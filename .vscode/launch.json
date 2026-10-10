@@ -1,0 +1,44 @@
+{
+	"configurations": [
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:DegenerateAge}",
+			"name": "Debug DegenerateAge",
+			"target": "DegenerateAge",
+			"configuration": "debug",
+			"preLaunchTask": "swift: Build Debug DegenerateAge"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:DegenerateAge}",
+			"name": "Release DegenerateAge",
+			"target": "DegenerateAge",
+			"configuration": "release",
+			"preLaunchTask": "swift: Build Release DegenerateAge"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:DegenerateAge}",
+			"name": "Debug RuleChecks",
+			"target": "RuleChecks",
+			"configuration": "debug",
+			"preLaunchTask": "swift: Build Debug RuleChecks"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:DegenerateAge}",
+			"name": "Release RuleChecks",
+			"target": "RuleChecks",
+			"configuration": "release",
+			"preLaunchTask": "swift: Build Release RuleChecks"
+		}
+	]
+}

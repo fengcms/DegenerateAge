@@ -1,0 +1,142 @@
+{
+  "initialMapId": "test_camp",
+  "maps": [
+    {
+      "id": "test_camp",
+      "name": "测试营地",
+      "columns": 32,
+      "rows": 32,
+      "blockedCells": [
+        {
+          "column": 3,
+          "row": 3
+        },
+        {
+          "column": 3,
+          "row": 4
+        },
+        {
+          "column": 4,
+          "row": 3
+        },
+        {
+          "column": 11,
+          "row": 14
+        },
+        {
+          "column": 12,
+          "row": 14
+        },
+        {
+          "column": 13,
+          "row": 14
+        },
+        {
+          "column": 14,
+          "row": 14
+        },
+        {
+          "column": 15,
+          "row": 14
+        },
+        {
+          "column": 11,
+          "row": 15
+        },
+        {
+          "column": 11,
+          "row": 16
+        },
+        {
+          "column": 11,
+          "row": 17
+        },
+        {
+          "column": 11,
+          "row": 18
+        },
+        {
+          "column": 22,
+          "row": 17
+        },
+        {
+          "column": 22,
+          "row": 18
+        },
+        {
+          "column": 22,
+          "row": 19
+        },
+        {
+          "column": 22,
+          "row": 20
+        },
+        {
+          "column": 22,
+          "row": 21
+        },
+        {
+          "column": 22,
+          "row": 22
+        },
+        {
+          "column": 24,
+          "row": 24
+        },
+        {
+          "column": 25,
+          "row": 23
+        }
+      ],
+      "playerSpawn": {
+        "column": 16,
+        "row": 16
+      },
+      "enemyIds": [
+        "corrupted_wolf"
+      ],
+      "enemySpawns": [
+        {
+          "id": "wolf_1",
+          "enemyId": "corrupted_wolf",
+          "cell": {
+            "column": 21,
+            "row": 16
+          }
+        },
+        {
+          "id": "wolf_2",
+          "enemyId": "corrupted_wolf",
+          "cell": {
+            "column": 17,
+            "row": 22
+          }
+        },
+        {
+          "id": "wolf_3",
+          "enemyId": "corrupted_wolf",
+          "cell": {
+            "column": 9,
+            "row": 16
+          }
+        }
+      ]
+    }
+  ],
+  "enemies": [
+    {
+      "id": "corrupted_wolf",
+      "name": "腐化野狼",
+      "level": 1,
+      "maxHP": 40,
+      "attack": 8,
+      "defense": 2,
+      "attackInterval": 1.3,
+      "attackRange": 1.0,
+      "movementSpeed": 2.0,
+      "aggroRadius": 4.0,
+      "leashRadius": 7.0,
+      "respawnSeconds": 8.0
+    }
+  ]
+}
