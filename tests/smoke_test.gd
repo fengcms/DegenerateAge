@@ -8,7 +8,7 @@ extends Node
 ##
 ## 说明：--import 用于注册 class_name 全局类（Iso / IsoGround / PlayerCharacter /
 ## Combat / Monster / MonsterSpawner / DamageNumber / Fx / ItemUtil / Loot /
-## Inventory / GroundItem / Equipment / Shop / ItemSlot）；换机或新增 class_name 后需先跑一次。
+## Inventory / GroundItem / Equipment / Shop / ItemSlot / DragGhost）；换机或新增 class_name 后需先跑一次。
 
 var _failures: Array[String] = []
 
@@ -30,6 +30,7 @@ func _ready() -> void:
 	_test_shop()
 	await _test_trade_panel()
 	_test_debug_seed()
+	await _test_drag_layer()
 	await _test_world()
 	_finish()
 
@@ -702,6 +703,46 @@ func _test_trade_panel() -> void:
 
 	inv.queue_free()
 	shop.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+# ---- M1-8 追加修复：拖拽预览层级（DragGhost 的落点图层）----
+## 根因：引擎的 set_drag_preview 把预览插到发起拖拽的面板内部（实测 4.7），与其余面板
+## 同 canvas、同 z_index → 被排在后面的面板整块盖住；z_index 只在同 canvas 内比较。
+## 故改为自绘 DragGhost，挂到 UI 层内最高层（组 drag_ghost_layer）。本测守住这条契约。
+func _test_drag_layer() -> void:
+	GameState.reset_to_defaults()
+	var main: Node = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+
+	var layer := get_tree().get_first_node_in_group("drag_ghost_layer")
+	_expect(layer != null, "缺少拖拽预览图层（组 drag_ghost_layer）")
+	if layer != null:
+		var shop: Control = main.get_node("UI/ShopPanel")
+		var inv: Control = main.get_node("UI/InventoryPanel")
+		_expect(int(layer.z_index) > int(shop.z_index) and int(layer.z_index) > int(inv.z_index),
+			"拖拽图层 z_index（%d）应高于面板（货郎 %d / 背包 %d）"
+			% [layer.z_index, shop.z_index, inv.z_index])
+		_expect(layer.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"拖拽图层不得拦截鼠标（否则面板点击失效）")
+		_expect(layer.get_parent() == main.get_node("UI"),
+			"拖拽图层必须与面板同属 UI 层（z_index 只在同 canvas 内有效）")
+
+	# 非拖拽态取载荷：返回载荷但**不创建幽灵**，也不得报错（无头安全）
+	GameState.add_item(_equip_instance("helmet_cloth", "dl_probe", {"def": 2}))
+	var inv2: Control = load("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	add_child(inv2)
+	await get_tree().process_frame
+	inv2._bag_buttons[0].draggable = true
+	var payload: Variant = inv2._bag_buttons[0]._get_drag_data(Vector2.ZERO)
+	_expect(payload is Dictionary, "背包格应可拖出（_get_drag_data 返回载荷）")
+	if layer != null:
+		_expect(layer.get_node_or_null("DragGhost") == null,
+			"非拖拽态下不应创建拖拽幽灵（避免控件泄漏）")
+
+	inv2.queue_free()
+	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
 

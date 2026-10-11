@@ -7,7 +7,8 @@ extends Button
 ##   ROLE_TRAY —— 出售托盘格：可接收来自背包格的投放，松手即回传信号。
 ##
 ## 拖拽载荷结构：{ "from": int(ROLE_BAG), "index": int, "item": Dictionary }
-## 界面本体仍为占位绘制（R5）：格内文字为模板名前 2 字 + 品质色描边。
+## 拖动时的跟随视觉由 DragGhost 承载（挂 UI 层最高层；**不用**引擎的拖拽预览，
+## 原因见 `_spawn_drag_visual`）。界面本体仍为占位绘制（R5）：格内文字为模板名前 2 字 + 品质色描边。
 ##
 ## 为什么单独抽一个控件：Godot 4 的拖放是 Control 的虚方法（_get_drag_data /
 ## _can_drop_data / _drop_data），必须在脚本里覆写；界面为代码构建，无法给 Button 实例
@@ -28,11 +29,27 @@ var draggable: bool = false      # 是否允许拖出（仅交易会话中的背
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	if role != ROLE_BAG or not draggable or item.is_empty():
 		return null
-	# 预览只在真实拖拽中创建：引擎要求 set_drag_preview 时正处于拖拽态，
-	# 无头测试直接调用本函数取载荷时不能设置预览（否则报错并泄漏控件）。
-	if get_viewport().gui_is_dragging():
-		set_drag_preview(_make_drag_preview())
+	_spawn_drag_visual()
 	return {"from": ROLE_BAG, "index": index, "item": item}
+
+## 拖动时跟随鼠标的视觉反馈（拖拽幽灵）。
+## **不用引擎的 set_drag_preview**：预览挂载点由引擎自定（实测 4.7 插到本面板内部），
+## 与其它面板同 canvas、同 z_index，绘制顺序由树的先后决定 —— 预览会被排在后面的
+## 面板（如货郎面板）整块盖住，玩家看不到拖动的元素；`z_index` 只在同 canvas 内比较，
+## 无法跨 canvas 纠正。故改为自绘 DragGhost，显式挂到 UI 层内最高层（组 drag_ghost_layer）。
+## 兜底：场景中无该图层时（如独立测试场景）仍走引擎预览，并尽量抬高其 z_index。
+## 引擎契约：`_get_drag_data` 内的拖拽态必为真（官方即推荐在此调用 set_drag_preview，
+## 其内部同样断言 gui_is_dragging）；无头测试直接取载荷时为假 —— 此时不做任何视觉创建。
+func _spawn_drag_visual() -> void:
+	if not get_viewport().gui_is_dragging():
+		return
+	var layer := get_tree().get_first_node_in_group("drag_ghost_layer")
+	if layer != null:
+		DragGhost.spawn(layer, item)
+		return
+	var preview := _make_drag_preview()
+	preview.z_index = DragGhost.Z
+	set_drag_preview(preview)
 
 ## 拖拽跟随鼠标的小预览：物品名 + 品质色描边（占位素材，不加载图标）。
 func _make_drag_preview() -> Control:
