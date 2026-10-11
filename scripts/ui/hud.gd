@@ -96,6 +96,8 @@ func _toast_color(kind: String) -> Color:
 			return Color("f0d060")
 		"pickup":
 			return Color("8fd07a")
+		"drop":
+			return Color("e8b46a")
 		_:
 			return Color("e8e8e8")
 

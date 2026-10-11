@@ -49,15 +49,13 @@ func _ready() -> void:
 	img.save_png("/tmp/degenerateage_loot.png")
 	print("[LootShot] ground_items=%d" % loot_root.get_child_count())
 
-	# 走近拾取验证：把玩家移到掉落物中心附近
+	# 走近拾取验证：把玩家移到掉落物中心附近（须等待超过落地保护期）
 	var before_gold: int = GameState.gold
 	var before_bag: int = GameState.inventory_used()
 	player.global_position = center + Vector2(150.0, 0.0)   # 靠近第一件
-	for _i in range(10):
-		await get_tree().process_frame
+	await get_tree().create_timer(GroundItem.PICKUP_DELAY + 0.4).timeout
 	player.global_position = center + Vector2(230.0, -170.0)  # 走到野狼掉落处
-	for _i in range(10):
-		await get_tree().process_frame
+	await get_tree().create_timer(GroundItem.PICKUP_DELAY + 0.4).timeout
 	print("[LootShot] pickup 前 金币=%d 背包=%d / 后 金币=%d 背包=%d 剩余地面=%d" % [
 		before_gold, before_bag, GameState.gold, GameState.inventory_used(), loot_root.get_child_count()])
 	get_tree().quit()

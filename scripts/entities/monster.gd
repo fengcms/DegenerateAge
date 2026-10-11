@@ -262,6 +262,7 @@ func _die() -> void:
 ## 死亡结算（3.1：经验 / 掉落 / 任务，仅一次）。
 ## 经验即时结算；掉落按 dropTableId 走掉落表（M1-6，含金币作为地面拾取物）。
 ## 无掉落表时回退为直接结算模板金币（如教学木桩 goldReward=0）。
+## 掉落结果聚合为一条「掉落」提示广播，与地面拾取时的「拾取」提示区分（9.6）。
 ## 任务推进在 M2 接入（订阅 EventBus.monster_died）。
 func _settle_rewards() -> void:
 	var xp := int(template.get("xpReward", 0))
@@ -273,10 +274,23 @@ func _settle_rewards() -> void:
 		var gold := int(template.get("goldReward", 0))
 		if gold > 0:
 			GameState.add_gold(gold)
+			EventBus.toast_requested.emit("%s 掉落：金币 ×%d" % [display_name, gold], "drop")
 		return
 
-	for it in Loot.roll(table_id):
+	var rolled := Loot.roll(table_id)
+	for it in rolled:
 		_spawn_drop(it)
+	_announce_drops(rolled)
+
+## 聚合广播一条掉落提示：如「腐化野狼 掉落：金币 ×6 · 生命药水 · 稀有 布甲头盔 Lv2」。
+func _announce_drops(items: Array) -> void:
+	var parts: Array[String] = []
+	for it in items:
+		if it is Dictionary and not (it as Dictionary).is_empty():
+			parts.append(ItemUtil.display_name(it))
+	if parts.is_empty():
+		return
+	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(parts)], "drop")
 
 ## 在死亡位置附近生成一件地面掉落物（7.6 / 9.9）。
 func _spawn_drop(item: Dictionary) -> void:
