@@ -1,0 +1,19 @@
+.build/
+.swiftpm/
+build/
+.DS_Store
+*.xcuserstate
+xcuserdata/
+
+# Agent / local data — do not publish (repo is public)
+.workbuddy/
+
+# Archived legacy content — preserved on the `bak` branch, do not push again
+bak/
+docs/history/
+
+# Editor settings
+.vscode/
+
+# Godot project artifacts (future)
+.godot/
