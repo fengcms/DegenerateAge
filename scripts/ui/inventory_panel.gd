@@ -42,6 +42,7 @@ func _ready() -> void:
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.player_hp_changed.connect(_on_stat_changed)
 	EventBus.player_mp_changed.connect(_on_stat_changed)
+	EventBus.panel_opened.connect(_on_panel_opened)
 	_refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -55,9 +56,15 @@ func _unhandled_input(event: InputEvent) -> void:
 ## 开关面板；同步全局面板标志（角色操控在 player.gd 中据此屏蔽）。
 func set_open(open: bool) -> void:
 	visible = open
-	GameState.panel_open = open
+	GameState.set_panel_open("inventory", open)
 	if open:
+		EventBus.panel_opened.emit("inventory")
 		_refresh()
+
+## 其他面板（如货郎，M1-8）打开时自动关闭本面板，保证互斥。
+func _on_panel_opened(panel_id: String) -> void:
+	if panel_id != "inventory" and visible:
+		set_open(false)
 
 # ---- 构建 ----
 

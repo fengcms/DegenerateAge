@@ -25,6 +25,7 @@ var current_map: String = "camp"
 var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
 var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
 var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
+var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
 var quest_states: Dictionary = {}   # quest_id -> state 字符串
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var settings: Dictionary = {}
@@ -55,6 +56,7 @@ func reset_to_defaults() -> void:
 	inventory = Inventory.create(INVENTORY_SIZE)
 	equipment = Equipment.create()
 	panel_open = false
+	_open_panels = {}
 	quest_states = {}
 	first_clear = {}
 	settings = {
@@ -202,6 +204,111 @@ func _after_equip_change() -> void:
 	player.mp = mini(int(player.mp), max_mp())
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+
+# ---- 面板互斥（M1-7 / M1-8）----
+
+## 登记 / 注销一个已打开的面板；任一面板打开即置 panel_open（player.gd 据此屏蔽操控）。
+## 多面板互斥由各面板订阅 EventBus.panel_opened 自行关闭实现（I 背包 / E 货郎）。
+func set_panel_open(panel_id: String, open: bool) -> void:
+	if open:
+		_open_panels[panel_id] = true
+	else:
+		_open_panels.erase(panel_id)
+	panel_open = not _open_panels.is_empty()
+
+# ---- 货郎交易（6.4；算价与物品构造见 scripts/systems/shop.gd）----
+
+## 向货郎购买一件商品。返回 {ok, reason, item, price}。
+## 失败原因明确广播提示（金币不足 / 背包满 / 不售此物），不静默。
+func shop_buy(shop_id: String, item_id: String) -> Dictionary:
+	var price := Shop.buy_price(shop_id, item_id)
+	if price < 0:
+		return _trade_fail("该货郎不出售此物")
+	var item := Shop.make_item(item_id)
+	if item.is_empty():
+		return _trade_fail("物品不存在：%s" % item_id)
+	if not Inventory.has_space_for(inventory, item):
+		return _trade_fail("背包已满，无法购买")
+	if gold < price:
+		return _trade_fail("金币不足（需 %d，现有 %d）" % [price, gold])
+	add_gold(-price)
+	add_item(item)
+	EventBus.toast_requested.emit("购买：%s（-%d 金币）" % [ItemUtil.display_name(item), price], "pickup")
+	EventBus.trade_done.emit("buy", item_id, price)
+	return {"ok": true, "reason": "", "item": item, "price": price}
+
+## 出售背包中指定格的装备（6.4：货郎只收购装备）。返回 {ok, reason, item, price}。
+## silent = true 时不广播单件 toast（供面板批量出售后自行汇总，避免刷屏）。
+func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
+	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
+		return _trade_fail("该格没有物品")
+	var item: Dictionary = inventory[inv_index]
+	if not Shop.can_sell(item):
+		return _trade_fail("货郎只收购装备")
+	var price := Shop.sell_price(item)
+	var label := ItemUtil.display_name(item)
+	remove_item_at(inv_index)
+	add_gold(price)
+	if not silent:
+		EventBus.toast_requested.emit("出售：%s（+%d 金币）" % [label, price], "pickup")
+	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), price)
+	return {"ok": true, "reason": "", "item": item, "price": price}
+
+## 一键出售（6.4）：批量卖出背包装备，**属性高于已穿戴的不会被售出**（5.9 评分口径）。
+## 返回 {sold, gold, skipped}。
+func shop_sell_all() -> Dictionary:
+	var idxs: Array[int] = []
+	var skipped := 0
+	for i in range(inventory.size()):
+		var it = inventory[i]
+		if not (it is Dictionary):
+			continue
+		if not Shop.can_sell(it):
+			continue
+		if is_upgrade_over_worn(it):
+			skipped += 1
+			continue
+		idxs.append(i)
+	if idxs.is_empty():
+		EventBus.toast_requested.emit("没有可出售的装备", "danger")
+		return {"sold": 0, "gold": 0, "skipped": skipped}
+
+	var total := 0
+	for i in range(idxs.size() - 1, -1, -1):   # 倒序删除，避免下标位移
+		var idx := idxs[i]
+		var it2: Dictionary = inventory[idx]
+		total += Shop.sell_price(it2)
+		inventory[idx] = null
+	add_gold(total)
+	EventBus.inventory_changed.emit()
+	var msg := "一键出售 %d 件（+%d 金币）" % [idxs.size(), total]
+	if skipped > 0:
+		msg += "，保留 %d 件更优装备" % skipped
+	EventBus.toast_requested.emit(msg, "pickup")
+	EventBus.trade_done.emit("sell_all", "", total)
+	return {"sold": idxs.size(), "gold": total, "skipped": skipped}
+
+## 该装备是否优于同类型已穿戴装备（6.4 一键出售排除判据 / 5.9 评分）。
+## 同类型槽全空 → 不算升级件（可出售）。
+func is_upgrade_over_worn(item: Dictionary) -> bool:
+	var kind := Equipment.item_kind(item)
+	if kind.is_empty():
+		return false
+	var best := 0.0
+	var has_worn := false
+	for sid in Equipment.slots_for_kind(kind):
+		var w = equipment.get(sid)
+		if w is Dictionary:
+			has_worn = true
+			best = maxf(best, Equipment.score(w))
+	if not has_worn:
+		return false
+	return Equipment.score(item) > best
+
+## 交易失败统一出口：广播明确原因（9.6），返回统一结构。
+func _trade_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "reason": reason, "item": {}, "price": 0}
 
 ## 增加经验，并按 4.4 处理（多级连升、剩余结转）。
 func add_xp(amount: int) -> void:

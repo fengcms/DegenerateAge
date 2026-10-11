@@ -28,6 +28,10 @@ signal gold_changed(amount: int)
 signal inventory_changed()
 signal equipment_changed()
 
+# ---- NPC / 交易（M1-8）----
+signal shop_open_requested(shop_id: String)
+signal trade_done(kind: String, item_id: String, price: int)
+
 # ---- 任务 ----
 signal quest_accepted(quest_id: String)
 signal quest_progressed(quest_id: String, current: int, required: int)
@@ -35,6 +39,7 @@ signal quest_completed(quest_id: String)
 
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)
+signal panel_opened(panel_id: String)
 signal map_changed(map_id: String)
 signal data_loaded()
 signal settings_changed()

@@ -27,6 +27,7 @@ func _ready() -> void:
 	await _test_pickup()
 	await _test_pickup_delay()
 	_test_equipment()
+	_test_shop()
 	await _test_world()
 	_finish()
 
@@ -486,6 +487,110 @@ func _test_equipment() -> void:
 
 	GameState.reset_to_defaults()
 
+## M1-8：货郎买卖（6.4 / 6.2）——买扣金币入包；卖加金币出包；
+## 金币不足 / 背包满 / 非装备出售 均有明确拦截（不静默）。
+func _test_shop() -> void:
+	var shop_id := "peddler_camp"
+	GameState.reset_to_defaults()
+
+	# 配置读取（数据驱动，10.2）
+	_expect(Shop.display_name(shop_id) == "货郎（营地）",
+		"货郎名应取自 shops.json，实际 %s" % Shop.display_name(shop_id))
+	_expect(Shop.buy_items(shop_id).size() >= 1, "营地货郎应有出售商品")
+	_expect(Shop.buy_price(shop_id, "potion_hp_small") == 20, "小红药售价应为 20")
+	_expect(Shop.buy_price(shop_id, "potion_hp_large") == -1, "营地货郎不应出售大红药（返回 -1）")
+
+	# 买 · 金币不足 → 明确失败，不扣钱不入包
+	GameState.gold = 0
+	var poor := GameState.shop_buy(shop_id, "potion_hp_small")
+	_expect(not bool(poor.get("ok", false)), "金币不足应购买失败")
+	_expect(GameState.gold == 0, "购买失败不应扣金币")
+	_expect(GameState.inventory_used() == 0, "购买失败不应入包")
+
+	# 买 · 成功 → 扣金币 + 入包（同一药水堆叠为 1 格 2 瓶）
+	GameState.gold = 100
+	var ok1 := GameState.shop_buy(shop_id, "potion_hp_small")
+	_expect(bool(ok1.get("ok", false)), "金币充足应购买成功：%s" % ok1.get("reason", ""))
+	_expect(GameState.gold == 80, "购买应扣 20 金币，实际 %d" % GameState.gold)
+	_expect(GameState.inventory_used() == 1, "药水应入包占 1 格，实际 %d" % GameState.inventory_used())
+	var ok2 := GameState.shop_buy(shop_id, "potion_hp_small")
+	_expect(bool(ok2.get("ok", false)), "第二瓶应可续买")
+	_expect(int(GameState.inventory[0].get("count", 0)) == 2,
+		"两瓶药水应堆叠为 2，实际 %d" % int(GameState.inventory[0].get("count", 0)))
+
+	# 买 · 杂项品类解析正确（回城卷 → misc）
+	GameState.gold = 200
+	var scroll := GameState.shop_buy(shop_id, "misc_town_scroll")
+	_expect(bool(scroll.get("ok", false)), "回城卷应可购买")
+	_expect(String(GameState.inventory[1].get("kind", "")) == "misc", "回城卷品类应为 misc")
+
+	# 买 · 背包满 → 明确失败且不扣钱
+	GameState.reset_to_defaults()
+	GameState.gold = 999
+	for i in range(GameState.inventory.size()):
+		GameState.inventory[i] = _equip_instance("weapon_starter", "f%d" % i, {"atk": 1})
+	var full := GameState.shop_buy(shop_id, "potion_hp_small")
+	_expect(not bool(full.get("ok", false)), "背包满应购买失败")
+	_expect(GameState.gold == 999, "背包满失败不应扣金币，实际 %d" % GameState.gold)
+
+	# 售价公式（6.2）：round(baseValue × qualityMult × (1 + star×0.08))
+	var common_w := _equip_instance("weapon_starter", "s1", {"atk": 5})
+	_expect(Shop.sell_price(common_w) == 50,
+		"普通武器（基础价 50 × 1.0）售价应为 50，实际 %d" % Shop.sell_price(common_w))
+	var rare_w := _equip_instance("weapon_wolfking", "s2", {"atk": 12})
+	rare_w["quality"] = "rare"
+	_expect(Shop.sell_price(rare_w) == 720,
+		"稀有武器（240 × 3）售价应为 720，实际 %d" % Shop.sell_price(rare_w))
+	var rare_star := rare_w.duplicate(true)
+	rare_star["star"] = 1
+	_expect(Shop.sell_price(rare_star) == 778,
+		"稀有 +1 星（240 × 3 × 1.08）应为 778，实际 %d" % Shop.sell_price(rare_star))
+	_expect(Shop.can_sell(rare_w), "装备可出售")
+	_expect(not Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
+		"药水不可出售给货郎（6.4）")
+
+	# 卖 · 非装备拦截
+	GameState.reset_to_defaults()
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	var bad_sell := GameState.shop_sell(0)
+	_expect(not bool(bad_sell.get("ok", false)), "药水不应可出售给货郎")
+	_expect(GameState.inventory[0] != null, "出售失败不应移除物品")
+
+	# 卖 · 装备 → 加金币出包
+	GameState.reset_to_defaults()
+	GameState.inventory[0] = _equip_instance("weapon_starter", "v1", {"atk": 5})
+	var sell := GameState.shop_sell(0)
+	_expect(bool(sell.get("ok", false)), "装备应可出售")
+	_expect(GameState.gold == 50, "出售普通武器应得 50 金币，实际 %d" % GameState.gold)
+	_expect(GameState.inventory[0] == null, "出售后该格应清空")
+	_expect(not GameState.is_upgrade_over_worn(_equip_instance("weapon_starter", "v2", {"atk": 5})),
+		"无同类型已穿戴装备时不应判为升级件")
+
+	# 一键出售（6.4）：属性高于已穿戴的装备被保留
+	GameState.reset_to_defaults()
+	GameState.player.level = 5
+	GameState.inventory[0] = _equip_instance("weapon_wolfking", "w_strong", {"atk": 12},
+		[{"stat": "atk", "value": 6}])
+	GameState.equip_from_inventory(0)      # 穿上强武器（武器槽占用）
+	GameState.inventory[0] = _equip_instance("weapon_starter", "w_weak", {"atk": 5})
+	GameState.inventory[1] = _equip_instance("helmet_cloth", "h1", {"def": 2})
+	GameState.inventory[2] = _equip_instance("weapon_starter", "w_better", {"atk": 30})
+	_expect(GameState.is_upgrade_over_worn(GameState.inventory[2]),
+		"攻击 30 的武器应高于已穿戴（18）而判为升级件")
+
+	var before := GameState.gold
+	var all := GameState.shop_sell_all()
+	_expect(int(all.get("sold", 0)) == 2,
+		"一键出售应卖出 2 件（弱武器 + 头盔），实际 %d" % int(all.get("sold", 0)))
+	_expect(int(all.get("skipped", 0)) == 1,
+		"应保留 1 件更优装备，实际 %d" % int(all.get("skipped", 0)))
+	_expect(GameState.gold - before == 50 + 30,
+		"一键出售应入账 50+30 金币，实际 %d" % (GameState.gold - before))
+	_expect(_index_of_instance("w_better") >= 0, "更优武器应仍在背包")
+	_expect(_index_of_instance("w_weak") < 0, "弱武器应已卖出")
+
+	GameState.reset_to_defaults()
+
 ## 构造一件装备实例（10.1：实例自带属性，永不重随）。
 func _equip_instance(item_id: String, inst_id: String, base_attrs: Dictionary,
 		affixes: Array = []) -> Dictionary:
@@ -546,6 +651,21 @@ func _test_world() -> void:
 	# M1-6：世界掉落容器
 	var loot_root: Node = game.get_node_or_null("LootRoot")
 	_expect(loot_root != null and loot_root.is_in_group("loot_root"), "缺少 LootRoot 掉落容器节点")
+
+	# M1-8：安全区 NPC（货郎）与交互半径
+	var npcs: Node = game.get_node_or_null("Npcs")
+	_expect(npcs != null, "未找到 Npcs 节点")
+	if npcs != null:
+		_expect(npcs.get_child_count() == 1, "营地图应有 1 个货郎，实际 %d" % npcs.get_child_count())
+		var npc := npcs.get_child(0) as Npc
+		_expect(npc != null, "Npcs 子节点应为 Npc 实体")
+		if npc != null:
+			_expect(npc.shop_id == "peddler_camp", "货郎应绑定 peddler_camp 商店")
+			_expect(not npc.npc_name.is_empty(), "货郎应有显示名")
+			_expect(not npc.is_player_in_range(), "出生点不应已在货郎交互范围内（避免开局误开面板）")
+			(player as Node2D).global_position = npc.global_position + Vector2(40.0, 0.0)
+			await get_tree().process_frame
+			_expect(game.nearest_npc() == npc, "走进交互半径后应能定位到该 NPC（6.3）")
 
 	# HUD 伤害飘字层分组
 	var dn: Node = game.get_node_or_null("DamageNumbers")
