@@ -1,13 +1,11 @@
 extends Node2D
-## 启动场景脚本（脚手架版）。
-##
-## 职责：验证工程骨架可用——数据层已加载、配置校验可通过。
-## 正式的玩法（移动 / 战斗 / NPC / UI）将在阶段 1 之后逐步接入。
+## 启动引导：校验数据配置；游戏世界由子场景 Game 承载（M1 起）。
+
+@onready var _info: Label = $UI/InfoLabel
 
 func _ready() -> void:
 	print("========================================")
-	print("[Main] 《末法纪元：最后的守护者》脚手架启动")
-	print("[Main] 配置表加载摘要: ", DataLoader.get_summary())
+	print("[Main] 《末法纪元：最后的守护者》启动")
 
 	var report: Array[String] = DataLoader.validate_all()
 	if report.is_empty():
@@ -15,8 +13,11 @@ func _ready() -> void:
 	else:
 		push_warning("[Main] 配置校验存在问题（%d 项）:\n%s" % [report.size(), "\n".join(PackedStringArray(report))])
 
-	# 示例：读取一条怪物数据，验证数据层可用。
-	var wolf = DataLoader.get_entry("monsters", "wolf_corrupted")
-	if wolf != null:
-		print("[Main] 示例读取 monster 'wolf_corrupted' -> ", wolf.get("name", "?"), " HP基础=", wolf.get("hpBase", "?"))
+	_info.text = "%s · WASD 移动（M1）" % _current_map_name()
 	print("========================================")
+
+func _current_map_name() -> String:
+	var m = DataLoader.get_entry("maps", GameState.current_map)
+	if m == null:
+		return String(GameState.current_map)
+	return String(m.get("name", GameState.current_map))

@@ -35,6 +35,10 @@ window/size/viewport_height=800
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/custom="res://assets/themes/default_theme.tres"
+
 [input]
 
 move_up={
