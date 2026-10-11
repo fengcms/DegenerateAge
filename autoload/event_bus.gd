@@ -34,6 +34,10 @@ signal shop_close_requested()
 signal trade_mode_changed(active: bool)
 signal trade_done(kind: String, item_id: String, price: int)
 
+# ---- 自动战斗 / 自动拾取（M1-9，3.14 / 4.6）----
+signal auto_state_changed(battle: bool, pickup: bool)
+signal auto_phase_changed(phase: String)
+
 # ---- 任务 ----
 signal quest_accepted(quest_id: String)
 signal quest_progressed(quest_id: String, current: int, required: int)

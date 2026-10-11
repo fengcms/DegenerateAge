@@ -29,6 +29,10 @@ var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互�
 var quest_states: Dictionary = {}   # quest_id -> state 字符串
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var settings: Dictionary = {}
+## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
+## （10.3：重启后自动战斗默认关闭）。决策机见 scripts/systems/auto_battle.gd。
+var auto_battle_on: bool = false
+var auto_pickup_on: bool = false
 
 func _ready() -> void:
 	reset_to_defaults()
@@ -59,6 +63,8 @@ func reset_to_defaults() -> void:
 	_open_panels = {}
 	quest_states = {}
 	first_clear = {}
+	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
+	auto_pickup_on = false
 	settings = {
 		"autoBattleDefault": false,   # 10.3：重启后自动战斗默认关闭
 		"autoPickupDefault": false,
@@ -204,6 +210,39 @@ func _after_equip_change() -> void:
 	player.mp = mini(int(player.mp), max_mp())
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+
+# ---- 自动战斗 / 自动拾取开关（M1-9，3.14 / 4.6）----
+
+## 设置自动战斗开关（F 键）。返回新状态。决策机订阅本信号以重置锚点。
+func set_auto_battle(on: bool) -> bool:
+	if auto_battle_on == on:
+		return auto_battle_on
+	auto_battle_on = on
+	EventBus.auto_state_changed.emit(auto_battle_on, auto_pickup_on)
+	var msg := "自动战斗：开" if on else "自动战斗：关"
+	if on and auto_pickup_on:
+		msg += "（自动拾取已开）"
+	EventBus.toast_requested.emit(msg, "info")
+	return auto_battle_on
+
+## 切换自动战斗（F）。
+func toggle_auto_battle() -> bool:
+	return set_auto_battle(not auto_battle_on)
+
+## 设置自动拾取开关（G 键；9.9：仅控制**自动战斗时**是否顺路走向掉落物，
+## 手动靠近本来就会自动入包）。返回新状态。
+func set_auto_pickup(on: bool) -> bool:
+	if auto_pickup_on == on:
+		return auto_pickup_on
+	auto_pickup_on = on
+	EventBus.auto_state_changed.emit(auto_battle_on, auto_pickup_on)
+	EventBus.toast_requested.emit(
+		"自动拾取：开（自动战斗时顺路拾取）" if on else "自动拾取：关", "info")
+	return auto_pickup_on
+
+## 切换自动拾取（G）。
+func toggle_auto_pickup() -> bool:
+	return set_auto_pickup(not auto_pickup_on)
 
 # ---- 面板互斥（M1-7 / M1-8）----
 

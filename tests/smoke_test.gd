@@ -8,7 +8,8 @@ extends Node
 ##
 ## 说明：--import 用于注册 class_name 全局类（Iso / IsoGround / PlayerCharacter /
 ## Combat / Monster / MonsterSpawner / DamageNumber / Fx / ItemUtil / Loot /
-## Inventory / GroundItem / Equipment / Shop / ItemSlot / DragGhost）；换机或新增 class_name 后需先跑一次。
+## Inventory / GroundItem / Equipment / Shop / ItemSlot / DragGhost / AutoBattle）；
+## 换机或新增 class_name 后需先跑一次。
 
 var _failures: Array[String] = []
 
@@ -31,6 +32,7 @@ func _ready() -> void:
 	await _test_trade_panel()
 	_test_debug_seed()
 	await _test_drag_layer()
+	await _test_auto_battle()
 	await _test_world()
 	_finish()
 
@@ -760,6 +762,114 @@ func _test_drag_layer() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
+
+## M1-9：自动战斗 / 自动拾取（3.14 硬性异常规则；T08 不可达改选 / T10 背包满 / T11 MP 与冷却；4.6 手动接管）。
+func _test_auto_battle() -> void:
+	GameState.reset_to_defaults()
+
+	# ---- T11：MP / 冷却 / 等级不足 → 不施放该技能（choose_skill 纯函数）----
+	var skills: Array = DataLoader.get_table("skills")
+	var earth := _skill_by_id(skills, "earth_cleave")     # Lv5 / 15MP / 范围(cone)
+	var armor := _skill_by_id(skills, "armor_break")      # Lv25 / 40MP / 单体
+	_expect(not earth.is_empty() and not armor.is_empty(),
+		"skills.json 应含 earth_cleave / armor_break")
+	# 3.14：优先可用范围技（命中 ≥2）
+	_expect(String(AutoBattle.choose_skill([earth], 5, 35, {}, 3).get("id", "")) == "earth_cleave",
+		"命中≥2 时应优先范围技")
+	# 单体场景不选范围技（返回空 = 回退普攻）
+	_expect(AutoBattle.choose_skill([earth], 5, 35, {}, 1).is_empty(),
+		"单体场景不应选范围技（应回退普攻）")
+	# MP 不足 → 不施放（T11）
+	_expect(AutoBattle.choose_skill([earth], 5, 14, {}, 3).is_empty(),
+		"MP 不足不应施放技能（T11）")
+	# 冷却中 → 不施放（T11）
+	_expect(AutoBattle.choose_skill([armor], 25, 40, {"armor_break": 3.0}, 1).is_empty(),
+		"冷却中不应施放技能（T11）")
+	# 等级不足 → 不施放
+	_expect(AutoBattle.choose_skill([earth], 1, 999, {}, 3).is_empty(),
+		"技能未解锁不应施放")
+	# 条件齐备 → 可施放单体
+	_expect(String(AutoBattle.choose_skill([armor], 25, 40, {}, 1).get("id", "")) == "armor_break",
+		"条件齐备应可施放单体技能")
+
+	# ---- 状态机：实例化世界，开 F → 锚点搜怪 → 接近 / 攻击 ----
+	var game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	var player: PlayerCharacter = game.get_node("Entities/Player")
+	var pilot: AutoBattle = player.get_node_or_null("AutoPilot")
+	_expect(pilot != null, "Player 下应挂有 AutoPilot 自动战斗决策机")
+	if pilot == null:
+		game.queue_free()
+		await get_tree().process_frame
+		GameState.reset_to_defaults()
+		return
+
+	# 锚点半径内放一只不动的怪，保证必有目标（避免依赖随机怪物点）
+	var mon: Monster = load("res://scenes/entities/Monster.tscn").instantiate()
+	mon.monster_id = "training_dummy"
+	mon.ai_enabled = false
+	game.get_node("Spawner").add_child(mon)
+	mon.global_position = player.global_position + Vector2(220.0, 0.0)
+	await get_tree().process_frame
+
+	GameState.set_auto_battle(true)
+	_expect(GameState.auto_battle_on, "开启自动战斗后 auto_battle_on 应为 true")
+	# 压低攻击保证目标不死，便于观察状态机；max_hp 由攻击派生（4.3）→ 同步补满
+	GameState.player.attack = 1
+	GameState.player.hp = GameState.max_hp()
+	var seen_combat := false
+	for _i in range(120):                     # ≈2s
+		await get_tree().physics_frame
+		var st := pilot.current_state()
+		if st == AutoBattle.State.PATH_TO_TARGET or st == AutoBattle.State.ATTACK_TARGET:
+			seen_combat = true
+	_expect(pilot.current_target() != null, "自动战斗应锁定锚点半径内的目标")
+	_expect(seen_combat, "开 F 后应进入「接近目标」或「攻击目标」状态")
+
+	# 4.6 手动接管：模拟按住方向键 → 立即转「手动接管」
+	Input.action_press("move_left")
+	for _i in range(4):
+		await get_tree().physics_frame
+	_expect(pilot.current_state() == AutoBattle.State.MANUAL_OVERRIDE,
+		"检测到手动输入应进入「手动接管」，实际 %s"
+		% AutoBattle.state_name(pilot.current_state()))
+	Input.action_release("move_left")
+
+	# 3.14 ⑥ 死亡 → 自动转 off（4.7）
+	player.is_dead = true
+	for _i in range(4):
+		await get_tree().physics_frame
+	_expect(not GameState.auto_battle_on, "玩家死亡后自动战斗应自动关闭（3.14）")
+	player.is_dead = false
+	GameState.set_auto_battle(false)
+
+	# ---- T10：背包满 → 不走向需要入包的掉落物（金币不受背包限制）----
+	for i in range(GameState.inventory.size()):
+		GameState.inventory[i] = _equip_instance("helmet_cloth", "full_%d" % i, {"def": 1})
+	var loot_root: Node = game.get_node("LootRoot")
+	var it_potion: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	it_potion.item = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	loot_root.add_child(it_potion)
+	await get_tree().process_frame
+	_expect(not pilot._can_pick(it_potion),
+		"背包满时应判定该掉落物不可拾取（T10：不得无限拾取满背包）")
+	var it_coin: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	it_coin.item = {"kind": "coin", "itemId": "coin", "gold": 5, "count": 1}
+	loot_root.add_child(it_coin)
+	await get_tree().process_frame
+	_expect(pilot._can_pick(it_coin), "金币不受背包容量限制，应仍可拾取")
+
+	game.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+## 按 id 取 skills.json 中的一条技能定义（不存在返回空字典）。
+func _skill_by_id(skills: Array, skill_id: String) -> Dictionary:
+	for s in skills:
+		if s is Dictionary and String(s.get("id", "")) == skill_id:
+			return s
+	return {}
 
 ## 构造一件装备实例（10.1：实例自带属性，永不重随）。
 func _equip_instance(item_id: String, inst_id: String, base_attrs: Dictionary,

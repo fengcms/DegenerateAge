@@ -5,6 +5,11 @@ extends Control
 
 const HOTBAR_SLOTS := 16
 
+## 自动状态指示配色（4.6：界面明显显示「自动中 / 手动接管 / 暂停中」）
+const COL_AUTO_OFF := Color("8c9199")
+const COL_AUTO_ON := Color("f0a44a")
+const COL_AUTO_OVERRIDE := Color("8fd07a")
+
 @onready var _name_label: Label = %NameLabel
 @onready var _level_label: Label = %LevelLabel
 @onready var _hp_bar: ProgressBar = %HpBar
@@ -14,6 +19,7 @@ const HOTBAR_SLOTS := 16
 @onready var _exp_bar: ProgressBar = %ExpBar
 @onready var _gold_label: Label = %GoldLabel
 @onready var _bag_label: Label = %BagLabel
+@onready var _auto_label: Label = %AutoLabel
 @onready var _toast_box: VBoxContainer = %ToastBox
 @onready var _map_name: Label = %MapName
 @onready var _map_coords: Label = %MapCoords
@@ -22,6 +28,9 @@ const HOTBAR_SLOTS := 16
 @onready var _hotbar: HBoxContainer = %Hotbar
 
 var _target: Node = null
+var _auto_battle: bool = false
+var _auto_pickup: bool = false
+var _auto_phase: String = ""
 
 func _ready() -> void:
 	EventBus.player_hp_changed.connect(_on_hp)
@@ -33,8 +42,11 @@ func _ready() -> void:
 	EventBus.map_changed.connect(_on_map_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.toast_requested.connect(_on_toast)
+	EventBus.auto_state_changed.connect(_on_auto_state)
+	EventBus.auto_phase_changed.connect(_on_auto_phase)
 	_build_hotbar()
 	_refresh_all()
+	_refresh_auto()
 
 func _process(_delta: float) -> void:
 	_update_coords()
@@ -71,6 +83,31 @@ func _on_map_changed(_map_id: String) -> void:
 
 func _on_inventory_changed() -> void:
 	_bag_label.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
+
+# ---- 自动战斗状态指示（M1-9；4.6「界面明显显示自动中 / 手动接管 / 暂停中」）----
+
+func _on_auto_state(battle: bool, pickup: bool) -> void:
+	_auto_battle = battle
+	_auto_pickup = pickup
+	_refresh_auto()
+
+func _on_auto_phase(phase: String) -> void:
+	_auto_phase = phase
+	_refresh_auto()
+
+func _refresh_auto() -> void:
+	if not _auto_battle:
+		_auto_label.text = "自动  关（F 开启）"
+		_auto_label.add_theme_color_override("font_color", COL_AUTO_OFF)
+		return
+	var tail := ""
+	if _auto_phase == "手动接管":
+		tail = " · 3 秒后恢复"
+	elif _auto_pickup:
+		tail = " · 拾取 G 开"
+	_auto_label.text = "自动  %s%s" % [_auto_phase if not _auto_phase.is_empty() else "启动中", tail]
+	var col := COL_AUTO_OVERRIDE if _auto_phase == "手动接管" else COL_AUTO_ON
+	_auto_label.add_theme_color_override("font_color", col)
 
 ## 系统提示 Toast（9.6，最小版；完整样式在 M5-5 完善）。
 func _on_toast(text: String, kind: String) -> void:

@@ -2,9 +2,10 @@ class_name PlayerCharacter
 extends CharacterBody2D
 ## 玩家角色：八向归一化移动 + 普攻 + 受击保护 + 死亡占位。
 ## 依据：产品文档 4.6 操控 / 3.1 战斗流程 / 3.2 伤害公式 / 3.4 受击保护 / 4.7 死亡。
-## M1-3/M1-4：移动 + 普攻结算；M1-5：受击硬直 + 无敌帧 + 死亡复活占位。
+## M1-3/M1-4：移动 + 普攻结算；M1-5：受击硬直 + 无敌帧 + 死亡复活占位；
+## M1-9：暴露自动移动 / 自动攻击接口（供 AutoBattle 决策机驱动，3.14）。
 ## 普攻设计为「离散事件」——每次成功发动只结算一次，天然满足 T04（不重复结算）。
-## 技能 / 自动战斗 / 超距走位在后续子步骤接入。
+## 技能 / 超距走位在后续子步骤接入。
 
 const RADIUS := 12.0
 const COLOR_BODY := Color("e8c07d")
@@ -14,6 +15,7 @@ const COLOR_DEAD := Color("8a8a8a")
 const IFRAME := 0.5            # 3.4：受击后无敌帧时长（s）
 const HITSTUN := 0.25          # 3.4：受击硬直时长（s，期间无法主动行动）
 const DEATH_REVIVE_DELAY := 3.0  # 4.7 死亡流程占位（正式复活对话框见 M3）
+const MANUAL_EPS := 0.05       # 手动输入判定阈值（摇杆量）
 
 ## 移动速度（像素/秒）= 属性表 movementSpeed（格/秒）× 瓦片宽
 var _speed: float = 256.0
@@ -28,6 +30,12 @@ var _stun: float = 0.0
 var _death_t: float = 0.0
 var is_dead: bool = false
 
+## 自动战斗的移动意图（3.14）：由 AutoBattle 写入。
+## **手动输入优先**——玩家一按方向键即完全接管（4.6），无需 AutoBattle 额外干预。
+var auto_move: Vector2 = Vector2.ZERO
+## 上一帧是否检测到手动输入（供 auto_battle 判定「手动接管」）。
+var manual_input_active: bool = false
+
 func _ready() -> void:
 	add_to_group("player")
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
@@ -39,6 +47,8 @@ func _physics_process(delta: float) -> void:
 	_attack_cd = maxf(0.0, _attack_cd - delta)
 
 	if is_dead:
+		auto_move = Vector2.ZERO
+		manual_input_active = false
 		velocity = Vector2.ZERO
 		move_and_slide()
 		_death_t += delta
@@ -51,6 +61,8 @@ func _physics_process(delta: float) -> void:
 
 	# 面板打开时屏蔽操控（面板不暂停世界模拟，仅屏蔽玩家指令，避免开背包时误攻击 / 误走位）
 	if GameState.panel_open:
+		auto_move = Vector2.ZERO
+		manual_input_active = false
 		velocity = Vector2.ZERO
 		move_and_slide()
 		_update_blink()
@@ -58,6 +70,10 @@ func _physics_process(delta: float) -> void:
 
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	manual_input_active = dir.length() > MANUAL_EPS
+	# 手动输入优先；无手动输入时由自动战斗的移动意图接管（3.14：自动与手动共用同一移动路径）
+	if not manual_input_active and auto_move != Vector2.ZERO:
+		dir = auto_move
 	if _stun > 0.0:
 		dir = Vector2.ZERO   # 硬直期间无法主动移动（3.4）
 	velocity = dir * _speed
@@ -110,10 +126,33 @@ func _update_blink() -> void:
 	else:
 		modulate.a = 1.0
 
+# ---- 自动战斗接口（M1-9，3.14：自动与手动共用同一移动 / 攻击路径）----
+
+## 设置自动移动意图（由 AutoBattle 调用）。手动输入优先，见 _physics_process。
+func set_auto_move(dir: Vector2) -> void:
+	auto_move = dir
+
+## 攻击是否就绪：未死亡、不在受击硬直、攻击冷却已结束（3.9：自动不绕过攻速）。
+func is_attack_ready() -> bool:
+	return not is_dead and _stun <= 0.0 and _attack_cd <= 0.0
+
+## 自动战斗对指定目标发动一次普攻。返回是否真正发动。
+## 冷却中 / 硬直中 / 目标已失效 → 返回 false（不结算、不推进冷却）。
+func try_auto_attack(target: Node) -> bool:
+	if not is_attack_ready():
+		return false
+	if target == null or not is_instance_valid(target):
+		return false
+	if target.get("is_dead") == true or not target.has_method("take_hit"):
+		return false
+	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
+	perform_attack(target)
+	return true
+
 # ---- 攻击 ----
 
-## 普攻附加的最近目标距离上限（格 → 像素）。M3-7 接入「超距自动走位」后改为自动接近。
-func _melee_range_px() -> float:
+## 普攻的攻击距离上限（格 → 像素）。超距自动走位（3.15）与自动战斗（3.14）共用。
+func melee_range_px() -> float:
 	return float(_basic.get("range", 1.0)) * Iso.TILE_W
 
 ## 尝试普攻：找到攻击范围内最近的敌人则发动（无目标则不动作）。
@@ -145,9 +184,9 @@ func perform_attack(target: Node) -> Dictionary:
 	target.take_hit(result, self)
 	return result
 
-## 攻击范围内的最近敌人（attacking 目标搜索，M1-4 仅手动）。
+## 攻击范围内的最近敌人（手动普攻的目标搜索；自动战斗为 3.14 的锚点搜索）。
 func find_nearest_enemy_in_range() -> Node:
-	var rng_px := _melee_range_px()
+	var rng_px := melee_range_px()
 	var best: Node = null
 	var best_d := INF
 	for e in get_tree().get_nodes_in_group("enemies"):
