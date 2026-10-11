@@ -28,6 +28,7 @@ func _ready() -> void:
 	await _test_pickup_delay()
 	_test_equipment()
 	_test_shop()
+	_test_debug_seed()
 	await _test_world()
 	_finish()
 
@@ -617,10 +618,33 @@ func _index_of_instance(instance_id: String) -> int:
 			return i
 	return -1
 
+# ---- 开发期测试便利：测试武器必须与掉落池隔离（防污染回归）----
+func _test_debug_seed() -> void:
+	var id := "debug_blade_overpower"
+	var tpl = DataLoader.get_entry("equipments", id)
+	_expect(tpl is Dictionary, "缺少开发期测试武器模板 %s" % id)
+	if tpl is Dictionary:
+		_expect(bool(tpl.get("debug", false)), "测试武器模板应带 debug 标记（否则会进掉落池）")
+		_expect(String(tpl.get("slot", "")) == "weapon", "测试武器应为 weapon 槽")
+		_expect(int((tpl.get("baseAttrs", {}) as Dictionary).get("atk", 0)) >= 100,
+			"测试武器攻击应显著高于普通装备")
+
+	# 抽取 500 次野生掉落：测试武器一次都不应出现（Loot 跳过 debug 模板）
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261011
+	var hits := 0
+	for _i in range(500):
+		for it in Loot.roll("DT_Wild_L1", rng):
+			if it is Dictionary and String(it.get("itemId", "")) == id:
+				hits += 1
+	_expect(hits == 0, "测试武器不应出现在掉落中（命中 %d 次）" % hits)
+
 func _test_world() -> void:
+	GameState.reset_to_defaults()   # 保证发放测试武器时背包有空间
 	var game: Node = load("res://scenes/Game.tscn").instantiate()
 	add_child(game)
 	await get_tree().process_frame
+	await get_tree().process_frame   # 等 deferred 发放测试武器落地
 
 	var ground: Node = game.get_node_or_null("Ground")
 	var player: Node = game.get_node_or_null("Entities/Player")
@@ -641,12 +665,21 @@ func _test_world() -> void:
 	if boundary != null:
 		_expect(boundary.get_child_count() == 4, "边界墙应为 4 段，实际 %d" % boundary.get_child_count())
 
-	# M1-5：怪物生成器已按测试怪物点生成 3 个怪物（2 野狼 + 1 木桩）
+	# M1-5：怪物生成器按测试怪物点生成（数量随 game.gd 的 TEST_SPAWNS 配置，至少 3）
 	var spawner: Node = game.get_node_or_null("Spawner")
 	_expect(spawner != null, "未找到 Spawner 节点")
 	if spawner != null:
-		_expect(spawner.get_child_count() == 3,
-			"应生成 3 个怪物，实际 %d" % spawner.get_child_count())
+		_expect(spawner.point_count() >= 3,
+			"测试怪物点应至少 3 个，实际 %d" % spawner.point_count())
+		_expect(spawner.get_child_count() == spawner.point_count(),
+			"每个怪物点都应生成实例：点=%d 实例=%d" % [spawner.point_count(), spawner.get_child_count()])
+
+	# 开发期测试便利：开局应已把测试武器放进背包
+	var debug_found := false
+	for it in GameState.inventory:
+		if it is Dictionary and String(it.get("itemId", "")) == "debug_blade_overpower":
+			debug_found = true
+	_expect(debug_found, "开发期测试武器未发放到背包")
 
 	# M1-6：世界掉落容器
 	var loot_root: Node = game.get_node_or_null("LootRoot")

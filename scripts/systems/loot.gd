@@ -136,6 +136,7 @@ static func _weighted_quality(weights, r: RandomNumberGenerator) -> String:
 
 ## 选取等级适配的装备模板：优先 tier 匹配（每 10 级一套，5.2），否则回退全表随机。
 ## 无可用模板时返回空字典。
+## 带 "debug": true 标记的模板（开发期测试装备）不参与抽取，避免污染正式掉落。
 static func _pick_equip_template(level: int, r: RandomNumberGenerator) -> Dictionary:
 	var tier := int(ceil(float(level) / 10.0))
 	var all: Array = []
@@ -144,6 +145,8 @@ static func _pick_equip_template(level: int, r: RandomNumberGenerator) -> Dictio
 	if t is Array:
 		for e in t:
 			if not (e is Dictionary):
+				continue
+			if bool(e.get("debug", false)):
 				continue
 			all.append(e)
 			if int(e.get("tier", 1)) == tier:

@@ -152,5 +152,20 @@
     "price": 30,
     "icon": "res://assets/sprites/equip/necklace_basic.png",
     "desc": "项链，提供生命加成。"
+  },
+  {
+    "id": "debug_blade_overpower",
+    "name": "调试·斩铁刃",
+    "slot": "weapon",
+    "tier": 1,
+    "levelReq": 1,
+    "quality": "legendary",
+    "baseAttrs": { "atk": 999 },
+    "pctAttrs": [],
+    "affixes": [],
+    "price": 1,
+    "debug": true,
+    "icon": "res://assets/sprites/equip/debug_blade_overpower.png",
+    "desc": "【开发期测试武器】一击必杀，用于加快开发期测试循环；带 debug 标记，不参与掉落抽取。M5 打包前随测试便利一并移除。"
   }
 ]

@@ -5,11 +5,18 @@ extends Node2D
 const NPC_SCENE := preload("res://scenes/entities/Npc.tscn")
 
 ## M1 测试怪物点（在营地图上验证 AI；M3 改为读 maps.json 的 spawnPoints）。
-## 木桩 ai=false（静态教学目标）；野狼 ai=true（会巡逻 / 追击 / 攻击）。
+## 木桩 ai=false（静态教学目标）；野狼 / 裂壳虫 ai=true（会巡逻 / 追击 / 攻击）。
+## 【开发期测试便利】为加快测试循环，数量已上调、刷新时间已缩短；正式数值见 maps.json（M3）。
 const TEST_SPAWNS := [
-	{"monsterId": "wolf_corrupted", "level": 2, "count": 2, "respawnTime": 15.0, "ai": true},
-	{"monsterId": "training_dummy", "level": 1, "count": 1, "respawnTime": 600.0, "ai": false},
+	{"monsterId": "wolf_corrupted", "level": 2, "count": 6, "respawnTime": 6.0, "ai": true},
+	{"monsterId": "shellback_bug", "level": 3, "count": 2, "respawnTime": 12.0, "ai": true},
+	{"monsterId": "training_dummy", "level": 1, "count": 3, "respawnTime": 20.0, "ai": false},
 ]
+
+## ---- 开发期测试便利（【M5 打包前移除】）----
+## 开局往背包补一把高攻测试武器，省去刷装备环节，便于快速验证战斗 / 掉落 / 交易。
+## 模板在 equipments.json 中标 "debug": true → Loot 抽取时跳过（见 loot.gd），不污染正式掉落池。
+const DEBUG_WEAPON_ID := "debug_blade_overpower"
 
 ## M1 安全区 NPC（6.3：每个地图的安全区聚集功能性 NPC；M3 改为读 maps.json 的 NPC 点）。
 ## cell 为等距网格坐标；货郎放在出生点附近（营地中心偏西 4 格），开局即可走到。
@@ -44,6 +51,63 @@ func _ready() -> void:
 
 	# 安全区 NPC（M1-8）
 	_spawn_npcs()
+
+	# 开发期：延迟一帧发放测试武器（此时 UI 已就绪，提示能正常显示）
+	_grant_debug_loadout.call_deferred()
+
+## 开发期：向背包补一把测试武器（已有则不重复给，避免堆积）。
+## 仅 debug 构建生效（导出 release 包时不应带测试武器）。
+func _grant_debug_loadout() -> void:
+	if not OS.is_debug_build():
+		return
+	if _has_item_anywhere(DEBUG_WEAPON_ID):
+		return
+	var item := _make_debug_equip(DEBUG_WEAPON_ID)
+	if item.is_empty():
+		return
+	GameState.add_item(item)
+	EventBus.toast_requested.emit("【测试】已放入背包：%s" % ItemUtil.display_name(item), "drop")
+	print("[Debug] 已发放测试武器：%s（攻击 +%d）" % [
+		ItemUtil.display_name(item), int(item.get("baseAttrs", {}).get("atk", 0))])
+
+## 背包或已穿戴中是否已存在该装备。
+func _has_item_anywhere(item_id: String) -> bool:
+	for it in GameState.inventory:
+		if it is Dictionary and String(it.get("itemId", "")) == item_id:
+			return true
+	for sid in GameState.equipment.keys():
+		var w = GameState.equipment[sid]
+		if w is Dictionary and String(w.get("itemId", "")) == item_id:
+			return true
+	return false
+
+## 依模板构造一件装备实例（结构与 Loot 一致：属性随实例保存，10.1 / 5.7）。
+func _make_debug_equip(item_id: String) -> Dictionary:
+	var tpl = DataLoader.get_entry("equipments", item_id)
+	if not (tpl is Dictionary):
+		push_warning("[Debug] 未找到测试装备模板：%s" % item_id)
+		return {}
+	var base := {}
+	if tpl.get("baseAttrs", {}) is Dictionary:
+		base = (tpl.get("baseAttrs") as Dictionary).duplicate(true)
+	var affixes := []
+	if tpl.get("affixes", []) is Array:
+		affixes = (tpl.get("affixes") as Array).duplicate(true)
+	var pct := []
+	if tpl.get("pctAttrs", []) is Array:
+		pct = (tpl.get("pctAttrs") as Array).duplicate(true)
+	return {
+		"kind": "equip",
+		"itemId": item_id,
+		"instanceId": "debug_%d" % Time.get_ticks_msec(),
+		"quality": String(tpl.get("quality", "common")),
+		"level": 1,
+		"baseAttrs": base,
+		"affixes": affixes,
+		"pctAttrs": pct,
+		"star": 0,
+		"count": 1,
+	}
 
 ## 按测试规格生成 NPC（6.3）。M3 起改为读 maps.json 的 NPC 点。
 func _spawn_npcs() -> void:
