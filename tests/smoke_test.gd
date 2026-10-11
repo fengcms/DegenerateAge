@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_inventory()
 	await _test_pickup()
 	await _test_pickup_delay()
+	_test_equipment()
 	await _test_world()
 	_finish()
 
@@ -392,6 +393,124 @@ func _test_pickup_delay() -> void:
 	player.queue_free()
 	loot_root.queue_free()
 	await get_tree().process_frame
+
+## M1-7：装备栏 14 槽（5.1）、穿戴后属性立即生效（T06）、实例属性不重随（10.1）。
+func _test_equipment() -> void:
+	GameState.reset_to_defaults()
+
+	# 14 槽定义：数量 / id 唯一 / 单双槽（5.1）
+	_expect(Equipment.SLOT_DEFS.size() == 14, "装备槽应为 14 个，实际 %d" % Equipment.SLOT_DEFS.size())
+	var seen := {}
+	for d in Equipment.SLOT_DEFS:
+		seen[String(d.id)] = true
+	_expect(seen.size() == 14, "槽位 id 应唯一，实际 %d" % seen.size())
+	_expect(Equipment.slots_for_kind("ring").size() == 2, "戒指应为双槽")
+	_expect(Equipment.slots_for_kind("weapon").size() == 1, "武器应为单槽")
+	_expect(Equipment.create().size() == 14, "Equipment.create 应生成 14 槽")
+	# 武器与盾牌可同时装备（5.1）；类型取自模板（5.7）
+	_expect(Equipment.item_kind({"itemId": "weapon_starter"}) == "weapon", "守护者短刃应为武器")
+	_expect(Equipment.item_kind({"itemId": "shield_basic"}) == "shield", "木盾应为盾牌")
+
+	# 穿戴：属性立即生效（T06），且不改基础值（5.1）
+	var base_atk: int = int(GameState.player.attack)
+	var hp_before := GameState.max_hp()
+	var idx := _put_item(_equip_instance("weapon_starter", "e1", {"atk": 5}))
+	var res := GameState.equip_from_inventory(idx)
+	_expect(bool(res.get("ok", false)), "穿戴守护者短刃应成功：%s" % res.get("reason", ""))
+	_expect(int(GameState.player.attack) == base_atk, "装备不应改基础攻击（5.1）")
+	_expect(GameState.total_attack() == base_atk + 5,
+		"总攻击应为基础+5，实际 %d" % GameState.total_attack())
+	_expect(GameState.max_hp() > hp_before, "穿戴加攻装备后最大生命应提升（4.3 派生）")
+	_expect(GameState.equipment.get("weapon") != null, "武器槽应已占用")
+	_expect(GameState.inventory_used() == 0, "穿戴后该装备应离开背包（已穿戴不占背包 5.8）")
+
+	# 实例属性不重随（10.1）：记录实例 → 卸下 → 再穿，逐字段一致
+	var worn: Dictionary = GameState.equipment["weapon"]
+	var atk_worn := GameState.total_attack()
+	var un := GameState.unequip_slot("weapon")
+	_expect(bool(un.get("ok", false)), "卸下应成功")
+	_expect(GameState.total_attack() == base_atk, "卸下后总攻击应还原，实际 %d" % GameState.total_attack())
+	_expect(GameState.inventory_used() == 1, "卸下后装备应回到背包")
+	var again := GameState.equip_from_inventory(_index_of_instance("e1"))
+	_expect(bool(again.get("ok", false)), "再次穿戴应成功")
+	_expect(str(GameState.equipment["weapon"]) == str(worn), "穿脱后实例属性不应重随（10.1）")
+	_expect(GameState.total_attack() == atk_worn, "再次穿戴后总攻击应一致")
+
+	# 同槽替换：旧装备回背包，新装备生效
+	GameState.player.level = 5
+	var idx2 := _put_item(_equip_instance("weapon_wolfking", "e2", {"atk": 12}, [{"stat": "atk", "value": 6}]))
+	var rep := GameState.equip_from_inventory(idx2)
+	_expect(bool(rep.get("ok", false)), "替换武器应成功：%s" % rep.get("reason", ""))
+	_expect(String(GameState.equipment["weapon"].get("instanceId", "")) == "e2", "武器槽应换成新武器")
+	var rep_old: Dictionary = rep.get("replaced", {})
+	_expect(not rep_old.is_empty(), "应返回被替换的旧装备")
+	_expect(GameState.total_attack() == base_atk + 12 + 6,
+		"攻击应为基础+12+6，实际 %d" % GameState.total_attack())
+	_expect(GameState.inventory_used() == 1, "被替换的旧武器应回到背包")
+
+	# 等级门槛（5.2 / 4.5）：不足不可穿戴，且不改变状态
+	GameState.reset_to_defaults()
+	var idx3 := _put_item(_equip_instance("weapon_wolfking", "e3", {"atk": 12}))
+	var low := GameState.equip_from_inventory(idx3)
+	_expect(not bool(low.get("ok", false)), "Lv1 不应能穿戴 Lv4 装备")
+	_expect(GameState.equipment["weapon"] == null, "穿戴失败不应占用槽位")
+	_expect(GameState.inventory_used() == 1, "穿戴失败不应改变背包")
+	_expect(Equipment.level_req(_equip_instance("weapon_wolfking", "e3", {})) == 4,
+		"狼王之刃门槛应为 4（5.2）")
+
+	# 卸下需背包空位（5.1）
+	GameState.player.level = 5
+	GameState.equip_from_inventory(idx3)
+	_expect(GameState.equipment["weapon"] != null, "Lv5 应能穿戴 Lv4 武器")
+	for i in range(GameState.inventory.size()):
+		if GameState.inventory[i] == null:
+			GameState.inventory[i] = {"kind": "potion", "itemId": "potion_hp_small", "count": 99}
+	var full_un := GameState.unequip_slot("weapon")
+	_expect(not bool(full_un.get("ok", false)), "背包满时卸下应失败（5.1）")
+	_expect(GameState.equipment["weapon"] != null, "卸下失败不应清空槽位")
+
+	# 双槽类：两枚戒指可同时装备（5.1）
+	GameState.reset_to_defaults()
+	for k in range(2):
+		var ri := _put_item(_equip_instance("ring_basic", "r%d" % k, {"atk": 1, "mp": 5}))
+		GameState.equip_from_inventory(ri)
+	_expect(Equipment.worn_count(GameState.equipment) == 2, "两枚戒指应各占一槽")
+	_expect(GameState.equipment["ring_1"] != null and GameState.equipment["ring_2"] != null,
+		"双槽应分别占用")
+	# 装备 mp 进入 MPFlat（4.3）
+	_expect(GameState.max_mp() == 35 + 10, "两枚戒指应使最大法力 +10，实际 %d" % GameState.max_mp())
+
+	# 评分（5.9）：高攻装备评分更高
+	_expect(Equipment.score({"baseAttrs": {"atk": 12}, "affixes": [{"stat": "atk", "value": 6}]})
+		> Equipment.score({"baseAttrs": {"atk": 5}}), "高攻装备评分应更高")
+
+	GameState.reset_to_defaults()
+
+## 构造一件装备实例（10.1：实例自带属性，永不重随）。
+func _equip_instance(item_id: String, inst_id: String, base_attrs: Dictionary,
+		affixes: Array = []) -> Dictionary:
+	return {
+		"kind": "equip", "itemId": item_id, "instanceId": inst_id,
+		"quality": "common", "level": 1,
+		"baseAttrs": base_attrs, "affixes": affixes, "pctAttrs": [],
+		"star": 0, "count": 1,
+	}
+
+## 放入背包首个空位，返回索引（-1 = 无空位）。
+func _put_item(item: Dictionary) -> int:
+	for i in range(GameState.inventory.size()):
+		if GameState.inventory[i] == null:
+			GameState.inventory[i] = item
+			return i
+	return -1
+
+## 背包中指定实例 id 的格位（-1 = 不存在）。
+func _index_of_instance(instance_id: String) -> int:
+	for i in range(GameState.inventory.size()):
+		var it = GameState.inventory[i]
+		if it is Dictionary and String(it.get("instanceId", "")) == instance_id:
+			return i
+	return -1
 
 func _test_world() -> void:
 	var game: Node = load("res://scenes/Game.tscn").instantiate()

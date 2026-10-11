@@ -26,6 +26,7 @@ signal item_picked(item_id: String)
 signal loot_spawned(item: Dictionary)
 signal gold_changed(amount: int)
 signal inventory_changed()
+signal equipment_changed()
 
 # ---- 任务 ----
 signal quest_accepted(quest_id: String)

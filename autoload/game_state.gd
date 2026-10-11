@@ -23,6 +23,8 @@ var player: Dictionary = {}
 var gold: int = 0
 var current_map: String = "camp"
 var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
+var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
+var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
 var quest_states: Dictionary = {}   # quest_id -> state 字符串
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var settings: Dictionary = {}
@@ -51,6 +53,8 @@ func reset_to_defaults() -> void:
 	gold = 0
 	current_map = "camp"
 	inventory = Inventory.create(INVENTORY_SIZE)
+	equipment = Equipment.create()
+	panel_open = false
 	quest_states = {}
 	first_clear = {}
 	settings = {
@@ -68,19 +72,34 @@ func reset_to_defaults() -> void:
 func xp_to_next(level: int) -> int:
 	return int(round(100.0 * pow(float(level), 1.6)))
 
-## 派生的最大生命（4.3 公式）。装备百分比 / 固定加成暂为 0（M4 接入）。
+## 装备提供的属性加成汇总（14 槽，见 Equipment / 5.1）。
+func equip_bonus() -> Dictionary:
+	return Equipment.bonus(equipment)
+
+## 总攻击力 = 基础攻击（player.attack，升级成长 4.4）+ 装备固定加成（5.2）。
+## 装备**不改基础值**（5.1）：基础值与装备加成始终分离保存。
+func total_attack() -> int:
+	return int(player.attack) + int(round(float(equip_bonus().get("atk", 0.0))))
+
+## 总防御力 = 基础防御 + 装备固定加成。
+func total_defense() -> int:
+	return int(player.defense) + int(round(float(equip_bonus().get("def", 0.0))))
+
+## 派生的最大生命（4.3 公式；攻 / 防取**总属性**，装备 hp / hpPercent 进入固定 / 百分比项）。
 func max_hp() -> int:
 	var base := BASE_HP + float(player.level) * HP_PER_LV \
-		+ float(player.attack) * HP_PER_ATK + float(player.defense) * HP_PER_DEF
-	var pct := float(player.get("hpPercent", 0.0))
-	var flat := float(player.get("hpFlat", 0.0))
+		+ float(total_attack()) * HP_PER_ATK + float(total_defense()) * HP_PER_DEF
+	var b := equip_bonus()
+	var pct := float(player.get("hpPercent", 0.0)) + float(b.get("hpPercent", 0.0))
+	var flat := float(player.get("hpFlat", 0.0)) + float(b.get("hp", 0.0))
 	return int(round(base * (1.0 + pct) + flat))
 
-## 派生的最大法力（4.3 公式）。
+## 派生的最大法力（4.3 公式；装备 mp / mpPercent 进入固定 / 百分比项）。
 func max_mp() -> int:
+	var b := equip_bonus()
 	var base := BASE_MP + float(player.level) * MP_PER_LV
-	var pct := float(player.get("mpPercent", 0.0))
-	var flat := float(player.get("mpFlat", 0.0))
+	var pct := float(player.get("mpPercent", 0.0)) + float(b.get("mpPercent", 0.0))
+	var flat := float(player.get("mpFlat", 0.0)) + float(b.get("mp", 0.0))
 	return int(round(base * (1.0 + pct) + flat))
 
 # ---- 数值变更（统一走事件广播，HUD 订阅刷新）----
@@ -143,6 +162,47 @@ func remove_item_at(index: int) -> Dictionary:
 func inventory_used() -> int:
 	return Inventory.used_slots(inventory)
 
+# ---- 装备穿脱（5.1；槽位规则与属性汇总见 scripts/systems/equipment.gd）----
+
+## 从背包穿上一件装备（slot_id 为空时自动选槽：优先同类空槽，否则替换）。
+## 返回 {ok, reason, replaced}；失败广播原因（背包满 / 等级不足 / 槽位不匹配），不静默。
+func equip_from_inventory(inv_index: int, slot_id: String = "") -> Dictionary:
+	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
+		return {"ok": false, "reason": "该格没有物品", "replaced": {}}
+	var item: Dictionary = inventory[inv_index]
+	var target := slot_id
+	if target.is_empty():
+		target = Equipment.auto_slot_for(equipment, item)
+	var res := Equipment.equip_from_inventory(
+		equipment, inventory, target, inv_index, int(player.level))
+	if bool(res.get("ok", false)):
+		_after_equip_change()
+		EventBus.toast_requested.emit("穿戴：" + ItemUtil.display_name(item), "pickup")
+	else:
+		EventBus.toast_requested.emit(String(res.get("reason", "无法穿戴")), "danger")
+	return res
+
+## 卸下槽位装备（需背包空位，5.1）。返回 {ok, reason, item}。
+func unequip_slot(slot_id: String) -> Dictionary:
+	var res := Equipment.unequip(equipment, inventory, slot_id)
+	if bool(res.get("ok", false)):
+		var item: Dictionary = res.get("item", {})
+		_after_equip_change()
+		EventBus.toast_requested.emit("卸下：" + ItemUtil.display_name(item), "info")
+	else:
+		EventBus.toast_requested.emit(String(res.get("reason", "无法卸下")), "danger")
+	return res
+
+## 穿脱后统一收尾（T06：穿戴后属性立即生效）：
+## 广播装备 / 背包变更；上限可能降低时把当前 HP / MP 收敛到新上限（不补满、不按比例）。
+func _after_equip_change() -> void:
+	EventBus.equipment_changed.emit()
+	EventBus.inventory_changed.emit()
+	player.hp = mini(int(player.hp), max_hp())
+	player.mp = mini(int(player.mp), max_mp())
+	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+
 ## 增加经验，并按 4.4 处理（多级连升、剩余结转）。
 func add_xp(amount: int) -> void:
 	if amount <= 0:
@@ -173,6 +233,8 @@ func _level_up() -> void:
 ## 广播全部数值（HUD 初始化 / 读档后同步）。
 func emit_all() -> void:
 	EventBus.gold_changed.emit(gold)
+	EventBus.equipment_changed.emit()
+	EventBus.inventory_changed.emit()
 	EventBus.player_leveled.emit(int(player.level))
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())

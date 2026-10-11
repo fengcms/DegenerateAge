@@ -49,6 +49,13 @@ func _physics_process(delta: float) -> void:
 
 	_stun = maxf(0.0, _stun - delta)
 
+	# 面板打开时屏蔽操控（面板不暂停世界模拟，仅屏蔽玩家指令，避免开背包时误攻击 / 误走位）
+	if GameState.panel_open:
+		velocity = Vector2.ZERO
+		move_and_slide()
+		_update_blink()
+		return
+
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if _stun > 0.0:
@@ -125,7 +132,7 @@ func perform_attack(target: Node) -> Dictionary:
 		return {}
 
 	var result := Combat.resolve(
-		float(GameState.player.get("attack", 0)),
+		float(GameState.total_attack()),
 		_target_defense(target),
 		float(_basic.get("coefficient", 1.0)),
 		float(GameState.player.get("criticalChance", 0.0)),

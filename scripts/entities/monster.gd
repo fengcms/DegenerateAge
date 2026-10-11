@@ -222,7 +222,7 @@ func _do_attack(player: Node2D) -> void:
 		return
 	var res := Combat.resolve(
 		attack_power,
-		float(GameState.player.get("defense", 0.0)),
+		float(GameState.total_defense()),
 		1.0, 0.0, 1.5,
 		float(GameState.player.get("dodge", 0.0)))
 	Fx.damage_number(get_tree(), player, res)
@@ -290,7 +290,7 @@ func _announce_drops(items: Array) -> void:
 			parts.append(ItemUtil.display_name(it))
 	if parts.is_empty():
 		return
-	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(parts)], "drop")
+	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(PackedStringArray(parts))], "drop")
 
 ## 在死亡位置附近生成一件地面掉落物（7.6 / 9.9）。
 func _spawn_drop(item: Dictionary) -> void:
