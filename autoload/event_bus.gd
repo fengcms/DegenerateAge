@@ -30,6 +30,8 @@ signal equipment_changed()
 
 # ---- NPC / 交易（M1-8）----
 signal shop_open_requested(shop_id: String)
+signal shop_close_requested()
+signal trade_mode_changed(active: bool)
 signal trade_done(kind: String, item_id: String, price: int)
 
 # ---- 任务 ----

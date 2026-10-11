@@ -8,7 +8,7 @@ extends Node
 ##
 ## 说明：--import 用于注册 class_name 全局类（Iso / IsoGround / PlayerCharacter /
 ## Combat / Monster / MonsterSpawner / DamageNumber / Fx / ItemUtil / Loot /
-## Inventory / GroundItem）；换机或新增 class_name 后需先跑一次。
+## Inventory / GroundItem / Equipment / Shop / ItemSlot）；换机或新增 class_name 后需先跑一次。
 
 var _failures: Array[String] = []
 
@@ -28,6 +28,7 @@ func _ready() -> void:
 	await _test_pickup_delay()
 	_test_equipment()
 	_test_shop()
+	await _test_trade_panel()
 	_test_debug_seed()
 	await _test_world()
 	_finish()
@@ -567,7 +568,7 @@ func _test_shop() -> void:
 	_expect(not GameState.is_upgrade_over_worn(_equip_instance("weapon_starter", "v2", {"atk": 5})),
 		"无同类型已穿戴装备时不应判为升级件")
 
-	# 一键出售（6.4）：属性高于已穿戴的装备被保留
+	# 暂存 → 退回（关闭面板 / 取回）：不结算、不丢失
 	GameState.reset_to_defaults()
 	GameState.player.level = 5
 	GameState.inventory[0] = _equip_instance("weapon_wolfking", "w_strong", {"atk": 12},
@@ -579,17 +580,129 @@ func _test_shop() -> void:
 	_expect(GameState.is_upgrade_over_worn(GameState.inventory[2]),
 		"攻击 30 的武器应高于已穿戴（18）而判为升级件")
 
-	var before := GameState.gold
-	var all := GameState.shop_sell_all()
-	_expect(int(all.get("sold", 0)) == 2,
-		"一键出售应卖出 2 件（弱武器 + 头盔），实际 %d" % int(all.get("sold", 0)))
-	_expect(int(all.get("skipped", 0)) == 1,
-		"应保留 1 件更优装备，实际 %d" % int(all.get("skipped", 0)))
-	_expect(GameState.gold - before == 50 + 30,
-		"一键出售应入账 50+30 金币，实际 %d" % (GameState.gold - before))
-	_expect(_index_of_instance("w_better") >= 0, "更优武器应仍在背包")
-	_expect(_index_of_instance("w_weak") < 0, "弱武器应已卖出")
+	var staged_ret: Array = [GameState.remove_item_at(0)]
+	var gold_ret: int = GameState.gold
+	var back_n := GameState.shop_unstage(staged_ret)
+	_expect(back_n == 1, "退回 1 件应成功，实际 %d" % back_n)
+	_expect(staged_ret.is_empty(), "退回后暂存列表应清空")
+	_expect(GameState.gold == gold_ret, "退回不予结算（不应加金币）")
+	_expect(_index_of_instance("w_weak") >= 0, "退回的装备应回到背包")
 
+	# 暂存 → 确认出售（6.4）：批量结算为金币
+	var staged: Array = []
+	for i in range(GameState.inventory.size() - 1, -1, -1):
+		if GameState.inventory[i] is Dictionary:
+			staged.append(GameState.remove_item_at(i))
+	var expect_gold := 0
+	for it in staged:
+		expect_gold += Shop.sell_price(it)
+	var gold_before: int = GameState.gold
+	var settled := GameState.shop_sell_staged(staged)
+	_expect(int(settled.get("count", 0)) == staged.size(),
+		"确认出售应结算全部暂存件，实际 %d" % int(settled.get("count", 0)))
+	_expect(GameState.gold - gold_before == expect_gold,
+		"确认出售应入账 %d 金币，实际 %d" % [expect_gold, GameState.gold - gold_before])
+	_expect(GameState.inventory_used() == 0, "结算后背包应为空")
+	_expect(GameState.shop_sell_staged([]).get("count", -1) == 0, "空暂存结算应为 0 件")
+
+	GameState.reset_to_defaults()
+
+## 交易界面（双面板 + 拖拽出售，M1-8 改造）：面板级不变量与 6.4 托盘流程。
+## 独立实例化两个面板（不加载世界），验证拖入 / 取回 / 确认结算 / 一键移入保留升级件 / 关闭退回。
+func _test_trade_panel() -> void:
+	GameState.reset_to_defaults()
+	GameState.player.level = 5
+
+	var inv: Control = load("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	var shop: Control = load("res://scenes/ui/ShopPanel.tscn").instantiate()
+	add_child(inv)
+	add_child(shop)                       # 与 Main.tscn 同序：货郎面板在上层
+	await get_tree().process_frame
+
+	# 开战前：两面板都关闭
+	_expect(not shop.visible and not inv.visible, "未交易时两面板应都关闭")
+
+	# 走近货郎按 E → 进入交易会话：货郎面板 + 背包面板**并列打开**（工程文档 05 🔴R2）
+	EventBus.shop_open_requested.emit("peddler_camp")
+	await get_tree().process_frame
+	_expect(shop.visible, "开战后货郎面板应可见")
+	_expect(inv.visible, "开战后背包面板应同时可见（不再互斥）")
+	_expect(shop.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"货郎面板根节点应为 IGNORE，否则会吞掉左侧背包的鼠标事件")
+	_expect(not inv._dim.visible and not shop._dim.visible, "交易会话中双方遮罩都应隐藏")
+
+	# 背包准备：2 件普通装备（可售）+ 1 件优于已穿戴的武器（一键移入应跳过）
+	GameState.inventory[0] = _equip_instance("weapon_wolfking", "p_worn", {"atk": 12},
+		[{"stat": "atk", "value": 6}])
+	GameState.equip_from_inventory(0)     # 穿上强武器
+	GameState.inventory[0] = _equip_instance("weapon_starter", "p_weak", {"atk": 5})
+	GameState.inventory[1] = _equip_instance("helmet_cloth", "p_helm", {"def": 2})
+	GameState.inventory[2] = _equip_instance("weapon_starter", "p_better", {"atk": 30})
+	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+
+	var bag_slot: ItemSlot = inv._bag_buttons[0]
+	var payload: Variant = bag_slot._get_drag_data(Vector2.ZERO)
+	_expect(payload is Dictionary, "背包格应可拖出（_get_drag_data 返回载荷）")
+	_expect(int((payload as Dictionary).get("index", -1)) == 0, "载荷应携带背包下标")
+	var payload_item: Dictionary = (payload as Dictionary).get("item", {})
+	_expect(String(payload_item.get("instanceId", "")) == "p_weak", "载荷应携带该格物品实例")
+
+	var tray_slot: ItemSlot = shop._tray_slots[0]
+	_expect(tray_slot._can_drop_data(Vector2.ZERO, payload), "托盘格应接受背包格的投放")
+	_expect(not tray_slot._can_drop_data(Vector2.ZERO, {"from": 999}), "托盘格不应接受非法来源")
+
+	# 拖入 → 装备从背包移入托盘暂存（未结算）
+	shop._on_tray_drop(0, payload)
+	await get_tree().process_frame
+	_expect(shop._tray.size() == 1, "拖入后托盘应暂存 1 件，实际 %d" % shop._tray.size())
+	_expect(_index_of_instance("p_weak") < 0, "拖入后该装备应离开背包")
+	_expect(GameState.gold == 0, "暂存阶段不应结算金币")
+	_expect(tray_slot.item.get("instanceId", "") == "p_weak", "托盘格应显示该装备")
+
+	# 点托盘格 → 取回背包
+	shop._on_tray_slot_pressed(0)
+	await get_tree().process_frame
+	_expect(shop._tray.is_empty(), "取回后托盘应清空")
+	_expect(_index_of_instance("p_weak") >= 0, "取回的装备应回到背包")
+
+	# 一键移入：移入可售装备、跳过优于已穿戴的武器
+	shop._on_stage_all_pressed()
+	await get_tree().process_frame
+	_expect(shop._tray.size() == 2, "一键移入应移入 2 件可售装备，实际 %d" % shop._tray.size())
+	_expect(_index_of_instance("p_better") >= 0, "优于已穿戴的武器不应被一键移入（6.4）")
+	_expect(_index_of_instance("p_weak") < 0 and _index_of_instance("p_helm") < 0,
+		"可售装备应已移入托盘")
+
+	# 确认出售 → 结算为金币
+	var gold_before: int = GameState.gold
+	shop._on_confirm_pressed()
+	await get_tree().process_frame
+	_expect(shop._tray.is_empty(), "确认出售后托盘应清空")
+	_expect(GameState.gold > gold_before, "确认出售应加金币，实际 %d→%d" % [gold_before, GameState.gold])
+
+	# 关闭货郎面板 → 背包面板随之关闭（交易会话整体退出）
+	shop.set_open(false)
+	await get_tree().process_frame
+	_expect(not shop.visible and not inv.visible, "关闭货郎面板应同时关闭背包面板")
+	_expect(not GameState.panel_open, "退出交易后角色操控应解除屏蔽")
+
+	# 关闭时托盘内未确认装备应退回背包（不静默丢失，🔴R3）
+	EventBus.shop_open_requested.emit("peddler_camp")
+	await get_tree().process_frame
+	GameState.inventory[0] = _equip_instance("weapon_starter", "p_lost", {"atk": 5})
+	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+	shop._on_tray_drop(0, inv._bag_buttons[0]._get_drag_data(Vector2.ZERO))
+	_expect(shop._tray.size() == 1, "再次拖入应暂存 1 件")
+	shop.set_open(false)
+	await get_tree().process_frame
+	_expect(shop._tray.is_empty(), "关闭后面板托盘应清空")
+	_expect(_index_of_instance("p_lost") >= 0, "关闭面板时未确认的装备应退回背包")
+
+	inv.queue_free()
+	shop.queue_free()
+	await get_tree().process_frame
 	GameState.reset_to_defaults()
 
 ## 构造一件装备实例（10.1：实例自带属性，永不重随）。

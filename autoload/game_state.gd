@@ -254,39 +254,33 @@ func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), price)
 	return {"ok": true, "reason": "", "item": item, "price": price}
 
-## 一键出售（6.4）：批量卖出背包装备，**属性高于已穿戴的不会被售出**（5.9 评分口径）。
-## 返回 {sold, gold, skipped}。
-func shop_sell_all() -> Dictionary:
-	var idxs: Array[int] = []
-	var skipped := 0
-	for i in range(inventory.size()):
-		var it = inventory[i]
-		if not (it is Dictionary):
-			continue
-		if not Shop.can_sell(it):
-			continue
-		if is_upgrade_over_worn(it):
-			skipped += 1
-			continue
-		idxs.append(i)
-	if idxs.is_empty():
-		EventBus.toast_requested.emit("没有可出售的装备", "danger")
-		return {"sold": 0, "gold": 0, "skipped": skipped}
-
+## 结算一批暂存待售的装备（6.4「确认出售」）。托盘内容由出售界面持有，本函数只做算价与入账。
+## 返回 {count, gold}；无可售项时返回 {count: 0, gold: 0}（不扣物、不广播）。
+func shop_sell_staged(items: Array) -> Dictionary:
 	var total := 0
-	for i in range(idxs.size() - 1, -1, -1):   # 倒序删除，避免下标位移
-		var idx := idxs[i]
-		var it2: Dictionary = inventory[idx]
-		total += Shop.sell_price(it2)
-		inventory[idx] = null
+	var n := 0
+	for it in items:
+		if it is Dictionary and Shop.can_sell(it):
+			total += Shop.sell_price(it)
+			n += 1
+	if n == 0:
+		return {"count": 0, "gold": 0}
 	add_gold(total)
-	EventBus.inventory_changed.emit()
-	var msg := "一键出售 %d 件（+%d 金币）" % [idxs.size(), total]
-	if skipped > 0:
-		msg += "，保留 %d 件更优装备" % skipped
-	EventBus.toast_requested.emit(msg, "pickup")
-	EventBus.trade_done.emit("sell_all", "", total)
-	return {"sold": idxs.size(), "gold": total, "skipped": skipped}
+	EventBus.trade_done.emit("sell", "", total)
+	return {"count": n, "gold": total}
+
+## 把暂存装备退回背包（关闭面板未确认 / 点托盘格取回）。会就地移除已退回项。
+## 返回实际退回件数；背包满的件保留在托盘由调用方提示（不静默丢失，6.4）。
+func shop_unstage(items: Array) -> int:
+	var back := 0
+	var i := items.size() - 1
+	while i >= 0:
+		var it = items[i]
+		if it is Dictionary and add_item(it):
+			items.remove_at(i)
+			back += 1
+		i -= 1
+	return back
 
 ## 该装备是否优于同类型已穿戴装备（6.4 一键出售排除判据 / 5.9 评分）。
 ## 同类型槽全空 → 不算升级件（可出售）。

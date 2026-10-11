@@ -8,13 +8,18 @@ extends Control
 ##   双击背包中的装备 → 穿戴（自动选槽）；点击装备槽 → 卸下（需背包空位）；
 ##   悬停显示属性；装备类物品同时显示同槽已穿戴对比与评分高低（5.9）。
 ##   面板打开时屏蔽角色操控（不暂停世界模拟，见 player.gd）。
+## 交易会话（M1-8 改造）：货郎开店时本面板**不关闭**，改为与货郎面板**并列**显示——
+##   左半屏背包、右半屏货郎；背包格开放拖出（ItemSlot），可把装备拖到货郎的出售托盘（6.4）。
 ## 占位素材（R5）：格内以模板名前 2 字 + 品质色描边表现，不加载图标。
-## 拖拽丢弃 / 自动整理（5.8）、一键出售（6.4）留待 M4 / M1-8。
+## 拖拽丢弃 / 自动整理（5.8）留待 M4。
 
 const SLOT_MIN := Vector2(46, 46)
 const BAG_COLUMNS := 8
 const EQUIP_COLUMNS := 2
 const DOUBLE_CLICK_MS := 400
+
+## 交易会话中本面板占据的屏幕横向区间（左侧），右侧留给货郎面板（见 shop_panel.gd）。
+const TRADE_LEFT_RATIO := 0.60
 
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
@@ -25,12 +30,16 @@ const COL_TEXT := Color(0.90, 0.92, 0.95)
 const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 
 var _slot_buttons: Dictionary = {}          # slot_id -> Button
-var _bag_buttons: Array[Button] = []
+var _bag_buttons: Array[ItemSlot] = []
 var _equip_title: Label
 var _bag_title: Label
 var _summary: Label
+var _center: CenterContainer
+var _dim: ColorRect
 var _last_click_index: int = -1
 var _last_click_ms: int = 0
+## 交易会话（货郎开店中）：与货郎面板并列显示，背包格开放拖出（M1-8 改造）。
+var _trade_active: bool = false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -43,14 +52,22 @@ func _ready() -> void:
 	EventBus.player_hp_changed.connect(_on_stat_changed)
 	EventBus.player_mp_changed.connect(_on_stat_changed)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
 	_refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("panel_inventory"):
-		set_open(not visible)
+		# 交易会话中 I 键 = 结束整场交易（与货郎面板同步关闭），避免只关一半
+		if _trade_active:
+			EventBus.shop_close_requested.emit()
+		else:
+			set_open(not visible)
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("pause"):
-		set_open(false)
+		if _trade_active:
+			EventBus.shop_close_requested.emit()
+		else:
+			set_open(false)
 		get_viewport().set_input_as_handled()
 
 ## 开关面板；同步全局面板标志（角色操控在 player.gd 中据此屏蔽）。
@@ -61,28 +78,66 @@ func set_open(open: bool) -> void:
 		EventBus.panel_opened.emit("inventory")
 		_refresh()
 
-## 其他面板（如货郎，M1-8）打开时自动关闭本面板，保证互斥。
+## 其他面板打开时自动关闭本面板，保证互斥——**例外**：交易会话中的货郎面板（见 05 方案）。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id != "inventory" and visible:
+	if panel_id == "inventory":
+		return
+	if panel_id == "shop" and _trade_active:
+		return
+	if visible:
 		set_open(false)
+
+# ---- 交易会话（M1-8 改造）----
+
+## 进入 / 退出交易会话：切换布局、遮罩与背包格的拖出能力。
+func _on_trade_mode_changed(active: bool) -> void:
+	_trade_active = active
+	if active:
+		_apply_trade_layout(true)
+		if not visible:
+			set_open(true)
+	else:
+		if not visible:
+			_apply_trade_layout(false)
+			return
+		set_open(false)
+		_apply_trade_layout(false)
+
+## 交易布局：左半屏居中 + 去遮罩（两层黑遮罩叠加会把对面面板压暗）；
+## 普通布局：全屏居中 + 恢复遮罩。
+func _apply_trade_layout(trade: bool) -> void:
+	if _center == null:
+		return
+	if trade:
+		_center.anchor_left = 0.0
+		_center.anchor_right = TRADE_LEFT_RATIO
+	else:
+		_center.anchor_left = 0.0
+		_center.anchor_right = 1.0
+	_center.offset_left = 0.0
+	_center.offset_right = 0.0
+	if _dim != null:
+		_dim.visible = not trade
+	for b in _bag_buttons:
+		b.draggable = trade
 
 # ---- 构建 ----
 
 func _build() -> void:
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.35)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
+	_dim = ColorRect.new()
+	_dim.color = Color(0, 0, 0, 0.35)
+	_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_dim)
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = CenterContainer.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 
 	var box := PanelContainer.new()
 	box.add_theme_stylebox_override("panel", _panel_style())
-	center.add_child(box)
+	_center.add_child(box)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
@@ -151,7 +206,7 @@ func _build() -> void:
 	bag_grid.add_theme_constant_override("v_separation", 6)
 	right.add_child(bag_grid)
 	for i in range(GameState.inventory.size()):
-		var b2 := _make_slot()
+		var b2 := _make_item_slot(ItemSlot.ROLE_BAG, i)
 		b2.pressed.connect(_on_bag_pressed.bind(i))
 		bag_grid.add_child(b2)
 		_bag_buttons.append(b2)
@@ -163,13 +218,27 @@ func _build() -> void:
 	root.add_child(_summary)
 
 	var hint := Label.new()
-	hint.text = "双击背包装备穿戴 · 点击装备槽卸下 · 悬停查看属性 · I / Esc 关闭"
+	hint.text = "双击穿戴 · 点击装备槽卸下 · 悬停查看属性 · 向货郎买/卖时把装备拖到右侧托盘 · I / Esc 关闭"
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
 
 func _make_slot() -> Button:
 	var b := Button.new()
+	_apply_slot_base(b)
+	return b
+
+## 背包格：使用 ItemSlot（交易会话中可拖出到货郎的出售托盘）。
+## 装备槽仍是普通 Button——卸下走点击，不需要拖放。
+func _make_item_slot(role: int, index: int) -> ItemSlot:
+	var b := ItemSlot.new()
+	b.role = role
+	b.index = index
+	_apply_slot_base(b)
+	return b
+
+## 格子通用外观（尺寸 / 字号 / 文字色 / 空槽描边）。
+func _apply_slot_base(b: Button) -> void:
 	b.custom_minimum_size = SLOT_MIN
 	b.clip_text = true
 	b.add_theme_font_size_override("font_size", 13)
@@ -178,7 +247,6 @@ func _make_slot() -> Button:
 	b.add_theme_color_override("font_pressed_color", COL_TEXT)
 	b.add_theme_color_override("font_focus_color", COL_TEXT)
 	_apply_slot_style(b, COL_BORDER, false)
-	return b
 
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -228,15 +296,17 @@ func _refresh() -> void:
 	_equip_title.text = "装备  %d / %d" % [worn, Equipment.SLOT_DEFS.size()]
 
 	for i in range(_bag_buttons.size()):
-		var b2: Button = _bag_buttons[i]
+		var b2: ItemSlot = _bag_buttons[i]
 		var it2 = GameState.inventory[i] if i < GameState.inventory.size() else null
 		if it2 is Dictionary:
 			var col2 := _item_color(it2)
+			b2.item = it2          # 供拖拽载荷携带（ItemSlot._get_drag_data）
 			b2.text = _short_name(it2)
 			b2.add_theme_color_override("font_color", col2)
 			_apply_slot_style(b2, col2, true)
 			b2.tooltip_text = _bag_tooltip(it2)
 		else:
+			b2.item = {}
 			b2.text = ""
 			_apply_slot_style(b2, COL_BORDER, false)
 			b2.tooltip_text = ""

@@ -1,47 +1,64 @@
 extends Control
-## 货郎商店面板（M1-8，依据产品文档 6.4 货郎 / 9.2 面板规范 / 6.2 售价公式）。
+## 货郎商店面板（M1-8；M1-8 追加改造为「双面板 + 拖拽出售」）。
+## 依据：产品文档 6.4 货郎 / 9.2 面板规范 / 6.2 售价公式 / 工程文档 05 改造方案。
 ##
 ## 两个页签：
 ##   购买 —— 读 shops.json 的 buyItems，逐项显示名称 / 简介 / 已拥有 / 价格 + 购买按钮；
-##   出售 —— 类背包格子面板，点击装备加入出售清单并累计结算金币，可「确认出售」或
-##          「一键出售」（6.4：属性高于已穿戴的装备不会被一键出售）。
+##   出售 —— **出售托盘**：从左侧背包面板把装备**拖入**托盘暂存（一格一件），
+##          托盘内点一下取回；「一键移入」批量移入背包中可售装备（6.4：优于已穿戴的不移入）；
+##          「全部取回」清空托盘；「确认出售」才真正结算为金币。
 ## 打开方式：靠近货郎按 E（game.gd 派发 EventBus.shop_open_requested）；E / Esc 关闭。
-## 与背包面板互斥（EventBus.panel_opened 广播，后开者关闭先开者）。
+## 交易会话：本面板打开时**同时拉起背包面板**并与之并列（本面板居中于右半屏，
+##          背包面板居中于左半屏），不互斥——见 EventBus.trade_mode_changed。
 ## 占位素材（R5）：格子以模板名前 2 字 + 品质色描边表现，不加载图标。
-## 留待 M4：拖拽出售、卖出高于自身穿戴时的二次确认对话框（6.4）、仓库面板。
+## 留待 M4：手拖优于已穿戴装备时的二次确认对话框（6.4）、仓库面板。
 
 const SLOT_MIN := Vector2(46, 46)
-const BAG_COLUMNS := 8
+const BUY_ROW_MIN := Vector2(430, 0)
+## 出售托盘容量（格）：超过则拒绝继续投放并提示（不静默丢弃）。
+const TRAY_COLUMNS := 6
+const TRAY_ROWS := 4
+## 交易会话中本面板占据的屏幕横向区间（右侧），左侧留给背包面板（见 inventory_panel.gd）。
+const TRADE_LEFT_RATIO := 0.58
 
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
 const COL_SLOT_BG := Color(0.13, 0.14, 0.17, 0.95)
 const COL_SLOT_EMPTY := Color(0.10, 0.11, 0.13, 0.92)
 const COL_SLOT_HOVER := Color(0.20, 0.22, 0.26, 0.98)
-const COL_SELECTED := Color(0.95, 0.82, 0.40)
 const COL_TEXT := Color(0.90, 0.92, 0.95)
 const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 const COL_GOLD := Color(0.94, 0.78, 0.38)
+const COL_WARN := Color(0.92, 0.68, 0.34)
 
 var _shop_id: String = ""
-var _selected: Array[int] = []
+## 交易会话是否进行中（由本面板发起，退出时同步关闭背包面板）。
+var _trade_active: bool = false
+## 出售托盘：已从背包移出、尚未结算的装备实例（确认出售 / 取回 / 关闭退回见下）。
+var _tray: Array[Dictionary] = []
 
 var _title: Label
 var _gold_label: Label
 var _tabs: TabContainer
 var _buy_list: VBoxContainer
-var _sell_grid: GridContainer
-var _sell_buttons: Array[Button] = []
-var _sell_summary: Label
-var _sell_confirm: Button
-var _sell_all: Button
+var _tray_slots: Array[ItemSlot] = []
+var _tray_summary: Label
+var _tray_warn: Label
+var _confirm_btn: Button
+var _stage_all_btn: Button
+var _return_all_btn: Button
+var _center: CenterContainer
+var _dim: ColorRect
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	# 根节点不吃鼠标：交易会话中与背包面板并列，只有面板本体（PanelContainer）拦截，
+	# 否则全屏根节点会把左侧背包面板的点击全部吞掉（见工程文档 05 §3.3）。
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	visible = false
 	EventBus.shop_open_requested.connect(_on_shop_requested)
+	EventBus.shop_close_requested.connect(_on_shop_close_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
@@ -60,25 +77,55 @@ func _on_shop_requested(shop_id: String) -> void:
 	_shop_id = shop_id
 	set_open(true)
 
+func _on_shop_close_requested() -> void:
+	if visible:
+		set_open(false)
+
 ## 开关面板；同步全局面板标志（角色操控在 player.gd 中据此屏蔽）。
+## 开启 = 进入交易会话（拉起背包面板并列）；关闭 = 退出会话 + **托盘内未确认装备退回背包**。
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("shop", open)
 	if open:
-		_selected.clear()
+		_trade_active = true
+		_apply_trade_layout(true)
+		EventBus.trade_mode_changed.emit(true)   # 先拉起背包面板
 		EventBus.panel_opened.emit("shop")
 		_refresh()
+	else:
+		_return_tray()
+		_trade_active = false
+		EventBus.trade_mode_changed.emit(false)  # 再关闭背包面板
+		_apply_trade_layout(false)
 
-## 其他面板打开时自动关闭本面板（与背包面板互斥）。
+## 其他面板打开时自动关闭：交易会话中忽略背包面板（那是会话伙伴，见工程文档 05 §3.2）。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id != "shop" and visible:
+	if panel_id == "shop":
+		return
+	if _trade_active and panel_id == "inventory":
+		return
+	if visible:
 		set_open(false)
+
+## 交易布局：右半屏居中 + 隐藏遮罩（两层黑遮罩叠加会把左侧背包面板压暗）。
+func _apply_trade_layout(trade: bool) -> void:
+	if _center == null:
+		return
+	if trade:
+		_center.anchor_left = TRADE_LEFT_RATIO
+		_center.anchor_right = 1.0
+	else:
+		_center.anchor_left = 0.0
+		_center.anchor_right = 1.0
+	_center.offset_left = 0.0
+	_center.offset_right = 0.0
+	if _dim != null:
+		_dim.visible = not trade
 
 func _on_gold_changed(_amount: int) -> void:
 	_refresh_gold()
-	# 金币变化影响按钮可用性（金币不足提示）
 	if visible:
-		_refresh_sell()
+		_refresh_buy_prices()
 
 func _on_inventory_changed() -> void:
 	if visible:
@@ -87,20 +134,20 @@ func _on_inventory_changed() -> void:
 # ---- 构建 ----
 
 func _build() -> void:
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.35)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
+	_dim = ColorRect.new()
+	_dim.color = Color(0, 0, 0, 0.35)
+	_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_dim)
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = CenterContainer.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 
 	var box := PanelContainer.new()
 	box.add_theme_stylebox_override("panel", _panel_style())
-	center.add_child(box)
+	_center.add_child(box)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
@@ -137,7 +184,7 @@ func _build() -> void:
 	root.add_child(HSeparator.new())
 
 	_tabs = TabContainer.new()
-	_tabs.custom_minimum_size = Vector2(760, 400)
+	_tabs.custom_minimum_size = Vector2(BUY_ROW_MIN.x, 400)
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_tabs.add_theme_font_size_override("font_size", 15)
 	root.add_child(_tabs)
@@ -148,7 +195,8 @@ func _build() -> void:
 	_tabs.set_tab_title(1, "出售")
 
 	var hint := Label.new()
-	hint.text = "靠近货郎按 E 开合　·　双击与拖拽出售、高价值装备卖出二次确认见 M4"
+	hint.text = "购买：点右侧按钮；出售：把左侧背包里的装备拖到托盘　·　E / Esc 关闭（托盘内未确认的装备会退回背包）"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
@@ -169,32 +217,24 @@ func _build_sell_page() -> Control:
 	page.add_theme_constant_override("separation", 8)
 
 	var tip := Label.new()
-	tip.text = "点击背包装备加入出售清单（货郎只收购装备；高于已穿戴的不会被一键出售）"
+	tip.text = "从左侧背包拖拽装备到下方托盘（货郎只收购装备）。点托盘中的装备可取回。"
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tip.add_theme_font_size_override("font_size", 12)
 	tip.add_theme_color_override("font_color", COL_TEXT_DIM)
 	page.add_child(tip)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	page.add_child(scroll)
-
-	_sell_grid = GridContainer.new()
-	_sell_grid.columns = BAG_COLUMNS
-	_sell_grid.add_theme_constant_override("h_separation", 6)
-	_sell_grid.add_theme_constant_override("v_separation", 6)
-	scroll.add_child(_sell_grid)
-	for i in range(GameState.inventory.size()):
-		var b := _make_slot()
-		b.pressed.connect(_on_sell_slot_pressed.bind(i))
-		_sell_grid.add_child(b)
-		_sell_buttons.append(b)
+	_tray_grid_holder(page)
 
 	page.add_child(HSeparator.new())
 
-	_sell_summary = Label.new()
-	_sell_summary.add_theme_font_size_override("font_size", 14)
-	page.add_child(_sell_summary)
+	_tray_summary = Label.new()
+	_tray_summary.add_theme_font_size_override("font_size", 14)
+	page.add_child(_tray_summary)
+
+	_tray_warn = Label.new()
+	_tray_warn.add_theme_font_size_override("font_size", 12)
+	_tray_warn.add_theme_color_override("font_color", COL_WARN)
+	page.add_child(_tray_warn)
 
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 8)
@@ -202,30 +242,57 @@ func _build_sell_page() -> Control:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(sp)
-	_sell_all = Button.new()
-	_sell_all.text = "一键出售"
-	_sell_all.custom_minimum_size = Vector2(110, 32)
-	_sell_all.pressed.connect(_on_sell_all_pressed)
-	bar.add_child(_sell_all)
-	_sell_confirm = Button.new()
-	_sell_confirm.text = "确认出售"
-	_sell_confirm.custom_minimum_size = Vector2(110, 32)
-	_sell_confirm.pressed.connect(_on_confirm_sell_pressed)
-	bar.add_child(_sell_confirm)
+	_return_all_btn = Button.new()
+	_return_all_btn.text = "全部取回"
+	_return_all_btn.custom_minimum_size = Vector2(96, 32)
+	_return_all_btn.pressed.connect(_on_return_all_pressed)
+	bar.add_child(_return_all_btn)
+	_stage_all_btn = Button.new()
+	_stage_all_btn.text = "一键移入"
+	_stage_all_btn.tooltip_text = "把背包中所有可售装备移入托盘（优于已穿戴的不会被移入，6.4）"
+	_stage_all_btn.custom_minimum_size = Vector2(96, 32)
+	_stage_all_btn.pressed.connect(_on_stage_all_pressed)
+	bar.add_child(_stage_all_btn)
+	_confirm_btn = Button.new()
+	_confirm_btn.text = "确认出售"
+	_confirm_btn.custom_minimum_size = Vector2(96, 32)
+	_confirm_btn.pressed.connect(_on_confirm_pressed)
+	bar.add_child(_confirm_btn)
 
 	return page
 
-func _make_slot() -> Button:
-	var b := Button.new()
-	b.custom_minimum_size = SLOT_MIN
-	b.clip_text = true
-	b.add_theme_font_size_override("font_size", 13)
-	b.add_theme_color_override("font_color", COL_TEXT)
-	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.add_theme_color_override("font_color", COL_TEXT)
-	b.add_theme_color_override("font_disabled_color", COL_TEXT_DIM)
-	_apply_slot_style(b, COL_BORDER, false)
-	return b
+## 出售托盘：TRAY_COLUMNS × TRAY_ROWS 个可接收投放的格子（ItemSlot.ROLE_TRAY）。
+## 用两侧弹性空白把网格居中（比 size_flags 收缩更可控，不会随面板变宽而左贴）。
+func _tray_grid_holder(page: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	page.add_child(row)
+	var pad_l := Control.new()
+	pad_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(pad_l)
+
+	var grid := GridContainer.new()
+	grid.columns = TRAY_COLUMNS
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	row.add_child(grid)
+
+	var pad_r := Control.new()
+	pad_r.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(pad_r)
+	for i in range(TRAY_COLUMNS * TRAY_ROWS):
+		var b := ItemSlot.new()
+		b.role = ItemSlot.ROLE_TRAY
+		b.index = i
+		b.custom_minimum_size = SLOT_MIN
+		b.clip_text = true
+		b.add_theme_font_size_override("font_size", 13)
+		b.add_theme_color_override("font_color", COL_TEXT)
+		b.add_theme_color_override("font_hover_color", Color.WHITE)
+		_apply_slot_style(b, COL_BORDER, false)
+		b.item_dropped.connect(_on_tray_drop)
+		b.pressed.connect(_on_tray_slot_pressed.bind(i))
+		grid.add_child(b)
+		_tray_slots.append(b)
 
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -259,7 +326,7 @@ func _refresh() -> void:
 	_title.text = "%s　买卖" % Shop.display_name(_shop_id)
 	_refresh_gold()
 	_rebuild_buy()
-	_refresh_sell()
+	_refresh_tray()
 
 func _refresh_gold() -> void:
 	if _gold_label != null:
@@ -279,6 +346,16 @@ func _rebuild_buy() -> void:
 	for it in items:
 		if it is Dictionary:
 			_buy_list.add_child(_make_buy_row(it))
+
+## 金币变化时只更新价格颜色（金币不足转灰），不重建整页。
+func _refresh_buy_prices() -> void:
+	if _buy_list == null:
+		return
+	for row in _buy_list.get_children():
+		for c in row.get_children():
+			if c is Label and String(c.get_meta("role", "")) == "price":
+				var price := int(c.get_meta("price", 0))
+				c.add_theme_color_override("font_color", COL_GOLD if GameState.gold >= price else COL_TEXT_DIM)
 
 func _make_buy_row(e: Dictionary) -> Control:
 	var item_id := String(e.get("itemId", ""))
@@ -311,6 +388,8 @@ func _make_buy_row(e: Dictionary) -> Control:
 	pr.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pr.add_theme_font_size_override("font_size", 15)
 	pr.add_theme_color_override("font_color", COL_GOLD if GameState.gold >= price else COL_TEXT_DIM)
+	pr.set_meta("role", "price")
+	pr.set_meta("price", price)
 	row.add_child(pr)
 
 	var buy := Button.new()
@@ -321,34 +400,35 @@ func _make_buy_row(e: Dictionary) -> Control:
 
 	return row
 
-func _refresh_sell() -> void:
-	if _sell_buttons.is_empty():
+func _refresh_tray() -> void:
+	if _tray_slots.is_empty():
 		return
-	for i in range(_sell_buttons.size()):
-		var b: Button = _sell_buttons[i]
-		var it = GameState.inventory[i] if i < GameState.inventory.size() else null
-		var sellable := it is Dictionary and Shop.can_sell(it)
-		if it is Dictionary:
+	for i in range(_tray_slots.size()):
+		var b: ItemSlot = _tray_slots[i]
+		if i < _tray.size():
+			var it: Dictionary = _tray[i]
+			b.item = it
 			b.text = _short_name(it)
 			b.add_theme_color_override("font_color", ItemUtil.quality_color(Shop.item_quality(it)))
-			b.tooltip_text = _sell_tooltip(it)
+			_apply_slot_style(b, ItemUtil.quality_color(Shop.item_quality(it)), true)
+			b.tooltip_text = _tray_tooltip(it)
 		else:
+			b.item = {}
 			b.text = ""
-			b.tooltip_text = ""
-		b.disabled = not sellable
-		var sel := _selected.has(i)
-		_apply_slot_style(b, COL_SELECTED if sel else COL_BORDER, it is Dictionary)
+			_apply_slot_style(b, COL_BORDER, false)
+			b.tooltip_text = "把左侧背包里的装备拖到这里"
 
 	var total := 0
-	var n := 0
-	for i in _selected:
-		var it2 = GameState.inventory[i] if i < GameState.inventory.size() else null
-		if it2 is Dictionary:
-			total += Shop.sell_price(it2)
-			n += 1
-	_sell_summary.text = "选中 %d 件　·　结算 %d 金币" % [n, total]
-	_sell_confirm.disabled = n == 0
-	_sell_all.disabled = GameState.inventory_used() == 0
+	var upgraded := 0
+	for it2 in _tray:
+		total += Shop.sell_price(it2)
+		if GameState.is_upgrade_over_worn(it2):
+			upgraded += 1
+	_tray_summary.text = "暂存 %d / %d 件　·　结算 %d 金币" % [_tray.size(), _tray_slots.size(), total]
+	_tray_warn.text = ("⚠ 其中 %d 件优于已穿戴，请确认后再出售（6.4 二次确认对话框见 M4）" % upgraded) if upgraded > 0 else ""
+	_confirm_btn.disabled = _tray.is_empty()
+	_stage_all_btn.disabled = GameState.inventory_used() == 0
+	_return_all_btn.disabled = _tray.is_empty()
 
 # ---- 交互 ----
 
@@ -356,34 +436,100 @@ func _on_buy_pressed(item_id: String) -> void:
 	GameState.shop_buy(_shop_id, item_id)   # 失败原因由 GameState 广播 toast
 	_refresh()
 
-func _on_sell_slot_pressed(index: int) -> void:
-	if _selected.has(index):
-		_selected.erase(index)
-	else:
-		_selected.append(index)
-	_refresh_sell()
-
-func _on_confirm_sell_pressed() -> void:
-	if _selected.is_empty():
-		EventBus.toast_requested.emit("请先选择要出售的装备", "danger")
+## 托盘收到背包格的拖入（ItemSlot.item_dropped）。载荷携带背包下标与物品实例；
+## 这里**以实例反查实时下标**取出，避免拖拽期间其他变动导致的下标位移误移（工程文档 05 🔴R1）。
+func _on_tray_drop(_tray_index: int, payload: Dictionary) -> void:
+	var item: Dictionary = payload.get("item", {})
+	if item.is_empty():
 		return
-	var idxs := _selected.duplicate()
-	var total := 0
-	var n := 0
-	for i in idxs:
-		var res := GameState.shop_sell(int(i), true)   # 静默逐件，末尾汇总一条
-		if bool(res.get("ok", false)):
-			total += int(res.get("price", 0))
-			n += 1
-	_selected.clear()
-	if n > 0:
-		EventBus.toast_requested.emit("出售 %d 件（+%d 金币）" % [n, total], "pickup")
-	_refresh()
+	if not Shop.can_sell(item):
+		EventBus.toast_requested.emit("货郎只收购装备", "danger")
+		return
+	if _tray.size() >= _tray_slots.size():
+		EventBus.toast_requested.emit("出售栏已满（%d 格），请先确认出售或取回" % _tray_slots.size(), "danger")
+		return
+	var idx := _index_of_instance(String(item.get("instanceId", "")))
+	if idx < 0:
+		EventBus.toast_requested.emit("该装备已不在背包", "danger")
+		_refresh()
+		return
+	var taken := GameState.remove_item_at(idx)
+	if taken.is_empty():
+		_refresh()
+		return
+	_tray.append(taken)
+	_refresh_tray()
 
-func _on_sell_all_pressed() -> void:
-	GameState.shop_sell_all()
-	_selected.clear()
-	_refresh()
+## 点托盘格：把该件取回背包（背包满则拒绝，不静默丢失）。
+func _on_tray_slot_pressed(tray_index: int) -> void:
+	if tray_index < 0 or tray_index >= _tray.size():
+		return
+	var one: Array = [_tray[tray_index]]
+	var back := GameState.shop_unstage(one)
+	if back == 0:
+		EventBus.toast_requested.emit("背包已满，无法取回", "danger")
+		return
+	_tray.remove_at(tray_index)
+	_refresh_tray()
+
+## 一键移入（6.4）：把背包中所有可售装备批量移入托盘（一格一件）；优于已穿戴的不移入。
+func _on_stage_all_pressed() -> void:
+	var moved := 0
+	var skipped := 0
+	var full := false
+	var i := GameState.inventory.size() - 1
+	while i >= 0:
+		var it = GameState.inventory[i]
+		if not (it is Dictionary) or not Shop.can_sell(it):
+			i -= 1
+			continue
+		if GameState.is_upgrade_over_worn(it):
+			skipped += 1
+			i -= 1
+			continue
+		if _tray.size() >= _tray_slots.size():
+			full = true
+			break
+		var taken := GameState.remove_item_at(i)
+		if not taken.is_empty():
+			_tray.append(taken)
+			moved += 1
+		i -= 1
+	var msg := "移入 %d 件" % moved
+	if skipped > 0:
+		msg += "，保留 %d 件更优装备" % skipped
+	if full:
+		msg += "（出售栏已满）"
+	EventBus.toast_requested.emit(msg if moved > 0 else "没有可移入的装备", "pickup" if moved > 0 else "danger")
+	_refresh_tray()
+
+## 全部取回：清空托盘退回背包。
+func _on_return_all_pressed() -> void:
+	var back := _return_tray()
+	if back > 0:
+		EventBus.toast_requested.emit("已取回 %d 件" % back, "info")
+	_refresh_tray()
+
+func _on_confirm_pressed() -> void:
+	if _tray.is_empty():
+		EventBus.toast_requested.emit("请先把要出售的装备拖到托盘", "danger")
+		return
+	var res := GameState.shop_sell_staged(_tray)
+	var n := int(res.get("count", 0))
+	var gold := int(res.get("gold", 0))
+	_tray.clear()
+	if n > 0:
+		EventBus.toast_requested.emit("出售 %d 件（+%d 金币）" % [n, gold], "pickup")
+	_refresh_tray()
+
+## 把托盘内装备退回背包（关闭面板 / 全部取回）。返回退回件数；背包满的件保留在托盘。
+func _return_tray() -> int:
+	if _tray.is_empty():
+		return 0
+	var back := GameState.shop_unstage(_tray)
+	if back < _tray.size():
+		EventBus.toast_requested.emit("背包已满，%d 件仍留在出售栏" % (_tray.size() - back), "danger")
+	return back
 
 # ---- 文本 ----
 
@@ -399,13 +545,23 @@ func _owned_count(item_id: String) -> int:
 			n += int(it.get("count", 1))
 	return n
 
-func _sell_tooltip(item: Dictionary) -> String:
+## 按实例 id 反查背包实时下标（-1 = 不在背包）。
+func _index_of_instance(instance_id: String) -> int:
+	if instance_id.is_empty():
+		return -1
+	for i in range(GameState.inventory.size()):
+		var it = GameState.inventory[i]
+		if it is Dictionary and String(it.get("instanceId", "")) == instance_id:
+			return i
+	return -1
+
+func _tray_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append(ItemUtil.display_name(item))
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
 	lines.append("售价 %d 金币" % Shop.sell_price(item))
 	if GameState.is_upgrade_over_worn(item):
-		lines.append("⚠ 优于已穿戴（一键出售会保留）")
-	lines.append("点击加入 / 移出出售清单")
+		lines.append("⚠ 优于已穿戴（「一键移入」不会移入，手动拖入需确认）")
+	lines.append("点击取回背包")
 	return "\n".join(PackedStringArray(lines))
