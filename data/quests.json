@@ -1,0 +1,62 @@
+[
+  {
+    "id": "Q001",
+    "name": "守护者苏醒",
+    "type": "main",
+    "giver": "elder",
+    "objective": { "kind": "talk", "targetId": "elder", "count": 1 },
+    "reward": { "gold": 50, "xp": 0, "item": "weapon_starter" },
+    "mapScope": ["camp"],
+    "prev": "",
+    "abandonable": false,
+    "desc": "与长老交谈，获得基础武器与操作引导。"
+  },
+  {
+    "id": "Q002",
+    "name": "初战试炼",
+    "type": "main",
+    "giver": "elder",
+    "objective": { "kind": "kill", "targetId": "wolf_corrupted", "count": 5 },
+    "reward": { "gold": 100, "xp": 150 },
+    "mapScope": ["wild_trial"],
+    "prev": "Q001",
+    "abandonable": false,
+    "desc": "击败 5 只腐化野狼。"
+  },
+  {
+    "id": "Q003",
+    "name": "荒野遗物",
+    "type": "main",
+    "giver": "elder",
+    "objective": { "kind": "collect", "targetId": "spirit_shard", "count": 3 },
+    "reward": { "gold": 0, "xp": 200, "item": "armor_starter" },
+    "mapScope": ["wild_trial"],
+    "prev": "Q002",
+    "abandonable": false,
+    "desc": "拾取 3 个灵能碎片。"
+  },
+  {
+    "id": "Q004",
+    "name": "精英踪迹",
+    "type": "main",
+    "giver": "elder",
+    "objective": { "kind": "kill", "targetId": "elite_wolf_king", "count": 1 },
+    "reward": { "gold": 200, "xp": 400, "item": "weapon_wolfking" },
+    "mapScope": ["wild_trial"],
+    "prev": "Q003",
+    "abandonable": false,
+    "desc": "击败精英裂爪狼王，获得 Boss 线索。"
+  },
+  {
+    "id": "Q005",
+    "name": "腐化源头",
+    "type": "main",
+    "giver": "elder",
+    "objective": { "kind": "kill", "targetId": "boss_corrupted_beast", "count": 1 },
+    "reward": { "gold": 500, "xp": 1000, "unlock": "chapter2" },
+    "mapScope": ["corruption_source"],
+    "prev": "Q004",
+    "abandonable": false,
+    "desc": "击败腐化巨兽，完成第一章、解锁第二章入口。"
+  }
+]

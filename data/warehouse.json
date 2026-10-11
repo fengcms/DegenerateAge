@@ -1,0 +1,7 @@
+{
+  "baseSlots": 40,
+  "expandBase": 1000,
+  "expandRate": 1.6,
+  "cap": 200,
+  "_comment": "expandCost(k) = round(expandBase × expandRate^k)。仓库内装备不占背包、不计入死亡掉落。"
+}

@@ -1,0 +1,6 @@
+[
+  { "id": "rune_iron", "name": "铁如意", "successBonus": 0.05, "dropBossOnly": true },
+  { "id": "rune_jade", "name": "玉如意", "successBonus": 0.1, "dropBossOnly": true },
+  { "id": "rune_gold", "name": "金如意", "successBonus": 0.15, "dropBossOnly": true },
+  { "id": "rune_diamond", "name": "钻石如意", "successBonus": 0.2, "dropBossOnly": true }
+]

@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="BootLabel" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 1200.0
+offset_bottom = 160.0
+text = "末法纪元：最后的守护者 — 脚手架就绪\n（详见 docs/工程文档/01-脚手架搭建与换机复现指南.md）"

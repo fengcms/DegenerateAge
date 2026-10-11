@@ -1,0 +1,11 @@
+[
+  {
+    "id": "mount_corrupted_wing",
+    "name": "腐化之翼",
+    "speedBonus": 0.3,
+    "dropBossId": "boss_corrupted_beast",
+    "icon": "res://assets/sprites/mounts/corrupted_wing.png",
+    "placeholder": true,
+    "desc": "坐骑系统为预留项（玩家达 20 级骑乘门槛后启用）。"
+  }
+]

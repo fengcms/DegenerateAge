@@ -1,0 +1,26 @@
+[
+  {
+    "npcId": "peddler_camp",
+    "name": "货郎（营地）",
+    "sellEnabled": true,
+    "buyItems": [
+      { "itemId": "potion_hp_small", "price": 20, "tier": 1 },
+      { "itemId": "potion_mp_small", "price": 20, "tier": 1 },
+      { "itemId": "misc_random_ticket", "price": 100, "tier": 1 },
+      { "itemId": "misc_town_scroll", "price": 80, "tier": 1 },
+      { "itemId": "misc_revive_scroll", "price": 120, "tier": 1 }
+    ]
+  },
+  {
+    "npcId": "peddler_ash",
+    "name": "货郎（灰烬之地）",
+    "sellEnabled": true,
+    "buyItems": [
+      { "itemId": "potion_hp_mid", "price": 60, "tier": 2 },
+      { "itemId": "potion_mp_mid", "price": 60, "tier": 2 },
+      { "itemId": "misc_random_ticket", "price": 100, "tier": 1 },
+      { "itemId": "misc_town_scroll", "price": 80, "tier": 1 },
+      { "itemId": "misc_revive_scroll", "price": 120, "tier": 1 }
+    ]
+  }
+]
