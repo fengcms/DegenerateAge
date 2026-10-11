@@ -14,6 +14,12 @@ signal player_died()
 signal xp_gained(amount: int)
 signal player_leveled(new_level: int)
 
+# ---- 玩家数值（HUD 实时刷新，M1-3）----
+signal player_hp_changed(current: int, maximum: int)
+signal player_mp_changed(current: int, maximum: int)
+signal player_xp_changed(current: int, maximum: int)
+signal target_changed(target: Node)
+
 # ---- 物品 / 经济 ----
 signal item_dropped(item_id: String)
 signal item_picked(item_id: String)

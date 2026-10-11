@@ -7,6 +7,14 @@ extends Node
 
 const SCHEMA_VERSION := 1
 
+# 4.3 最大生命 / 法力派生常量（初始参数，试玩校准）
+const BASE_HP := 50.0
+const HP_PER_LV := 8.0
+const HP_PER_ATK := 2.0
+const HP_PER_DEF := 4.0
+const BASE_MP := 30.0
+const MP_PER_LV := 5.0
+
 var player: Dictionary = {}
 var gold: int = 0
 var current_map: String = "camp"
@@ -54,10 +62,85 @@ func reset_to_defaults() -> void:
 func xp_to_next(level: int) -> int:
 	return int(round(100.0 * pow(float(level), 1.6)))
 
-## 派生的最大生命（4.3 公式，无装备时）。
+## 派生的最大生命（4.3 公式）。装备百分比 / 固定加成暂为 0（M4 接入）。
 func max_hp() -> int:
-	return int(round(50.0 + player.level * 8.0 + player.attack * 2.0 + player.defense * 4.0))
+	var base := BASE_HP + float(player.level) * HP_PER_LV \
+		+ float(player.attack) * HP_PER_ATK + float(player.defense) * HP_PER_DEF
+	var pct := float(player.get("hpPercent", 0.0))
+	var flat := float(player.get("hpFlat", 0.0))
+	return int(round(base * (1.0 + pct) + flat))
 
-## 派生的最大法力（4.3 公式，无装备时）。
+## 派生的最大法力（4.3 公式）。
 func max_mp() -> int:
-	return int(round(30.0 + player.level * 5.0))
+	var base := BASE_MP + float(player.level) * MP_PER_LV
+	var pct := float(player.get("mpPercent", 0.0))
+	var flat := float(player.get("mpFlat", 0.0))
+	return int(round(base * (1.0 + pct) + flat))
+
+# ---- 数值变更（统一走事件广播，HUD 订阅刷新）----
+
+## 受击扣血；返回是否死亡。HP 不低于 0。
+func damage_player(amount: int) -> bool:
+	if amount <= 0:
+		return player.hp <= 0
+	player.hp = max(0, int(player.hp) - amount)
+	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+	if player.hp <= 0:
+		EventBus.player_died.emit()
+		return true
+	return false
+
+## 治疗，不超过上限。
+func heal_player(amount: int) -> void:
+	player.hp = min(max_hp(), int(player.hp) + amount)
+	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+
+## 消耗法力；不足则返回 false（不扣）。供技能（M3）与测试使用。
+func spend_mp(amount: int) -> bool:
+	if amount <= 0:
+		return true
+	if int(player.mp) < amount:
+		return false
+	player.mp = int(player.mp) - amount
+	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+	return true
+
+## 金币增减（下限 0）。
+func add_gold(amount: int) -> void:
+	gold = max(0, gold + amount)
+	EventBus.gold_changed.emit(gold)
+
+## 增加经验，并按 4.4 处理（多级连升、剩余结转）。
+func add_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	player.xp = int(player.xp) + amount
+	EventBus.xp_gained.emit(amount)
+	while int(player.xp) >= xp_to_next(int(player.level)):
+		player.xp = int(player.xp) - xp_to_next(int(player.level))
+		_level_up()
+	EventBus.player_xp_changed.emit(int(player.xp), xp_to_next(int(player.level)))
+
+## 升级：属性成长 + 按 4.3「升级保留当前 HP / MP 百分比」结转。
+func _level_up() -> void:
+	var prev_hp := max_hp()
+	var prev_mp := max_mp()
+	var hp_ratio := float(player.hp) / float(max(1, prev_hp))
+	var mp_ratio := float(player.mp) / float(max(1, prev_mp))
+	player.level = int(player.level) + 1
+	player.attack = int(player.attack) + 2   # 4.4：每级 攻 +2
+	player.defense = int(player.defense) + 1 # 4.4：每级 防 +1
+	player.hp = int(round(float(max_hp()) * hp_ratio))
+	player.mp = int(round(float(max_mp()) * mp_ratio))
+	EventBus.player_leveled.emit(int(player.level))
+	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+	EventBus.toast_requested.emit("升级！Lv%d" % int(player.level), "levelup")
+
+## 广播全部数值（HUD 初始化 / 读档后同步）。
+func emit_all() -> void:
+	EventBus.gold_changed.emit(gold)
+	EventBus.player_leveled.emit(int(player.level))
+	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+	EventBus.player_xp_changed.emit(int(player.xp), xp_to_next(int(player.level)))

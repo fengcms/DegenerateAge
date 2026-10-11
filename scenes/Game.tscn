@@ -14,3 +14,7 @@ map_id = "camp"
 [node name="Entities" type="Node2D" parent="."]
 
 [node name="Player" parent="Entities" instance=ExtResource("3_player")]
+
+[node name="Targets" type="Node2D" parent="."]
+
+[node name="DamageNumbers" type="Node2D" parent="."]

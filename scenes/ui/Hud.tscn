@@ -1,0 +1,287 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="sb_panel"]
+bg_color = Color(0.06, 0.07, 0.09, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.31, 0.35, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_portrait"]
+bg_color = Color(0.20, 0.24, 0.29, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.60, 0.66, 0.9)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[sub_resource type="StyleBoxFlat" id="sb_bar_bg"]
+bg_color = Color(0.13, 0.14, 0.16, 0.92)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_hp"]
+bg_color = Color(0.80, 0.22, 0.24, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_mp"]
+bg_color = Color(0.26, 0.48, 0.88, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_exp"]
+bg_color = Color(0.72, 0.60, 0.24, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="Hud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="StatusPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 316.0
+offset_bottom = 112.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_panel")
+
+[node name="Portrait" type="Panel" parent="StatusPanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 12.0
+offset_right = 58.0
+offset_bottom = 60.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_portrait")
+
+[node name="NameLabel" type="Label" parent="StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 70.0
+offset_top = 14.0
+offset_right = 300.0
+offset_bottom = 38.0
+mouse_filter = 2
+text = "守护者"
+
+[node name="LevelLabel" type="Label" parent="StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 70.0
+offset_top = 38.0
+offset_right = 220.0
+offset_bottom = 58.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.85, 0.83, 0.55, 1)
+text = "Lv1"
+
+[node name="HpBar" type="ProgressBar" parent="StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 70.0
+offset_top = 62.0
+offset_right = 306.0
+offset_bottom = 82.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_hp")
+max_value = 102.0
+value = 102.0
+show_percentage = false
+
+[node name="HpText" type="Label" parent="StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 70.0
+offset_top = 62.0
+offset_right = 306.0
+offset_bottom = 82.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "102 / 102"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MpBar" type="ProgressBar" parent="StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 70.0
+offset_top = 86.0
+offset_right = 306.0
+offset_bottom = 104.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_mp")
+max_value = 35.0
+value = 35.0
+show_percentage = false
+
+[node name="MpText" type="Label" parent="StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 70.0
+offset_top = 86.0
+offset_right = 306.0
+offset_bottom = 104.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 11
+text = "35 / 35"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GoldLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 18.0
+offset_top = 118.0
+offset_right = 316.0
+offset_bottom = 142.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.83, 0.45, 1)
+text = "金币  0"
+
+[node name="TargetPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 336.0
+offset_top = 16.0
+offset_right = 576.0
+offset_bottom = 100.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_panel")
+
+[node name="TargetTitle" type="Label" parent="TargetPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 90.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.72, 1)
+text = "目标"
+
+[node name="TargetName" type="Label" parent="TargetPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 28.0
+offset_right = 228.0
+offset_bottom = 50.0
+mouse_filter = 2
+text = "无目标"
+
+[node name="TargetHp" type="ProgressBar" parent="TargetPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 58.0
+offset_right = 228.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_hp")
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="MapPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 84.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_panel")
+
+[node name="MapName" type="Label" parent="MapPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 192.0
+offset_bottom = 30.0
+mouse_filter = 2
+text = "幸存者营地"
+horizontal_alignment = 2
+
+[node name="MapCoords" type="Label" parent="MapPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 34.0
+offset_right = 192.0
+offset_bottom = 56.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.68, 0.72, 0.78, 1)
+text = "(0, 0)"
+horizontal_alignment = 2
+
+[node name="Hotbar" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -56.0
+offset_right = 240.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="ExpBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -22.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_exp")
+max_value = 100.0
+value = 0.0
+show_percentage = false
