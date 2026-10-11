@@ -7,7 +7,7 @@ extends Node
 ##   "$GODOT" --headless --path . res://tests/SmokeTest.tscn
 ##
 ## 说明：--import 用于注册 class_name 全局类（Iso / IsoGround / PlayerCharacter /
-## Combat / Monster / DamageNumber）；换机或新增 class_name 后需先跑一次。
+## Combat / Monster / MonsterSpawner / DamageNumber / Fx）；换机或新增 class_name 后需先跑一次。
 
 var _failures: Array[String] = []
 
@@ -17,6 +17,10 @@ func _ready() -> void:
 	_test_stats()
 	_test_combat()
 	await _test_single_resolution()
+	await _test_monster_chase()
+	await _test_monster_attacks_player()
+	await _test_death_settles_once()
+	await _test_spawner()
 	await _test_world()
 	_finish()
 
@@ -96,6 +100,113 @@ func _test_single_resolution() -> void:
 	monster.queue_free()
 	await get_tree().process_frame
 
+# ---- M1-5：怪物 AI 追击（7.9）----
+func _test_monster_chase() -> void:
+	GameState.reset_to_defaults()
+	var player = load("res://scenes/entities/Player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector2.ZERO
+
+	var wolf = load("res://scenes/entities/Monster.tscn").instantiate()
+	wolf.monster_id = "wolf_corrupted"
+	wolf.spawn_level = 2
+	wolf.ai_enabled = true
+	wolf.position = Vector2(160.0, 0.0)     # 在仇恨半径内、攻击范围外
+	wolf.spawn_position = Vector2(160.0, 0.0)
+	add_child(wolf)
+	await get_tree().physics_frame
+
+	var d0: float = wolf.global_position.distance_to(player.global_position)
+	for _i in range(20):
+		await get_tree().physics_frame
+	var d1: float = wolf.global_position.distance_to(player.global_position)
+	_expect(d1 < d0, "怪物应朝玩家追击：距离 %0.1f -> %0.1f" % [d0, d1])
+	_expect(wolf.state == wolf.State.CHASE or wolf.state == wolf.State.ATTACK,
+		"怪物应处于追击/攻击态，实际 %d" % wolf.state)
+
+	player.queue_free()
+	wolf.queue_free()
+	await get_tree().physics_frame
+
+# ---- M1-5：怪物攻击玩家（3.1 敌我对等）----
+func _test_monster_attacks_player() -> void:
+	GameState.reset_to_defaults()
+	var player = load("res://scenes/entities/Player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector2.ZERO
+
+	var wolf = load("res://scenes/entities/Monster.tscn").instantiate()
+	wolf.monster_id = "wolf_corrupted"
+	wolf.spawn_level = 2
+	wolf.ai_enabled = true
+	wolf.position = Vector2(40.0, 0.0)      # 在普攻范围内（1 格 = 64px）
+	wolf.spawn_position = Vector2(40.0, 0.0)
+	add_child(wolf)
+
+	var hp0: int = int(GameState.player.hp)
+	for _i in range(15):
+		await get_tree().physics_frame
+	_expect(int(GameState.player.hp) < hp0,
+		"怪物应攻击玩家并扣血：%d -> %d" % [hp0, int(GameState.player.hp)])
+	_expect(GameState.player.hp == hp0 - 5,
+		"野狼(攻8) 打玩家(防5) 应为 5 点伤害，实际 %d" % [hp0 - int(GameState.player.hp)])
+
+	# 玩家无敌帧内不应被连续命中（3.4）
+	var hp_a: int = int(GameState.player.hp)
+	player.apply_damage(5)   # 立即再打一次应被无敌帧挡下
+	_expect(int(GameState.player.hp) == hp_a, "无敌帧内不应再次扣血")
+
+	player.queue_free()
+	wolf.queue_free()
+	await get_tree().physics_frame
+
+# ---- M1-5：死亡结算仅一次（3.1）----
+func _test_death_settles_once() -> void:
+	GameState.reset_to_defaults()
+	var wolf = load("res://scenes/entities/Monster.tscn").instantiate()
+	wolf.monster_id = "wolf_corrupted"
+	wolf.spawn_level = 2
+	add_child(wolf)
+	await get_tree().process_frame
+
+	var gold0: int = GameState.gold
+	var lethal := Combat.resolve(9999.0, wolf.get_defense(), 1.0, 1.0, 1.0, 0.0)
+	wolf.take_hit(lethal, null)
+	_expect(bool(wolf.is_dead), "致命伤害后怪物应死亡")
+	_expect(GameState.gold - gold0 == 6, "击杀野狼应结算金币 6，实际 %d" % [GameState.gold - gold0])
+
+	var gold1: int = GameState.gold
+	wolf.take_hit(lethal, null)   # 已是死亡态，不应再结算
+	_expect(GameState.gold == gold1, "死亡结算应仅一次")
+
+	wolf.queue_free()
+	await get_tree().process_frame
+
+# ---- M1-5：怪物点生成与刷新（7.9）----
+func _test_spawner() -> void:
+	var sp := MonsterSpawner.new()
+	add_child(sp)
+	sp.setup(null, null)
+	sp.spawn_from_specs([
+		{"monsterId": "wolf_corrupted", "level": 2, "count": 3, "respawnTime": 1.0, "ai": true},
+	])
+	await get_tree().process_frame
+	_expect(sp.point_count() == 3, "应登记 3 个怪物点，实际 %d" % sp.point_count())
+	_expect(sp.alive_count() == 3, "应生成 3 个存活怪物，实际 %d" % sp.alive_count())
+
+	# 击杀一只后应按 respawnTime 重生
+	var first: Node = sp.get_child(0)
+	first.take_hit(Combat.resolve(9999.0, 0.0, 1.0, 1.0, 1.0, 0.0), null)
+	await get_tree().process_frame
+	_expect(sp.alive_count() == 2, "击杀后存活数应为 2，实际 %d" % sp.alive_count())
+
+	# 注意：无头模式不锁帧，单帧 delta 极小，故按真实时间等待而非帧数
+	await get_tree().create_timer(1.4).timeout
+	_expect(sp.alive_count() == 3, "刷新时间到达后应回到 3 只，实际 %d" % sp.alive_count())
+
+	sp.queue_free()
+	await get_tree().process_frame
+
 func _test_world() -> void:
 	var game: Node = load("res://scenes/Game.tscn").instantiate()
 	add_child(game)
@@ -120,12 +231,14 @@ func _test_world() -> void:
 	if boundary != null:
 		_expect(boundary.get_child_count() == 4, "边界墙应为 4 段，实际 %d" % boundary.get_child_count())
 
-	# M1-4：静态测试目标已生成
-	var targets: Node = game.get_node_or_null("Targets")
-	_expect(targets != null and targets.get_child_count() == 3,
-		"应生成 3 个测试目标，实际 %s" % [targets.get_child_count() if targets != null else -1])
+	# M1-5：怪物生成器已按测试怪物点生成 3 个怪物（2 野狼 + 1 木桩）
+	var spawner: Node = game.get_node_or_null("Spawner")
+	_expect(spawner != null, "未找到 Spawner 节点")
+	if spawner != null:
+		_expect(spawner.get_child_count() == 3,
+			"应生成 3 个怪物，实际 %d" % spawner.get_child_count())
 
-	# M1-3：HUD 存在且含伤害飘字层分组
+	# HUD 伤害飘字层分组
 	var dn: Node = game.get_node_or_null("DamageNumbers")
 	_expect(dn != null and dn.is_in_group("damage_numbers"), "DamageNumbers 节点缺少分组标记")
 

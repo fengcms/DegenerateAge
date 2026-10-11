@@ -1,19 +1,18 @@
 extends Node2D
-## 世界根节点：装配地面、实体与测试目标，设置出生点与相机边界。
-## 依据产品文档 7.2（相机平滑跟随、防露边界）。
+## 世界根节点：装配地面、玩家、怪物生成器，设置出生点与相机边界。
+## 依据产品文档 7.2（相机平滑跟随、防露边界）、7.9（怪物点刷新）。
 
-## M1-4 静态测试目标（AI 于 M1-5 接入）：2 只腐化野狼 + 1 个教学木桩。
-const MONSTER_SCENE := preload("res://scenes/entities/Monster.tscn")
-const TEST_TARGETS := [
-	{"id": "wolf_corrupted", "offset": Vector2(56.0, 0.0)},
-	{"id": "wolf_corrupted", "offset": Vector2(-70.0, -20.0)},
-	{"id": "training_dummy", "offset": Vector2(0.0, -70.0)},
+## M1 测试怪物点（在营地图上验证 AI；M3 改为读 maps.json 的 spawnPoints）。
+## 木桩 ai=false（静态教学目标）；野狼 ai=true（会巡逻 / 追击 / 攻击）。
+const TEST_SPAWNS := [
+	{"monsterId": "wolf_corrupted", "level": 2, "count": 2, "respawnTime": 15.0, "ai": true},
+	{"monsterId": "training_dummy", "level": 1, "count": 1, "respawnTime": 600.0, "ai": false},
 ]
 
 @onready var _ground: IsoGround = $Ground
 @onready var _player: PlayerCharacter = $Entities/Player
 @onready var _camera: Camera2D = $Entities/Player/Camera2D
-@onready var _targets: Node2D = $Targets
+@onready var _spawner: MonsterSpawner = $Spawner
 @onready var _damage_numbers: Node2D = $DamageNumbers
 
 func _ready() -> void:
@@ -30,15 +29,9 @@ func _ready() -> void:
 	_camera.limit_bottom = int(b.end.y)
 	_camera.reset_smoothing()
 
-	_spawn_test_targets()
-
-func _spawn_test_targets() -> void:
-	var center := _ground.get_map_center_world()
-	for spec in TEST_TARGETS:
-		var m: Node2D = MONSTER_SCENE.instantiate()
-		m.monster_id = String(spec["id"])
-		m.position = center + Vector2(spec["offset"])
-		_targets.add_child(m)
+	# 怪物点（M1-5）
+	_spawner.setup(_ground, _player)
+	_spawner.spawn_from_specs(TEST_SPAWNS)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# 开发期验证键（M5 移除）：H = 自伤 15，用于验证 HUD 血条实时刷新。

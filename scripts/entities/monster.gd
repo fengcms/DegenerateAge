@@ -1,18 +1,35 @@
 class_name Monster
-extends Node2D
-## 怪物实体（M1-4 最小版：属性读取 / 受击结算 / 死亡消失）。
+extends CharacterBody2D
+## 怪物实体：属性读取 / HP 派生（7.5）/ 状态机（7.9）/ 受击与死亡结算（3.1）。
 ##
-## 属性来源 monsters.json；HP 按《07 地图关卡与怪物》17.1 派生公式随刷新等级缩放。
-## M1-4 关闭 AI（不移动 / 不攻击）——仅作为普攻与伤害结算的可验证目标；
-## M1-5 接入状态机（巡逻 / 追击 / 攻击）后打开 ai_enabled。
+## 状态机子集：IDLE/patrol → aggro → chase → attack → (return) → dead → respawn。
+## 死亡结算（经验 + 金币）**仅一次**；掉落与任务推进在 M1-6 / M2 接入。
+## AI 参数来自 monsters.json；木桩等静态目标 ai_enabled=false。
 
-const M_HP_PER_LV := 0.12   # 17.1：每高 1 级约 +12% 生命（初始参数）
+const M_HP_PER_LV := 0.12      # 7.5：每高 1 级约 +12% 生命（初始参数）
+const AGGRO_RANGE := 200.0     # 仇恨半径（px，≈3 格）
+const LEASH_RANGE := 420.0     # 追击边界：离 spawn 点过远则返回（px）
+const PATROL_RADIUS := 90.0    # 巡逻半径（px）
+const IDLE_TIME := 1.4         # 巡逻间停留（s）
+const REACH := 6.0             # 到达判定（px）
+const HIT_FLASH := 0.12        # 受击白闪时长（s）
+
+const RADIUS := 13.0
+const COLOR_BODY := Color("9c5a4a")
+const COLOR_AGGRO := Color("c9553f")
+const COLOR_EDGE := Color("3d221c")
+const COLOR_HP_BG := Color(0.08, 0.08, 0.10, 0.85)
+const COLOR_HP_FG := Color("d2383c")
+
+enum State { IDLE, PATROL, CHASE, ATTACK, RETURN, DEAD }
 
 @export var monster_id: String = "wolf_corrupted"
-## 实际刷新等级；0 = 采用模板等级（地图等级梯度 / 等级差在 M3 接入）
+## 实际刷新等级；0 = 采用模板等级（区域等级梯度 / 等级差在 M3 接入）
 @export var spawn_level: int = 0
-## M1-4 为 false（静态目标）；M1-5 打开
+## 是否启用 AI（木桩教学目标为 false）
 @export var ai_enabled: bool = false
+## 由生成器设置的锚点（巡逻 / 返回基准）；Zero 时取初始位置
+@export var spawn_position: Vector2 = Vector2.ZERO
 
 signal died(id: String)
 
@@ -22,16 +39,31 @@ var level: int = 1
 var max_hp: int = 1
 var hp: int = 1
 var is_dead: bool = false
+var state: int = State.IDLE
 
-const RADIUS := 13.0
-const COLOR_BODY := Color("9c5a4a")
-const COLOR_EDGE := Color("3d221c")
-const COLOR_HP_BG := Color(0.08, 0.08, 0.10, 0.85)
-const COLOR_HP_FG := Color("d2383c")
+# ---- 由模板派生的 AI 参数 ----
+var aggro_range: float = AGGRO_RANGE
+var leash_range: float = LEASH_RANGE
+var attack_range_px: float = 64.0
+var attack_interval: float = 1.2
+var attack_power: float = 0.0
+var move_speed_px: float = 0.0
+var is_ranged: bool = false
+
+var _rng := RandomNumberGenerator.new()
+var _attack_cd: float = 0.0
+var _state_t: float = 0.0
+var _patrol_target: Vector2 = Vector2.ZERO
+var _flash_t: float = 0.0
+var _flash_dirty: bool = false
 
 func _ready() -> void:
 	add_to_group("enemies")
+	_rng.randomize()
 	_load_template()
+	if spawn_position == Vector2.ZERO:
+		spawn_position = position
+	_state_t = _rng.randf() * IDLE_TIME   # 错开巡逻相位
 	queue_redraw()
 
 func _load_template() -> void:
@@ -44,15 +76,23 @@ func _load_template() -> void:
 	level = spawn_level if spawn_level > 0 else tpl_level
 	max_hp = _derive_max_hp(tpl_level)
 	hp = max_hp
+	# AI 参数
+	move_speed_px = float(template.get("moveSpeed", 0.0)) * Iso.TILE_W
+	attack_interval = float(template.get("attackInterval", 1.2))
+	attack_power = float(template.get("attack", 0.0))
+	var ar = template.get("attackRange", {})
+	if ar is Dictionary:
+		is_ranged = String(ar.get("kind", "melee")) == "ranged"
+		attack_range_px = float(ar.get("range", 1.0)) * Iso.TILE_W
 
-## 17.1：monsterMaxHP = max(1, round(hpBase × (1 + M_HP_PER_LV × (spawnLevel − templateLevel))))
+## 7.5：monsterMaxHP = max(1, round(hpBase × (1 + M_HP_PER_LV × (spawnLevel − templateLevel))))
 func _derive_max_hp(tpl_level: int) -> int:
 	var hp_base := float(template.get("hpBase", 1))
 	var scaled := hp_base * (1.0 + M_HP_PER_LV * float(level - tpl_level))
 	return maxi(1, int(round(scaled)))
 
 func get_attack() -> float:
-	return float(template.get("attack", 0))
+	return attack_power
 
 func get_defense() -> float:
 	return float(template.get("defense", 0))
@@ -63,31 +103,175 @@ func get_dodge() -> float:
 func hp_ratio() -> float:
 	return float(hp) / float(maxi(1, max_hp))
 
-## 承受一次已结算的攻击（由 Combat.resolve 产出）。miss 不扣血。
-func take_hit(result: Dictionary, _from: Node = null) -> void:
+# ---- 物理 / 状态机 ----
+
+func _physics_process(delta: float) -> void:
+	# 白闪计时（受击反馈）
+	if _flash_t > 0.0:
+		_flash_t = maxf(0.0, _flash_t - delta)
+		_flash_dirty = true
+		queue_redraw()
+	elif _flash_dirty:
+		_flash_dirty = false
+		queue_redraw()
+
+	if is_dead:
+		velocity = Vector2.ZERO
+		return
+
+	_attack_cd = maxf(0.0, _attack_cd - delta)
+	velocity = Vector2.ZERO
+	if ai_enabled:
+		_update_ai(delta)
+	move_and_slide()
+
+func _enter(s: int) -> void:
+	if state == s:
+		return
+	state = s
+	_state_t = 0.0
+	queue_redraw()
+
+func _update_ai(delta: float) -> void:
+	var player := _get_player()
+	var dist := INF
+	if player != null:
+		dist = global_position.distance_to(player.global_position)
+
+	match state:
+		State.IDLE, State.PATROL:
+			if _can_aggro(player, dist):
+				_enter(State.CHASE)
+			else:
+				_patrol(delta)
+		State.CHASE:
+			if player == null or global_position.distance_to(spawn_position) > leash_range:
+				_enter(State.RETURN)
+			elif dist <= attack_range_px:
+				_enter(State.ATTACK)
+			elif move_speed_px > 0.0:
+				_approach(player.global_position)
+		State.ATTACK:
+			if player == null:
+				_enter(State.RETURN)
+			elif dist > attack_range_px * 1.2:
+				_enter(State.CHASE)
+			elif _attack_cd <= 0.0:
+				_do_attack(player)
+		State.RETURN:
+			if _can_aggro(player, dist):
+				_enter(State.CHASE)
+			elif global_position.distance_to(spawn_position) <= REACH:
+				_enter(State.IDLE)
+			elif move_speed_px > 0.0:
+				_approach(spawn_position)
+		_:
+			pass
+
+## 能否进入战斗：无害静止物（木桩：移速 0 且攻击 0）永不仇恨。
+func _can_aggro(player: Node2D, dist: float) -> bool:
+	if player == null:
+		return false
+	if move_speed_px <= 0.0 and attack_power <= 0.0:
+		return false
+	return dist <= aggro_range
+
+func _patrol(delta: float) -> void:
+	if move_speed_px <= 0.0:
+		return   # 静止型怪物不巡逻
+	if state == State.IDLE:
+		_state_t += delta
+		if _state_t >= IDLE_TIME:
+			_patrol_target = _random_patrol_point()
+			_enter(State.PATROL)
+		return
+	# PATROL
+	if global_position.distance_to(_patrol_target) <= REACH or _state_t > IDLE_TIME * 4.0:
+		_enter(State.IDLE)
+		return
+	_state_t += delta
+	_approach(_patrol_target)
+
+func _random_patrol_point() -> Vector2:
+	var ang := _rng.randf() * TAU
+	var r := _rng.randf_range(20.0, PATROL_RADIUS)
+	return spawn_position + Vector2(cos(ang), sin(ang)) * r
+
+func _approach(target_pos: Vector2) -> void:
+	var to := target_pos - global_position
+	if to.length() < 0.001:
+		return
+	velocity = to.normalized() * move_speed_px
+
+func _get_player() -> Node2D:
+	var p := get_tree().get_first_node_in_group("player")
+	if p == null:
+		return null
+	if p.get("is_dead") == true:
+		return null
+	return p as Node2D
+
+# ---- 攻击 ----
+
+func _do_attack(player: Node2D) -> void:
+	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
+	if attack_power <= 0.0:
+		return
+	var res := Combat.resolve(
+		attack_power,
+		float(GameState.player.get("defense", 0.0)),
+		1.0, 0.0, 1.5,
+		float(GameState.player.get("dodge", 0.0)))
+	Fx.damage_number(get_tree(), player, res)
+	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
+		player.call("apply_damage", int(res.get("damage", 0)))
+
+# ---- 受击 / 死亡 ----
+
+## 承受一次已结算的攻击（由 Combat.resolve 产出）。miss 不扣血；受击转仇恨。
+func take_hit(result: Dictionary, from: Node = null) -> void:
 	if is_dead or bool(result.get("miss", false)):
 		return
 	hp = maxi(0, hp - int(result.get("damage", 0)))
+	_flash_t = HIT_FLASH
 	if hp <= 0:
 		_die()
 	else:
+		if ai_enabled and from is Node2D and state != State.CHASE and state != State.ATTACK:
+			_enter(State.CHASE)
 		queue_redraw()
 
 func _die() -> void:
 	if is_dead:
 		return
 	is_dead = true
+	state = State.DEAD
+	velocity = Vector2.ZERO
+	_settle_rewards()
 	died.emit(monster_id)
 	EventBus.monster_died.emit(monster_id)
-	# 占位：淡出后移除（经验 / 金币 / 掉落结算在 M1-5 / M1-6 接入）
+	queue_redraw()
+	# 淡出后移除；刷新由生成器按 respawnTime 处理（7.9）
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.35)
 	tw.tween_callback(queue_free)
 
+## 死亡结算（3.1：经验 / 掉落 / 任务，仅一次）。掉落与任务在 M1-6 / M2 接入。
+func _settle_rewards() -> void:
+	var xp := int(template.get("xpReward", 0))
+	var gold := int(template.get("goldReward", 0))
+	if xp > 0:
+		GameState.add_xp(xp)
+	if gold > 0:
+		GameState.add_gold(gold)
+
 func _draw() -> void:
-	# 占位身体
+	var aggro := state == State.CHASE or state == State.ATTACK
+	var body := COLOR_AGGRO if aggro else COLOR_BODY
+	if _flash_t > 0.0:
+		body = Color.WHITE
 	var body_center := Vector2(0.0, -RADIUS * 0.6)
-	draw_circle(body_center, RADIUS, COLOR_BODY)
+	draw_circle(body_center, RADIUS, body)
 	draw_arc(body_center, RADIUS, 0.0, TAU, 24, COLOR_EDGE, 2.0, true)
 	# 头顶血条（9.5：目标血条）
 	var w := 34.0

@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/game.gd" id="1_game"]
 [ext_resource type="Script" path="res://scripts/world/ground.gd" id="2_ground"]
 [ext_resource type="PackedScene" path="res://scenes/entities/Player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://scripts/world/spawner.gd" id="4_spawner"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_game")
@@ -15,6 +16,7 @@ map_id = "camp"
 
 [node name="Player" parent="Entities" instance=ExtResource("3_player")]
 
-[node name="Targets" type="Node2D" parent="."]
+[node name="Spawner" type="Node2D" parent="."]
+script = ExtResource("4_spawner")
 
 [node name="DamageNumbers" type="Node2D" parent="."]
