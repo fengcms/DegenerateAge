@@ -34,8 +34,15 @@ const TEST_NPCS := [
 func _ready() -> void:
 	_damage_numbers.add_to_group("damage_numbers")
 
-	# 出生点：地图中心
-	_player.global_position = _ground.get_map_center_world()
+	# 出生点：读档坐标优先（M1-10，10.3「当前地图与坐标」），否则地图中心。
+	# SaveManager.apply_to_game_state 把坐标写进 GameState.save_pos，此处**消费一次**即清空，
+	# 因此后续重载场景若没有新的读档就仍按地图中心出生。
+	if GameState.has_save_pos:
+		_player.global_position = _ground.clamp_to_map(GameState.save_pos)
+		print("[Game] 读档出生点：%s" % str(_player.global_position))
+		GameState.clear_save_pos()
+	else:
+		_player.global_position = _ground.get_map_center_world()
 
 	# 相机限制到地图包围盒，避免露出边界外的空白
 	var b: Rect2 = _ground.get_world_bounds()

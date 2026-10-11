@@ -34,12 +34,30 @@ var settings: Dictionary = {}
 var auto_battle_on: bool = false
 var auto_pickup_on: bool = false
 
+## 读档待应用的玩家世界坐标（M1-10，10.3「当前地图与坐标」）。
+## 写入方：SaveManager.apply_to_game_state；消费方：Game._ready（消费一次后 clear_save_pos）。
+## has_save_pos = false 时按地图中心出生（新游戏 / 无坐标字段的旧档）。
+var save_pos: Vector2 = Vector2.ZERO
+var has_save_pos: bool = false
+
+## 清除待应用的读档坐标（Game._ready 用完后调用，避免影响后续重载）。
+func clear_save_pos() -> void:
+	save_pos = Vector2.ZERO
+	has_save_pos = false
+
+## 清空面板登记（读档 / 重载世界前调用，避免旧面板状态残留）。
+func close_all_panels() -> void:
+	_open_panels = {}
+	panel_open = false
+
 func _ready() -> void:
 	reset_to_defaults()
 
-## 重置为初始状态（新建角色 / 初始化时调用）。
-func reset_to_defaults() -> void:
-	player = {
+## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
+## 独立成函数：reset_to_defaults 与**读档字段补全**（SaveManager._migrate_player）共用，
+## 保证旧档缺字段时补出来的默认值与新游戏完全一致（M1-10）。
+func default_player() -> Dictionary:
+	return {
 		"name": "守护者",
 		"level": 1,
 		"xp": 0,
@@ -55,6 +73,23 @@ func reset_to_defaults() -> void:
 		"block": 0,         # 首版不做（保留字段）
 		"cdr": 0.0,
 	}
+
+## 设置模板（10.3：用户设置随存档保存；3.14 自动战斗默认关）。
+func default_settings() -> Dictionary:
+	return {
+		"autoBattleDefault": false,   # 10.3：重启后自动战斗默认关闭
+		"autoPickupDefault": false,
+		"potionThreshold": 0.35,      # 3.14 喝药血量阈值
+		"searchRadius": 12,           # 3.14 搜索半径（格）
+		"allowBoss": false,           # 3.14 自动战斗是否允许 Boss
+		"masterVolume": 1.0,
+		"sfxVolume": 1.0,
+		"uiScale": 1.0,
+	}
+
+## 重置为初始状态（新建角色 / 初始化时调用）。
+func reset_to_defaults() -> void:
+	player = default_player()
 	gold = 0
 	current_map = "camp"
 	inventory = Inventory.create(INVENTORY_SIZE)
@@ -65,16 +100,8 @@ func reset_to_defaults() -> void:
 	first_clear = {}
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
-	settings = {
-		"autoBattleDefault": false,   # 10.3：重启后自动战斗默认关闭
-		"autoPickupDefault": false,
-		"potionThreshold": 0.35,      # 3.14 喝药血量阈值
-		"searchRadius": 12,           # 3.14 搜索半径（格）
-		"allowBoss": false,           # 3.14 自动战斗是否允许 Boss
-		"masterVolume": 1.0,
-		"sfxVolume": 1.0,
-		"uiScale": 1.0,
-	}
+	clear_save_pos()
+	settings = default_settings()
 
 ## 经验升级所需（4.4 公式：round(100 × L^1.6)）。
 func xp_to_next(level: int) -> int:

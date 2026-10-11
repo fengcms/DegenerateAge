@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_debug_seed()
 	await _test_drag_layer()
 	await _test_auto_battle()
+	await _test_save()
 	await _test_world()
 	_finish()
 
@@ -863,6 +864,258 @@ func _test_auto_battle() -> void:
 	game.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
+
+## M1-10：存档落地（10.3 记录清单 / 原子写入 / 备份 / T16 损坏恢复）。
+## 契约：① 存→退→进后 等级 / 经验 / 金币 / 地图 / 背包实例 / 已穿戴实例 / 坐标 / 任务状态 全部一致；
+##       ② 主档损坏 → 自动回退备份并自愈；③ 主档 + 备份都坏 → 明确失败（不静默）；
+##       ④ 删除清干净；⑤ 旧档缺字段按默认值补齐；⑥ 运行态自动战斗开关不落档（10.3）。
+## 说明：用 3 号槽做实验，测试前快照、测试后原样写回，不碰玩家 1 / 2 号槽。
+func _test_save() -> void:
+	const SLOT := 3
+	var prev_active: int = SaveManager.active_slot
+	var snap := _snapshot_saves(SLOT)
+	SaveManager.delete_slot(SLOT)
+
+	# ---- ① 空槽语义：读取失败但给出明确说明（不静默）----
+	_expect(not SaveManager.has_slot(SLOT), "删除后该槽应视为空")
+	var empty_read := SaveManager.read_slot(SLOT)
+	_expect(not bool(empty_read.get("ok", false)), "空槽读取应失败")
+	_expect(not String(empty_read.get("message", "")).is_empty(), "空槽读取应给出明确说明")
+
+	# ---- 构造一份有内容的进度（等级 / 经验 / 背包实例 / 已穿戴实例 / 坐标 / 任务状态）----
+	GameState.reset_to_defaults()
+	GameState.player.level = 7
+	GameState.player.xp = 33
+	GameState.player.attack = 24
+	GameState.player.defense = 11
+	GameState.player.hp = 90
+	GameState.player.mp = 12
+	GameState.gold = 1234
+	GameState.current_map = "camp"
+	GameState.quest_states = {"Q001": "done"}
+	GameState.first_clear = {"boss_corrupt_beast": true}
+	GameState.settings["searchRadius"] = 15
+	GameState.inventory[0] = _equip_instance("weapon_starter", "sv_1", {"atk": 5})
+	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
+	GameState.equipment["weapon"] = _equip_instance("weapon_wolfking", "sv_worn", {"atk": 12},
+		[{"stat": "atk", "value": 6}])
+	GameState.save_pos = Vector2(123.5, -456.25)
+	GameState.has_save_pos = true
+	GameState.set_auto_battle(true)          # 运行态开关：不应被存档带过重启（10.3）
+
+	var expected_worn: Dictionary = (GameState.equipment["weapon"] as Dictionary).duplicate(true)
+	var expected_bag0: Dictionary = (GameState.inventory[0] as Dictionary).duplicate(true)
+	var expected_atk := GameState.total_attack()
+
+	SaveManager.set_active_slot(SLOT)
+	_expect(SaveManager.save_slot(SLOT, true), "保存应成功")
+	_expect(SaveManager.has_slot(SLOT), "保存后应存在存档文件")
+	SaveManager.save_slot(SLOT, true)        # 再存一次 → 产生一份最近有效备份（10.3）
+
+	# ---- 摘要（9.4 存档卡：角色名 / 等级 / 地图 / 存档时间）----
+	var sum := SaveManager.slot_summary(SLOT)
+	_expect(bool(sum.get("ok", false)), "存档摘要应可用：%s" % String(sum.get("message", "")))
+	_expect(int(sum.get("level", 0)) == 7, "摘要等级应为 7，实际 %d" % int(sum.get("level", 0)))
+	_expect(int(sum.get("gold", 0)) == 1234, "摘要金币应为 1234，实际 %d" % int(sum.get("gold", 0)))
+	_expect(int(sum.get("worn", 0)) == 1, "摘要应记录 1 件已穿戴，实际 %d" % int(sum.get("worn", 0)))
+	_expect(int(sum.get("inventoryUsed", 0)) == 2,
+		"摘要应记录 2 格背包占用，实际 %d" % int(sum.get("inventoryUsed", 0)))
+	_expect(String(sum.get("mapName", "")) == "幸存者营地",
+		"摘要地图名应取自 maps.json，实际 %s" % String(sum.get("mapName", "")))
+	_expect(not String(sum.get("savedAt", "")).is_empty(), "摘要应含存档时间")
+	_expect(String(sum.get("savedAt", "")).find("T") < 0, "存档时间应已格式化为可读形式")
+
+	# ---- ② 退出（重置）→ 重进（读档）后逐字段一致 ----
+	GameState.reset_to_defaults()
+	_expect(GameState.gold == 0 and int(GameState.player.level) == 1, "重置后应回到初始状态")
+
+	var res := SaveManager.read_slot(SLOT)
+	_expect(bool(res.get("ok", false)), "读档应成功")
+	_expect(String(res.get("source", "")) == "main", "正常读档来源应为主档")
+	SaveManager.apply_to_game_state(res.get("data", {}))
+
+	_expect(int(GameState.player.level) == 7, "读档后等级应为 7，实际 %d" % int(GameState.player.level))
+	_expect(int(GameState.player.xp) == 33, "读档后经验应为 33，实际 %d" % int(GameState.player.xp))
+	_expect(int(GameState.player.attack) == 24, "读档后基础攻击应为 24")
+	_expect(int(GameState.player.defense) == 11, "读档后基础防御应为 11")
+	_expect(int(GameState.player.hp) == 90, "读档后当前 HP 应为 90，实际 %d" % int(GameState.player.hp))
+	_expect(int(GameState.player.mp) == 12, "读档后当前 MP 应为 12，实际 %d" % int(GameState.player.mp))
+	_expect(GameState.gold == 1234, "读档后金币应为 1234，实际 %d" % GameState.gold)
+	_expect(GameState.current_map == "camp", "读档后地图应一致")
+	_expect(String(GameState.quest_states.get("Q001", "")) == "done", "读档后任务状态应一致")
+	_expect(bool(GameState.first_clear.get("boss_corrupt_beast", false)), "读档后首杀标记应一致")
+	_expect(int(GameState.settings.get("searchRadius", 0)) == 15, "读档后设置项应一致")
+
+	# 背包：实例（含 int 化的数值字段）逐字段一致 + 堆叠数正确
+	var idx := _index_of_instance("sv_1")
+	_expect(idx >= 0, "读档后背包装备应还原")
+	if idx >= 0:
+		_expect(_deep_equal(GameState.inventory[idx], expected_bag0),
+			"读档后背包实例应逐字段一致（10.1 不重随）：\n  存档时：%s\n  读档后：%s"
+			% [str(expected_bag0), str(GameState.inventory[idx])])
+	_expect(String(GameState.inventory[1].get("itemId", "")) == "potion_hp_small",
+		"读档后药水应还原")
+	_expect(int(GameState.inventory[1].get("count", 0)) == 3,
+		"读档后药水堆叠应为 3（JSON 数字需回落为 int），实际 %d"
+		% int(GameState.inventory[1].get("count", 0)))
+
+	# 已穿戴实例：逐字段一致，且加成立即生效（T06）
+	_expect(_deep_equal(GameState.equipment["weapon"], expected_worn),
+		"读档后已穿戴实例应逐字段一致（10.1）：\n  存档时：%s\n  读档后：%s"
+		% [str(expected_worn), str(GameState.equipment["weapon"])])
+	_expect(GameState.total_attack() == expected_atk,
+		"读档后总攻击应为 %d，实际 %d" % [expected_atk, GameState.total_attack()])
+
+	# 坐标（10.3 当前地图与坐标）
+	_expect(GameState.has_save_pos, "读档后应带出生坐标")
+	_expect(GameState.save_pos.is_equal_approx(Vector2(123.5, -456.25)),
+		"读档后坐标应一致，实际 %s" % str(GameState.save_pos))
+
+	# ---- ③ 运行态开关不落档（10.3：重启后自动战斗默认关闭）----
+	_expect(not GameState.auto_battle_on, "读档后自动战斗应默认关闭（运行态开关不持久化）")
+
+	# ---- ④ 存 → 退 → 进（续档链路，10.3 继续）----
+	GameState.reset_to_defaults()
+	_expect(SaveManager.resume_last(), "重启后应能继续上次存档（last_slot）")
+	_expect(int(GameState.player.level) == 7 and GameState.gold == 1234, "续档后进度应一致")
+
+	# ---- ⑤ T16：主档损坏 → 回退备份并自愈 ----
+	var path := SaveManager.slot_path(SLOT)
+	_write_raw(path, "{ 这不是合法 JSON")
+	var from_bak := SaveManager.read_slot(SLOT)
+	_expect(bool(from_bak.get("ok", false)), "主档损坏时应能回退备份（T16）：%s"
+		% String(from_bak.get("message", "")))
+	_expect(String(from_bak.get("source", "")) == "backup", "恢复来源应为备份，实际 %s"
+		% String(from_bak.get("source", "")))
+	_expect(int((from_bak.get("data", {}) as Dictionary).get("gold", 0)) == 1234,
+		"从备份恢复的金币应与最近有效存档一致")
+	_expect(FileAccess.file_exists(path + ".corrupt"), "损坏的主档应另存为 .corrupt 保留现场")
+	var healed := SaveManager.read_slot(SLOT)
+	_expect(String(healed.get("source", "")) == "main", "恢复后应回到主档路径（已自愈）")
+
+	# 结构非法（合法 JSON 但不是存档）同样判为损坏
+	_write_raw(path, JSON.stringify({"schemaVersion": 1}))
+	_write_raw(SaveManager.backup_path(SLOT), JSON.stringify({"schemaVersion": 1}))
+	var dead := SaveManager.read_slot(SLOT)
+	_expect(not bool(dead.get("ok", false)), "主档与备份都不是合法存档时应明确失败")
+	_expect(not String(dead.get("message", "")).is_empty(), "损坏时应给出明确说明（不静默）")
+
+	# ---- ⑥ 旧档导入：缺字段按默认值补齐 ----
+	SaveManager.delete_slot(SLOT)            # 先清掉上一轮的 .bak / .corrupt 等旁文件
+	_write_raw(path, JSON.stringify({"schemaVersion": 0, "player": {"level": 3}, "gold": 5}))
+	var old_res := SaveManager.read_slot(SLOT)
+	_expect(bool(old_res.get("ok", false)), "缺字段的旧档应可读取（旧档导入）")
+	SaveManager.apply_to_game_state(old_res.get("data", {}))
+	_expect(int(GameState.player.level) == 3, "旧档已有字段应保留（等级 3）")
+	_expect(int(GameState.player.attack) == int(GameState.default_player()["attack"]),
+		"旧档缺失字段应补默认值（攻击 %d）" % int(GameState.default_player()["attack"]))
+	_expect(GameState.inventory.size() == GameState.INVENTORY_SIZE, "旧档无背包字段时应补空背包")
+	_expect(GameState.equipment.size() == Equipment.SLOT_DEFS.size(), "旧档无装备字段时应补空槽")
+	_expect(not GameState.has_save_pos, "旧档无坐标字段时应回退地图中心出生")
+
+	# ---- ⑦ 删除：清干净（主档 / 备份 / 临时 / 损坏现场）----
+	SaveManager.delete_slot(SLOT)
+	_expect(not FileAccess.file_exists(path), "删除后主档应移除")
+	_expect(not FileAccess.file_exists(path + ".bak"), "删除后备份应移除")
+	_expect(not FileAccess.file_exists(path + ".corrupt"), "删除后损坏现场应移除")
+	_expect(not SaveManager.has_slot(SLOT), "删除后 has_slot 应为 false")
+
+	# 还原现场（不污染玩家真实存档）
+	_restore_saves(SLOT, snap)
+	SaveManager.active_slot = prev_active
+	GameState.reset_to_defaults()
+
+	# ---- ⑧ 读档坐标 → 世界出生点（10.3「当前地图与坐标」）----
+	GameState.save_pos = Vector2(400.0, -400.0)
+	GameState.has_save_pos = true
+	var game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	var player: Node2D = game.get_node("Entities/Player")
+	var ground: IsoGround = game.get_node("Ground")
+	var expected := ground.clamp_to_map(Vector2(400.0, -400.0))
+	_expect(player.global_position.is_equal_approx(expected),
+		"读档后玩家应出生在存档坐标而非地图中心：pos=%s expected=%s"
+		% [str(player.global_position), str(expected)])
+	_expect(not player.global_position.is_equal_approx(ground.get_map_center_world()),
+		"读档出生点不应等于地图中心（说明坐标未被消费）")
+	_expect(not GameState.has_save_pos, "出生坐标应在读档出生后被消费一次清空")
+
+	# 坏档 / 越界坐标容错：应被夹回地图范围内（不把玩家扔到墙外）
+	var far := ground.clamp_to_map(Vector2(999999.0, -999999.0))
+	var gfar := Iso.world_to_grid(far)
+	_expect(gfar.x >= 0.0 and gfar.x <= float(ground.grid_size.x)
+		and gfar.y >= 0.0 and gfar.y <= float(ground.grid_size.y),
+		"越界坐标应被夹回地图范围，实际网格坐标 %s" % str(gfar))
+
+	game.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+# ---- 存档测试辅助：快照 / 还原 3 号槽与 last_slot（避免污染玩家真实存档）----
+
+func _snapshot_saves(slot: int) -> Dictionary:
+	var out := {"__last__": ""}
+	if FileAccess.file_exists(SaveManager.LAST_SLOT_FILE):
+		var lf := FileAccess.open(SaveManager.LAST_SLOT_FILE, FileAccess.READ)
+		if lf != null:
+			out["__last__"] = lf.get_as_text()
+			lf.close()
+	for suffix in ["", ".bak", ".tmp", ".corrupt"]:
+		var p: String = SaveManager.slot_path(slot) + suffix
+		if FileAccess.file_exists(p):
+			var f := FileAccess.open(p, FileAccess.READ)
+			if f != null:
+				out[suffix] = f.get_as_text()
+				f.close()
+	return out
+
+func _restore_saves(slot: int, snap: Dictionary) -> void:
+	SaveManager.delete_slot(slot)
+	for key in snap.keys():
+		var txt := String(snap[key])
+		var path: String = SaveManager.LAST_SLOT_FILE if String(key) == "__last__" \
+			else SaveManager.slot_path(slot) + String(key)
+		if txt.is_empty():
+			if FileAccess.file_exists(path):
+				DirAccess.remove_absolute(path)
+		else:
+			_write_raw(path, txt)
+
+func _write_raw(path: String, text: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		push_error("[SmokeTest] 无法写入测试文件：%s" % path)
+		return
+	f.store_string(text)
+	f.close()
+
+## 存储结构深比较：键集相同 + 逐键相等。
+## 注意 JSON 往返会**改变字典的键顺序**（解析后按键排序），故不能用 str() 比较。
+func _deep_equal(a: Variant, b: Variant) -> bool:
+	if typeof(a) != typeof(b):
+		return false
+	match typeof(a):
+		TYPE_DICTIONARY:
+			var da: Dictionary = a
+			var db: Dictionary = b
+			if da.size() != db.size():
+				return false
+			for k in da.keys():
+				if not db.has(k) or not _deep_equal(da[k], db[k]):
+					return false
+			return true
+		TYPE_ARRAY:
+			var aa: Array = a
+			var ab: Array = b
+			if aa.size() != ab.size():
+				return false
+			for i in range(aa.size()):
+				if not _deep_equal(aa[i], ab[i]):
+					return false
+			return true
+		_:
+			return a == b
 
 ## 按 id 取 skills.json 中的一条技能定义（不存在返回空字典）。
 func _skill_by_id(skills: Array, skill_id: String) -> Dictionary:

@@ -1,114 +1,476 @@
 extends Node
 ## SaveManager — 单机存档（单例 / Autoload）。
 ##
-## 机制（见 docs/产品文档/10 数据配置与存档技术 10.3）：
-##   - 3 个独立存档槽；写入 user://saves/slot_N.json。
-##   - 原子写入：先写临时文件，成功后替换主档；保留一份最近有效备份（.bak）。
+## 机制（见 docs/产品文档/10 数据配置与存档技术 10.3；落地方案见工程文档 06）：
+##   - 3 个独立存档槽；写入 user://saves/slot_N.json（互不影响，04 §4.1）。
+##   - 原子写入：先写 .tmp，成功后替换主档；主档有效时先留一份最近有效备份（.bak）。
+##   - **损坏恢复（T16）**：主档不可解析 / 结构非法 → 自动回退 .bak；恢复成功把坏档另存
+##     为 .corrupt（保留现场）并把备份内容写回主档；备份也不可用则明确失败，绝不静默返回空档。
+##   - 保存策略：关键事件即时存（升级 / 穿戴 / 交易 / 任务 / 切图）、每 120 秒定时存、
+##     退出存；写入失败有明确提示（不静默丢失）。
 ##   - 版本迁移：读取时按 schemaVersion 递增补默认值（旧档导入）。
-##   - 写入失败提示不静默丢失；不持久化运行时节点对象。
+##   - 不持久化运行时节点对象；**自动战斗开关不落档**（10.3：重启后默认关闭）。
 
 const SAVE_DIR := "user://saves/"
+const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
+
 const MAX_SLOTS := 3
 const CURRENT_SCHEMA := 1
 
+## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
+const AUTOSAVE_INTERVAL := 120.0
+const AUTOSAVE_DEBOUNCE := 0.6
+
+## 当前活动槽：自动存 / 退出存写入该槽。-1 = 未开档（新游戏未手动存过，不做任何自动写盘）。
+var active_slot: int = -1
+
+var _since_last_save: float = 0.0
+var _debounce: float = -1.0
+## 应用存档过程中抑制自动存（读档回写不应触发新一轮写盘）。
+var _suppress_autosave: bool = false
+## 启动续档提示：autoload 就绪时 HUD 尚未创建，故延后一帧广播（10.3）。
+var _resume_toast: String = ""
+
 func _ready() -> void:
 	_ensure_dir()
+	_connect_events()
+	if resume_last():
+		_emit_resume_toast.call_deferred()
+
+func _process(delta: float) -> void:
+	if active_slot < 0:
+		return
+	_since_last_save += delta
+	if _since_last_save >= AUTOSAVE_INTERVAL:
+		_since_last_save = 0.0
+		autosave("定时")
+		return
+	if _debounce > 0.0:
+		_debounce -= delta
+		if _debounce <= 0.0:
+			_debounce = -1.0
+			autosave("关键事件")
+
+## 退出存（10.3：退出存）。窗口关闭通知先于退出发出，此处同步写盘即可完成。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_on_quit()
+
+# ---- 路径 ----
 
 func _ensure_dir() -> void:
 	if not DirAccess.dir_exists_absolute(SAVE_DIR):
 		DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 
-func _slot_path(slot: int) -> String:
+func slot_path(slot: int) -> String:
 	return SAVE_DIR + "slot_%d.json" % slot
 
-## 是否存在某槽存档。
-func has_slot(slot: int) -> bool:
-	return FileAccess.file_exists(_slot_path(slot))
+func backup_path(slot: int) -> String:
+	return slot_path(slot) + ".bak"
 
-## 采集当前运行时状态为存档字典。
+## 是否存在某槽的主档文件（不判断内容是否有效）。
+func has_slot(slot: int) -> bool:
+	return FileAccess.file_exists(slot_path(slot))
+
+## 主档的相对后缀（供删除遍历：主档 / 备份 / 临时 / 损坏现场，避免遗漏）。
+func _sidecar_suffixes() -> Array[String]:
+	return ["", ".bak", ".tmp", ".corrupt"] as Array[String]
+
+# ---- 采集与写入 ----
+
+## 采集当前运行时状态为存档字典（10.3 记录清单）。
 func _collect() -> Dictionary:
+	var pos := _player_world_pos()
 	return {
 		"schemaVersion": CURRENT_SCHEMA,
+		"slotId": active_slot,
 		"savedAt": Time.get_datetime_string_from_system(),
-		"player": GameState.player,
+		"player": GameState.player.duplicate(true),
 		"gold": GameState.gold,
 		"currentMap": GameState.current_map,
-		"questStates": GameState.quest_states,
-		"firstClear": GameState.first_clear,
-		"settings": GameState.settings,
+		"playerPos": [pos.x, pos.y],
+		"inventory": GameState.inventory.duplicate(true),
+		"equipment": GameState.equipment.duplicate(true),
+		"questStates": GameState.quest_states.duplicate(true),
+		"firstClear": GameState.first_clear.duplicate(true),
+		"settings": GameState.settings.duplicate(true),
+		# 注意：运行态自动战斗开关**不入档**（10.3：重启后自动战斗默认关闭）。
 	}
 
-## 原子写入：tmp 写好 -> 备份旧档 -> 替换主档。
-func save_slot(slot: int) -> bool:
+## 玩家当前世界坐标（场景中取实体；无场景时退回上次读档坐标）。
+func _player_world_pos() -> Vector2:
+	var p := get_tree().get_first_node_in_group("player")
+	if p is Node2D:
+		return (p as Node2D).global_position
+	return GameState.save_pos
+
+## 保存到某槽。silent = true 时不弹成功提示（自动存用，避免刷屏；失败始终提示）。
+func save_slot(slot: int, silent: bool = false) -> bool:
 	_ensure_dir()
 	var data := _collect()
 	data["slotId"] = slot
 
-	var path := _slot_path(slot)
-	var tmp := path + ".tmp"
+	var path := slot_path(slot)
 
+	# 只有主档**有效**时才留备份——否则会把损坏内容覆盖掉可用的 .bak（T16 前提）。
+	if _is_valid_save(_read_file(path)):
+		_copy_over(path, backup_path(slot))
+
+	if not _write_json_atomic(path, data):
+		push_error("[SaveManager] 保存失败：%s" % path)
+		EventBus.toast_requested.emit("存档写入失败（槽 %d），进度未保存！" % slot, "danger")
+		return false
+
+	active_slot = slot
+	_since_last_save = 0.0
+	_debounce = -1.0
+	_write_last_slot(slot)
+	print("[SaveManager] 已保存到槽 %d：%s" % [slot, path])
+	if not silent:
+		EventBus.toast_requested.emit("已保存到槽 %d（自动存档将写入本槽）" % slot, "pickup")
+	return true
+
+## 自动存（定时 / 关键事件 / 退出）：静默成功，失败必提示。
+func autosave(_reason: String) -> bool:
+	if active_slot < 0:
+		return false
+	return save_slot(active_slot, true)
+
+## 退出存（10.3）。此时已无法交互，失败仅报错。
+func save_on_quit() -> void:
+	if active_slot < 0:
+		return
+	if save_slot(active_slot, true):
+		print("[SaveManager] 退出存档完成（槽 %d）" % active_slot)
+
+## 关键事件触发的去抖存（升级 / 穿戴 / 交易 / 任务 / 切图）。
+## 未开档（active_slot < 0）或正在读档时忽略——避免"新游戏把旧档写坏"。
+func request_autosave() -> void:
+	if _suppress_autosave or active_slot < 0:
+		return
+	_debounce = AUTOSAVE_DEBOUNCE
+
+func _connect_events() -> void:
+	EventBus.player_leveled.connect(func(_lv: int) -> void: request_autosave())
+	EventBus.equipment_changed.connect(func() -> void: request_autosave())
+	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
+	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())
+	EventBus.quest_completed.connect(func(_q: String) -> void: request_autosave())
+
+# ---- 读取与迁移 ----
+
+## 读取某槽并存档（含备份回退与版本迁移）。
+## 返回 {ok: bool, source: "main"/"backup"/"", data: Dictionary, message: String}。
+func read_slot(slot: int) -> Dictionary:
+	var path := slot_path(slot)
+	if not FileAccess.file_exists(path):
+		return {"ok": false, "source": "", "data": {}, "message": "槽 %d 还没有存档" % slot}
+
+	var main: Variant = _read_file(path)
+	if _is_valid_save(main):
+		return {"ok": true, "source": "main", "data": _migrate(main as Dictionary), "message": ""}
+
+	# T16：主档损坏 → 回退备份
+	push_warning("[SaveManager] 槽 %d 主档不可用，尝试从备份恢复" % slot)
+	var bak: Variant = _read_file(backup_path(slot))
+	if _is_valid_save(bak):
+		_restore_backup(slot, bak as Dictionary)
+		return {
+			"ok": true, "source": "backup", "data": _migrate(bak as Dictionary),
+			"message": "槽 %d 主存档损坏，已从备份恢复（坏档另存为 .corrupt）" % slot,
+		}
+	return {
+		"ok": false, "source": "", "data": {},
+		"message": "槽 %d 存档损坏且备份不可用（现场文件已保留）" % slot,
+	}
+
+## 把备份内容写回主档（自愈），并把损坏的主档另存为 .corrupt 保留现场。
+func _restore_backup(slot: int, data: Dictionary) -> void:
+	var path := slot_path(slot)
+	if FileAccess.file_exists(path):
+		var corrupt := path + ".corrupt"
+		if FileAccess.file_exists(corrupt):
+			DirAccess.remove_absolute(corrupt)
+		DirAccess.rename_absolute(path, corrupt)
+	_write_json_atomic(path, data)
+
+## 读档并应用到运行时状态（不重载场景，重载由 UI 层负责）。
+## 返回同 read_slot 的结构（额外含 applied: bool）。
+func load_into_game(slot: int) -> Dictionary:
+	var res := read_slot(slot)
+	if not bool(res.get("ok", false)):
+		EventBus.toast_requested.emit(String(res.get("message", "读档失败")), "danger")
+		return res
+	apply_to_game_state(res.get("data", {}))
+	active_slot = slot
+	_write_last_slot(slot)
+	var msg := String(res.get("message", ""))
+	EventBus.toast_requested.emit(
+		msg if not msg.is_empty() else "已载入槽 %d 的存档" % slot,
+		"danger" if res.get("source", "main") == "backup" else "pickup")
+	res["applied"] = true
+	return res
+
+## 启动续档（10.3「继续」语义）：读取上次使用的槽并应用。
+## 返回是否成功续档；失败不打断启动（新游戏照常）。
+func resume_last() -> bool:
+	var slot := _read_last_slot()
+	if slot < 0:
+		return false
+	var res := read_slot(slot)
+	if not bool(res.get("ok", false)):
+		push_warning("[SaveManager] 续档失败（槽 %d）：%s" % [slot, res.get("message", "")])
+		_resume_toast = "续档失败：%s" % String(res.get("message", ""))
+		return false
+	apply_to_game_state(res.get("data", {}))
+	active_slot = slot
+	_resume_toast = String(res.get("message", ""))
+	if _resume_toast.is_empty():
+		_resume_toast = "已继续上次存档（槽 %d）" % slot
+	return true
+
+func _emit_resume_toast() -> void:
+	print("[SaveManager] 续档完成：Lv%d 金币 %d 地图 %s 背包 %d 格" % [
+		int(GameState.player.level), GameState.gold, GameState.current_map,
+		GameState.inventory_used()])
+	if _resume_toast.is_empty():
+		return
+	var kind := "danger" if _resume_toast.begins_with("续档失败") else "info"
+	EventBus.toast_requested.emit(_resume_toast, kind)
+	_resume_toast = ""
+
+## 版本迁移：为旧档补齐新增字段的默认值（10.3 / 04 §4.5 版本化内容 + 旧档导入）。
+func _migrate(data: Dictionary) -> Dictionary:
+	var v: int = int(data.get("schemaVersion", CURRENT_SCHEMA))
+	if v < CURRENT_SCHEMA:
+		# 未来 schemaVersion 提升时在此按版本补默认值。
+		pass
+	data["schemaVersion"] = CURRENT_SCHEMA
+	return data
+
+## 应用存档到运行时状态。所有字段做**存在性 + 类型**校验，坏字段退回默认值（不崩、不静默写坏）。
+func apply_to_game_state(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	_suppress_autosave = true
+
+	if data.get("player", null) is Dictionary:
+		GameState.player = _migrate_player(data["player"] as Dictionary)
+	GameState.gold = clampi(int(data.get("gold", 0)), 0, GameState.GOLD_CAP)
+	GameState.current_map = String(data.get("currentMap", "camp"))
+	GameState.inventory = _migrate_inventory(data.get("inventory", []))
+	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
+	if data.get("questStates", null) is Dictionary:
+		GameState.quest_states = data["questStates"] as Dictionary
+	if data.get("firstClear", null) is Dictionary:
+		GameState.first_clear = data["firstClear"] as Dictionary
+	if data.get("settings", null) is Dictionary:
+		GameState.settings = _migrate_settings(data["settings"] as Dictionary)
+
+	# 坐标：交给 Game._ready 消费（10.3 当前地图与坐标）
+	var pp = data.get("playerPos", null)
+	if pp is Array and (pp as Array).size() >= 2:
+		GameState.save_pos = Vector2(float((pp as Array)[0]), float((pp as Array)[1]))
+		GameState.has_save_pos = true
+	else:
+		GameState.clear_save_pos()
+
+	# 运行态开关不持久化：10.3 重启后自动战斗默认关闭
+	GameState.auto_battle_on = false
+	GameState.auto_pickup_on = false
+	GameState.close_all_panels()
+
+	# HP / MP 收敛到（可能变化的）上限：装备加成改变上限时不越界、不补满
+	GameState.player.hp = mini(int(GameState.player.hp), GameState.max_hp())
+	GameState.player.mp = mini(int(GameState.player.mp), GameState.max_mp())
+
+	_suppress_autosave = false
+
+# ---- 字段迁移 ----
+
+## 角色字段补全：以默认模板为底，覆盖存档中的已有字段（旧档缺字段自动补默认值）。
+func _migrate_player(raw: Dictionary) -> Dictionary:
+	var out := GameState.default_player()
+	for k in raw.keys():
+		out[k] = raw[k]
+	return _deep_int(out) as Dictionary
+
+func _migrate_settings(raw: Dictionary) -> Dictionary:
+	var out := GameState.default_settings()
+	for k in raw.keys():
+		out[k] = raw[k]
+	return _deep_int(out) as Dictionary
+
+## 背包迁移：定长 40 格（5.8）；多余丢弃、不足补空、非法项置空。
+func _migrate_inventory(raw) -> Array:
+	var out := Inventory.create(GameState.INVENTORY_SIZE)
+	if not (raw is Array):
+		return out
+	var arr := raw as Array
+	for i in range(mini(arr.size(), GameState.INVENTORY_SIZE)):
+		if arr[i] is Dictionary:
+			out[i] = _deep_int((arr[i] as Dictionary).duplicate(true))
+	return out
+
+## 装备槽迁移：以 14 槽模板为底（5.1）；未知槽位丢弃，缺失槽补空。
+func _migrate_equipment(raw) -> Dictionary:
+	var out := Equipment.create()
+	if not (raw is Dictionary):
+		return out
+	for k in (raw as Dictionary).keys():
+		var sid := String(k)
+		if not out.has(sid):
+			continue
+		var it = raw[k]
+		if it is Dictionary:
+			out[sid] = _deep_int((it as Dictionary).duplicate(true))
+	return out
+
+## JSON 数字一律解析为 float（Godot JSON 实现）→ 整数值回落为 int，
+## 保证读档后属性与存档前**逐字段相等**（实例属性不重随，10.1）。
+func _deep_int(v: Variant) -> Variant:
+	match typeof(v):
+		TYPE_DICTIONARY:
+			var d: Dictionary = v
+			for k in d.keys():
+				d[k] = _deep_int(d[k])
+			return d
+		TYPE_ARRAY:
+			var a: Array = v
+			for i in range(a.size()):
+				a[i] = _deep_int(a[i])
+			return a
+		TYPE_FLOAT:
+			var f := float(v)
+			if absf(f) < 9007199254740992.0 and is_equal_approx(f, round(f)):
+				return int(f)
+			return f
+		_:
+			return v
+
+# ---- 摘要 / 删除 ----
+
+## 某槽摘要（供存档卡显示，不改动运行时状态）。
+## 返回 {slot, exists, ok, empty, source, message, name, level, gold, mapId, mapName, savedAt}。
+func slot_summary(slot: int) -> Dictionary:
+	var info := {
+		"slot": slot, "exists": has_slot(slot), "ok": false, "empty": not has_slot(slot),
+		"source": "", "message": "", "name": "", "level": 0, "gold": 0,
+		"mapId": "", "mapName": "", "savedAt": "", "inventoryUsed": 0, "worn": 0,
+	}
+	var res := read_slot(slot)
+	info["source"] = String(res.get("source", ""))
+	info["message"] = String(res.get("message", ""))
+	if not bool(res.get("ok", false)):
+		return info
+	var d: Dictionary = res.get("data", {})
+	var p: Dictionary = {}
+	if d.get("player", null) is Dictionary:
+		p = d["player"]
+	var map_id := String(d.get("currentMap", "camp"))
+	info["ok"] = true
+	info["name"] = String(p.get("name", "守护者"))
+	info["level"] = int(p.get("level", 1))
+	info["gold"] = int(d.get("gold", 0))
+	info["mapId"] = map_id
+	info["mapName"] = map_display_name(map_id)
+	info["savedAt"] = _pretty_time(String(d.get("savedAt", "")))
+	var inv_raw = d.get("inventory", null)
+	if inv_raw is Array:
+		info["inventoryUsed"] = Inventory.used_slots(inv_raw as Array)
+	var eq_raw = d.get("equipment", null)
+	if eq_raw is Dictionary:
+		info["worn"] = Equipment.worn_count(eq_raw as Dictionary)
+	return info
+
+## 全部槽摘要（1..MAX_SLOTS）。
+func list_slots() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for i in range(1, MAX_SLOTS + 1):
+		out.append(slot_summary(i))
+	return out
+
+## 地图显示名（取 maps.json 的 name；无则回退 id）。
+func map_display_name(map_id: String) -> String:
+	var m = DataLoader.get_entry("maps", map_id)
+	if m is Dictionary:
+		return String((m as Dictionary).get("name", map_id))
+	return map_id
+
+func _pretty_time(iso: String) -> String:
+	return iso.replace("T", " ") if not iso.is_empty() else ""
+
+## 删除某槽（主档 + 备份 + 临时 + 损坏现场）；若删的是活动槽则解除活动状态。
+func delete_slot(slot: int) -> void:
+	for suffix in _sidecar_suffixes():
+		var p := slot_path(slot) + suffix
+		if FileAccess.file_exists(p):
+			DirAccess.remove_absolute(p)
+	if active_slot == slot:
+		active_slot = -1
+		_write_last_slot(-1)
+	print("[SaveManager] 已删除槽 %d 的存档" % slot)
+
+func set_active_slot(slot: int) -> void:
+	active_slot = slot
+	_write_last_slot(slot if slot >= 0 else -1)
+
+# ---- 底层文件操作 ----
+
+## 原子写入：tmp 写好 → 替换主档（10.3）。
+func _write_json_atomic(path: String, data: Dictionary) -> bool:
+	var tmp := path + ".tmp"
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		push_error("[SaveManager] 无法写入临时存档：%s" % tmp)
 		return false
 	f.store_string(JSON.stringify(data, "\t"))
 	f.close()
-
-	# 备份现有有效存档（最近一份），保障可回滚。
-	if FileAccess.file_exists(path):
-		var bak := path + ".bak"
-		if FileAccess.file_exists(bak):
-			DirAccess.remove_absolute(bak)
-		DirAccess.copy_absolute(path, bak)
-
-	# 原子替换。
 	var err := DirAccess.rename_absolute(tmp, path)
 	if err != OK:
 		push_error("[SaveManager] 替换存档失败（err=%d）：%s" % [err, path])
+		DirAccess.remove_absolute(tmp)
 		return false
-
-	print("[SaveManager] 已保存到槽 %d：%s" % [slot, path])
 	return true
 
-## 读取某槽存档（含版本迁移）。返回 {} 表示无存档或损坏。
-func load_slot(slot: int) -> Dictionary:
-	var path := _slot_path(slot)
+## 读文件并解析为 Variant；不存在 / 打不开 / 解析失败一律返回 null（不抛错）。
+func _read_file(path: String) -> Variant:
 	if not FileAccess.file_exists(path):
-		return {}
+		return null
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
-		push_error("[SaveManager] 无法读取存档：%s" % path)
-		return {}
+		return null
 	var text := f.get_as_text()
 	f.close()
-	var data = JSON.parse_string(text)
-	if data == null or typeof(data) != TYPE_DICTIONARY:
-		push_error("[SaveManager] 存档损坏，已保留备份：%s" % path)
-		return {}
-	return _migrate(data)
+	return JSON.parse_string(text)
 
-## 版本迁移：为旧档补齐新增字段的默认值。
-func _migrate(data: Dictionary) -> Dictionary:
-	var v: int = int(data.get("schemaVersion", 1))
-	if v < 1:
-		# 示例：未来 schemaVersion 提升时在此补默认值。
-		data["schemaVersion"] = 1
-	return data
+## 存档结构有效性：必须是字典且含 player 字典（10.3 记录清单的最小可用集）。
+func _is_valid_save(v: Variant) -> bool:
+	if not (v is Dictionary):
+		return false
+	return (v as Dictionary).get("player", null) is Dictionary
 
-## 应用存档到运行时状态。
-func apply_to_game_state(data: Dictionary) -> void:
-	if data.is_empty():
+func _copy_over(src: String, dst: String) -> void:
+	if FileAccess.file_exists(dst):
+		DirAccess.remove_absolute(dst)
+	DirAccess.copy_absolute(src, dst)
+
+func _write_last_slot(slot: int) -> void:
+	if slot < 0:
+		if FileAccess.file_exists(LAST_SLOT_FILE):
+			DirAccess.remove_absolute(LAST_SLOT_FILE)
 		return
-	GameState.player = data.get("player", GameState.player)
-	GameState.gold = int(data.get("gold", 0))
-	GameState.current_map = String(data.get("currentMap", "camp"))
-	GameState.quest_states = data.get("questStates", {})
-	GameState.first_clear = data.get("firstClear", {})
-	GameState.settings = data.get("settings", GameState.settings)
+	var f := FileAccess.open(LAST_SLOT_FILE, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify({"slot": slot}))
+	f.close()
 
-## 删除某槽存档（含备份）。
-func delete_slot(slot: int) -> void:
-	for suffix in ["", ".bak", ".tmp"]:
-		var p: String = _slot_path(slot) + suffix
-		if FileAccess.file_exists(p):
-			DirAccess.remove_absolute(p)
+func _read_last_slot() -> int:
+	var v: Variant = _read_file(LAST_SLOT_FILE)
+	if not (v is Dictionary):
+		return -1
+	var slot := int((v as Dictionary).get("slot", -1))
+	if slot < 1 or slot > MAX_SLOTS:
+		return -1
+	return slot

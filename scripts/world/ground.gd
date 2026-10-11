@@ -35,6 +35,15 @@ func _load_map() -> void:
 func get_map_center_world() -> Vector2:
 	return Iso.grid_to_world(Vector2i(grid_size.x / 2, grid_size.y / 2))
 
+## 把世界坐标夹回地图可用范围（M1-10 读档坐标容错）：
+## 坏档 / 版本变更导致坐标越界时，玩家仍会落在边界内而不是墙外。
+func clamp_to_map(world: Vector2) -> Vector2:
+	var g := Iso.world_to_grid(world)
+	var margin := 2.0
+	var hi_x := maxf(margin, float(grid_size.x - 1) - margin)
+	var hi_y := maxf(margin, float(grid_size.y - 1) - margin)
+	return Iso.grid_pt(clampf(g.x, margin, hi_x), clampf(g.y, margin, hi_y))
+
 ## 地图（菱形区域）的世界包围盒，用于相机限制
 func get_world_bounds() -> Rect2:
 	var pts := _outer_corners()
