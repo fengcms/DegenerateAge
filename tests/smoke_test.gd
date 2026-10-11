@@ -718,12 +718,27 @@ func _test_drag_layer() -> void:
 
 	var layer := get_tree().get_first_node_in_group("drag_ghost_layer")
 	_expect(layer != null, "缺少拖拽预览图层（组 drag_ghost_layer）")
+	var shop: Control = main.get_node("UI/ShopPanel")
+	var inv: Control = main.get_node("UI/InventoryPanel")
+
+	# HUD 提示条必须浮在面板之上：Hud 与面板同 canvas、z_index 皆为 0 时，
+	# 绘制顺序由树的先后决定（Hud 排在 UI 层最前 → 被后绘制的面板整块盖住），
+	# 于是交易中的「货郎只收购装备」「背包已满」等提示玩家根本看不到。
+	var toast: Control = main.get_node("UI/Hud/ToastBox")
+	_expect(toast != null, "未找到 HUD 提示条容器（Hud/ToastBox）")
+	if toast != null:
+		_expect(toast.z_index > shop.z_index and toast.z_index > inv.z_index,
+			"HUD 提示条 z_index（%d）应高于面板（货郎 %d / 背包 %d）"
+			% [toast.z_index, shop.z_index, inv.z_index])
+
 	if layer != null:
-		var shop: Control = main.get_node("UI/ShopPanel")
-		var inv: Control = main.get_node("UI/InventoryPanel")
 		_expect(int(layer.z_index) > int(shop.z_index) and int(layer.z_index) > int(inv.z_index),
 			"拖拽图层 z_index（%d）应高于面板（货郎 %d / 背包 %d）"
 			% [layer.z_index, shop.z_index, inv.z_index])
+		if toast != null:
+			_expect(int(toast.z_index) < int(layer.z_index),
+				"HUD 提示条 z_index（%d）应低于拖拽幽灵图层（%d）—— 幽灵须始终最上"
+				% [toast.z_index, layer.z_index])
 		_expect(layer.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 			"拖拽图层不得拦截鼠标（否则面板点击失效）")
 		_expect(layer.get_parent() == main.get_node("UI"),

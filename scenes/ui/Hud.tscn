@@ -182,6 +182,7 @@ text = "背包  0 / 40"
 
 [node name="ToastBox" type="VBoxContainer" parent="."]
 unique_name_in_owner = true
+z_index = 2048
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5

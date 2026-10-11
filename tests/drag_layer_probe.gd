@@ -36,6 +36,9 @@ func _ready() -> void:
 	for _i in range(6):
 		await get_tree().process_frame
 
+	# 面板打开时 HUD 提示条是否可见（Hud 与面板同 canvas，只能靠 z_index 取胜）
+	_report_toast_layer(main)
+
 	var from: Vector2 = inv._bag_buttons[0].get_global_rect().get_center()
 	var to: Vector2 = panel._tray_slots[0].get_global_rect().get_center()
 	print("[DragProbe] 起点(背包格 0)=%s　终点(出售托盘格 0)=%s" % [str(from), str(to)])
@@ -95,8 +98,32 @@ func _ready() -> void:
 	for _i in range(4):
 		await get_tree().process_frame
 	print("[DragProbe] 松手后托盘件数=%d（拖放判定本身应正常）" % panel._tray.size())
-	print("[DragProbe] 截图：/tmp/degenerateage_drag_probe.png")
+	print("[DragProbe] 截图①（拖拽中，幽灵应压在货郎面板之上）：/tmp/degenerateage_drag_probe.png")
+
+	# 面板打开态下的 HUD 提示条：修复前会被面板整块盖住 → 玩家看不到任何交易反馈
+	EventBus.toast_requested.emit("货郎只收购装备（层级演示）", "danger")
+	for _i in range(6):
+		await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("/tmp/degenerateage_toast_layer.png")
+	print("[DragProbe] 截图②（面板之上应可见红色提示条）：/tmp/degenerateage_toast_layer.png")
 	get_tree().quit()
+
+## HUD 提示条与面板的层级对比（修复前：同 canvas、同为 z_index=0 → 按树序被面板盖住）。
+func _report_toast_layer(main: Node) -> void:
+	var toast: Control = main.get_node_or_null("UI/Hud/ToastBox")
+	var shop: Control = main.get_node("UI/ShopPanel")
+	var inv: Control = main.get_node("UI/InventoryPanel")
+	var layer: Control = main.get_node_or_null("UI/DragLayer")
+	if toast == null:
+		print("[DragProbe] ❌ 未找到 HUD 提示条容器（Hud/ToastBox）")
+		return
+	print("[DragProbe] HUD 提示条 z_index=%d　面板 z_index：货郎=%d 背包=%d 拖拽图层=%d" % [
+		toast.z_index, shop.z_index, inv.z_index,
+		layer.z_index if layer != null else -1])
+	var ok := toast.z_index > shop.z_index and toast.z_index > inv.z_index
+	print("[DragProbe] 提示条层级断言：%s" % (
+		"✅ 高于面板，面板打开时提示同样可见" if ok else "❌ 会被面板遮挡（提示不可见）"))
 
 # ---- 证据收集 ----
 
