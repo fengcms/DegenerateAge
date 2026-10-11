@@ -155,4 +155,71 @@ func validate_all() -> Array[String]:
 				if not bmid.is_empty() and not monster_ids.has(bmid):
 					report.append("[maps] %s 的 bossSpawn 引用未定义怪物 '%s'" % [mp.get("id", "?"), bmid])
 
+	# 4) 掉落表合法性（T07：掉落项必在合法表内）
+	report.append_array(_validate_drop_tables())
+
 	return report
+
+## T07：校验 dropTables 的品类 / 引用 / 品质权重 / 等级范围。
+func _validate_drop_tables() -> Array[String]:
+	var report: Array[String] = []
+	var dts = tables.get("dropTables")
+	if not (dts is Array):
+		return report
+	var potion_ids := _id_set("potions")
+	var rune_ids := _id_set("runes")
+	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
+	var valid_kinds := ["coin", "potion", "equip", "rune"]
+
+	for d in dts:
+		if typeof(d) != TYPE_DICTIONARY:
+			continue
+		var did := String(d.get("id", "?"))
+		var entries = d.get("entries", [])
+		if not (entries is Array):
+			report.append("[dropTables] %s 的 entries 非法" % did)
+			continue
+		for en in entries:
+			if typeof(en) != TYPE_DICTIONARY:
+				continue
+			var kind := String(en.get("kind", ""))
+			if not valid_kinds.has(kind):
+				report.append("[dropTables] %s 含非法品类 '%s'" % [did, kind])
+				continue
+			match kind:
+				"coin":
+					if not (en.get("goldRange", null) is Array):
+						report.append("[dropTables] %s coin 条目缺少 goldRange" % did)
+				"potion":
+					var pid := String(en.get("itemId", ""))
+					if not potion_ids.has(pid):
+						report.append("[dropTables] %s 引用未定义药水 '%s'" % [did, pid])
+				"rune":
+					var ids = en.get("itemIds", [])
+					if not (ids is Array):
+						report.append("[dropTables] %s rune 条目缺少 itemIds" % did)
+					else:
+						for rid in ids:
+							if not rune_ids.has(String(rid)):
+								report.append("[dropTables] %s 引用未定义如意 '%s'" % [did, rid])
+				"equip":
+					if not (en.get("levelRange", null) is Array):
+						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
+					var qw = en.get("qualityWeight", {})
+					if not (qw is Dictionary) or qw.is_empty():
+						report.append("[dropTables] %s equip 条目缺少 qualityWeight" % did)
+					else:
+						for q in qw.keys():
+							if not quality_enum.has(String(q)):
+								report.append("[dropTables] %s 品质权重含未知品质 '%s'" % [did, q])
+	return report
+
+## 取某表的 id 集合（数组型）。
+func _id_set(table_name: String) -> Dictionary:
+	var out := {}
+	var t = tables.get(table_name)
+	if t is Array:
+		for e in t:
+			if typeof(e) == TYPE_DICTIONARY:
+				out[e.get("id", "")] = true
+	return out

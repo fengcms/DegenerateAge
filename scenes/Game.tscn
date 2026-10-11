@@ -19,4 +19,6 @@ map_id = "camp"
 [node name="Spawner" type="Node2D" parent="."]
 script = ExtResource("4_spawner")
 
+[node name="LootRoot" type="Node2D" parent="." groups=["loot_root"]]
+
 [node name="DamageNumbers" type="Node2D" parent="."]

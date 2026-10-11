@@ -13,6 +13,8 @@ const HOTBAR_SLOTS := 16
 @onready var _mp_text: Label = %MpText
 @onready var _exp_bar: ProgressBar = %ExpBar
 @onready var _gold_label: Label = %GoldLabel
+@onready var _bag_label: Label = %BagLabel
+@onready var _toast_box: VBoxContainer = %ToastBox
 @onready var _map_name: Label = %MapName
 @onready var _map_coords: Label = %MapCoords
 @onready var _target_name: Label = %TargetName
@@ -29,6 +31,8 @@ func _ready() -> void:
 	EventBus.player_leveled.connect(_on_level)
 	EventBus.target_changed.connect(_on_target)
 	EventBus.map_changed.connect(_on_map_changed)
+	EventBus.inventory_changed.connect(_on_inventory_changed)
+	EventBus.toast_requested.connect(_on_toast)
 	_build_hotbar()
 	_refresh_all()
 
@@ -65,6 +69,36 @@ func _on_target(target: Node) -> void:
 func _on_map_changed(_map_id: String) -> void:
 	_map_name.text = _current_map_name()
 
+func _on_inventory_changed() -> void:
+	_bag_label.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
+
+## 系统提示 Toast（9.6，最小版；完整样式在 M5-5 完善）。
+func _on_toast(text: String, kind: String) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", _toast_color(kind))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	lbl.add_theme_constant_override("outline_size", 4)
+	_toast_box.add_child(lbl)
+	var tw := lbl.create_tween()
+	tw.tween_interval(1.4)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.6)
+	tw.tween_callback(lbl.queue_free)
+
+func _toast_color(kind: String) -> Color:
+	match kind:
+		"danger":
+			return Color("e0655a")
+		"levelup":
+			return Color("f0d060")
+		"pickup":
+			return Color("8fd07a")
+		_:
+			return Color("e8e8e8")
+
 # ---- 刷新 ----
 
 func _refresh_all() -> void:
@@ -74,6 +108,7 @@ func _refresh_all() -> void:
 	_on_mp(int(GameState.player.mp), GameState.max_mp())
 	_on_xp(int(GameState.player.xp), GameState.xp_to_next(int(GameState.player.level)))
 	_on_gold(GameState.gold)
+	_on_inventory_changed()
 	_map_name.text = _current_map_name()
 
 func _update_coords() -> void:

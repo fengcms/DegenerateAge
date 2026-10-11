@@ -7,6 +7,10 @@ extends Node
 
 const SCHEMA_VERSION := 1
 
+## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
+const INVENTORY_SIZE := 40
+const GOLD_CAP := 999999999
+
 # 4.3 最大生命 / 法力派生常量（初始参数，试玩校准）
 const BASE_HP := 50.0
 const HP_PER_LV := 8.0
@@ -18,6 +22,7 @@ const MP_PER_LV := 5.0
 var player: Dictionary = {}
 var gold: int = 0
 var current_map: String = "camp"
+var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
 var quest_states: Dictionary = {}   # quest_id -> state 字符串
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var settings: Dictionary = {}
@@ -45,6 +50,7 @@ func reset_to_defaults() -> void:
 	}
 	gold = 0
 	current_map = "camp"
+	inventory = Inventory.create(INVENTORY_SIZE)
 	quest_states = {}
 	first_clear = {}
 	settings = {
@@ -105,10 +111,37 @@ func spend_mp(amount: int) -> bool:
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
 	return true
 
-## 金币增减（下限 0）。
-func add_gold(amount: int) -> void:
-	gold = max(0, gold + amount)
+## 金币增减（下限 0，上限 GOLD_CAP，见 6.2）。返回实际入账额。
+func add_gold(amount: int) -> int:
+	var before := gold
+	gold = clampi(gold + amount, 0, GOLD_CAP)
+	var delta := gold - before
 	EventBus.gold_changed.emit(gold)
+	return delta
+
+## 金币是否已达上限（6.2：达上限后不再拾取金币并提示）。
+func gold_is_capped() -> bool:
+	return gold >= GOLD_CAP
+
+# ---- 背包（5.8；存储层见 scripts/systems/inventory.gd）----
+
+## 物品入包。成功返回 true 并广播；背包满返回 false（不静默）。
+func add_item(item: Dictionary) -> bool:
+	var ok := Inventory.add(inventory, item)
+	if ok:
+		EventBus.inventory_changed.emit()
+	return ok
+
+## 移除指定格物品（丢弃 / 出售 / 穿戴时使用）。
+func remove_item_at(index: int) -> Dictionary:
+	var it := Inventory.remove_at(inventory, index)
+	if not it.is_empty():
+		EventBus.inventory_changed.emit()
+	return it
+
+## 背包已占用格数。
+func inventory_used() -> int:
+	return Inventory.used_slots(inventory)
 
 ## 增加经验，并按 4.4 处理（多级连升、剩余结转）。
 func add_xp(amount: int) -> void:

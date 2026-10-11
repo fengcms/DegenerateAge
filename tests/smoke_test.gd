@@ -7,7 +7,8 @@ extends Node
 ##   "$GODOT" --headless --path . res://tests/SmokeTest.tscn
 ##
 ## 说明：--import 用于注册 class_name 全局类（Iso / IsoGround / PlayerCharacter /
-## Combat / Monster / MonsterSpawner / DamageNumber / Fx）；换机或新增 class_name 后需先跑一次。
+## Combat / Monster / MonsterSpawner / DamageNumber / Fx / ItemUtil / Loot /
+## Inventory / GroundItem）；换机或新增 class_name 后需先跑一次。
 
 var _failures: Array[String] = []
 
@@ -21,6 +22,9 @@ func _ready() -> void:
 	await _test_monster_attacks_player()
 	await _test_death_settles_once()
 	await _test_spawner()
+	_test_loot()
+	_test_inventory()
+	await _test_pickup()
 	await _test_world()
 	_finish()
 
@@ -50,6 +54,7 @@ func _test_stats() -> void:
 	_expect(GameState.max_hp() == 102, "L1 最大生命应为 102，实际 %d" % GameState.max_hp())
 	_expect(GameState.max_mp() == 35, "L1 最大法力应为 35，实际 %d" % GameState.max_mp())
 	_expect(int(GameState.player.hp) == GameState.max_hp(), "初始当前 HP 应等于上限")
+	_expect(GameState.inventory.size() == 40, "背包应为 40 格，实际 %d" % GameState.inventory.size())
 
 	# 数值变更应经 EventBus 广播（HUD 实时刷新链路）
 	var hp_sig := [0, 0]
@@ -69,9 +74,21 @@ func _test_combat() -> void:
 	var r := Combat.resolve(12.0, 2.0, 1.0, 0.0, 1.5, 0.0)
 	_expect(not r.miss and int(r.damage) == 11 and not r.critical,
 		"普攻基础伤害应为 11/非暴击，实际 %s" % [r])
-	# 暴击：floor(11 × 1.5) = 16（crit_chance=1 必暴）
-	var rc := Combat.resolve(12.0, 2.0, 1.0, 1.0, 1.5, 0.0)
-	_expect(rc.critical and int(rc.damage) == 16, "暴击伤害应为 16，实际 %s" % [rc])
+	# 暴击：倍数 floor(11 × 1.5) = 16。注意 3.8 暴击率上限 75%，
+	# 故用固定种子跑 100 次，确定性校验「暴击=16 / 非暴击=11」两条路径。
+	var crng := RandomNumberGenerator.new()
+	crng.seed = 999
+	var n_crit := 0
+	var n_norm := 0
+	for _i in range(100):
+		var rc := Combat.resolve(12.0, 2.0, 1.0, 0.75, 1.5, 0.0, crng)
+		if rc.critical:
+			n_crit += 1
+			_expect(int(rc.damage) == 16, "暴击伤害应为 16，实际 %d" % int(rc.damage))
+		else:
+			n_norm += 1
+			_expect(int(rc.damage) == 11, "非暴击伤害应为 11，实际 %d" % int(rc.damage))
+	_expect(n_crit > 0 and n_norm > 0, "100 次抽样应同时出现暴击与非暴击（暴击 %d / 普通 %d）" % [n_crit, n_norm])
 	# 概率 Miss（3.5）：dodge50 → 50%；封顶 75%
 	_expect(is_equal_approx(Combat.miss_chance(50.0), 0.5), "闪避 50 → Miss 应为 50%")
 	_expect(is_equal_approx(Combat.miss_chance(1000.0), 0.75), "Miss 应封顶 75%")
@@ -160,26 +177,38 @@ func _test_monster_attacks_player() -> void:
 	wolf.queue_free()
 	await get_tree().physics_frame
 
-# ---- M1-5：死亡结算仅一次（3.1）----
+# ---- M1-5/M1-6：死亡结算仅一次 + 掉落生成 ----
 func _test_death_settles_once() -> void:
 	GameState.reset_to_defaults()
+	var loot_root := Node2D.new()
+	loot_root.add_to_group("loot_root")
+	add_child(loot_root)
+
 	var wolf = load("res://scenes/entities/Monster.tscn").instantiate()
 	wolf.monster_id = "wolf_corrupted"
 	wolf.spawn_level = 2
 	add_child(wolf)
 	await get_tree().process_frame
 
-	var gold0: int = GameState.gold
+	var xp0: int = int(GameState.player.xp)
 	var lethal := Combat.resolve(9999.0, wolf.get_defense(), 1.0, 1.0, 1.0, 0.0)
 	wolf.take_hit(lethal, null)
 	_expect(bool(wolf.is_dead), "致命伤害后怪物应死亡")
-	_expect(GameState.gold - gold0 == 6, "击杀野狼应结算金币 6，实际 %d" % [GameState.gold - gold0])
+	_expect(int(GameState.player.xp) - xp0 == 25,
+		"击杀野狼应结算经验 25，实际 %d" % [int(GameState.player.xp) - xp0])
+	await get_tree().process_frame
+	var drop_n := loot_root.get_child_count()
+	_expect(drop_n >= 1, "击杀后应生成至少 1 件地面掉落（coin 概率 1.0），实际 %d" % drop_n)
 
-	var gold1: int = GameState.gold
-	wolf.take_hit(lethal, null)   # 已是死亡态，不应再结算
-	_expect(GameState.gold == gold1, "死亡结算应仅一次")
+	# 二次致命不应重复结算 / 重复掉落
+	var xp1: int = int(GameState.player.xp)
+	wolf.take_hit(lethal, null)
+	await get_tree().process_frame
+	_expect(int(GameState.player.xp) == xp1, "死亡结算应仅一次（经验）")
+	_expect(loot_root.get_child_count() == drop_n, "死亡后不应重复掉落")
 
 	wolf.queue_free()
+	loot_root.queue_free()
 	await get_tree().process_frame
 
 # ---- M1-5：怪物点生成与刷新（7.9）----
@@ -205,6 +234,123 @@ func _test_spawner() -> void:
 	_expect(sp.alive_count() == 3, "刷新时间到达后应回到 3 只，实际 %d" % sp.alive_count())
 
 	sp.queue_free()
+	await get_tree().process_frame
+
+# ---- M1-6 / T07：掉落合法（品类 / 引用 / 品质权重 / 等级范围）----
+func _test_loot() -> void:
+	# 固定种子 → 可复现
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 12345
+	var drops := Loot.roll("DT_Wild_L1", rng)
+	_expect(drops.size() >= 1, "DT_Wild_L1 应至少产出 1 件（coin 概率 1.0）")
+	var has_coin := false
+	for it in drops:
+		var kind := String(it.get("kind", ""))
+		_expect(kind in ["coin", "potion", "equip", "rune"], "掉落品类非法：%s" % kind)
+		if kind == "coin":
+			has_coin = true
+			var g := int(it.get("gold", 0))
+			_expect(g >= 4 and g <= 8, "野生金币应在 [4,8]，实际 %d" % g)
+		elif kind == "potion":
+			_expect(DataLoader.get_entry("potions", String(it.get("itemId", ""))) != null,
+				"掉落的药水未在 potions.json 定义")
+		elif kind == "equip":
+			_expect(ItemUtil.is_valid_quality(String(it.get("quality", ""))),
+				"装备品质非法：%s" % String(it.get("quality", "")))
+			var lv := int(it.get("level", 0))
+			_expect(lv >= 1 and lv <= 5, "野生装备等级应在 [1,5]，实际 %d" % lv)
+			_expect(DataLoader.get_entry("equipments", String(it.get("itemId", ""))) != null,
+				"掉落的装备模板未定义：%s" % String(it.get("itemId", "")))
+			_expect(not String(it.get("instanceId", "")).is_empty(), "装备实例需带 instanceId")
+	_expect(has_coin, "DT_Wild_L1 coin 概率 1.0，应必出金币")
+
+	# Boss 表品质权重仅 rare/epic/legendary（10.2 权重约束）
+	for s in range(40):
+		var br := RandomNumberGenerator.new()
+		br.seed = s
+		for it2 in Loot.roll("DT_Boss_L1", br):
+			if String(it2.get("kind", "")) == "equip":
+				var q := String(it2.get("quality", ""))
+				_expect(q in ["rare", "epic", "legendary"],
+					"Boss 装备品质应限于 rare/epic/legendary，实际 %s" % q)
+
+	# 无效掉落表 → 空（不崩溃）
+	_expect(Loot.roll("DT_NOT_EXIST").is_empty(), "无效掉落表应返回空数组")
+
+# ---- M1-6 / T10：背包存储与满包判定（5.8）----
+func _test_inventory() -> void:
+	var inv := Inventory.create(40)
+	_expect(inv.size() == 40, "背包应为 40 格，实际 %d" % inv.size())
+	_expect(Inventory.used_slots(inv) == 0, "新背包应为空")
+
+	# 药水可堆叠
+	var potion := {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	_expect(Inventory.add(inv, potion), "药水应可入包")
+	_expect(Inventory.add(inv, potion), "药水应可续堆")
+	_expect(Inventory.used_slots(inv) == 1, "两瓶药水应占 1 格，实际 %d" % Inventory.used_slots(inv))
+	_expect(int(inv[0].get("count", 0)) == 2, "药水应堆叠为 2，实际 %d" % int(inv[0].get("count", 0)))
+
+	# 装备不可堆叠 → 各占一格
+	var eq := {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "i1", "count": 1}
+	_expect(Inventory.add(inv, eq), "装备应可入包")
+	_expect(Inventory.add(inv, eq.duplicate(true)), "第二件装备应入新格")
+	_expect(Inventory.used_slots(inv) == 3, "应为 3 格，实际 %d" % Inventory.used_slots(inv))
+
+	# 满包：40 件装备 → is_full
+	var full := Inventory.create(40)
+	for i in range(40):
+		Inventory.add(full, {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "f%d" % i, "count": 1})
+	_expect(Inventory.is_full(full), "40 件装备后背包应满")
+	_expect(not Inventory.add(full, {"kind": "equip", "itemId": "weapon_starter", "count": 1}), "满包不应再入装备")
+	_expect(not Inventory.has_space_for(full, {"kind": "equip", "itemId": "weapon_starter", "count": 1}), "满包对装备应无空间")
+	_expect(not Inventory.has_space_for(full, {"kind": "potion", "itemId": "potion_hp_small", "count": 1}), "满包（无药水堆）不应容纳新药水")
+
+# ---- M1-6：靠近自动拾取 / T10 满包留地（9.9）----
+func _test_pickup() -> void:
+	GameState.reset_to_defaults()
+	var loot_root := Node2D.new()
+	loot_root.add_to_group("loot_root")
+	add_child(loot_root)
+
+	var player = load("res://scenes/entities/Player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector2.ZERO
+	await get_tree().physics_frame
+
+	# 金币：靠近 → 直接入账（不占背包）
+	var gi: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi.item = {"kind": "coin", "itemId": "coin", "gold": 7, "count": 1}
+	loot_root.add_child(gi)
+	gi.global_position = Vector2(20.0, 0.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_expect(GameState.gold == 7, "拾取金币应入账 7，实际 %d" % GameState.gold)
+	_expect(not is_instance_valid(gi), "拾取后金币掉落物应被移除")
+
+	# 药水：靠近 → 入背包
+	var gi2: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi2.item = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	loot_root.add_child(gi2)
+	gi2.global_position = Vector2(20.0, 0.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_expect(GameState.inventory_used() == 1, "拾取药水应占 1 格，实际 %d" % GameState.inventory_used())
+
+	# T10：背包满 → 物品留地
+	GameState.inventory = Inventory.create(40)
+	for i in range(40):
+		Inventory.add(GameState.inventory, {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "z%d" % i, "count": 1})
+	var gi3: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi3.item = {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "ll", "count": 1}
+	loot_root.add_child(gi3)
+	gi3.global_position = Vector2(20.0, 0.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_expect(is_instance_valid(gi3), "背包满时地面物品应留地（T10）")
+	_expect(GameState.inventory_used() == 40, "背包满时应保持 40 件")
+
+	player.queue_free()
+	loot_root.queue_free()
 	await get_tree().process_frame
 
 func _test_world() -> void:
@@ -237,6 +383,10 @@ func _test_world() -> void:
 	if spawner != null:
 		_expect(spawner.get_child_count() == 3,
 			"应生成 3 个怪物，实际 %d" % spawner.get_child_count())
+
+	# M1-6：世界掉落容器
+	var loot_root: Node = game.get_node_or_null("LootRoot")
+	_expect(loot_root != null and loot_root.is_in_group("loot_root"), "缺少 LootRoot 掉落容器节点")
 
 	# HUD 伤害飘字层分组
 	var dn: Node = game.get_node_or_null("DamageNumbers")

@@ -23,6 +23,7 @@ signal target_changed(target: Node)
 # ---- 物品 / 经济 ----
 signal item_dropped(item_id: String)
 signal item_picked(item_id: String)
+signal loot_spawned(item: Dictionary)
 signal gold_changed(amount: int)
 signal inventory_changed()
 

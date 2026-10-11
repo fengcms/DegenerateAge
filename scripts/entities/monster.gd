@@ -3,8 +3,11 @@ extends CharacterBody2D
 ## 怪物实体：属性读取 / HP 派生（7.5）/ 状态机（7.9）/ 受击与死亡结算（3.1）。
 ##
 ## 状态机子集：IDLE/patrol → aggro → chase → attack → (return) → dead → respawn。
-## 死亡结算（经验 + 金币）**仅一次**；掉落与任务推进在 M1-6 / M2 接入。
+## 死亡结算（经验 + 掉落）**仅一次**；掉落按 dropTableId 走掉落表（M1-6），任务推进在 M2。
 ## AI 参数来自 monsters.json；木桩等静态目标 ai_enabled=false。
+
+const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
+const DROP_SCATTER := 18.0     # 掉落物散落半径（px）
 
 const M_HP_PER_LV := 0.12      # 7.5：每高 1 级约 +12% 生命（初始参数）
 const AGGRO_RANGE := 200.0     # 仇恨半径（px，≈3 格）
@@ -256,14 +259,40 @@ func _die() -> void:
 	tw.tween_property(self, "modulate:a", 0.0, 0.35)
 	tw.tween_callback(queue_free)
 
-## 死亡结算（3.1：经验 / 掉落 / 任务，仅一次）。掉落与任务在 M1-6 / M2 接入。
+## 死亡结算（3.1：经验 / 掉落 / 任务，仅一次）。
+## 经验即时结算；掉落按 dropTableId 走掉落表（M1-6，含金币作为地面拾取物）。
+## 无掉落表时回退为直接结算模板金币（如教学木桩 goldReward=0）。
+## 任务推进在 M2 接入（订阅 EventBus.monster_died）。
 func _settle_rewards() -> void:
 	var xp := int(template.get("xpReward", 0))
-	var gold := int(template.get("goldReward", 0))
 	if xp > 0:
 		GameState.add_xp(xp)
-	if gold > 0:
-		GameState.add_gold(gold)
+
+	var table_id := String(template.get("dropTableId", ""))
+	if table_id.is_empty():
+		var gold := int(template.get("goldReward", 0))
+		if gold > 0:
+			GameState.add_gold(gold)
+		return
+
+	for it in Loot.roll(table_id):
+		_spawn_drop(it)
+
+## 在死亡位置附近生成一件地面掉落物（7.6 / 9.9）。
+func _spawn_drop(item: Dictionary) -> void:
+	if item.is_empty():
+		return
+	var layer := get_tree().get_first_node_in_group("loot_root")
+	if layer == null:
+		return
+	var gi: GroundItem = GROUND_ITEM_SCENE.instantiate()
+	gi.item = item
+	layer.add_child(gi)
+	var ang := _rng.randf() * TAU
+	var r := _rng.randf() * DROP_SCATTER
+	gi.global_position = global_position + Vector2(cos(ang), sin(ang)) * r
+	EventBus.item_dropped.emit(String(item.get("itemId", "")))
+	EventBus.loot_spawned.emit(item)
 
 func _draw() -> void:
 	var aggro := state == State.CHASE or state == State.ATTACK
