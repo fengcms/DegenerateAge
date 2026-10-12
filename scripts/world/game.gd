@@ -73,7 +73,7 @@ func _ready() -> void:
 	_spawner.spawn_from_map(GameState.current_map)
 	var boss := MapService.current_boss()
 	if not boss.is_empty():
-		_spawner.spawn_from_specs([boss])
+		_spawner.spawn_from_specs([boss], GameState.current_map)
 
 	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()

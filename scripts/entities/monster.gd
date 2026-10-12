@@ -27,7 +27,7 @@ const COLOR_HP_FG := Color("d2383c")
 enum State { IDLE, PATROL, CHASE, ATTACK, RETURN, DEAD }
 
 @export var monster_id: String = "wolf_corrupted"
-## 实际刷新等级；0 = 采用模板等级（区域等级梯度 / 等级差在 M3 接入）
+## 实际刷新等级；0 = 采用模板等级（地图生成器会按 tierRange 约束）
 @export var spawn_level: int = 0
 ## 是否启用 AI（木桩教学目标为 false）
 @export var ai_enabled: bool = false
@@ -404,7 +404,7 @@ func _die() -> void:
 ## 掉落结果聚合为一条「掉落」提示广播，与地面拾取时的「拾取」提示区分（9.6）。
 ## 任务推进在 M2 接入（订阅 EventBus.monster_died）。
 func _settle_rewards() -> void:
-	var xp := int(template.get("xpReward", 0))
+	var xp := LevelGap.kill_xp(int(template.get("xpReward", 0)), int(GameState.player.get("level", 1)), level)
 	if xp > 0:
 		GameState.add_xp(xp)
 

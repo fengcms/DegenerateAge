@@ -73,7 +73,7 @@
     "carterFees": { "ash_land": 100 },
     "requiresUnlock": "",
     "spawnPoints": [
-      { "monsterId": "shellback_bug", "level": 9, "respawnTime": 60, "count": 4 }
+      { "monsterId": "shellback_bug", "level": 10, "respawnTime": 60, "count": 4 }
     ],
     "bossSpawn": { "monsterId": "boss_corrupted_beast", "level": 10, "respawnTime": 300, "tombstone": true },
     "npcs": [

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""末法纪元 M1 数值校准分析（依据 03/04/06/07 文档公式 + data/*.json 实配）。"""
+"""末法纪元数值校准分析（依据 03/04/06/07 文档公式 + data/*.json 实配）。"""
 import json, math, os
 
-ROOT = "/Users/fungleo/Sites/GameProjects/DegenerateAge"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def j(p):
     with open(os.path.join(ROOT, p), encoding="utf-8") as f:
         return json.load(f)
@@ -45,6 +45,20 @@ def monster_hp(mon, spawn_lv):
 def xp_next(L): return round(100*(L**1.6))
 def xp_cum(L):  return sum(xp_next(i) for i in range(1, L))
 
+def kill_xp(player_lv, monster_lv, base_xp):
+    mult = min(1.5, max(0.2, 1.0 - (player_lv-monster_lv)*0.04))
+    return math.floor(base_xp*mult + 0.5)  # Godot roundi：正数四舍五入
+
+WILD_REGULAR = [s for s in maps["wild_trial"]["spawnPoints"]
+                if monsters[s["monsterId"]].get("kind", "normal") == "normal"]
+
+def wild_xp_per_round(player_lv):
+    return sum(s["count"] * kill_xp(player_lv, s["level"], monsters[s["monsterId"]]["xpReward"])
+               for s in WILD_REGULAR)
+
+def estimated_rounds_to(player_lv):
+    return sum(xp_next(lv) / wild_xp_per_round(lv) for lv in range(1, player_lv))
+
 # ---- 装备场景 ----
 BONUS = {"无装备": {"atk":0,"df":0,"hp":0},
          "Q001短刃": {"atk":5,"df":0,"hp":0},
@@ -64,9 +78,6 @@ print()
 print("="*104)
 print("【2】怪物击杀耗时 TTK（玩家 = 推荐等级 / 各装备场景，纯普攻，含暴击期望；实战TTK 叠加怪物闪避）")
 print("="*104)
-MAP_LV = {"wild_trial": {2:["wolf_corrupted"], 3:["shellback_bug"], 4:["elite_wolf_king"]},
-          "ash_land": {6:["ash_wraith"], 7:["shellback_bug"]},
-          "corruption_source": {9:["shellback_bug"], 10:["boss_corrupted_beast"]}}
 ORDER = ["wolf_corrupted","shellback_bug","ash_wraith","elite_wolf_king","boss_corrupted_beast"]
 SPAWN = {"wolf_corrupted":2,"shellback_bug":3,"ash_wraith":6,"elite_wolf_king":4,"boss_corrupted_beast":10}
 PLV   = {"wolf_corrupted":3,"shellback_bug":4,"ash_wraith":6,"elite_wolf_king":5,"boss_corrupted_beast":10}
@@ -92,12 +103,15 @@ for mid in ORDER:
 
 print()
 print("="*104)
-print("【3】升级经验曲线（4.4：xp = round(100×L^1.6)）")
+print("【3】升级经验曲线（4.4 升级需求 + 3.13 击杀经验等级差）")
 print("="*104)
-print(f"{'Lv':>4}{'本级所需':>10}{'累计':>10}   试炼野外(6狼+2虫=210XP/轮)")
+print(f"{'Lv':>4}{'本级所需':>10}{'累计':>10}{'普通怪XP/轮':>15}{'本级轮数':>12}{'累计估计轮数':>16}{'累计估计分钟':>16}")
 for L in [1,2,3,4,5,6,7,8,9,10,15,20]:
     n = xp_next(L); c = xp_cum(L)
-    print(f"{L:>4}{n:>10}{c:>10}   {c/210:>6.1f} 轮 = {c/210*30/60:>5.1f} 分钟(respawn30s)")
+    per_round = wild_xp_per_round(L)
+    cumulative_rounds = estimated_rounds_to(L)
+    print(f"{L:>4}{n:>10}{c:>10}{per_round:>15}{n/per_round:>12.1f}{cumulative_rounds:>16.1f}{cumulative_rounds*0.5:>16.1f}")
+print("  估算仅含试炼野外普通怪，按每级固定收益折算；忽略精英、任务、行走与击杀耗时，30 秒/轮。")
 
 print()
 print("="*104)

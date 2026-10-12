@@ -146,6 +146,24 @@ func validate_all() -> Array[String]:
 		for mp in maps:
 			if typeof(mp) != TYPE_DICTIONARY:
 				continue
+			var map_id := String(mp.get("id", "?"))
+			var tier: Variant = mp.get("tierRange", [])
+			if not (tier is Array) or tier.size() != 2 or not _is_whole_level(tier[0]) or not _is_whole_level(tier[1]) or int(tier[0]) < 1 or int(tier[1]) < int(tier[0]):
+				report.append("[maps] %s 的 tierRange 应为有效的 [最低等级, 最高等级]" % map_id)
+			else:
+				var tier_min := int(tier[0])
+				var tier_max := int(tier[1])
+				var spawn_specs: Array = mp.get("spawnPoints", []).duplicate()
+				if mp.get("bossSpawn", null) is Dictionary:
+					spawn_specs.append(mp.bossSpawn)
+				for spec in spawn_specs:
+					if spec is Dictionary and spec.has("level"):
+						if not _is_whole_level(spec.level):
+							report.append("[maps] %s 的 %s 刷新等级应为整数" % [map_id, spec.get("monsterId", "?")])
+						else:
+							var spec_level := int(spec.level)
+							if spec_level < 0 or (spec_level > 0 and (spec_level < tier_min or spec_level > tier_max)):
+								report.append("[maps] %s 的 %s 刷新等级 %d 超出 tierRange %d～%d" % [map_id, spec.get("monsterId", "?"), spec_level, tier_min, tier_max])
 			for sp in mp.get("spawnPoints", []):
 				var mid: String = String(sp.get("monsterId", ""))
 				if not mid.is_empty() and not monster_ids.has(mid):
@@ -206,6 +224,10 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_affixes())
 
 	return report
+
+## Godot 的 JSON 数值可能以 float 返回；等级须仍是正整数形式。
+func _is_whole_level(value: Variant) -> bool:
+	return (typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT) and float(value) == floorf(float(value))
 
 ## T07：校验 dropTables 的品类 / 引用 / 品质权重 / 等级范围。
 func _validate_drop_tables() -> Array[String]:

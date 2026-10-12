@@ -24,6 +24,7 @@ func _ready() -> void:
 	await _test_monster_attacks_player()
 	await _test_death_settles_once()
 	await _test_spawner()
+	await _test_level_gap()
 	_test_loot()
 	_test_balance_calibration()
 	_test_inventory()
@@ -216,8 +217,8 @@ func _test_death_settles_once() -> void:
 	var lethal := Combat.resolve(9999.0, wolf.get_defense(), 1.0, 1.0, 1.0, 0.0)
 	wolf.take_hit(lethal, null)
 	_expect(bool(wolf.is_dead), "致命伤害后怪物应死亡")
-	_expect(int(GameState.player.xp) - xp0 == 25,
-		"击杀野狼应结算经验 25，实际 %d" % [int(GameState.player.xp) - xp0])
+	_expect(int(GameState.player.xp) - xp0 == 26,
+		"L1 击杀 L2 野狼应结算经验 26，实际 %d" % [int(GameState.player.xp) - xp0])
 	await get_tree().process_frame
 	var drop_n := loot_root.get_child_count()
 	_expect(drop_n >= 1, "击杀后应生成至少 1 件地面掉落（coin 概率 1.0），实际 %d" % drop_n)
@@ -257,6 +258,51 @@ func _test_spawner() -> void:
 
 	sp.queue_free()
 	await get_tree().process_frame
+
+# ---- M3-6：地图等级范围与击杀经验等级差 ----
+func _test_level_gap() -> void:
+	_expect(is_equal_approx(LevelGap.experience_multiplier(5, 5), 1.0), "同级经验应为 1 倍")
+	_expect(is_equal_approx(LevelGap.experience_multiplier(1, 10), 1.36), "越级经验应为 1.36 倍")
+	_expect(is_equal_approx(LevelGap.experience_multiplier(1, 30), 1.5), "越级经验应封顶 1.5 倍")
+	_expect(is_equal_approx(LevelGap.experience_multiplier(30, 1), 0.2), "回低图经验应保底 0.2 倍")
+
+	var sp := MonsterSpawner.new()
+	add_child(sp)
+	sp.setup(null, null)
+	sp.spawn_from_specs([{"monsterId":"shellback_bug", "level":9, "ai":false}], "corruption_source")
+	_expect((sp.get_child(0) as Monster).level == 10, "Boss 图 L9 怪物应限制为 L10")
+	_expect((sp.get_child(0) as Monster).max_hp > int(DataLoader.get_entry("monsters", "shellback_bug").hpBase),
+		"高等级刷新怪物生命应高于模板等级")
+	sp.spawn_from_specs([{"monsterId":"wolf_corrupted", "level":99, "ai":false}], "wild_trial")
+	_expect((sp.get_child(1) as Monster).level == 5, "试炼野外 L99 配置应限制为 L5")
+	sp.spawn_from_specs([{"monsterId":"shellback_bug", "ai":false}], "corruption_source")
+	_expect((sp.get_child(2) as Monster).level == 10, "未指定等级应按模板等级再限制到地图范围")
+	sp.queue_free()
+	await get_tree().process_frame
+
+	var original_maps: Array = DataLoader.tables["maps"]
+	var invalid_maps := original_maps.duplicate(true)
+	invalid_maps[0].spawnPoints[0].level = 2
+	DataLoader.tables["maps"] = invalid_maps
+	var report: Array[String] = DataLoader.validate_all()
+	_expect(" ".join(PackedStringArray(report)).contains("超出 tierRange"), "配置校验应拒绝超出区域范围的刷新等级")
+	DataLoader.tables["maps"] = original_maps
+
+	GameState.reset_to_defaults()
+	GameState.player.level = 10
+	var wolf: Monster = load("res://scenes/entities/Monster.tscn").instantiate()
+	wolf.monster_id = "wolf_corrupted"
+	wolf.spawn_level = 2
+	add_child(wolf)
+	wolf.take_hit({"damage": 9999})
+	_expect(int(GameState.player.xp) == 17, "L10 击杀 L2 野狼应获得 17 经验，实际 %d" % int(GameState.player.xp))
+	wolf.take_hit({"damage": 9999})
+	_expect(int(GameState.player.xp) == 17, "重复击杀不应重复结算等级差经验")
+	GameState.add_xp(25)
+	_expect(int(GameState.player.xp) == 42, "任务等直接奖励经验应保持原值")
+	wolf.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
 
 # ---- M1-6 / T07：掉落合法（品类 / 引用 / 品质权重 / 等级范围）----
 func _test_loot() -> void:

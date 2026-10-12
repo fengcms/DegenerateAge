@@ -16,16 +16,32 @@ func setup(ground: IsoGround, player: Node2D) -> void:
 	_player = player
 	_rng.randomize()
 
-## 从怪物点规格批量生成。specs: [{monsterId, level, count, respawnTime, ai}]
-func spawn_from_specs(specs: Array) -> void:
+## 从怪物点规格批量生成。传入 map_id 时，怪物等级按该地图 tierRange 约束。
+## 无 map_id 的显式测试规格沿用原有等级，不受当前地图影响。
+func spawn_from_specs(specs: Array, map_id: String = "") -> void:
+	var tier_range: Array = []
+	if not map_id.is_empty():
+		var map_data: Variant = DataLoader.get_entry("maps", map_id)
+		if map_data is Dictionary:
+			var configured_tier: Variant = map_data.get("tierRange", [])
+			if configured_tier is Array:
+				tier_range = configured_tier
 	for s in specs:
 		if not (s is Dictionary):
 			continue
+		var monster_id := String(s.get("monsterId", s.get("id", "wolf_corrupted")))
+		var spawn_level := int(s.get("level", 0))
+		if tier_range.size() == 2:
+			if spawn_level <= 0:
+				var template: Variant = DataLoader.get_entry("monsters", monster_id)
+				if template is Dictionary:
+					spawn_level = int(template.get("level", 1))
+			spawn_level = clampi(spawn_level, int(tier_range[0]), int(tier_range[1]))
 		var count := int(s.get("count", 1))
 		for _i in range(count):
 			var point := {
-				"monster_id": String(s.get("monsterId", s.get("id", "wolf_corrupted"))),
-				"level": int(s.get("level", 0)),
+				"monster_id": monster_id,
+				"level": spawn_level,
 				"respawn_time": maxf(1.0, float(s.get("respawnTime", 30.0))),
 				"ai": bool(s.get("ai", true)),
 				"entry": null,
@@ -43,7 +59,7 @@ func spawn_from_map(map_id: String) -> void:
 		return
 	var pts = m.get("spawnPoints", [])
 	if pts is Array:
-		spawn_from_specs(pts)
+		spawn_from_specs(pts, map_id)
 
 ## 当前存活怪物数（测试 / 调试用）。
 func alive_count() -> int:
