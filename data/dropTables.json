@@ -9,6 +9,15 @@
     ]
   },
   {
+    "id": "DT_Shellback_L1",
+    "desc": "裂壳虫掉落表（灵能碎片专属来源 → Q003 荒野遗物；碎片必掉，任务进度不靠概率）",
+    "entries": [
+      { "kind": "coin", "chance": 1.0, "goldRange": [6, 10] },
+      { "kind": "potion", "chance": 0.12, "itemId": "potion_hp_small" },
+      { "kind": "misc", "chance": 1.0, "itemId": "spirit_shard" }
+    ]
+  },
+  {
     "id": "DT_Elite_L1",
     "desc": "精英怪掉落表（L1–5，优奖：金币 L×15±20%、装备必掉、优品权重上移）",
     "entries": [

@@ -35,6 +35,11 @@ func _ready() -> void:
 	await _test_drag_layer()
 	await _test_auto_battle()
 	await _test_save()
+	# ---- M2 任务系统（R9）----
+	_test_quest_chain()
+	_test_quest_save()
+	_test_level_up_carry()
+	_test_quest_side()
 	await _test_world()
 	_finish()
 
@@ -256,7 +261,7 @@ func _test_loot() -> void:
 	var has_coin := false
 	for it in drops:
 		var kind := String(it.get("kind", ""))
-		_expect(kind in ["coin", "potion", "equip", "rune"], "掉落品类非法：%s" % kind)
+		_expect(kind in ["coin", "potion", "equip", "rune", "misc"], "掉落品类非法：%s" % kind)
 		if kind == "coin":
 			has_coin = true
 			var g := int(it.get("gold", 0))
@@ -283,6 +288,22 @@ func _test_loot() -> void:
 				var q := String(it2.get("quality", ""))
 				_expect(q in ["rare", "epic", "legendary"],
 					"Boss 装备品质应限于 rare/epic/legendary，实际 %s" % q)
+
+	# M2（R1）：misc 品类 —— 裂壳虫专属表必掉灵能碎片（Q003 收集物来源，Q3 选专属表）
+	var s_rng := RandomNumberGenerator.new()
+	s_rng.seed = 777
+	var drops2 := Loot.roll("DT_Shellback_L1", s_rng)
+	var has_shard := false
+	for it3 in drops2:
+		var k3 := String(it3.get("kind", ""))
+		_expect(k3 in ["coin", "potion", "misc"], "裂壳虫表品类非法：%s" % k3)
+		if k3 == "misc":
+			_expect(String(it3.get("itemId", "")) == "spirit_shard",
+				"裂壳虫 misc 应为灵能碎片，实际 %s" % String(it3.get("itemId", "")))
+			_expect(DataLoader.get_entry("miscItems", "spirit_shard") != null, "灵能碎片模板应存在")
+			_expect(int(it3.get("count", 0)) >= 1, "灵能碎片应至少 1 个")
+			has_shard = true
+	_expect(has_shard, "裂壳虫表 misc 概率 1.0，应必出灵能碎片（Q003 不靠脸）")
 
 	# 无效掉落表 → 空（不崩溃）
 	_expect(Loot.roll("DT_NOT_EXIST").is_empty(), "无效掉落表应返回空数组")
@@ -983,8 +1004,9 @@ func _test_save() -> void:
 	GameState.player.mp = 12
 	GameState.gold = 1234
 	GameState.current_map = "camp"
-	GameState.quest_states = {"Q001": "done"}
+	GameState.quest_states = {"Q002": {"state": "active", "progress": 2}, "Q003": {"state": "rewarded", "progress": 3}}
 	GameState.first_clear = {"boss_corrupt_beast": true}
+	GameState.unlocks = {"chapter2": true}
 	GameState.settings["searchRadius"] = 15
 	GameState.inventory[0] = _equip_instance("weapon_starter", "sv_1", {"atk": 5})
 	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
@@ -996,6 +1018,7 @@ func _test_save() -> void:
 
 	var expected_worn: Dictionary = (GameState.equipment["weapon"] as Dictionary).duplicate(true)
 	var expected_bag0: Dictionary = (GameState.inventory[0] as Dictionary).duplicate(true)
+	var expected_quests: Dictionary = GameState.quest_states.duplicate(true)
 	var expected_atk := GameState.total_attack()
 
 	SaveManager.set_active_slot(SLOT)
@@ -1033,8 +1056,11 @@ func _test_save() -> void:
 	_expect(int(GameState.player.mp) == 12, "读档后当前 MP 应为 12，实际 %d" % int(GameState.player.mp))
 	_expect(GameState.gold == 1234, "读档后金币应为 1234，实际 %d" % GameState.gold)
 	_expect(GameState.current_map == "camp", "读档后地图应一致")
-	_expect(String(GameState.quest_states.get("Q001", "")) == "done", "读档后任务状态应一致")
+	_expect(_deep_equal(GameState.quest_states, expected_quests),
+		"读档后任务状态应逐键一致（含嵌套 state/progress）：\n  存档时：%s\n  读档后：%s"
+		% [str(expected_quests), str(GameState.quest_states)])
 	_expect(bool(GameState.first_clear.get("boss_corrupt_beast", false)), "读档后首杀标记应一致")
+	_expect(bool(GameState.unlocks.get("chapter2", false)), "读档后解锁标记应一致（M2 新增字段）")
 	_expect(int(GameState.settings.get("searchRadius", 0)) == 15, "读档后设置项应一致")
 
 	# 背包：实例（含 int 化的数值字段）逐字段一致 + 堆叠数正确
@@ -1241,6 +1267,13 @@ func _index_of_instance(instance_id: String) -> int:
 			return i
 	return -1
 
+## 背包内是否含指定模板 id 的物品（M2 任务奖励断言用）。
+func _has_item_id(item_id: String) -> bool:
+	for it in GameState.inventory:
+		if it is Dictionary and String(it.get("itemId", "")) == item_id:
+			return true
+	return false
+
 # ---- 开发期测试便利：测试武器必须与掉落池隔离（防污染回归）----
 func _test_debug_seed() -> void:
 	var id := "debug_blade_overpower"
@@ -1262,6 +1295,203 @@ func _test_debug_seed() -> void:
 				hits += 1
 	_expect(hits == 0, "测试武器不应出现在掉落中（命中 %d 次）" % hits)
 
+# ============================================================================
+# M2 任务系统（R9；产品文档 08 / 工程文档 11）
+# ============================================================================
+
+# ---- M2-1 / M2-3 / M2-5：主线链 Q001–Q005 全流程（接取 → 推进 → 完成 → 交付 → 前置解锁）----
+func _test_quest_chain() -> void:
+	GameState.reset_to_defaults()
+
+	# ① 状态推导：Q001 可接（prev 空）；Q002 前置未完成 → locked；二者均不落档
+	_expect(Quest.state_of("Q001") == Quest.STATE_AVAILABLE, "Q001 初始应可接取")
+	_expect(Quest.state_of("Q002") == Quest.STATE_LOCKED, "Q002 前置未完成应锁定")
+	_expect(GameState.quest_states.is_empty(), "locked / available 不应落档（由 prev 链推导）")
+
+	# ② 接取 Q001（talk 类，接取即达标 → completed，D4-A）
+	var r1 := Quest.accept("Q001")
+	_expect(bool(r1.get("ok", false)), "接取 Q001 应成功：%s" % r1.get("reason", ""))
+	_expect(Quest.state_of("Q001") == Quest.STATE_COMPLETED,
+		"talk 类目标接取即达标，实际 %s" % Quest.state_of("Q001"))
+
+	# ③ 交付 Q001：50 金币 + weapon_starter 入包；Q002 随之解锁
+	var d1 := Quest.deliver("Q001")
+	_expect(bool(d1.get("ok", false)), "交付 Q001 应成功：%s" % d1.get("reason", ""))
+	_expect(Quest.state_of("Q001") == Quest.STATE_REWARDED, "Q001 交付后应置 rewarded")
+	_expect(GameState.gold == 50, "Q001 奖励应为 50 金币，实际 %d" % GameState.gold)
+	_expect(_has_item_id("weapon_starter"), "背包应含 Q001 奖励武器 weapon_starter")
+	_expect(Quest.state_of("Q002") == Quest.STATE_AVAILABLE, "Q001 交付后 Q002 应解锁")
+
+	# ④ Q002：击杀 5 只腐化野狼（monster_died 推进，逐次计数）
+	_expect(bool(Quest.accept("Q002").get("ok", false)), "Q002 应可接取")
+	_expect(Quest.state_of("Q002") == Quest.STATE_ACTIVE, "Q002 接取后应 active")
+	for _i in range(4):
+		Quest.on_event("monster_died", "wolf_corrupted")
+	_expect(int(Quest.progress_of("Q002").get("cur", 0)) == 4,
+		"Q002 应计数 4，实际 %d" % int(Quest.progress_of("Q002").get("cur", 0)))
+	Quest.on_event("monster_died", "wolf_corrupted")            # 第 5 只 → 达标
+	_expect(Quest.state_of("Q002") == Quest.STATE_COMPLETED, "打满 5 只后应 completed")
+	Quest.on_event("monster_died", "wolf_corrupted")            # 08 §8.1：达标后不再计数
+	_expect(int(Quest.progress_of("Q002").get("cur", 0)) == 5, "达标后不应继续计数")
+	Quest.deliver("Q002")
+	_expect(GameState.gold == 150, "Q002 交付后金币应为 150，实际 %d" % GameState.gold)
+
+	# ⑤ Q003：收集 3 个灵能碎片（item_picked 推进）
+	_expect(bool(Quest.accept("Q003").get("ok", false)), "Q003 应可接取")
+	# 目标不匹配的事件不应计数
+	Quest.on_event("item_picked", "misc_firework")
+	_expect(int(Quest.progress_of("Q003").get("cur", 0)) == 0, "非目标物品不应计数")
+	for _i in range(3):
+		Quest.on_event("item_picked", "spirit_shard")
+	_expect(Quest.state_of("Q003") == Quest.STATE_COMPLETED, "收集 3 个碎片后应 completed")
+	GameState.inventory = Inventory.create(40)                  # 腾空背包，确保奖励护甲可入包
+	var d3 := Quest.deliver("Q003")
+	_expect(bool(d3.get("ok", false)), "交付 Q003 应成功：%s" % d3.get("reason", ""))
+	_expect(_has_item_id("armor_starter"), "背包应含 Q003 奖励护甲 armor_starter")
+
+	# ⑥ Q004：击杀裂爪狼王 1 只
+	_expect(Quest.state_of("Q004") == Quest.STATE_AVAILABLE, "Q003 交付后 Q004 应解锁")
+	_expect(bool(Quest.accept("Q004").get("ok", false)), "Q004 应可接取")
+	Quest.on_event("monster_died", "elite_wolf_king")
+	_expect(Quest.state_of("Q004") == Quest.STATE_COMPLETED, "击杀狼王后应 completed")
+	GameState.inventory = Inventory.create(40)
+	Quest.deliver("Q004")
+	_expect(_has_item_id("weapon_wolfking"), "背包应含 Q004 奖励 狼王之刃")
+
+	# ⑦ Q005：击杀腐化巨兽 → 写 unlocks.chapter2
+	_expect(Quest.state_of("Q005") == Quest.STATE_AVAILABLE, "Q004 交付后 Q005 应解锁")
+	_expect(bool(Quest.accept("Q005").get("ok", false)), "Q005 应可接取")
+	Quest.on_event("monster_died", "boss_corrupted_beast")
+	_expect(Quest.state_of("Q005") == Quest.STATE_COMPLETED, "击杀巨兽后应 completed")
+	Quest.deliver("Q005")
+	_expect(Quest.state_of("Q005") == Quest.STATE_REWARDED, "Q005 应置 rewarded")
+	_expect(bool(GameState.unlocks.get("chapter2", false)), "Q005 应写入 unlocks.chapter2")
+
+	# ⑧ 重复交付应被拒绝（08 §8.1：奖励不重复领）
+	_expect(not bool(Quest.deliver("Q005").get("ok", false)), "已交付的任务不应重复领奖")
+
+	GameState.reset_to_defaults()
+
+# ---- M2-6 / R8：任务状态存档往返 + 老结构（String）防御性迁移 ----
+func _test_quest_save() -> void:
+	const SLOT := 3
+	var prev_active: int = SaveManager.active_slot
+	var snap := _snapshot_saves(SLOT)
+	SaveManager.delete_slot(SLOT)
+
+	GameState.reset_to_defaults()
+	# 造一份混合局面：rewarded / active(带进度) + 解锁标记
+	Quest.accept("Q001")
+	Quest.deliver("Q001")
+	Quest.accept("Q002")
+	Quest.on_event("monster_died", "wolf_corrupted")
+	Quest.on_event("monster_died", "wolf_corrupted")
+	GameState.unlocks = {"chapter2": true}
+	var expected: Dictionary = GameState.quest_states.duplicate(true)
+	_expect(not expected.is_empty(), "应有任务状态可存")
+
+	SaveManager.set_active_slot(SLOT)
+	_expect(SaveManager.save_slot(SLOT, true), "任务存档应写入成功")
+
+	# 存 → 退 → 进
+	GameState.reset_to_defaults()
+	_expect(GameState.quest_states.is_empty(), "重置后任务状态应清空")
+	var res := SaveManager.read_slot(SLOT)
+	_expect(bool(res.get("ok", false)), "任务存档应可读取")
+	SaveManager.apply_to_game_state(res.get("data", {}))
+	_expect(_deep_equal(GameState.quest_states, expected),
+		"任务状态存读应逐字段一致（嵌套 state/progress）：\n  存档时：%s\n  读档后：%s"
+		% [str(expected), str(GameState.quest_states)])
+	_expect(Quest.state_of("Q002") == Quest.STATE_ACTIVE, "读档后 Q002 应仍为 active")
+	_expect(int(Quest.progress_of("Q002").get("cur", 0)) == 2,
+		"读档后 Q002 进度应保留 2，实际 %d" % int(Quest.progress_of("Q002").get("cur", 0)))
+	_expect(bool(GameState.unlocks.get("chapter2", false)), "读档后 unlocks 应保留")
+
+	# 老结构迁移：String 值 → {state, progress}；非法状态丢弃（R8 防御）
+	var migrated := Quest.normalize_states({"Q001": "rewarded", "Q004": "active", "Q009": "bogus"})
+	_expect(String((migrated.get("Q001", {}) as Dictionary).get("state", "")) == "rewarded",
+		"老档 String 值应迁移为 {state, progress}")
+	_expect(int((migrated.get("Q001", {}) as Dictionary).get("progress", -1)) == 0,
+		"迁移后 progress 应为 0")
+	_expect(not migrated.has("Q009"), "非法状态应被丢弃（不静默写坏）")
+
+	# 还原现场（不污染玩家真实存档）
+	SaveManager.delete_slot(SLOT)
+	_restore_saves(SLOT, snap)
+	SaveManager.active_slot = prev_active
+	GameState.reset_to_defaults()
+
+# ---- M2-5 / T05：升级保留 HP / MP 百分比（产品文档 4.3）----
+func _test_level_up_carry() -> void:
+	GameState.reset_to_defaults()
+	var hp0 := GameState.max_hp()
+	var mp0 := GameState.max_mp()
+	# 当前值设为上限的 50%
+	GameState.player.hp = int(round(float(hp0) * 0.5))
+	GameState.player.mp = int(round(float(mp0) * 0.5))
+	var ratio_hp := float(GameState.player.hp) / float(hp0)
+	var ratio_mp := float(GameState.player.mp) / float(mp0)
+
+	GameState.add_xp(GameState.xp_to_next(1))       # 恰好升 1 级
+	_expect(int(GameState.player.level) == 2,
+		"应升到 2 级，实际 %d" % int(GameState.player.level))
+	_expect(GameState.max_hp() > hp0, "升级后最大生命应提高")
+	var new_ratio_hp := float(GameState.player.hp) / float(GameState.max_hp())
+	var new_ratio_mp := float(GameState.player.mp) / float(GameState.max_mp())
+	_expect(absf(new_ratio_hp - ratio_hp) <= 0.02,
+		"升级后 HP 百分比应保留（4.3）：升级前 %.3f，升级后 %.3f" % [ratio_hp, new_ratio_hp])
+	_expect(absf(new_ratio_mp - ratio_mp) <= 0.02,
+		"升级后 MP 百分比应保留（4.3）：升级前 %.3f，升级后 %.3f" % [ratio_mp, new_ratio_mp])
+	GameState.reset_to_defaults()
+
+# ---- M2-6 / 08 §8.2 §8.4：支线放弃 / 重接（计数清零）+ 同时接取上限 5 ----
+func _test_quest_side() -> void:
+	GameState.reset_to_defaults()
+
+	# ① 支线可接取；主线不可放弃
+	_expect(bool(Quest.accept("S001").get("ok", false)), "支线 S001 应可接取")
+	_expect(Quest.state_of("S001") == Quest.STATE_ACTIVE, "S001 接取后应 active")
+	_expect(not bool(Quest.abandon("Q001").get("ok", false)), "主线任务不可放弃（08 §8.2）")
+
+	# ② 计数后放弃 → 计数清零
+	Quest.on_event("monster_died", "shellback_bug")
+	_expect(int(Quest.progress_of("S001").get("cur", 0)) == 1, "S001 应先计数 1")
+	_expect(bool(Quest.abandon("S001").get("ok", false)), "支线应可放弃")
+	_expect(Quest.state_of("S001") == Quest.STATE_ABANDONED, "放弃后应为 abandoned")
+	_expect(int(Quest.progress_of("S001").get("cur", 0)) == 0, "放弃后计数应清零（08 §8.4）")
+
+	# ③ 立即重接 → active，计数从 0 重新开始
+	_expect(bool(Quest.accept("S001").get("ok", false)), "放弃后应可立即重接")
+	_expect(Quest.state_of("S001") == Quest.STATE_ACTIVE, "重接后应回到 active")
+	_expect(int(Quest.progress_of("S001").get("cur", 0)) == 0, "重接后计数应从 0 开始")
+
+	# ④ 同时接取上限 5（08 §8.4）：临时注入 6 条可接任务
+	GameState.reset_to_defaults()
+	var quests_ref: Array = DataLoader.get_table("quests")
+	for i in range(6):
+		quests_ref.append({
+			"id": "T_TMP%d" % i, "name": "临时任务 %d" % i, "type": "side", "giver": "elder",
+			"objective": {"kind": "kill", "targetId": "training_dummy", "count": 1},
+			"reward": {"gold": 1, "xp": 0}, "mapScope": ["camp"], "prev": "", "abandonable": true,
+		})
+	var ok_n := 0
+	for i in range(6):
+		if bool(Quest.accept("T_TMP%d" % i).get("ok", false)):
+			ok_n += 1
+	_expect(ok_n == 5, "同时接取上限应为 5，实际成功 %d 个" % ok_n)
+	_expect(Quest.active_count() == 5, "active 数应封顶 5，实际 %d" % Quest.active_count())
+
+	# 清理临时任务（避免污染后续用例）
+	var kept: Array = []
+	for q in quests_ref:
+		if q is Dictionary and not String((q as Dictionary).get("id", "")).begins_with("T_TMP"):
+			kept.append(q)
+	quests_ref.clear()
+	for q in kept:
+		quests_ref.append(q)
+	GameState.reset_to_defaults()
+
+# ---- M1 世界装配：出生点 / 边界 / 怪物点 / NPC / 掉落容器（M1-5 / M1-6 / M1-8）----
 func _test_world() -> void:
 	GameState.reset_to_defaults()   # 保证发放测试武器时背包有空间
 	var game: Node = load("res://scenes/Game.tscn").instantiate()
@@ -1308,20 +1538,34 @@ func _test_world() -> void:
 	var loot_root: Node = game.get_node_or_null("LootRoot")
 	_expect(loot_root != null and loot_root.is_in_group("loot_root"), "缺少 LootRoot 掉落容器节点")
 
-	# M1-8：安全区 NPC（货郎）与交互半径
+	# M1-8 / M2-2：安全区 NPC（货郎 + 任务官长老）与交互半径
 	var npcs: Node = game.get_node_or_null("Npcs")
 	_expect(npcs != null, "未找到 Npcs 节点")
 	if npcs != null:
-		_expect(npcs.get_child_count() == 1, "营地图应有 1 个货郎，实际 %d" % npcs.get_child_count())
-		var npc := npcs.get_child(0) as Npc
-		_expect(npc != null, "Npcs 子节点应为 Npc 实体")
-		if npc != null:
-			_expect(npc.shop_id == "peddler_camp", "货郎应绑定 peddler_camp 商店")
-			_expect(not npc.npc_name.is_empty(), "货郎应有显示名")
-			_expect(not npc.is_player_in_range(), "出生点不应已在货郎交互范围内（避免开局误开面板）")
-			(player as Node2D).global_position = npc.global_position + Vector2(40.0, 0.0)
+		_expect(npcs.get_child_count() == 2,
+			"营地图应有 2 个 NPC（货郎 + 长老），实际 %d" % npcs.get_child_count())
+		var peddler: Npc = null
+		var elder: Npc = null
+		for c in npcs.get_children():
+			var n := c as Npc
+			if n == null:
+				continue
+			if n.role == "quest":
+				elder = n
+			elif not n.shop_id.is_empty():
+				peddler = n
+		_expect(peddler != null, "应存在货郎 NPC（role=shop）")
+		_expect(elder != null, "应存在任务官 NPC（role=quest，M2-2）")
+		if elder != null:
+			_expect(elder.npc_name == "长老", "任务官应名为长老，实际 %s" % elder.npc_name)
+			_expect(elder.shop_id.is_empty(), "任务官不应绑定商店")
+		if peddler != null:
+			_expect(peddler.shop_id == "peddler_camp", "货郎应绑定 peddler_camp 商店")
+			_expect(not peddler.npc_name.is_empty(), "货郎应有显示名")
+			_expect(not peddler.is_player_in_range(), "出生点不应已在货郎交互范围内（避免开局误开面板）")
+			(player as Node2D).global_position = peddler.global_position + Vector2(40.0, 0.0)
 			await get_tree().process_frame
-			_expect(game.nearest_npc() == npc, "走进交互半径后应能定位到该 NPC（6.3）")
+			_expect(game.nearest_npc() == peddler, "走进交互半径后应能定位到货郎（6.3）")
 
 	# HUD 伤害飘字层分组
 	var dn: Node = game.get_node_or_null("DamageNumbers")

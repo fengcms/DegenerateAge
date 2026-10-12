@@ -4,6 +4,8 @@ extends Control
 ## 全部数值经 EventBus 广播驱动刷新，不做轮询（内存与事件卫生）。
 
 const HOTBAR_SLOTS := 16
+## 任务列表最多显示条数（08 §8.4 同时接取上限 5）；超出折叠为「还有 N 条」。
+const QUEST_LIST_MAX := 5
 
 ## 自动状态指示配色（4.6：界面明显显示「自动中 / 手动接管 / 暂停中」）
 const COL_AUTO_OFF := Color("8c9199")
@@ -26,6 +28,8 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _target_name: Label = %TargetName
 @onready var _target_hp: ProgressBar = %TargetHp
 @onready var _hotbar: HBoxContainer = %Hotbar
+@onready var _quest_tracker: PanelContainer = %QuestTracker
+@onready var _quest_list: VBoxContainer = %QuestList
 
 var _target: Node = null
 var _auto_battle: bool = false
@@ -44,9 +48,14 @@ func _ready() -> void:
 	EventBus.toast_requested.connect(_on_toast)
 	EventBus.auto_state_changed.connect(_on_auto_state)
 	EventBus.auto_phase_changed.connect(_on_auto_phase)
+	EventBus.quest_accepted.connect(_on_quest_changed)
+	EventBus.quest_completed.connect(_on_quest_changed)
+	EventBus.quest_rewarded.connect(_on_quest_changed)
+	EventBus.quest_progressed.connect(_on_quest_progressed)
 	_build_hotbar()
 	_refresh_all()
 	_refresh_auto()
+	_refresh_quests()
 
 func _process(_delta: float) -> void:
 	_update_coords()
@@ -149,6 +158,58 @@ func _refresh_all() -> void:
 	_on_gold(GameState.gold)
 	_on_inventory_changed()
 	_map_name.text = _current_map_name()
+
+# ---- 任务列表（M2-4；9.1 第 6 条「小地图下方」）----
+
+func _on_quest_changed(_quest_id: String) -> void:
+	_refresh_quests()
+
+func _on_quest_progressed(_quest_id: String, _cur: int, _need: int) -> void:
+	_refresh_quests()
+
+## 重建进行中任务列表（事件驱动刷新，不轮询）。无进行中任务时整块隐藏。
+func _refresh_quests() -> void:
+	if _quest_list == null:
+		return
+	for c in _quest_list.get_children():
+		_quest_list.remove_child(c)
+		c.queue_free()
+	var items: Array[Dictionary] = Quest.ongoing_list()
+	_quest_tracker.visible = not items.is_empty()
+	if items.is_empty():
+		return
+	var shown := 0
+	for e in items:
+		if shown >= QUEST_LIST_MAX:
+			break
+		_quest_list.add_child(_make_quest_row(e))
+		shown += 1
+	if items.size() > QUEST_LIST_MAX:
+		var more := Label.new()
+		more.text = "…还有 %d 条" % (items.size() - QUEST_LIST_MAX)
+		more.add_theme_font_size_override("font_size", 11)
+		more.add_theme_color_override("font_color", COL_AUTO_OFF)
+		more.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_quest_list.add_child(more)
+
+## 单条任务行：「· 初战试炼 3/5」；completed 显示「⚑ 名 可交付」高亮（9.1）。
+func _make_quest_row(e: Dictionary) -> Label:
+	var state := String(e.get("state", ""))
+	var done := state == Quest.STATE_COMPLETED
+	var lbl := Label.new()
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var text := "%s%s" % ["⚑ " if done else "· ", String(e.get("name", ""))]
+	if done:
+		text += "　可交付"
+		lbl.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
+	else:
+		var need := int(e.get("need", 0))
+		if need > 1:
+			text += " %d/%d" % [int(e.get("cur", 0)), need]
+		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.91))
+	lbl.text = text
+	return lbl
 
 func _update_coords() -> void:
 	var p := get_tree().get_first_node_in_group("player")

@@ -65,13 +65,13 @@
     "resistType": "",
     "xpReward": 30,
     "goldReward": 9,
-    "dropTableId": "DT_Wild_L1",
+    "dropTableId": "DT_Shellback_L1",
     "kind": "normal",
     "monsterType": "tank",
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 0.6,
-    "desc": "高防型普通怪，贯穿多张地图、按刷新等级自动缩放 HP。"
+    "desc": "高防型普通怪，贯穿多张地图、按刷新等级自动缩放 HP。专属掉落表必掉灵能碎片（Q003 收集物来源）。"
   },
   {
     "id": "ash_wraith",

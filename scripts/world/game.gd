@@ -13,6 +13,18 @@ const TEST_SPAWNS := [
 	{"monsterId": "training_dummy", "level": 1, "count": 3, "respawnTime": 20.0, "ai": false},
 ]
 
+## M2 任务链所需的精英 / Boss 测试点（【M5 打包前移除】）。
+## Q004 需击杀 elite_wolf_king、Q005 需击杀 boss_corrupted_beast，而 M1 只有 camp 一张图。
+## 缓解 R-d（营地变高危区 + 忘清理）：
+##   ① **仅在 debug 构建生成**（正式包不带）；
+##   ② Boss 测试点 `ai:false`（静态可挑战）——营地是新号出生地，L10 Boss 主动追击会秒杀
+##      L1 玩家；M3 迁至 corruption_source 后恢复 ai=true；
+##   ③ 已登记于工程文档 04「M5 移除清单」。
+const TEST_ELITES := [
+	{"monsterId": "elite_wolf_king", "level": 4, "count": 1, "respawnTime": 60.0, "ai": true},
+	{"monsterId": "boss_corrupted_beast", "level": 10, "count": 1, "respawnTime": 90.0, "ai": false},
+]
+
 ## ---- 开发期测试便利（【M5 打包前移除】）----
 ## 开局往背包补一把高攻测试武器，省去刷装备环节，便于快速验证战斗 / 掉落 / 交易。
 ## 模板在 equipments.json 中标 "debug": true → Loot 抽取时跳过（见 loot.gd），不污染正式掉落池。
@@ -20,8 +32,10 @@ const DEBUG_WEAPON_ID := "debug_blade_overpower"
 
 ## M1 安全区 NPC（6.3：每个地图的安全区聚集功能性 NPC；M3 改为读 maps.json 的 NPC 点）。
 ## cell 为等距网格坐标；货郎放在出生点附近（营地中心偏西 4 格），开局即可走到。
+## M2 追加任务官「长老」（role=quest）：与货郎并列，M3 统一数据化时一起搬（11 §3 D2-A）。
 const TEST_NPCS := [
-	{"shopId": "peddler_camp", "cell": Vector2i(16, 20)},
+	{"shopId": "peddler_camp", "role": "shop", "cell": Vector2i(16, 20)},
+	{"role": "quest", "npcName": "长老", "cell": Vector2i(24, 20)},
 ]
 
 @onready var _ground: IsoGround = $Ground
@@ -55,6 +69,9 @@ func _ready() -> void:
 	# 怪物点（M1-5）
 	_spawner.setup(_ground, _player)
 	_spawner.spawn_from_specs(TEST_SPAWNS)
+	# M2 任务链所需的精英 / Boss 测试点（仅 debug 构建；R-d 缓解见 TEST_ELITES 注释）
+	if OS.is_debug_build():
+		_spawner.spawn_from_specs(TEST_ELITES)
 
 	# 安全区 NPC（M1-8）
 	_spawn_npcs()
@@ -88,33 +105,13 @@ func _has_item_anywhere(item_id: String) -> bool:
 			return true
 	return false
 
-## 依模板构造一件装备实例（结构与 Loot 一致：属性随实例保存，10.1 / 5.7）。
+## 依模板构造一件装备实例（结构由公共工厂产出，见 scripts/systems/item_factory.gd）。
+## 开发期测试装备用 "debug" 前缀便于辨识（M2 起统一由 ItemFactory 构造，消除 4 处重复）。
 func _make_debug_equip(item_id: String) -> Dictionary:
-	var tpl = DataLoader.get_entry("equipments", item_id)
-	if not (tpl is Dictionary):
+	var item := ItemFactory.make_equip(item_id, 1, "debug")
+	if item.is_empty():
 		push_warning("[Debug] 未找到测试装备模板：%s" % item_id)
-		return {}
-	var base := {}
-	if tpl.get("baseAttrs", {}) is Dictionary:
-		base = (tpl.get("baseAttrs") as Dictionary).duplicate(true)
-	var affixes := []
-	if tpl.get("affixes", []) is Array:
-		affixes = (tpl.get("affixes") as Array).duplicate(true)
-	var pct := []
-	if tpl.get("pctAttrs", []) is Array:
-		pct = (tpl.get("pctAttrs") as Array).duplicate(true)
-	return {
-		"kind": "equip",
-		"itemId": item_id,
-		"instanceId": "debug_%d" % Time.get_ticks_msec(),
-		"quality": String(tpl.get("quality", "common")),
-		"level": 1,
-		"baseAttrs": base,
-		"affixes": affixes,
-		"pctAttrs": pct,
-		"star": 0,
-		"count": 1,
-	}
+	return item
 
 ## 按测试规格生成 NPC（6.3）。M3 起改为读 maps.json 的 NPC 点。
 func _spawn_npcs() -> void:
@@ -123,6 +120,8 @@ func _spawn_npcs() -> void:
 			continue
 		var npc: Npc = NPC_SCENE.instantiate()
 		npc.shop_id = String(spec.get("shopId", ""))
+		npc.role = String(spec.get("role", "shop"))
+		npc.npc_name = String(spec.get("npcName", ""))
 		var cell: Vector2i = spec.get("cell", Vector2i.ZERO)
 		npc.position = Iso.grid_to_world(cell)
 		_npcs.add_child(npc)
@@ -157,10 +156,14 @@ func auto_pilot() -> AutoBattle:
 	return _player.get_node_or_null("AutoPilot") as AutoBattle
 
 ## 就近与 NPC 交互：成功派发返回 true（6.3 通用交互入口，后续对话系统 9.8 在此扩展）。
+## M2：按 NPC role 派发 —— quest = 任务面板，shop = 货郎面板（11 §4.4）。
 func _try_interact() -> bool:
 	var npc := nearest_npc()
 	if npc == null:
 		return false
+	if npc.role == "quest":
+		EventBus.quest_panel_requested.emit(npc.npc_name)
+		return true
 	if not npc.shop_id.is_empty():
 		EventBus.shop_open_requested.emit(npc.shop_id)
 		return true

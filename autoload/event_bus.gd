@@ -38,10 +38,12 @@ signal trade_done(kind: String, item_id: String, price: int)
 signal auto_state_changed(battle: bool, pickup: bool)
 signal auto_phase_changed(phase: String)
 
-# ---- 任务 ----
+# ---- 任务（M2）----
 signal quest_accepted(quest_id: String)
 signal quest_progressed(quest_id: String, current: int, required: int)
 signal quest_completed(quest_id: String)
+signal quest_rewarded(quest_id: String)
+signal quest_panel_requested(npc_name: String)
 
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)

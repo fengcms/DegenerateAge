@@ -102,6 +102,7 @@ func _collect() -> Dictionary:
 		"equipment": GameState.equipment.duplicate(true),
 		"questStates": GameState.quest_states.duplicate(true),
 		"firstClear": GameState.first_clear.duplicate(true),
+		"unlocks": GameState.unlocks.duplicate(true),
 		"settings": GameState.settings.duplicate(true),
 		# 注意：运行态自动战斗开关**不入档**（10.3：重启后自动战斗默认关闭）。
 	}
@@ -179,7 +180,9 @@ func _connect_events() -> void:
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
 	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())
+	EventBus.quest_accepted.connect(func(_q: String) -> void: request_autosave())
 	EventBus.quest_completed.connect(func(_q: String) -> void: request_autosave())
+	EventBus.quest_rewarded.connect(func(_q: String) -> void: request_autosave())
 
 # ---- 读取与迁移 ----
 
@@ -284,10 +287,14 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.current_map = String(data.get("currentMap", "camp"))
 	GameState.inventory = _migrate_inventory(data.get("inventory", []))
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
-	if data.get("questStates", null) is Dictionary:
-		GameState.quest_states = data["questStates"] as Dictionary
+	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
+	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
 	if data.get("firstClear", null) is Dictionary:
 		GameState.first_clear = data["firstClear"] as Dictionary
+	if data.get("unlocks", null) is Dictionary:
+		GameState.unlocks = data["unlocks"] as Dictionary
+	else:
+		GameState.unlocks = {}
 	if data.get("settings", null) is Dictionary:
 		GameState.settings = _migrate_settings(data["settings"] as Dictionary)
 

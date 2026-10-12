@@ -27,6 +27,7 @@ EventBus="*res://autoload/event_bus.gd"
 GameState="*res://autoload/game_state.gd"
 DataLoader="*res://autoload/data_loader.gd"
 SaveManager="*res://autoload/save_manager.gd"
+QuestService="*res://autoload/quest_service.gd"
 
 [display]
 

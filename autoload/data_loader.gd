@@ -168,8 +168,9 @@ func _validate_drop_tables() -> Array[String]:
 		return report
 	var potion_ids := _id_set("potions")
 	var rune_ids := _id_set("runes")
+	var misc_ids := _id_set("miscItems")
 	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
-	var valid_kinds := ["coin", "potion", "equip", "rune"]
+	var valid_kinds := ["coin", "potion", "equip", "rune", "misc"]
 
 	for d in dts:
 		if typeof(d) != TYPE_DICTIONARY:
@@ -202,6 +203,10 @@ func _validate_drop_tables() -> Array[String]:
 						for rid in ids:
 							if not rune_ids.has(String(rid)):
 								report.append("[dropTables] %s 引用未定义如意 '%s'" % [did, rid])
+				"misc":
+					var mid := String(en.get("itemId", ""))
+					if not misc_ids.has(mid):
+						report.append("[dropTables] %s 引用未定义杂项 '%s'" % [did, mid])
 				"equip":
 					if not (en.get("levelRange", null) is Array):
 						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)

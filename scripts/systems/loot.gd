@@ -3,14 +3,18 @@ extends RefCounted
 ## 掉落结算（产品文档 03.1 死亡结算 / 07.6 怪物点↔掉落表 / 10.2 dropTables schema）。
 ##
 ## 输入：掉落表 id（怪物模板的 dropTableId）；输出：物品实例数组。
-## 掉落项**必在合法表内**（T07）：coin / potion / equip / rune 四类，
+## 掉落项**必在合法表内**（T07）：coin / potion / equip / rune / misc 五类，
 ## 品类、品质权重、itemId、等级范围均来自配置，不硬编码。
 ## 装备实例遵循「模板 ID 与实例 ID 分离、实例属性永久保存」（5.7 / 10.1）。
+##
+## misc（M2 新增）：杂项 / 任务收集物，读 miscItems 表 —— 用于灵能碎片（Q003）
+## 这类「非装备、非消耗品」的产出路径。新增投放只需改 dropTables.json。
 
 const KIND_COIN := "coin"
 const KIND_POTION := "potion"
 const KIND_EQUIP := "equip"
 const KIND_RUNE := "rune"
+const KIND_MISC := "misc"
 
 ## 5.10 随机词条数：普 0 / 优 1 / 稀 1–2 / 史 2–3 / 传 = 独特被动（不随机词条）。
 const AFFIX_COUNT := {
@@ -80,6 +84,11 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
 			return {"kind": KIND_RUNE, "itemId": rid, "count": 1}
 		KIND_EQUIP:
 			return _roll_equip(e, r)
+		KIND_MISC:
+			var mid := String(e.get("itemId", ""))
+			if mid.is_empty() or DataLoader.get_entry("miscItems", mid) == null:
+				return {}
+			return {"kind": KIND_MISC, "itemId": mid, "count": 1}
 	return {}
 
 ## 生成一件装备实例（品质按权重 → 基础属性按等级缩放 → 随机词条）。

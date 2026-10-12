@@ -26,8 +26,9 @@ var inventory: Array = []           # 背包物品实例（40 格，见 Inventor
 var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
 var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
-var quest_states: Dictionary = {}   # quest_id -> state 字符串
+var quest_states: Dictionary = {}   # quest_id -> {"state": String, "progress": int}（M2 起；见 scripts/systems/quest.gd）
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
+var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2：Q005 奖励 → 第二章入口）
 var settings: Dictionary = {}
 ## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
 ## （10.3：重启后自动战斗默认关闭）。决策机见 scripts/systems/auto_battle.gd。
@@ -99,6 +100,7 @@ func reset_to_defaults() -> void:
 	_open_panels = {}
 	quest_states = {}
 	first_clear = {}
+	unlocks = {}
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
 	clear_save_pos()

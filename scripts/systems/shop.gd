@@ -48,16 +48,10 @@ static func buy_price(shop_id: String, item_id: String) -> int:
 
 # ---- 物品构造 ----
 
-## 依 id 构造一件待售物品实例（品类由配置表反查）。
-## 药水 → potion；杂项 → misc；找不到则空字典（不静默凭空造物）。
+## 依 id 构造一件待售物品实例（品类由配置表反查，构造统一收敛到 ItemFactory）。
+## 药水 → potion；杂项 → misc；装备 → equip 实例；找不到则空字典（不静默凭空造物）。
 static func make_item(item_id: String) -> Dictionary:
-	if item_id.is_empty():
-		return {}
-	if DataLoader.get_entry("potions", item_id) is Dictionary:
-		return {"kind": "potion", "itemId": item_id, "count": 1}
-	if DataLoader.get_entry("miscItems", item_id) is Dictionary:
-		return {"kind": "misc", "itemId": item_id, "count": 1}
-	return {}
+	return ItemFactory.make_any(item_id, 1)
 
 ## 商品简介（9.6 / 6.4 购买面板每项含介绍）。取配置 desc，缺省回退名称。
 static func describe(item_id: String) -> String:

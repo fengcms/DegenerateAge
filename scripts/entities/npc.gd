@@ -17,6 +17,9 @@ const COLOR_SKIN := Color("e8c9a0")
 
 ## 对应 shops.json 的 npcId；为空表示纯对话 NPC（M2 任务官等）。
 @export var shop_id: String = ""
+## 功能角色（M2）：shop = 货郎（开交易面板）；quest = 任务官（开任务面板）。
+## 交互派发见 scripts/world/game.gd::_try_interact。
+@export var role: String = "shop"
 ## 头顶名称；为空时从配置表取名。
 @export var npc_name: String = ""
 
