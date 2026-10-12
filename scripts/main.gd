@@ -2,6 +2,8 @@ extends Node2D
 ## 启动引导：校验数据配置。世界由子场景 Game 承载，HUD 由 UI/Hud 承载（M1 起）。
 
 func _ready() -> void:
+	# M5-9a：渲染策略先于一切显示相关计算落地（窗口放大 = 看到更多，元素像素尺寸不变）。
+	SettingsRuntime.apply_display_strategy()
 	SettingsRuntime.apply_all.call_deferred()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	$UI/MenuPanel.initialize_if_current.call_deferred()

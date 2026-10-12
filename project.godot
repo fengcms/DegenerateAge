@@ -35,7 +35,13 @@ MapService="*res://autoload/map_service.gd"
 
 window/size/viewport_width=1280
 window/size/viewport_height=800
+; ⚠ 实际渲染策略在运行时由 SettingsRuntime.apply_display_strategy() 设为 disabled（M5-9a，工程 17）。
+; 这里必须保持 canvas_items：无头运行时 dummy 显示驱动报告窗口尺寸 0×0，而 disabled 的视口
+; 尺寸源自窗口 ⇒ 根视口塌成 64×64，会让依赖 get_viewport_rect() 的 Game.visible_enemies()
+; 与 T 系列冒烟误判失败。无头保持 canvas_items 可让视口取本处 1280×800。
+; ⚠ 注意：OS.has_feature("headless") 恒为 false，判断无头请用 DisplayServer.get_name()。
 window/stretch/mode="canvas_items"
+; aspect 与 canvas_items 配套；运行时切到 disabled 后失效（保留仅为便于回退）。
 window/stretch/aspect="expand"
 
 [gui]

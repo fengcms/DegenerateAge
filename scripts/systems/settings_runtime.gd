@@ -74,6 +74,24 @@ static func apply_all() -> void:
 	_apply_text_scale()
 	_apply_window()
 
+## M5-9a（09-A 显示适配，工程 17）：渲染策略 = disabled。
+## disabled 下「逻辑视口尺寸 = 窗口逻辑尺寸」⇒ 窗口放大 = 看到更多地图，元素像素尺寸不变；
+## 基准 1280×800 时与 canvas_items 1:1 等价，故不是"换基准"，是渲染策略修正。
+##
+## ⚠ 为什么写在运行时而不是 project.godot：
+## 无头运行时 dummy 显示驱动报告窗口尺寸 0×0，而 disabled 的视口尺寸**源自窗口** ⇒ 根视口
+## 塌成 64×64；`Game.visible_enemies()` 用 `get_viewport_rect()` 判定可见怪，于是有怪也"看不见"，
+## T 系列冒烟（自动战斗锁定目标等）随之误判。无头没有显示器、策略无意义，故无头保持项目默认的
+## canvas_items（视口取 `display/window/size/viewport_*` 的 1280×800）。
+## ⚠ 判断无头只能用 DisplayServer.get_name()：`OS.has_feature("headless")` 实测恒为 false。
+static func apply_display_strategy() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	tree.root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
+
 static func _apply_audio() -> void:
 	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index("Master"), clampf(float(GameState.settings.get("masterVolume", 1.0)), 0.0, 1.0))
 	for name in ["Music", "SFX"]:
