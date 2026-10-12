@@ -28,6 +28,7 @@ func _ready() -> void:
 	_test_loot()
 	_test_balance_calibration()
 	_test_inventory()
+	_test_inventory_sort()
 	await _test_pickup()
 	await _test_claim_fly()
 	_test_equipment()
@@ -112,6 +113,32 @@ func _test_blacksmith() -> void:
 		_expect(not dialogue.visible, "手动打断走向 NPC 后不应延迟弹出对话")
 	main.queue_free()
 	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_inventory_sort() -> void:
+	GameState.reset_to_defaults()
+	var rare := _equip_instance("weapon_starter", "sort_rare", {"atk": 5})
+	rare.quality = "rare"
+	var common := _equip_instance("weapon_starter", "sort_common", {"atk": 6})
+	GameState.inventory[3] = common
+	GameState.inventory[7] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
+	GameState.inventory[9] = rare
+	GameState.inventory[11] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
+	GameState.inventory[13] = {"kind": "potion", "itemId": "potion_hp_small", "count": 5, "batch": "special"}
+	var panel := preload("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	panel.get("_organize_button").pressed.emit()
+	_expect(GameState.inventory[0].instanceId == "sort_rare" and GameState.inventory[1].instanceId == "sort_common",
+		"背包整理应先排装备，同模板高品质在前且保留实例")
+	_expect(GameState.inventory[2].count == 99 and GameState.inventory[3].count == 2
+		and GameState.inventory[4].count == 5 and GameState.inventory[4].batch == "special",
+		"相同药品应安全合堆，不同元数据的堆叠不得混合")
+	_expect(GameState.inventory[5] == null and GameState.inventory.size() == 40,
+		"整理后空格应移到末尾且背包容量不变")
+	_expect(not GameState.organize_inventory(), "重复整理应保持稳定顺序")
+	panel.set_open(false)
+	panel.queue_free()
 	GameState.reset_to_defaults()
 
 func _test_warehouse() -> void:

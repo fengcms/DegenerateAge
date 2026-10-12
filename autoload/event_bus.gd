@@ -27,6 +27,7 @@ signal item_picked(item_id: String)
 signal loot_spawned(item: Dictionary)
 signal gold_changed(amount: int)
 signal inventory_changed()
+signal inventory_organized()
 signal equipment_changed()
 
 # ---- NPC / 交易（M1-8）----

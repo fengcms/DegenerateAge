@@ -8,6 +8,7 @@ extends RefCounted
 ## 函数显式接收 inv 数组，便于单测与解耦（不依赖 Autoload 单例）。
 
 const SLOTS := 40
+const ORGANIZE_KINDS := ["equip", "potion", "rune", "misc", "quest"]
 
 ## 新建一个空背包。
 static func create(size: int = SLOTS) -> Array:
@@ -89,6 +90,68 @@ static func _same_stack(entry: Variant, item: Dictionary) -> bool:
 	left.erase("count")
 	right.erase("count")
 	return left == right
+
+## 整理当前容器：分类 / 模板 / 装备品质星级排序，安全合并同数据堆叠，空格置末尾。
+## 返回是否发生变化；不增减装备实例，也不修改词条。
+static func organize(slots: Array) -> bool:
+	var entries: Array[Dictionary] = []
+	for index in range(slots.size()):
+		if slots[index] is Dictionary:
+			entries.append({"item": (slots[index] as Dictionary).duplicate(true), "index": index})
+	entries.sort_custom(_organize_less)
+	var packed: Array[Dictionary] = []
+	for entry in entries:
+		var item: Dictionary = entry.item
+		if ItemUtil.is_stackable(item):
+			var remaining := int(item.get("count", 1))
+			var limit := maxi(1, ItemUtil.stack_max(item))
+			for existing in packed:
+				if not _same_stack(existing, item):
+					continue
+				var amount := mini(remaining, maxi(0, limit - int(existing.get("count", 1))))
+				if amount > 0:
+					existing["count"] = int(existing.get("count", 1)) + amount
+					remaining -= amount
+				if remaining == 0:
+					break
+			while remaining > 0:
+				var stack := item.duplicate(true)
+				stack["count"] = mini(remaining, limit)
+				packed.append(stack)
+				remaining -= int(stack["count"])
+		else:
+			packed.append(item)
+	if packed.size() > slots.size():
+		return false
+	var changed := false
+	for index in range(slots.size()):
+		var next = packed[index] if index < packed.size() else null
+		if slots[index] != next:
+			changed = true
+		slots[index] = next
+	return changed
+
+static func _organize_less(a: Dictionary, b: Dictionary) -> bool:
+	var left: Dictionary = a.item
+	var right: Dictionary = b.item
+	var left_kind := ORGANIZE_KINDS.find(String(left.get("kind", "")))
+	var right_kind := ORGANIZE_KINDS.find(String(right.get("kind", "")))
+	left_kind = 999 if left_kind < 0 else left_kind
+	right_kind = 999 if right_kind < 0 else right_kind
+	if left_kind != right_kind:
+		return left_kind < right_kind
+	var left_id := String(left.get("itemId", ""))
+	var right_id := String(right.get("itemId", ""))
+	if left_id != right_id:
+		return left_id < right_id
+	if String(left.get("kind", "")) == "equip":
+		var left_quality := ItemUtil.QUALITIES.find(String(left.get("quality", "common")))
+		var right_quality := ItemUtil.QUALITIES.find(String(right.get("quality", "common")))
+		if left_quality != right_quality:
+			return left_quality > right_quality
+		if int(left.get("star", 0)) != int(right.get("star", 0)):
+			return int(left.get("star", 0)) > int(right.get("star", 0))
+	return int(a.index) < int(b.index)
 
 ## 移除指定格，返回被移除物品（空位返回 {}）。
 static func remove_at(inv: Array, index: int) -> Dictionary:

@@ -219,6 +219,14 @@ func remove_item_at(index: int) -> Dictionary:
 func inventory_used() -> int:
 	return Inventory.used_slots(inventory)
 
+func organize_inventory() -> bool:
+	var changed := Inventory.organize(inventory)
+	if changed:
+		EventBus.inventory_changed.emit()
+		EventBus.inventory_organized.emit()
+	EventBus.toast_requested.emit("背包已整理", "info")
+	return changed
+
 # ---- 仓库（M4-3；背包中的所有合法物品）----
 
 func warehouse_store(inv_index: int, expected_id: String, target_index: int = -1) -> Dictionary:

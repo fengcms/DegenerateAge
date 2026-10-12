@@ -33,6 +33,7 @@ var _slot_buttons: Dictionary = {}          # slot_id -> Button
 var _bag_buttons: Array[ItemSlot] = []
 var _equip_title: Label
 var _bag_title: Label
+var _organize_button: Button
 var _summary: Label
 var _center: CenterContainer
 var _dim: ColorRect
@@ -197,9 +198,18 @@ func _build() -> void:
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 6)
 	body.add_child(right)
+	var bag_head := HBoxContainer.new()
+	right.add_child(bag_head)
 	_bag_title = Label.new()
 	_bag_title.add_theme_font_size_override("font_size", 14)
-	right.add_child(_bag_title)
+	_bag_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bag_head.add_child(_bag_title)
+	_organize_button = Button.new()
+	_organize_button.text = "整理"
+	_organize_button.tooltip_text = "按品类整理背包并合并相同物品"
+	_organize_button.pressed.connect(_on_organize_pressed)
+	bag_head.add_child(_organize_button)
+
 	var bag_grid := GridContainer.new()
 	bag_grid.columns = BAG_COLUMNS
 	bag_grid.add_theme_constant_override("h_separation", 6)
@@ -274,6 +284,11 @@ func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 	b.add_theme_stylebox_override("disabled", _slot_style(bg, border))
 
 # ---- 刷新 ----
+
+func _on_organize_pressed() -> void:
+	_last_click_index = -1
+	_last_click_ms = 0
+	GameState.organize_inventory()
 
 func _refresh() -> void:
 	var worn := 0
