@@ -85,18 +85,26 @@ static func _apply_audio() -> void:
 	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index("SFX"), clampf(float(GameState.settings.get("sfxVolume", 1.0)), 0.0, 1.0))
 
 static func _apply_ui_scale() -> void:
-	var main := Engine.get_main_loop() as SceneTree
-	if main == null:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
 		return
-	var scene := main.current_scene
+	var scene := tree.current_scene
 	if scene == null:
 		return
 	var ui := scene.get_node_or_null("UI") as CanvasLayer
 	if ui == null:
 		return
+	apply_ui_scale_to(ui)
+
+## 使用 UI 实际所在 Viewport 的可见尺寸。嵌入式试玩时 SceneTree.root 是编辑器窗口，
+## 与游戏 SubViewport 尺寸不同；拿 root.size 会让右/下锚点随窗口改变而漂出游戏区域。
+static func apply_ui_scale_to(ui: CanvasLayer) -> void:
 	var scale_value := clampf(float(GameState.settings.get("uiScale", 1.0)), 0.8, 1.5)
-	# 缩小 UI 的逻辑根尺寸后再绘制放大，右上/下方锚点仍留在屏幕内。
-	var logical_size := Vector2(main.root.size) / scale_value
+	var viewport_size := ui.get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	# 根控件使用当前游戏画布的逻辑尺寸，四边锚点才能始终贴住可见区域。
+	var logical_size := viewport_size / scale_value
 	for child in ui.get_children():
 		if child is Control:
 			var control := child as Control

@@ -34,10 +34,36 @@ func _ready() -> void:
 	GameState.settings["musicVolume"] = 0.4
 	SettingsRuntime.apply_all()
 	_check(is_equal_approx(ui.transform.x.x, 1.5), "UI 缩放即时生效")
-	_check(screen.size.is_equal_approx(Vector2(get_viewport().size) / 1.5), "UI 根尺寸随缩放调整")
+	_check(screen.size.is_equal_approx(get_viewport().get_visible_rect().size / 1.5),
+		"UI 根尺寸随缩放调整：实际 %s 视口 %s" % [screen.size, get_viewport().get_visible_rect().size])
 	_check(is_equal_approx(AudioServer.get_bus_volume_linear(AudioServer.get_bus_index("Music")), 0.4), "音乐音量即时生效")
+	await _check_embedded_resize()
 	print("[SettingsTest] 全部通过 ✅")
 	get_tree().quit()
+
+func _check_embedded_resize() -> void:
+	var embedded := SubViewport.new()
+	embedded.size = Vector2i(1153, 721)
+	add_child(embedded)
+	var layer := CanvasLayer.new()
+	embedded.add_child(layer)
+	var hud: Control = (load("res://scenes/ui/Hud.tscn") as PackedScene).instantiate()
+	layer.add_child(hud)
+	for viewport_size in [Vector2i(1153, 721), Vector2i(1387, 867)]:
+		embedded.size = viewport_size
+		for factor in [1.0, 1.5]:
+			GameState.settings["uiScale"] = factor
+			SettingsRuntime.apply_ui_scale_to(layer)
+			await get_tree().process_frame
+			var logical: Vector2 = Vector2(viewport_size) / factor
+			_check(hud.size.is_equal_approx(logical), "HUD 根尺寸跟随游戏 Viewport")
+			var map_panel := hud.get_node("MapPanel") as Control
+			var hotbar := hud.get_node("Hotbar") as Control
+			_check(map_panel.position.x >= 0 and map_panel.position.x + map_panel.size.x <= logical.x + 1,
+				"小地图留在可见宽度内")
+			_check(hotbar.position.y >= 0 and hotbar.position.y + hotbar.size.y <= logical.y + 1,
+				"快捷栏留在可见高度内")
+	embedded.queue_free()
 
 func _map_key(action: String) -> int:
 	for event in InputMap.action_get_events(action):
