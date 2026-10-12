@@ -3,7 +3,7 @@ extends Control
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
@@ -37,7 +37,7 @@ func _build() -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.42)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)

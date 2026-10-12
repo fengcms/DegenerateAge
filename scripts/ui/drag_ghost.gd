@@ -31,17 +31,30 @@ static func spawn(layer: Node, item: Dictionary) -> DragGhost:
 	g._follow()
 	return g
 
+static func spawn_text(layer: Node, label: String) -> DragGhost:
+	if layer == null:
+		return null
+	var g := DragGhost.new()
+	g.name = "DragGhost"
+	g._build_label(label, Color("8bc6d9"))
+	layer.add_child(g)
+	g._follow()
+	return g
+
 var _life: float = 0.0
 var _seen_drag: bool = false
 
 func _build(item: Dictionary) -> void:
+	_build_label(ItemUtil.display_name(item), ItemUtil.quality_color(String(item.get("quality", "common"))))
+
+func _build_label(label: String, border: Color) -> void:
 	# 不拦鼠标：投放判定由引擎在拖拽态下完成，幽灵绝不能吃事件。
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = Z
 	var box := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.10, 0.11, 0.14, 0.94)
-	sb.border_color = ItemUtil.quality_color(String(item.get("quality", "common")))
+	sb.border_color = border
 	sb.set_border_width_all(1)
 	sb.set_corner_radius_all(4)
 	sb.content_margin_left = 8.0
@@ -50,7 +63,7 @@ func _build(item: Dictionary) -> void:
 	sb.content_margin_bottom = 4.0
 	box.add_theme_stylebox_override("panel", sb)
 	var l := Label.new()
-	l.text = ItemUtil.display_name(item)
+	l.text = label
 	l.add_theme_font_size_override("font_size", 13)
 	l.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
 	box.add_child(l)

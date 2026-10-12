@@ -44,7 +44,7 @@ var _trade_active: bool = false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	visible = false
 	EventBus.inventory_changed.connect(_refresh)
@@ -75,6 +75,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("inventory", open)
+	var hud := get_node_or_null("../Hud")
+	if hud != null:
+		hud.set_hotbar_drop_mode(open)
 	if open:
 		EventBus.panel_opened.emit("inventory")
 		_refresh()
@@ -120,7 +123,7 @@ func _apply_trade_layout(trade: bool) -> void:
 	if _dim != null:
 		_dim.visible = not trade
 	for b in _bag_buttons:
-		b.draggable = trade
+		b.draggable = trade or not HotbarConfig.entry_for_item(b.item).is_empty()
 
 # ---- 构建 ----
 
@@ -228,7 +231,7 @@ func _build() -> void:
 	root.add_child(_summary)
 
 	var hint := Label.new()
-	hint.text = "双击穿戴 / 使用（药水可按 1·2）· 点击装备槽卸下 · 悬停查看属性 · 向货郎买/卖时把装备拖到右侧托盘 · I / Esc 关闭"
+	hint.text = "双击穿戴 / 使用 · 药品与回城卷可拖到快捷栏 · 点击装备槽卸下 · 向货郎买/卖时把装备拖到右侧托盘 · I / Esc 关闭"
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
@@ -316,12 +319,14 @@ func _refresh() -> void:
 		if it2 is Dictionary:
 			var col2 := _item_color(it2)
 			b2.item = it2          # 供拖拽载荷携带（ItemSlot._get_drag_data）
+			b2.draggable = _trade_active or not HotbarConfig.entry_for_item(it2).is_empty()
 			b2.text = _short_name(it2)
 			b2.add_theme_color_override("font_color", col2)
 			_apply_slot_style(b2, col2, true)
 			b2.tooltip_text = _bag_tooltip(it2)
 		else:
 			b2.item = {}
+			b2.draggable = false
 			b2.text = ""
 			_apply_slot_style(b2, COL_BORDER, false)
 			b2.tooltip_text = ""

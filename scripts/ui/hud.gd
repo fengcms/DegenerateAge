@@ -35,7 +35,6 @@ var _target: Node = null
 var _auto_battle: bool = false
 var _auto_pickup: bool = false
 var _auto_phase: String = ""
-var _hotbar_contents: Array[String] = ["hp", "mp", "basic_slash", "", "", "", "", "", "", "", "", ""]
 var _hotbar_buttons: Array[HotbarSlot] = []
 
 func _ready() -> void:
@@ -47,6 +46,7 @@ func _ready() -> void:
 	EventBus.target_changed.connect(_on_target)
 	EventBus.map_changed.connect(_on_map_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
+	EventBus.hotbar_changed.connect(_refresh_hotbar)
 	EventBus.toast_requested.connect(_on_toast)
 	EventBus.auto_state_changed.connect(_on_auto_state)
 	EventBus.auto_phase_changed.connect(_on_auto_phase)
@@ -103,6 +103,7 @@ func _on_map_changed(_map_id: String) -> void:
 
 func _on_inventory_changed() -> void:
 	_bag_label.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
+	_refresh_hotbar()
 
 # ---- 自动战斗状态指示（M1-9；4.6「界面明显显示自动中 / 手动接管 / 暂停中」）----
 
@@ -269,43 +270,100 @@ func _build_hotbar() -> void:
 		slot.index = i
 		slot.custom_minimum_size = Vector2(32, 32)
 		slot.pressed.connect(_activate_hotbar.bind(i))
-		slot.skill_dropped.connect(_on_skill_dropped)
+		slot.binding_dropped.connect(_on_binding_dropped)
+		slot.clear_requested.connect(func(clear_index: int) -> void: GameState.set_hotbar_entry(clear_index, null))
 		_hotbar.add_child(slot)
 		_hotbar_buttons.append(slot)
 	_refresh_hotbar()
 
 func _refresh_hotbar() -> void:
 	for i in range(_hotbar_buttons.size()):
-		var id := _hotbar_contents[i]
-		var name := "空"
-		match id:
-			"hp": name = "红药"
-			"mp": name = "蓝药"
-			"basic_slash": name = "普攻"
-		_hotbar_buttons[i].text = name.substr(0, 1) if id != "" else ""
-		_hotbar_buttons[i].tooltip_text = "%s · 快捷格 %d" % [name, i + 1]
+		var binding = GameState.hotbar[i]
+		var name := _binding_name(binding)
+		var slot := _hotbar_buttons[i]
+		slot.entry = binding
+		slot.text = name.substr(0, 1) if binding != null else ""
+		slot.tooltip_text = "%s · 快捷格 %d · 右键清空" % [name, i + 1]
+		slot.set_count(_binding_count(binding))
+
+func _binding_name(binding: Variant) -> String:
+	if not binding is Dictionary:
+		return "空"
+	match String(binding.kind):
+		"auto_potion": return "自动红药" if binding.id == "red" else "自动蓝药"
+		"skill":
+			var skill = DataLoader.get_entry("skills", String(binding.id))
+			return String(skill.get("name", binding.id)) if skill is Dictionary else String(binding.id)
+		"potion", "item":
+			var table := "potions" if binding.kind == "potion" else "miscItems"
+			var template = DataLoader.get_entry(table, String(binding.id))
+			return String(template.get("name", binding.id)) if template is Dictionary else String(binding.id)
+	return "空"
+
+func _binding_count(binding: Variant) -> int:
+	if not binding is Dictionary or binding.kind == "skill":
+		return -1
+	var total := 0
+	for raw in GameState.inventory:
+		if not raw is Dictionary:
+			continue
+		var item: Dictionary = raw
+		if binding.kind == "auto_potion":
+			if item.get("kind") != "potion":
+				continue
+			var template = DataLoader.get_entry("potions", String(item.get("itemId", "")))
+			if not template is Dictionary or template.get("kind") != binding.id:
+				continue
+		elif String(item.get("itemId", "")) != String(binding.id):
+			continue
+		total += int(item.get("count", 1))
+	return total
 
 func set_hotbar_drop_mode(active: bool) -> void:
-	_hotbar.z_index = 100 if active else 0
+	var inventory := get_node_or_null("../InventoryPanel") as Control
+	var skills := get_node_or_null("../SkillPanel") as Control
+	_hotbar.z_index = 100 if active or (inventory != null and inventory.visible) or (skills != null and skills.visible) else 0
 
-func _on_skill_dropped(index: int, skill_id: String) -> void:
-	if index < 0 or index >= 12 or skill_id != "basic_slash":
-		return
-	_hotbar_contents[index] = skill_id
-	_refresh_hotbar()
+func _on_binding_dropped(index: int, payload: Dictionary) -> void:
+	var kind := String(payload.get("kind", ""))
+	if kind == "hotbar_slot":
+		GameState.swap_hotbar_entries(int(payload.get("index", -1)), index)
+	elif kind == "hotbar_skill":
+		GameState.set_hotbar_entry(index, {"kind": "skill", "id": payload.get("id")})
+	elif int(payload.get("from", -1)) == ItemSlot.ROLE_BAG:
+		var source := int(payload.get("index", -1))
+		if source >= 0 and source < GameState.inventory.size() and GameState.inventory[source] is Dictionary:
+			var item: Dictionary = GameState.inventory[source]
+			if Warehouse.token_matches(item, String(payload.get("token", ""))):
+				GameState.set_hotbar_entry(index, HotbarConfig.entry_for_item(item))
 
 func _activate_hotbar(index: int) -> void:
 	if index < 0 or index >= 12 or GameState.panel_open:
 		return
-	match _hotbar_contents[index]:
-		"hp": _use_potion(Consumable.KIND_RED)
-		"mp": _use_potion(Consumable.KIND_BLUE)
-		"basic_slash":
+	var binding = GameState.hotbar[index]
+	if not binding is Dictionary:
+		return
+	match String(binding.kind):
+		"auto_potion": _use_potion(String(binding.id))
+		"potion", "item":
+			var source := _first_item_index(String(binding.id))
+			if source >= 0:
+				GameState.use_item(source)
+			else:
+				EventBus.toast_requested.emit("背包中没有%s" % _binding_name(binding), "danger")
+		"skill":
 			var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 			if player != null and player.valid_target(player.locked_target):
 				player.request_target_attack(player.locked_target)
 			else:
 				EventBus.toast_requested.emit("请先选中怪物", "danger")
+
+func _first_item_index(item_id: String) -> int:
+	for i in range(GameState.inventory.size()):
+		var item = GameState.inventory[i]
+		if item is Dictionary and item.get("itemId") == item_id:
+			return i
+	return -1
 
 func _use_potion(kind: String) -> void:
 	var idx := Consumable.pick_index(kind)
