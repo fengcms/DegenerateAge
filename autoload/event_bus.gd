@@ -61,6 +61,7 @@ signal warehouse_changed()
 
 # ---- 坐骑（M4-4）----
 signal mount_changed()
+signal mount_panel_requested()
 
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)

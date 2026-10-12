@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Game.tscn" id="2_game"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/UpgradePanel.tscn" id="10_upgrade"]
 [ext_resource type="PackedScene" path="res://scenes/ui/BlacksmithPanel.tscn" id="11_blacksmith"]
 [ext_resource type="PackedScene" path="res://scenes/ui/WarehousePanel.tscn" id="12_warehouse"]
+[ext_resource type="PackedScene" path="res://scenes/ui/MountPanel.tscn" id="13_mount"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -40,6 +41,8 @@ script = ExtResource("1_main")
 [node name="BlacksmithPanel" parent="UI" instance=ExtResource("11_blacksmith")]
 
 [node name="WarehousePanel" parent="UI" instance=ExtResource("12_warehouse")]
+
+[node name="MountPanel" parent="UI" instance=ExtResource("13_mount")]
 
 [node name="DragLayer" type="Control" parent="UI" groups=["drag_ghost_layer"]]
 anchors_preset = 15

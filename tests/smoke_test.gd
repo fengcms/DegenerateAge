@@ -189,16 +189,32 @@ func _test_mount_core() -> void:
 	add_child(ground)
 	_expect(GameState.owned_mounts == ["mount_corrupted_wing"] and GameState.inventory_used() == 0,
 		"坐骑拾取后应进入独立收藏，不占背包")
+	for seed_value in range(30):
+		var duplicate_rng := RandomNumberGenerator.new()
+		duplicate_rng.seed = seed_value
+		for drop in Loot.roll("DT_Boss_L1", duplicate_rng, "boss_corrupted_beast"):
+			_expect(String(drop.get("kind", "")) != "mount", "已收藏坐骑不得重复掉落")
+	var panel := preload("res://scenes/ui/MountPanel.tscn").instantiate()
+	add_child(panel)
+	EventBus.mount_panel_requested.emit()
+	var action: Button = panel.get("_action")
+	_expect(panel.visible and action.disabled and panel.get("_image").texture != null,
+		"坐骑快捷入口应打开预览，未达等级时骑乘按钮禁用")
 	_expect(not GameState.ride_mount("mount_corrupted_wing").ok and GameState.mount_speed_multiplier() == 1.0,
 		"20 级前不得骑乘")
 	GameState.player.level = 20
-	_expect(GameState.ride_mount("mount_corrupted_wing").ok and is_equal_approx(GameState.mount_speed_multiplier(), 1.3),
+	EventBus.player_leveled.emit(20)
+	action.pressed.emit()
+	_expect(GameState.active_mount == "mount_corrupted_wing" and is_equal_approx(GameState.mount_speed_multiplier(), 1.3),
 		"20 级后骑乘应提供配置速度加成")
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "坐骑收藏与骑乘状态应可入档")
 	var invalid := saved.duplicate(true)
 	invalid.activeMount = "unknown_mount"
 	_expect(not SaveManager._is_valid_save(invalid), "存档不得接受未知骑乘坐骑")
+	invalid = saved.duplicate(true)
+	invalid.ownedMounts = ["unknown_mount"]
+	_expect(not SaveManager._is_valid_save(invalid), "存档不得接受未知收藏坐骑")
 	var old := saved.duplicate(true)
 	old.schemaVersion = 3
 	old.erase("ownedMounts")
@@ -207,8 +223,10 @@ func _test_mount_core() -> void:
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.owned_mounts == ["mount_corrupted_wing"] and GameState.active_mount == "mount_corrupted_wing",
 		"坐骑收藏与骑乘状态读档后应还原")
-	GameState.dismount()
+	action.pressed.emit()
 	_expect(GameState.mount_speed_multiplier() == 1.0, "下骑应恢复基础速度")
+	panel.set_open(false)
+	panel.queue_free()
 	ground.queue_free()
 	GameState.reset_to_defaults()
 

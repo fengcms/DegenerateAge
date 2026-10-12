@@ -242,7 +242,15 @@ func _current_map_name() -> String:
 # ---- 快捷栏占位（16 格，技能 / 药品槽位在 M4-6 完善）----
 
 func _build_hotbar() -> void:
-	for _i in range(HOTBAR_SLOTS):
+	for i in range(HOTBAR_SLOTS):
+		if i == HOTBAR_SLOTS - 1:
+			var mount_button := Button.new()
+			mount_button.custom_minimum_size = Vector2(28, 28)
+			mount_button.text = "骑"
+			mount_button.tooltip_text = "打开坐骑面板（N）"
+			mount_button.pressed.connect(func() -> void: EventBus.mount_panel_requested.emit())
+			_hotbar.add_child(mount_button)
+			continue
 		var slot := Panel.new()
 		slot.custom_minimum_size = Vector2(28, 28)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
