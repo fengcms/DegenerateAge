@@ -283,6 +283,52 @@ func _after_equip_change() -> void:
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
 
+# ---- 装备升星（M4-1）----
+
+## source = "bag" / "worn"；key 是背包下标或装备槽 id。
+## expected_id 防止选择后背包整理、穿脱导致错误实例被扣费。
+func upgrade_equipment(source: String, key: Variant, expected_id: String,
+		rng: RandomNumberGenerator = null) -> Dictionary:
+	var item: Dictionary = {}
+	if source == "bag" and key is int and key >= 0 and key < inventory.size():
+		var candidate = inventory[key]
+		if candidate is Dictionary:
+			item = candidate
+	elif source == "worn" and key is String:
+		var candidate = equipment.get(key)
+		if candidate is Dictionary:
+			item = candidate
+	if item.is_empty() or expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
+		return _upgrade_fail("装备已移动，请重新选择")
+	if String(item.get("kind", "")) != "equip":
+		return _upgrade_fail("只能给装备升星")
+	var star := int(item.get("star", 0))
+	if star < 0 or star >= Upgrade.max_star():
+		return _upgrade_fail("装备已达到最高星级")
+	var price := Upgrade.cost(star)
+	if price <= 0 or Upgrade.success_rate(star) <= 0.0:
+		return _upgrade_fail("升星配置不可用")
+	if gold < price:
+		return _upgrade_fail("金币不足（需 %d，现有 %d）" % [price, gold])
+	add_gold(-price)
+	var success := Upgrade.roll_success(star, rng)
+	if success:
+		item["star"] = star + 1
+		if source == "worn":
+			EventBus.equipment_changed.emit()
+			EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+			EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+		else:
+			EventBus.inventory_changed.emit()
+	var message := "升星成功：%s（-%d 金币）" % [ItemUtil.display_name(item), price] if success \
+		else "升星失败：保持 +%d（-%d 金币）" % [star, price]
+	EventBus.toast_requested.emit(message, "pickup" if success else "danger")
+	return {"ok": true, "success": success, "cost": price, "star": int(item.get("star", 0)), "reason": message}
+
+func _upgrade_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "success": false, "cost": 0, "reason": reason}
+
 # ---- 自动战斗 / 自动拾取开关（M1-9，3.14 / 4.6）----
 
 ## 设置自动战斗开关（F 键）。返回新状态。决策机订阅本信号以重置锚点。

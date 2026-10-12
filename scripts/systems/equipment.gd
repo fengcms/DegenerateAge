@@ -154,7 +154,7 @@ static func bonus(slots: Dictionary) -> Dictionary:
 		var it = slots[sid]
 		if not (it is Dictionary):
 			continue
-		accumulate(b, it.get("baseAttrs", {}))
+		accumulate(b, Upgrade.base_attrs(it))
 		accumulate(b, it.get("affixes", []))
 		accumulate(b, it.get("pctAttrs", []))
 	return b
@@ -181,7 +181,7 @@ static func score(item: Dictionary) -> float:
 	var b := {}
 	for k in BONUS_KEYS:
 		b[k] = 0.0
-	accumulate(b, item.get("baseAttrs", {}))
+	accumulate(b, Upgrade.base_attrs(item))
 	accumulate(b, item.get("affixes", []))
 	accumulate(b, item.get("pctAttrs", []))
 	var s := 0.0
@@ -189,7 +189,6 @@ static func score(item: Dictionary) -> float:
 		s += float(b[k]) * float(SCORE_WEIGHTS[k])
 	s += float(b["hpPercent"]) * 100.0 * float(SCORE_WEIGHTS["hp"])
 	s += float(b["mpPercent"]) * 100.0 * float(SCORE_WEIGHTS["mp"])
-	# 升星加成（starBonus）随 M4 升星系统接入
 	return s
 
 ## 已穿戴装备总件数（存档 / UI 摘要用）。

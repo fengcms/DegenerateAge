@@ -72,7 +72,8 @@ static func display_name(item: Dictionary) -> String:
 	if kind == "equip":
 		var q := String(item.get("quality", "common"))
 		var lv := int(item.get("level", 1))
-		return "%s %s Lv%d" % [quality_name(q), base, lv]
+		var star := int(item.get("star", 0))
+		return "%s %s Lv%d%s" % [quality_name(q), base, lv, " +%d" % star if star > 0 else ""]
 	var n := int(item.get("count", 1))
 	return base if n <= 1 else "%s ×%d" % [base, n]
 
@@ -109,7 +110,7 @@ const PERCENT_STATS := [
 ## 把一件装备的属性整理成可显示行：基础属性 → 随机词条 → 百分比词条。
 static func attr_lines(item: Dictionary) -> Array[String]:
 	var lines: Array[String] = []
-	var base = item.get("baseAttrs", {})
+	var base = Upgrade.base_attrs(item)
 	if base is Dictionary:
 		for k in base.keys():
 			lines.append(stat_line(String(k), float(base[k])))

@@ -31,6 +31,7 @@ func _ready() -> void:
 	await _test_pickup()
 	await _test_claim_fly()
 	_test_equipment()
+	_test_upgrade()
 	_test_shop()
 	await _test_trade_panel()
 	_test_debug_seed()
@@ -58,6 +59,53 @@ func _expect(cond: bool, msg: String) -> void:
 func _test_data_validation() -> void:
 	var report: Array[String] = DataLoader.validate_all()
 	_expect(report.is_empty(), "数据校验未通过：%s" % [report])
+
+func _test_upgrade() -> void:
+	GameState.reset_to_defaults()
+	var weapon := _equip_instance("weapon_starter", "upgrade_test", {"atk": 10}, [{"stat": "atk", "value": 3}])
+	GameState.equipment["weapon"] = weapon
+	GameState.add_gold(100000)
+	var before_attack := GameState.total_attack()
+	var result := GameState.upgrade_equipment("worn", "weapon", "upgrade_test")
+	_expect(result.ok and result.success and result.cost == 500 and weapon.star == 1,
+		"0→1 升星应必成且扣 500 金币")
+	_expect(GameState.gold == 99500 and GameState.total_attack() == before_attack + 1,
+		"升星后金币及已穿戴固定属性应即时生效")
+	_expect(weapon.affixes[0].value == 3 and float(weapon.baseAttrs.atk) == 10.0,
+		"升星不能修改原始基础值或词条")
+	_expect(Equipment.score(weapon) > Equipment.score(_equip_instance("weapon_starter", "plain", {"atk": 10}, [{"stat": "atk", "value": 3}])),
+		"升星后的装备评分应提高")
+	var stale_gold := GameState.gold
+	var stale := GameState.upgrade_equipment("worn", "weapon", "old_instance")
+	_expect(not stale.ok and GameState.gold == stale_gold, "实例已移动时不应扣费")
+	weapon.star = 11
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 42
+	var failure_cost := Upgrade.cost(11)
+	var failed := GameState.upgrade_equipment("worn", "weapon", "upgrade_test", rng)
+	_expect(failed.ok and not failed.success and failed.cost == failure_cost,
+		"11→12 失败应返回明确结算")
+	_expect(weapon.star == 11 and GameState.gold == stale_gold - failure_cost,
+		"失败应扣金币但星级不下降")
+	weapon.star = 12
+	var cap_gold := GameState.gold
+	_expect(not GameState.upgrade_equipment("worn", "weapon", "upgrade_test").ok and GameState.gold == cap_gold,
+		"满星不可继续扣费")
+	var bag_item := _equip_instance("weapon_starter", "bag_upgrade", {"atk": 5})
+	GameState.inventory[0] = bag_item
+	GameState.gold = 0
+	_expect(not GameState.upgrade_equipment("bag", 0, "bag_upgrade").ok and bag_item.star == 0,
+		"背包装备金币不足时不应改变星级")
+	GameState.add_gold(500)
+	_expect(GameState.upgrade_equipment("bag", 0, "bag_upgrade").success and bag_item.star == 1,
+		"背包装备应可升星，且保持原实例")
+	var panel := preload("res://scenes/ui/UpgradePanel.tscn").instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	_expect(panel.visible and GameState.panel_open, "升星面板应可打开并屏蔽世界操控")
+	panel.set_open(false)
+	panel.queue_free()
+	GameState.reset_to_defaults()
 
 func _test_iso_math() -> void:
 	# 往返转换
