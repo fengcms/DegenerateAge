@@ -229,6 +229,13 @@ func organize_inventory() -> bool:
 
 # ---- 仓库（M4-3；背包中的所有合法物品）----
 
+func organize_warehouse() -> bool:
+	var changed := Inventory.organize(warehouse)
+	if changed:
+		EventBus.warehouse_changed.emit()
+	EventBus.toast_requested.emit("仓库已整理", "info")
+	return changed
+
 func warehouse_store(inv_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or not inventory[inv_index] is Dictionary:
 		return _warehouse_fail("背包该格没有物品")

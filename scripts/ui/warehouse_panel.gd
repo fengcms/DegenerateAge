@@ -11,6 +11,8 @@ const COL_BORDER := Color(0.30, 0.33, 0.38)
 var _title: Label
 var _bag_count: Label
 var _store_count: Label
+var _bag_organize: Button
+var _store_organize: Button
 var _gold: Label
 var _detail: Label
 var _expand: Button
@@ -97,13 +99,29 @@ func _build() -> void:
 	root.add_child(columns)
 	var bag_column := VBoxContainer.new()
 	columns.add_child(bag_column)
+	var bag_head := HBoxContainer.new()
+	bag_column.add_child(bag_head)
 	_bag_count = Label.new()
-	bag_column.add_child(_bag_count)
+	_bag_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bag_head.add_child(_bag_count)
+	_bag_organize = Button.new()
+	_bag_organize.text = "整理"
+	_bag_organize.tooltip_text = "整理背包"
+	_bag_organize.pressed.connect(_on_bag_organize)
+	bag_head.add_child(_bag_organize)
 	_bag_grid = _make_grid(bag_column)
 	var store_column := VBoxContainer.new()
 	columns.add_child(store_column)
+	var store_head := HBoxContainer.new()
+	store_column.add_child(store_head)
 	_store_count = Label.new()
-	store_column.add_child(_store_count)
+	_store_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	store_head.add_child(_store_count)
+	_store_organize = Button.new()
+	_store_organize.text = "整理"
+	_store_organize.tooltip_text = "整理仓库"
+	_store_organize.pressed.connect(_on_store_organize)
+	store_head.add_child(_store_organize)
 	_store_grid = _make_grid(store_column)
 	_detail = Label.new()
 	_detail.custom_minimum_size.y = 48
@@ -166,6 +184,19 @@ func _refresh_summary() -> void:
 	_expand.disabled = cost < 0
 	_expand.text = "已达上限" if cost < 0 else "扩容 +%d 格（%d 金币）" % [
 		Warehouse.capacity(GameState.warehouse_expansions + 1) - GameState.warehouse.size(), cost]
+
+func _on_bag_organize() -> void:
+	_reset_click()
+	GameState.organize_inventory()
+
+func _on_store_organize() -> void:
+	_reset_click()
+	GameState.organize_warehouse()
+
+func _reset_click() -> void:
+	_last_side = ""
+	_last_index = -1
+	_last_click_ms = 0
 
 func _on_slot_pressed(side: String, index: int) -> void:
 	var items: Array = GameState.inventory if side == "bag" else GameState.warehouse

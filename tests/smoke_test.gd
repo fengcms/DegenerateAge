@@ -29,6 +29,7 @@ func _ready() -> void:
 	_test_balance_calibration()
 	_test_inventory()
 	_test_inventory_sort()
+	_test_warehouse_sort()
 	await _test_pickup()
 	await _test_claim_fly()
 	_test_equipment()
@@ -137,6 +138,30 @@ func _test_inventory_sort() -> void:
 	_expect(GameState.inventory[5] == null and GameState.inventory.size() == 40,
 		"整理后空格应移到末尾且背包容量不变")
 	_expect(not GameState.organize_inventory(), "重复整理应保持稳定顺序")
+	panel.set_open(false)
+	panel.queue_free()
+	GameState.reset_to_defaults()
+
+func _test_warehouse_sort() -> void:
+	GameState.reset_to_defaults()
+	var equipment := _equip_instance("weapon_starter", "stored_sorted", {"atk": 8})
+	GameState.warehouse[6] = equipment
+	GameState.warehouse[12] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
+	GameState.warehouse[15] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
+	GameState.inventory[5] = {"kind": "potion", "itemId": "potion_hp_small", "count": 2}
+	var panel := preload("res://scenes/ui/WarehousePanel.tscn").instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	panel.get("_store_organize").pressed.emit()
+	_expect(GameState.warehouse[0].instanceId == "stored_sorted"
+		and GameState.warehouse[1].count == 99 and GameState.warehouse[2].count == 2
+		and GameState.warehouse[3] == null, "仓库整理应保留装备实例、合并药品并把空位移后")
+	_expect(GameState.inventory[5].count == 2 and GameState.inventory[0] == null,
+		"仓库整理不得改变背包")
+	panel.get("_bag_organize").pressed.emit()
+	_expect(GameState.inventory[0].count == 2 and GameState.warehouse[1].count == 99,
+		"仓库窗口的背包整理按钮应只整理背包")
+	_expect(not GameState.organize_warehouse(), "重复整理仓库应保持稳定顺序")
 	panel.set_open(false)
 	panel.queue_free()
 	GameState.reset_to_defaults()
