@@ -83,6 +83,7 @@ func _finish() -> void:
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	GameState.menu_mode = "world"
 	GameState.gold = 200  # 测试出行资金；野外刷金已在经济闭环单独验收。
 	GameState.quest_states = {"Q005": {"state": "active", "progress": 0}}
 	await get_tree().process_frame  # 避开根节点构造阶段的 add_child 锁。

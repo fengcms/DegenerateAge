@@ -35,6 +35,8 @@ var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2：Q005 奖励 → 第二章入口）
 var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
 var settings: Dictionary = {}
+## 本次运行的菜单流程状态；不入档。切图与读档重建 Main 时保留 world。
+var menu_mode: String = "menu"
 ## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
 ## （10.3：重启后自动战斗默认关闭）。决策机见 scripts/systems/auto_battle.gd。
 var auto_battle_on: bool = false

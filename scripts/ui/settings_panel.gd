@@ -4,7 +4,7 @@ extends Control
 const ACTION_NAMES := {
 	"move_up": "向上移动", "move_down": "向下移动", "move_left": "向左移动", "move_right": "向右移动",
 	"attack": "普通攻击", "target_next": "切换目标", "auto_battle": "自动战斗", "auto_pickup": "自动拾取",
-	"interact": "交互", "pause": "关闭 / 存档", "panel_inventory": "背包", "panel_character": "人物",
+	"interact": "交互", "pause": "关闭 / 暂停", "panel_inventory": "背包", "panel_character": "人物",
 	"panel_map": "地图", "panel_skill": "技能", "panel_mount": "坐骑",
 }
 
@@ -236,7 +236,9 @@ func _build_data(tabs: TabContainer) -> void:
 	button.text = "打开存档管理"
 	button.pressed.connect(func() -> void:
 		set_open(false)
-		get_node("../SavePanel").set_open(true))
+		var save_panel := get_node("../SavePanel")
+		save_panel.set_mode("manage")
+		save_panel.set_open(true))
 	box.add_child(button)
 	var note := Label.new()
 	note.text = "设置保存在当前活动存档槽；新游戏请先手动建立存档。"

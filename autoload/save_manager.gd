@@ -43,8 +43,7 @@ var _resume_toast: String = ""
 func _ready() -> void:
 	_ensure_dir()
 	_connect_events()
-	if resume_last():
-		_emit_resume_toast.call_deferred()
+	# M4-7：启动先显示主菜单；玩家选择「继续」后才读取上次存档。
 
 func _process(delta: float) -> void:
 	if active_slot < 0:
@@ -120,10 +119,16 @@ func _player_world_pos() -> Vector2:
 	return GameState.save_pos
 
 ## 保存到某槽。silent = true 时不弹成功提示（自动存用，避免刷屏；失败始终提示）。
-func save_slot(slot: int, silent: bool = false) -> bool:
+func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 	_ensure_dir()
 	var data := _collect()
 	data["slotId"] = slot
+	if new_game:
+		# 菜单里的世界仍是旧节点；新档始终从营地中心出生。
+		var camp: Dictionary = DataLoader.get_entry("maps", "camp")
+		var size: Dictionary = camp.get("size", {})
+		var center := Iso.grid_to_world(Vector2i(int(size.get("w", 40)) / 2, int(size.get("h", 40)) / 2))
+		data["playerPos"] = [center.x, center.y]
 	if slot < 1 or slot > MAX_SLOTS or not _is_valid_save(data):
 		EventBus.toast_requested.emit("当前状态不符合存档格式，未覆盖已有存档", "danger")
 		return false
@@ -140,6 +145,12 @@ func save_slot(slot: int, silent: bool = false) -> bool:
 		push_error("[SaveManager] 保存失败：%s" % path)
 		EventBus.toast_requested.emit("存档写入失败（槽 %d），进度未保存！" % slot, "danger")
 		return false
+	if new_game:
+		# 主档成功落盘后才清掉旧备份，避免日后把新角色恢复成旧角色。
+		for suffix in [".bak", ".corrupt"]:
+			var sidecar: String = path + suffix
+			if FileAccess.file_exists(sidecar):
+				DirAccess.remove_absolute(sidecar)
 
 	active_slot = slot
 	_since_last_save = 0.0
@@ -497,12 +508,17 @@ func delete_slot(slot: int) -> void:
 			DirAccess.remove_absolute(p)
 	if active_slot == slot:
 		active_slot = -1
+	if _read_last_slot() == slot:
 		_write_last_slot(-1)
 	print("[SaveManager] 已删除槽 %d 的存档" % slot)
 
 func set_active_slot(slot: int) -> void:
 	active_slot = slot
 	_write_last_slot(slot if slot >= 0 else -1)
+
+func continue_slot() -> int:
+	var slot := _read_last_slot()
+	return slot if slot >= 1 and slot <= MAX_SLOTS and bool(read_slot(slot).get("ok", false)) else -1
 
 # ---- 底层文件操作 ----
 

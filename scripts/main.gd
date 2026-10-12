@@ -4,6 +4,7 @@ extends Node2D
 func _ready() -> void:
 	SettingsRuntime.apply_all.call_deferred()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	$UI/MenuPanel.initialize_if_current.call_deferred()
 	print("========================================")
 	print("[Main] 《末法纪元：最后的守护者》启动")
 

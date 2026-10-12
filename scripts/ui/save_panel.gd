@@ -3,7 +3,7 @@ extends Control
 ## 09.3「数据：存档管理（手动存 / 备份 / 删除）」、10.3（原子写入 / 备份 / 损坏恢复）。
 ##
 ## 交互：
-##   Esc（pause 动作）开 / 关；其他面板打开时不抢 Esc（背包 / 货郎自己先关）；
+##   主菜单或暂停菜单打开；Esc 仅关闭本面板并返回上级菜单；
 ##   每张卡显示 角色名 / 等级 / 金币 / 地图 / 存档时间（9.4 的"职业"本项目暂无，占位见工程文档 06）；
 ##   「保存」写入该槽并把它设为**活动槽**（此后自动存档都写本槽）；
 ##   「读取」载入该槽 → 关面板 → 重载世界（销旧怪物 / 掉落 / 面板状态，见工程文档 06 §5）；
@@ -26,6 +26,12 @@ const COL_OK := Color(0.56, 0.82, 0.48)
 var _center: CenterContainer
 var _dim: ColorRect
 var _cards: Array[Dictionary] = []
+var _mode := "manage"
+var _hint: Label
+var _name_row: HBoxContainer
+var _name_input: LineEdit
+var _overwrite_dialog: ConfirmationDialog
+var _pending_overwrite := -1
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -40,10 +46,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if visible:
 		set_open(false)
 		get_viewport().set_input_as_handled()
-	elif not GameState.panel_open:
-		# 其它面板打开时让出 Esc，由它们自行关闭（09.2 面板互斥）
-		set_open(true)
-		get_viewport().set_input_as_handled()
+
+func set_mode(mode: String) -> void:
+	if mode not in ["new", "load", "manage"]:
+		return
+	_mode = mode
+	if visible:
+		_refresh()
 
 ## 开关面板；同步全局面板标志（角色操控在 player.gd 中据此屏蔽）。
 func set_open(open: bool) -> void:
@@ -105,19 +114,37 @@ func _build() -> void:
 	head.add_child(close)
 
 	root.add_child(HSeparator.new())
+	_name_row = HBoxContainer.new()
+	var name_label := Label.new()
+	name_label.text = "角色名称"
+	_name_row.add_child(name_label)
+	_name_input = LineEdit.new()
+	_name_input.text = "守护者"
+	_name_input.max_length = 16
+	_name_input.custom_minimum_size = Vector2(190, 30)
+	_name_row.add_child(_name_input)
+	var class_label := Label.new()
+	class_label.text = "职业：灵刃战士"
+	_name_row.add_child(class_label)
+	root.add_child(_name_row)
+
+	root.add_child(HSeparator.new())
 
 	for i in range(1, SaveManager.MAX_SLOTS + 1):
 		_build_card(i, root)
 
 	root.add_child(HSeparator.new())
 
-	var hint := Label.new()
-	hint.text = "保存后该槽成为活动槽：每 120 秒、关键事件（升级 / 穿戴 / 交易 / 切图）与退出时自动写入本槽"
-	hint.add_theme_font_size_override("font_size", 12)
-	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.custom_minimum_size = CARD_MIN
-	root.add_child(hint)
+	_hint = Label.new()
+	_hint.add_theme_font_size_override("font_size", 12)
+	_hint.add_theme_color_override("font_color", COL_TEXT_DIM)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.custom_minimum_size = CARD_MIN
+	root.add_child(_hint)
+	_overwrite_dialog = ConfirmationDialog.new()
+	_overwrite_dialog.title = "覆盖存档"
+	_overwrite_dialog.confirmed.connect(_on_overwrite_confirmed)
+	add_child(_overwrite_dialog)
 
 func _build_card(slot: int, parent: Node) -> void:
 	var card := PanelContainer.new()
@@ -213,6 +240,10 @@ func _card_style() -> StyleBoxFlat:
 # ---- 刷新 ----
 
 func _refresh() -> void:
+	_name_row.visible = _mode == "new"
+	_hint.text = "选择存档槽开始新游戏；覆盖已有槽位前需要确认。" if _mode == "new" else \
+		"选择存档槽读取游戏。" if _mode == "load" else \
+		"保存后该槽成为活动槽：定时、关键事件与退出时自动写入本槽。"
 	for c in _cards:
 		var slot := int(c.slot)
 		var s := SaveManager.slot_summary(slot)
@@ -227,7 +258,7 @@ func _refresh() -> void:
 		if bool(s.get("ok", false)):
 			var tag := "● 活动槽" if active else "○"
 			var src := "（从备份恢复）" if String(s.get("source", "")) == "backup" else ""
-			info.text = "%s %s　Lv%d　金币 %d　%s　%s %s" % [
+			info.text = "%s %s　灵刃战士 Lv%d　金币 %d　%s　%s %s" % [
 				tag, String(s.get("name", "")), int(s.get("level", 1)), int(s.get("gold", 0)),
 				String(s.get("mapName", "")), String(s.get("savedAt", "")), src,
 			]
@@ -249,13 +280,54 @@ func _refresh() -> void:
 			c.load.disabled = true
 			c.del.disabled = true
 
+		c.save.visible = _mode != "load"
+		c.save.text = ("覆盖" if bool(s.get("exists", false)) else "新建") if _mode == "new" else "保存"
 		c.save.add_theme_color_override("font_color", COL_OK if active else COL_TEXT)
 
 # ---- 操作 ----
 
 func _on_save_pressed(slot: int) -> void:
+	if _mode == "new":
+		if not _valid_new_name():
+			return
+		if bool(SaveManager.slot_summary(slot).get("exists", false)):
+			_pending_overwrite = slot
+			_overwrite_dialog.dialog_text = "槽 %d 已有存档。确认覆盖并开始新游戏？此操作不能撤销。" % slot
+			_overwrite_dialog.popup_centered()
+		else:
+			_create_new_slot(slot)
+		return
+	if _mode != "manage":
+		return
 	SaveManager.save_slot(slot, false)
 	_refresh()
+
+func _on_overwrite_confirmed() -> void:
+	if _pending_overwrite < 1:
+		return
+	var slot := _pending_overwrite
+	_pending_overwrite = -1
+	_create_new_slot(slot)
+
+func _valid_new_name() -> bool:
+	var name := _name_input.text.strip_edges()
+	if name.length() >= 2 and name.length() <= 16:
+		return true
+	EventBus.toast_requested.emit("角色名称需要 2–16 个字符", "danger")
+	_name_input.grab_focus()
+	return false
+
+func _create_new_slot(slot: int) -> void:
+	if not _valid_new_name():
+		return
+	# 新档原子覆盖旧槽，成功后才清除旧备份；写盘失败保留旧存档。
+	SaveManager.active_slot = -1
+	GameState.reset_to_defaults()
+	GameState.player.name = _name_input.text.strip_edges()
+	if not SaveManager.save_slot(slot, true, true):
+		_refresh()
+		return
+	_start_loaded_world()
 
 func _on_load_pressed(slot: int) -> void:
 	var res := SaveManager.load_into_game(slot)
@@ -264,7 +336,12 @@ func _on_load_pressed(slot: int) -> void:
 		return
 	# 重载世界：销毁并重建 Main 场景，清掉旧怪物 / 掉落 / 面板状态（10.5 读档清旧实体）
 	GameState.emit_all()
+	_start_loaded_world()
+
+func _start_loaded_world() -> void:
 	set_open(false)
+	GameState.menu_mode = "world"
+	get_tree().paused = false
 	get_tree().reload_current_scene.call_deferred()
 
 func _on_delete_pressed(slot: int) -> void:

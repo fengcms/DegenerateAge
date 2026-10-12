@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Game.tscn" id="2_game"]
@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/CharacterPanel.tscn" id="14_character"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SkillPanel.tscn" id="15_skill"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="16_settings"]
+[ext_resource type="PackedScene" path="res://scenes/ui/MenuPanel.tscn" id="17_menu"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -24,6 +25,7 @@ script = ExtResource("1_main")
 [node name="Game" parent="." instance=ExtResource("2_game")]
 
 [node name="UI" type="CanvasLayer" parent="."]
+process_mode = 3
 
 [node name="Hud" parent="UI" instance=ExtResource("3_hud")]
 
@@ -52,6 +54,8 @@ script = ExtResource("1_main")
 [node name="SkillPanel" parent="UI" instance=ExtResource("15_skill")]
 
 [node name="SettingsPanel" parent="UI" instance=ExtResource("16_settings")]
+
+[node name="MenuPanel" parent="UI" instance=ExtResource("17_menu")]
 
 [node name="DragLayer" type="Control" parent="UI" groups=["drag_ghost_layer"]]
 anchors_preset = 15
