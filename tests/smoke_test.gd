@@ -61,6 +61,7 @@ func _ready() -> void:
 	_test_font_mono()
 	await _test_item_slot_count()
 	await _test_map_scale()
+	await _test_display_scale()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -2506,6 +2507,86 @@ func _test_map_scale() -> void:
 			"世界装配应按设置应用地图倍率（zoom=0.8），实际 %s" % str(scene_cam.zoom))
 	game.queue_free()
 	GameState.settings.erase("mapScale")
+	await get_tree().process_frame
+
+# ---- M5-9c（09-A §4）：窗口尺寸变化重算 + 显示适配「自动 / 手动」统一系数 ----
+func _test_display_scale() -> void:
+	# ① 模式归一与系数取值：缺键 / 非法值一律视为 auto ⇒ 1.0（故 M5-9d 新增档位无需 schema 升级）
+	GameState.settings.erase("displayScaleMode")
+	GameState.settings.erase("displayScale")
+	_expect(SettingsRuntime.display_scale_mode() == "auto", "缺 displayScaleMode 键应为 auto")
+	_expect(is_equal_approx(SettingsRuntime.display_scale_factor(), 1.0),
+		"auto 模式系数应为 1.0（不重复应用密度补偿）")
+	GameState.settings["displayScaleMode"] = "weird"
+	_expect(SettingsRuntime.display_scale_mode() == "auto", "非法模式值应回退 auto")
+	GameState.settings["displayScaleMode"] = "manual"
+	GameState.settings["displayScale"] = 1.25
+	_expect(is_equal_approx(SettingsRuntime.display_scale_factor(), 1.25), "manual 模式应取 1.25")
+	GameState.settings["displayScale"] = 9.0
+	_expect(is_equal_approx(SettingsRuntime.display_scale_factor(), 1.5), "displayScale 超上限应 clamp 到 1.5")
+	GameState.settings["displayScale"] = 0.1
+	_expect(is_equal_approx(SettingsRuntime.display_scale_factor(), 0.75), "displayScale 超下限应 clamp 到 0.75")
+
+	# 存档校验：默认值为 String 的键会走 valid_choice，漏配分支会让**所有**存档判非法
+	_expect(SettingsRuntime.valid_choice("displayScaleMode", "auto")
+		and SettingsRuntime.valid_choice("displayScaleMode", "manual"), "displayScaleMode 合法取值应被接受")
+	_expect(not SettingsRuntime.valid_choice("displayScaleMode", "never"), "displayScaleMode 非法取值应被拒绝")
+
+	# ② 三轴各乘「一次」：手动 1.25 × 各轴 1.0 ⇒ 三轴同为 1.25
+	GameState.settings["displayScale"] = 1.25
+	GameState.settings["uiScale"] = 1.0
+	GameState.settings["mapScale"] = 1.0
+	GameState.settings["textScale"] = 1.0
+	var ui := CanvasLayer.new()
+	ui.name = "UI"
+	add_child(ui)
+	var screen := Control.new()
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(screen)
+	var label := Label.new()
+	ui.add_child(label)
+	var cam := Camera2D.new()
+	add_child(cam)
+	await get_tree().process_frame
+	SettingsRuntime.apply_all()
+	await get_tree().process_frame
+	var viewport_size := get_viewport().get_visible_rect().size
+	_expect(is_equal_approx(ui.transform.x.x, 1.25), "显示适配应作用于界面轴：实际 %.4f" % ui.transform.x.x)
+	_expect(screen.size.is_equal_approx(viewport_size / 1.25),
+		"UI 根尺寸应随显示适配调整：实际 %s 视口 %s" % [screen.size, viewport_size])
+	var base_font := int(label.get_meta("base_font_size", 0))
+	_expect(int(label.get_theme_font_size("font_size")) == maxi(9, roundi(base_font * 1.25)),
+		"显示适配应作用于文字轴：基础 %d 实际 %d" % [base_font, label.get_theme_font_size("font_size")])
+	SettingsRuntime.apply_map_scale_to(cam)
+	_expect(cam.zoom.is_equal_approx(Vector2(1.25, 1.25)), "显示适配应作用于地图轴：实际 %s" % str(cam.zoom))
+
+	# ③ 系数与各轴倍率「相乘」（不是覆盖、不是相加）
+	GameState.settings["uiScale"] = 1.5
+	GameState.settings["mapScale"] = 0.8
+	SettingsRuntime.apply_all()
+	SettingsRuntime.apply_map_scale_to(cam)
+	await get_tree().process_frame
+	_expect(is_equal_approx(ui.transform.x.x, 1.875), "界面轴应为 uiScale×系数=1.875，实际 %.4f" % ui.transform.x.x)
+	_expect(cam.zoom.is_equal_approx(Vector2(1.0, 1.0)), "地图轴应为 mapScale×系数=1.0，实际 %s" % str(cam.zoom))
+
+	# ④ 回到自动模式 ⇒ 系数 1.0，三轴回到各自倍率（关手动即复位，无残留）
+	GameState.settings["displayScaleMode"] = "auto"
+	SettingsRuntime.apply_all()
+	SettingsRuntime.apply_map_scale_to(cam)
+	await get_tree().process_frame
+	_expect(is_equal_approx(ui.transform.x.x, 1.5), "auto 下界面轴应回到 uiScale=1.5，实际 %.4f" % ui.transform.x.x)
+	_expect(cam.zoom.is_equal_approx(Vector2(0.8, 0.8)), "auto 下地图轴应回到 mapScale=0.8，实际 %s" % str(cam.zoom))
+
+	# ⑤ 视口重算入口（main.gd 对 size_changed 同帧合并后调用）与直接应用等价
+	SettingsRuntime.reapply_for_viewport()
+	await get_tree().process_frame
+	_expect(is_equal_approx(ui.transform.x.x, 1.5), "reapply_for_viewport 应与直接应用等价")
+
+	for node in [label, screen, cam]:
+		node.queue_free()
+	ui.queue_free()
+	for key in ["displayScaleMode", "displayScale", "uiScale", "mapScale", "textScale"]:
+		GameState.settings.erase(key)
 	await get_tree().process_frame
 
 func _finish() -> void:

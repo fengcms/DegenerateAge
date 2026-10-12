@@ -8,6 +8,32 @@ const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "
 	"hotbar_4", "hotbar_5", "hotbar_6", "hotbar_7", "hotbar_8", "hotbar_9",
 	"hotbar_10", "hotbar_11", "hotbar_12"]
 
+## M5-9c（09-A §4）：显示适配手动系数与 UI/文字/地图三轴的档位上下限。
+const DISPLAY_SCALE_MIN := 0.75
+const DISPLAY_SCALE_MAX := 1.5
+const UI_SCALE_MIN := 0.8
+const UI_SCALE_MAX := 1.5
+const MAP_SCALE_MIN := 0.8
+const MAP_SCALE_MAX := 1.5
+const TEXT_SCALE_MIN := 0.8
+const TEXT_SCALE_MAX := 1.5
+
+## 无头判定唯一可靠方式。⚠ `OS.has_feature("headless")` 实测恒为 false（无头下也 false），勿用。
+static func is_headless() -> bool:
+	return DisplayServer.get_name() == "headless"
+
+## M5-9c：显示适配模式（"auto" / "manual"）。非法值与缺键一律视为 auto。
+static func display_scale_mode() -> String:
+	var mode := String(GameState.settings.get("displayScaleMode", "auto"))
+	return "manual" if mode == "manual" else "auto"
+
+## M5-9c：显示适配统一系数。auto ⇒ 1.0（系统已在逻辑单位层完成密度换算，游戏内**不得**再乘一次）；
+## manual ⇒ clamp(displayScale, 0.75, 1.5)。三轴最终值各乘这一次，见 09-A §4。
+static func display_scale_factor() -> float:
+	if display_scale_mode() != "manual":
+		return 1.0
+	return clampf(float(GameState.settings.get("displayScale", 1.0)), DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX)
+
 static func valid_bindings(value: Dictionary) -> bool:
 	var used := {}
 	for action in value:
@@ -26,6 +52,10 @@ static func valid_choice(key: String, value: String) -> bool:
 		return ["all", "rare", "epic", "legendary"].has(value)
 	if key == "resolution":
 		return ["auto", "1280x800", "1440x900", "1600x900"].has(value)
+	# M5-9c：显示适配模式。⚠ 漏掉本分支会让 _is_valid_save 对默认值为 String 的键一律判非法
+	# （它只按"默认值类型"分派，不看键名），进而把**所有存档**判为损坏 —— 新增 String 设置键时必须同步此处。
+	if key == "displayScaleMode":
+		return ["auto", "manual"].has(value)
 	return false
 
 static func default_key(action: String) -> int:
@@ -86,7 +116,7 @@ static func apply_all() -> void:
 ## canvas_items（视口取 `display/window/size/viewport_*` 的 1280×800）。
 ## ⚠ 判断无头只能用 DisplayServer.get_name()：`OS.has_feature("headless")` 实测恒为 false。
 static func apply_display_strategy() -> void:
-	if DisplayServer.get_name() == "headless":
+	if is_headless():
 		return
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
@@ -103,6 +133,11 @@ static func _apply_audio() -> void:
 	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index("Music"), clampf(float(GameState.settings.get("musicVolume", 1.0)), 0.0, 1.0))
 	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index("SFX"), clampf(float(GameState.settings.get("sfxVolume", 1.0)), 0.0, 1.0))
 
+## M5-9c：视口尺寸变化后的重算入口。`main.gd` 对 `size_changed` 做同帧合并后调用本函数
+## （disabled 策略下拖窗口会高频触发，避免重复重排全部面板）。
+static func reapply_for_viewport() -> void:
+	_apply_ui_scale()
+
 static func _apply_ui_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
@@ -117,8 +152,9 @@ static func _apply_ui_scale() -> void:
 
 ## 使用 UI 实际所在 Viewport 的可见尺寸。嵌入式试玩时 SceneTree.root 是编辑器窗口，
 ## 与游戏 SubViewport 尺寸不同；拿 root.size 会让右/下锚点随窗口改变而漂出游戏区域。
+## M5-9c：最终倍率 = clamp(uiScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
 static func apply_ui_scale_to(ui: CanvasLayer) -> void:
-	var scale_value := clampf(float(GameState.settings.get("uiScale", 1.0)), 0.8, 1.5)
+	var scale_value := clampf(float(GameState.settings.get("uiScale", 1.0)), UI_SCALE_MIN, UI_SCALE_MAX) * display_scale_factor()
 	var viewport_size := ui.get_viewport().get_visible_rect().size
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
@@ -136,10 +172,18 @@ static func _apply_text_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or tree.current_scene == null:
 		return
-	var ui := tree.current_scene.get_node_or_null("UI")
+	apply_text_scale_to(tree.current_scene.get_node_or_null("UI"))
+
+## M5-9c：文字轴最终倍率 = clamp(textScale) × display_scale_factor()。
+static func text_scale_value() -> float:
+	return clampf(float(GameState.settings.get("textScale", 1.0)), TEXT_SCALE_MIN, TEXT_SCALE_MAX) * display_scale_factor()
+
+## 供外部（世界装配 / 开发期探针）对指定 UI 层直接应用文字缩放，不依赖 current_scene 路径
+## —— 与 `apply_ui_scale_to` / `apply_map_scale_to` 同一模式。
+static func apply_text_scale_to(ui: Node) -> void:
 	if ui == null:
 		return
-	_text_scale_node(ui, clampf(float(GameState.settings.get("textScale", 1.0)), 0.8, 1.5))
+	_text_scale_node(ui, text_scale_value())
 
 static func _text_scale_node(node: Node, factor: float) -> void:
 	if node is Label or node is Button or node is LineEdit or node is OptionButton:
@@ -169,13 +213,14 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 		return
 	camera.zoom = Vector2.ONE * map_scale_value()
 
-## 地图显示倍率（0.8–1.5）。缺键取默认 1.0，故 M5-9d 新增档位**无需 schema 升级**。
+## 地图显示倍率（0.8–1.5 × 显示适配系数）。缺键取默认 1.0，故 M5-9d 新增档位**无需 schema 升级**。
+## M5-9c：最终值 = clamp(mapScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
 static func map_scale_value() -> float:
-	return clampf(float(GameState.settings.get("mapScale", 1.0)), 0.8, 1.5)
+	return clampf(float(GameState.settings.get("mapScale", 1.0)), MAP_SCALE_MIN, MAP_SCALE_MAX) * display_scale_factor()
 
 static func _apply_window() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
-	if tree == null or OS.has_feature("headless"):
+	if tree == null or is_headless():
 		return
 	var window := tree.root
 	window.mode = Window.MODE_FULLSCREEN if bool(GameState.settings.get("fullscreen", false)) else Window.MODE_WINDOWED

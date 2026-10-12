@@ -123,6 +123,8 @@ func default_settings() -> Dictionary:
 		"strongFlash": true,
 		"textScale": 1.0,
 		"mapScale": 1.0,              # M5-9b（09-A）：地图显示大小＝相机 zoom（0.8–1.5）
+		"displayScaleMode": "auto",   # M5-9c（09-A）：显示适配 自动/手动（auto = 不额外补偿，系统已完成密度换算）
+		"displayScale": 1.0,          # M5-9c：仅手动模式生效的统一系数（0.75–1.5），三轴各乘这一次
 		"fullscreen": false,
 		"resolution": "auto",
 		"qualityFilter": "all",

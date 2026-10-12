@@ -316,9 +316,14 @@ func _migrate(source: Dictionary) -> Dictionary:
 				data[key] = defaults[key]
 		if data.get("player") is Dictionary:
 			data.player = _migrate_player(data.player)
+	# ⚠ M5-9c：设置键补齐对**所有版本**生效，不能只放在下面的 v < CURRENT_SCHEMA 分支里。
+	# default_settings() 新增键（mapScale / displayScaleMode / displayScale…）时，当前版本的存量档
+	# 同样缺这些键；若只在跨版本迁移时补，新键一上线就会把全部存量档判为损坏
+	# （实测事故：9c 加键后启动续档报「槽 1 主档不可用」——校验按 default_settings() 逐键查）。
+	# 语义与运行时读取一致：缺键取默认值；存档已有值优先，未知键保留（见 _migrate_settings）。
+	if data.get("settings") is Dictionary:
+		data.settings = _migrate_settings(data.settings)
 	if v >= 0 and v < CURRENT_SCHEMA:
-		if data.get("settings") is Dictionary:
-			data.settings = _migrate_settings(data.settings)
 		if not data.has("unlocks"):
 			data.unlocks = {}
 		if not data.has("exploredMaps"):

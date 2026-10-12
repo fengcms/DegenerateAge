@@ -13,15 +13,45 @@ func _ready() -> void:
 	var data := SaveManager._collect()
 	_check(SaveManager._is_valid_save(data), "新设置可以存档")
 	data["schemaVersion"] = 4
-	for key in ["musicVolume", "screenShake", "strongFlash", "textScale", "fullscreen", "resolution", "qualityFilter", "keyBindings"]:
+	for key in ["musicVolume", "screenShake", "strongFlash", "textScale", "fullscreen", "resolution", "qualityFilter", "keyBindings",
+		"mapScale", "displayScaleMode", "displayScale"]:
 		data.settings.erase(key)
 	_check(SaveManager._is_valid_save(data), "v4 旧档仍可读取")
 	var migrated := SaveManager._migrate(data)
 	_check(migrated.schemaVersion == SaveManager.CURRENT_SCHEMA and migrated.settings.has("keyBindings")
 		and HotbarConfig.valid_layout(migrated.hotbar), "v4 设置与快捷栏补齐并迁移到当前版本")
+	_check(is_equal_approx(float(migrated.settings.get("mapScale", -1.0)), 1.0)
+		and String(migrated.settings.get("displayScaleMode", "")) == "auto"
+		and is_equal_approx(float(migrated.settings.get("displayScale", -1.0)), 1.0),
+		"M5-9c：显示三键缺键应补默认值（无需 schema 升级）")
 	var bad := migrated.duplicate(true)
 	bad.settings.keyBindings = {"panel_inventory": -1}
 	_check(not SaveManager._is_valid_save(bad), "非法键位被拒绝")
+	# M5-9c 回归（实测事故）：**当前版本**档缺新增设置键时仍必须可读 ——
+	# 事故形态：9c 给 default_settings() 加键后，启动续档报「槽 1 主档不可用」，
+	# 根因是 _migrate 原先只在 v < CURRENT_SCHEMA 时补设置键，而校验按 default_settings() 逐键查。
+	var current := SaveManager._collect()
+	current["schemaVersion"] = SaveManager.CURRENT_SCHEMA
+	current.settings.erase("mapScale")
+	current.settings.erase("displayScaleMode")
+	current.settings.erase("displayScale")
+	_check(SaveManager._is_valid_save(current), "当前版本档缺新增设置键仍应有效")
+	var refilled := SaveManager._migrate(current)
+	_check(is_equal_approx(float(refilled.settings.get("mapScale", -1.0)), 1.0)
+		and String(refilled.settings.get("displayScaleMode", "")) == "auto"
+		and is_equal_approx(float(refilled.settings.get("displayScale", -1.0)), 1.0),
+		"当前版本档缺键应补齐默认值")
+	# 补齐只填缺键，不得覆盖存档已有值、不得丢弃未知键
+	current = SaveManager._collect()
+	current["schemaVersion"] = SaveManager.CURRENT_SCHEMA
+	current.settings.erase("displayScale")
+	current.settings["displayScaleMode"] = "manual"
+	current.settings["unknownFutureKey"] = 7
+	refilled = SaveManager._migrate(current)
+	_check(String(refilled.settings.get("displayScaleMode", "")) == "manual"
+		and is_equal_approx(float(refilled.settings.get("displayScale", -1.0)), 1.0)
+		and int(refilled.settings.get("unknownFutureKey", 0)) == 7,
+		"补齐只填缺键：已有值与未知键均保留")
 	GameState.settings = migrated.settings
 	SettingsRuntime.apply_all()
 	_check(_map_key("panel_inventory") == inventory_key, "读取旧档恢复默认键位")
