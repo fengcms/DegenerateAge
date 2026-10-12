@@ -120,12 +120,17 @@ func save_slot(slot: int, silent: bool = false) -> bool:
 	_ensure_dir()
 	var data := _collect()
 	data["slotId"] = slot
+	if slot < 1 or slot > MAX_SLOTS or not _is_valid_save(data):
+		EventBus.toast_requested.emit("当前状态不符合存档格式，未覆盖已有存档", "danger")
+		return false
 
 	var path := slot_path(slot)
 
 	# 只有主档**有效**时才留备份——否则会把损坏内容覆盖掉可用的 .bak（T16 前提）。
 	if _is_valid_save(_read_file(path)):
-		_copy_over(path, backup_path(slot))
+		if not _copy_over(path, backup_path(slot)):
+			EventBus.toast_requested.emit("备份写入失败，未覆盖已有存档", "danger")
+			return false
 
 	if not _write_json_atomic(path, data):
 		push_error("[SaveManager] 保存失败：%s" % path)
@@ -192,7 +197,7 @@ func _connect_events() -> void:
 ## 返回 {ok: bool, source: "main"/"backup"/"", data: Dictionary, message: String}。
 func read_slot(slot: int) -> Dictionary:
 	var path := slot_path(slot)
-	if not FileAccess.file_exists(path):
+	if not FileAccess.file_exists(path) and not FileAccess.file_exists(backup_path(slot)):
 		return {"ok": false, "source": "", "data": {}, "message": "槽 %d 还没有存档" % slot}
 
 	var main: Variant = _read_file(path)
@@ -203,10 +208,10 @@ func read_slot(slot: int) -> Dictionary:
 	push_warning("[SaveManager] 槽 %d 主档不可用，尝试从备份恢复" % slot)
 	var bak: Variant = _read_file(backup_path(slot))
 	if _is_valid_save(bak):
-		_restore_backup(slot, bak as Dictionary)
+		var restored := _restore_backup(slot, bak as Dictionary)
 		return {
 			"ok": true, "source": "backup", "data": _migrate(bak as Dictionary),
-			"message": "槽 %d 主存档损坏，已从备份恢复（坏档另存为 .corrupt）" % slot,
+			"message": ("槽 %d 主存档不可用，已从备份恢复（原主档另存为 .corrupt）" if restored else "槽 %d 已读取备份，但主档修复写入失败；现场与备份已保留") % slot,
 		}
 	return {
 		"ok": false, "source": "", "data": {},
@@ -214,14 +219,15 @@ func read_slot(slot: int) -> Dictionary:
 	}
 
 ## 把备份内容写回主档（自愈），并把损坏的主档另存为 .corrupt 保留现场。
-func _restore_backup(slot: int, data: Dictionary) -> void:
+func _restore_backup(slot: int, data: Dictionary) -> bool:
 	var path := slot_path(slot)
 	if FileAccess.file_exists(path):
 		var corrupt := path + ".corrupt"
 		if FileAccess.file_exists(corrupt):
 			DirAccess.remove_absolute(corrupt)
-		DirAccess.rename_absolute(path, corrupt)
-	_write_json_atomic(path, data)
+		if DirAccess.rename_absolute(path, corrupt) != OK:
+			return false
+	return _write_json_atomic(path, data)
 
 ## 读档并应用到运行时状态（不重载场景，重载由 UI 层负责）。
 ## 返回同 read_slot 的结构（额外含 applied: bool）。
@@ -269,19 +275,35 @@ func _emit_resume_toast() -> void:
 	_resume_toast = ""
 
 ## 版本迁移：为旧档补齐新增字段的默认值（10.3 / 04 §4.5 版本化内容 + 旧档导入）。
-func _migrate(data: Dictionary) -> Dictionary:
-	var v: int = int(data.get("schemaVersion", CURRENT_SCHEMA))
-	if v < CURRENT_SCHEMA:
-		# v1 无探索信息；保持原角色/背包/任务字段，新增空探索集合。
+func _migrate(source: Dictionary) -> Dictionary:
+	var data := source.duplicate(true)
+	var v := int(data.get("schemaVersion", -1))
+	# 仅明确声明的 v0 支持历史最小角色格式；不能把无版本坏档当旧档补空。
+	if v == 0:
+		var defaults := {"slotId": -1, "savedAt": "", "currentMap": "camp", "playerPos": null,
+			"inventory": Inventory.create(), "equipment": Equipment.create(), "questStates": {},
+			"firstClear": {}, "unlocks": {}, "settings": GameState.default_settings()}
+		for key in defaults:
+			if not data.has(key):
+				data[key] = defaults[key]
+		if data.get("player") is Dictionary:
+			data.player = _migrate_player(data.player)
+	if v >= 0 and v < CURRENT_SCHEMA:
+		if data.get("settings") is Dictionary:
+			data.settings = _migrate_settings(data.settings)
+		if not data.has("unlocks"):
+			data.unlocks = {}
 		if not data.has("exploredMaps"):
-			data["exploredMaps"] = {}
-	data["schemaVersion"] = CURRENT_SCHEMA
+			data.exploredMaps = {}
+		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
-## 应用存档到运行时状态。所有字段做**存在性 + 类型**校验，坏字段退回默认值（不崩、不静默写坏）。
+## 应用前完整校验；无效数据不修改运行态。只有明确旧版本允许迁移缺省字段。
 func apply_to_game_state(data: Dictionary) -> void:
-	if data.is_empty():
+	if not _is_valid_save(data):
+		EventBus.toast_requested.emit("存档结构无效，未改变当前进度", "danger")
 		return
+	data = _migrate(data)
 	_suppress_autosave = true
 
 	if data.get("player", null) is Dictionary:
@@ -479,16 +501,109 @@ func _read_file(path: String) -> Variant:
 	f.close()
 	return JSON.parse_string(text)
 
-## 存档结构有效性：必须是字典且含 player 字典（10.3 记录清单的最小可用集）。
-func _is_valid_save(v: Variant) -> bool:
-	if not (v is Dictionary):
+## 所有读档/备份/应用入口使用同一校验；先识别版本，再迁移再验收，绝不修改输入。
+func _is_valid_save(raw: Variant) -> bool:
+	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), 0, CURRENT_SCHEMA):
 		return false
-	return (v as Dictionary).get("player", null) is Dictionary
+	if not raw.get("player") is Dictionary or not _whole(raw.player.get("level"), 1):
+		return false
+	if not _whole(raw.get("gold"), 0, GameState.GOLD_CAP):
+		return false
+	var data := _migrate(raw)
+	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps"]:
+		if not data.get(key) is Dictionary:
+			return false
+	if not data.get("inventory") is Array or data.inventory.size() != GameState.INVENTORY_SIZE:
+		return false
+	if not data.get("currentMap") is String or DataLoader.get_entry("maps", data.currentMap) == null:
+		return false
+	if not data.get("savedAt") is String or not _whole(data.get("slotId"), -1, MAX_SLOTS):
+		return false
+	var pos: Variant = data.get("playerPos")
+	if not data.has("playerPos") or (pos != null and (not pos is Array or pos.size() != 2)):
+		return false
+	if pos is Array:
+		for value in pos:
+			if not _number(value):
+				return false
+	for key in GameState.default_player():
+		var value: Variant = data.player.get(key)
+		if key == "name":
+			if not value is String or value.is_empty():
+				return false
+		elif not _number(value) or float(value) < 0:
+			return false
+	for key in ["level", "xp", "hp", "mp"]:
+		if not _whole(data.player.get(key), 1 if key == "level" else 0):
+			return false
+	if float(data.player.attackInterval) <= 0 or float(data.player.movementSpeed) <= 0:
+		return false
+	for item in data.inventory:
+		if item != null and not _valid_item(item):
+			return false
+	if data.equipment.size() != Equipment.SLOT_DEFS.size():
+		return false
+	for slot in Equipment.create():
+		if not data.equipment.has(slot):
+			return false
+		var item: Variant = data.equipment[slot]
+		if item != null and (not _valid_item(item) or item.kind != "equip" or not Equipment.slot_accepts(slot, item)):
+			return false
+	for key in ["firstClear", "unlocks"]:
+		for value in data[key].values():
+			if not value is bool:
+				return false
+	for value in data.questStates.values():
+		if value is String:
+			if not Quest._is_known_state(value):
+				return false
+		elif not value is Dictionary or not value.get("state") is String or not Quest._is_known_state(value.state) or not _whole(value.get("progress"), 0):
+			return false
+	for key in GameState.default_settings():
+		var value: Variant = data.settings.get(key)
+		if GameState.default_settings()[key] is bool:
+			if not value is bool:
+				return false
+		elif not _number(value) or float(value) < 0:
+			return false
+	return true
 
-func _copy_over(src: String, dst: String) -> void:
-	if FileAccess.file_exists(dst):
-		DirAccess.remove_absolute(dst)
-	DirAccess.copy_absolute(src, dst)
+func _number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value))
+
+func _whole(value: Variant, minimum: float, maximum: float = 9007199254740991.0) -> bool:
+	return _number(value) and float(value) == floor(float(value)) and float(value) >= minimum and float(value) <= maximum
+
+func _valid_item(item: Variant) -> bool:
+	if not item is Dictionary or not item.get("kind") is String or not item.get("itemId") is String:
+		return false
+	var kind := String(item.kind)
+	if kind == "equip":
+		if not DataLoader.get_entry("equipments", item.itemId) is Dictionary or not item.get("instanceId") is String or item.instanceId.is_empty():
+			return false
+		if not item.get("baseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
+			return false
+		if not _whole(item.get("level"), 1) or not _whole(item.get("star"), 0, 12) or not ItemUtil.is_valid_quality(str(item.get("quality", ""))):
+			return false
+		for value in item.baseAttrs.values():
+			if not _number(value):
+				return false
+		for effect in item.affixes + item.pctAttrs:
+			if not effect is Dictionary or not effect.get("stat") is String or not _number(effect.get("value")):
+				return false
+		return true
+	var table: String = {"potion": "potions", "misc": "miscItems", "quest": "miscItems", "rune": "runes"}.get(kind, "")
+	return not table.is_empty() and DataLoader.get_entry(table, item.itemId) != null and _whole(item.get("count", 1), 1, ItemUtil.stack_max(item))
+
+## 先复制到临时文件再替换备份，复制失败不得先删除旧备份。
+func _copy_over(src: String, dst: String) -> bool:
+	var temp := dst + ".tmp"
+	if DirAccess.copy_absolute(src, temp) != OK:
+		return false
+	var error := DirAccess.rename_absolute(temp, dst)
+	if error != OK:
+		DirAccess.remove_absolute(temp)
+	return error == OK
 
 func _write_last_slot(slot: int) -> void:
 	if slot < 0:

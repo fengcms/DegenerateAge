@@ -1908,7 +1908,12 @@ func _test_fog() -> void:
 	_expect(_deep_equal(snapshot, Fog.encode()), "探索的JSON往返不一致")
 	GameState.explored_maps = Fog.normalize({"wild_trial": [0.0, 0, 224, 225, -1, 1.5, "2", INF, NAN], "unknown": [0], "camp": 42})
 	_expect(GameState.explored_maps.size() == 1 and GameState.explored_maps.wild_trial.size() == 2, "坏探索记录、重复或未知地图未清理")
-	var old := SaveManager._migrate({"schemaVersion": 1, "player": {"level": 3}, "gold": 17})
+	var legacy := SaveManager._collect()
+	legacy.schemaVersion = 1
+	legacy.erase("exploredMaps")
+	legacy.player.level = 3
+	legacy.gold = 17
+	var old := SaveManager._migrate(legacy)
 	SaveManager.apply_to_game_state(old)
 	_expect(int(old.schemaVersion) == 2 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
 	GameState.reset_to_defaults()
