@@ -21,6 +21,15 @@ const DEFAULT_MAP := "camp"
 
 # ---- 查询 ----
 
+func data_for(map_id: String) -> Dictionary:
+	var entry: Variant = DataLoader.get_entry("maps", map_id)
+	return entry if entry is Dictionary else {}
+
+func grid_size(map_id: String) -> Vector2i:
+	var dims: Dictionary = data_for(map_id).get("size", {})
+	return Vector2i(int(dims.get("w", 0)), int(dims.get("h", 0)))
+
+
 ## 当前地图数据（未找到 → 空字典）。
 func current_data() -> Dictionary:
 	var m = DataLoader.get_entry("maps", GameState.current_map)

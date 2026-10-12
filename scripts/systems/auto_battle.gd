@@ -138,6 +138,21 @@ func _physics_process(delta: float) -> void:
 		_set_state(State.OFF)
 		return
 
+	# ⑥ 面板打开 / 后台 / 暂停 → 停决策（不暂停世界模拟，仅停本机决策）
+	if GameState.panel_open or _background or get_tree().paused:
+		_player.set_auto_move(Vector2.ZERO)
+		_set_state(State.RECOVER, "暂停中")
+		return
+
+	# 大地图步行期间持续保持手动接管，到达/取消后才开始三秒恢复计时。
+	if _player.map_move_active:
+		_player.set_auto_move(Vector2.ZERO)
+		_target = null
+		_loot = null
+		_manual_t = MANUAL_RESUME_DELAY
+		_set_state(State.MANUAL_OVERRIDE)
+		return
+
 	# ③ 手动接管：计时期间不再接管移动 / 攻击，到点自动恢复
 	if _manual_t > 0.0:
 		_manual_t = maxf(0.0, _manual_t - delta)
@@ -145,12 +160,6 @@ func _physics_process(delta: float) -> void:
 		if _manual_t <= 0.0:
 			_toast("自动战斗恢复", "info")
 			_anchor = _player.global_position
-		return
-
-	# ⑥ 面板打开 / 后台 / 暂停 → 停决策（不暂停世界模拟，仅停本机决策）
-	if GameState.panel_open or _background or get_tree().paused:
-		_player.set_auto_move(Vector2.ZERO)
-		_set_state(State.RECOVER, "暂停中")
 		return
 
 	# ③ 手动输入 → 立即取消、3 秒后恢复（4.6）

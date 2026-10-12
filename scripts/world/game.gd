@@ -27,6 +27,22 @@ const DEBUG_WEAPON_ID := "debug_blade_overpower"
 @onready var _npcs: Node2D = $Npcs
 @onready var _damage_numbers: Node2D = $DamageNumbers
 
+var _explored_cell := Vector2i(-1, -1)
+
+func _process(_delta: float) -> void:
+	if GameState.panel_open or _player.is_dead:
+		return
+	var cell := Vector2i(Iso.world_to_grid(_player.global_position).round())
+	if cell != _explored_cell:
+		_explored_cell = cell
+		Fog.reveal(GameState.current_map, cell)
+
+func request_map_move(point: Vector2) -> bool:
+	if not _player.request_map_move(_ground.clamp_to_map(point)):
+		return false
+	EventBus.toast_requested.emit("步行前往地图目标", "info")
+	return true
+
 func _ready() -> void:
 	_damage_numbers.add_to_group("damage_numbers")
 
@@ -60,6 +76,9 @@ func _ready() -> void:
 
 	# 抵达提示（切图 / 读档后给一次系统提示；延后一帧等 HUD 就绪）
 	_notify_arrival.call_deferred()
+
+	add_to_group("map_world")
+	Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(_player.global_position).round()))
 
 	# 开发期：延迟一帧发放测试武器（此时 UI 已就绪，提示能正常显示）
 	_grant_debug_loadout.call_deferred()

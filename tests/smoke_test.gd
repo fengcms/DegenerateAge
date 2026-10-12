@@ -44,6 +44,8 @@ func _ready() -> void:
 	_test_map_travel()
 	await _test_world()
 	await _test_map_reload()
+	_test_fog()
+	await _test_fog_ui()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -1010,6 +1012,9 @@ func _test_save() -> void:
 	GameState.quest_states = {"Q002": {"state": "active", "progress": 2}, "Q003": {"state": "rewarded", "progress": 3}}
 	GameState.first_clear = {"boss_corrupt_beast": true}
 	GameState.unlocks = {"chapter2": true}
+	Fog.reveal("camp", Vector2i(0, 0))
+	Fog.reveal("wild_trial", Vector2i(59, 59))
+	var expected_explored := Fog.encode()
 	GameState.settings["searchRadius"] = 15
 	GameState.inventory[0] = _equip_instance("weapon_starter", "sv_1", {"atk": 5})
 	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
@@ -1091,6 +1096,8 @@ func _test_save() -> void:
 	_expect(GameState.save_pos.is_equal_approx(Vector2(123.5, -456.25)),
 		"读档后坐标应一致，实际 %s" % str(GameState.save_pos))
 
+	_expect(_deep_equal(Fog.encode(), expected_explored), "读档后各图探索区块应完整一致")
+
 	# ---- ③ 运行态开关不落档（10.3：重启后自动战斗默认关闭）----
 	_expect(not GameState.auto_battle_on, "读档后自动战斗应默认关闭（运行态开关不持久化）")
 
@@ -1126,6 +1133,7 @@ func _test_save() -> void:
 	var old_res := SaveManager.read_slot(SLOT)
 	_expect(bool(old_res.get("ok", false)), "缺字段的旧档应可读取（旧档导入）")
 	SaveManager.apply_to_game_state(old_res.get("data", {}))
+	_expect(GameState.explored_maps.is_empty(), "旧档缺探索字段必须清空，不能沿用上一槽")
 	_expect(int(GameState.player.level) == 3, "旧档已有字段应保留（等级 3）")
 	_expect(int(GameState.player.attack) == int(GameState.default_player()["attack"]),
 		"旧档缺失字段应补默认值（攻击 %d）" % int(GameState.default_player()["attack"]))
@@ -1717,6 +1725,9 @@ func _test_world() -> void:
 	# HUD 伤害飘字层分组
 	var dn: Node = game.get_node_or_null("DamageNumbers")
 	_expect(dn != null and dn.is_in_group("damage_numbers"), "DamageNumbers 节点缺少分组标记")
+	game.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 ## M3-1 / M3-2：地图数据、车夫拓扑与出行校验链（工程文档 13 §3 / §6 R5）。
 func _test_map_travel() -> void:
@@ -1786,6 +1797,8 @@ func _test_map_reload() -> void:
 	var camp_npc_n := int(camp_npcs.get_child_count()) if camp_npcs != null else -1
 	_expect(camp_monsters == _expected_point_count("camp"),
 		"营地怪物点数应为 %d，实际 %d" % [_expected_point_count("camp"), camp_monsters])
+	Fog.reveal("camp", Vector2i.ZERO)
+	var camp_explored: Array = Fog.encode().get("camp", []).duplicate()
 	camp_game.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -1828,8 +1841,18 @@ func _test_map_reload() -> void:
 		_expect((player as Node2D).global_position.is_equal_approx(target),
 			"玩家应落在切图落点：pos=%s 落点=%s" % [(player as Node2D).global_position, target])
 	_expect(not GameState.has_save_pos, "落点应被消费一次即清空")
+	_expect(_deep_equal(Fog.encode().get("camp", []), camp_explored), "进入野外不应改变营地探索")
 
 	wild_game.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	GameState.gold = 100
+	_expect(bool(MapService.travel_to("camp").ok), "回营地切图校验失败")
+	var returned: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(returned)
+	await get_tree().process_frame
+	_expect(_deep_equal(Fog.encode().get("camp", []), camp_explored), "返回营地后历史探索丢失")
+	returned.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
@@ -1866,3 +1889,84 @@ func _finish() -> void:
 		for f in _failures:
 			printerr("[SmokeTest] 失败：", f)
 		get_tree().quit(1)
+
+# ---- M3-3：探索、迁移与真实 UI 输入链 ----
+func _test_fog() -> void:
+	GameState.reset_to_defaults()
+	_expect(not Fog.is_explored("camp", Vector2i(0, 0)), "新档不得已探索整图")
+	_expect(Fog.reveal("camp", Vector2i(0, 0)), "首次揭示必须产生变化")
+	_expect(Fog.is_explored("camp", Vector2i(8, 0)) and not Fog.is_explored("camp", Vector2i(12, 0)), "揭示半径/区块边缘不正确")
+	var initial := Fog.encode().duplicate(true)
+	_expect(not Fog.reveal("camp", Vector2i(0, 0)) and _deep_equal(initial, Fog.encode()), "重复揭示不应增长集合")
+	_expect(not Fog.reveal("unknown", Vector2i.ZERO) and not Fog.reveal("camp", Vector2i(-1, 0)), "未知地图/越界不应揭示")
+	Fog.reveal("corruption_source", Vector2i(49, 49))
+	_expect(Fog.is_explored("corruption_source", Vector2i(49, 49)) and Fog.block_grid("corruption_source") == Vector2i(13, 13), "50格地图的不足四格边块丢失")
+	var snapshot := Fog.encode()
+	GameState.explored_maps = Fog.normalize(JSON.parse_string(JSON.stringify(snapshot)))
+	_expect(_deep_equal(snapshot, Fog.encode()), "探索的JSON往返不一致")
+	GameState.explored_maps = Fog.normalize({"wild_trial": [0.0, 0, 224, 225, -1, 1.5, "2", INF, NAN], "unknown": [0], "camp": 42})
+	_expect(GameState.explored_maps.size() == 1 and GameState.explored_maps.wild_trial.size() == 2, "坏探索记录、重复或未知地图未清理")
+	var old := SaveManager._migrate({"schemaVersion": 1, "player": {"level": 3}, "gold": 17})
+	SaveManager.apply_to_game_state(old)
+	_expect(int(old.schemaVersion) == 2 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
+	GameState.reset_to_defaults()
+
+func _test_fog_ui() -> void:
+	GameState.reset_to_defaults()
+	GameState.current_map = "wild_trial"
+	GameState.quest_states = {"Q002": {"state": "active", "progress": 0}}
+	var main: Node = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var panel: Control = main.get_node("UI/MapBigPanel")
+	var canvas: MapCanvas = panel.get("_map")
+	var player: PlayerCharacter = main.get_node("Game/Entities/Player")
+	var world: Node = main.get_node("Game")
+	var markers := MapMarkers.for_world(world)
+	var targets := markers.filter(func(marker: Dictionary) -> bool: return marker.kind == "quest")
+	_expect(targets.size() == 6 and targets.all(func(marker: Dictionary) -> bool: return marker.revealed), "接取狼任务未揭示六个实际刷新点")
+	_expect(MapMarkers.drops_item("shellback_bug", "spirit_shard") and not MapMarkers.drops_item("training_dummy", "spirit_shard"), "收集标记没有按真实掉落表过滤")
+	for monster: Node in get_tree().get_nodes_in_group("enemies"):
+		monster.set_physics_process(false)
+	panel.set_open(true)
+	_expect(panel.visible and GameState.panel_open, "大地图未登记关闭式面板")
+	var cell := Vector2(40, 34)
+	var point := Iso.grid_pt(cell.x, cell.y)
+	var canvas_point := canvas.world_to_canvas(point)
+	_expect(canvas.canvas_to_grid(canvas_point).is_equal_approx(cell), "大小地图投影反算不一致")
+	GameState.set_auto_battle(true)
+	var mouse := InputEventMouseButton.new()
+	mouse.button_index = MOUSE_BUTTON_LEFT
+	mouse.pressed = true
+	mouse.position = canvas_point
+	canvas._gui_input(mouse)
+	_expect(not panel.visible and not GameState.panel_open and player.map_move_active, "大地图点击未关闭面板并发起真实移动")
+	var before := player.global_position
+	await get_tree().create_timer(0.5).timeout
+	_expect(player.global_position.distance_to(before) > 10 and player.global_position.distance_to(point) < before.distance_to(point), "地图点击后角色未接近目的地")
+	var pilot: AutoBattle = player.get_node("AutoPilot")
+	_expect(pilot.get("_state") == AutoBattle.State.MANUAL_OVERRIDE, "地图行走被自动战斗抢占")
+	panel.set_open(true)
+	var held := player.global_position
+	var manual_t := float(pilot.get("_manual_t"))
+	await get_tree().create_timer(0.2).timeout
+	_expect(player.global_position.is_equal_approx(held) and is_equal_approx(float(pilot.get("_manual_t")), manual_t), "打开地图后路线/接管计时未冻结")
+	EventBus.panel_opened.emit("inventory")
+	_expect(not panel.visible, "地图未与其他面板互斥")
+	GameState.set_panel_open("inventory", false)
+	player._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	await get_tree().create_timer(0.15).timeout
+	_expect(player.global_position.is_equal_approx(held), "后台地图路线仍推进")
+	player._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
+	GameState.set_auto_battle(false)
+	Input.action_press("move_right")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("move_right")
+	_expect(not player.map_move_active, "WASD未取消地图目的地")
+	var signal_count := EventBus.fog_changed.get_connections().size()
+	main.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_expect(EventBus.fog_changed.get_connections().size() == signal_count - 2, "销毁大小地图后探索信号残留")
+	GameState.reset_to_defaults()

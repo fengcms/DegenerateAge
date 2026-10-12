@@ -64,12 +64,21 @@ func _process(delta: float) -> void:
 		if float(p.timer) >= float(p.respawn_time):
 			_spawn(p)
 
+## UI 使用当前实际刷新区域，死亡后保留旧点直到本点重生。
+func marker_points() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for point in _points:
+		if point.has("position"):
+			out.append({"monster_id": point.monster_id, "position": point.position})
+	return out
+
 func _spawn(point: Dictionary) -> void:
 	var m: Monster = MONSTER_SCENE.instantiate()
 	m.monster_id = String(point.get("monster_id", "wolf_corrupted"))
 	m.spawn_level = int(point.get("level", 0))
 	m.ai_enabled = bool(point.get("ai", true))
 	var pos := _random_spawn_position()
+	point.position = pos
 	m.position = pos
 	m.spawn_position = pos
 	m.died.connect(func(_id: String) -> void: _on_monster_died(point))

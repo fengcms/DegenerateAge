@@ -5,7 +5,7 @@ extends Node
 ## （数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 不持久化运行时节点对象——存档由 SaveManager 负责序列化这里的数据。
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
 
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
@@ -29,6 +29,7 @@ var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互�
 var quest_states: Dictionary = {}   # quest_id -> {"state": String, "progress": int}（M2 起；见 scripts/systems/quest.gd）
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2：Q005 奖励 → 第二章入口）
+var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
 var settings: Dictionary = {}
 ## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
 ## （10.3：重启后自动战斗默认关闭）。决策机见 scripts/systems/auto_battle.gd。
@@ -106,6 +107,7 @@ func reset_to_defaults() -> void:
 	quest_states = {}
 	first_clear = {}
 	unlocks = {}
+	explored_maps = {}
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）

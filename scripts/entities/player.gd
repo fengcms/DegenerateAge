@@ -35,6 +35,46 @@ var is_dead: bool = false
 var auto_move: Vector2 = Vector2.ZERO
 ## 上一帧是否检测到手动输入（供 auto_battle 判定「手动接管」）。
 var manual_input_active: bool = false
+## 大地图发出的手动目的地与普攻/自动共用 velocity + move_and_slide；不保存运行态路线。
+var map_move_active := false
+var _map_destination := Vector2.ZERO
+var _map_check_t := 0.0
+var _map_last_distance := INF
+var _map_stuck_count := 0
+var _map_background := false
+
+func request_map_move(point: Vector2) -> bool:
+	if is_dead or not point.is_finite():
+		return false
+	_map_destination = point
+	map_move_active = true
+	_map_last_distance = global_position.distance_to(point)
+	_map_check_t = 0.0
+	_map_stuck_count = 0
+	auto_move = Vector2.ZERO
+	return true
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_map_background = true
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		_map_background = false
+
+func _map_direction(delta: float) -> Vector2:
+	var distance := global_position.distance_to(_map_destination)
+	if distance <= AutoBattle.LOOT_ARRIVE_EPS:
+		map_move_active = false
+		return Vector2.ZERO
+	_map_check_t += delta
+	if _map_check_t >= AutoBattle.STUCK_INTERVAL:
+		_map_check_t = 0.0
+		_map_stuck_count = _map_stuck_count + 1 if _map_last_distance - distance < AutoBattle.STUCK_PROGRESS_EPS else 0
+		_map_last_distance = distance
+		if _map_stuck_count >= AutoBattle.STUCK_LIMIT:
+			map_move_active = false
+			EventBus.toast_requested.emit("前往地图目标受阻，请换一个位置", "danger")
+			return Vector2.ZERO
+	return global_position.direction_to(_map_destination)
 
 func _ready() -> void:
 	add_to_group("player")
@@ -71,6 +111,14 @@ func _physics_process(delta: float) -> void:
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	manual_input_active = dir.length() > MANUAL_EPS
+	if manual_input_active or Input.is_action_pressed("attack") or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		map_move_active = false
+	if map_move_active:
+		if _map_background:
+			dir = Vector2.ZERO
+		elif _stun <= 0.0:
+			dir = _map_direction(delta)
+		manual_input_active = map_move_active
 	# 手动输入优先；无手动输入时由自动战斗的移动意图接管（3.14：自动与手动共用同一移动路径）
 	if not manual_input_active and auto_move != Vector2.ZERO:
 		dir = auto_move
@@ -99,6 +147,7 @@ func apply_damage(amount: int) -> void:
 func _begin_death() -> void:
 	if is_dead:
 		return
+	map_move_active = false
 	is_dead = true
 	_death_t = 0.0
 	velocity = Vector2.ZERO

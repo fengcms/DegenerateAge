@@ -15,7 +15,7 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-const CURRENT_SCHEMA := 1
+const CURRENT_SCHEMA := 2
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -104,6 +104,7 @@ func _collect() -> Dictionary:
 		"firstClear": GameState.first_clear.duplicate(true),
 		"unlocks": GameState.unlocks.duplicate(true),
 		"settings": GameState.settings.duplicate(true),
+		"exploredMaps": Fog.encode(),
 		# 注意：运行态自动战斗开关**不入档**（10.3：重启后自动战斗默认关闭）。
 	}
 
@@ -180,6 +181,7 @@ func _connect_events() -> void:
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
 	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())
+	EventBus.fog_changed.connect(func(_m: String) -> void: request_autosave())
 	EventBus.quest_accepted.connect(func(_q: String) -> void: request_autosave())
 	EventBus.quest_completed.connect(func(_q: String) -> void: request_autosave())
 	EventBus.quest_rewarded.connect(func(_q: String) -> void: request_autosave())
@@ -270,8 +272,9 @@ func _emit_resume_toast() -> void:
 func _migrate(data: Dictionary) -> Dictionary:
 	var v: int = int(data.get("schemaVersion", CURRENT_SCHEMA))
 	if v < CURRENT_SCHEMA:
-		# 未来 schemaVersion 提升时在此按版本补默认值。
-		pass
+		# v1 无探索信息；保持原角色/背包/任务字段，新增空探索集合。
+		if not data.has("exploredMaps"):
+			data["exploredMaps"] = {}
 	data["schemaVersion"] = CURRENT_SCHEMA
 	return data
 
@@ -285,6 +288,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 		GameState.player = _migrate_player(data["player"] as Dictionary)
 	GameState.gold = clampi(int(data.get("gold", 0)), 0, GameState.GOLD_CAP)
 	GameState.current_map = String(data.get("currentMap", "camp"))
+	GameState.explored_maps = Fog.normalize(data.get("exploredMaps", {}))
 	GameState.inventory = _migrate_inventory(data.get("inventory", []))
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）

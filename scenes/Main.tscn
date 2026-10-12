@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Game.tscn" id="2_game"]
@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/SavePanel.tscn" id="6_save"]
 [ext_resource type="PackedScene" path="res://scenes/ui/QuestPanel.tscn" id="7_quest"]
 [ext_resource type="PackedScene" path="res://scenes/ui/CarterPanel.tscn" id="8_carter"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/MapBigPanel.tscn" id="9_map"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -27,6 +29,8 @@ script = ExtResource("1_main")
 [node name="QuestPanel" parent="UI" instance=ExtResource("7_quest")]
 
 [node name="CarterPanel" parent="UI" instance=ExtResource("8_carter")]
+
+[node name="MapBigPanel" parent="UI" instance=ExtResource("9_map")]
 
 [node name="DragLayer" type="Control" parent="UI" groups=["drag_ghost_layer"]]
 anchors_preset = 15
