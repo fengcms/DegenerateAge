@@ -5,7 +5,7 @@ extends Node
 ## （数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 不持久化运行时节点对象——存档由 SaveManager 负责序列化这里的数据。
 
-const SCHEMA_VERSION := 4
+const SCHEMA_VERSION := 5
 
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
@@ -97,6 +97,14 @@ func default_settings() -> Dictionary:
 		"masterVolume": 1.0,
 		"sfxVolume": 1.0,
 		"uiScale": 1.0,
+		"musicVolume": 1.0,
+		"screenShake": true,
+		"strongFlash": true,
+		"textScale": 1.0,
+		"fullscreen": false,
+		"resolution": "auto",
+		"qualityFilter": "all",
+		"keyBindings": {},
 	}
 
 ## 重置为初始状态（新建角色 / 初始化时调用）。
@@ -121,6 +129,7 @@ func reset_to_defaults() -> void:
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
 	clear_save_pos()
 	settings = default_settings()
+	SettingsRuntime.apply_all()
 
 ## 经验升级所需（4.4 公式：round(100 × L^1.6)）。
 func xp_to_next(level: int) -> int:

@@ -20,6 +20,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("skill", open)
+	var hud := get_node_or_null("../Hud")
+	if hud != null:
+		hud.set_hotbar_drop_mode(open)
 	if open:
 		_refresh()
 		EventBus.panel_opened.emit("skill")

@@ -301,6 +301,15 @@ script = ExtResource("2_map")
 minimap = true
 tooltip_text = "点击打开大地图 · M"
 
+[node name="SettingsButton" type="Button" parent="MapPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 42.0
+offset_bottom = 36.0
+text = "⚙"
+tooltip_text = "打开设置"
+
 [node name="QuestTracker" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -340,7 +349,6 @@ theme_override_constants/separation = 3
 
 [node name="Hotbar" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
-z_index = 100
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

@@ -15,7 +15,7 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-const CURRENT_SCHEMA := 4
+const CURRENT_SCHEMA := 5
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -199,6 +199,7 @@ func _connect_events() -> void:
 	EventBus.quest_rewarded.connect(func(_q: String) -> void: request_autosave())
 	EventBus.warehouse_changed.connect(func() -> void: request_autosave())
 	EventBus.mount_changed.connect(func() -> void: request_autosave())
+	EventBus.settings_changed.connect(func() -> void: request_autosave())
 
 # ---- 读取与迁移 ----
 
@@ -344,6 +345,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 		GameState.unlocks = {}
 	if data.get("settings", null) is Dictionary:
 		GameState.settings = _migrate_settings(data["settings"] as Dictionary)
+		SettingsRuntime.apply_all()
 
 	# 坐标：交给 Game._ready 消费（10.3 当前地图与坐标）
 	var pp = data.get("playerPos", null)
@@ -607,8 +609,15 @@ func _is_valid_save(raw: Variant) -> bool:
 			return false
 	for key in GameState.default_settings():
 		var value: Variant = data.settings.get(key)
-		if GameState.default_settings()[key] is bool:
+		var default_value: Variant = GameState.default_settings()[key]
+		if default_value is bool:
 			if not value is bool:
+				return false
+		elif default_value is Dictionary:
+			if not value is Dictionary or not SettingsRuntime.valid_bindings(value):
+				return false
+		elif default_value is String:
+			if not value is String or not SettingsRuntime.valid_choice(key, value):
 				return false
 		elif not _number(value) or float(value) < 0:
 			return false

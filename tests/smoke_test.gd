@@ -2344,7 +2344,7 @@ func _test_fog() -> void:
 	legacy.gold = 17
 	var old := SaveManager._migrate(legacy)
 	SaveManager.apply_to_game_state(old)
-	_expect(int(old.schemaVersion) == 4 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
+	_expect(int(old.schemaVersion) == SaveManager.CURRENT_SCHEMA and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
 	var v2 := SaveManager._collect()
 	v2.schemaVersion = 2
 	v2.erase("warehouse")

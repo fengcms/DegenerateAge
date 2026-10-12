@@ -55,6 +55,7 @@ func _ready() -> void:
 	EventBus.quest_rewarded.connect(_on_quest_changed)
 	EventBus.quest_progressed.connect(_on_quest_progressed)
 	_build_hotbar()
+	$MapPanel/SettingsButton.pressed.connect(func() -> void: get_node("../SettingsPanel").set_open(true))
 	_refresh_all()
 	_auto_battle = GameState.auto_battle_on
 	_auto_pickup = GameState.auto_pickup_on
@@ -283,6 +284,9 @@ func _refresh_hotbar() -> void:
 			"basic_slash": name = "普攻"
 		_hotbar_buttons[i].text = name.substr(0, 1) if id != "" else ""
 		_hotbar_buttons[i].tooltip_text = "%s · 快捷格 %d" % [name, i + 1]
+
+func set_hotbar_drop_mode(active: bool) -> void:
+	_hotbar.z_index = 100 if active else 0
 
 func _on_skill_dropped(index: int, skill_id: String) -> void:
 	if index < 0 or index >= 12 or skill_id != "basic_slash":
