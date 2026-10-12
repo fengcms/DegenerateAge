@@ -213,8 +213,8 @@ func validate_all() -> Array[String]:
 				if typeof(npc) != TYPE_DICTIONARY:
 					continue
 				var role := String(npc.get("role", ""))
-				if role != "shop" and role != "quest" and role != "carter" and role != "blacksmith":
-					report.append("[maps] %s 的 npc role '%s' 非法（应为 shop / quest / carter / blacksmith）" % [mid_map, role])
+				if not ["shop", "quest", "carter", "blacksmith", "warehouse"].has(role):
+					report.append("[maps] %s 的 npc role '%s' 非法" % [mid_map, role])
 				if role == "blacksmith" and (String(npc.get("npcName", "")).is_empty() or String(npc.get("greeting", "")).is_empty()):
 					report.append("[maps] %s 的铁匠缺少 npcName 或 greeting" % mid_map)
 				var sid := String(npc.get("shopId", ""))
@@ -224,6 +224,7 @@ func validate_all() -> Array[String]:
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
 	report.append_array(_validate_affixes())
+	report.append_array(Warehouse.validate_config())
 
 	return report
 

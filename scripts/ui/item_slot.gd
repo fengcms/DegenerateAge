@@ -4,9 +4,10 @@ extends Button
 ##
 ## 两种角色（`role`）：
 ##   ROLE_BAG  —— 背包格：`draggable = true` 时可拖出，载荷携带背包下标与物品实例；
-##   ROLE_TRAY —— 出售托盘格：可接收来自背包格的投放，松手即回传信号。
+##   ROLE_TRAY —— 出售托盘格：可接收来自背包格的投放；
+##   ROLE_WAREHOUSE —— 仓库格：与背包格双向拖放。
 ##
-## 拖拽载荷结构：{ "from": int(ROLE_BAG), "index": int, "item": Dictionary }
+## 拖拽载荷结构：{ "from": ROLE_BAG 或 ROLE_WAREHOUSE, "index": int, "item": Dictionary }
 ## 拖动时的跟随视觉由 DragGhost 承载（挂 UI 层最高层；**不用**引擎的拖拽预览，
 ## 原因见 `_spawn_drag_visual`）。界面本体仍为占位绘制（R5）：格内文字为模板名前 2 字 + 品质色描边。
 ##
@@ -14,9 +15,9 @@ extends Button
 ## _can_drop_data / _drop_data），必须在脚本里覆写；界面为代码构建，无法给 Button 实例
 ## 单独挂虚方法，故统一由此类承载拖出与接收两端。
 
-enum { ROLE_BAG, ROLE_TRAY }
+enum { ROLE_BAG, ROLE_TRAY, ROLE_WAREHOUSE }
 
-## 托盘收到投放时回传（tray_index 为本格下标，payload 见文件头）。
+## 目标格收到投放时回传（target_index 为本格下标，payload 见文件头）。
 signal item_dropped(tray_index: int, payload: Dictionary)
 
 var role: int = ROLE_BAG
@@ -27,10 +28,10 @@ var draggable: bool = false      # 是否允许拖出（仅交易会话中的背
 # ---- 拖出（ROLE_BAG）----
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	if role != ROLE_BAG or not draggable or item.is_empty():
+	if not [ROLE_BAG, ROLE_WAREHOUSE].has(role) or not draggable or item.is_empty():
 		return null
 	_spawn_drag_visual()
-	return {"from": ROLE_BAG, "index": index, "item": item}
+	return {"from": role, "index": index, "item": item}
 
 ## 拖动时跟随鼠标的视觉反馈（拖拽幽灵）。
 ## **不用引擎的 set_drag_preview**：预览挂载点由引擎自定（实测 4.7 插到本面板内部），
@@ -75,9 +76,12 @@ func _make_drag_preview() -> Control:
 # ---- 接收（ROLE_TRAY）----
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
-	if role != ROLE_TRAY or not (data is Dictionary):
+	if not (data is Dictionary):
 		return false
-	return int((data as Dictionary).get("from", -1)) == ROLE_BAG
+	var source := int((data as Dictionary).get("from", -1))
+	return (role == ROLE_TRAY and source == ROLE_BAG) \
+		or (role == ROLE_WAREHOUSE and source == ROLE_BAG) \
+		or (role == ROLE_BAG and source == ROLE_WAREHOUSE)
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	item_dropped.emit(index, data as Dictionary)

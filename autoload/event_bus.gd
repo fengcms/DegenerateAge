@@ -54,6 +54,10 @@ signal map_traveled(from_id: String, to_id: String)
 signal blacksmith_panel_requested(npc_name: String, greeting: String)
 signal upgrade_panel_requested()
 
+# ---- 仓库（M4-3）----
+signal warehouse_panel_requested(npc_name: String)
+signal warehouse_changed()
+
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)
 signal panel_opened(panel_id: String)

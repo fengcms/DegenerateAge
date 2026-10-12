@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_equipment()
 	_test_upgrade()
 	await _test_blacksmith()
+	await _test_warehouse()
 	_test_shop()
 	await _test_trade_panel()
 	_test_debug_seed()
@@ -109,6 +110,79 @@ func _test_blacksmith() -> void:
 		player.global_position = smith.global_position + Vector2(32.0, 0.0)
 		world._process(0.0)
 		_expect(not dialogue.visible, "手动打断走向 NPC 后不应延迟弹出对话")
+	main.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_warehouse() -> void:
+	GameState.reset_to_defaults()
+	_expect(GameState.warehouse.size() == 40 and Warehouse.next_cost(0) == 1000,
+		"仓库初始应为 40 格、首次扩容 1000 金币")
+	var item := _equip_instance("weapon_starter", "store_once", {"atk": 7})
+	GameState.inventory[0] = item
+	var stored := GameState.warehouse_store(0, "store_once")
+	_expect(stored.ok and GameState.inventory[0] == null and GameState.warehouse[0] == item,
+		"存入仓库应保持装备实例且清空背包格")
+	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	_expect(not GameState.warehouse_store(1, "").ok, "仓库应拒绝药品")
+	GameState.inventory[0] = _equip_instance("weapon_starter", "stale_now", {"atk": 2})
+	_expect(not GameState.warehouse_store(0, "store_once").ok and GameState.warehouse[0] == item,
+		"拖拽载荷过期时不得误存另一件装备")
+	for i in range(GameState.inventory.size()):
+		if GameState.inventory[i] == null:
+			GameState.inventory[i] = _equip_instance("weapon_starter", "full_%d" % i, {"atk": 1})
+	_expect(not GameState.warehouse_take(0, "store_once").ok and GameState.warehouse[0] == item,
+		"背包满时取出应失败且仓库装备不丢失")
+	GameState.inventory[2] = null
+	var taken := GameState.warehouse_take(0, "store_once", 2)
+	_expect(taken.ok and GameState.warehouse[0] == null and GameState.inventory[2] == item,
+		"取出仓库应放入指定空格并保留实例属性")
+	_expect(not GameState.warehouse_expand().ok and GameState.warehouse.size() == 40,
+		"金币不足不得扩容")
+	GameState.add_gold(1000)
+	var expanded := GameState.warehouse_expand()
+	_expect(expanded.ok and expanded.cost == 1000 and GameState.warehouse.size() == 50 and GameState.gold == 0,
+		"首次扩容应扣 1000 金币并加 10 格")
+	_expect(Warehouse.next_cost(1) == 1600 and Warehouse.capacity(Warehouse.max_expansions()) == 200
+		and Warehouse.next_cost(Warehouse.max_expansions()) == -1,
+		"后续扩容费应按几何公式递增且 200 格封顶")
+	var invalid_save := SaveManager._collect()
+	invalid_save.warehouse.resize(49)
+	_expect(not SaveManager._is_valid_save(invalid_save), "存档应拒绝仓库格数与扩容次数不一致")
+	invalid_save = SaveManager._collect()
+	invalid_save.warehouse[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	_expect(not SaveManager._is_valid_save(invalid_save), "存档应拒绝仓库中出现非装备")
+	GameState.reset_to_defaults()
+	var ui_item := _equip_instance("weapon_starter", "ui_store", {"atk": 8})
+	GameState.inventory[0] = ui_item
+	var main := preload("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var world: Node = main.get_node("Game")
+	var player: Node2D = world.get_node("Entities/Player")
+	var keeper: Npc = null
+	for child in world.get_node("Npcs").get_children():
+		if child is Npc and child.role == "warehouse":
+			keeper = child
+			break
+	_expect(keeper != null, "营地应生成仓库管理员")
+	if keeper != null:
+		player.global_position = keeper.global_position + Vector2(32.0, 0.0)
+		_expect(world._try_interact(), "靠近仓库管理员按 E 应派发交互")
+		var panel: Control = main.get_node("UI/WarehousePanel")
+		_expect(panel.visible and GameState.panel_open, "仓库面板应可打开并阻止世界操控")
+		panel._on_slot_pressed("bag", 0)
+		panel._on_slot_pressed("bag", 0)
+		_expect(GameState.warehouse[0] == ui_item and GameState.inventory[0] == null,
+			"双击背包装备应存入仓库")
+		var bag_target: ItemSlot = panel.get("_bag_grid").get_child(10)
+		var payload := {"from": ItemSlot.ROLE_WAREHOUSE, "index": 0, "item": ui_item}
+		_expect(bag_target._can_drop_data(Vector2.ZERO, payload), "背包空格应接受仓库装备拖放")
+		panel._on_drop(10, payload, "bag")
+		_expect(GameState.warehouse[0] == null and GameState.inventory[10] == ui_item,
+			"拖放仓库装备到背包指定空格应取出")
+		panel.set_open(false)
+		_expect(not GameState.panel_open, "关闭仓库应恢复世界操控")
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
@@ -1167,6 +1241,9 @@ func _test_save() -> void:
 	GameState.settings["searchRadius"] = 15
 	GameState.inventory[0] = _equip_instance("weapon_starter", "sv_1", {"atk": 5})
 	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
+	GameState.warehouse_expansions = 1
+	GameState.warehouse = Warehouse.create(1)
+	GameState.warehouse[0] = _equip_instance("weapon_starter", "sv_store", {"atk": 9}, [{"stat": "def", "value": 2}])
 	GameState.equipment["weapon"] = _equip_instance("weapon_wolfking", "sv_worn", {"atk": 12},
 		[{"stat": "atk", "value": 6}])
 	GameState.save_pos = Vector2(123.5, -456.25)
@@ -1175,6 +1252,7 @@ func _test_save() -> void:
 
 	var expected_worn: Dictionary = (GameState.equipment["weapon"] as Dictionary).duplicate(true)
 	var expected_bag0: Dictionary = (GameState.inventory[0] as Dictionary).duplicate(true)
+	var expected_store: Dictionary = (GameState.warehouse[0] as Dictionary).duplicate(true)
 	var expected_quests: Dictionary = GameState.quest_states.duplicate(true)
 	var expected_atk := GameState.total_attack()
 
@@ -1232,6 +1310,9 @@ func _test_save() -> void:
 	_expect(int(GameState.inventory[1].get("count", 0)) == 3,
 		"读档后药水堆叠应为 3（JSON 数字需回落为 int），实际 %d"
 		% int(GameState.inventory[1].get("count", 0)))
+	_expect(GameState.warehouse_expansions == 1 and GameState.warehouse.size() == 50
+		and _deep_equal(GameState.warehouse[0], expected_store),
+		"读档后仓库扩容与装备实例应保持不变")
 
 	# 已穿戴实例：逐字段一致，且加成立即生效（T06）
 	_expect(_deep_equal(GameState.equipment["weapon"], expected_worn),
@@ -1288,6 +1369,8 @@ func _test_save() -> void:
 		"旧档缺失字段应补默认值（攻击 %d）" % int(GameState.default_player()["attack"]))
 	_expect(GameState.inventory.size() == GameState.INVENTORY_SIZE, "旧档无背包字段时应补空背包")
 	_expect(GameState.equipment.size() == Equipment.SLOT_DEFS.size(), "旧档无装备字段时应补空槽")
+	_expect(GameState.warehouse.size() == 40 and GameState.warehouse_expansions == 0,
+		"旧档无仓库字段时应补 40 个空格")
 	_expect(not GameState.has_save_pos, "旧档无坐标字段时应回退地图中心出生")
 
 	# ---- ⑦ 删除：清干净（主档 / 备份 / 临时 / 损坏现场）----
@@ -2062,7 +2145,15 @@ func _test_fog() -> void:
 	legacy.gold = 17
 	var old := SaveManager._migrate(legacy)
 	SaveManager.apply_to_game_state(old)
-	_expect(int(old.schemaVersion) == 2 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
+	_expect(int(old.schemaVersion) == 3 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
+	var v2 := SaveManager._collect()
+	v2.schemaVersion = 2
+	v2.erase("warehouse")
+	v2.erase("warehouseExpansions")
+	_expect(SaveManager._is_valid_save(v2), "v2 旧档应可迁移新增仓库字段")
+	SaveManager.apply_to_game_state(v2)
+	_expect(GameState.warehouse.size() == 40 and GameState.warehouse_expansions == 0,
+		"v2 迁移应获得空仓库且不覆盖其他进度")
 	GameState.reset_to_defaults()
 
 func _test_fog_ui() -> void:

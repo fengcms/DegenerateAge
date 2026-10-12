@@ -65,7 +65,7 @@ func _test_save() -> void:
 		var partial := baseline.duplicate(true)
 		partial.erase(key)
 		invalid.append(partial)
-	for patch in [{"schemaVersion":3}, {"inventory":{}}, {"currentMap":"missing"}, {"gold":-1}]:
+	for patch in [{"schemaVersion":4}, {"inventory":{}}, {"currentMap":"missing"}, {"gold":-1}]:
 		var data := baseline.duplicate(true)
 		data.merge(patch, true)
 		invalid.append(data)

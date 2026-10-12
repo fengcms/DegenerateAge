@@ -294,6 +294,9 @@ func _interact_with(npc: Npc) -> bool:
 	if npc.role == "blacksmith":
 		EventBus.blacksmith_panel_requested.emit(npc.npc_name, npc.greeting)
 		return true
+	if npc.role == "warehouse":
+		EventBus.warehouse_panel_requested.emit(npc.npc_name)
+		return true
 	if not npc.shop_id.is_empty():
 		EventBus.shop_open_requested.emit(npc.shop_id)
 		return true

@@ -68,8 +68,8 @@ func contains_screen_point(point: Vector2) -> bool:
 	return Rect2(-38.0, -52.0, 76.0, 68.0).has_point(local)
 
 func _draw() -> void:
-	var cloak_color := Color("956b4b") if role == "blacksmith" else COLOR_CLOAK
-	var edge := Color("463226") if role == "blacksmith" else COLOR_CLOAK_EDGE
+	var cloak_color := Color("956b4b") if role == "blacksmith" else (Color("547784") if role == "warehouse" else COLOR_CLOAK)
+	var edge := Color("463226") if role == "blacksmith" else (Color("273c44") if role == "warehouse" else COLOR_CLOAK_EDGE)
 	# 脚下阴影
 	draw_set_transform(Vector2(0.0, 8.0), 0.0, Vector2(1.0, 0.5))
 	draw_circle(Vector2.ZERO, 12.0, Color(0, 0, 0, 0.28))

@@ -15,7 +15,7 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-const CURRENT_SCHEMA := 2
+const CURRENT_SCHEMA := 3
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -99,6 +99,8 @@ func _collect() -> Dictionary:
 		"currentMap": GameState.current_map,
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
+		"warehouse": GameState.warehouse.duplicate(true),
+		"warehouseExpansions": GameState.warehouse_expansions,
 		"equipment": GameState.equipment.duplicate(true),
 		"questStates": GameState.quest_states.duplicate(true),
 		"firstClear": GameState.first_clear.duplicate(true),
@@ -191,6 +193,7 @@ func _connect_events() -> void:
 	EventBus.quest_accepted.connect(func(_q: String) -> void: request_autosave())
 	EventBus.quest_completed.connect(func(_q: String) -> void: request_autosave())
 	EventBus.quest_rewarded.connect(func(_q: String) -> void: request_autosave())
+	EventBus.warehouse_changed.connect(func() -> void: request_autosave())
 
 # ---- 读取与迁移 ----
 
@@ -296,6 +299,9 @@ func _migrate(source: Dictionary) -> Dictionary:
 			data.unlocks = {}
 		if not data.has("exploredMaps"):
 			data.exploredMaps = {}
+		if v < 3:
+			data.warehouse = Warehouse.create()
+			data.warehouseExpansions = 0
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -313,6 +319,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.current_map = String(data.get("currentMap", "camp"))
 	GameState.explored_maps = Fog.normalize(data.get("exploredMaps", {}))
 	GameState.inventory = _migrate_inventory(data.get("inventory", []))
+	GameState.warehouse_expansions = int(data.get("warehouseExpansions", 0))
+	GameState.warehouse = _migrate_warehouse(data.get("warehouse", []), GameState.warehouse_expansions)
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
 	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
@@ -368,6 +376,15 @@ func _migrate_inventory(raw) -> Array:
 	for i in range(mini(arr.size(), GameState.INVENTORY_SIZE)):
 		if arr[i] is Dictionary:
 			out[i] = _deep_int((arr[i] as Dictionary).duplicate(true))
+	return out
+
+func _migrate_warehouse(raw, expansions: int) -> Array:
+	var out := Warehouse.create(expansions)
+	if not raw is Array:
+		return out
+	for i in range(mini(raw.size(), out.size())):
+		if raw[i] is Dictionary:
+			out[i] = _deep_int((raw[i] as Dictionary).duplicate(true))
 	return out
 
 ## 装备槽迁移：以 14 槽模板为底（5.1）；未知槽位丢弃，缺失槽补空。
@@ -516,6 +533,10 @@ func _is_valid_save(raw: Variant) -> bool:
 			return false
 	if not data.get("inventory") is Array or data.inventory.size() != GameState.INVENTORY_SIZE:
 		return false
+	if not _whole(data.get("warehouseExpansions"), 0, Warehouse.max_expansions()):
+		return false
+	if not data.get("warehouse") is Array or data.warehouse.size() != Warehouse.capacity(int(data.warehouseExpansions)):
+		return false
 	if not data.get("currentMap") is String or DataLoader.get_entry("maps", data.currentMap) == null:
 		return false
 	if not data.get("savedAt") is String or not _whole(data.get("slotId"), -1, MAX_SLOTS):
@@ -541,6 +562,9 @@ func _is_valid_save(raw: Variant) -> bool:
 		return false
 	for item in data.inventory:
 		if item != null and not _valid_item(item):
+			return false
+	for item in data.warehouse:
+		if item != null and (not _valid_item(item) or item.kind != "equip"):
 			return false
 	if data.equipment.size() != Equipment.SLOT_DEFS.size():
 		return false

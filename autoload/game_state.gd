@@ -5,7 +5,7 @@ extends Node
 ## （数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 不持久化运行时节点对象——存档由 SaveManager 负责序列化这里的数据。
 
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
@@ -23,6 +23,8 @@ var player: Dictionary = {}
 var gold: int = 0
 var current_map: String = "camp"
 var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
+var warehouse: Array = []           # 仓库装备，空位为 null（6.8）
+var warehouse_expansions: int = 0
 var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
 var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
@@ -101,6 +103,8 @@ func reset_to_defaults() -> void:
 	gold = 0
 	current_map = "camp"
 	inventory = Inventory.create(INVENTORY_SIZE)
+	warehouse_expansions = 0
+	warehouse = Warehouse.create()
 	equipment = Equipment.create()
 	panel_open = false
 	_open_panels = {}
@@ -214,6 +218,64 @@ func remove_item_at(index: int) -> Dictionary:
 ## 背包已占用格数。
 func inventory_used() -> int:
 	return Inventory.used_slots(inventory)
+
+# ---- 仓库（M4-3；仅存装备）----
+
+func warehouse_store(inv_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
+	if inv_index < 0 or inv_index >= inventory.size() or not inventory[inv_index] is Dictionary:
+		return _warehouse_fail("背包该格没有装备")
+	var item: Dictionary = inventory[inv_index]
+	if String(item.get("kind", "")) != "equip":
+		return _warehouse_fail("仓库只存放装备")
+	if expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
+		return _warehouse_fail("装备已移动，请重新选择")
+	var destination := target_index
+	if destination == -1:
+		destination = warehouse.find(null)
+	if destination < 0 or destination >= warehouse.size() or warehouse[destination] != null:
+		return _warehouse_fail("仓库已满或目标格不可用")
+	warehouse[destination] = item
+	inventory[inv_index] = null
+	EventBus.inventory_changed.emit()
+	EventBus.warehouse_changed.emit()
+	EventBus.toast_requested.emit("存入仓库：%s" % ItemUtil.display_name(item), "pickup")
+	return {"ok": true, "index": destination, "reason": ""}
+
+func warehouse_take(store_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
+	if store_index < 0 or store_index >= warehouse.size() or not warehouse[store_index] is Dictionary:
+		return _warehouse_fail("仓库该格没有装备")
+	var item: Dictionary = warehouse[store_index]
+	if expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
+		return _warehouse_fail("装备已移动，请重新选择")
+	var destination := target_index
+	if destination == -1:
+		destination = inventory.find(null)
+	if destination < 0 or destination >= inventory.size() or inventory[destination] != null:
+		return _warehouse_fail("背包已满或目标格不可用")
+	inventory[destination] = item
+	warehouse[store_index] = null
+	EventBus.inventory_changed.emit()
+	EventBus.warehouse_changed.emit()
+	EventBus.toast_requested.emit("取出仓库：%s" % ItemUtil.display_name(item), "pickup")
+	return {"ok": true, "index": destination, "reason": ""}
+
+func warehouse_expand() -> Dictionary:
+	var cost := Warehouse.next_cost(warehouse_expansions)
+	if cost < 0:
+		return _warehouse_fail("仓库已达容量上限")
+	if gold < cost:
+		return _warehouse_fail("金币不足（扩容需 %d，现有 %d）" % [cost, gold])
+	var old_capacity := warehouse.size()
+	add_gold(-cost)
+	warehouse_expansions += 1
+	warehouse.resize(Warehouse.capacity(warehouse_expansions))
+	EventBus.warehouse_changed.emit()
+	EventBus.toast_requested.emit("仓库扩容：%d → %d 格（-%d 金币）" % [old_capacity, warehouse.size(), cost], "pickup")
+	return {"ok": true, "cost": cost, "capacity": warehouse.size(), "reason": ""}
+
+func _warehouse_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "reason": reason}
 
 # ---- 物品「使用」（M2.5；产品文档 09 §9.2「双击穿戴 / 使用」）----
 

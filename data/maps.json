@@ -17,6 +17,7 @@
       { "role": "shop", "shopId": "peddler_camp", "cell": [16, 20] },
       { "role": "quest", "npcName": "长老", "cell": [24, 20] },
       { "role": "blacksmith", "npcName": "铁匠", "greeting": "炉火还旺。带上装备和金币，我替你试试升星。", "cell": [20, 14] },
+      { "role": "warehouse", "npcName": "仓库管理员", "cell": [14, 14] },
       { "role": "carter", "npcName": "车夫", "cell": [20, 24] }
     ],
     "desc": "安全区：复活锚点 / 回城落点，聚集货郎、铁匠、车夫、任务官、仓库。"
