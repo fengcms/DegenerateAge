@@ -239,15 +239,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			GameState.toggle_auto_pickup()
 			get_viewport().set_input_as_handled()
 			return
-		# 快捷喝药（1 = 红 / 2 = 蓝；M2.5。键位与产品 9.1 快捷栏一致，M4 由正式快捷栏接管）
-		if event.is_action_pressed("use_potion_hp"):
-			_use_potion(Consumable.KIND_RED)
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("use_potion_mp"):
-			_use_potion(Consumable.KIND_BLUE)
-			get_viewport().set_input_as_handled()
-			return
 
 	# 与 NPC 交互（6.3 通用交互）：靠近后按 E；面板打开时不响应
 	if event.is_action_pressed("interact") and not GameState.panel_open:

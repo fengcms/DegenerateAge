@@ -35,6 +35,8 @@ var _target: Node = null
 var _auto_battle: bool = false
 var _auto_pickup: bool = false
 var _auto_phase: String = ""
+var _hotbar_contents: Array[String] = ["hp", "mp", "basic_slash", "", "", "", "", "", "", "", "", ""]
+var _hotbar_buttons: Array[HotbarSlot] = []
 
 func _ready() -> void:
 	EventBus.player_hp_changed.connect(_on_hp)
@@ -239,23 +241,82 @@ func _current_map_name() -> String:
 		return String(GameState.current_map)
 	return String(m.get("name", GameState.current_map))
 
-# ---- 快捷栏占位（16 格，技能 / 药品槽位在 M4-6 完善）----
+# ---- 快捷栏：前 12 格放已接通操作，后 4 格打开面板 ----
+
+func _unhandled_input(event: InputEvent) -> void:
+	if GameState.panel_open or not event is InputEventKey or not event.pressed or event.echo:
+		return
+	for i in range(12):
+		if InputMap.has_action("hotbar_%d" % (i + 1)) and event.is_action_pressed("hotbar_%d" % (i + 1)):
+			_activate_hotbar(i)
+			get_viewport().set_input_as_handled()
+			return
 
 func _build_hotbar() -> void:
 	for i in range(HOTBAR_SLOTS):
-		if i == HOTBAR_SLOTS - 1:
-			var mount_button := Button.new()
-			mount_button.custom_minimum_size = Vector2(28, 28)
-			mount_button.text = "骑"
-			mount_button.tooltip_text = "打开坐骑面板（N）"
-			mount_button.pressed.connect(func() -> void: EventBus.mount_panel_requested.emit())
-			_hotbar.add_child(mount_button)
+		if i >= 12:
+			var button := Button.new()
+			button.custom_minimum_size = Vector2(32, 32)
+			var names := ["人", "包", "技", "骑"]
+			var keys := ["C", "I", "K", "N"]
+			button.text = names[i - 12]
+			button.tooltip_text = "%s 面板（%s）" % [names[i - 12], keys[i - 12]]
+			button.pressed.connect(_open_panel.bind(i))
+			_hotbar.add_child(button)
 			continue
-		var slot := Panel.new()
-		slot.custom_minimum_size = Vector2(28, 28)
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.add_theme_stylebox_override("panel", _slot_style())
+		var slot := HotbarSlot.new()
+		slot.index = i
+		slot.custom_minimum_size = Vector2(32, 32)
+		slot.pressed.connect(_activate_hotbar.bind(i))
+		slot.skill_dropped.connect(_on_skill_dropped)
 		_hotbar.add_child(slot)
+		_hotbar_buttons.append(slot)
+	_refresh_hotbar()
+
+func _refresh_hotbar() -> void:
+	for i in range(_hotbar_buttons.size()):
+		var id := _hotbar_contents[i]
+		var name := "空"
+		match id:
+			"hp": name = "红药"
+			"mp": name = "蓝药"
+			"basic_slash": name = "普攻"
+		_hotbar_buttons[i].text = name.substr(0, 1) if id != "" else ""
+		_hotbar_buttons[i].tooltip_text = "%s · 快捷格 %d" % [name, i + 1]
+
+func _on_skill_dropped(index: int, skill_id: String) -> void:
+	if index < 0 or index >= 12 or skill_id != "basic_slash":
+		return
+	_hotbar_contents[index] = skill_id
+	_refresh_hotbar()
+
+func _activate_hotbar(index: int) -> void:
+	if index < 0 or index >= 12 or GameState.panel_open:
+		return
+	match _hotbar_contents[index]:
+		"hp": _use_potion(Consumable.KIND_RED)
+		"mp": _use_potion(Consumable.KIND_BLUE)
+		"basic_slash":
+			var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+			if player != null and player.valid_target(player.locked_target):
+				player.request_target_attack(player.locked_target)
+			else:
+				EventBus.toast_requested.emit("请先选中怪物", "danger")
+
+func _use_potion(kind: String) -> void:
+	var idx := Consumable.pick_index(kind)
+	if idx < 0:
+		idx = Consumable.first_index_of_kind(kind)
+	if idx >= 0:
+		GameState.use_item(idx)
+	else:
+		EventBus.toast_requested.emit("背包中没有%s" % ("红药" if kind == Consumable.KIND_RED else "蓝药"), "danger")
+
+func _open_panel(index: int) -> void:
+	var nodes := ["CharacterPanel", "InventoryPanel", "SkillPanel", "MountPanel"]
+	var panel := get_node_or_null("../" + nodes[index - 12])
+	if panel != null:
+		panel.set_open(true)
 
 func _slot_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
