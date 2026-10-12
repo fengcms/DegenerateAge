@@ -17,7 +17,8 @@ func _ready() -> void:
 		data.settings.erase(key)
 	_check(SaveManager._is_valid_save(data), "v4 旧档仍可读取")
 	var migrated := SaveManager._migrate(data)
-	_check(migrated.schemaVersion == 5 and migrated.settings.has("keyBindings"), "v4 设置补齐并迁移 v5")
+	_check(migrated.schemaVersion == SaveManager.CURRENT_SCHEMA and migrated.settings.has("keyBindings")
+		and HotbarConfig.valid_layout(migrated.hotbar), "v4 设置与快捷栏补齐并迁移到当前版本")
 	var bad := migrated.duplicate(true)
 	bad.settings.keyBindings = {"panel_inventory": -1}
 	_check(not SaveManager._is_valid_save(bad), "非法键位被拒绝")

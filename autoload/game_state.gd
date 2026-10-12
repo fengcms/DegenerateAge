@@ -5,7 +5,7 @@ extends Node
 ## （数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 不持久化运行时节点对象——存档由 SaveManager 负责序列化这里的数据。
 
-const SCHEMA_VERSION := 5
+const SCHEMA_VERSION := 6
 
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
@@ -35,6 +35,7 @@ var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2：Q005 奖励 → 第二章入口）
 var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
 var settings: Dictionary = {}
+var hotbar: Array = []             # 12 格模板引用；背包整理、切图后保持绑定（M4-8）
 ## 本次运行的菜单流程状态；不入档。切图与读档重建 Main 时保留 world。
 var menu_mode: String = "menu"
 ## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
@@ -131,7 +132,28 @@ func reset_to_defaults() -> void:
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
 	clear_save_pos()
 	settings = default_settings()
+	hotbar = HotbarConfig.defaults()
 	SettingsRuntime.apply_all()
+
+func set_hotbar_entry(index: int, entry: Variant) -> bool:
+	if index < 0 or index >= HotbarConfig.SIZE or not HotbarConfig.valid_entry(entry):
+		return false
+	if hotbar[index] == entry:
+		return true
+	hotbar[index] = entry.duplicate(true) if entry is Dictionary else null
+	EventBus.hotbar_changed.emit()
+	return true
+
+func swap_hotbar_entries(from_index: int, to_index: int) -> bool:
+	if from_index < 0 or from_index >= HotbarConfig.SIZE or to_index < 0 or to_index >= HotbarConfig.SIZE:
+		return false
+	if from_index == to_index:
+		return true
+	var old = hotbar[from_index]
+	hotbar[from_index] = hotbar[to_index]
+	hotbar[to_index] = old
+	EventBus.hotbar_changed.emit()
+	return true
 
 ## 经验升级所需（4.4 公式：round(100 × L^1.6)）。
 func xp_to_next(level: int) -> int:

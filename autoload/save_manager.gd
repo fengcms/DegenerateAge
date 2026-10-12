@@ -15,7 +15,7 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-const CURRENT_SCHEMA := 5
+const CURRENT_SCHEMA := 6
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -107,6 +107,7 @@ func _collect() -> Dictionary:
 		"firstClear": GameState.first_clear.duplicate(true),
 		"unlocks": GameState.unlocks.duplicate(true),
 		"settings": GameState.settings.duplicate(true),
+		"hotbar": GameState.hotbar.duplicate(true),
 		"exploredMaps": Fog.encode(),
 		# 注意：运行态自动战斗开关**不入档**（10.3：重启后自动战斗默认关闭）。
 	}
@@ -211,6 +212,7 @@ func _connect_events() -> void:
 	EventBus.warehouse_changed.connect(func() -> void: request_autosave())
 	EventBus.mount_changed.connect(func() -> void: request_autosave())
 	EventBus.settings_changed.connect(func() -> void: request_autosave())
+	EventBus.hotbar_changed.connect(func() -> void: request_autosave())
 
 # ---- 读取与迁移 ----
 
@@ -322,6 +324,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 		if v < 4:
 			data.ownedMounts = []
 			data.activeMount = ""
+		if v < 6:
+			data.hotbar = HotbarConfig.defaults()
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -346,6 +350,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 		GameState.owned_mounts.append(String(mount_id))
 	GameState.active_mount = String(data.get("activeMount", ""))
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
+	GameState.hotbar = data.hotbar.duplicate(true)
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
 	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
 	if data.get("firstClear", null) is Dictionary:
@@ -568,6 +573,8 @@ func _is_valid_save(raw: Variant) -> bool:
 	if not data.get("warehouse") is Array or data.warehouse.size() != Warehouse.capacity(int(data.warehouseExpansions)):
 		return false
 	if not data.get("ownedMounts") is Array or not data.get("activeMount") is String:
+		return false
+	if not HotbarConfig.valid_layout(data.get("hotbar")):
 		return false
 	var seen_mounts := {}
 	for mount_id in data.ownedMounts:
