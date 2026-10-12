@@ -21,7 +21,7 @@ extends Node
 ##   · 每 60s 一次交互脉冲：开关背包面板、开关存档面板、0.6s 手动移动接管（压 UI 与 4.6 分支）、
 ##     清空场上怪物 4s（观察兜底的「搜索掉落 → 顺路拾取」路径——仅在存在未认领留地物时触发）、
 ##     把留地掉落物扫进背包（兜底：背包满时掉落物会留地待清，否则会单调堆积掩盖泄漏信号）、
-##     背包接近满时模拟回城卖装备
+##     背包接近满时模拟回城卖装备；M3 增加营地↔试炼野外往返切图脉冲
 ##   · 低血注水：HP < 50% 时补满（压测角色**不带药水**，故 M2.5 的自动喝药不会触发；
 ##     且 Q5 已取消「低血停战」，若不注水角色会一直战斗到死，破坏持续负载）——
 ##     属压测注水，只为保证持续负载，报告中单独计数说明
@@ -68,6 +68,8 @@ var _max_gap := 0.0
 var _gap_overruns := 0
 var _last_frames := 0
 var _stress_count := 0
+var _travel_count := 0
+var _travel_subsidy := 0
 
 var _failures: Array[String] = []
 var _save_snapshot: Dictionary = {}
@@ -306,11 +308,52 @@ func _stress_pulse() -> void:
 	if GameState.inventory_used() >= BAG_CLEAN_THRESHOLD:
 		cleaned = _clean_bag()
 	var swept := _sweep_drops()
+	# ⑤ M3 切图生命周期脉冲：往返后仍回原地图，便于稳定性样本横向比较。
+	await _travel_round_trip()
 
-	print("[Soak] %s：面板开合 %d · 清场 %d 怪 · 顺路拾取 %s · 扫入 %d 件(+%d 金) · 卖 %d 件 · 背包 %d 格" % [
+	print("[Soak] %s：面板开合 %d · 清场 %d 怪 · 顺路拾取 %s · 扫入 %d 件(+%d 金) · 卖 %d 件 · 切图累计 %d 次 · 背包 %d 格" % [
 		tag, opened, cleared, "√" if loot_seen else "×",
-		int(swept.get("took", 0)), int(swept.get("gold", 0)), cleaned,
+		int(swept.get("took", 0)), int(swept.get("gold", 0)), cleaned, _travel_count,
 		GameState.inventory_used()])
+
+func _travel_round_trip() -> void:
+	if GameState.current_map != "camp":
+		_fail("切图脉冲起点应为营地，实际 %s" % GameState.current_map)
+		return
+	if not await _travel_once("wild_trial"):
+		return
+	var fare := MapService.fee_to("camp")
+	if GameState.gold < fare:
+		var subsidy := fare - GameState.gold
+		GameState.add_gold(subsidy)
+		_travel_subsidy += subsidy
+	await _travel_once("camp")
+
+func _travel_once(map_id: String) -> bool:
+	var result := MapService.travel_to(map_id)
+	if not bool(result.get("ok", false)):
+		_fail("切图脉冲前往 %s 失败：%s" % [map_id, result.get("reason", "")])
+		return false
+	var old_main: WeakRef = weakref(_main)
+	_main.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if old_main.get_ref() != null:
+		_fail("切图脉冲旧世界未释放")
+	_main = load("res://scenes/Main.tscn").instantiate()
+	add_child(_main)
+	await get_tree().process_frame
+	_game = _main.get_node_or_null("Game")
+	_player = _game.get_node_or_null("Entities/Player") as PlayerCharacter if _game != null else null
+	_pilot = _player.get_node_or_null("AutoPilot") as AutoBattle if _player != null else null
+	if _game == null or _player == null or _pilot == null:
+		_fail("切图脉冲新世界缺少 Game / Player / AutoPilot")
+		return false
+	if GameState.current_map != map_id or _game.get_node("Ground").map_id != map_id:
+		_fail("切图脉冲未装载目标地图 %s" % map_id)
+		return false
+	_travel_count += 1
+	return true
 
 ## 把**未认领**的留地掉落物扫进背包 / 金币入账（兜底；9.9）。
 ## 工程文档 10 起怪物掉落生成即认领，本路径主要服务「背包满留地」遗留物；
@@ -387,6 +430,8 @@ func _evaluate() -> void:
 	_expect(max_orphan == 0,
 		"孤儿节点应恒为 0（对象未正确释放），实际峰值 %d" % max_orphan)
 	_expect(_kills > 0, "压测期间应有真实负载（击杀 > 0），实际 %d" % _kills)
+	_expect(_travel_count == _stress_count * 2,
+		"每次交互脉冲应完成营地↔野外两次切图：%d 次脉冲 / %d 次切图" % [_stress_count, _travel_count])
 	_expect(_duplicate_ids == 0,
 		"背包不应出现重复实例 ID（复制 bug），实际 %d 次" % _duplicate_ids)
 	_expect(max_bag <= GameState.INVENTORY_SIZE,
@@ -451,6 +496,7 @@ func _write_reports() -> void:
 	lines.append("- 压测时长：%.1fs（采样 %d 次，间隔 %.0fs）" % [
 		float(last.get("t", 0.0)), n, _interval])
 	lines.append("- 交互脉冲：%d 次（每 %.0fs 一次）" % [_stress_count, STRESS_EVERY])
+	lines.append("- M3 切图脉冲：%d 次实际切图（营地↔试炼野外；测试补足返程车费 %d 金）" % [_travel_count, _travel_subsidy])
 	lines.append("- 引擎：Godot %s · %s" % [
 		Engine.get_version_info().get("string", "?"), OS.get_name()])
 	lines.append("")
@@ -465,6 +511,7 @@ func _write_reports() -> void:
 	lines.append("| 卖出装备 | %d 件（+%d 金币）|" % [_sold, _gold_sold])
 	lines.append("| 模拟拾取 | %d 件 + %d 金币（未认领留地物兜底清理）|" % [
 		_swept_items, _swept_gold])
+	lines.append("| 往返切图 | %d 次（测试返程车费补足 %d 金）|" % [_travel_count, _travel_subsidy])
 	lines.append("| 顺路拾取触发 | %d 次（清场后观察到 PATH_TO_LOOT；仅命中未认领留地物，属兜底）|" % _loot_paths)
 	lines.append("| 低血注水 | %d 次（M1 无自动喝药，压测注水）|" % _heals)
 	lines.append("| 玩家死亡 | %d 次 |" % _deaths)
