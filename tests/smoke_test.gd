@@ -24,6 +24,7 @@ func _ready() -> void:
 	await _test_death_settles_once()
 	await _test_spawner()
 	_test_loot()
+	_test_balance_calibration()
 	_test_inventory()
 	await _test_pickup()
 	await _test_pickup_delay()
@@ -285,6 +286,75 @@ func _test_loot() -> void:
 
 	# 无效掉落表 → 空（不崩溃）
 	_expect(Loot.roll("DT_NOT_EXIST").is_empty(), "无效掉落表应返回空数组")
+
+# ---- M1 收尾 / 数值校准（07 方案 §7）：防回归断言 ----
+## 校准值一旦被误改回旧值，此用例立即失败。
+func _test_balance_calibration() -> void:
+	# C1 裂壳虫：hpBase / defense 已校准（原 300 / 20 → 30s 过肉）
+	var bug = DataLoader.get_entry("monsters", "shellback_bug")
+	if bug == null:
+		_expect(false, "缺少裂壳虫模板 shellback_bug")
+	else:
+		_expect(int(bug.get("hpBase", 0)) == 140,
+			"C1 裂壳虫 hpBase 应为 140（校准），实际 %d" % int(bug.get("hpBase", 0)))
+		_expect(int(bug.get("defense", 0)) == 12,
+			"C1 裂壳虫 defense 应为 12（校准），实际 %d" % int(bug.get("defense", 0)))
+
+	# C2 闪避为「点数」口径：野狼/游魂 6（≈10.7%）、狼王 8（≈13.8%）
+	var dodge_cases := {"wolf_corrupted": 6, "ash_wraith": 6, "elite_wolf_king": 8}
+	for mid in dodge_cases.keys():
+		var mon = DataLoader.get_entry("monsters", mid)
+		if mon == null:
+			_expect(false, "缺少怪物模板 %s" % mid)
+			continue
+		var dv := int(mon.get("dodge", -1))
+		_expect(dv == int(dodge_cases[mid]),
+			"C2 %s dodge 应为 %d（点数口径），实际 %d" % [mid, int(dodge_cases[mid]), dv])
+		# 点数口径复核：dodge=6 → Miss≈10.7%、dodge=8 → Miss≈13.8%
+		var miss := Combat.miss_chance(float(dv))
+		_expect(miss > 0.05 and miss < 0.20,
+			"C2 %s dodge=%d 的 Miss 应落在 (5%%,20%%)，实际 %.2f%%" % [mid, dv, miss * 100.0])
+
+	# C3 精英专属掉落表：存在 + 已绑定 + 金币/装备口径正确
+	var elite = DataLoader.get_entry("monsters", "elite_wolf_king")
+	if elite != null:
+		_expect(String(elite.get("dropTableId", "")) == "DT_Elite_L1",
+			"C3 精英应绑 DT_Elite_L1，实际 %s" % String(elite.get("dropTableId", "")))
+	var dt = DataLoader.get_entry("dropTables", "DT_Elite_L1")
+	if dt == null:
+		_expect(false, "C3 缺少 DT_Elite_L1 掉落表")
+	else:
+		var coin_ok := false
+		var equip_ok := false
+		for e in dt.get("entries", []):
+			var kind := String(e.get("kind", ""))
+			if kind == "coin":
+				var gr = e.get("goldRange", [])
+				coin_ok = gr is Array and gr.size() >= 2 and int(gr[0]) == 48 and int(gr[1]) == 72
+			elif kind == "equip":
+				_expect(is_equal_approx(float(e.get("chance", 0.0)), 1.0),
+					"C3 精英装备应必掉（chance 1.0）")
+				var qw = e.get("qualityWeight", {})
+				equip_ok = qw is Dictionary and int(qw.get("uncommon", 0)) == 50 \
+					and int(qw.get("rare", 0)) == 40 and int(qw.get("epic", 0)) == 10
+		_expect(coin_ok, "C3 DT_Elite_L1 金币范围应为 [48,72]")
+		_expect(equip_ok, "C3 DT_Elite_L1 品质权重应为 优50/稀40/史10")
+
+	# 精英掉落实测：金币落 [48,72] 且必出装备（多轮验证）
+	var seen_equip := false
+	for s in range(30):
+		var r := RandomNumberGenerator.new()
+		r.seed = 900 + s
+		for it in Loot.roll("DT_Elite_L1", r):
+			var k := String(it.get("kind", ""))
+			if k == "coin":
+				var g := int(it.get("gold", 0))
+				_expect(g >= 48 and g <= 72, "C3 精英金币应在 [48,72]，实际 %d" % g)
+			elif k == "equip":
+				seen_equip = true
+				var q := String(it.get("quality", ""))
+				_expect(q in ["uncommon", "rare", "epic"], "C3 精英装备品质越界：%s" % q)
+	_expect(seen_equip, "C3 精英应必出装备（30 轮抽取全未见 equip，异常）")
 
 # ---- M1-6 / T10：背包存储与满包判定（5.8）----
 func _test_inventory() -> void:

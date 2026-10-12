@@ -9,6 +9,15 @@
     ]
   },
   {
+    "id": "DT_Elite_L1",
+    "desc": "精英怪掉落表（L1–5，优奖：金币 L×15±20%、装备必掉、优品权重上移）",
+    "entries": [
+      { "kind": "coin", "chance": 1.0, "goldRange": [48, 72] },
+      { "kind": "equip", "chance": 1.0, "levelRange": [3, 5], "qualityWeight": { "uncommon": 50, "rare": 40, "epic": 10 } },
+      { "kind": "potion", "chance": 0.4, "itemId": "potion_hp_small" }
+    ]
+  },
+  {
     "id": "DT_Ash_L1",
     "desc": "灰烬之地掉落表（L5–9）",
     "entries": [
