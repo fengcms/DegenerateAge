@@ -5,7 +5,7 @@ extends CharacterBody2D
 ## M1-3/M1-4：移动 + 普攻结算；M1-5：受击硬直 + 无敌帧 + 死亡复活占位；
 ## M1-9：暴露自动移动 / 自动攻击接口（供 AutoBattle 决策机驱动，3.14）。
 ## 普攻设计为「离散事件」——每次成功发动只结算一次，天然满足 T04（不重复结算）。
-## 技能 / 超距走位在后续子步骤接入。
+## 锁定目标超距接近与点击普攻已接入；技能格随后续技能系统接线。
 
 const RADIUS := 12.0
 const COLOR_BODY := Color("e8c07d")
@@ -50,7 +50,10 @@ var is_dead: bool = false
 var auto_move: Vector2 = Vector2.ZERO
 ## 上一帧是否检测到手动输入（供 auto_battle 判定「手动接管」）。
 var manual_input_active: bool = false
-## 大地图发出的手动目的地与普攻/自动共用 velocity + move_and_slide；不保存运行态路线。
+## 锁定目标与手动指令归玩家持有；地面/大地图/追击共用移动与普攻，不保存运行态路线。
+var locked_target: Node2D = null
+var target_is_manual := false
+var manual_attack_active := false
 var map_move_active := false
 var _map_destination := Vector2.ZERO
 var _map_check_t := 0.0
@@ -58,15 +61,63 @@ var _map_last_distance := INF
 var _map_stuck_count := 0
 var _map_background := false
 
-func request_map_move(point: Vector2) -> bool:
-	if is_dead or not point.is_finite():
+func valid_target(target: Variant) -> bool:
+	return is_instance_valid(target) and target is Node2D and not target.is_queued_for_deletion() and target.get("is_dead") != true and target.has_method("take_hit")
+
+func select_target(target: Node2D, manual: bool = true) -> void:
+	if target != null and not valid_target(target):
+		target = null
+	if is_instance_valid(locked_target) and locked_target.has_method("set_selected"):
+		locked_target.set_selected(false)
+	locked_target = target
+	target_is_manual = manual and target != null
+	if locked_target != null and locked_target.has_method("set_selected"):
+		locked_target.set_selected(true)
+	EventBus.target_changed.emit(locked_target)
+
+func begin_manual_command() -> void:
+	auto_move = Vector2.ZERO
+	var pilot := get_node_or_null("AutoPilot") as AutoBattle
+	if pilot != null:
+		pilot.begin_manual_override()
+
+func request_target_attack(target: Node2D) -> bool:
+	if is_dead or not valid_target(target):
 		return false
+	select_target(target)
+	map_move_active = false
+	manual_attack_active = true
+	reset_move_progress(target.global_position)
+	begin_manual_command()
+	return true
+
+func reset_move_progress(point: Vector2) -> void:
 	_map_destination = point
-	map_move_active = true
 	_map_last_distance = global_position.distance_to(point)
 	_map_check_t = 0.0
 	_map_stuck_count = 0
-	auto_move = Vector2.ZERO
+
+func _manual_attack_direction(delta: float) -> Vector2:
+	if not valid_target(locked_target):
+		manual_attack_active = false
+		select_target(null)
+		return Vector2.ZERO
+	if global_position.distance_to(locked_target.global_position) <= melee_range_px() - AutoBattle.STOP_GAP:
+		_map_stuck_count = 0
+		_map_check_t = 0.0
+		_map_last_distance = INF
+		try_auto_attack(locked_target)
+		return Vector2.ZERO
+	_map_destination = locked_target.global_position
+	return _map_direction(delta)
+
+func request_map_move(point: Vector2) -> bool:
+	if is_dead or not point.is_finite():
+		return false
+	manual_attack_active = false
+	map_move_active = true
+	reset_move_progress(point)
+	begin_manual_command()
 	return true
 
 func _notification(what: int) -> void:
@@ -87,7 +138,8 @@ func _map_direction(delta: float) -> Vector2:
 		_map_last_distance = distance
 		if _map_stuck_count >= AutoBattle.STUCK_LIMIT:
 			map_move_active = false
-			EventBus.toast_requested.emit("前往地图目标受阻，请换一个位置", "danger")
+			manual_attack_active = false
+			EventBus.toast_requested.emit("前往目标受阻，请换一个位置或目标", "danger")
 			return Vector2.ZERO
 	return global_position.direction_to(_map_destination)
 
@@ -98,6 +150,9 @@ func _ready() -> void:
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
 
 func _physics_process(delta: float) -> void:
+	if locked_target != null and not valid_target(locked_target):
+		manual_attack_active = false
+		select_target(null)
 	_slow_remaining = maxf(0.0, _slow_remaining - delta)
 	_invuln = maxf(0.0, _invuln - delta)
 	_attack_cd = maxf(0.0, _attack_cd - delta)
@@ -127,14 +182,20 @@ func _physics_process(delta: float) -> void:
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	manual_input_active = dir.length() > MANUAL_EPS
-	if manual_input_active or Input.is_action_pressed("attack") or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+	if manual_input_active or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		map_move_active = false
-	if map_move_active:
+		manual_attack_active = false
+	if Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:
+		if valid_target(locked_target):
+			request_target_attack(locked_target)
+		else:
+			map_move_active = false
+	if manual_attack_active or map_move_active:
 		if _map_background:
 			dir = Vector2.ZERO
 		elif _stun <= 0.0:
-			dir = _map_direction(delta)
-		manual_input_active = map_move_active
+			dir = _manual_attack_direction(delta) if manual_attack_active else _map_direction(delta)
+		manual_input_active = true
 	# 手动输入优先；无手动输入时由自动战斗的移动意图接管（3.14：自动与手动共用同一移动路径）
 	if not manual_input_active and auto_move != Vector2.ZERO:
 		dir = auto_move
@@ -144,7 +205,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# 普攻：按住攻击键，冷却结束即发动一次（每次发动 = 一次结算）
-	if _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
+	if not manual_attack_active and _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
 		_try_attack()
 
 	_update_blink()
@@ -166,6 +227,8 @@ func _begin_death() -> void:
 	if is_dead:
 		return
 	map_move_active = false
+	manual_attack_active = false
+	select_target(null)
 	_slow_remaining = 0.0
 	_slow_pct = 0.0
 	is_dead = true
@@ -214,6 +277,8 @@ func try_auto_attack(target: Node) -> bool:
 		return false
 	if target.get("is_dead") == true or not target.has_method("take_hit"):
 		return false
+	if not target is Node2D or global_position.distance_to(target.global_position) > melee_range_px():
+		return false
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
 	perform_attack(target)
 	return true
@@ -224,10 +289,10 @@ func try_auto_attack(target: Node) -> bool:
 func melee_range_px() -> float:
 	return float(_basic.get("range", 1.0)) * Iso.TILE_W
 
-## 尝试普攻：找到攻击范围内最近的敌人则发动（无目标则不动作）。
+## 尝试普攻：优先锁定目标；无锁定时使用范围内最近敌人。
 func _try_attack() -> void:
-	var target := find_nearest_enemy_in_range()
-	if target == null:
+	var target: Node = locked_target if valid_target(locked_target) else find_nearest_enemy_in_range()
+	if target == null or global_position.distance_to(target.global_position) > melee_range_px():
 		return
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
 	perform_attack(target)
@@ -249,7 +314,8 @@ func perform_attack(target: Node) -> Dictionary:
 
 	Fx.damage_number(get_tree(), target as Node2D, result)
 	EventBus.damage_dealt.emit(target, int(result.get("damage", 0)), bool(result.get("critical", false)))
-	EventBus.target_changed.emit(target)
+	if locked_target != target:
+		select_target(target as Node2D, false)
 	target.take_hit(result, self)
 	return result
 

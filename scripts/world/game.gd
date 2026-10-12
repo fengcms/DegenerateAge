@@ -146,7 +146,59 @@ func _cell_of(spec: Dictionary) -> Vector2i:
 func _notify_arrival() -> void:
 	EventBus.toast_requested.emit("抵达　%s" % MapService.display_name(GameState.current_map), "levelup")
 
+## 使用画布投影后的视口范围，随相机、缩放与窗口尺寸变化。
+func visible_enemies() -> Array[Node2D]:
+	var candidates: Array[Node2D] = []
+	var rect := get_viewport_rect()
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not _player.valid_target(enemy) or not enemy.is_visible_in_tree():
+			continue
+		if rect.has_point(enemy.get_global_transform_with_canvas().origin):
+			candidates.append(enemy)
+	candidates.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		var da := _player.global_position.distance_squared_to(a.global_position)
+		var db := _player.global_position.distance_squared_to(b.global_position)
+		return a.get_instance_id() < b.get_instance_id() if is_equal_approx(da, db) else da < db)
+	return candidates
+
+func cycle_target() -> void:
+	var candidates := visible_enemies()
+	_player.manual_attack_active = false
+	_player.map_move_active = false
+	_player.begin_manual_command()
+	if candidates.is_empty():
+		_player.select_target(null)
+		EventBus.toast_requested.emit("可视范围内没有目标", "info")
+		return
+	var index := candidates.find(_player.locked_target)
+	_player.select_target(candidates[(index + 1) % candidates.size()])
+
+func enemy_at_screen(point: Vector2) -> Node2D:
+	var best: Node2D = null
+	var nearest := INF
+	for enemy in visible_enemies():
+		var local: Vector2 = enemy.get_global_transform_with_canvas().affine_inverse() * point
+		var distance := local.distance_to(Vector2(0, -Monster.RADIUS * 0.6))
+		if distance <= Monster.RADIUS + 9 and distance < nearest:
+			nearest = distance
+			best = enemy
+	return best
+
 func _unhandled_input(event: InputEvent) -> void:
+	if not GameState.panel_open and not _player.is_dead:
+		if event.is_action_pressed("target_next") and not event.is_echo():
+			cycle_target()
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var enemy := enemy_at_screen(event.position)
+			if enemy != null:
+				_player.request_target_attack(enemy)
+			else:
+				var world_point: Vector2 = get_canvas_transform().affine_inverse() * event.position
+				_player.request_map_move(_ground.clamp_to_map(world_point))
+			get_viewport().set_input_as_handled()
+			return
 	# 开发期验证键（M5 移除）：H = 自伤 15，用于验证 HUD 血条实时刷新。
 	if OS.is_debug_build() and event.is_action_pressed("debug_hurt"):
 		GameState.damage_player(15)

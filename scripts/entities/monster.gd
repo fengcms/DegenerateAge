@@ -42,6 +42,11 @@ var level: int = 1
 var max_hp: int = 1
 var hp: int = 1
 var is_dead: bool = false
+var selected := false
+
+func set_selected(value: bool) -> void:
+	selected = value
+	queue_redraw()
 var state: int = State.IDLE
 
 # ---- 由模板派生的 AI 参数 ----
@@ -380,6 +385,8 @@ func _spawn_drop(item: Dictionary, index: int = 0) -> void:
 	EventBus.loot_spawned.emit(item)
 
 func _draw() -> void:
+	if selected and not is_dead:
+		draw_arc(Vector2.ZERO, RADIUS + 7, 0, TAU, 40, Color("6eebe6"), 2.5, true)
 	var aggro := state == State.CHASE or state == State.ATTACK
 	var body := COLOR_AGGRO if aggro else COLOR_BODY
 	if _flash_t > 0.0:

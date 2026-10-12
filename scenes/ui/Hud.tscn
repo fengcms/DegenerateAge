@@ -72,7 +72,7 @@ offset_left = 16.0
 offset_top = 16.0
 offset_right = 316.0
 offset_bottom = 112.0
-mouse_filter = 2
+mouse_filter = 0
 theme_override_styles/panel = SubResource("sb_panel")
 
 [node name="Portrait" type="Panel" parent="StatusPanel"]
@@ -211,12 +211,13 @@ theme_override_constants/separation = 4
 alignment = 1
 
 [node name="TargetPanel" type="Panel" parent="."]
+visible = false
 layout_mode = 0
 offset_left = 336.0
 offset_top = 16.0
 offset_right = 576.0
 offset_bottom = 100.0
-mouse_filter = 2
+mouse_filter = 0
 theme_override_styles/panel = SubResource("sb_panel")
 
 [node name="TargetTitle" type="Label" parent="TargetPanel"]
@@ -263,7 +264,7 @@ offset_top = 16.0
 offset_right = -16.0
 offset_bottom = 252.0
 grow_horizontal = 0
-mouse_filter = 2
+mouse_filter = 0
 theme_override_styles/panel = SubResource("sb_panel")
 
 [node name="MapName" type="Label" parent="MapPanel"]
@@ -312,7 +313,7 @@ offset_right = -16.0
 offset_bottom = 260.0
 grow_horizontal = 0
 grow_vertical = 1
-mouse_filter = 2
+mouse_filter = 0
 theme_override_styles/panel = SubResource("sb_panel")
 
 [node name="Margin" type="MarginContainer" parent="QuestTracker"]
@@ -351,7 +352,7 @@ offset_right = 240.0
 offset_bottom = -28.0
 grow_horizontal = 2
 grow_vertical = 0
-mouse_filter = 2
+mouse_filter = 0
 theme_override_constants/separation = 2
 alignment = 1
 

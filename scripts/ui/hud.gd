@@ -63,6 +63,7 @@ func _ready() -> void:
 			_auto_phase = pilot.current_phase()
 	_refresh_auto()
 	_refresh_quests()
+	_update_target()
 
 func _process(_delta: float) -> void:
 	_update_coords()
@@ -223,6 +224,7 @@ func _update_coords() -> void:
 		_map_coords.text = "(%d, %d)" % [int(round(g.x)), int(round(g.y))]
 
 func _update_target() -> void:
+	$TargetPanel.visible = is_instance_valid(_target) and not _target.is_queued_for_deletion() and _target.get("is_dead") != true
 	if _target != null and is_instance_valid(_target) and _target.get("is_dead") != true:
 		_target_name.text = String(_target.get("display_name"))
 		_target_hp.max_value = maxi(1, int(_target.get("max_hp")))

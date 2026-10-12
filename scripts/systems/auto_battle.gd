@@ -146,7 +146,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# 持续手动操作先刷新计时；松手后才开始倒计时，避免按住时提前恢复。
-	if _player.map_move_active or _has_manual_input():
+	if _player.map_move_active or _player.manual_attack_active or _has_manual_input():
 		begin_manual_override()
 		return
 
@@ -165,7 +165,7 @@ func begin_manual_override() -> void:
 	_player.set_auto_move(Vector2.ZERO)
 	_target = null
 	_loot = null
-	_manual_t = MANUAL_RESUME_DELAY
+	_manual_t = MANUAL_RESUME_DELAY if GameState.auto_battle_on else 0.0
 	if GameState.auto_battle_on:
 		_set_state(State.MANUAL_OVERRIDE, "手动接管 · 操作结束后恢复")
 
@@ -205,6 +205,7 @@ func _tick(delta: float) -> void:
 			_search_t = SEARCH_INTERVAL
 			_target = _find_target()
 			if _target != null:
+				_player.select_target(_target as Node2D, _player.target_is_manual and _player.locked_target == _target)
 				_last_dist = INF
 				_stuck_count = 0
 		if _target == null:
@@ -260,6 +261,9 @@ func _try_drink() -> bool:
 ## 锚点半径内搜索敌人（3.14）。排除 Boss（除非设置允许）、黑名单目标。
 ## M1 目标优先级：距离最近；同距离取血量更低者（「优先低代价 / 弱目标」的最小实现）。
 func _find_target() -> Node:
+	# 明确选中的目标优先；黑名单仍生效，避免不可达目标循环。
+	if _player.target_is_manual and _player.valid_target(_player.locked_target) and not _is_blacklisted(_player.locked_target):
+		return _player.locked_target
 	var radius := float(GameState.settings.get("searchRadius", 12)) * Iso.TILE_W
 	var allow_boss := bool(GameState.settings.get("allowBoss", false))
 	var best: Node = null
@@ -382,7 +386,7 @@ func _has_manual_input() -> bool:
 		return true
 	if Input.is_action_pressed("attack") or Input.is_action_pressed("target_next"):
 		return true
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		return true
 	return false
 
