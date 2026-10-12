@@ -407,7 +407,7 @@ func _after_equip_change() -> void:
 ## source = "bag" / "worn"；key 是背包下标或装备槽 id。
 ## expected_id 防止选择后背包整理、穿脱导致错误实例被扣费。
 func upgrade_equipment(source: String, key: Variant, expected_id: String,
-		rng: RandomNumberGenerator = null) -> Dictionary:
+		rng: RandomNumberGenerator = null, rune_ids: Array = []) -> Dictionary:
 	var item: Dictionary = {}
 	if source == "bag" and key is int and key >= 0 and key < inventory.size():
 		var candidate = inventory[key]
@@ -427,22 +427,38 @@ func upgrade_equipment(source: String, key: Variant, expected_id: String,
 	var price := Upgrade.cost(star)
 	if price <= 0 or Upgrade.success_rate(star) <= 0.0:
 		return _upgrade_fail("升星配置不可用")
+	var plan := Upgrade.rune_plan(inventory, rune_ids)
+	if not plan.get("ok", false):
+		return _upgrade_fail(String(plan.get("reason", "如意不可用")))
 	if gold < price:
 		return _upgrade_fail("金币不足（需 %d，现有 %d）" % [price, gold])
+	for use in plan.uses:
+		var index := int(use.index)
+		var entry: Dictionary = inventory[index]
+		var left := int(entry.get("count", 0)) - int(use.count)
+		if left <= 0:
+			inventory[index] = null
+		else:
+			inventory[index] = entry.duplicate(true)
+			inventory[index].count = left
 	add_gold(-price)
-	var success := Upgrade.roll_success(star, rng)
+	var rate := Upgrade.final_rate(star, float(plan.bonus))
+	var success := Upgrade.roll_success(star, rng, float(plan.bonus))
 	if success:
 		item["star"] = star + 1
 		if source == "worn":
 			EventBus.equipment_changed.emit()
 			EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 			EventBus.player_mp_changed.emit(int(player.mp), max_mp())
-		else:
-			EventBus.inventory_changed.emit()
-	var message := "升星成功：%s（-%d 金币）" % [ItemUtil.display_name(item), price] if success \
-		else "升星失败：保持 +%d（-%d 金币）" % [star, price]
+	if (success and source == "bag") or not plan.uses.is_empty():
+		EventBus.inventory_changed.emit()
+	EventBus.upgrade_completed.emit()
+	var spend := "-%d 金币、-%d 如意" % [price, int(plan.count)] if int(plan.count) > 0 else "-%d 金币" % price
+	var message := "升星成功：%s（%s）" % [ItemUtil.display_name(item), spend] if success \
+		else "升星失败：保持 +%d（%s）" % [star, spend]
 	EventBus.toast_requested.emit(message, "pickup" if success else "danger")
-	return {"ok": true, "success": success, "cost": price, "star": int(item.get("star", 0)), "reason": message}
+	return {"ok": true, "success": success, "cost": price, "star": int(item.get("star", 0)),
+		"runesUsed": int(plan.count), "rate": rate, "reason": message}
 
 func _upgrade_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")

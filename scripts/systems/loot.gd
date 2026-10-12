@@ -79,9 +79,18 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_
 			return {"kind": KIND_POTION, "itemId": pid, "count": 1}
 		KIND_RUNE:
 			var ids = e.get("itemIds", [])
+			if e.has("itemId"):
+				ids = [e.get("itemId")]
 			if not (ids is Array) or ids.is_empty():
 				return {}
 			var rid := String(ids[r.randi_range(0, ids.size() - 1)])
+			var rune = DataLoader.get_entry("runes", rid)
+			if not rune is Dictionary:
+				return {}
+			if bool(rune.get("dropBossOnly", false)) and not source_monster_id.is_empty():
+				var source = DataLoader.get_entry("monsters", source_monster_id)
+				if not source is Dictionary or String(source.get("kind", "")) != "boss":
+					return {}
 			return {"kind": KIND_RUNE, "itemId": rid, "count": 1}
 		KIND_EQUIP:
 			return _roll_equip(e, r)

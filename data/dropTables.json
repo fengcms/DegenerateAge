@@ -42,7 +42,10 @@
       { "kind": "coin", "chance": 1.0, "goldRange": [720, 880] },
       { "kind": "equip", "chance": 1.0, "levelRange": [9, 10], "qualityWeight": { "rare": 50, "epic": 40, "legendary": 10 } },
       { "kind": "potion", "chance": 0.5, "itemId": "potion_hp_large" },
-      { "kind": "rune", "chance": 0.3, "itemIds": ["rune_iron", "rune_jade"] },
+      { "kind": "rune", "chance": 0.18, "itemId": "rune_iron" },
+      { "kind": "rune", "chance": 0.12, "itemId": "rune_jade" },
+      { "kind": "rune", "chance": 0.06, "itemId": "rune_gold" },
+      { "kind": "rune", "chance": 0.03, "itemId": "rune_diamond" },
       { "kind": "mount", "chance": 0.2, "itemId": "mount_corrupted_wing" }
     ]
   }

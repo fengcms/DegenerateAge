@@ -223,6 +223,16 @@ func validate_all() -> Array[String]:
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
+	var runes = tables.get("runes")
+	if runes is Array:
+		for rune in runes:
+			if not rune is Dictionary:
+				continue
+			var rune_id := String(rune.get("id", ""))
+			if not (rune.get("successBonus") is float or rune.get("successBonus") is int) or float(rune.get("successBonus", 0.0)) <= 0.0 or float(rune.get("successBonus", 0.0)) > 1.0:
+				report.append("[runes] %s 的 successBonus 应在 (0,1]" % rune_id)
+			if not rune.get("dropBossOnly") is bool:
+				report.append("[runes] %s 的 dropBossOnly 必须为布尔值" % rune_id)
 	var mounts = tables.get("mounts")
 	if mounts is Array:
 		for mount in mounts:
@@ -279,12 +289,22 @@ func _validate_drop_tables() -> Array[String]:
 						report.append("[dropTables] %s 引用未定义药水 '%s'" % [did, pid])
 				"rune":
 					var ids = en.get("itemIds", [])
-					if not (ids is Array):
-						report.append("[dropTables] %s rune 条目缺少 itemIds" % did)
+					if en.has("itemId"):
+						ids = [en.get("itemId")]
+					if not (ids is Array) or ids.is_empty():
+						report.append("[dropTables] %s rune 条目缺少 itemId/itemIds" % did)
 					else:
 						for rid in ids:
 							if not rune_ids.has(String(rid)):
 								report.append("[dropTables] %s 引用未定义如意 '%s'" % [did, rid])
+							else:
+								var rune_tpl = get_entry("runes", String(rid))
+								if bool(rune_tpl.get("dropBossOnly", false)):
+									var monsters = get_table("monsters")
+									if monsters is Array:
+										for source in monsters:
+											if source is Dictionary and String(source.get("dropTableId", "")) == did and String(source.get("kind", "")) != "boss":
+												report.append("[dropTables] %s 的 Boss 专属如意被非 Boss 使用" % did)
 				"misc":
 					var mid := String(en.get("itemId", ""))
 					if not misc_ids.has(mid):

@@ -35,6 +35,8 @@ func _ready() -> void:
 	await _test_claim_fly()
 	_test_equipment()
 	_test_upgrade()
+	_test_rune_upgrade()
+	_test_rune_loot()
 	await _test_blacksmith()
 	await _test_warehouse()
 	_test_shop()
@@ -319,6 +321,66 @@ func _test_warehouse() -> void:
 		_expect(not GameState.panel_open, "关闭仓库应恢复世界操控")
 	main.queue_free()
 	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_rune_loot() -> void:
+	var found := {}
+	for seed_value in range(500):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		for item in Loot.roll("DT_Boss_L1", rng, "boss_corrupted_beast"):
+			if String(item.get("kind", "")) == "rune":
+				found[String(item.get("itemId", ""))] = true
+	_expect(found.size() == 4, "四种如意都应能从 Boss 掉落表产出")
+	var other_rng := RandomNumberGenerator.new()
+	other_rng.seed = 42
+	for item in Loot.roll("DT_Boss_L1", other_rng, "wolf_corrupted"):
+		_expect(String(item.get("kind", "")) != "rune", "非 Boss 不得产出 Boss 专属如意")
+
+func _test_rune_upgrade() -> void:
+	GameState.reset_to_defaults()
+	var weapon := _equip_instance("weapon_starter", "rune_upgrade", {"atk": 10})
+	weapon.star = 8
+	GameState.inventory[0] = weapon
+	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 2}
+	GameState.inventory[2] = {"kind": "rune", "itemId": "rune_diamond", "count": 2}
+	GameState.add_gold(Upgrade.cost(8))
+	var plan := Upgrade.rune_plan(GameState.inventory, ["rune_diamond", "rune_diamond", "rune_diamond", "rune_diamond"])
+	_expect(plan.ok and is_equal_approx(Upgrade.final_rate(8, plan.bonus), 100.0),
+		"四枚钻石如意应把 8→9 的 20% 提高到封顶 100%")
+	var panel := preload("res://scenes/ui/UpgradePanel.tscn").instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	for picker in panel.get("_rune_pickers"):
+		picker.select(4)
+		picker.item_selected.emit(4)
+	_expect(panel.get("_price").text.contains("100%") and not panel.get("_upgrade_button").disabled,
+		"升星面板应预览含四枚如意的最终成功率")
+	panel.get("_upgrade_button").pressed.emit()
+	_expect(weapon.star == 9 and GameState.gold == 0 and GameState.inventory[1] == null and GameState.inventory[2] == null,
+		"升星成功应扣除四枚如意与金币，保留装备实例")
+	panel.set_open(false)
+	panel.queue_free()
+	weapon.star = 11
+	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_iron", "count": 1}
+	GameState.gold = Upgrade.cost(11)
+	var before_gold := GameState.gold
+	_expect(not GameState.upgrade_equipment("bag", 0, "stale_rune_upgrade", null, ["rune_iron"]).ok
+		and GameState.gold == before_gold and GameState.inventory[1].count == 1,
+		"装备实例失效时不得扣如意或金币")
+	GameState.gold = before_gold - 1
+	_expect(not GameState.upgrade_equipment("bag", 0, "rune_upgrade", null, ["rune_iron"]).ok
+		and GameState.inventory[1].count == 1, "金币不足时不得扣如意")
+	GameState.gold = before_gold
+	_expect(not GameState.upgrade_equipment("bag", 0, "rune_upgrade", null, ["rune_iron", "rune_iron"]).ok
+		and GameState.gold == before_gold and GameState.inventory[1].count == 1,
+		"如意数量不足时不得扣金币或物品")
+	var failed_rng := RandomNumberGenerator.new()
+	failed_rng.seed = 42
+	var failed := GameState.upgrade_equipment("bag", 0, "rune_upgrade", failed_rng, ["rune_iron"])
+	_expect(failed.ok and not failed.success and weapon.star == 11 and GameState.gold == 0
+		and GameState.inventory[1] == null and failed.runesUsed == 1,
+		"升星失败应消耗金币与如意，但保留星级")
 	GameState.reset_to_defaults()
 
 func _test_upgrade() -> void:

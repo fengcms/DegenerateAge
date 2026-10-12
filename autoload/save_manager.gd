@@ -189,6 +189,7 @@ func _connect_events() -> void:
 	EventBus.boss_first_clear.connect(func(_id: String) -> void: request_autosave())
 	EventBus.player_leveled.connect(func(_lv: int) -> void: request_autosave())
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
+	EventBus.upgrade_completed.connect(func() -> void: request_autosave())
 	EventBus.inventory_organized.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
 	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())

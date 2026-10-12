@@ -1,5 +1,5 @@
 extends Control
-## 升星十字面板（M4-1）。由铁匠对话的功能按钮打开；如意格 M4-5 启用。
+## 升星十字面板：中心装备、四周可选如意，预览与结算共用 Upgrade 概率公式。
 
 const PANEL_ID := "upgrade"
 const WIDTH := 560.0
@@ -16,6 +16,8 @@ var _feedback: Label
 var _upgrade_button: Button
 var _choices: Array[Dictionary] = []
 var _selected_id := ""
+var _rune_pickers: Array[OptionButton] = []
+var _rune_choices: Array[String] = ["", "", "", ""]
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -40,7 +42,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
-		_feedback.text = "选择装备后进行升星。失败会消耗金币，但星级不下降。"
+		_feedback.text = "如意可选填四格；结算后成功或失败都会消耗金币与已选如意。"
 		_refresh_choices()
 		EventBus.panel_opened.emit(PANEL_ID)
 
@@ -102,16 +104,28 @@ func _build() -> void:
 	cross.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	root.add_child(cross)
 	for index in range(9):
-		var cell := Label.new()
-		cell.custom_minimum_size = Vector2(145, 68)
-		cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		cell.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cell.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var cell: Control
 		if index == 4:
-			_center = cell
+			_center = Label.new()
+			_center.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			_center.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			_center.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cell = _center
 		elif [1, 3, 5, 7].has(index):
-			cell.text = "如意格\n稍后开放"
-			cell.modulate = Color(0.55, 0.58, 0.62)
+			var rune_cell := VBoxContainer.new()
+			var title_label := Label.new()
+			title_label.text = "如意 %d" % (_rune_pickers.size() + 1)
+			title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			rune_cell.add_child(title_label)
+			var picker := OptionButton.new()
+			picker.custom_minimum_size.y = 34
+			picker.item_selected.connect(_on_rune_selected.bind(_rune_pickers.size()))
+			rune_cell.add_child(picker)
+			_rune_pickers.append(picker)
+			cell = rune_cell
+		else:
+			cell = Control.new()
+		cell.custom_minimum_size = Vector2(145, 68)
 		cross.add_child(cell)
 	_preview = Label.new()
 	_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -153,6 +167,37 @@ func _refresh_choices() -> void:
 				break
 		_picker.select(choice_index)
 		_selected_id = String(_choices[choice_index].id)
+	_refresh_runes()
+	_refresh_details()
+
+func _refresh_runes() -> void:
+	var counts := {}
+	for item in GameState.inventory:
+		if item is Dictionary and String(item.get("kind", "")) == "rune":
+			var rune_id := String(item.get("itemId", ""))
+			counts[rune_id] = int(counts.get(rune_id, 0)) + int(item.get("count", 1))
+	var templates = DataLoader.get_table("runes")
+	for slot in range(_rune_pickers.size()):
+		var picker := _rune_pickers[slot]
+		picker.clear()
+		picker.add_item("空")
+		var selected_index := 0
+		if templates is Array:
+			for template in templates:
+				if not template is Dictionary:
+					continue
+				var rune_id := String(template.get("id", ""))
+				var choice_index := picker.item_count
+				picker.add_item("%s ×%d" % [String(template.get("name", rune_id)), int(counts.get(rune_id, 0))])
+				picker.set_item_metadata(choice_index, rune_id)
+				picker.set_item_disabled(choice_index, int(counts.get(rune_id, 0)) <= 0)
+				if _rune_choices[slot] == rune_id:
+					selected_index = choice_index
+		picker.select(selected_index)
+
+func _on_rune_selected(choice_index: int, slot: int) -> void:
+	var picker := _rune_pickers[slot]
+	_rune_choices[slot] = String(picker.get_item_metadata(choice_index)) if choice_index > 0 else ""
 	_refresh_details()
 
 func _add_choice(source: String, key: Variant, item: Dictionary, prefix: String) -> void:
@@ -199,17 +244,20 @@ func _refresh_details() -> void:
 	_preview.text = "固定属性：%s\n升星后：%s" % [", ".join(ItemUtil.attr_lines(item).slice(0, Upgrade.base_attrs(item).size())),
 		", ".join(ItemUtil.attr_lines(next_item).slice(0, Upgrade.base_attrs(item).size()))]
 	var price := Upgrade.cost(star)
-	_price.text = "+%d → +%d　成功率 %.0f%%　费用 %d 金币　持有 %d" % [star, star + 1,
-		Upgrade.success_rate(star), price, GameState.gold]
-	_upgrade_button.disabled = GameState.gold < price
-	_upgrade_button.tooltip_text = "金币不足" if _upgrade_button.disabled else ""
+	var plan := Upgrade.rune_plan(GameState.inventory, _rune_choices)
+	var rune_bonus := float(plan.get("bonus", 0.0))
+	_price.text = "+%d → +%d　成功率 %.0f%% + 如意 %.0f%% = %.0f%%\n费用 %d 金币　持有 %d" % [
+		star, star + 1, Upgrade.success_rate(star), rune_bonus,
+		Upgrade.final_rate(star, rune_bonus), price, GameState.gold]
+	_upgrade_button.disabled = GameState.gold < price or not plan.get("ok", false)
+	_upgrade_button.tooltip_text = "金币不足" if GameState.gold < price else String(plan.get("reason", ""))
 
 func _on_upgrade() -> void:
 	var index := _picker.selected
 	if index < 0 or index >= _choices.size():
 		return
 	var choice := _choices[index]
-	var result := GameState.upgrade_equipment(String(choice.source), choice.key, String(choice.id))
+	var result := GameState.upgrade_equipment(String(choice.source), choice.key, String(choice.id), null, _rune_choices.duplicate())
 	_feedback.text = String(result.get("reason", ""))
 	_feedback.add_theme_color_override("font_color", COL_WARN if not result.get("success", false) else COL_GOLD)
 	_refresh_choices()

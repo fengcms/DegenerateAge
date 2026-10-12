@@ -29,6 +29,7 @@ signal gold_changed(amount: int)
 signal inventory_changed()
 signal inventory_organized()
 signal equipment_changed()
+signal upgrade_completed()
 
 # ---- NPC / 交易（M1-8）----
 signal shop_open_requested(shop_id: String)
