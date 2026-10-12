@@ -72,6 +72,7 @@ static func apply_all() -> void:
 	_apply_audio()
 	_apply_ui_scale()
 	_apply_text_scale()
+	_apply_map_scale()
 	_apply_window()
 
 ## M5-9a（09-A 显示适配，工程 17）：渲染策略 = disabled。
@@ -148,6 +149,29 @@ static func _text_scale_node(node: Node, factor: float) -> void:
 		control.add_theme_font_size_override("font_size", maxi(9, roundi(int(control.get_meta("base_font_size")) * factor)))
 	for child in node.get_children():
 		_text_scale_node(child, factor)
+
+## M5-9b（09-A §4）：地图显示大小 = 相机 zoom（80/100/125/150% ⇒ 0.8/1.0/1.25/1.5）。
+## zoom < 1 时可见范围等比例变大（不改碰撞、射程、怪物数量、拾取距离，创意 09 §4）；
+## 数据不变时相机被 limit 夹住 ⇒ 地图外围会出现底色空白 —— 属"地图真实边界外仍受相机限制"
+## 的预期行为，不视为缺陷（是否给边界外做装饰留 M6）。
+static func _apply_map_scale() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.current_scene == null:
+		return
+	var camera := tree.current_scene.get_node_or_null("Game/Entities/Player/Camera2D") as Camera2D
+	if camera == null:
+		return
+	apply_map_scale_to(camera)
+
+## 供世界装配（game.gd）在**切图重建 Player 后**调用：不依赖 current_scene 的节点路径。
+static func apply_map_scale_to(camera: Camera2D) -> void:
+	if camera == null or not is_instance_valid(camera):
+		return
+	camera.zoom = Vector2.ONE * map_scale_value()
+
+## 地图显示倍率（0.8–1.5）。缺键取默认 1.0，故 M5-9d 新增档位**无需 schema 升级**。
+static func map_scale_value() -> float:
+	return clampf(float(GameState.settings.get("mapScale", 1.0)), 0.8, 1.5)
 
 static func _apply_window() -> void:
 	var tree := Engine.get_main_loop() as SceneTree

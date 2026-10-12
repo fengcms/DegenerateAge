@@ -25,6 +25,7 @@ var _failures: Array[String] = []
 var _rows: Array[Dictionary] = []
 var _tag := "after"
 var _legacy := false
+var _map_scale := 0.0   # >0 = M5-9b 地图倍率模式（固定窗口，只变相机 zoom）
 
 var _main: Node = null
 var _player: PlayerCharacter = null
@@ -36,6 +37,8 @@ func _ready() -> void:
 			_tag = String(arg).split("=", true, 1)[1]
 		elif String(arg) == "--legacy":
 			_legacy = true
+		elif String(arg).begins_with("--map-scale="):
+			_map_scale = float(String(arg).split("=", true, 1)[1])
 	await _run()
 	get_tree().quit(0 if _failures.is_empty() else 1)
 
@@ -98,10 +101,12 @@ func _run() -> void:
 		await get_tree().process_frame
 	_cam.reset_smoothing()
 
-	for size in SIZES:
-		await _measure_at(size)
-
-	_report()
+	if _map_scale > 0.0:
+		await _measure_map_scale()
+	else:
+		for size in SIZES:
+			await _measure_at(size)
+		_report()
 	if not _failures.is_empty():
 		for message in _failures:
 			print("[DisplayProbe] 失败：", message)
@@ -156,6 +161,29 @@ func _measure_at(size: Vector2i) -> void:
 		to_window.x, row["player_px"], row["world_visible"].x, row["world_visible"].y,
 	])
 	await _capture("/tmp/degenerateage_m59a_%s_%dx%d.png" % [_tag, window.size.x, window.size.y])
+
+## M5-9b：固定窗口 1280×800，只变地图倍率 —— 验证「地图显示大小」= 相机 zoom 的端到端效果。
+func _measure_map_scale() -> void:
+	var window := get_window()
+	window.size = Vector2i(1280, 800)
+	for _i in range(15):
+		await get_tree().process_frame
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+	GameState.settings["mapScale"] = _map_scale
+	SettingsRuntime.apply_map_scale_to(_cam)
+	_cam.reset_smoothing()
+	for _i in range(5):
+		await get_tree().process_frame
+	var vp := get_viewport()
+	var canvas_scale := vp.get_canvas_transform().get_scale()
+	var to_window := canvas_scale * vp.get_final_transform().get_scale()
+	var vis := vp.get_visible_rect().size
+	var world_visible := Vector2(vis.x / maxf(canvas_scale.x, 0.0001), vis.y / maxf(canvas_scale.y, 0.0001))
+	print("[地图倍率 %.2f] 相机 zoom=%s ｜ 可见世界=%.0f×%.0f ｜ 玩家像素高=%.1f" % [
+		_map_scale, str(_cam.zoom), world_visible.x, world_visible.y, PlayerCharacter.RADIUS * 2.0 * to_window.x,
+	])
+	await _capture("/tmp/degenerateage_m59b_map%s_%dx%d.png" % [str(_map_scale).replace(".", "p"), window.size.x, window.size.y])
 
 func _capture(path: String) -> void:
 	if DisplayServer.get_name() == "headless":

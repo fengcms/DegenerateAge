@@ -77,6 +77,8 @@ func _ready() -> void:
 	_camera.limit_top = int(b.position.y)
 	_camera.limit_right = int(b.end.x)
 	_camera.limit_bottom = int(b.end.y)
+	# M5-9b（09-A）：切图 reload 会重建 Player/Camera2D，故在装配相机处补应用一次地图倍率。
+	SettingsRuntime.apply_map_scale_to(_camera)
 	_camera.reset_smoothing()
 
 	# 怪物点 / Boss 点 / NPC：全部按当前地图数据装配（M3-1）

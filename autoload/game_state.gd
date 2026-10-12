@@ -122,6 +122,7 @@ func default_settings() -> Dictionary:
 		"screenShake": true,
 		"strongFlash": true,
 		"textScale": 1.0,
+		"mapScale": 1.0,              # M5-9b（09-A）：地图显示大小＝相机 zoom（0.8–1.5）
 		"fullscreen": false,
 		"resolution": "auto",
 		"qualityFilter": "all",

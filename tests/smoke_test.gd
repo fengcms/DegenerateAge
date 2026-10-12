@@ -60,6 +60,7 @@ func _ready() -> void:
 	await _test_fog_ui()
 	_test_font_mono()
 	await _test_item_slot_count()
+	await _test_map_scale()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -2467,6 +2468,44 @@ func _test_item_slot_count() -> void:
 	slot.item = {}
 	_expect(slot._count.text == "", "空格不应显示数量")
 	slot.queue_free()
+	await get_tree().process_frame
+
+# ---- M5-9b（09-A §4）：地图显示大小（相机倍率）----
+func _test_map_scale() -> void:
+	# ① 取值与 clamp（纯逻辑，不依赖场景）
+	GameState.settings["mapScale"] = 0.8
+	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 0.8), "mapScale=0.8 应取 0.8")
+	GameState.settings["mapScale"] = 9.0
+	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 1.5), "mapScale 超上限应 clamp 到 1.5")
+	GameState.settings["mapScale"] = 0.1
+	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 0.8), "mapScale 超下限应 clamp 到 0.8")
+	GameState.settings.erase("mapScale")
+	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 1.0), "缺 mapScale 键应取默认 1.0（M5-9d 新增档位无需 schema 升级）")
+
+	# ② 应用到相机（zoom = 一倍率；zoom<1 = 可见范围更大）
+	var cam := Camera2D.new()
+	add_child(cam)
+	GameState.settings["mapScale"] = 0.8
+	SettingsRuntime.apply_map_scale_to(cam)
+	_expect(cam.zoom.is_equal_approx(Vector2(0.8, 0.8)), "mapScale=0.8 应使 zoom=(0.8,0.8)，实际 %s" % str(cam.zoom))
+	GameState.settings["mapScale"] = 1.25
+	SettingsRuntime.apply_map_scale_to(cam)
+	_expect(cam.zoom.is_equal_approx(Vector2(1.25, 1.25)), "mapScale=1.25 应使 zoom=(1.25,1.25)，实际 %s" % str(cam.zoom))
+	cam.queue_free()
+
+	# ③ 世界装配时补应用（切图 reload 会重建 Player/Camera2D，见 game.gd 相机段）
+	GameState.reset_to_defaults()
+	GameState.settings["mapScale"] = 0.8
+	var game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	var scene_cam: Camera2D = game.get_node_or_null("Entities/Player/Camera2D") as Camera2D
+	_expect(scene_cam != null, "Game.tscn 应含 Entities/Player/Camera2D")
+	if scene_cam != null:
+		_expect(scene_cam.zoom.is_equal_approx(Vector2(0.8, 0.8)),
+			"世界装配应按设置应用地图倍率（zoom=0.8），实际 %s" % str(scene_cam.zoom))
+	game.queue_free()
+	GameState.settings.erase("mapScale")
 	await get_tree().process_frame
 
 func _finish() -> void:
