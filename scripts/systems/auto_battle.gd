@@ -42,6 +42,7 @@ enum State {
 	RECOVER,
 	MANUAL_OVERRIDE,
 	BLOCKED,
+	ROAM,
 }
 
 # ---- 节流与阈值（初始参数，试玩校准）----
@@ -56,6 +57,8 @@ const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
 const LOOT_ARRIVE_EPS := 6.0           # 判定「已抵达掉落物」（px；≤1.5 格由 GroundItem 自动入包）
 const STOP_GAP := 8.0                  # 攻击范围内提前停步（px，避免与目标互相顶开）
+const ROAM_GRID_STEP := 7               # 巡游采样间隔（格），往返覆盖地图有效区域
+const ROAM_ARRIVE_EPS := 12.0
 ## 喝药阈值兜底值（3.14 设置项）。正式取值一律读 `GameState.settings.potionThreshold`，
 ## 本常量仅在该字段缺失时生效——避免「常量 + 设置」两个事实源（M2.5 收敛，见工程文档 12 §3.4）。
 const DEFAULT_POTION_THRESHOLD := 0.35
@@ -81,6 +84,11 @@ var _blocked_t: float = 0.0
 var _manual_t: float = 0.0
 var _danger_t: float = 0.0
 var _background: bool = false
+var _roam_points: Array[Vector2] = []
+var _roam_index: int = -1
+var _roam_last_dist := INF
+var _roam_stuck_t := 0.0
+var _roam_stuck_count := 0
 
 ## instance_id → 剩余秒数（短期黑名单，3.14 ①）
 var _blacklist: Dictionary = {}
@@ -101,9 +109,11 @@ func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 		_stuck_count = 0
 		_last_dist = INF
 		_blacklist.clear()
+		_roam_index = -1
 	else:
 		_target = null
 		_loot = null
+		_roam_index = -1
 
 func _notification(what: int) -> void:
 	# 应用失去焦点（切到后台）→ 停决策（3.14 ⑥）
@@ -162,6 +172,7 @@ func begin_manual_override() -> void:
 	_player.set_auto_move(Vector2.ZERO)
 	_target = null
 	_loot = null
+	_roam_index = -1
 	_manual_t = MANUAL_RESUME_DELAY if GameState.auto_battle_on else 0.0
 	if GameState.auto_battle_on:
 		_set_state(State.MANUAL_OVERRIDE, "手动接管 · 操作结束后恢复")
@@ -196,21 +207,20 @@ func _tick(delta: float) -> void:
 		_stuck_count = 0
 
 	if _target == null:
-		_set_state(State.SEARCH_TARGET)
 		_search_t = maxf(0.0, _search_t - delta)
 		if _search_t <= 0.0:
 			_search_t = SEARCH_INTERVAL
 			_target = _find_target()
 			if _target != null:
+				_roam_index = -1
 				_player.select_target(_target as Node2D, _player.target_is_manual and _player.locked_target == _target)
 				_last_dist = INF
 				_stuck_count = 0
 		if _target == null:
 			# 无怪可打 → 自动拾取（9.9：G 仅控制自动战斗时是否顺路拾取）
-			if GameState.auto_pickup_on:
-				_tick_loot()
-			else:
-				_player.set_auto_move(Vector2.ZERO)
+			if GameState.auto_pickup_on and _tick_loot():
+				return
+			_tick_roam(delta)
 		return
 
 	var target2d := _target as Node2D
@@ -307,7 +317,7 @@ func _find_loot() -> GroundItem:
 			best = gi
 	return best
 
-func _tick_loot() -> void:
+func _tick_loot() -> bool:
 	if _loot != null and (not is_instance_valid(_loot)
 			or (_loot as GroundItem).item.is_empty() or not _can_pick(_loot as GroundItem)):
 		_loot = null
@@ -315,15 +325,80 @@ func _tick_loot() -> void:
 		_set_state(State.SEARCH_LOOT)
 		_loot = _find_loot()
 		if _loot == null:
-			_player.set_auto_move(Vector2.ZERO)   # 附近无可拾取物 → 待机，不循环重试
-			return
+			return false
 	var d := _player.global_position.distance_to((_loot as Node2D).global_position)
 	if d <= LOOT_ARRIVE_EPS:
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.PICK_UP)                 # 进入 1.5 格后由 GroundItem 自动入包（9.9）
-		return
+		return true
 	_set_state(State.PATH_TO_LOOT)
 	_player.set_auto_move(((_loot as Node2D).global_position - _player.global_position).normalized())
+	return true
+
+## 无可见怪物时按地图有效格往返巡游；每个物理帧仍走上方的节流搜怪。
+func _tick_roam(delta: float) -> void:
+	if _roam_points.is_empty():
+		_build_roam_points()
+	if _roam_points.is_empty():
+		_player.set_auto_move(Vector2.ZERO)
+		_set_state(State.SEARCH_TARGET)
+		return
+	if _roam_index < 0:
+		var nearest := INF
+		for i in range(_roam_points.size()):
+			var d := _player.global_position.distance_squared_to(_roam_points[i])
+			if d < nearest:
+				nearest = d
+				_roam_index = i
+		_reset_roam_progress()
+	var point := _roam_points[_roam_index]
+	var dist := _player.global_position.distance_to(point)
+	if dist <= ROAM_ARRIVE_EPS:
+		_advance_roam()
+		point = _roam_points[_roam_index]
+		dist = _player.global_position.distance_to(point)
+	_roam_stuck_t += delta
+	if _roam_stuck_t >= STUCK_INTERVAL:
+		_roam_stuck_t = 0.0
+		_roam_stuck_count = _roam_stuck_count + 1 if _roam_last_dist - dist < STUCK_PROGRESS_EPS else 0
+		_roam_last_dist = dist
+		if _roam_stuck_count >= STUCK_LIMIT:
+			_advance_roam()
+			point = _roam_points[_roam_index]
+	_player.set_auto_move(_player.global_position.direction_to(point))
+	_set_state(State.ROAM)
+
+func _build_roam_points() -> void:
+	_roam_points.clear()
+	var world := get_tree().get_first_node_in_group("map_world")
+	if world == null:
+		return
+	var ground := world.get_node_or_null("Ground") as IsoGround
+	if ground == null:
+		return
+	var xs: Array[int] = []
+	var ys: Array[int] = []
+	for x in range(2, maxi(3, ground.grid_size.x - 2), ROAM_GRID_STEP):
+		xs.append(x)
+	for y in range(2, maxi(3, ground.grid_size.y - 2), ROAM_GRID_STEP):
+		ys.append(y)
+	if xs.is_empty() or xs.back() != ground.grid_size.x - 3:
+		xs.append(maxi(2, ground.grid_size.x - 3))
+	if ys.is_empty() or ys.back() != ground.grid_size.y - 3:
+		ys.append(maxi(2, ground.grid_size.y - 3))
+	for row in range(ys.size()):
+		for col in range(xs.size()):
+			var x: int = xs[col] if row % 2 == 0 else xs[xs.size() - col - 1]
+			_roam_points.append(ground.clamp_to_map(Iso.grid_to_world(Vector2i(x, ys[row]))))
+
+func _advance_roam() -> void:
+	_roam_index = (_roam_index + 1) % _roam_points.size()
+	_reset_roam_progress()
+
+func _reset_roam_progress() -> void:
+	_roam_last_dist = INF
+	_roam_stuck_t = 0.0
+	_roam_stuck_count = 0
 
 ## T10：该掉落物当前是否可被拾取（背包满则不可，避免无限拾取满背包）。
 func _can_pick(gi: GroundItem) -> bool:
@@ -424,6 +499,8 @@ static func state_name(s: int) -> String:
 			return "手动接管"
 		State.BLOCKED:
 			return "受阻改选"
+		State.ROAM:
+			return "漫游寻怪"
 		_:
 			return "未知"
 
