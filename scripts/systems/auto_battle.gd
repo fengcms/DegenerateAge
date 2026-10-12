@@ -22,7 +22,8 @@ extends Node
 ##   · 玩家 Lv1 仅解锁普攻 basic_slash，故本阶段实际施放普攻；`choose_skill`
 ##     的 MP / 冷却 / 等级判据已按 3.14 完整实现并纳入回归（T11），
 ##     待 M3 技能系统接线后由 `WIRED_SKILLS` 放开即可直接生效；
-##   · 药水使用接口尚未接线 → 危险血量进入 RECOVER 停寻怪并提示，不自动送死；
+##   · **药水已接线（M2.5）**：危险血量**自动喝药**（先红后蓝，按缺口选"够用的最小档"）；
+##     **药尽仍继续战斗**（Q5 拍板，不再停战）——见工程文档 12；
 ##   · 地图为无障碍开阔地，接近采用「直线趋近 + 节流重算」替代 A*；
 ##     卡住检测与黑名单机制与地图形态无关，M3 换 TileMap 后可直接复用。
 ##   · **顺路拾取已降级为兜底**（工程文档 10 方案 C）：怪物掉落物**生成即认领**并
@@ -55,7 +56,9 @@ const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
 const LOOT_ARRIVE_EPS := 6.0           # 判定「已抵达掉落物」（px；≤1.5 格由 GroundItem 自动入包）
 const STOP_GAP := 8.0                  # 攻击范围内提前停步（px，避免与目标互相顶开）
-const DANGER_HP_RATIO := 0.35          # 危险血量比例（3.14 喝药阈值）
+## 喝药阈值兜底值（3.14 设置项）。正式取值一律读 `GameState.settings.potionThreshold`，
+## 本常量仅在该字段缺失时生效——避免「常量 + 设置」两个事实源（M2.5 收敛，见工程文档 12 §3.4）。
+const DEFAULT_POTION_THRESHOLD := 0.35
 const DANGER_TOAST_CD := 4.0           # 「危险血量」提示节流（s）
 
 ## M1 已接线的自动施放技能（普攻由攻击间隔单独驱动，不进此表）。
@@ -170,16 +173,17 @@ func _tick(delta: float) -> void:
 		_set_state(State.BLOCKED)
 		return
 
-	# 危险血量：M1 无药水使用接口 → 停寻怪并提示（不自动送死）
+	# 危险血量（3.14）：**先自动喝药**（与手动共用 Consumable 入口，不另写一套）。
+	# Q5 拍板（2026-10-12）：**药尽仍继续战斗至死** —— 喝不到药不再停寻怪。
 	var max_hp := GameState.max_hp()
-	if max_hp > 0 and float(int(GameState.player.hp)) / float(max_hp) <= DANGER_HP_RATIO:
-		_player.set_auto_move(Vector2.ZERO)
-		_set_state(State.RECOVER, "危险血量")
-		_danger_t = maxf(0.0, _danger_t - delta)
+	if max_hp > 0 and float(int(GameState.player.hp)) / float(max_hp) <= _potion_threshold():
+		if _try_drink():
+			_danger_t = 0.0
+			return                                    # 已回血：本帧不再决策，下一帧按新血量行动
+		_danger_t = maxf(0.0, _danger_t - delta)       # 无药 / 全在冷却 → 继续战斗（不停战）
 		if _danger_t <= 0.0:
 			_danger_t = DANGER_TOAST_CD
-			_toast("生命过低，已暂停自动战斗（M1 暂无药水使用）", "danger")
-		return
+			_toast("生命过低且无药可用，继续战斗", "danger")
 
 	# ② 每帧校验目标有效性（死亡 / 释放 / 进黑名单 → 停旧指令）
 	if _target != null and (not is_instance_valid(_target)
@@ -225,6 +229,25 @@ func _tick(delta: float) -> void:
 	_set_state(State.ATTACK_TARGET)
 	_stuck_count = 0
 	_player.try_auto_attack(_target)
+
+# ---- 自动喝药（M2.5；3.14「自动只调用与玩家相同的喝药接口」）----
+
+## 喝药阈值（3.14 设置项，默认 35%）。
+func _potion_threshold() -> float:
+	return float(GameState.settings.get("potionThreshold", DEFAULT_POTION_THRESHOLD))
+
+## 危险血量时尝试喝药（先红后蓝 —— Q2 拍板「自动红蓝一并开」）。返回是否成功喝到。
+## 与手动喝药共用 `Consumable.use`，不另写一套实现；`silent` 抑制单次失败提示，由本层统一节流。
+func _try_drink() -> bool:
+	for kind in [Consumable.KIND_RED, Consumable.KIND_BLUE]:
+		var idx := Consumable.pick_index(String(kind))
+		if idx < 0:
+			continue
+		var res := Consumable.use(idx, true)
+		if bool(res.get("ok", false)):
+			_toast("自动喝药 · %s" % String(res.get("message", "")), "info")
+			return true
+	return false
 
 # ---- 目标搜索 ----
 

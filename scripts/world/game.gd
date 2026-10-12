@@ -143,11 +143,34 @@ func _unhandled_input(event: InputEvent) -> void:
 			GameState.toggle_auto_pickup()
 			get_viewport().set_input_as_handled()
 			return
+		# 快捷喝药（1 = 红 / 2 = 蓝；M2.5。键位与产品 9.1 快捷栏一致，M4 由正式快捷栏接管）
+		if event.is_action_pressed("use_potion_hp"):
+			_use_potion(Consumable.KIND_RED)
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("use_potion_mp"):
+			_use_potion(Consumable.KIND_BLUE)
+			get_viewport().set_input_as_handled()
+			return
 
 	# 与 NPC 交互（6.3 通用交互）：靠近后按 E；面板打开时不响应
 	if event.is_action_pressed("interact") and not GameState.panel_open:
 		if _try_interact():
 			get_viewport().set_input_as_handled()
+
+## 快捷键喝药（M2.5）。挑不出可用瓶时，若背包里有该颜色药水则交给 use() 给出精确原因
+## （已满 / 冷却中），否则明确提示「背包中没有」——不静默。
+func _use_potion(kind: String) -> void:
+	var idx := Consumable.pick_index(kind)
+	if idx >= 0:
+		GameState.use_item(idx)
+		return
+	var any_idx := Consumable.first_index_of_kind(kind)
+	if any_idx >= 0:
+		GameState.use_item(any_idx)
+		return
+	EventBus.toast_requested.emit(
+		"背包中没有%s" % ("红药" if kind == Consumable.KIND_RED else "蓝药"), "danger")
 
 ## 玩家身上的自动战斗决策机（M1-9；测试场景中可能不存在 → 返回 null）。
 func auto_pilot() -> AutoBattle:

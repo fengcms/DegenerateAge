@@ -40,6 +40,7 @@ func _ready() -> void:
 	_test_quest_save()
 	_test_level_up_carry()
 	_test_quest_side()
+	await _test_consumable()
 	await _test_world()
 	_finish()
 
@@ -1206,6 +1207,139 @@ func _write_raw(path: String, text: String) -> void:
 		return
 	f.store_string(text)
 	f.close()
+
+# ---- M2.5 消耗品使用与自动喝药（工程文档 12 R7）----
+
+## 放入一瓶药水，返回其格位。
+func _put_potion(item_id: String, count: int = 1) -> int:
+	return _put_item({"kind": "potion", "itemId": item_id, "count": count})
+
+## 某格堆叠数（格为空 / 越界返回 -1）。
+func _stack_at(index: int) -> int:
+	if index < 0 or index >= GameState.inventory.size():
+		return -1
+	var it = GameState.inventory[index]
+	if not (it is Dictionary):
+		return -1
+	return int((it as Dictionary).get("count", 1))
+
+func _test_consumable() -> void:
+	GameState.reset_to_defaults()
+
+	# ① 数据齐备（5.11：红蓝 × 小中大，含恢复量与独立冷却）
+	for pid in ["potion_hp_small", "potion_hp_mid", "potion_hp_large",
+			"potion_mp_small", "potion_mp_mid", "potion_mp_large"]:
+		var tpl0 = DataLoader.get_entry("potions", pid)
+		_expect(tpl0 is Dictionary, "缺少药水模板 %s" % pid)
+		if tpl0 is Dictionary:
+			_expect(int(tpl0.get("restoreAmount", 0)) > 0, "%s 应配置 restoreAmount" % pid)
+			_expect(float(tpl0.get("cooldown", 0.0)) > 0.0, "%s 应配置 cooldown" % pid)
+
+	# ② 使用入口：药水回血 + 扣堆叠（M2.5 之前这一步会报「无法装备」）
+	GameState.player.hp = 1
+	var ri := _put_potion("potion_hp_small", 2)
+	_expect(ri >= 0, "应能放入红药")
+	var hp0 := int(GameState.player.hp)
+	var r1 := GameState.use_item(ri)
+	_expect(bool(r1.get("ok", false)), "使用红药应成功：%s" % r1.get("reason", ""))
+	_expect(int(GameState.player.hp) == hp0 + 80,
+		"小红药应回 80 生命，实际 %d" % int(GameState.player.hp))
+	_expect(_stack_at(ri) == 1, "使用后堆叠应由 2 减到 1，实际 %d" % _stack_at(ri))
+
+	# ③ 冷却阻塞（5.11：每类独立冷却）
+	_expect(Consumable.cd_of("potion_hp_small") > 0.0, "使用后应进入冷却")
+	var r2 := GameState.use_item(ri)
+	_expect(not bool(r2.get("ok", false)), "冷却中不应再次使用")
+	_expect(String(r2.get("reason", "")).contains("冷却"),
+		"冷却拒绝原因应含「冷却」，实际：%s" % r2.get("reason", ""))
+	_expect(_stack_at(ri) == 1, "冷却被拒不应扣药")
+
+	# ④ 跨种类互不阻塞：红药冷却中，蓝药仍可独立使用
+	GameState.player.mp = 1
+	var bi := _put_potion("potion_mp_small", 1)
+	var r3 := GameState.use_item(bi)
+	_expect(bool(r3.get("ok", false)),
+		"红药冷却中时蓝药应仍可独立使用：%s" % r3.get("reason", ""))
+	_expect(Consumable.cd_of("potion_mp_small") > 0.0, "蓝药应各自进冷却")
+	_expect(Consumable.cd_of("potion_hp_small") > 0.0, "红药冷却不应被蓝药影响")
+
+	# ⑤ 超量恢复按缺口截断（5.11：不超过上限）
+	Consumable.reset()
+	GameState.player.hp = GameState.max_hp() - 10
+	var ti := _put_potion("potion_hp_large", 1)
+	var r4 := GameState.use_item(ti)
+	_expect(bool(r4.get("ok", false)), "大红药应可用")
+	_expect(int(GameState.player.hp) == GameState.max_hp(),
+		"超量恢复应截断到上限，实际 %d/%d" % [int(GameState.player.hp), GameState.max_hp()])
+	_expect(int(r4.get("restored", 0)) == 10,
+		"restored 应等于缺口 10，实际 %d" % int(r4.get("restored", 0)))
+
+	# ⑥ 满值不浪费：不扣药、不进冷却（R-e）
+	Consumable.reset()
+	GameState.player.hp = GameState.max_hp()
+	var fi := _put_potion("potion_hp_small", 1)
+	var r5 := GameState.use_item(fi)
+	_expect(not bool(r5.get("ok", false)), "满血不应允许喝药")
+	_expect(Consumable.cd_of("potion_hp_small") == 0.0, "满血被拒不应进入冷却（R-e）")
+	_expect(_stack_at(fi) == 1, "满血被拒不应扣药")
+
+	# ⑦ 耗尽移除格
+	Consumable.reset()
+	GameState.player.hp = 1
+	var li := _put_potion("potion_hp_small", 1)
+	var used0 := GameState.inventory_used()
+	var r6 := GameState.use_item(li)
+	_expect(bool(r6.get("ok", false)), "最后一瓶应可用")
+	_expect(GameState.inventory[li] == null, "耗尽后该格应清空")
+	_expect(GameState.inventory_used() == used0 - 1, "耗尽后占用应 -1")
+
+	# ⑧ R-b 回归：use_item 必须按 kind 分流 —— 双击装备仍应穿戴
+	Consumable.reset()
+	var ei := _put_item(_equip_instance("weapon_starter", "cm_equip", {"atk": 3}))
+	var r7 := GameState.use_item(ei)
+	_expect(bool(r7.get("ok", false)), "双击装备应仍可穿戴（R-b）：%s" % r7.get("reason", ""))
+	_expect(GameState.equipment.get("weapon") != null, "装备应已进入武器槽")
+
+	# ⑨ 非可用品类明确拒绝且不吞物品（不静默）
+	var qi := _put_item({"kind": "quest", "itemId": "spirit_shard", "count": 1})
+	var r8 := GameState.use_item(qi)
+	_expect(not bool(r8.get("ok", false)), "任务物品不应可「使用」")
+	_expect(qi >= 0 and GameState.inventory[qi] != null, "被拒的物品不应消失")
+
+	# ⑩ Q1 选瓶策略（纯函数）：够用的最小档优先；均不足则取最大档
+	var cands := [{"index": 0, "amount": 80}, {"index": 1, "amount": 220}, {"index": 2, "amount": 500}]
+	_expect(Consumable.choose_candidate(60, cands) == 0, "缺口 60 应选 80 的小药（Q1）")
+	_expect(Consumable.choose_candidate(100, cands) == 1, "缺口 100 应跳过 80 选 220（Q1）")
+	_expect(Consumable.choose_candidate(900, cands) == 2, "缺口超过所有档时应取最大档")
+	_expect(Consumable.choose_candidate(60, []) == -1, "无候选应返回 -1")
+
+	# ⑪ pick_index：缺口大 → 中药；缺口小 → 小药；冷却中的小药被跳过
+	GameState.reset_to_defaults()
+	GameState.player.hp = 1
+	var si := _put_potion("potion_hp_small", 1)
+	var mi := _put_potion("potion_hp_mid", 1)
+	_expect(Consumable.pick_index(Consumable.KIND_RED) == mi,
+		"缺口大于小药恢复量时应选中药（实际 %d / 中药 %d / 小药 %d）"
+			% [Consumable.pick_index(Consumable.KIND_RED), mi, si])
+	GameState.player.hp = GameState.max_hp() - 60
+	_expect(Consumable.pick_index(Consumable.KIND_RED) == si, "缺口 60 应选小药（够用最小档）")
+	Consumable._cd["potion_hp_small"] = 5.0
+	_expect(Consumable.pick_index(Consumable.KIND_RED) == mi, "冷却中的小药应被跳过")
+	Consumable.reset()
+
+	# ⑫ 背包 tooltip 文案（R3）：药水显示恢复量 / 冷却 / 使用方式；任务物说明不可使用
+	var panel = load("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	add_child(panel)
+	await get_tree().process_frame
+	var tip := String(panel._bag_tooltip({"kind": "potion", "itemId": "potion_hp_small", "count": 1}))
+	_expect(tip.contains("恢复 80"), "药水 tooltip 应显示恢复量：%s" % tip)
+	_expect(tip.contains("冷却"), "药水 tooltip 应显示冷却：%s" % tip)
+	_expect(tip.contains("双击使用"), "药水 tooltip 应提示「双击使用」：%s" % tip)
+	var tip2 := String(panel._bag_tooltip({"kind": "quest", "itemId": "spirit_shard", "count": 1}))
+	_expect(tip2.contains("不可使用"), "任务物品 tooltip 应说明不可使用：%s" % tip2)
+	panel.queue_free()
+
+	GameState.reset_to_defaults()
 
 ## 存储结构深比较：键集相同 + 逐键相等。
 ## 注意 JSON 往返会**改变字典的键顺序**（解析后按键排序），故不能用 str() 比较。

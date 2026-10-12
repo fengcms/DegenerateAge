@@ -54,6 +54,11 @@ func close_all_panels() -> void:
 func _ready() -> void:
 	reset_to_defaults()
 
+## 药水冷却心跳（M2.5）。挂在本 Autoload（常驻节点）而非 UI 节点上——
+## 否则面板销毁会导致冷却永久停摆（见工程文档 12 §5 R-h）。
+func _process(delta: float) -> void:
+	Consumable.tick(delta)
+
 ## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 独立成函数：reset_to_defaults 与**读档字段补全**（SaveManager._migrate_player）共用，
 ## 保证旧档缺字段时补出来的默认值与新游戏完全一致（M1-10）。
@@ -103,6 +108,7 @@ func reset_to_defaults() -> void:
 	unlocks = {}
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
+	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
 	clear_save_pos()
 	settings = default_settings()
 
@@ -158,6 +164,13 @@ func heal_player(amount: int) -> void:
 	player.hp = min(max_hp(), int(player.hp) + amount)
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 
+## 恢复法力，不超过上限（M2.5 蓝药；与 heal_player 对称）。
+func restore_mp(amount: int) -> void:
+	if amount <= 0:
+		return
+	player.mp = min(max_mp(), int(player.mp) + amount)
+	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+
 ## 消耗法力；不足则返回 false（不扣）。供技能（M3）与测试使用。
 func spend_mp(amount: int) -> bool:
 	if amount <= 0:
@@ -199,6 +212,33 @@ func remove_item_at(index: int) -> Dictionary:
 ## 背包已占用格数。
 func inventory_used() -> int:
 	return Inventory.used_slots(inventory)
+
+# ---- 物品「使用」（M2.5；产品文档 09 §9.2「双击穿戴 / 使用」）----
+
+## 使用背包中指定格的物品（背包双击 / 快捷键 1·2 / 自动喝药统一入口）。
+## 按品类分流，返回 {ok, reason, ...}：
+##   potion → Consumable.use（回血 / 回蓝 + 独立冷却）
+##   equip  → 原穿戴路径（双击装备仍穿戴，行为不变）
+##   misc / quest / 其他 → 明确提示「该物品无法使用」（不静默）
+func use_item(inv_index: int) -> Dictionary:
+	var inv: Array = inventory
+	if inv_index < 0 or inv_index >= inv.size() or inv[inv_index] == null:
+		return _use_fail("该格没有物品")
+	var it = inv[inv_index]
+	if not (it is Dictionary):
+		return _use_fail("该格没有物品")
+	var kind := String((it as Dictionary).get("kind", ""))
+	match kind:
+		"potion":
+			return Consumable.use(inv_index)
+		"equip":
+			return equip_from_inventory(inv_index)
+		_:
+			return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))
+
+func _use_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "reason": reason}
 
 # ---- 装备穿脱（5.1；槽位规则与属性汇总见 scripts/systems/equipment.gd）----
 

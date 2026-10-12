@@ -218,7 +218,7 @@ func _build() -> void:
 	root.add_child(_summary)
 
 	var hint := Label.new()
-	hint.text = "双击穿戴 · 点击装备槽卸下 · 悬停查看属性 · 向货郎买/卖时把装备拖到右侧托盘 · I / Esc 关闭"
+	hint.text = "双击穿戴 / 使用（药水可按 1·2）· 点击装备槽卸下 · 悬停查看属性 · 向货郎买/卖时把装备拖到右侧托盘 · I / Esc 关闭"
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
@@ -357,7 +357,7 @@ func _bag_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append(ItemUtil.display_name(item))
 	if String(item.get("kind", "")) != "equip":
-		lines.append("（M1-7 仅装备可穿戴；药水使用 / 丢弃见后续子步骤）")
+		lines.append_array(_non_equip_tooltip(item))
 		return "\n".join(PackedStringArray(lines))
 
 	var level := int(GameState.player.level)
@@ -383,6 +383,37 @@ func _bag_tooltip(item: Dictionary) -> String:
 	lines.append("双击穿戴" if ok else "等级不足，无法穿戴")
 	return "\n".join(PackedStringArray(lines))
 
+## 非装备物品的 tooltip（M2.5）：药水显示恢复量 / 冷却 / 使用方式；
+## 任务物与杂项明确说明不可使用（不静默）。
+func _non_equip_tooltip(item: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var kind := String(item.get("kind", ""))
+	if kind == "potion":
+		var item_id := String(item.get("itemId", ""))
+		var tpl = DataLoader.get_entry("potions", item_id)
+		if tpl is Dictionary:
+			var t: Dictionary = tpl
+			var color := String(t.get("kind", Consumable.KIND_RED))
+			out.append("恢复 %d %s" % [
+				int(t.get("restoreAmount", 0)), Consumable.stat_label(color)])
+			out.append("冷却 %ds（各药水独立计时，互不影响）" % int(t.get("cooldown", 0)))
+			var key := "1" if color == Consumable.KIND_RED else "2"
+			var left := Consumable.cd_of(item_id)
+			if left > 0.0:
+				out.append("")
+				out.append("冷却中：还需 %.1fs" % left)
+				return out
+			out.append("")
+			out.append("双击使用（或按 %s）" % key)
+			return out
+		out.append("（药水数据缺失）")
+		return out
+	if kind == "quest":
+		out.append("任务物品，不可使用")
+		return out
+	out.append("杂项物品，暂未开放使用（M4）")
+	return out
+
 ## 同类型槽中第一件已穿戴装备（用于 5.9 对比）。
 func _worn_same_kind(item: Dictionary) -> Dictionary:
 	var kind := Equipment.item_kind(item)
@@ -401,13 +432,15 @@ func _on_slot_pressed(slot_id: String) -> void:
 		return
 	GameState.unequip_slot(slot_id)
 
-## 双击（400ms 内两次点击同一格）→ 穿戴。
+## 双击（400ms 内两次点击同一格）→ 使用 / 穿戴。
+## M2.5：改走 `GameState.use_item`，由它按品类分流（药水 → 使用；装备 → 穿戴），
+## 保证「双击装备仍穿戴」行为完全不变（工程文档 12 §5 R-b）。
 func _on_bag_pressed(index: int) -> void:
 	var now := Time.get_ticks_msec()
 	if index == _last_click_index and now - _last_click_ms <= DOUBLE_CLICK_MS:
 		_last_click_index = -1
 		_last_click_ms = 0
-		GameState.equip_from_inventory(index)
+		GameState.use_item(index)
 	else:
 		_last_click_index = index
 		_last_click_ms = now

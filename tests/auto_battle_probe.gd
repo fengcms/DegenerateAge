@@ -68,14 +68,32 @@ func _ready() -> void:
 		or GameState.inventory_used() > 0, "击杀后应有经验 / 金币 / 物品入账")
 	_expect(not player.is_dead, "玩家不应在自动战斗中断死亡（HP=%d）" % int(GameState.player.hp))
 
-	# ③ 危险血量保护（3.14）：HP ≤ 阈值 → 停寻怪（M1 无药水使用 → RECOVER）
+	# ③ 危险血量（3.14 / M2.5）：先自动喝药（红→蓝），**药尽仍继续战斗**（Q5 拍板，不再停战）
+	# ③a 无药：不应再进入 RECOVER 停战
+	for i in range(GameState.inventory.size()):
+		GameState.inventory[i] = null
+	Consumable.reset()
 	GameState.player.hp = maxi(1, int(round(float(GameState.max_hp()) * 0.2)))
-	for _i in range(4):
+	for _i in range(6):
 		await get_tree().physics_frame
-	print("[Auto] 阶段③ 低血（%d/%d）状态=%s" % [
+	print("[Auto] 阶段③a 无药低血（%d/%d）状态=%s" % [
 		int(GameState.player.hp), GameState.max_hp(), AutoBattle.state_name(pilot.current_state())])
-	_expect(pilot.current_state() == AutoBattle.State.RECOVER,
-		"HP 低于阈值时应暂停自动战斗，实际 %s" % AutoBattle.state_name(pilot.current_state()))
+	_expect(pilot.current_state() != AutoBattle.State.RECOVER,
+		"无药时危险血量不应停战（Q5：药尽仍继续战斗），实际 %s" % AutoBattle.state_name(pilot.current_state()))
+
+	# ③b 有药：应自动喝药把 HP 拉高，且同样不停战
+	Consumable.reset()
+	GameState.player.hp = maxi(1, int(round(float(GameState.max_hp()) * 0.2)))
+	GameState.add_item({"kind": "potion", "itemId": "potion_hp_small", "count": 3})
+	var hp_low := int(GameState.player.hp)
+	for _i in range(8):
+		await get_tree().physics_frame
+	print("[Auto] 阶段③b 有药低血（%d→%d/%d）状态=%s" % [
+		hp_low, int(GameState.player.hp), GameState.max_hp(),
+		AutoBattle.state_name(pilot.current_state())])
+	_expect(int(GameState.player.hp) > hp_low, "有药时危险血量应自动喝药回血（3.14 / M2.5）")
+	_expect(pilot.current_state() != AutoBattle.State.RECOVER,
+		"自动喝药后不应停战，实际 %s" % AutoBattle.state_name(pilot.current_state()))
 	GameState.player.hp = GameState.max_hp()
 
 	# ④ G：无怪时顺路拾取 5 格外的掉落物（超出 1.5 格自动拾取半径，必须靠自动走位）
