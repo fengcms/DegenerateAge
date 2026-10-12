@@ -1,6 +1,6 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene format=3 uid="uid://u6v6o68xks00"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://dpqnhbwq074i3" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Game.tscn" id="2_game"]
 [ext_resource type="PackedScene" path="res://scenes/ui/Hud.tscn" id="3_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/InventoryPanel.tscn" id="4_inv"]
@@ -8,7 +8,6 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/SavePanel.tscn" id="6_save"]
 [ext_resource type="PackedScene" path="res://scenes/ui/QuestPanel.tscn" id="7_quest"]
 [ext_resource type="PackedScene" path="res://scenes/ui/CarterPanel.tscn" id="8_carter"]
-
 [ext_resource type="PackedScene" path="res://scenes/ui/MapBigPanel.tscn" id="9_map"]
 [ext_resource type="PackedScene" path="res://scenes/ui/UpgradePanel.tscn" id="10_upgrade"]
 [ext_resource type="PackedScene" path="res://scenes/ui/BlacksmithPanel.tscn" id="11_blacksmith"]
@@ -19,49 +18,64 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="16_settings"]
 [ext_resource type="PackedScene" path="res://scenes/ui/MenuPanel.tscn" id="17_menu"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
 
-[node name="Game" parent="." instance=ExtResource("2_game")]
+[node name="Game" parent="." unique_id=1996088833 instance=ExtResource("2_game")]
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1893905974]
 process_mode = 3
 
-[node name="Hud" parent="UI" instance=ExtResource("3_hud")]
+[node name="Hud" parent="UI" unique_id=360693552 instance=ExtResource("3_hud")]
 
-[node name="InventoryPanel" parent="UI" instance=ExtResource("4_inv")]
+[node name="InventoryPanel" parent="UI" unique_id=115460546 instance=ExtResource("4_inv")]
+layout_mode = 3
 
-[node name="ShopPanel" parent="UI" instance=ExtResource("5_shop")]
+[node name="ShopPanel" parent="UI" unique_id=1266241031 instance=ExtResource("5_shop")]
+layout_mode = 3
 
-[node name="SavePanel" parent="UI" instance=ExtResource("6_save")]
+[node name="SavePanel" parent="UI" unique_id=844511050 instance=ExtResource("6_save")]
+layout_mode = 3
 
-[node name="QuestPanel" parent="UI" instance=ExtResource("7_quest")]
+[node name="QuestPanel" parent="UI" unique_id=631615777 instance=ExtResource("7_quest")]
+layout_mode = 3
 
-[node name="CarterPanel" parent="UI" instance=ExtResource("8_carter")]
+[node name="CarterPanel" parent="UI" unique_id=440230102 instance=ExtResource("8_carter")]
+layout_mode = 3
 
-[node name="MapBigPanel" parent="UI" instance=ExtResource("9_map")]
+[node name="MapBigPanel" parent="UI" unique_id=1462285574 instance=ExtResource("9_map")]
+layout_mode = 3
 
-[node name="UpgradePanel" parent="UI" instance=ExtResource("10_upgrade")]
+[node name="UpgradePanel" parent="UI" unique_id=201223481 instance=ExtResource("10_upgrade")]
+layout_mode = 3
 
-[node name="BlacksmithPanel" parent="UI" instance=ExtResource("11_blacksmith")]
+[node name="BlacksmithPanel" parent="UI" unique_id=655326140 instance=ExtResource("11_blacksmith")]
+layout_mode = 3
 
-[node name="WarehousePanel" parent="UI" instance=ExtResource("12_warehouse")]
+[node name="WarehousePanel" parent="UI" unique_id=8165928 instance=ExtResource("12_warehouse")]
+layout_mode = 3
 
-[node name="MountPanel" parent="UI" instance=ExtResource("13_mount")]
+[node name="MountPanel" parent="UI" unique_id=1044120446 instance=ExtResource("13_mount")]
+layout_mode = 3
 
-[node name="CharacterPanel" parent="UI" instance=ExtResource("14_character")]
+[node name="CharacterPanel" parent="UI" unique_id=130802881 instance=ExtResource("14_character")]
+layout_mode = 3
 
-[node name="SkillPanel" parent="UI" instance=ExtResource("15_skill")]
+[node name="SkillPanel" parent="UI" unique_id=533473255 instance=ExtResource("15_skill")]
+layout_mode = 3
 
-[node name="SettingsPanel" parent="UI" instance=ExtResource("16_settings")]
+[node name="SettingsPanel" parent="UI" unique_id=1881184025 instance=ExtResource("16_settings")]
+layout_mode = 3
 
-[node name="MenuPanel" parent="UI" instance=ExtResource("17_menu")]
+[node name="MenuPanel" parent="UI" unique_id=1099351891 instance=ExtResource("17_menu")]
+layout_mode = 3
 
-[node name="DragLayer" type="Control" parent="UI" groups=["drag_ghost_layer"]]
+[node name="DragLayer" type="Control" parent="UI" unique_id=47854683 groups=["drag_ghost_layer"]]
+z_index = 4096
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-z_index = 4096
