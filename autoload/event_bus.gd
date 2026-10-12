@@ -17,6 +17,7 @@ signal player_leveled(new_level: int)
 # ---- 玩家数值（HUD 实时刷新，M1-3）----
 signal player_hp_changed(current: int, maximum: int)
 signal player_mp_changed(current: int, maximum: int)
+signal player_sitting_changed(sitting: bool)
 signal player_xp_changed(current: int, maximum: int)
 signal target_changed(target: Node)
 signal boss_first_clear(monster_id: String)

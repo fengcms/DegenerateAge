@@ -50,6 +50,7 @@ func _ready() -> void:
 	EventBus.toast_requested.connect(_on_toast)
 	EventBus.auto_state_changed.connect(_on_auto_state)
 	EventBus.auto_phase_changed.connect(_on_auto_phase)
+	EventBus.player_sitting_changed.connect(_on_sitting_changed)
 	EventBus.quest_accepted.connect(_on_quest_changed)
 	EventBus.quest_completed.connect(_on_quest_changed)
 	EventBus.quest_rewarded.connect(_on_quest_changed)
@@ -116,7 +117,15 @@ func _on_auto_phase(phase: String) -> void:
 	_auto_phase = phase
 	_refresh_auto()
 
+func _on_sitting_changed(_sitting: bool) -> void:
+	_refresh_auto()
+
 func _refresh_auto() -> void:
+	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+	if player != null and player.is_sitting:
+		_auto_label.text = "打坐中（X 起身）" if not _auto_battle else "打坐中 · 自动暂停（X 起身）"
+		_auto_label.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
+		return
 	if not _auto_battle:
 		_auto_label.text = "自动  关（F 开启）"
 		_auto_label.add_theme_color_override("font_color", COL_AUTO_OFF)

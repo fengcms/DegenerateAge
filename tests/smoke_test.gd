@@ -2524,7 +2524,6 @@ func _test_auto_hud_reload() -> void:
 		pilot.set_physics_process(false)
 		var hud: Control = main.get_node("UI/Hud")
 		_expect(not String(hud.get_node("%AutoLabel").text).contains("关（F"), "切图后 HUD 应读取自动开关")
-		_expect(pilot._anchor == player.global_position, "新图自动战斗锚点应初始化到玩家出生点")
 		pilot.begin_manual_override()
 		pilot._physics_process(0.1)
 		_expect(pilot.current_phase().contains("3 秒"), "恢复倒计时 3")

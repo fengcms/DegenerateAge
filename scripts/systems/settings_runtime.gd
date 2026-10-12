@@ -2,7 +2,7 @@ class_name SettingsRuntime
 extends RefCounted
 ## 设置统一应用层。改键只存物理键码，旧档迁移后沿用项目默认绑定。
 
-const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "target_next",
+const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "target_next", "sit_toggle",
 	"auto_battle", "auto_pickup", "interact", "pause", "panel_inventory", "panel_character",
 	"panel_map", "panel_skill", "panel_mount", "hotbar_1", "hotbar_2", "hotbar_3",
 	"hotbar_4", "hotbar_5", "hotbar_6", "hotbar_7", "hotbar_8", "hotbar_9",

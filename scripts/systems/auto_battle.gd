@@ -146,6 +146,12 @@ func _physics_process(delta: float) -> void:
 		GameState.set_auto_battle(false)
 		_set_state(State.OFF)
 		return
+	if _player.is_sitting:
+		_player.set_auto_move(Vector2.ZERO)
+		_target = null
+		_loot = null
+		_set_state(State.RECOVER, "打坐中")
+		return
 
 	# ⑥ 面板打开 / 后台 / 暂停 → 停决策（不暂停世界模拟，仅停本机决策）
 	if GameState.panel_open or _background or get_tree().paused:

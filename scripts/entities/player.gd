@@ -49,6 +49,7 @@ var _stun: float = 0.0
 ## 死亡占位计时
 var _death_t: float = 0.0
 var is_dead: bool = false
+var is_sitting: bool = false
 
 ## 自动战斗的移动意图（3.14）：由 AutoBattle 写入。
 ## **手动输入优先**——玩家一按方向键即完全接管（4.6），无需 AutoBattle 额外干预。
@@ -84,6 +85,7 @@ func select_target(target: Node2D, manual: bool = true) -> void:
 	EventBus.target_changed.emit(locked_target)
 
 func begin_manual_command() -> void:
+	set_sitting(false)
 	auto_move = Vector2.ZERO
 	var pilot := get_node_or_null("AutoPilot") as AutoBattle
 	if pilot != null:
@@ -178,6 +180,17 @@ func _physics_process(delta: float) -> void:
 	_tick_regen(delta)
 
 	_stun = maxf(0.0, _stun - delta)
+	if is_sitting:
+		var wants_move := Input.get_vector("move_left", "move_right", "move_up", "move_down").length() > MANUAL_EPS
+		if wants_move or Input.is_action_pressed("attack"):
+			set_sitting(false)
+		else:
+			auto_move = Vector2.ZERO
+			manual_input_active = false
+			velocity = Vector2.ZERO
+			move_and_slide()
+			_update_blink()
+			return
 
 	# 面板打开时屏蔽操控（面板不暂停世界模拟，仅屏蔽玩家指令，避免开背包时误攻击 / 误走位）
 	if GameState.panel_open:
@@ -225,6 +238,7 @@ func _physics_process(delta: float) -> void:
 func apply_damage(amount: int) -> int:
 	if is_dead or _invuln > 0.0 or amount <= 0:
 		return 0
+	set_sitting(false)
 	_invuln = IFRAME
 	_stun = HITSTUN
 	_mark_combat()
@@ -236,6 +250,7 @@ func apply_damage(amount: int) -> int:
 func _begin_death() -> void:
 	if is_dead:
 		return
+	set_sitting(false)
 	map_move_active = false
 	manual_attack_active = false
 	select_target(null)
@@ -340,14 +355,15 @@ func _mark_combat() -> void:
 func _tick_regen(delta: float) -> void:
 	if _map_background or get_tree().paused:
 		return
+	var recovery_delta := maxf(0.0, delta - _combat_cooldown)
 	_combat_cooldown = maxf(0.0, _combat_cooldown - delta)
 	var pilot := get_node_or_null("AutoPilot") as AutoBattle
-	if _combat_cooldown > 0.0 or manual_attack_active or (pilot != null and pilot.current_target() != null):
+	if recovery_delta <= 0.0 or manual_attack_active or (pilot != null and pilot.current_target() != null):
 		return
 	var hp_max := GameState.max_hp()
 	var mp_max := GameState.max_mp()
 	if int(GameState.player.hp) < hp_max:
-		_hp_regen_rest += float(hp_max) * IDLE_HP_RATE * delta
+		_hp_regen_rest += float(hp_max) * (SIT_HP_RATE if is_sitting else IDLE_HP_RATE) * recovery_delta
 		var hp_points := int(floorf(_hp_regen_rest))
 		if hp_points > 0:
 			_hp_regen_rest -= hp_points
@@ -355,7 +371,7 @@ func _tick_regen(delta: float) -> void:
 	else:
 		_hp_regen_rest = 0.0
 	if int(GameState.player.mp) < mp_max:
-		_mp_regen_rest += float(mp_max) * IDLE_MP_RATE * delta
+		_mp_regen_rest += float(mp_max) * (SIT_MP_RATE if is_sitting else IDLE_MP_RATE) * recovery_delta
 		var mp_points := int(floorf(_mp_regen_rest))
 		if mp_points > 0:
 			_mp_regen_rest -= mp_points
@@ -388,5 +404,25 @@ func _target_dodge(t: Node) -> float:
 func _draw() -> void:
 	# 占位角色：圆形身体 + 描边；死亡态转灰（脚底碰撞体见 CollisionShape2D）
 	var body := COLOR_DEAD if is_dead else COLOR_BODY
-	draw_circle(Vector2.ZERO, RADIUS, body)
-	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 28, COLOR_EDGE, 2.0, true)
+	if is_sitting:
+		draw_circle(Vector2(0, 5), RADIUS, body)
+		draw_arc(Vector2(0, 5), RADIUS, 0.0, TAU, 28, COLOR_EDGE, 2.0, true)
+		draw_line(Vector2(-15, 17), Vector2(15, 17), COLOR_EDGE, 3.0)
+	else:
+		draw_circle(Vector2.ZERO, RADIUS, body)
+		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 28, COLOR_EDGE, 2.0, true)
+
+func set_sitting(value: bool) -> void:
+	if is_dead and value or is_sitting == value:
+		return
+	is_sitting = value
+	if value:
+		map_move_active = false
+		manual_attack_active = false
+		auto_move = Vector2.ZERO
+		velocity = Vector2.ZERO
+		var pilot := get_node_or_null("AutoPilot") as AutoBattle
+		if pilot != null:
+			pilot.begin_manual_override()
+	EventBus.player_sitting_changed.emit(is_sitting)
+	queue_redraw()

@@ -198,6 +198,10 @@ func enemy_at_screen(point: Vector2) -> Node2D:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not GameState.panel_open and not _player.is_dead:
+		if event.is_action_pressed("sit_toggle") and not event.is_echo():
+			_player.set_sitting(not _player.is_sitting)
+			get_viewport().set_input_as_handled()
+			return
 		if event.is_action_pressed("target_next") and not event.is_echo():
 			cycle_target()
 			get_viewport().set_input_as_handled()
@@ -232,6 +236,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	# 自动战斗 / 自动拾取（F / G，3.14 / 9.9）；面板打开时不响应
 	if not GameState.panel_open:
 		if event.is_action_pressed("auto_battle"):
+			if not GameState.auto_battle_on:
+				_player.set_sitting(false)
 			GameState.toggle_auto_battle()
 			get_viewport().set_input_as_handled()
 			return

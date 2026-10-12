@@ -3,7 +3,7 @@ extends Control
 
 const ACTION_NAMES := {
 	"move_up": "向上移动", "move_down": "向下移动", "move_left": "向左移动", "move_right": "向右移动",
-	"attack": "普通攻击", "target_next": "切换目标", "auto_battle": "自动战斗", "auto_pickup": "自动拾取",
+	"attack": "普通攻击", "target_next": "切换目标", "sit_toggle": "打坐 / 起身", "auto_battle": "自动战斗", "auto_pickup": "自动拾取",
 	"interact": "交互", "pause": "关闭 / 暂停", "panel_inventory": "背包", "panel_character": "人物",
 	"panel_map": "地图", "panel_skill": "技能", "panel_mount": "坐骑",
 }
