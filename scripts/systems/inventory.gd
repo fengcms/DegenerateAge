@@ -28,32 +28,61 @@ static func used_slots(inv: Array) -> int:
 static func is_full(inv: Array) -> bool:
 	return used_slots(inv) >= inv.size()
 
-## 能否容纳该物品：可堆叠 → 有未满堆 或 有空位；不可堆叠 → 需空位。
+## 容量必须覆盖整批数量；拒绝非法数量，不允许部分成功。
 static func has_space_for(inv: Array, item: Dictionary) -> bool:
 	if item.is_empty():
 		return false
-	if ItemUtil.is_stackable(item):
-		if _find_stack_with_room(inv, item) >= 0:
+	if not ItemUtil.is_stackable(item):
+		return _first_empty(inv) >= 0
+	var count: Variant = item.get("count", 1)
+	if not (count is int or count is float) or not is_finite(float(count)) or float(count) != floor(float(count)) or float(count) <= 0:
+		return false
+	var remaining := float(count)
+	var maximum := ItemUtil.stack_max(item)
+	if maximum <= 0:
+		return false
+	for entry in inv:
+		if entry == null:
+			remaining -= maximum
+		elif _same_stack(entry, item):
+			remaining -= maxi(0, maximum - int(entry.get("count", 1)))
+		if remaining <= 0:
 			return true
-	return _first_empty(inv) >= 0
+	return false
 
-## 入包。成功返回 true；失败（背包满）返回 false 且不改变背包。
+## 先完整预检，再分配已有堆与空格；失败时背包和输入物品均不变。
 static func add(inv: Array, item: Dictionary) -> bool:
-	if item.is_empty():
+	if not has_space_for(inv, item):
 		return false
-	if ItemUtil.is_stackable(item):
-		var si := _find_stack_with_room(inv, item)
-		if si >= 0:
-			var max_n := ItemUtil.stack_max(item)
-			var cur := int(inv[si].get("count", 1))
-			var add_n := int(item.get("count", 1))
-			inv[si]["count"] = mini(max_n, cur + add_n)
+	if not ItemUtil.is_stackable(item):
+		inv[_first_empty(inv)] = item.duplicate(true)
+		return true
+	var remaining := int(item.get("count", 1))
+	var maximum := ItemUtil.stack_max(item)
+	for i in range(inv.size()):
+		var entry: Variant = inv[i]
+		if not _same_stack(entry, item):
+			continue
+		var amount := mini(remaining, maxi(0, maximum - int(entry.get("count", 1))))
+		if amount > 0:
+			inv[i] = entry.duplicate(true)
+			inv[i].count = int(entry.get("count", 1)) + amount
+		remaining -= amount
+		if remaining == 0:
 			return true
-	var ei := _first_empty(inv)
-	if ei < 0:
-		return false
-	inv[ei] = item.duplicate(true)
-	return true
+	for i in range(inv.size()):
+		if inv[i] != null:
+			continue
+		var amount := mini(remaining, maximum)
+		inv[i] = item.duplicate(true)
+		inv[i].count = amount
+		remaining -= amount
+		if remaining == 0:
+			return true
+	return false
+
+static func _same_stack(entry: Variant, item: Dictionary) -> bool:
+	return entry is Dictionary and entry.get("kind", "") == item.get("kind", "") and entry.get("itemId", "") == item.get("itemId", "")
 
 ## 移除指定格，返回被移除物品（空位返回 {}）。
 static func remove_at(inv: Array, index: int) -> Dictionary:
