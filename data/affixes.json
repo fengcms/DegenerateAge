@@ -1,0 +1,35 @@
+[
+  {
+    "id": "rage",
+    "name": "狂暴",
+    "attackPct": 0.3,
+    "attackSpeedPct": 0.2
+  },
+  {
+    "id": "frost",
+    "name": "寒霜",
+    "slowPct": 0.2,
+    "slowDuration": 2.0
+  },
+  {
+    "id": "hard",
+    "name": "坚硬",
+    "defensePct": 0.5
+  },
+  {
+    "id": "fast",
+    "name": "迅捷",
+    "moveSpeedPct": 0.3
+  },
+  {
+    "id": "summon",
+    "name": "召唤",
+    "summonId": "wolf_corrupted",
+    "summonCount": 2
+  },
+  {
+    "id": "vampire",
+    "name": "吸血",
+    "lifeStealPct": 0.05
+  }
+]

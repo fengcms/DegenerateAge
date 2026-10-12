@@ -17,6 +17,21 @@ const HITSTUN := 0.25          # 3.4：受击硬直时长（s，期间无法主�
 const DEATH_REVIVE_DELAY := 3.0  # 4.7 死亡流程占位（正式复活对话框见 M3）
 const MANUAL_EPS := 0.05       # 手动输入判定阈值（摇杆量）
 
+## 减速是实体运行态，死亡清除，不写存档。
+var _slow_pct := 0.0
+var _slow_remaining := 0.0
+
+## 同强度刷新时间，较弱减速不会覆盖较强效果；不乘算叠加。
+func apply_slow(percent: float, duration: float) -> void:
+	if is_dead or percent <= 0 or duration <= 0:
+		return
+	if percent >= _slow_pct or _slow_remaining <= 0:
+		_slow_pct = clampf(percent, 0.0, 0.95)
+		_slow_remaining = duration
+
+func movement_multiplier() -> float:
+	return 1.0 - _slow_pct if _slow_remaining > 0 else 1.0
+
 ## 移动速度（像素/秒）= 属性表 movementSpeed（格/秒）× 瓦片宽
 var _speed: float = 256.0
 ## 普攻冷却计时（s）
@@ -83,6 +98,7 @@ func _ready() -> void:
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
 
 func _physics_process(delta: float) -> void:
+	_slow_remaining = maxf(0.0, _slow_remaining - delta)
 	_invuln = maxf(0.0, _invuln - delta)
 	_attack_cd = maxf(0.0, _attack_cd - delta)
 
@@ -124,7 +140,7 @@ func _physics_process(delta: float) -> void:
 		dir = auto_move
 	if _stun > 0.0:
 		dir = Vector2.ZERO   # 硬直期间无法主动移动（3.4）
-	velocity = dir * _speed
+	velocity = dir * _speed * movement_multiplier()
 	move_and_slide()
 
 	# 普攻：按住攻击键，冷却结束即发动一次（每次发动 = 一次结算）
@@ -135,19 +151,23 @@ func _physics_process(delta: float) -> void:
 
 # ---- 受击保护 / 死亡（3.4 / 4.7）----
 
-## 承受怪物攻击（Combat.resolve 已结算）。无敌帧内忽略；否则进入硬直 + 触发闪烁。
-func apply_damage(amount: int) -> void:
+## 承受怪物攻击，返回实际扣血量；无敌帧内返回 0，供吸血与附伤判定。
+func apply_damage(amount: int) -> int:
 	if is_dead or _invuln > 0.0 or amount <= 0:
-		return
+		return 0
 	_invuln = IFRAME
 	_stun = HITSTUN
+	var actual := mini(amount, int(GameState.player.hp))
 	if GameState.damage_player(amount):
 		_begin_death()
+	return actual
 
 func _begin_death() -> void:
 	if is_dead:
 		return
 	map_move_active = false
+	_slow_remaining = 0.0
+	_slow_pct = 0.0
 	is_dead = true
 	_death_t = 0.0
 	velocity = Vector2.ZERO

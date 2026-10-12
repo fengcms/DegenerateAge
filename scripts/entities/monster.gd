@@ -52,6 +52,9 @@ var attack_interval: float = 1.2
 var attack_power: float = 0.0
 var move_speed_px: float = 0.0
 var is_ranged: bool = false
+var defense_power := 0.0
+var active_affixes: Array[Dictionary] = []
+var _life_steal_credit := 0.0
 
 var _rng := RandomNumberGenerator.new()
 var _attack_cd: float = 0.0
@@ -83,10 +86,73 @@ func _load_template() -> void:
 	move_speed_px = float(template.get("moveSpeed", 0.0)) * Iso.TILE_W
 	attack_interval = float(template.get("attackInterval", 1.2))
 	attack_power = float(template.get("attack", 0.0))
+	defense_power = float(template.get("defense", 0))
+	_roll_affixes()
 	var ar = template.get("attackRange", {})
 	if ar is Dictionary:
 		is_ranged = String(ar.get("kind", "melee")) == "ranged"
 		attack_range_px = float(ar.get("range", 1.0)) * Iso.TILE_W
+
+## 每次出生独立抽取，不修改共享模板，不重复抽取同一词缀。
+func _roll_affixes() -> void:
+	active_affixes.clear()
+	_life_steal_credit = 0.0
+	if template.get("kind", "normal") != "elite":
+		return
+	var pool: Array = template.get("affixPool", []).duplicate()
+	var counts: Array = template.get("affixCount", [1, 2])
+	var count := mini(pool.size(), _rng.randi_range(int(counts[0]), int(counts[1])))
+	var prefixes: Array[String] = []
+	for _i in range(count):
+		var id := String(pool.pop_at(_rng.randi_range(0, pool.size() - 1)))
+		var entry: Variant = DataLoader.get_entry("affixes", id)
+		if not entry is Dictionary:
+			continue
+		active_affixes.append(entry.duplicate(true))
+		prefixes.append(String(entry.name))
+		attack_power *= 1.0 + float(entry.get("attackPct", 0))
+		attack_interval /= 1.0 + float(entry.get("attackSpeedPct", 0))
+		defense_power *= 1.0 + float(entry.get("defensePct", 0))
+		move_speed_px *= 1.0 + float(entry.get("moveSpeedPct", 0))
+	if not prefixes.is_empty():
+		display_name = "·".join(prefixes) + "的" + display_name
+
+## 仅有效扣血触发附伤；吸血保留不足 1 点的小数，避免低伤害永不回血。
+func _apply_hit_effects(player: Node2D, actual_damage: int) -> void:
+	if actual_damage <= 0:
+		return
+	var effects := active_affixes.duplicate()
+	if template.get("specialAttack", "") == "slow":
+		var frost: Variant = DataLoader.get_entry("affixes", "frost")
+		if frost is Dictionary:
+			effects.append(frost)
+	for effect in effects:
+		if effect.has("slowPct") and player.has_method("apply_slow"):
+			player.call("apply_slow", float(effect.slowPct), float(effect.slowDuration))
+		_life_steal_credit += actual_damage * float(effect.get("lifeStealPct", 0))
+	var heal := int(floor(_life_steal_credit))
+	_life_steal_credit -= heal
+	hp = mini(max_hp, hp + heal)
+	queue_redraw()
+
+## 延迟到物理查询结束后生成；普通模板且不登记刷新点，随所属世界释放。
+func _spawn_death_summons() -> void:
+	if not is_inside_tree() or get_parent() == null:
+		return
+	for effect in active_affixes:
+		for i in range(int(effect.get("summonCount", 0))):
+			var child := (load("res://scenes/entities/Monster.tscn") as PackedScene).instantiate() as Monster
+			child.monster_id = String(effect.summonId)
+			child.spawn_level = level
+			child.ai_enabled = true
+			var point := global_position + Vector2.from_angle(TAU * i / int(effect.summonCount)) * 32.0
+			var grid := Iso.world_to_grid(point)
+			var dims := MapService.grid_size(GameState.current_map)
+			grid = grid.clamp(Vector2.ZERO, Vector2(dims) - Vector2.ONE)
+			point = Iso.grid_pt(grid.x, grid.y)
+			child.position = get_parent().to_local(point)
+			child.spawn_position = point
+			get_parent().add_child(child)
 
 ## 7.5：monsterMaxHP = max(1, round(hpBase × (1 + M_HP_PER_LV × (spawnLevel − templateLevel))))
 func _derive_max_hp(tpl_level: int) -> int:
@@ -98,7 +164,7 @@ func get_attack() -> float:
 	return attack_power
 
 func get_defense() -> float:
-	return float(template.get("defense", 0))
+	return defense_power
 
 func get_dodge() -> float:
 	return float(template.get("dodge", 0.0))
@@ -227,7 +293,8 @@ func _do_attack(player: Node2D) -> void:
 		float(GameState.player.get("dodge", 0.0)))
 	Fx.damage_number(get_tree(), player, res)
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
-		player.call("apply_damage", int(res.get("damage", 0)))
+		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
+		_apply_hit_effects(player, actual)
 
 # ---- 受击 / 死亡 ----
 
@@ -251,6 +318,7 @@ func _die() -> void:
 	state = State.DEAD
 	velocity = Vector2.ZERO
 	_settle_rewards()
+	_spawn_death_summons.call_deferred()
 	died.emit(monster_id)
 	EventBus.monster_died.emit(monster_id)
 	queue_redraw()
@@ -318,7 +386,10 @@ func _draw() -> void:
 		body = Color.WHITE
 	var body_center := Vector2(0.0, -RADIUS * 0.6)
 	draw_circle(body_center, RADIUS, body)
-	draw_arc(body_center, RADIUS, 0.0, TAU, 24, COLOR_EDGE, 2.0, true)
+	var elite: bool = template.get("kind", "normal") == "elite"
+	draw_arc(body_center, RADIUS, 0.0, TAU, 24, Color("f3c85b") if elite else COLOR_EDGE, 3.0 if elite else 2.0, true)
+	if elite:
+		draw_string(ThemeDB.fallback_font, Vector2(-100, -RADIUS * 3.1), display_name, HORIZONTAL_ALIGNMENT_CENTER, 200, 13, Color("f3c85b"))
 	# 头顶血条（9.5：目标血条）
 	var w := 34.0
 	var h := 4.0

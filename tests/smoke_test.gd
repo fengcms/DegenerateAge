@@ -15,6 +15,7 @@ var _failures: Array[String] = []
 
 func _ready() -> void:
 	_test_data_validation()
+	await _test_elite_affixes()
 	_test_iso_math()
 	_test_stats()
 	_test_combat()
@@ -1969,4 +1970,101 @@ func _test_fog_ui() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_expect(EventBus.fog_changed.get_connections().size() == signal_count - 2, "销毁大小地图后探索信号残留")
+	GameState.reset_to_defaults()
+
+func _test_elite_affixes() -> void:
+	GameState.reset_to_defaults()
+	var scene := load("res://scenes/entities/Monster.tscn") as PackedScene
+	var tpl: Dictionary = DataLoader.get_entry("monsters", "elite_wolf_king")
+	var original := tpl.duplicate(true)
+	var container := Node2D.new()
+	add_child(container)
+	var player := (load("res://scenes/entities/Player.tscn") as PackedScene).instantiate() as PlayerCharacter
+	container.add_child(player)
+	player.set_physics_process(false)
+	for id in ["rage", "hard", "fast", "frost", "vampire", "summon"]:
+		tpl.affixPool = [id]
+		tpl.affixCount = [1, 1]
+		var monster := scene.instantiate() as Monster
+		monster.monster_id = "elite_wolf_king"
+		container.add_child(monster)
+		monster.set_physics_process(false)
+		_expect(monster.active_affixes.size() == 1 and monster.display_name != original.name, "精英词缀及名称：" + id)
+		match id:
+			"rage":
+				_expect(is_equal_approx(monster.attack_power, 18.2) and is_equal_approx(monster.attack_interval, 1.1 / 1.2), "狂暴攻击与攻速")
+			"hard":
+				_expect(is_equal_approx(monster.get_defense(), 12.0), "坚硬防御")
+			"fast":
+				_expect(is_equal_approx(monster.move_speed_px, 3.4 * 64 * 1.3), "迅捷移速")
+			"frost":
+				monster._apply_hit_effects(player, 10)
+				player.apply_slow(0.2, 2.0)
+				_expect(is_equal_approx(player.movement_multiplier(), 0.8), "寒霜不叠乘")
+				player.auto_move = Vector2.RIGHT
+				player._physics_process(0.1)
+				_expect(is_equal_approx(player.velocity.x, 204.8), "寒霜影响实际自动移动速度")
+				player._physics_process(2.1)
+				_expect(is_equal_approx(player.movement_multiplier(), 1.0) and is_equal_approx(player.velocity.x, 256.0), "寒霜到期恢复")
+				player.auto_move = Vector2.ZERO
+			"vampire":
+				monster.hp = 400
+				monster._apply_hit_effects(player, 10)
+				monster._apply_hit_effects(player, 10)
+				_expect(monster.hp == 401, "吸血小数累计")
+				monster._apply_hit_effects(player, 0)
+				_expect(monster.hp == 401, "未实际扣血不能吸血")
+				monster._apply_hit_effects(player, 10000)
+				_expect(monster.hp == monster.max_hp, "吸血不超过上限")
+				player._invuln = 1.0
+				monster.hp = 400
+				monster._do_attack(player)
+				_expect(monster.hp == 400, "真实无敌帧阻断吸血")
+			"summon":
+				var before := container.get_child_count()
+				monster._die()
+				monster._die()
+				await get_tree().process_frame
+				_expect(container.get_child_count() == before + 2, "死亡只召唤两只一次")
+				for child in container.get_children():
+					if child is Monster and child != monster:
+						_expect(child.monster_id == "wolf_corrupted" and child.active_affixes.is_empty(), "召唤普通怪禁止递归词缀")
+						child.queue_free()
+		monster.queue_free()
+		await get_tree().process_frame
+	tpl.clear()
+	tpl.merge(original, true)
+	var seen := {}
+	for i in range(40):
+		var monster := scene.instantiate() as Monster
+		monster.monster_id = "elite_wolf_king"
+		monster._rng.seed = i + 1
+		monster._load_template()
+		_expect(monster.active_affixes.size() >= 1 and monster.active_affixes.size() <= 2, "随机词缀数量")
+		var unique := {}
+		for effect in monster.active_affixes:
+			unique[effect.id] = true
+			seen[effect.id] = true
+		_expect(unique.size() == monster.active_affixes.size(), "词缀不能重复")
+		monster.free()
+	_expect(seen.size() == 6 and tpl == original, "随机池覆盖六种且不改模板")
+	var normal := scene.instantiate() as Monster
+	normal._load_template()
+	_expect(normal.active_affixes.is_empty() and normal.get_attack() == 8, "普通怪不受词缀影响")
+	normal.free()
+	tpl.affixPool = ["missing"]
+	_expect(not DataLoader.validate_all().is_empty(), "未知词缀启动校验")
+	tpl.affixPool = ["fast", "fast"]
+	_expect(not DataLoader.validate_all().is_empty(), "重复词缀启动校验")
+	tpl.clear()
+	tpl.merge(original, true)
+	var summon: Dictionary = DataLoader.get_entry("affixes", "summon")
+	summon.summonId = "elite_wolf_king"
+	_expect(not DataLoader.validate_all().is_empty(), "递归召唤配置被拒绝")
+	summon.summonId = "wolf_corrupted"
+	player.apply_slow(0.2, 2)
+	player._begin_death()
+	_expect(player.movement_multiplier() == 1.0, "死亡清理减速")
+	container.queue_free()
+	await get_tree().process_frame
 	GameState.reset_to_defaults()

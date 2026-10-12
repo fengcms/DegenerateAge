@@ -47,7 +47,7 @@ cd DegenerateAge
 | `scenes/` | 场景（`.tscn`） |
 | `scripts/` | 玩法脚本（`.gd`） |
 | `autoload/` | 全局单例：`EventBus` / `GameState` / `DataLoader` / `SaveManager` / `QuestService` |
-| `data/` | **14 个 JSON 数据配置**（装备/技能/怪物/掉落/任务/商店/升星/坐骑/如意/仓库/杂项/药水/地图/文案） |
+| `data/` | **15 个 JSON 数据配置**（装备/技能/怪物/精英词缀/掉落/任务/商店/升星/坐骑/如意/仓库/杂项/药水/地图/文案） |
 | `assets/` | 美术与音频（占位） |
 | `addons/` | Godot 插件（预留） |
 | `docs/产品文档/` | **产品需求基线**（唯一权威设计来源） |

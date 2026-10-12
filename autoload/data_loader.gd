@@ -2,7 +2,7 @@ extends Node
 ## DataLoader — 数据加载与校验（单例 / Autoload）。
 ##
 ## 职责：
-##   1. 读取 res://data/ 下的 14 个 JSON 配置（见 docs/产品文档/10 数据配置与存档技术）。
+##   1. 读取 res://data/ 下的 15 个 JSON 配置（见 docs/产品文档/10 数据配置与存档技术）。
 ##   2. 在启动时执行校验（ID 唯一 / 引用合法 / 等级范围），非法时明确报错而非静默。
 ## 数据全部文本可编辑——新增物品 / 怪物只需加 JSON 条目，无需改代码。
 
@@ -13,6 +13,7 @@ const TABLES := {
 	"equipments": "equipments.json",
 	"skills": "skills.json",
 	"monsters": "monsters.json",
+	"affixes": "affixes.json",
 	"dropTables": "dropTables.json",
 	"quests": "quests.json",
 	"shops": "shops.json",
@@ -27,7 +28,7 @@ const TABLES := {
 }
 
 ## 需要做「ID 唯一」校验的表（数组型）。
-const ID_UNIQUE_TABLES := ["equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables"]
+const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables"]
 
 ## 各表用作「唯一键」的字段名（缺省为 id）。shops 以 npcId 为键（见 docs 第 10 章 schema）。
 const KEY_FIELDS := {
@@ -202,6 +203,7 @@ func validate_all() -> Array[String]:
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
+	report.append_array(_validate_affixes())
 
 	return report
 
@@ -273,3 +275,53 @@ func _id_set(table_name: String) -> Dictionary:
 			if typeof(e) == TYPE_DICTIONARY:
 				out[e.get("id", "")] = true
 	return out
+
+## 词缀配置错误应在启动时暴露，避免运行中随机抽中才报错。
+func _validate_affixes() -> Array[String]:
+	var report: Array[String] = []
+	var affixes: Variant = get_table("affixes")
+	if not affixes is Array or affixes.is_empty():
+		report.append("[affixes] 需要非空数组")
+		return report
+	for entry in affixes:
+		if not entry is Dictionary or String(entry.get("name", "")).is_empty():
+			report.append("[affixes] 条目缺少名称")
+			continue
+		for field in ["attackPct", "attackSpeedPct", "defensePct", "moveSpeedPct", "slowPct", "slowDuration", "lifeStealPct"]:
+			if not entry.has(field):
+				continue
+			var value: Variant = entry[field]
+			if not (value is float or value is int) or not is_finite(float(value)) or float(value) <= 0:
+				report.append("[affixes] %s 的 %s 必须为正数" % [entry.get("id", "?"), field])
+		if entry.has("slowPct") and (float(entry.slowPct) >= 1 or not entry.has("slowDuration")):
+			report.append("[affixes] 减速需要小于 1 的比例及持续时间")
+		if entry.has("summonId") or entry.has("summonCount"):
+			var target: Variant = get_entry("monsters", String(entry.get("summonId", "")))
+			var count: Variant = entry.get("summonCount", 0)
+			if not target is Dictionary or target.get("kind", "") != "normal":
+				report.append("[affixes] 召唤目标必须为普通怪，禁止递归精英召唤")
+			if not (count is float or count is int) or float(count) != floor(float(count)) or float(count) < 1:
+				report.append("[affixes] summonCount 必须为正整数")
+	for monster in get_table("monsters"):
+		if not monster is Dictionary or monster.get("kind", "") != "elite":
+			continue
+		var pool: Variant = monster.get("affixPool", [])
+		var counts: Variant = monster.get("affixCount", [])
+		if not pool is Array or pool.is_empty():
+			report.append("[monsters] 精英需要非空 affixPool")
+			continue
+		var seen := {}
+		for id in pool:
+			if not id is String or get_entry("affixes", str(id)) == null or seen.has(str(id)):
+				report.append("[monsters] affixPool 含未知或重复词缀")
+			seen[str(id)] = true
+		if not counts is Array or counts.size() != 2:
+			report.append("[monsters] affixCount 需要 [最少, 最多]")
+			continue
+		var valid := true
+		for count in counts:
+			if not (count is float or count is int) or float(count) != floor(float(count)) or float(count) < 1 or float(count) > pool.size():
+				valid = false
+		if not valid or float(counts[0]) > float(counts[1]):
+			report.append("[monsters] affixCount 超出池范围或顺序错误")
+	return report
