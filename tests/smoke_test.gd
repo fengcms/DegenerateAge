@@ -30,6 +30,7 @@ func _ready() -> void:
 	_test_inventory()
 	_test_inventory_sort()
 	_test_warehouse_sort()
+	_test_mount_core()
 	await _test_pickup()
 	await _test_claim_fly()
 	_test_equipment()
@@ -164,6 +165,51 @@ func _test_warehouse_sort() -> void:
 	_expect(not GameState.organize_warehouse(), "重复整理仓库应保持稳定顺序")
 	panel.set_open(false)
 	panel.queue_free()
+	GameState.reset_to_defaults()
+
+func _test_mount_core() -> void:
+	GameState.reset_to_defaults()
+	var found := false
+	for seed_value in range(100):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		for drop in Loot.roll("DT_Boss_L1", rng, "boss_corrupted_beast"):
+			if String(drop.get("kind", "")) == "mount":
+				found = String(drop.get("itemId", "")) == "mount_corrupted_wing"
+				break
+		if found:
+			break
+	_expect(found, "腐化巨兽掉落表应可产出配置坐骑")
+	var wrong_source := RandomNumberGenerator.new()
+	wrong_source.seed = 1
+	for drop in Loot.roll("DT_Boss_L1", wrong_source, "wolf_corrupted"):
+		_expect(String(drop.get("kind", "")) != "mount", "非指定 Boss 不得产出该坐骑")
+	var ground := preload("res://scenes/entities/GroundItem.tscn").instantiate()
+	ground.item = {"kind": "mount", "itemId": "mount_corrupted_wing", "count": 1}
+	add_child(ground)
+	_expect(GameState.owned_mounts == ["mount_corrupted_wing"] and GameState.inventory_used() == 0,
+		"坐骑拾取后应进入独立收藏，不占背包")
+	_expect(not GameState.ride_mount("mount_corrupted_wing").ok and GameState.mount_speed_multiplier() == 1.0,
+		"20 级前不得骑乘")
+	GameState.player.level = 20
+	_expect(GameState.ride_mount("mount_corrupted_wing").ok and is_equal_approx(GameState.mount_speed_multiplier(), 1.3),
+		"20 级后骑乘应提供配置速度加成")
+	var saved := SaveManager._collect()
+	_expect(SaveManager._is_valid_save(saved), "坐骑收藏与骑乘状态应可入档")
+	var invalid := saved.duplicate(true)
+	invalid.activeMount = "unknown_mount"
+	_expect(not SaveManager._is_valid_save(invalid), "存档不得接受未知骑乘坐骑")
+	var old := saved.duplicate(true)
+	old.schemaVersion = 3
+	old.erase("ownedMounts")
+	old.erase("activeMount")
+	_expect(SaveManager._is_valid_save(old), "schema 3 旧档应可迁移空坐骑收藏")
+	SaveManager.apply_to_game_state(saved)
+	_expect(GameState.owned_mounts == ["mount_corrupted_wing"] and GameState.active_mount == "mount_corrupted_wing",
+		"坐骑收藏与骑乘状态读档后应还原")
+	GameState.dismount()
+	_expect(GameState.mount_speed_multiplier() == 1.0, "下骑应恢复基础速度")
+	ground.queue_free()
 	GameState.reset_to_defaults()
 
 func _test_warehouse() -> void:
@@ -2218,7 +2264,7 @@ func _test_fog() -> void:
 	legacy.gold = 17
 	var old := SaveManager._migrate(legacy)
 	SaveManager.apply_to_game_state(old)
-	_expect(int(old.schemaVersion) == 3 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
+	_expect(int(old.schemaVersion) == 4 and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
 	var v2 := SaveManager._collect()
 	v2.schemaVersion = 2
 	v2.erase("warehouse")

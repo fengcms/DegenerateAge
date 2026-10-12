@@ -5,7 +5,7 @@ extends Node
 ## （数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 不持久化运行时节点对象——存档由 SaveManager 负责序列化这里的数据。
 
-const SCHEMA_VERSION := 3
+const SCHEMA_VERSION := 4
 
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
@@ -23,8 +23,10 @@ var player: Dictionary = {}
 var gold: int = 0
 var current_map: String = "camp"
 var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
-var warehouse: Array = []           # 仓库装备，空位为 null（6.8）
+var warehouse: Array = []           # 仓库物品，空位为 null（6.8）
 var warehouse_expansions: int = 0
+var owned_mounts: Array[String] = [] # 独立坐骑收藏，不占背包格（M4-4）
+var active_mount: String = ""
 var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
 var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
@@ -105,6 +107,8 @@ func reset_to_defaults() -> void:
 	inventory = Inventory.create(INVENTORY_SIZE)
 	warehouse_expansions = 0
 	warehouse = Warehouse.create()
+	owned_mounts = []
+	active_mount = ""
 	equipment = Equipment.create()
 	panel_open = false
 	_open_panels = {}
@@ -218,6 +222,42 @@ func remove_item_at(index: int) -> Dictionary:
 ## 背包已占用格数。
 func inventory_used() -> int:
 	return Inventory.used_slots(inventory)
+
+# ---- 坐骑（M4-4）----
+
+func collect_mount(mount_id: String) -> bool:
+	if not DataLoader.get_entry("mounts", mount_id) is Dictionary or owned_mounts.has(mount_id):
+		return false
+	owned_mounts.append(mount_id)
+	EventBus.mount_changed.emit()
+	return true
+
+func mount_speed_multiplier() -> float:
+	if active_mount.is_empty():
+		return 1.0
+	var mount = DataLoader.get_entry("mounts", active_mount)
+	if not mount is Dictionary or not owned_mounts.has(active_mount) or int(player.get("level", 1)) < int(mount.get("levelReq", 20)):
+		return 1.0
+	return 1.0 + maxf(0.0, float(mount.get("speedBonus", 0.0)))
+
+func ride_mount(mount_id: String) -> Dictionary:
+	var mount = DataLoader.get_entry("mounts", mount_id)
+	if not mount is Dictionary or not owned_mounts.has(mount_id):
+		return {"ok": false, "reason": "尚未获得该坐骑"}
+	var required := int(mount.get("levelReq", 20))
+	if int(player.get("level", 1)) < required:
+		return {"ok": false, "reason": "需要达到 %d 级才能骑乘" % required}
+	active_mount = mount_id
+	EventBus.mount_changed.emit()
+	EventBus.toast_requested.emit("已骑乘：%s" % String(mount.get("name", mount_id)), "pickup")
+	return {"ok": true}
+
+func dismount() -> void:
+	if active_mount.is_empty():
+		return
+	active_mount = ""
+	EventBus.mount_changed.emit()
+	EventBus.toast_requested.emit("已下骑", "info")
 
 func organize_inventory() -> bool:
 	var changed := Inventory.organize(inventory)
@@ -570,6 +610,7 @@ func _level_up() -> void:
 ## 广播全部数值（HUD 初始化 / 读档后同步）。
 func emit_all() -> void:
 	EventBus.gold_changed.emit(gold)
+	EventBus.mount_changed.emit()
 	EventBus.equipment_changed.emit()
 	EventBus.inventory_changed.emit()
 	EventBus.player_leveled.emit(int(player.level))

@@ -59,6 +59,9 @@ signal upgrade_panel_requested()
 signal warehouse_panel_requested(npc_name: String)
 signal warehouse_changed()
 
+# ---- 坐骑（M4-4）----
+signal mount_changed()
+
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)
 signal panel_opened(panel_id: String)

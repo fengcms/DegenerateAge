@@ -32,6 +32,7 @@ const KIND_COLOR := {
 	"rune": Color("8ad2c8"),
 	"misc": Color("b8a06a"),
 	"quest": Color("d8a03a"),
+	"mount": Color("a68be2"),
 }
 
 ## 可堆叠物品（药品 / 杂项 / 如意 / 任务物）；装备不可堆叠（5.8）。
@@ -86,6 +87,7 @@ static func _base_name(item: Dictionary) -> String:
 		"potion": table = "potions"
 		"rune": table = "runes"
 		"misc", "quest": table = "miscItems"
+		"mount": table = "mounts"
 	var e = DataLoader.get_entry(table, id)
 	if e is Dictionary:
 		return String(e.get("name", id))

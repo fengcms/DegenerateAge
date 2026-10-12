@@ -224,6 +224,15 @@ func _try_pickup(announce: bool = true) -> bool:
 		if announce:
 			_announce_pickup()
 		return true
+	if String(item.get("kind", "")) == "mount":
+		var mount_id := String(item.get("itemId", ""))
+		if not DataLoader.get_entry("mounts", mount_id) is Dictionary:
+			return false
+		var fresh := GameState.collect_mount(mount_id)
+		_pickup_msg = "获得坐骑：%s" % ItemUtil.display_name(item) if fresh else "该坐骑已收藏"
+		if announce:
+			_announce_pickup()
+		return true
 
 	if Inventory.add(GameState.inventory, item):
 		EventBus.item_picked.emit(String(item.get("itemId", "")))

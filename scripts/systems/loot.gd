@@ -15,6 +15,7 @@ const KIND_POTION := "potion"
 const KIND_EQUIP := "equip"
 const KIND_RUNE := "rune"
 const KIND_MISC := "misc"
+const KIND_MOUNT := "mount"
 
 ## 5.10 随机词条数：普 0 / 优 1 / 稀 1–2 / 史 2–3 / 传 = 独特被动（不随机词条）。
 const AFFIX_COUNT := {
@@ -44,7 +45,7 @@ const EQUIP_LV_SCALE := 0.08
 static var _seq: int = 0
 
 ## 结算一张掉落表，返回物品实例数组（不含随机数状态）。
-static func roll(drop_table_id: String, rng: RandomNumberGenerator = null) -> Array:
+static func roll(drop_table_id: String, rng: RandomNumberGenerator = null, source_monster_id: String = "") -> Array:
 	var r := rng if rng != null else _default_rng()
 	var out: Array = []
 	var table = DataLoader.get_entry("dropTables", drop_table_id)
@@ -58,13 +59,13 @@ static func roll(drop_table_id: String, rng: RandomNumberGenerator = null) -> Ar
 			continue
 		if r.randf() >= float(e.get("chance", 0.0)):
 			continue
-		var item := _roll_entry(e, r)
+		var item := _roll_entry(e, r, source_monster_id)
 		if not item.is_empty():
 			out.append(item)
 	return out
 
 ## 生成单个掉落项。
-static func _roll_entry(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
+static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_id: String = "") -> Dictionary:
 	match String(e.get("kind", "")):
 		KIND_COIN:
 			var gr = e.get("goldRange", [1, 1])
@@ -89,6 +90,12 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
 			if mid.is_empty() or DataLoader.get_entry("miscItems", mid) == null:
 				return {}
 			return {"kind": KIND_MISC, "itemId": mid, "count": 1}
+		KIND_MOUNT:
+			var mount_id := String(e.get("itemId", ""))
+			var mount = DataLoader.get_entry("mounts", mount_id)
+			if not mount is Dictionary or source_monster_id != String(mount.get("dropBossId", "")) or GameState.owned_mounts.has(mount_id):
+				return {}
+			return {"kind": KIND_MOUNT, "itemId": mount_id, "count": 1}
 	return {}
 
 ## 生成一件装备实例（品质按权重 → 基础属性按等级缩放 → 随机词条）。

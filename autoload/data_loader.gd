@@ -223,6 +223,16 @@ func validate_all() -> Array[String]:
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
+	var mounts = tables.get("mounts")
+	if mounts is Array:
+		for mount in mounts:
+			if not mount is Dictionary:
+				continue
+			var mid := String(mount.get("id", ""))
+			if not _is_whole_level(mount.get("levelReq", 0)) or int(mount.get("levelReq", 0)) < 1:
+				report.append("[mounts] %s 的 levelReq 必须是正整数" % mid)
+			if not (mount.get("speedBonus") is float or mount.get("speedBonus") is int) or float(mount.get("speedBonus", 0.0)) <= 0.0:
+				report.append("[mounts] %s 的 speedBonus 必须大于 0" % mid)
 	report.append_array(_validate_affixes())
 	report.append_array(Warehouse.validate_config())
 
@@ -242,7 +252,7 @@ func _validate_drop_tables() -> Array[String]:
 	var rune_ids := _id_set("runes")
 	var misc_ids := _id_set("miscItems")
 	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
-	var valid_kinds := ["coin", "potion", "equip", "rune", "misc"]
+	var valid_kinds := ["coin", "potion", "equip", "rune", "misc", "mount"]
 
 	for d in dts:
 		if typeof(d) != TYPE_DICTIONARY:
@@ -279,6 +289,15 @@ func _validate_drop_tables() -> Array[String]:
 					var mid := String(en.get("itemId", ""))
 					if not misc_ids.has(mid):
 						report.append("[dropTables] %s 引用未定义杂项 '%s'" % [did, mid])
+				"mount":
+					var mount_id := String(en.get("itemId", ""))
+					var mount = get_entry("mounts", mount_id)
+					if not mount is Dictionary:
+						report.append("[dropTables] %s 引用未定义坐骑 '%s'" % [did, mount_id])
+					else:
+						var boss = get_entry("monsters", String(mount.get("dropBossId", "")))
+						if not boss is Dictionary or String(boss.get("kind", "")) != "boss" or String(boss.get("dropTableId", "")) != did:
+							report.append("[mounts] %s 的 dropBossId 必须是使用 %s 的 Boss" % [mount_id, did])
 				"equip":
 					if not (en.get("levelRange", null) is Array):
 						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)

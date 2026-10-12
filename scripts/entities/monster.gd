@@ -416,7 +416,7 @@ func _settle_rewards() -> void:
 			EventBus.toast_requested.emit("%s 掉落：金币 ×%d" % [display_name, gold], "drop")
 		return
 
-	var rolled := Loot.roll(table_id)
+	var rolled := Loot.roll(table_id, null, monster_id)
 	for i in range(rolled.size()):
 		_spawn_drop(rolled[i], i)
 	_announce_drops(rolled)

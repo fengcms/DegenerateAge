@@ -201,7 +201,7 @@ func _physics_process(delta: float) -> void:
 		dir = auto_move
 	if _stun > 0.0:
 		dir = Vector2.ZERO   # 硬直期间无法主动移动（3.4）
-	velocity = dir * _speed * movement_multiplier()
+	velocity = dir * _speed * movement_multiplier() * GameState.mount_speed_multiplier()
 	move_and_slide()
 
 	# 普攻：按住攻击键，冷却结束即发动一次（每次发动 = 一次结算）

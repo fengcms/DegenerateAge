@@ -15,7 +15,7 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-const CURRENT_SCHEMA := 3
+const CURRENT_SCHEMA := 4
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -101,6 +101,8 @@ func _collect() -> Dictionary:
 		"inventory": GameState.inventory.duplicate(true),
 		"warehouse": GameState.warehouse.duplicate(true),
 		"warehouseExpansions": GameState.warehouse_expansions,
+		"ownedMounts": GameState.owned_mounts.duplicate(),
+		"activeMount": GameState.active_mount,
 		"equipment": GameState.equipment.duplicate(true),
 		"questStates": GameState.quest_states.duplicate(true),
 		"firstClear": GameState.first_clear.duplicate(true),
@@ -195,6 +197,7 @@ func _connect_events() -> void:
 	EventBus.quest_completed.connect(func(_q: String) -> void: request_autosave())
 	EventBus.quest_rewarded.connect(func(_q: String) -> void: request_autosave())
 	EventBus.warehouse_changed.connect(func() -> void: request_autosave())
+	EventBus.mount_changed.connect(func() -> void: request_autosave())
 
 # ---- 读取与迁移 ----
 
@@ -303,6 +306,9 @@ func _migrate(source: Dictionary) -> Dictionary:
 		if v < 3:
 			data.warehouse = Warehouse.create()
 			data.warehouseExpansions = 0
+		if v < 4:
+			data.ownedMounts = []
+			data.activeMount = ""
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -322,6 +328,10 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.inventory = _migrate_inventory(data.get("inventory", []))
 	GameState.warehouse_expansions = int(data.get("warehouseExpansions", 0))
 	GameState.warehouse = _migrate_warehouse(data.get("warehouse", []), GameState.warehouse_expansions)
+	GameState.owned_mounts.clear()
+	for mount_id in data.get("ownedMounts", []):
+		GameState.owned_mounts.append(String(mount_id))
+	GameState.active_mount = String(data.get("activeMount", ""))
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
 	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
@@ -537,6 +547,15 @@ func _is_valid_save(raw: Variant) -> bool:
 	if not _whole(data.get("warehouseExpansions"), 0, Warehouse.max_expansions()):
 		return false
 	if not data.get("warehouse") is Array or data.warehouse.size() != Warehouse.capacity(int(data.warehouseExpansions)):
+		return false
+	if not data.get("ownedMounts") is Array or not data.get("activeMount") is String:
+		return false
+	var seen_mounts := {}
+	for mount_id in data.ownedMounts:
+		if not mount_id is String or not DataLoader.get_entry("mounts", mount_id) is Dictionary or seen_mounts.has(mount_id):
+			return false
+		seen_mounts[mount_id] = true
+	if not data.activeMount.is_empty() and not seen_mounts.has(data.activeMount):
 		return false
 	if not data.get("currentMap") is String or DataLoader.get_entry("maps", data.currentMap) == null:
 		return false
