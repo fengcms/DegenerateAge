@@ -22,8 +22,38 @@ signal item_dropped(tray_index: int, payload: Dictionary)
 
 var role: int = ROLE_BAG
 var index: int = -1              # 背包下标（ROLE_BAG）/ 托盘下标（ROLE_TRAY）
-var item: Dictionary = {}        # 当前格内物品实例（由面板在刷新时写入）
 var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交易装备 / 仓库存取）
+
+## 当前格内物品实例（由面板在刷新时写入）。**赋值即刷新右下角数量角标**（M4-10）。
+var item: Dictionary = {}:
+	set(value):
+		item = value
+		_refresh_count()
+
+## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
+var _count: Label
+
+func _ready() -> void:
+	_count = Label.new()
+	_count.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_count.add_theme_font_size_override("font_size", 11)
+	_count.add_theme_constant_override("outline_size", 2)
+	_count.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_count.add_theme_color_override("font_color", Color(0.96, 0.94, 0.85))
+	_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_count)
+	_refresh_count()
+
+## 依据 `item.count` 刷新角标文本。`_ready` 前被赋值时安全跳过（`_count` 为 null）。
+func _refresh_count() -> void:
+	if _count == null:
+		return
+	var n := 0
+	if not item.is_empty():
+		n = int(item.get("count", 1))
+	_count.text = str(n) if n > 1 else ""
 
 # ---- 拖出（ROLE_BAG）----
 

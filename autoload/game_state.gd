@@ -43,6 +43,23 @@ var menu_mode: String = "menu"
 var auto_battle_on: bool = false
 var auto_pickup_on: bool = false
 
+# ---- 世界时钟与怪物点刷新状态（M4-10：墓碑跨图保持）----
+## 依据：产品文档 07 §7.9（怪物点刷新）。根因见工程文档 14 §1.1 ——
+## 刷新倒计时原本存在场景运行态（`MonsterSpawner._points[i].timer`），切图重载场景即清零；
+## 提升到本 Autoload（跨场景存活）后，跨图 / 挂机时间照常推进。
+
+## 世界时钟（秒）：与 Consumable 冷却共用 `_process` 心跳，因此
+## 面板打开照常推进、Esc 暂停菜单时**冻结**（get_tree().paused 生效）。
+## **随存档落档**（`worldTime`，工程文档 14 §3.1 ④）：读档后从该值续算，
+## 离线真实时间不计入（游戏内时钟语义，可预测）。
+var world_time: float = 0.0
+
+## 怪物点刷新状态：key = `"<map_id>#<monster_id>#<同种序号>"`（**稳定 key**，
+## 不依赖数组下标 → 地图数据增减点不会错位，见 14 §5 R-a）
+##   → { "readyAt": float（到点时的 world_time）, "pos": Vector2（死亡处） }
+## 只记录**未刷新完成**的点；到点即清除（表不会无限增长，14 §5 R-d）。
+var spawn_respawn: Dictionary = {}
+
 ## 读档待应用的玩家世界坐标（M1-10，10.3「当前地图与坐标」）。
 ## 写入方：SaveManager.apply_to_game_state；消费方：Game._ready（消费一次后 clear_save_pos）。
 ## has_save_pos = false 时按地图中心出生（新游戏 / 无坐标字段的旧档）。
@@ -66,6 +83,7 @@ func _ready() -> void:
 ## 否则面板销毁会导致冷却永久停摆（见工程文档 12 §5 R-h）。
 func _process(delta: float) -> void:
 	Consumable.tick(delta)
+	world_time += delta    # M4-10：世界时钟（面板打开照常走、暂停时冻结；见字段注释）
 
 ## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 独立成函数：reset_to_defaults 与**读档字段补全**（SaveManager._migrate_player）共用，
@@ -130,6 +148,8 @@ func reset_to_defaults() -> void:
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
+	world_time = 0.0                # M4-10：世界时钟与刷新状态重置（新游戏 / 初始化）
+	spawn_respawn = {}
 	clear_save_pos()
 	settings = default_settings()
 	hotbar = HotbarConfig.defaults()
@@ -500,6 +520,84 @@ func upgrade_equipment(source: String, key: Variant, expected_id: String,
 func _upgrade_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "success": false, "cost": 0, "reason": reason}
+
+# ---- 世界时钟与怪物点刷新状态（M4-10）----
+## 契约：刷新倒计时由**世界时钟**（`world_time`）统一驱动，不再有第二套计时器。
+## key 用 `map_id#monster_id#同种序号`（稳定），不用数组下标 —— 地图数据增减点不错位。
+
+## 怪物点状态 key（稳定标识）。
+func spawn_key(map_id: String, monster_id: String, ordinal: int) -> String:
+	return "%s#%s#%d" % [map_id, monster_id, ordinal]
+
+## 标记怪物点已死亡：记录「到点时刻」与「死亡位置」（跨图后墓碑在原处重建）。
+func mark_spawn_dead(map_id: String, monster_id: String, ordinal: int,
+		respawn_time: float, pos: Vector2) -> void:
+	spawn_respawn[spawn_key(map_id, monster_id, ordinal)] = {
+		"readyAt": world_time + maxf(0.0, respawn_time),
+		"pos": pos,
+	}
+
+## 该点剩余刷新时间（秒）：> 0 = 仍在墓碑；<= 0 = 可刷新（顺带清除过期记录）。
+func spawn_remaining(map_id: String, monster_id: String, ordinal: int) -> float:
+	var key := spawn_key(map_id, monster_id, ordinal)
+	if not spawn_respawn.has(key):
+		return 0.0
+	var record: Dictionary = spawn_respawn[key]
+	var left := float(record.get("readyAt", 0.0)) - world_time
+	if left <= 0.0:
+		spawn_respawn.erase(key)
+		return 0.0
+	return left
+
+## 清除某点状态（该点重生后调用）。
+func clear_spawn_state(map_id: String, monster_id: String, ordinal: int) -> void:
+	spawn_respawn.erase(spawn_key(map_id, monster_id, ordinal))
+
+## 该点的死亡位置（无记录 → null，调用方回退随机位置）。
+func spawn_dead_pos(map_id: String, monster_id: String, ordinal: int) -> Variant:
+	var key := spawn_key(map_id, monster_id, ordinal)
+	if not spawn_respawn.has(key):
+		return null
+	var record: Dictionary = spawn_respawn[key]
+	var raw: Variant = record.get("pos", null)
+	if raw is Vector2:
+		return raw
+	return null
+
+## 存档编码：Vector2 → [x, y]（JSON 无 Vector2；见工程文档 14 §3.1 ④）。
+func encode_spawn_respawn() -> Dictionary:
+	var out: Dictionary = {}
+	for key in spawn_respawn.keys():
+		var record: Dictionary = spawn_respawn[key]
+		var raw_pos: Variant = record.get("pos", Vector2.ZERO)
+		var pos: Vector2 = raw_pos if raw_pos is Vector2 else Vector2.ZERO
+		out[key] = {"readyAt": float(record.get("readyAt", 0.0)), "pos": [pos.x, pos.y]}
+	return out
+
+## 读档解码：[x, y] → Vector2。非法项**忽略而非拒档**（地图数据变动不应导致读档失败）。
+func apply_spawn_respawn(raw: Variant) -> void:
+	spawn_respawn = {}
+	if not (raw is Dictionary):
+		return
+	for key in (raw as Dictionary).keys():
+		var record: Variant = raw[key]
+		if not (record is Dictionary):
+			continue
+		var at: Variant = (record as Dictionary).get("readyAt", null)
+		if not (at is int or at is float) or not is_finite(float(at)):
+			continue
+		spawn_respawn[String(key)] = {
+			"readyAt": float(at),
+			"pos": _decode_pos((record as Dictionary).get("pos", null)),
+		}
+
+## [x, y] → Vector2；非法 → Vector2.ZERO。
+func _decode_pos(raw: Variant) -> Vector2:
+	if raw is Array and (raw as Array).size() >= 2:
+		var arr: Array = raw
+		if (arr[0] is int or arr[0] is float) and (arr[1] is int or arr[1] is float):
+			return Vector2(float(arr[0]), float(arr[1]))
+	return Vector2.ZERO
 
 # ---- 自动战斗 / 自动拾取开关（M1-9，3.14 / 4.6）----
 

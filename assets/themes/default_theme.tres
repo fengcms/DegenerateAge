@@ -1,8 +1,11 @@
 [gd_resource type="Theme" load_steps=2 format=3]
 
-[sub_resource type="SystemFont" id="SystemFont_cjk"]
-font_names = PackedStringArray("PingFang SC", "Hiragino Sans GB", "Heiti SC", "STHeiti", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei", "sans-serif")
+; M4-10：默认字体改为等宽（工程文档 14 §3.2）。
+; 英数与数字等宽 → 数值列（金币 / 倒计时 / 12:34）纵向对齐、不跳动；中文经回退链显示。
+; 字体定义单一源在 mono_font.tres（自绘文字也引用它）。
+
+[ext_resource type="SystemFont" path="res://assets/themes/mono_font.tres" id="1_mono"]
 
 [resource]
-default_font = SubResource("SystemFont_cjk")
+default_font = ExtResource("1_mono")
 default_font_size = 16

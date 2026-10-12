@@ -1,65 +1,88 @@
 class_name MonsterSpawner
 extends Node2D
 ## 怪物点生成与刷新（产品文档 07 章 7.9）：按怪物点规格生成，击杀后按刷新时间重生。
-## M1 用显式测试规格驱动；M3 起改为读 maps.json 的 spawnPoints（接口不变）。
+## 数据源：`maps.json` 的 `spawnPoints`（普通怪 / 精英）与 `bossSpawn`（Boss，M3）。
+##
+## M4-10（工程文档 14 §3.1）：**刷新倒计时跨地图 / 跨存档保持**。
+##   ① 状态存于 `GameState.spawn_respawn`（Autoload，跨场景存活），由 `GameState.world_time` 统一驱动；
+##   ② key = `map_id#monster_id#同种序号`（**稳定**，不用数组下标 → 地图增减点不错位，14 §5 R-a）；
+##   ③ 带 `tombstone:true` 的点在等待期显示墓碑；其余点静默等待（跨图回来未到点就不生成）。
+##
+## ⚠ 旧实现把倒计时累加在场景运行态（`p.timer += delta`）——切图重载即清零，Boss 立刻复活
+##   （工程文档 14 §1.1 的根因）。现改为读全局剩余时间，**本节点不再自持时钟**。
 
 const MONSTER_SCENE := preload("res://scenes/entities/Monster.tscn")
 const MIN_SPAWN_DIST := 220.0   # 与玩家出生点的最小距离（px），避免开局被贴脸
+## 无地图的显式测试规格（`spawn_from_specs` 未传 map_id）所用的状态前缀 ——
+## 保证这类点同样受刷新状态管理（否则会「击杀即重生」，违反 7.9）。
+const LOCAL_MAP_ID := "_local"
 
 var _ground: IsoGround = null
 var _player: Node2D = null
 var _rng := RandomNumberGenerator.new()
 var _points: Array[Dictionary] = []
+## 当前装配的地图 id（M4-10：刷新状态 key 需要）。显式测试规格为空 → 用 LOCAL_MAP_ID。
+var _map_id: String = ""
+## 本图装配期的「同种怪物序号」计数（跨 spawnPoints / bossSpawn 两次调用累计）。
+var _ordinal: Dictionary = {}
 
 func setup(ground: IsoGround, player: Node2D) -> void:
 	_ground = ground
 	_player = player
 	_rng.randomize()
 
-## 从怪物点规格批量生成。传入 map_id 时，怪物等级按该地图 tierRange 约束。
-## 无 map_id 的显式测试规格沿用原有等级，不受当前地图影响。
-func spawn_from_specs(specs: Array, map_id: String = "") -> void:
-	var tier_range: Array = []
-	if not map_id.is_empty():
-		var map_data: Variant = DataLoader.get_entry("maps", map_id)
-		if map_data is Dictionary:
-			var configured_tier: Variant = map_data.get("tierRange", [])
-			if configured_tier is Array:
-				tier_range = configured_tier
-	for s in specs:
-		if not (s is Dictionary):
-			continue
-		var monster_id := String(s.get("monsterId", s.get("id", "wolf_corrupted")))
-		var spawn_level := int(s.get("level", 0))
-		if tier_range.size() == 2:
-			if spawn_level <= 0:
-				var template: Variant = DataLoader.get_entry("monsters", monster_id)
-				if template is Dictionary:
-					spawn_level = int(template.get("level", 1))
-			spawn_level = clampi(spawn_level, int(tier_range[0]), int(tier_range[1]))
-		var count := int(s.get("count", 1))
-		for _i in range(count):
-			var point := {
-				"monster_id": monster_id,
-				"level": spawn_level,
-				"respawn_time": maxf(1.0, float(s.get("respawnTime", 30.0))),
-				"ai": bool(s.get("ai", true)),
-				"entry": null,
-				"tombstone": bool(s.get("tombstone", false)),
-				"marker": null,
-				"timer": 0.0,
-			}
-			_points.append(point)
-			_spawn(point)
-
 ## 从地图数据（maps.json 的 spawnPoints）生成（M3 使用）。
+## 同时重置本图装配计数 —— 同图装配分两次调用（spawnPoints → bossSpawn），序号需连续。
 func spawn_from_map(map_id: String) -> void:
 	var m = DataLoader.get_entry("maps", map_id)
 	if m == null:
 		return
+	_map_id = map_id
+	_ordinal.clear()
 	var pts = m.get("spawnPoints", [])
 	if pts is Array:
 		spawn_from_specs(pts, map_id)
+
+## 从怪物点规格批量生成。传入 map_id 时，怪物等级按该地图 tierRange 约束。
+## 无 map_id 的显式测试规格沿用原有等级，状态归入 LOCAL_MAP_ID 前缀。
+func spawn_from_specs(specs: Array, map_id: String = "") -> void:
+	if not map_id.is_empty():
+		_map_id = map_id
+	var tier_range: Array = []
+	if not _map_id.is_empty():
+		var map_data: Variant = DataLoader.get_entry("maps", _map_id)
+		if map_data is Dictionary:
+			var configured: Variant = (map_data as Dictionary).get("tierRange", [])
+			if configured is Array:
+				tier_range = configured
+	for s in specs:
+		if not (s is Dictionary):
+			continue
+		var spec: Dictionary = s
+		var monster_id := String(spec.get("monsterId", spec.get("id", "wolf_corrupted")))
+		var spawn_level := int(spec.get("level", 0))
+		if tier_range.size() == 2:
+			if spawn_level <= 0:
+				var template: Variant = DataLoader.get_entry("monsters", monster_id)
+				if template is Dictionary:
+					spawn_level = int((template as Dictionary).get("level", 1))
+			spawn_level = clampi(spawn_level, int(tier_range[0]), int(tier_range[1]))
+		var count := int(spec.get("count", 1))
+		for _i in range(count):
+			var ordinal := int(_ordinal.get(monster_id, 0))
+			_ordinal[monster_id] = ordinal + 1
+			var point := {
+				"monster_id": monster_id,
+				"ordinal": ordinal,
+				"level": spawn_level,
+				"respawn_time": maxf(1.0, float(spec.get("respawnTime", 30.0))),
+				"ai": bool(spec.get("ai", true)),
+				"entry": null,
+				"tombstone": bool(spec.get("tombstone", false)),
+				"marker": null,
+			}
+			_points.append(point)
+			_spawn(point)
 
 ## 当前存活怪物数（测试 / 调试用）。
 func alive_count() -> int:
@@ -73,16 +96,26 @@ func alive_count() -> int:
 func point_count() -> int:
 	return _points.size()
 
-func _process(delta: float) -> void:
-	# 已死亡的怪物点按 respawnTime 重新生成（7.9）
+func _process(_delta: float) -> void:
+	# M4-10：倒计时由 `GameState.world_time` 统一驱动（本节点不再累加 delta）。
 	for p in _points:
 		if p.entry != null and is_instance_valid(p.entry):
 			continue
-		p.timer = float(p.timer) + delta
-		if is_instance_valid(p.marker):
-			p.marker.set_remaining(maxf(0, float(p.respawn_time) - float(p.timer)))
-		if float(p.timer) >= float(p.respawn_time):
-			_spawn(p)
+		var remaining := _remaining(p)
+		if remaining > 0.0:
+			if is_instance_valid(p.marker):
+				p.marker.set_remaining(remaining)
+			continue
+		_spawn(p)
+
+## 该点距刷新完成的剩余时间（秒）；无状态 → 0（可立即生成）。
+func _remaining(point: Dictionary) -> float:
+	return GameState.spawn_remaining(
+		_state_map_id(), String(point.get("monster_id", "")), int(point.get("ordinal", 0)))
+
+## 刷新状态所用的地图标识（显式测试规格归入 LOCAL_MAP_ID）。
+func _state_map_id() -> String:
+	return _map_id if not _map_id.is_empty() else LOCAL_MAP_ID
 
 ## UI 使用当前实际刷新区域，死亡后保留旧点直到本点重生。
 func marker_points() -> Array[Dictionary]:
@@ -93,11 +126,19 @@ func marker_points() -> Array[Dictionary]:
 	return out
 
 func _spawn(point: Dictionary) -> void:
+	# M4-10：仍在刷新等待期 → 不生成怪物；「墓碑点」显示墓碑，其余静默等待。
+	var remaining := _remaining(point)
+	if remaining > 0.0:
+		if bool(point.get("tombstone", false)):
+			_place_tombstone(point, remaining)
+		point.entry = null
+		return
+
 	var m: Monster = MONSTER_SCENE.instantiate()
 	m.monster_id = String(point.get("monster_id", "wolf_corrupted"))
 	m.spawn_level = int(point.get("level", 0))
 	m.ai_enabled = bool(point.get("ai", true))
-	var pos: Vector2 = point.position if point.tombstone and point.has("position") else _random_spawn_position()
+	var pos := _spawn_position(point)
 	if is_instance_valid(point.marker):
 		point.marker.queue_free()
 	point.marker = null
@@ -107,18 +148,53 @@ func _spawn(point: Dictionary) -> void:
 	m.died.connect(func(_id: String) -> void: _on_monster_died(point))
 	add_child(m)
 	point.entry = m
-	point.timer = 0.0
 
 func _on_monster_died(point: Dictionary) -> void:
-	if point.tombstone and is_instance_valid(point.entry):
-		point.position = point.entry.position
-		var marker := BossTombstone.new()
-		marker.position = point.position
-		marker.set_remaining(float(point.respawn_time))
-		add_child(marker)
-		point.marker = marker
+	var pos := Vector2.ZERO
+	var node := point.entry as Node2D
+	if node != null and is_instance_valid(node):
+		pos = node.global_position
+	point.position = pos
+	# M4-10：登记刷新状态（到点时刻 + 死亡位置）→ 跨图 / 跨档保持
+	GameState.mark_spawn_dead(
+		_state_map_id(),
+		String(point.get("monster_id", "")),
+		int(point.get("ordinal", 0)),
+		float(point.get("respawn_time", 0.0)),
+		pos)
+	if bool(point.get("tombstone", false)):
+		_place_tombstone(point, float(point.get("respawn_time", 0.0)))
 	point.entry = null
-	point.timer = 0.0
+
+## 放置 / 更新墓碑（位置取状态记录 → 本会话旧位置 → 随机兜底）。
+func _place_tombstone(point: Dictionary, remaining: float) -> void:
+	if is_instance_valid(point.marker):
+		point.marker.set_remaining(remaining)
+		return
+	var pos := _tombstone_position(point)
+	var marker := BossTombstone.new()
+	marker.position = pos
+	marker.set_remaining(remaining)
+	add_child(marker)
+	point.marker = marker
+	point.position = pos
+
+## 墓碑位置：优先取刷新状态里记录的死亡处（跨图 / 读档后在原处重建）。
+func _tombstone_position(point: Dictionary) -> Vector2:
+	var recorded: Variant = GameState.spawn_dead_pos(
+		_state_map_id(), String(point.get("monster_id", "")), int(point.get("ordinal", 0)))
+	if recorded is Vector2:
+		return recorded
+	var previous: Variant = point.get("position", null)
+	if previous is Vector2:
+		return previous
+	return _random_spawn_position()
+
+## 生成位置：墓碑类点沿用固定位置（原位复活），其余随机。
+func _spawn_position(point: Dictionary) -> Vector2:
+	if bool(point.get("tombstone", false)):
+		return _tombstone_position(point)
+	return _random_spawn_position()
 
 ## 在（网格）地图内随机取点，且与玩家出生点保持 MIN_SPAWN_DIST 以上距离。
 func _random_spawn_position() -> Vector2:

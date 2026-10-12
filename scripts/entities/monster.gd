@@ -24,6 +24,10 @@ const COLOR_EDGE := Color("3d221c")
 const COLOR_HP_BG := Color(0.08, 0.08, 0.10, 0.85)
 const COLOR_HP_FG := Color("d2383c")
 
+## 等宽字体（M4-10）：自绘文字不经过主题，显式引用与 default_theme 相同的字体资源，
+## 保证怪物名 / 倒计时里的数字与 UI 其余部分同样等宽对齐。
+const MONO_FONT := preload("res://assets/themes/mono_font.tres")
+
 enum State { IDLE, PATROL, CHASE, ATTACK, RETURN, DEAD }
 
 @export var monster_id: String = "wolf_corrupted"
@@ -455,7 +459,7 @@ func _draw() -> void:
 		var center := to_local(_stomp_center)
 		draw_circle(center, _stomp_radius, Color(1.0, 0.18, 0.05, 0.18))
 		draw_arc(center, _stomp_radius, 0, TAU, 64, Color("ff623a"), 3.0, true)
-		draw_string(ThemeDB.fallback_font, center + Vector2(-50, -_stomp_radius - 8), "践踏预警", HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
+		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), "践踏预警", HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
 	if selected and not is_dead:
 		draw_arc(Vector2.ZERO, RADIUS + 7, 0, TAU, 40, Color("6eebe6"), 2.5, true)
 	var aggro := state == State.CHASE or state == State.ATTACK
@@ -467,7 +471,7 @@ func _draw() -> void:
 	var elite: bool = template.get("kind", "normal") == "elite"
 	draw_arc(body_center, RADIUS, 0.0, TAU, 24, Color("f3c85b") if elite else COLOR_EDGE, 3.0 if elite else 2.0, true)
 	if elite:
-		draw_string(ThemeDB.fallback_font, Vector2(-100, -RADIUS * 3.1), display_name, HORIZONTAL_ALIGNMENT_CENTER, 200, 13, Color("f3c85b"))
+		draw_string(MONO_FONT, Vector2(-100, -RADIUS * 3.1), display_name, HORIZONTAL_ALIGNMENT_CENTER, 200, 13, Color("f3c85b"))
 	# 头顶血条（9.5：目标血条）
 	var w := 34.0
 	var h := 4.0

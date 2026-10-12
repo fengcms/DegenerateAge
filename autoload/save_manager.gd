@@ -15,7 +15,9 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-const CURRENT_SCHEMA := 6
+## 存档 schema 版本（工程文档 06）。v7（M4-10 / 工程文档 14 §3.1 ④）新增：
+##   `worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态，含墓碑位置）。
+const CURRENT_SCHEMA := 7
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -109,6 +111,9 @@ func _collect() -> Dictionary:
 		"settings": GameState.settings.duplicate(true),
 		"hotbar": GameState.hotbar.duplicate(true),
 		"exploredMaps": Fog.encode(),
+		# M4-10：世界时钟与怪物点刷新状态（墓碑跨图 / 跨档保持，见工程文档 14 §3.1 ④）
+		"worldTime": GameState.world_time,
+		"spawnRespawn": GameState.encode_spawn_respawn(),
 		# 注意：运行态自动战斗开关**不入档**（10.3：重启后自动战斗默认关闭）。
 	}
 
@@ -326,6 +331,10 @@ func _migrate(source: Dictionary) -> Dictionary:
 			data.activeMount = ""
 		if v < 6:
 			data.hotbar = HotbarConfig.defaults()
+		if v < 7:
+			# M4-10：旧档无世界时钟与刷新状态 → 视为「无墓碑」，从零起算（不报错）
+			data.worldTime = 0.0
+			data.spawnRespawn = {}
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -342,6 +351,10 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.gold = clampi(int(data.get("gold", 0)), 0, GameState.GOLD_CAP)
 	GameState.current_map = String(data.get("currentMap", "camp"))
 	GameState.explored_maps = Fog.normalize(data.get("exploredMaps", {}))
+	# M4-10：世界时钟与怪物点刷新状态。须在读档重载场景**之前**恢复 ——
+	# `Game._ready` → `spawn_from_map` 装配怪物点时会立即读取该状态（决定是否建墓碑）。
+	GameState.world_time = maxf(0.0, float(data.get("worldTime", 0.0)))
+	GameState.apply_spawn_respawn(data.get("spawnRespawn", {}))
 	GameState.inventory = _migrate_inventory(data.get("inventory", []))
 	GameState.warehouse_expansions = int(data.get("warehouseExpansions", 0))
 	GameState.warehouse = _migrate_warehouse(data.get("warehouse", []), GameState.warehouse_expansions)
@@ -585,6 +598,11 @@ func _is_valid_save(raw: Variant) -> bool:
 		return false
 	if not data.get("currentMap") is String or DataLoader.get_entry("maps", data.currentMap) == null:
 		return false
+	# M4-10：世界时钟与怪物点刷新状态（v7 起；旧档由 _migrate 补默认）
+	if not _number(data.get("worldTime")) or float(data.worldTime) < 0.0:
+		return false
+	if not _valid_spawn_respawn(data.get("spawnRespawn")):
+		return false
 	if not data.get("savedAt") is String or not _whole(data.get("slotId"), -1, MAX_SLOTS):
 		return false
 	var pos: Variant = data.get("playerPos")
@@ -672,6 +690,30 @@ func _valid_item(item: Variant) -> bool:
 		return true
 	var table: String = {"potion": "potions", "misc": "miscItems", "quest": "miscItems", "rune": "runes"}.get(kind, "")
 	return not table.is_empty() and DataLoader.get_entry(table, item.itemId) != null and _whole(item.get("count", 1), 1, ItemUtil.stack_max(item))
+
+## M4-10：怪物点刷新状态合法性。整体须为字典；每项须含合法 `readyAt`（有限数）
+## 与可选 `pos`（长度 2 的数对）。**不认识的 key 不拒档** —— 地图数据变动不应导致读档失败
+## （`GameState.apply_spawn_respawn` 亦会忽略非法项；此处只拦「结构级」坏档）。
+func _valid_spawn_respawn(raw: Variant) -> bool:
+	if not (raw is Dictionary):
+		return false
+	var table: Dictionary = raw
+	for key in table.keys():
+		var record: Variant = table[key]
+		if not (record is Dictionary):
+			return false
+		var entry: Dictionary = record
+		if not _number(entry.get("readyAt")):
+			return false
+		var pos: Variant = entry.get("pos", null)
+		if pos == null:
+			continue
+		if not (pos is Array) or (pos as Array).size() != 2:
+			return false
+		for value in (pos as Array):
+			if not _number(value):
+				return false
+	return true
 
 ## 先复制到临时文件再替换备份，复制失败不得先删除旧备份。
 func _copy_over(src: String, dst: String) -> bool:

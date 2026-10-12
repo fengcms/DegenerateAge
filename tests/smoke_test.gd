@@ -54,9 +54,12 @@ func _ready() -> void:
 	_test_map_travel()
 	await _test_world()
 	await _test_map_reload()
+	await _test_spawn_respawn_cross_map()
 	await _test_auto_hud_reload()
 	_test_fog()
 	await _test_fog_ui()
+	_test_font_mono()
+	await _test_item_slot_count()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -2311,6 +2314,160 @@ func _expected_npc_count(map_id: String) -> int:
 		return -1
 	var arr = (m as Dictionary).get("npcs", [])
 	return arr.size() if arr is Array else 0
+
+# ---- M4-10 / T17：怪物点刷新跨地图（世界时钟驱动 + 落档往返）----
+## 根因（工程文档 14 §1.1）：倒计时原存场景运行态，切图重载即清零 → Boss 立刻复活。
+## 本用例直接驱动 `GameState.world_time`（不做真实等待），验证：
+##   击杀登记 → 跨图重建不复活且墓碑在、剩余按流逝递减 → 到点重生并清状态 → 落档往返一致。
+func _test_spawn_respawn_cross_map() -> void:
+	GameState.reset_to_defaults()
+	var map_id := "corruption_source"
+	var boss_id := "boss_corrupted_beast"
+	var boss_spec: Dictionary = (DataLoader.get_entry("maps", map_id) as Dictionary).get("bossSpawn", {}).duplicate()
+	boss_spec["ai"] = false   # 测试无玩家，关闭 AI 避免追击分支
+
+	# ① 装配：Boss（ordinal 0）+ 4 只壳背虫
+	var sp1 := MonsterSpawner.new()
+	add_child(sp1)
+	sp1.setup(null, null)
+	sp1.spawn_from_map(map_id)
+	sp1.spawn_from_specs([boss_spec], map_id)
+	await get_tree().process_frame
+	var boss := _find_monster(sp1, boss_id)
+	_expect(boss != null, "装配后应生成 Boss")
+	_expect(_count_monsters(sp1, "shellback_bug") == 4, "装配后应有 4 只壳背虫")
+
+	# ② 击杀 Boss + 一只普通怪 → 登记刷新状态
+	var kill_time := GameState.world_time
+	if boss != null:
+		boss.take_hit({"damage": 9999999})
+	var normal := _find_monster(sp1, "shellback_bug")
+	if normal != null:
+		normal.take_hit({"damage": 9999999})
+	await get_tree().process_frame
+
+	var r_boss := GameState.spawn_remaining(map_id, boss_id, 0)
+	_expect(r_boss > 299.0 and r_boss <= 300.0, "Boss 剩余应≈300s，实际 %.2f" % r_boss)
+	_expect(GameState.spawn_remaining(map_id, "shellback_bug", 0) > 0.0,
+		"普通怪也应登记刷新状态（Q2 统一规则）")
+	_expect(_find_monster(sp1, boss_id) == null, "击杀后 Boss 应消失")
+
+	# ③ 落档往返（T17 入档）：encode → JSON → apply 后**结构一致、数值在容差内一致**。
+	# ⚠ JSON 是文本表示，`readyAt = world_time + respawn`（world_time 为逐帧累加的长小数）
+	#   往返会有末位精度损失（无害，亚毫秒级），故用近似比较而非严格相等。
+	var encoded := GameState.encode_spawn_respawn()
+	GameState.apply_spawn_respawn(JSON.parse_string(JSON.stringify(encoded)))
+	var restored := GameState.encode_spawn_respawn()
+	_expect(restored.size() == encoded.size(), "刷新状态往返后条目数应一致（%d vs %d）" % [restored.size(), encoded.size()])
+	for key in encoded.keys():
+		_expect(restored.has(key), "往返后应保留 key：%s" % key)
+		if not restored.has(key):
+			continue
+		_expect(is_equal_approx(float(restored[key].readyAt), float(encoded[key].readyAt)), "往返后 readyAt 应一致")
+		var pa: Array = encoded[key].pos
+		var pb: Array = restored[key].pos
+		_expect(pa.size() == 2 and pb.size() == 2
+			and is_equal_approx(float(pa[0]), float(pb[0])) and is_equal_approx(float(pa[1]), float(pb[1])),
+			"往返后 pos 应一致")
+
+	# ④ 切图（销毁旧世界 → 重建），时间流逝 30s（< 普通怪 60s / Boss 300s）：均不应重生
+	sp1.queue_free()
+	await get_tree().process_frame
+	GameState.world_time = kill_time + 30.0
+	var sp2 := MonsterSpawner.new()
+	add_child(sp2)
+	sp2.setup(null, null)
+	sp2.spawn_from_map(map_id)
+	sp2.spawn_from_specs([boss_spec], map_id)
+	await get_tree().process_frame
+	_expect(_find_monster(sp2, boss_id) == null, "未到点：跨图回来 Boss 不应复活")
+	_expect(_has_tombstone(sp2), "未到点：墓碑应存在")
+	_expect(_count_monsters(sp2, "shellback_bug") == 3, "未到点：被击杀的普通怪不应重生（应剩 3）")
+	var r_after := GameState.spawn_remaining(map_id, boss_id, 0)
+	_expect(r_after > 269.0 and r_after <= 270.0, "剩余应按流逝量递减（≈270s），实际 %.2f" % r_after)
+
+	# ⑤ 到点：重建后 Boss 与普通怪均重生、墓碑消失、状态清除
+	sp2.queue_free()
+	await get_tree().process_frame
+	GameState.world_time = kill_time + 301.0
+	var sp3 := MonsterSpawner.new()
+	add_child(sp3)
+	sp3.setup(null, null)
+	sp3.spawn_from_map(map_id)
+	sp3.spawn_from_specs([boss_spec], map_id)
+	await get_tree().process_frame
+	_expect(_find_monster(sp3, boss_id) != null, "到点后 Boss 应重生")
+	_expect(not _has_tombstone(sp3), "到点后墓碑应消失")
+	_expect(_count_monsters(sp3, "shellback_bug") == 4, "到点后普通怪应全部重生")
+	_expect(not GameState.spawn_respawn.has(GameState.spawn_key(map_id, boss_id, 0)),
+		"到点后刷新状态应被清除")
+
+	sp3.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+## 生成器下存活（未死）且 id 匹配的怪物；无 → null。
+func _find_monster(spawner: Node, monster_id: String) -> Monster:
+	for child in spawner.get_children():
+		if child is Monster and (child as Monster).monster_id == monster_id and not (child as Monster).is_dead:
+			return child
+	return null
+
+## 生成器下存活怪物计数（按 id；空 id = 全部）。
+func _count_monsters(spawner: Node, monster_id: String = "") -> int:
+	var n := 0
+	for child in spawner.get_children():
+		if child is Monster and not (child as Monster).is_dead:
+			if monster_id.is_empty() or (child as Monster).monster_id == monster_id:
+				n += 1
+	return n
+
+## 生成器下是否含墓碑节点。
+func _has_tombstone(spawner: Node) -> bool:
+	for child in spawner.get_children():
+		if child is BossTombstone:
+			return true
+	return false
+
+# ---- M4-10 / 反馈②：等宽字体（主题默认 + 自绘共用同一资源）----
+func _test_font_mono() -> void:
+	var mono: Font = load("res://assets/themes/mono_font.tres")
+	_expect(mono != null, "等宽字体资源应可加载")
+	var theme: Theme = load("res://assets/themes/default_theme.tres")
+	_expect(theme != null and theme.default_font == mono, "default_theme 的 default_font 应为等宽字体资源")
+	if mono == null:
+		return
+	# 数字 / 字母 / 空格 三者等宽（实测 4.7：Menlo 三者宽度一致；旧默认字体 92 vs 100 不等宽）
+	var w_digit := mono.get_string_size("0123456789", HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	var w_alpha := mono.get_string_size("ABCDEFGHIJ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	var w_space := mono.get_string_size("          ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	_expect(is_equal_approx(w_digit, w_alpha), "数字与字母应等宽（%.1f vs %.1f）" % [w_digit, w_alpha])
+	_expect(is_equal_approx(w_digit, w_space), "数字与空格应等宽（%.1f vs %.1f）" % [w_digit, w_space])
+	_expect(w_digit > 0.0, "字体宽度应为正（确认取到真实字体而非空资源）")
+	# 中文经回退链覆盖（不丢字）
+	_expect(mono.has_char("刷".unicode_at(0)) and mono.has_char("背".unicode_at(0)), "中文经回退链应有字形")
+
+# ---- M4-10 / 反馈③：背包数量角标（仅 count>1 显示）----
+func _test_item_slot_count() -> void:
+	var slot := ItemSlot.new()
+	slot.role = ItemSlot.ROLE_BAG
+	add_child(slot)
+	await get_tree().process_frame
+	_expect(slot._count != null, "ItemSlot 应创建数量角标 Label")
+	if slot._count == null:
+		slot.queue_free()
+		return
+	slot.item = {"itemId": "wolf_pelt", "kind": "misc", "count": 5}
+	_expect(slot._count.text == "5", "count=5 应显示「5」，实际「%s」" % slot._count.text)
+	slot.item = {"itemId": "wolf_pelt", "kind": "misc", "count": 1}
+	_expect(slot._count.text == "", "count=1 不应显示（阈值 >1），实际「%s」" % slot._count.text)
+	slot.item = {"itemId": "iron_sword", "kind": "equip", "count": 1}
+	_expect(slot._count.text == "", "装备不应显示数量")
+	slot.item = {}
+	_expect(slot._count.text == "", "空格不应显示数量")
+	slot.queue_free()
+	await get_tree().process_frame
 
 func _finish() -> void:
 	if _failures.is_empty():

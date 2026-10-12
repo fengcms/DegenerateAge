@@ -86,9 +86,14 @@ func _ready() -> void:
 	check(is_instance_valid(marker) and marker.remaining == 300, "死亡创建300秒墓碑")
 	await get_tree().create_timer(0.4).timeout
 	await capture("tombstone")
-	spawner._process(299)
-	check(spawner.alive_count() == 0 and marker.remaining == 1, "倒计时未结束不刷新")
-	spawner._process(1)
+	# M4-10：倒计时改由**全局世界时钟**（`GameState.world_time`）驱动 —— 不再靠 delta 手动累加。
+	var skey := GameState.spawn_key(MonsterSpawner.LOCAL_MAP_ID, "boss_corrupted_beast", 0)
+	var ready_at := float(GameState.spawn_respawn[skey].readyAt)
+	GameState.world_time = ready_at - 1.0
+	spawner._process(0.0)
+	check(spawner.alive_count() == 0 and is_equal_approx(marker.remaining, 1.0), "倒计时未结束不刷新")
+	GameState.world_time = ready_at + 1.0
+	spawner._process(0.0)
 	var second: Monster = spawner._points[0].entry
 	check(is_instance_valid(second) and second != boss and spawner._points[0].marker == null, "到期刷新并移除墓碑")
 	second.set_physics_process(false)

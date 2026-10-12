@@ -1,0 +1,15 @@
+[gd_resource type="SystemFont" load_steps=2 format=3]
+
+; M4-10：全局等宽字体（工程文档 14 §3.2）。
+; 主字体为等宽拉丁（macOS=Menlo / Windows=Consolas / Linux=DejaVu Sans Mono），
+; 中文与符号经 fallbacks 回退到 CJK 系统字体 —— Godot 的 fallbacks 语义是
+; 「主字体缺字才回退」，故主字体必须是纯拉丁等宽，中文才会落到回退链（反之无效）。
+; 实测（Godot 4.7.2 / 16px）：数字/字母/空格宽度均为 97.0 完全对齐；「刷」「你」有字形。
+; 由 default_theme.tres 与 4 处自绘文字（BOSS 墓碑 / 怪物名 / 践踏预警 / 小地图）共同引用。
+
+[sub_resource type="SystemFont" id="SystemFont_cjk"]
+font_names = PackedStringArray("PingFang SC", "Hiragino Sans GB", "Heiti SC", "STHeiti", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei", "sans-serif")
+
+[resource]
+font_names = PackedStringArray("Menlo", "SF Mono", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", "Courier New", "monospace")
+fallbacks = Array[Font]([SubResource("SystemFont_cjk")])

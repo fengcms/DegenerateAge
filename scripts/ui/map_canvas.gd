@@ -8,6 +8,10 @@ var _player_position := Vector2.ZERO
 var _markers: Array[Dictionary] = []
 var _refresh_t := 0.0
 
+## 等宽字体（M4-10）：小地图上的标记字母（N/B）不经主题，显式引用与 default_theme
+## 相同的字体资源，保证数字 / 字母等宽对齐。
+const MONO_FONT := preload("res://assets/themes/mono_font.tres")
+
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -114,6 +118,6 @@ func _draw() -> void:
 		draw_circle(p, 3 if minimap else 5, color)
 		if not minimap:
 			var glyph := ("!B" if bool(marker.get("boss", false)) else "!") if kind == "quest" else ("B" if kind == "boss" else "N")
-			draw_string(ThemeDB.fallback_font, p + Vector2(7, 4), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
+			draw_string(MONO_FONT, p + Vector2(7, 4), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
 	draw_circle(world_to_canvas(_player_position), 4 if minimap else 6, Color("6eebe6"))
 	draw_arc(world_to_canvas(_player_position), 6 if minimap else 9, 0, TAU, 24, Color.WHITE, 1, true)
