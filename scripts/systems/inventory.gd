@@ -82,7 +82,13 @@ static func add(inv: Array, item: Dictionary) -> bool:
 	return false
 
 static func _same_stack(entry: Variant, item: Dictionary) -> bool:
-	return entry is Dictionary and entry.get("kind", "") == item.get("kind", "") and entry.get("itemId", "") == item.get("itemId", "")
+	if not entry is Dictionary or entry.get("kind", "") != item.get("kind", "") or entry.get("itemId", "") != item.get("itemId", ""):
+		return false
+	var left: Dictionary = entry.duplicate(true)
+	var right := item.duplicate(true)
+	left.erase("count")
+	right.erase("count")
+	return left == right
 
 ## 移除指定格，返回被移除物品（空位返回 {}）。
 static func remove_at(inv: Array, index: int) -> Dictionary:

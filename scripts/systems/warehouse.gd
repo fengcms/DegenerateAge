@@ -38,6 +38,15 @@ static func next_cost(expansions: int) -> int:
 static func create(expansions: int = 0) -> Array:
 	return Inventory.create(capacity(expansions))
 
+## 装备沿用实例 ID；可堆叠物品快照全部字段，防止整理或使用后旧拖拽误操作。
+static func item_token(item: Dictionary) -> String:
+	if String(item.get("kind", "")) == "equip":
+		return String(item.get("instanceId", ""))
+	return "stack:" + JSON.stringify(item)
+
+static func token_matches(item: Dictionary, token: String) -> bool:
+	return not token.is_empty() and item_token(item) == token
+
 static func validate_config() -> Array[String]:
 	var issues: Array[String] = []
 	var data := config()

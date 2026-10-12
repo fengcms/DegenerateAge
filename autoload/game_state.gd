@@ -219,22 +219,22 @@ func remove_item_at(index: int) -> Dictionary:
 func inventory_used() -> int:
 	return Inventory.used_slots(inventory)
 
-# ---- 仓库（M4-3；仅存装备）----
+# ---- 仓库（M4-3；背包中的所有合法物品）----
 
 func warehouse_store(inv_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or not inventory[inv_index] is Dictionary:
-		return _warehouse_fail("背包该格没有装备")
+		return _warehouse_fail("背包该格没有物品")
 	var item: Dictionary = inventory[inv_index]
-	if String(item.get("kind", "")) != "equip":
-		return _warehouse_fail("仓库只存放装备")
-	if expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
-		return _warehouse_fail("装备已移动，请重新选择")
+	if not Warehouse.token_matches(item, expected_id):
+		return _warehouse_fail("物品已移动，请重新选择")
 	var destination := target_index
 	if destination == -1:
-		destination = warehouse.find(null)
-	if destination < 0 or destination >= warehouse.size() or warehouse[destination] != null:
-		return _warehouse_fail("仓库已满或目标格不可用")
-	warehouse[destination] = item
+		if not Inventory.add(warehouse, item):
+			return _warehouse_fail("仓库已满，无法存入整堆物品")
+	else:
+		if destination < 0 or destination >= warehouse.size() or warehouse[destination] != null:
+			return _warehouse_fail("仓库目标格不可用")
+		warehouse[destination] = item.duplicate(true)
 	inventory[inv_index] = null
 	EventBus.inventory_changed.emit()
 	EventBus.warehouse_changed.emit()
@@ -243,16 +243,18 @@ func warehouse_store(inv_index: int, expected_id: String, target_index: int = -1
 
 func warehouse_take(store_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
 	if store_index < 0 or store_index >= warehouse.size() or not warehouse[store_index] is Dictionary:
-		return _warehouse_fail("仓库该格没有装备")
+		return _warehouse_fail("仓库该格没有物品")
 	var item: Dictionary = warehouse[store_index]
-	if expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
-		return _warehouse_fail("装备已移动，请重新选择")
+	if not Warehouse.token_matches(item, expected_id):
+		return _warehouse_fail("物品已移动，请重新选择")
 	var destination := target_index
 	if destination == -1:
-		destination = inventory.find(null)
-	if destination < 0 or destination >= inventory.size() or inventory[destination] != null:
-		return _warehouse_fail("背包已满或目标格不可用")
-	inventory[destination] = item
+		if not Inventory.add(inventory, item):
+			return _warehouse_fail("背包已满，无法取出整堆物品")
+	else:
+		if destination < 0 or destination >= inventory.size() or inventory[destination] != null:
+			return _warehouse_fail("背包目标格不可用")
+		inventory[destination] = item.duplicate(true)
 	warehouse[store_index] = null
 	EventBus.inventory_changed.emit()
 	EventBus.warehouse_changed.emit()

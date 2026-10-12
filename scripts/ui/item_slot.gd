@@ -31,7 +31,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	if not [ROLE_BAG, ROLE_WAREHOUSE].has(role) or not draggable or item.is_empty():
 		return null
 	_spawn_drag_visual()
-	return {"from": role, "index": index, "item": item}
+	return {"from": role, "index": index, "item": item, "token": Warehouse.item_token(item)}
 
 ## 拖动时跟随鼠标的视觉反馈（拖拽幽灵）。
 ## **不用引擎的 set_drag_preview**：预览挂载点由引擎自定（实测 4.7 插到本面板内部），

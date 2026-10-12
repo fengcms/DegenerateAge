@@ -564,7 +564,7 @@ func _is_valid_save(raw: Variant) -> bool:
 		if item != null and not _valid_item(item):
 			return false
 	for item in data.warehouse:
-		if item != null and (not _valid_item(item) or item.kind != "equip"):
+		if item != null and not _valid_item(item):
 			return false
 	if data.equipment.size() != Equipment.SLOT_DEFS.size():
 		return false

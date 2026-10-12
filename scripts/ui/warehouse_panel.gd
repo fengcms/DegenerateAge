@@ -1,5 +1,5 @@
 extends Control
-## 仓库：背包 / 仓库双栏，装备双击或拖放存取，金币扩容。
+## 仓库：背包 / 仓库双栏，物品双击或拖放存取，金币扩容。
 
 const PANEL_ID := "warehouse"
 const COLUMNS := 8
@@ -52,7 +52,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
-		_detail.text = "双击装备存取，也可拖到另一侧的空格。"
+		_detail.text = "双击物品存取，也可拖到另一侧的空格。"
 		_refresh()
 		EventBus.panel_opened.emit(PANEL_ID)
 
@@ -149,7 +149,7 @@ func _rebuild_grid(grid: GridContainer, items: Array, side: String) -> void:
 		var item = items[index]
 		if item is Dictionary:
 			button.item = item
-			button.draggable = side == "warehouse" or String(item.get("kind", "")) == "equip"
+			button.draggable = true
 			button.text = ItemUtil.template_name(item).left(2)
 			button.tooltip_text = "%s\n%s" % [ItemUtil.display_name(item), "\n".join(ItemUtil.attr_lines(item))]
 		else:
@@ -175,7 +175,7 @@ func _on_slot_pressed(side: String, index: int) -> void:
 		_last_side = ""
 		_last_index = -1
 		if item is Dictionary:
-			var id := String(item.get("instanceId", ""))
+			var id := Warehouse.item_token(item)
 			var result := GameState.warehouse_store(index, id) if side == "bag" else GameState.warehouse_take(index, id)
 			_detail.text = String(result.get("reason", "存取完成")) if not result.get("ok", false) else "存取完成"
 		return
@@ -192,7 +192,7 @@ func _on_drop(target_index: int, payload: Dictionary, target_side: String) -> vo
 	var item: Variant = payload.get("item", {})
 	if not item is Dictionary:
 		return
-	var id := String(item.get("instanceId", ""))
+	var id := String(payload.get("token", Warehouse.item_token(item)))
 	var result: Dictionary = {}
 	if target_side == "warehouse" and int(payload.get("from", -1)) == ItemSlot.ROLE_BAG:
 		result = GameState.warehouse_store(source_index, id, target_index)

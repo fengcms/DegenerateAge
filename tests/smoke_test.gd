@@ -124,7 +124,15 @@ func _test_warehouse() -> void:
 	_expect(stored.ok and GameState.inventory[0] == null and GameState.warehouse[0] == item,
 		"存入仓库应保持装备实例且清空背包格")
 	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
-	_expect(not GameState.warehouse_store(1, "").ok, "仓库应拒绝药品")
+	var potion_token := Warehouse.item_token(GameState.inventory[1])
+	_expect(GameState.warehouse_store(1, potion_token).ok and GameState.warehouse[1].kind == "potion",
+		"仓库应支持药品")
+	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_iron", "count": 2}
+	_expect(GameState.warehouse_store(1, Warehouse.item_token(GameState.inventory[1])).ok,
+		"仓库应支持如意")
+	GameState.inventory[1] = {"kind": "misc", "itemId": "misc_town_scroll", "count": 1}
+	_expect(GameState.warehouse_store(1, Warehouse.item_token(GameState.inventory[1])).ok,
+		"仓库应支持杂项")
 	GameState.inventory[0] = _equip_instance("weapon_starter", "stale_now", {"atk": 2})
 	_expect(not GameState.warehouse_store(0, "store_once").ok and GameState.warehouse[0] == item,
 		"拖拽载荷过期时不得误存另一件装备")
@@ -137,6 +145,14 @@ func _test_warehouse() -> void:
 	var taken := GameState.warehouse_take(0, "store_once", 2)
 	_expect(taken.ok and GameState.warehouse[0] == null and GameState.inventory[2] == item,
 		"取出仓库应放入指定空格并保留实例属性")
+	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
+	_expect(GameState.warehouse_take(1, Warehouse.item_token(GameState.warehouse[1])).ok
+		and GameState.inventory[1].count == 99 and GameState.warehouse[1] == null,
+		"背包无空格但有足够同类堆叠空间时，应能整堆取出药品")
+	var stale_stack_token := Warehouse.item_token(GameState.warehouse[2])
+	GameState.warehouse[2].count = 3
+	_expect(not GameState.warehouse_take(2, stale_stack_token).ok,
+		"可堆叠物品数量变化后旧拖拽载荷不得误取")
 	_expect(not GameState.warehouse_expand().ok and GameState.warehouse.size() == 40,
 		"金币不足不得扩容")
 	GameState.add_gold(1000)
@@ -151,7 +167,9 @@ func _test_warehouse() -> void:
 	_expect(not SaveManager._is_valid_save(invalid_save), "存档应拒绝仓库格数与扩容次数不一致")
 	invalid_save = SaveManager._collect()
 	invalid_save.warehouse[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
-	_expect(not SaveManager._is_valid_save(invalid_save), "存档应拒绝仓库中出现非装备")
+	_expect(SaveManager._is_valid_save(invalid_save), "存档应接受仓库中的药品")
+	invalid_save.warehouse[0] = {"kind": "bogus", "itemId": "none", "count": 1}
+	_expect(not SaveManager._is_valid_save(invalid_save), "存档仍应拒绝非法品类")
 	GameState.reset_to_defaults()
 	var ui_item := _equip_instance("weapon_starter", "ui_store", {"atk": 8})
 	GameState.inventory[0] = ui_item
@@ -1244,6 +1262,7 @@ func _test_save() -> void:
 	GameState.warehouse_expansions = 1
 	GameState.warehouse = Warehouse.create(1)
 	GameState.warehouse[0] = _equip_instance("weapon_starter", "sv_store", {"atk": 9}, [{"stat": "def", "value": 2}])
+	GameState.warehouse[1] = {"kind": "potion", "itemId": "potion_mp_small", "count": 7}
 	GameState.equipment["weapon"] = _equip_instance("weapon_wolfking", "sv_worn", {"atk": 12},
 		[{"stat": "atk", "value": 6}])
 	GameState.save_pos = Vector2(123.5, -456.25)
@@ -1253,6 +1272,7 @@ func _test_save() -> void:
 	var expected_worn: Dictionary = (GameState.equipment["weapon"] as Dictionary).duplicate(true)
 	var expected_bag0: Dictionary = (GameState.inventory[0] as Dictionary).duplicate(true)
 	var expected_store: Dictionary = (GameState.warehouse[0] as Dictionary).duplicate(true)
+	var expected_store_potion: Dictionary = (GameState.warehouse[1] as Dictionary).duplicate(true)
 	var expected_quests: Dictionary = GameState.quest_states.duplicate(true)
 	var expected_atk := GameState.total_attack()
 
@@ -1311,8 +1331,9 @@ func _test_save() -> void:
 		"读档后药水堆叠应为 3（JSON 数字需回落为 int），实际 %d"
 		% int(GameState.inventory[1].get("count", 0)))
 	_expect(GameState.warehouse_expansions == 1 and GameState.warehouse.size() == 50
-		and _deep_equal(GameState.warehouse[0], expected_store),
-		"读档后仓库扩容与装备实例应保持不变")
+		and _deep_equal(GameState.warehouse[0], expected_store)
+		and _deep_equal(GameState.warehouse[1], expected_store_potion),
+		"读档后仓库扩容、装备及药品数量应保持不变")
 
 	# 已穿戴实例：逐字段一致，且加成立即生效（T06）
 	_expect(_deep_equal(GameState.equipment["weapon"], expected_worn),
