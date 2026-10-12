@@ -54,6 +54,13 @@ func _ready() -> void:
 	EventBus.quest_progressed.connect(_on_quest_progressed)
 	_build_hotbar()
 	_refresh_all()
+	_auto_battle = GameState.auto_battle_on
+	_auto_pickup = GameState.auto_pickup_on
+	var player := get_tree().get_first_node_in_group("player")
+	if player != null:
+		var pilot := player.get_node_or_null("AutoPilot") as AutoBattle
+		if pilot != null:
+			_auto_phase = pilot.current_phase()
 	_refresh_auto()
 	_refresh_quests()
 
@@ -110,12 +117,10 @@ func _refresh_auto() -> void:
 		_auto_label.add_theme_color_override("font_color", COL_AUTO_OFF)
 		return
 	var tail := ""
-	if _auto_phase == "手动接管":
-		tail = " · 3 秒后恢复"
-	elif _auto_pickup:
+	if _auto_pickup and not _auto_phase.begins_with("手动接管"):
 		tail = " · 拾取 G 开"
 	_auto_label.text = "自动  %s%s" % [_auto_phase if not _auto_phase.is_empty() else "启动中", tail]
-	var col := COL_AUTO_OVERRIDE if _auto_phase == "手动接管" else COL_AUTO_ON
+	var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with("手动接管") else COL_AUTO_ON
 	_auto_label.add_theme_color_override("font_color", col)
 
 ## 系统提示 Toast（9.6，最小版；完整样式在 M5-5 完善）。

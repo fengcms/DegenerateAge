@@ -91,6 +91,7 @@ func _ready() -> void:
 	if _player == null:
 		push_warning("[AutoBattle] 必须作为 PlayerCharacter 的子节点")
 	EventBus.auto_state_changed.connect(_on_auto_state_changed)
+	_on_auto_state_changed(GameState.auto_battle_on, GameState.auto_pickup_on)
 	set_physics_process(true)
 
 ## 开启自动战斗时重置锚点与搜索节流（3.14：锚点半径内搜怪，避免跑远）。
@@ -144,33 +145,29 @@ func _physics_process(delta: float) -> void:
 		_set_state(State.RECOVER, "暂停中")
 		return
 
-	# 大地图步行期间持续保持手动接管，到达/取消后才开始三秒恢复计时。
-	if _player.map_move_active:
-		_player.set_auto_move(Vector2.ZERO)
-		_target = null
-		_loot = null
-		_manual_t = MANUAL_RESUME_DELAY
-		_set_state(State.MANUAL_OVERRIDE)
+	# 持续手动操作先刷新计时；松手后才开始倒计时，避免按住时提前恢复。
+	if _player.map_move_active or _has_manual_input():
+		begin_manual_override()
 		return
 
-	# ③ 手动接管：计时期间不再接管移动 / 攻击，到点自动恢复
 	if _manual_t > 0.0:
 		_manual_t = maxf(0.0, _manual_t - delta)
-		_set_state(State.MANUAL_OVERRIDE)
-		if _manual_t <= 0.0:
-			_toast("自动战斗恢复", "info")
-			_anchor = _player.global_position
-		return
-
-	# ③ 手动输入 → 立即取消、3 秒后恢复（4.6）
-	if _has_manual_input():
-		_player.set_auto_move(Vector2.ZERO)
-		_target = null
-		_manual_t = MANUAL_RESUME_DELAY
-		_set_state(State.MANUAL_OVERRIDE)
-		return
+		if _manual_t > 0.0:
+			_set_state(State.MANUAL_OVERRIDE, "手动接管 · %d 秒后恢复" % ceili(_manual_t))
+			return
+		_toast("自动战斗恢复", "info")
+		_anchor = _player.global_position
 
 	_tick(delta)
+
+## 输入事件到达即可取消旧决策，不依赖下一物理帧。
+func begin_manual_override() -> void:
+	_player.set_auto_move(Vector2.ZERO)
+	_target = null
+	_loot = null
+	_manual_t = MANUAL_RESUME_DELAY
+	if GameState.auto_battle_on:
+		_set_state(State.MANUAL_OVERRIDE, "手动接管 · 操作结束后恢复")
 
 # ---- 决策主体 ----
 

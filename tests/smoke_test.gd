@@ -45,6 +45,7 @@ func _ready() -> void:
 	_test_map_travel()
 	await _test_world()
 	await _test_map_reload()
+	await _test_auto_hud_reload()
 	_test_fog()
 	await _test_fog_ui()
 	_finish()
@@ -2067,4 +2068,35 @@ func _test_elite_affixes() -> void:
 	_expect(player.movement_multiplier() == 1.0, "死亡清理减速")
 	container.queue_free()
 	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_auto_hud_reload() -> void:
+	GameState.reset_to_defaults()
+	GameState.set_auto_battle(true)
+	for map_id in ["camp", "wild_trial"]:
+		GameState.current_map = map_id
+		var main: Node = load("res://scenes/Main.tscn").instantiate()
+		add_child(main)
+		var player: PlayerCharacter = main.get_node("Game/Entities/Player")
+		var pilot: AutoBattle = player.get_node("AutoPilot")
+		pilot.set_physics_process(false)
+		var hud: Control = main.get_node("UI/Hud")
+		_expect(not String(hud.get_node("%AutoLabel").text).contains("关（F"), "切图后 HUD 应读取自动开关")
+		_expect(pilot._anchor == player.global_position, "新图自动战斗锚点应初始化到玩家出生点")
+		pilot.begin_manual_override()
+		pilot._physics_process(0.1)
+		_expect(pilot.current_phase().contains("3 秒"), "恢复倒计时 3")
+		pilot._physics_process(1.0)
+		_expect(pilot.current_phase().contains("2 秒"), "恢复倒计时 2")
+		pilot._physics_process(1.0)
+		_expect(pilot.current_phase().contains("1 秒"), "恢复倒计时 1")
+		GameState.set_panel_open("test", true)
+		pilot._physics_process(1.0)
+		_expect(is_equal_approx(pilot._manual_t, 0.9), "面板打开冻结恢复计时")
+		GameState.set_panel_open("test", false)
+		pilot._physics_process(1.0)
+		_expect(pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE, "倒计时结束恢复决策")
+		main.queue_free()
+		await get_tree().process_frame
+		await get_tree().process_frame
 	GameState.reset_to_defaults()

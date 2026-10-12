@@ -56,6 +56,10 @@ func _ready() -> void:
 	else:
 		_player.global_position = _ground.get_map_center_world()
 
+	var pilot := _player.get_node_or_null("AutoPilot") as AutoBattle
+	if pilot != null:
+		pilot._on_auto_state_changed(GameState.auto_battle_on, GameState.auto_pickup_on)
+
 	# 相机限制到地图包围盒，避免露出边界外的空白
 	var b: Rect2 = _ground.get_world_bounds()
 	_camera.limit_left = int(b.position.x)
