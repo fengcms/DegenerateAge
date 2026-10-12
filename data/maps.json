@@ -7,8 +7,17 @@
     "safeZone": true,
     "recommendedLevel": 1,
     "carterLinks": ["wild_trial"],
-    "spawnPoints": [],
+    "carterFees": { "wild_trial": 0 },
+    "requiresUnlock": "",
+    "spawnPoints": [
+      { "monsterId": "training_dummy", "level": 1, "respawnTime": 20, "count": 3, "ai": false }
+    ],
     "bossSpawn": null,
+    "npcs": [
+      { "role": "shop", "shopId": "peddler_camp", "cell": [16, 20] },
+      { "role": "quest", "npcName": "长老", "cell": [24, 20] },
+      { "role": "carter", "npcName": "车夫", "cell": [20, 24] }
+    ],
     "desc": "安全区：复活锚点 / 回城落点，聚集货郎、铁匠、车夫、任务官、仓库。"
   },
   {
@@ -19,12 +28,17 @@
     "safeZone": false,
     "recommendedLevel": 2,
     "carterLinks": ["camp", "ash_land"],
+    "carterFees": { "camp": 20, "ash_land": 50 },
+    "requiresUnlock": "",
     "spawnPoints": [
       { "monsterId": "wolf_corrupted", "level": 2, "respawnTime": 30, "count": 6 },
       { "monsterId": "shellback_bug", "level": 3, "respawnTime": 30, "count": 2 },
       { "monsterId": "elite_wolf_king", "level": 4, "respawnTime": 120, "count": 1, "kind": "elite" }
     ],
     "bossSpawn": null,
+    "npcs": [
+      { "role": "carter", "npcName": "车夫", "cell": [30, 34] }
+    ],
     "desc": "第一章第一张野外图，含精英裂爪狼王。"
   },
   {
@@ -35,11 +49,17 @@
     "safeZone": false,
     "recommendedLevel": 6,
     "carterLinks": ["wild_trial", "corruption_source"],
+    "carterFees": { "wild_trial": 50, "corruption_source": 100 },
+    "requiresUnlock": "",
     "spawnPoints": [
       { "monsterId": "ash_wraith", "level": 6, "respawnTime": 45, "count": 3 },
       { "monsterId": "shellback_bug", "level": 7, "respawnTime": 45, "count": 3 }
     ],
     "bossSpawn": null,
+    "npcs": [
+      { "role": "shop", "shopId": "peddler_ash", "cell": [26, 34] },
+      { "role": "carter", "npcName": "车夫", "cell": [30, 34] }
+    ],
     "desc": "第一章中间图，远程怪登场；裂壳虫按 L7 复用。"
   },
   {
@@ -50,10 +70,15 @@
     "safeZone": false,
     "recommendedLevel": 10,
     "carterLinks": ["ash_land"],
+    "carterFees": { "ash_land": 100 },
+    "requiresUnlock": "",
     "spawnPoints": [
       { "monsterId": "shellback_bug", "level": 9, "respawnTime": 60, "count": 4 }
     ],
     "bossSpawn": { "monsterId": "boss_corrupted_beast", "level": 10, "respawnTime": 300, "tombstone": true },
+    "npcs": [
+      { "role": "carter", "npcName": "车夫", "cell": [25, 29] }
+    ],
     "desc": "第一章 Boss 区；Boss 死亡生成墓碑显示刷新倒计时。"
   }
 ]

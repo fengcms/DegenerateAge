@@ -41,7 +41,9 @@ func _ready() -> void:
 	_test_level_up_carry()
 	_test_quest_side()
 	await _test_consumable()
+	_test_map_travel()
 	await _test_world()
+	await _test_map_reload()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -1436,6 +1438,9 @@ func _test_debug_seed() -> void:
 # ---- M2-1 / M2-3 / M2-5：主线链 Q001–Q005 全流程（接取 → 推进 → 完成 → 交付 → 前置解锁）----
 func _test_quest_chain() -> void:
 	GameState.reset_to_defaults()
+	# M3-1 恢复清单（工程文档 13 §6 R5）：Q002–Q004 的 mapScope 已还原为 ["wild_trial"]，
+	# 故推进前必须把当前地图切到该图，否则 Quest._in_scope 校验会拒绝计数。
+	GameState.current_map = "wild_trial"
 
 	# ① 状态推导：Q001 可接（prev 空）；Q002 前置未完成 → locked；二者均不落档
 	_expect(Quest.state_of("Q001") == Quest.STATE_AVAILABLE, "Q001 初始应可接取")
@@ -1492,7 +1497,8 @@ func _test_quest_chain() -> void:
 	Quest.deliver("Q004")
 	_expect(_has_item_id("weapon_wolfking"), "背包应含 Q004 奖励 狼王之刃")
 
-	# ⑦ Q005：击杀腐化巨兽 → 写 unlocks.chapter2
+	# ⑦ Q005：击杀腐化巨兽 → 写 unlocks.chapter2（该任务 mapScope = corruption_source）
+	GameState.current_map = "corruption_source"
 	_expect(Quest.state_of("Q005") == Quest.STATE_AVAILABLE, "Q004 交付后 Q005 应解锁")
 	_expect(bool(Quest.accept("Q005").get("ok", false)), "Q005 应可接取")
 	Quest.on_event("monster_died", "boss_corrupted_beast")
@@ -1514,6 +1520,8 @@ func _test_quest_save() -> void:
 	SaveManager.delete_slot(SLOT)
 
 	GameState.reset_to_defaults()
+	# M3-1：Q002 的 mapScope 已还原为 ["wild_trial"]，推进前必须切到该图（同 _test_quest_chain）
+	GameState.current_map = "wild_trial"
 	# 造一份混合局面：rewarded / active(带进度) + 解锁标记
 	Quest.accept("Q001")
 	Quest.deliver("Q001")
@@ -1652,12 +1660,12 @@ func _test_world() -> void:
 	if boundary != null:
 		_expect(boundary.get_child_count() == 4, "边界墙应为 4 段，实际 %d" % boundary.get_child_count())
 
-	# M1-5：怪物生成器按测试怪物点生成（数量随 game.gd 的 TEST_SPAWNS 配置，至少 3）
+	# M3-1：怪物点由 maps.json 的 spawnPoints 驱动（营地 = 3 只教学木桩，ai:false）
 	var spawner: Node = game.get_node_or_null("Spawner")
 	_expect(spawner != null, "未找到 Spawner 节点")
 	if spawner != null:
 		_expect(spawner.point_count() >= 3,
-			"测试怪物点应至少 3 个，实际 %d" % spawner.point_count())
+			"营地图怪物点应至少 3 个（教学木桩），实际 %d" % spawner.point_count())
 		_expect(spawner.get_child_count() == spawner.point_count(),
 			"每个怪物点都应生成实例：点=%d 实例=%d" % [spawner.point_count(), spawner.get_child_count()])
 
@@ -1672,24 +1680,29 @@ func _test_world() -> void:
 	var loot_root: Node = game.get_node_or_null("LootRoot")
 	_expect(loot_root != null and loot_root.is_in_group("loot_root"), "缺少 LootRoot 掉落容器节点")
 
-	# M1-8 / M2-2：安全区 NPC（货郎 + 任务官长老）与交互半径
+	# M3-1 / M3-2：营地图 NPC 由 maps.json 的 npcs 驱动（货郎 + 长老 + 车夫）与交互半径
 	var npcs: Node = game.get_node_or_null("Npcs")
 	_expect(npcs != null, "未找到 Npcs 节点")
 	if npcs != null:
-		_expect(npcs.get_child_count() == 2,
-			"营地图应有 2 个 NPC（货郎 + 长老），实际 %d" % npcs.get_child_count())
+		var expected_npcs := MapService.current_npcs().size()
+		_expect(npcs.get_child_count() == expected_npcs,
+			"NPC 数应与 maps.json 的 npcs 一致（%d），实际 %d" % [expected_npcs, npcs.get_child_count()])
 		var peddler: Npc = null
 		var elder: Npc = null
+		var carter: Npc = null
 		for c in npcs.get_children():
 			var n := c as Npc
 			if n == null:
 				continue
 			if n.role == "quest":
 				elder = n
+			elif n.role == "carter":
+				carter = n
 			elif not n.shop_id.is_empty():
 				peddler = n
 		_expect(peddler != null, "应存在货郎 NPC（role=shop）")
 		_expect(elder != null, "应存在任务官 NPC（role=quest，M2-2）")
+		_expect(carter != null, "应存在车夫 NPC（role=carter，M3-2）")
 		if elder != null:
 			_expect(elder.npc_name == "长老", "任务官应名为长老，实际 %s" % elder.npc_name)
 			_expect(elder.shop_id.is_empty(), "任务官不应绑定商店")
@@ -1704,6 +1717,146 @@ func _test_world() -> void:
 	# HUD 伤害飘字层分组
 	var dn: Node = game.get_node_or_null("DamageNumbers")
 	_expect(dn != null and dn.is_in_group("damage_numbers"), "DamageNumbers 节点缺少分组标记")
+
+## M3-1 / M3-2：地图数据、车夫拓扑与出行校验链（工程文档 13 §3 / §6 R5）。
+func _test_map_travel() -> void:
+	GameState.reset_to_defaults()
+
+	# ① 地图数据与车夫拓扑（07 §7.8：营地 ⇄ 试炼野外；营地**不**直达灰烬之地）
+	_expect(MapService.exists("camp") and MapService.exists("wild_trial"), "camp / wild_trial 地图应存在")
+	_expect(MapService.display_name("camp") == "幸存者营地", "camp 显示名应为「幸存者营地」")
+	_expect(MapService.is_linked("wild_trial"), "营地应可直达试炼野外")
+	_expect(not MapService.is_linked("ash_land"), "营地不应直达灰烬之地（需中转，07 §7.8）")
+	_expect(MapService.is_unlocked("wild_trial"), "无 requiresUnlock 的地图应恒为已解锁")
+	_expect(MapService.fee_to("wild_trial") == 0, "营地→试炼野外应为免费（0）")
+
+	# ② 目的地列表
+	var dests: Array = MapService.destinations()
+	_expect(dests.size() == 1, "营地车夫应有 1 条线路，实际 %d" % dests.size())
+	if dests.size() > 0:
+		var d0 := dests[0] as Dictionary
+		_expect(String(d0.get("id", "")) == "wild_trial", "营地线路应为 wild_trial")
+		_expect(int(d0.get("cost", -1)) == 0, "该线路费用应为 0")
+		_expect(bool(d0.get("unlocked", false)), "该线路应已解锁")
+
+	# ③ 拒绝分支：未知图 / 当前图 / 不连通 / 金币不足
+	_expect(not bool(MapService.travel_to("no_such_map").get("ok", false)), "未知地图应拒绝")
+	_expect(not bool(MapService.travel_to("camp").get("ok", false)), "已在当前图应拒绝")
+	_expect(not bool(MapService.travel_to("ash_land").get("ok", false)), "不连通目的地应拒绝（需中转）")
+	_expect(GameState.current_map == "camp", "被拒时不应改变当前地图")
+
+	GameState.current_map = "wild_trial"
+	_expect(MapService.fee_to("ash_land") == 50, "试炼野外→灰烬之地应为 50 金")
+	GameState.gold = 10
+	_expect(not bool(MapService.travel_to("ash_land").get("ok", false)), "金币不足应拒绝")
+	_expect(GameState.gold == 10, "被拒时不应扣费，实际 %d" % GameState.gold)
+	_expect(GameState.current_map == "wild_trial", "被拒时不应切图")
+
+	# ④ 成功出行：扣费 + 写 current_map + 写落点（travel_to 本身不触发场景重载）
+	GameState.gold = 100
+	var res := MapService.travel_to("ash_land")
+	_expect(bool(res.get("ok", false)), "金币足够时应放行：%s" % res.get("reason", ""))
+	_expect(GameState.current_map == "ash_land", "成功后 current_map 应为 ash_land")
+	_expect(GameState.gold == 50, "成功后应扣 50 金，实际 %d" % GameState.gold)
+	_expect(GameState.has_save_pos, "成功后应写入落点供重载消费")
+	_expect(MapService.display_name(GameState.current_map) == "灰烬之地", "落点地图名应为灰烬之地")
+
+	# ⑤ Boss 点数据（M3-5 用；此处只验证数据可达与墓碑标记）
+	_expect(MapService.current_boss().is_empty(), "灰烬之地不应有 Boss 点")
+	GameState.current_map = "corruption_source"
+	_expect(not MapService.current_boss().is_empty(), "腐化源头应配 Boss 点")
+	_expect(bool(MapService.current_boss().get("tombstone", false)), "Boss 点应启用墓碑")
+
+	GameState.reset_to_defaults()
+
+## M3-1 / 验收场景 T15：切图重建 —— 新图按自身数据装配、落点正确、旧实体不残留。
+## 做法：直接实例化 `Game.tscn` 模拟「重载后的世界」，对比营地与野外两套装配
+## （真实重载行为 = 销毁旧 Game + `Game._ready` 按 `GameState.current_map` 重建，见 MapService 头注）。
+func _test_map_reload() -> void:
+	GameState.reset_to_defaults()
+
+	# ① 营地世界：3 只教学木桩 + 3 个 NPC（货郎 / 长老 / 车夫）
+	var camp_game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(camp_game)
+	await get_tree().process_frame
+	var camp_spawner: Node = camp_game.get_node_or_null("Spawner")
+	var camp_npcs: Node = camp_game.get_node_or_null("Npcs")
+	_expect(camp_spawner != null and camp_npcs != null, "营地世界装配缺失（Spawner / Npcs）")
+	var camp_monsters := int(camp_spawner.point_count()) if camp_spawner != null else -1
+	var camp_npc_n := int(camp_npcs.get_child_count()) if camp_npcs != null else -1
+	_expect(camp_monsters == _expected_point_count("camp"),
+		"营地怪物点数应为 %d，实际 %d" % [_expected_point_count("camp"), camp_monsters])
+	camp_game.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	# ② 切到试炼野外（模拟 MapService 的状态变更）后实例化新世界
+	GameState.current_map = "wild_trial"
+	# 注意：Game._ready 会**消费一次即清空** save_pos，故落点先存到局部变量再断言
+	var target := MapService.entry_point("wild_trial")
+	GameState.save_pos = target
+	GameState.has_save_pos = true
+	var wild_game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(wild_game)
+	await get_tree().process_frame
+
+	var ground: Node = wild_game.get_node_or_null("Ground")
+	_expect(ground != null, "野外世界缺少 Ground")
+	if ground != null:
+		_expect(String(ground.map_id) == "wild_trial",
+			"地面应加载到当前地图，实际 %s" % String(ground.map_id))
+		_expect(ground.grid_size == Vector2i(60, 60),
+			"试炼野外尺寸应为 60×60，实际 %s" % str(ground.grid_size))
+
+	var spawner: Node = wild_game.get_node_or_null("Spawner")
+	var npcs: Node = wild_game.get_node_or_null("Npcs")
+	_expect(spawner != null and npcs != null, "野外世界装配缺失（Spawner / Npcs）")
+	if spawner != null:
+		_expect(int(spawner.point_count()) == _expected_point_count("wild_trial"),
+			"野外怪物点数应为 %d，实际 %d" % [_expected_point_count("wild_trial"), spawner.point_count()])
+		_expect(int(spawner.point_count()) != camp_monsters,
+			"切图后怪物点数应与营地不同（营地 %d）" % camp_monsters)
+	if npcs != null:
+		_expect(int(npcs.get_child_count()) == _expected_npc_count("wild_trial"),
+			"野外 NPC 数应为 %d，实际 %d" % [_expected_npc_count("wild_trial"), npcs.get_child_count()])
+		_expect(int(npcs.get_child_count()) != camp_npc_n,
+			"切图后 NPC 应重建（营地 %d）" % camp_npc_n)
+
+	var player: Node = wild_game.get_node_or_null("Entities/Player")
+	_expect(player != null, "野外世界缺少 Player")
+	if player != null:
+		_expect((player as Node2D).global_position.is_equal_approx(target),
+			"玩家应落在切图落点：pos=%s 落点=%s" % [(player as Node2D).global_position, target])
+	_expect(not GameState.has_save_pos, "落点应被消费一次即清空")
+
+	wild_game.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+## maps.json 的怪物点总数（count 展开 + Boss 点 1）。
+func _expected_point_count(map_id: String) -> int:
+	var m = DataLoader.get_entry("maps", map_id)
+	if not (m is Dictionary):
+		return -1
+	var n := 0
+	var pts = (m as Dictionary).get("spawnPoints", [])
+	if pts is Array:
+		for p in pts:
+			if p is Dictionary:
+				n += int((p as Dictionary).get("count", 1))
+	var boss = (m as Dictionary).get("bossSpawn", null)
+	if boss is Dictionary:
+		n += 1
+	return n
+
+## maps.json 的 NPC 点数。
+func _expected_npc_count(map_id: String) -> int:
+	var m = DataLoader.get_entry("maps", map_id)
+	if not (m is Dictionary):
+		return -1
+	var arr = (m as Dictionary).get("npcs", [])
+	return arr.size() if arr is Array else 0
 
 func _finish() -> void:
 	if _failures.is_empty():

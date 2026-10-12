@@ -45,6 +45,10 @@ signal quest_completed(quest_id: String)
 signal quest_rewarded(quest_id: String)
 signal quest_panel_requested(npc_name: String)
 
+# ---- 地图 / 车夫（M3）----
+signal carter_panel_requested(npc_name: String)
+signal map_traveled(from_id: String, to_id: String)
+
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)
 signal panel_opened(panel_id: String)

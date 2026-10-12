@@ -18,8 +18,7 @@
     "giver": "elder",
     "objective": { "kind": "kill", "targetId": "wolf_corrupted", "count": 5 },
     "reward": { "gold": 100, "xp": 150 },
-    "mapScope": ["camp"],
-    "_m2Temp": "⚠ M2 单图期临时值（原 wild_trial）。M3 接入多图后改回，见工程文档 11 §3 D3 / §8 R-a。",
+    "mapScope": ["wild_trial"],
     "prev": "Q001",
     "abandonable": false,
     "desc": "击败 5 只腐化野狼。"
@@ -31,8 +30,7 @@
     "giver": "elder",
     "objective": { "kind": "collect", "targetId": "spirit_shard", "count": 3 },
     "reward": { "gold": 0, "xp": 200, "item": "armor_starter" },
-    "mapScope": ["camp"],
-    "_m2Temp": "⚠ M2 单图期临时值（原 wild_trial）。M3 接入多图后改回，见工程文档 11 §3 D3 / §8 R-a。",
+    "mapScope": ["wild_trial"],
     "prev": "Q002",
     "abandonable": false,
     "desc": "拾取 3 个灵能碎片。"
@@ -44,8 +42,7 @@
     "giver": "elder",
     "objective": { "kind": "kill", "targetId": "elite_wolf_king", "count": 1 },
     "reward": { "gold": 200, "xp": 400, "item": "weapon_wolfking" },
-    "mapScope": ["camp"],
-    "_m2Temp": "⚠ M2 单图期临时值（原 wild_trial）。M3 接入多图后改回，见工程文档 11 §3 D3 / §8 R-a。",
+    "mapScope": ["wild_trial"],
     "prev": "Q003",
     "abandonable": false,
     "desc": "击败精英裂爪狼王，获得 Boss 线索。"
@@ -57,8 +54,7 @@
     "giver": "elder",
     "objective": { "kind": "kill", "targetId": "boss_corrupted_beast", "count": 1 },
     "reward": { "gold": 500, "xp": 1000, "unlock": "chapter2" },
-    "mapScope": ["camp"],
-    "_m2Temp": "⚠ M2 单图期临时值（原 corruption_source）。M3 接入多图后改回，见工程文档 11 §3 D3 / §8 R-a。",
+    "mapScope": ["corruption_source"],
     "prev": "Q004",
     "abandonable": false,
     "desc": "击败腐化巨兽，完成第一章、解锁第二章入口。"
@@ -70,11 +66,10 @@
     "giver": "elder",
     "objective": { "kind": "kill", "targetId": "shellback_bug", "count": 3 },
     "reward": { "gold": 80, "xp": 60 },
-    "mapScope": ["camp"],
-    "_m2Temp": "⚠ M2 单图期临时值（支线，M3 接多图后按 08 §8.3 调整范围）。",
+    "mapScope": ["camp", "wild_trial"],
     "prev": "",
     "abandonable": true,
-    "desc": "营地附近的裂壳虫成了威胁，清理 3 只。（可放弃 / 重接）"
+    "desc": "营地与试炼野外的裂壳虫成了威胁，清理 3 只。（可放弃 / 重接）"
   },
   {
     "id": "S002",
@@ -83,10 +78,9 @@
     "giver": "elder",
     "objective": { "kind": "collect", "targetId": "spirit_shard", "count": 1 },
     "reward": { "gold": 40, "xp": 30 },
-    "mapScope": ["camp"],
-    "_m2Temp": "⚠ M2 单图期临时值（支线，M3 接多图后按 08 §8.3 调整范围）。",
+    "mapScope": ["camp", "wild_trial"],
     "prev": "",
     "abandonable": true,
-    "desc": "长老需要 1 枚灵能碎片用于研究。（可放弃 / 重接）"
+    "desc": "长老需要 1 枚灵能碎片用于研究（碎片来自试炼野外的裂壳虫）。（可放弃 / 重接）"
   }
 ]

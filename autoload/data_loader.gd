@@ -155,6 +155,51 @@ func validate_all() -> Array[String]:
 				if not bmid.is_empty() and not monster_ids.has(bmid):
 					report.append("[maps] %s 的 bossSpawn 引用未定义怪物 '%s'" % [mp.get("id", "?"), bmid])
 
+	# 3b) 引用合法性：车夫拓扑与 NPC（M3-1 / M3-2 —— 车夫费用与 NPC 数据化后新增）
+	var map_ids := {}
+	if maps is Array:
+		for mp in maps:
+			if typeof(mp) == TYPE_DICTIONARY:
+				map_ids[mp.get("id", "")] = true
+	var shop_ids := {}
+	var shops = tables.get("shops")
+	if shops is Array:
+		for s in shops:
+			if typeof(s) == TYPE_DICTIONARY:
+				shop_ids[s.get("npcId", "")] = true
+	if maps is Array:
+		for mp in maps:
+			if typeof(mp) != TYPE_DICTIONARY:
+				continue
+			var mid_map := String(mp.get("id", "?"))
+			var links := []
+			var raw_links = mp.get("carterLinks", [])
+			if raw_links is Array:
+				links.assign(raw_links)
+			for lid in links:
+				if not map_ids.has(String(lid)):
+					report.append("[maps] %s 的 carterLinks 指向未定义地图 '%s'" % [mid_map, lid])
+			var fees = mp.get("carterFees", {})
+			if fees is Dictionary:
+				for fid in (fees as Dictionary).keys():
+					if not links.has(fid):
+						report.append("[maps] %s 的 carterFees 含未连通目的地 '%s'（不在 carterLinks 内）" % [mid_map, fid])
+					if not map_ids.has(String(fid)):
+						report.append("[maps] %s 的 carterFees 指向未定义地图 '%s'" % [mid_map, fid])
+			var npcs := []
+			var raw_npcs = mp.get("npcs", [])
+			if raw_npcs is Array:
+				npcs.assign(raw_npcs)
+			for npc in npcs:
+				if typeof(npc) != TYPE_DICTIONARY:
+					continue
+				var role := String(npc.get("role", ""))
+				if role != "shop" and role != "quest" and role != "carter":
+					report.append("[maps] %s 的 npc role '%s' 非法（应为 shop / quest / carter）" % [mid_map, role])
+				var sid := String(npc.get("shopId", ""))
+				if role == "shop" and not shop_ids.has(sid):
+					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])
+
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
 

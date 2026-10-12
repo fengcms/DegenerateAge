@@ -4,39 +4,21 @@ extends Node2D
 
 const NPC_SCENE := preload("res://scenes/entities/Npc.tscn")
 
-## M1 测试怪物点（在营地图上验证 AI；M3 改为读 maps.json 的 spawnPoints）。
-## 木桩 ai=false（静态教学目标）；野狼 / 裂壳虫 ai=true（会巡逻 / 追击 / 攻击）。
-## 【开发期测试便利】为加快测试循环，数量已上调、刷新时间已缩短；正式数值见 maps.json（M3）。
-const TEST_SPAWNS := [
-	{"monsterId": "wolf_corrupted", "level": 2, "count": 6, "respawnTime": 6.0, "ai": true},
-	{"monsterId": "shellback_bug", "level": 3, "count": 2, "respawnTime": 12.0, "ai": true},
-	{"monsterId": "training_dummy", "level": 1, "count": 3, "respawnTime": 20.0, "ai": false},
-]
-
-## M2 任务链所需的精英 / Boss 测试点（【M5 打包前移除】）。
-## Q004 需击杀 elite_wolf_king、Q005 需击杀 boss_corrupted_beast，而 M1 只有 camp 一张图。
-## 缓解 R-d（营地变高危区 + 忘清理）：
-##   ① **仅在 debug 构建生成**（正式包不带）；
-##   ② Boss 测试点 `ai:false`（静态可挑战）——营地是新号出生地，L10 Boss 主动追击会秒杀
-##      L1 玩家；M3 迁至 corruption_source 后恢复 ai=true；
-##   ③ 已登记于工程文档 04「M5 移除清单」。
-const TEST_ELITES := [
-	{"monsterId": "elite_wolf_king", "level": 4, "count": 1, "respawnTime": 60.0, "ai": true},
-	{"monsterId": "boss_corrupted_beast", "level": 10, "count": 1, "respawnTime": 90.0, "ai": false},
-]
+## 世界按「当前地图」数据驱动装配（M3-1）：
+##   · 怪物点 → `maps.json` 的 `spawnPoints`（`MonsterSpawner.spawn_from_map`）
+##   · Boss 点 → `maps.json` 的 `bossSpawn`（含墓碑刷新，M3-5 启用墓碑实体）
+##   · NPC    → `maps.json` 的 `npcs`（货郎 / 任务官 / 车夫）
+## 切图 = 重载场景（`MapService.travel_to`，拍板 D1-A）：旧图实体随场景一并销毁（T15）。
+## ⚠ 原 M1/M2 单图期的 `TEST_SPAWNS` / `TEST_ELITES` / `TEST_NPCS` 硬编码已随 M3 恢复清单移除
+##   （见工程文档 13 §6 R3 与 04「M5 移除清单」）；营地保留 3 只教学木桩（产品 07 §7.6，`ai:false`）。
 
 ## ---- 开发期测试便利（【M5 打包前移除】）----
 ## 开局往背包补一把高攻测试武器，省去刷装备环节，便于快速验证战斗 / 掉落 / 交易。
 ## 模板在 equipments.json 中标 "debug": true → Loot 抽取时跳过（见 loot.gd），不污染正式掉落池。
 const DEBUG_WEAPON_ID := "debug_blade_overpower"
 
-## M1 安全区 NPC（6.3：每个地图的安全区聚集功能性 NPC；M3 改为读 maps.json 的 NPC 点）。
-## cell 为等距网格坐标；货郎放在出生点附近（营地中心偏西 4 格），开局即可走到。
-## M2 追加任务官「长老」（role=quest）：与货郎并列，M3 统一数据化时一起搬（11 §3 D2-A）。
-const TEST_NPCS := [
-	{"shopId": "peddler_camp", "role": "shop", "cell": Vector2i(16, 20)},
-	{"role": "quest", "npcName": "长老", "cell": Vector2i(24, 20)},
-]
+## 安全区 / 各图 NPC 由 `maps.json` 的 `npcs` 驱动（M3-1；原 `TEST_NPCS` 已移除）。
+## `cell` 为等距网格坐标，JSON 里是 `[x, y]` 数组（见 `_cell_of`）。
 
 @onready var _ground: IsoGround = $Ground
 @onready var _player: PlayerCharacter = $Entities/Player
@@ -48,12 +30,12 @@ const TEST_NPCS := [
 func _ready() -> void:
 	_damage_numbers.add_to_group("damage_numbers")
 
-	# 出生点：读档坐标优先（M1-10，10.3「当前地图与坐标」），否则地图中心。
-	# SaveManager.apply_to_game_state 把坐标写进 GameState.save_pos，此处**消费一次**即清空，
-	# 因此后续重载场景若没有新的读档就仍按地图中心出生。
+	# 出生点：读档 / 切图坐标优先（M1-10 + M3-1），否则地图中心。
+	# SaveManager.apply_to_game_state（读档）与 MapService.travel_to（切图）都会把坐标写进
+	# GameState.save_pos；此处**消费一次**即清空，因此后续重载场景若无新坐标就按地图中心出生。
 	if GameState.has_save_pos:
 		_player.global_position = _ground.clamp_to_map(GameState.save_pos)
-		print("[Game] 读档出生点：%s" % str(_player.global_position))
+		print("[Game] 读档/切图出生点：%s" % str(_player.global_position))
 		GameState.clear_save_pos()
 	else:
 		_player.global_position = _ground.get_map_center_world()
@@ -66,15 +48,18 @@ func _ready() -> void:
 	_camera.limit_bottom = int(b.end.y)
 	_camera.reset_smoothing()
 
-	# 怪物点（M1-5）
+	# 怪物点 / Boss 点 / NPC：全部按当前地图数据装配（M3-1）
 	_spawner.setup(_ground, _player)
-	_spawner.spawn_from_specs(TEST_SPAWNS)
-	# M2 任务链所需的精英 / Boss 测试点（仅 debug 构建；R-d 缓解见 TEST_ELITES 注释）
-	if OS.is_debug_build():
-		_spawner.spawn_from_specs(TEST_ELITES)
+	_spawner.spawn_from_map(GameState.current_map)
+	var boss := MapService.current_boss()
+	if not boss.is_empty():
+		_spawner.spawn_from_specs([boss])
 
-	# 安全区 NPC（M1-8）
+	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()
+
+	# 抵达提示（切图 / 读档后给一次系统提示；延后一帧等 HUD 就绪）
+	_notify_arrival.call_deferred()
 
 	# 开发期：延迟一帧发放测试武器（此时 UI 已就绪，提示能正常显示）
 	_grant_debug_loadout.call_deferred()
@@ -113,18 +98,30 @@ func _make_debug_equip(item_id: String) -> Dictionary:
 		push_warning("[Debug] 未找到测试装备模板：%s" % item_id)
 	return item
 
-## 按测试规格生成 NPC（6.3）。M3 起改为读 maps.json 的 NPC 点。
+## 按当前地图的 NPC 点生成（6.3）。数据源：`maps.json` 的 `npcs`（M3-1 数据化）。
 func _spawn_npcs() -> void:
-	for spec in TEST_NPCS:
+	for spec in MapService.current_npcs():
 		if not (spec is Dictionary):
 			continue
 		var npc: Npc = NPC_SCENE.instantiate()
 		npc.shop_id = String(spec.get("shopId", ""))
 		npc.role = String(spec.get("role", "shop"))
 		npc.npc_name = String(spec.get("npcName", ""))
-		var cell: Vector2i = spec.get("cell", Vector2i.ZERO)
-		npc.position = Iso.grid_to_world(cell)
+		npc.position = Iso.grid_to_world(_cell_of(spec))
 		_npcs.add_child(npc)
+
+## `maps.json` 的 `cell` 是 `[x, y]` 数组（JSON 无 Vector2i）。
+func _cell_of(spec: Dictionary) -> Vector2i:
+	var c = spec.get("cell", null)
+	if c is Array:
+		var arr: Array = c as Array
+		if arr.size() >= 2:
+			return Vector2i(int(arr[0]), int(arr[1]))
+	return Vector2i.ZERO
+
+## 抵达提示（切图 / 读档 / 新游戏开局各一次）：延后一帧调用，确保 HUD 已就绪。
+func _notify_arrival() -> void:
+	EventBus.toast_requested.emit("抵达　%s" % MapService.display_name(GameState.current_map), "levelup")
 
 func _unhandled_input(event: InputEvent) -> void:
 	# 开发期验证键（M5 移除）：H = 自伤 15，用于验证 HUD 血条实时刷新。
@@ -179,13 +176,17 @@ func auto_pilot() -> AutoBattle:
 	return _player.get_node_or_null("AutoPilot") as AutoBattle
 
 ## 就近与 NPC 交互：成功派发返回 true（6.3 通用交互入口，后续对话系统 9.8 在此扩展）。
-## M2：按 NPC role 派发 —— quest = 任务面板，shop = 货郎面板（11 §4.4）。
+## M2：按 NPC role 派发 —— quest = 任务面板，shop = 货郎面板；
+## M3-2：carter = 车夫面板（跨图出行）。
 func _try_interact() -> bool:
 	var npc := nearest_npc()
 	if npc == null:
 		return false
 	if npc.role == "quest":
 		EventBus.quest_panel_requested.emit(npc.npc_name)
+		return true
+	if npc.role == "carter":
+		EventBus.carter_panel_requested.emit(npc.npc_name)
 		return true
 	if not npc.shop_id.is_empty():
 		EventBus.shop_open_requested.emit(npc.shop_id)

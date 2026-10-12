@@ -8,6 +8,8 @@ extends Node
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	# M3-1：Q002 / S001 的 mapScope 已还原真实地图 id，推进前须切到对应图（否则不计进度）
+	GameState.current_map = "wild_trial"
 	var main = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	for _i in range(20):

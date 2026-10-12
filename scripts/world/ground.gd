@@ -17,6 +17,11 @@ var map_data: Dictionary = {}
 var grid_size: Vector2i = Vector2i(40, 40)
 
 func _ready() -> void:
+	# M3-1：地面按「当前地图」加载。Game.tscn 的 @export map_id 仅作编辑器预览默认值，
+	# 运行时一律以 GameState.current_map 为准（切图 = 重载场景，见 MapService 头注）。
+	var cur := String(GameState.current_map)
+	if not cur.is_empty():
+		map_id = cur
 	_load_map()
 	_build_boundary()
 	queue_redraw()
