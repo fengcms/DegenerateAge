@@ -126,12 +126,8 @@ static func equip_from_inventory(slots: Dictionary, inv: Array, slot_id: String,
 		return {"ok": false, "reason": "需要等级 %d 才能穿戴" % level_req(item), "replaced": {}}
 
 	var old = slots[slot_id]
-	if old is Dictionary and not Inventory.has_space_for(inv, old):
-		return {"ok": false, "reason": "背包已满，无法卸下原装备", "replaced": {}}
-
-	inv[inv_index] = null                       # 先腾出该格
-	if old is Dictionary:
-		Inventory.add(inv, old)                 # 旧装备回包（可复用刚腾出的格）
+	# 新装备自身腾出的格始终足够容纳一件旧装备，直接交换保留实例属性。
+	inv[inv_index] = old if old is Dictionary else null
 	slots[slot_id] = item
 	return {"ok": true, "reason": "", "replaced": old if old is Dictionary else {}}
 
