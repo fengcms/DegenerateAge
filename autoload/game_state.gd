@@ -94,7 +94,7 @@ func default_settings() -> Dictionary:
 		"autoBattleDefault": false,   # 10.3：重启后自动战斗默认关闭
 		"autoPickupDefault": false,
 		"potionThreshold": 0.35,      # 3.14 喝药血量阈值
-		"searchRadius": 12,           # 3.14 搜索半径（格）
+		"searchRadius": 12,           # 旧档兼容字段；搜怪改用当前可视区域
 		"allowBoss": false,           # 3.14 自动战斗是否允许 Boss
 		"dropFlyAnim": true,          # 10：拾取飞行动画（关 = 入包后立即消失）
 		"masterVolume": 1.0,

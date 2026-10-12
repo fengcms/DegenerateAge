@@ -200,7 +200,6 @@ func _build_visual(tabs: TabContainer) -> void:
 func _build_game(tabs: TabContainer) -> void:
 	var box := _tab(tabs, "游戏")
 	_slider(box, "自动喝药阈值", "potionThreshold", 0.1, 0.9, 0.05)
-	_slider(box, "自动搜怪半径", "searchRadius", 2.0, 25.0, 1.0)
 	_checkbox(box, "自动战斗允许 Boss", "allowBoss")
 	_checkbox(box, "拾取飞行动画", "dropFlyAnim")
 	var filter := OptionButton.new()

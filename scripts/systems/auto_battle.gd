@@ -68,7 +68,6 @@ const WIRED_SKILLS: Array[String] = []
 var _player: PlayerCharacter = null
 var _state: int = State.OFF
 var _phase: String = ""
-var _anchor: Vector2 = Vector2.ZERO
 
 var _target: Node = null
 var _loot: Node = null
@@ -94,10 +93,9 @@ func _ready() -> void:
 	_on_auto_state_changed(GameState.auto_battle_on, GameState.auto_pickup_on)
 	set_physics_process(true)
 
-## 开启自动战斗时重置锚点与搜索节流（3.14：锚点半径内搜怪，避免跑远）。
+## 开启自动战斗时重置搜索节流。
 func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 	if battle and _player != null:
-		_anchor = _player.global_position
 		_search_t = 0.0
 		_repath_t = 0.0
 		_stuck_count = 0
@@ -156,7 +154,6 @@ func _physics_process(delta: float) -> void:
 			_set_state(State.MANUAL_OVERRIDE, "手动接管 · %d 秒后恢复" % ceili(_manual_t))
 			return
 		_toast("自动战斗恢复", "info")
-		_anchor = _player.global_position
 
 	_tick(delta)
 
@@ -258,18 +255,20 @@ func _try_drink() -> bool:
 
 # ---- 目标搜索 ----
 
-## 锚点半径内搜索敌人（3.14）。排除 Boss（除非设置允许）、黑名单目标。
+## 当前画面可见区域内搜索敌人（3.14）。排除 Boss（除非设置允许）、黑名单目标。
 ## M1 目标优先级：距离最近；同距离取血量更低者（「优先低代价 / 弱目标」的最小实现）。
 func _find_target() -> Node:
 	# 明确选中的目标优先；黑名单仍生效，避免不可达目标循环。
 	if _player.target_is_manual and _player.valid_target(_player.locked_target) and not _is_blacklisted(_player.locked_target):
 		return _player.locked_target
-	var radius := float(GameState.settings.get("searchRadius", 12)) * Iso.TILE_W
 	var allow_boss := bool(GameState.settings.get("allowBoss", false))
 	var best: Node = null
 	var best_dist := INF
 	var best_hp := INF
-	for e in get_tree().get_nodes_in_group("enemies"):
+	var world := get_tree().get_first_node_in_group("map_world")
+	if world == null or not world.has_method("visible_enemies"):
+		return null
+	for e in world.visible_enemies():
 		if not is_instance_valid(e) or e.get("is_dead") == true or not (e is Node2D):
 			continue
 		if _is_blacklisted(e):
@@ -278,9 +277,7 @@ func _find_target() -> Node:
 			var tpl = e.get("template")
 			if tpl is Dictionary and String(tpl.get("kind", "normal")) == "boss":
 				continue
-		var d := _anchor.distance_to((e as Node2D).global_position)
-		if d > radius:
-			continue
+		var d := _player.global_position.distance_to((e as Node2D).global_position)
 		var hp_v = e.get("hp")           # Node.get 只接受 1 个参数（无默认值重载）
 		var hp := float(hp_v) if hp_v != null else 0.0
 		if d < best_dist - 0.001 or (absf(d - best_dist) <= 0.001 and hp < best_hp):
