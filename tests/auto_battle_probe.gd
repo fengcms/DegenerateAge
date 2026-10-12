@@ -88,7 +88,8 @@ func _ready() -> void:
 	await get_tree().process_frame
 	var loot_root: Node = game.get_node("LootRoot")
 	var far: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
-	far.pickup_delay = 0.0
+	far.auto_claim = false   # 未认领地面物（工程文档 10）：验「顺路拾取」兜底路径
+	far.hold_time = 0.0
 	# 用不可堆叠的装备（药水会叠进已有堆，`inventory_used()` 不增，不便断言）
 	far.item = {
 		"kind": "equip", "itemId": "helmet_cloth", "instanceId": "probe_far",

@@ -25,6 +25,10 @@ extends Node
 ##   · 药水使用接口尚未接线 → 危险血量进入 RECOVER 停寻怪并提示，不自动送死；
 ##   · 地图为无障碍开阔地，接近采用「直线趋近 + 节流重算」替代 A*；
 ##     卡住检测与黑名单机制与地图形态无关，M3 换 TileMap 后可直接复用。
+##   · **顺路拾取已降级为兜底**（工程文档 10 方案 C）：怪物掉落物**生成即认领**并
+##     `remove_from_group("ground_items")`，本文件遍历的组里直接没有它，故以下
+##     SEARCH_LOOT / PATH_TO_LOOT / PICK_UP 三态**零改动**，仅服务于「背包满留地」与
+##     （未来的）「玩家丢弃」等**未认领**的地面物。`G` 开关语义不变。
 
 enum State {
 	OFF,
@@ -253,6 +257,8 @@ func _find_target() -> Node:
 	return best
 
 ## 顺路拾取目标（9.9）；T10：背包满时排除需要入包的掉落物（金币不受背包限制）。
+## 注：怪物掉落物生成即认领并已离组（工程文档 10），故此路径通常只命中**未认领**的
+## 留地物（背包满遗留 / 未来的玩家丢弃物）——属兜底，不影响主循环收益。
 func _find_loot() -> GroundItem:
 	var radius := LOOT_SEARCH_RADIUS * Iso.TILE_W
 	var best: GroundItem = null

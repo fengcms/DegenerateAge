@@ -278,8 +278,8 @@ func _settle_rewards() -> void:
 		return
 
 	var rolled := Loot.roll(table_id)
-	for it in rolled:
-		_spawn_drop(it)
+	for i in range(rolled.size()):
+		_spawn_drop(rolled[i], i)
 	_announce_drops(rolled)
 
 ## 聚合广播一条掉落提示：如「腐化野狼 掉落：金币 ×6 · 生命药水 · 稀有 布甲头盔 Lv2」。
@@ -293,7 +293,8 @@ func _announce_drops(items: Array) -> void:
 	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(PackedStringArray(parts))], "drop")
 
 ## 在死亡位置附近生成一件地面掉落物（7.6 / 9.9）。
-func _spawn_drop(item: Dictionary) -> void:
+## `index` 为同批序号：用于 `stagger_delay` 起飞错峰，避免多件同时飞行叠成一坨。
+func _spawn_drop(item: Dictionary, index: int = 0) -> void:
 	if item.is_empty():
 		return
 	var layer := get_tree().get_first_node_in_group("loot_root")
@@ -301,6 +302,8 @@ func _spawn_drop(item: Dictionary) -> void:
 		return
 	var gi: GroundItem = GROUND_ITEM_SCENE.instantiate()
 	gi.item = item
+	gi.auto_claim = true   # 怪物掉落 = 生成即认领（工程文档 10 方案 C）
+	gi.stagger_delay = minf(float(index) * GroundItem.STAGGER_PER_ITEM, GroundItem.STAGGER_MAX)
 	layer.add_child(gi)
 	var ang := _rng.randf() * TAU
 	var r := _rng.randf() * DROP_SCATTER

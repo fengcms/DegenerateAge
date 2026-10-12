@@ -24,6 +24,15 @@ const AUTOSAVE_DEBOUNCE := 0.6
 ## 当前活动槽：自动存 / 退出存写入该槽。-1 = 未开档（新游戏未手动存过，不做任何自动写盘）。
 var active_slot: int = -1
 
+## 自动存总开关。
+var autosave_enabled: bool = true
+## 测试场景下是否**强制**允许自动存。
+## 默认 false → 运行 `res://tests/*` 的开发期工具时自动存**自动关闭**（见 _autosave_allowed）。
+## 原因（实测事故，M1-10 后）：测试工具会 `GameState.reset_to_defaults()` / 大量击杀升级，
+## 而启动续档后 `active_slot` 指向玩家真实槽位 → 自动存/退出存会把玩家存档**写坏**。
+## 需要压测自动存路径的工具（`SoakTest`，其自行快照 / 还原整个存档目录）可显式置 true。
+var autosave_in_tests: bool = false
+
 var _since_last_save: float = 0.0
 var _debounce: float = -1.0
 ## 应用存档过程中抑制自动存（读档回写不应触发新一轮写盘）。
@@ -132,23 +141,38 @@ func save_slot(slot: int, silent: bool = false) -> bool:
 
 ## 自动存（定时 / 关键事件 / 退出）：静默成功，失败必提示。
 func autosave(_reason: String) -> bool:
-	if active_slot < 0:
+	if not _autosave_allowed():
 		return false
 	return save_slot(active_slot, true)
 
 ## 退出存（10.3）。此时已无法交互，失败仅报错。
 func save_on_quit() -> void:
-	if active_slot < 0:
+	if not _autosave_allowed():
 		return
 	if save_slot(active_slot, true):
 		print("[SaveManager] 退出存档完成（槽 %d）" % active_slot)
 
 ## 关键事件触发的去抖存（升级 / 穿戴 / 交易 / 任务 / 切图）。
-## 未开档（active_slot < 0）或正在读档时忽略——避免"新游戏把旧档写坏"。
+## 未开档（active_slot < 0）、正在读档、或不允许自动存时忽略——避免"新游戏 / 测试把旧档写坏"。
 func request_autosave() -> void:
-	if _suppress_autosave or active_slot < 0:
+	if not _autosave_allowed():
 		return
 	_debounce = AUTOSAVE_DEBOUNCE
+
+## 是否允许自动存 / 退出存写盘。
+## 三重闸门：① 已开档；② 不在读档抑制期；③ 总开关开且（非测试场景 或 显式放开测试）。
+func _autosave_allowed() -> bool:
+	if active_slot < 0 or _suppress_autosave or not autosave_enabled:
+		return false
+	if not autosave_in_tests and _is_test_scene():
+		return false
+	return true
+
+## 当前主场景是否为 `res://tests/` 下的开发期工具。
+## 这类工具会重置 / 大幅改动 GameState，若允许自动存会把玩家真实存档写坏（实测事故）。
+func _is_test_scene() -> bool:
+	var cs := get_tree().current_scene
+	return cs != null and String(cs.scene_file_path).begins_with("res://tests/")
 
 func _connect_events() -> void:
 	EventBus.player_leveled.connect(func(_lv: int) -> void: request_autosave())

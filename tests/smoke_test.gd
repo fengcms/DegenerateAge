@@ -27,7 +27,7 @@ func _ready() -> void:
 	_test_balance_calibration()
 	_test_inventory()
 	await _test_pickup()
-	await _test_pickup_delay()
+	await _test_claim_fly()
 	_test_equipment()
 	_test_shop()
 	await _test_trade_panel()
@@ -387,6 +387,7 @@ func _test_inventory() -> void:
 # ---- M1-6：靠近自动拾取 / T10 满包留地（9.9）----
 func _test_pickup() -> void:
 	GameState.reset_to_defaults()
+	GameState.settings["dropFlyAnim"] = false   # 本用例验「入包」语义：关掉飞行表现以便即时判定
 	var loot_root := Node2D.new()
 	loot_root.add_to_group("loot_root")
 	add_child(loot_root)
@@ -398,7 +399,7 @@ func _test_pickup() -> void:
 
 	# 金币：靠近 → 直接入账（不占背包）
 	var gi: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
-	gi.pickup_delay = 0.0   # 本用例验即时拾取语义，关闭落地保护期
+	gi.hold_time = 0.0   # 本用例验即时拾取语义，关闭停驻 / 保护期
 	gi.item = {"kind": "coin", "itemId": "coin", "gold": 7, "count": 1}
 	loot_root.add_child(gi)
 	gi.global_position = Vector2(20.0, 0.0)
@@ -409,7 +410,7 @@ func _test_pickup() -> void:
 
 	# 药水：靠近 → 入背包
 	var gi2: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
-	gi2.pickup_delay = 0.0
+	gi2.hold_time = 0.0
 	gi2.item = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
 	loot_root.add_child(gi2)
 	gi2.global_position = Vector2(20.0, 0.0)
@@ -422,7 +423,7 @@ func _test_pickup() -> void:
 	for i in range(40):
 		Inventory.add(GameState.inventory, {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "z%d" % i, "count": 1})
 	var gi3: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
-	gi3.pickup_delay = 0.0
+	gi3.hold_time = 0.0
 	gi3.item = {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "ll", "count": 1}
 	loot_root.add_child(gi3)
 	gi3.global_position = Vector2(20.0, 0.0)
@@ -435,11 +436,14 @@ func _test_pickup() -> void:
 	loot_root.queue_free()
 	await get_tree().process_frame
 
-## M1-6 补：落地保护期（掉落可见性）。
-## 生成后 PICKUP_DELAY 秒内不自动拾取，保证「击杀 → 看到掉落 → 再入包」；
-## 否则近战击杀距离（≤1 格）必然小于自动拾取半径（1.5 格），掉落物 1 物理帧内即被吸走。
-func _test_pickup_delay() -> void:
+## M1-6 改（工程文档 10 方案 C）：**生成即认领 + 飞行表现**。
+## 契约：① 掉落产生即入包（**与玩家距离无关** → 挂机 0 丢件，解掉 M1-6 的丢件根因）；
+##       ② 认领后脱离 `ground_items` 组（顺路拾取 / 观测工具自动看不见它）；
+##       ③ 节点在 HOLD/FLY 期间保留（「看得见」），动画结束回收（不泄漏）；
+##       ④ `auto_claim=false`（玩家丢弃物）保留旧地面语义（停驻期 + 靠近拾取）。
+func _test_claim_fly() -> void:
 	GameState.reset_to_defaults()
+	GameState.settings["dropFlyAnim"] = true
 	var loot_root := Node2D.new()
 	loot_root.add_to_group("loot_root")
 	add_child(loot_root)
@@ -448,24 +452,41 @@ func _test_pickup_delay() -> void:
 	player.global_position = Vector2.ZERO
 	await get_tree().physics_frame
 
+	# 玩家故意站到很远：若「认领」依赖靠近，本用例就不会入账
+	player.global_position = Vector2(900.0, 900.0)
+
 	var gi: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
 	gi.item = {"kind": "coin", "itemId": "coin", "gold": 9, "count": 1}
 	loot_root.add_child(gi)
-	gi.global_position = Vector2(20.0, 0.0)   # 明显落在自动拾取半径（1.5 格 = 96px）内
+	gi.global_position = Vector2(20.0, 0.0)
 
-	var delay: float = gi.pickup_delay
-	_expect(delay > 0.0, "地面掉落物默认应有落地保护期，实际 %.2f" % delay)
+	# ① 生成即入包（与玩家位置无关 → 挂机不丢件）
+	_expect(GameState.gold == 9,
+		"掉落应在生成当帧入包（与玩家距离无关），实际金币 %d" % GameState.gold)
+	# ② 认领后脱离 ground_items 组 + 标记为已认领
+	_expect(not gi.is_in_group("ground_items"),
+		"认领后应脱离 ground_items 组（顺路拾取 / 观测工具不再看到它）")
+	_expect(gi.is_claimed(), "生成即认领的掉落物应标记为已认领")
+	# ③ 动画期间保留可见，随后回收
+	_expect(is_instance_valid(gi), "认领物应在停驻 / 飞行期间保留（供玩家看见）")
+	await get_tree().create_timer(GroundItem.HOLD_TIME + GroundItem.FLY_TIME + 0.8).timeout
+	_expect(not is_instance_valid(gi), "飞行动画结束后应回收掉落物节点（不泄漏）")
 
-	# 保护期内：连续物理帧后仍留在地面，且未入账
+	# ④ 未认领（玩家丢弃物）：保留地面语义 —— 停驻期内不入包，靠近后入包
+	var gi2: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi2.auto_claim = false
+	gi2.item = {"kind": "coin", "itemId": "coin", "gold": 5, "count": 1}
+	loot_root.add_child(gi2)
+	gi2.global_position = Vector2(20.0, 0.0)
+	var gold_before: int = GameState.gold
 	for _i in range(3):
 		await get_tree().physics_frame
-	_expect(is_instance_valid(gi), "落地保护期内不应被自动拾取（掉落可见性）")
-	_expect(GameState.gold == 0, "落地保护期内不应入账，实际 %d" % GameState.gold)
-
-	# 保护期结束后：玩家仍在范围内 → 自动入包
-	await get_tree().create_timer(delay + 0.2).timeout
-	_expect(not is_instance_valid(gi), "保护期结束后应被自动拾取")
-	_expect(GameState.gold == 9, "保护期结束后金币应入账 9，实际 %d" % GameState.gold)
+	_expect(gi2.is_in_group("ground_items"), "未认领物应仍留在 ground_items 组（顺路拾取兜底）")
+	_expect(GameState.gold == gold_before, "未认领物在停驻期内不应入包，实际 %d" % GameState.gold)
+	player.global_position = Vector2.ZERO   # 走回拾取半径内
+	await get_tree().create_timer(GroundItem.HOLD_TIME + 0.3).timeout
+	_expect(GameState.gold == gold_before + 5, "未认领物在停驻期结束后应被靠近拾取")
+	_expect(not is_instance_valid(gi2), "拾取后未认领物应被移除")
 
 	player.queue_free()
 	loot_root.queue_free()

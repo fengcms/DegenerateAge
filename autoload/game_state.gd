@@ -82,6 +82,7 @@ func default_settings() -> Dictionary:
 		"potionThreshold": 0.35,      # 3.14 喝药血量阈值
 		"searchRadius": 12,           # 3.14 搜索半径（格）
 		"allowBoss": false,           # 3.14 自动战斗是否允许 Boss
+		"dropFlyAnim": true,          # 10：拾取飞行动画（关 = 入包后立即消失）
 		"masterVolume": 1.0,
 		"sfxVolume": 1.0,
 		"uiScale": 1.0,

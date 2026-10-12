@@ -13,13 +13,15 @@ extends Node
 ## 参数（`--` 之后）：--soak=秒数（默认 600）｜--interval=秒数（默认 5）｜--no-ui-stress
 ##
 ## 压测内容（真实主场景 Main.tscn，不是 Game.tscn——后者没有 UI 层）：
-##   · 自动战斗 + 自动拾取**常开**，持续刷怪 / 掉落 / 拾取 / 升级 / 结算
-##   · 每 interval 秒采样：帧率 / 节点数 / 对象数 / **孤儿节点** / 静态内存 / 场上怪物与掉落物
-##     / 累计击杀 / 等级 / 金币 / 背包占用 / 自动战斗状态
+##   · 自动战斗 + 自动拾取**常开**，持续刷怪 / 掉落 / 认领 / 飞行 / 升级 / 结算
+##   · 每 interval 秒采样：帧率 / 节点数 / 对象数 / **孤儿节点** / 静态内存 / 场上怪物与
+##     **留地掉落物**（工程文档 10 起：怪物掉落生成即认领并脱离 ground_items 组，
+##     故该采样通常为 0；>0 表示「背包满留地」等**未认领**物）/ 累计击杀 / 等级 / 金币 /
+##     背包占用 / 自动战斗状态
 ##   · 每 60s 一次交互脉冲：开关背包面板、开关存档面板、0.6s 手动移动接管（压 UI 与 4.6 分支）、
-##     清空场上怪物 4s（观察 3.14 / 9.9 的「搜索掉落 → 顺路拾取」路径）、
-##     把地面掉落物扫进背包（模拟玩家主动拾取；否则持续刷怪会让掉落物单调堆积——那是
-##     设计行为而非泄漏，会掩盖真正的节点泄漏信号）、背包接近满时模拟回城卖装备
+##     清空场上怪物 4s（观察兜底的「搜索掉落 → 顺路拾取」路径——仅在存在未认领留地物时触发）、
+##     把留地掉落物扫进背包（兜底：背包满时掉落物会留地待清，否则会单调堆积掩盖泄漏信号）、
+##     背包接近满时模拟回城卖装备
 ##   · 低血注水：HP < 50% 时补满（M1 无自动喝药，否则会停在 RECOVER 不再作战）——
 ##     属压测注水，只为保证持续负载，报告中单独计数说明
 ##
@@ -83,6 +85,9 @@ func _ready() -> void:
 	# 0) 现场保护：快照整个 saves 目录（含 last_slot.json 与各槽的 .bak/.tmp/.corrupt）
 	_save_snapshot = _snapshot_saves()
 	_prev_active = SaveManager.active_slot
+	# 本工具**主动压测自动存路径**（写 3 号槽），且已快照 / 还原整个存档目录 → 显式放开。
+	# 其余 tests/ 工具默认被 SaveManager 自动存的「测试场景闸门」挡住，不会写坏玩家存档。
+	SaveManager.autosave_in_tests = true
 
 	# 1) 起步角色：L5（与 4.4 成长一致），保证长跑期间持续作战
 	GameState.reset_to_defaults()
@@ -207,7 +212,7 @@ func _sample(elapsed: float, gap: float) -> void:
 	}
 	_samples.append(s)
 	_check_inventory()
-	print("[Soak] t=%6.1fs fps=%6.0f gap=%.2fs 节点=%5d 对象=%6d 孤儿=%d 内存=%4.0fMB 怪=%2d 掉落=%3d 击杀=%3d Lv%2d 金=%7d 包=%2d %s%s" % [
+	print("[Soak] t=%6.1fs fps=%6.0f gap=%.2fs 节点=%5d 对象=%6d 孤儿=%d 内存=%4.0fMB 怪=%2d 留地=%3d 击杀=%3d Lv%2d 金=%7d 包=%2d %s%s" % [
 		elapsed, fps, gap, nodes, objects, orphan, mem_mb, enemies, drops,
 		_kills, int(GameState.player.level), GameState.gold,
 		GameState.inventory_used(), state,
@@ -306,8 +311,9 @@ func _stress_pulse() -> void:
 		int(swept.get("took", 0)), int(swept.get("gold", 0)), cleaned,
 		GameState.inventory_used()])
 
-## 把地面战斗掉落扫进背包 / 金币入账（模拟玩家主动拾取，9.9）。
-## 背包满的件留在地上（不静默丢失）；地面物品另有 60s 生命周期兜底。
+## 把**未认领**的留地掉落物扫进背包 / 金币入账（兜底；9.9）。
+## 工程文档 10 起怪物掉落生成即认领，本路径主要服务「背包满留地」遗留物；
+## 背包满的件留在地上（不静默丢失），地面物品另有 60s 生命周期兜底。
 func _sweep_drops() -> Dictionary:
 	var took := 0
 	var coins := 0
@@ -456,9 +462,9 @@ func _write_reports() -> void:
 		_levels, START_LEVEL, int(last.get("level", START_LEVEL))])
 	lines.append("| 累计经验 | %d |" % _xp_gained)
 	lines.append("| 卖出装备 | %d 件（+%d 金币）|" % [_sold, _gold_sold])
-	lines.append("| 模拟拾取 | %d 件 + %d 金币（掉落物后台清理，模拟玩家主动拾取）|" % [
+	lines.append("| 模拟拾取 | %d 件 + %d 金币（未认领留地物兜底清理）|" % [
 		_swept_items, _swept_gold])
-	lines.append("| 顺路拾取触发 | %d 次（清场后观察到 PATH_TO_LOOT）|" % _loot_paths)
+	lines.append("| 顺路拾取触发 | %d 次（清场后观察到 PATH_TO_LOOT；仅命中未认领留地物，属兜底）|" % _loot_paths)
 	lines.append("| 低血注水 | %d 次（M1 无自动喝药，压测注水）|" % _heals)
 	lines.append("| 玩家死亡 | %d 次 |" % _deaths)
 	lines.append("| 最大采样间隔 | %.2fs（超阈值 %d 次）|" % [_max_gap, _gap_overruns])
@@ -473,14 +479,14 @@ func _write_reports() -> void:
 		float(first.get("memMB", 0.0)), float(last.get("memMB", 0.0))])
 	lines.append("| 场上怪物 | %d → %d |" % [
 		int(first.get("enemies", 0)), int(last.get("enemies", 0))])
-	lines.append("| 地面掉落物 | %d → %d |" % [
+	lines.append("| 留地掉落物（未认领） | %d → %d |" % [
 		int(first.get("drops", 0)), int(last.get("drops", 0))])
 	lines.append("| 金币 | %d → %d |" % [
 		int(first.get("gold", 0)), int(last.get("gold", 0))])
 	lines.append("")
 	lines.append("## 采样曲线（降采样）")
 	lines.append("")
-	lines.append("| t(s) | 帧率 | 节点 | 对象 | 孤儿 | 内存MB | 怪 | 掉落 | 击杀 | Lv | 金币 | 包 | 自动状态 |")
+	lines.append("| t(s) | 帧率 | 节点 | 对象 | 孤儿 | 内存MB | 怪 | 留地 | 击杀 | Lv | 金币 | 包 | 自动状态 |")
 	lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 	var step := maxi(1, int(float(n) / 12.0))
 	var i := 0
