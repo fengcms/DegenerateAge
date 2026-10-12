@@ -76,7 +76,14 @@ func _ready() -> void:
 	_check(GameState.hotbar[6].id == "basic_slash", "已接通技能可拖入")
 	_check(not hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "earth_cleave"}),
 		"未接通技能不可拖入")
-	hud._hotbar_buttons[6].clear_requested.emit(6)
+	var right := InputEventMouseButton.new()
+	right.position = hud._hotbar_buttons[6].get_global_rect().get_center()
+	right.global_position = right.position
+	right.button_index = MOUSE_BUTTON_RIGHT
+	right.button_mask = MOUSE_BUTTON_MASK_RIGHT
+	right.pressed = true
+	get_viewport().push_input(right, true)
+	await get_tree().process_frame
 	_check(GameState.hotbar[6] == null, "右键清空绑定")
 	GameState.inventory[0] = null
 	EventBus.inventory_changed.emit()
@@ -89,6 +96,13 @@ func _ready() -> void:
 	GameState.organize_inventory()
 	_check(GameState.hotbar[5].id == "potion_hp_small" and hud._hotbar_buttons[5]._count.text == "3",
 		"背包整理不破坏模板绑定")
+	inventory.set_open(false)
+	GameState.player.hp = GameState.max_hp() - 50
+	hud._activate_hotbar(5)
+	await get_tree().process_frame
+	_check(GameState.player.hp == GameState.max_hp() and hud._hotbar_buttons[5]._count.text == "2",
+		"拖入的具体药品可使用且库存同步减少")
+	_check(not hud._hotbar_buttons[5]._cooldown.text.is_empty(), "药品格显示冷却")
 	print("[HotbarUiTest] ", "全部通过 ✅" if _errors.is_empty() else str(_errors))
 	get_tree().quit(0 if _errors.is_empty() else 1)
 

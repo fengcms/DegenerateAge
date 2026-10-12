@@ -245,20 +245,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _try_interact():
 			get_viewport().set_input_as_handled()
 
-## 快捷键喝药（M2.5）。挑不出可用瓶时，若背包里有该颜色药水则交给 use() 给出精确原因
-## （已满 / 冷却中），否则明确提示「背包中没有」——不静默。
-func _use_potion(kind: String) -> void:
-	var idx := Consumable.pick_index(kind)
-	if idx >= 0:
-		GameState.use_item(idx)
-		return
-	var any_idx := Consumable.first_index_of_kind(kind)
-	if any_idx >= 0:
-		GameState.use_item(any_idx)
-		return
-	EventBus.toast_requested.emit(
-		"背包中没有%s" % ("红药" if kind == Consumable.KIND_RED else "蓝药"), "danger")
-
 ## 玩家身上的自动战斗决策机（M1-9；测试场景中可能不存在 → 返回 null）。
 func auto_pilot() -> AutoBattle:
 	if _player == null or not is_instance_valid(_player):

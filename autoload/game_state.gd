@@ -387,8 +387,12 @@ func use_item(inv_index: int) -> Dictionary:
 			return Consumable.use(inv_index)
 		"equip":
 			return equip_from_inventory(inv_index)
+		"misc":
+			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.TOWN_SCROLL:
+				return TravelItem.use_town_scroll(inv_index)
 		_:
 			return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))
+	return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))
 
 func _use_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")

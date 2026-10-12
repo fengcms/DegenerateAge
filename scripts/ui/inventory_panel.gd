@@ -9,7 +9,8 @@ extends Control
 ##   悬停显示属性；装备类物品同时显示同槽已穿戴对比与评分高低（5.9）。
 ##   面板打开时屏蔽角色操控（不暂停世界模拟，见 player.gd）。
 ## 交易会话（M1-8 改造）：货郎开店时本面板**不关闭**，改为与货郎面板**并列**显示——
-##   左半屏背包、右半屏货郎；背包格开放拖出（ItemSlot），可把装备拖到货郎的出售托盘（6.4）。
+##   左半屏背包、右半屏货郎；背包格可把装备拖到出售托盘（6.4）。
+## 通常打开时，可用药品/回城卷也可拖至 HUD 快捷栏；装备仍只在交易时开放拖出。
 ## 占位素材（R5）：格内以模板名前 2 字 + 品质色描边表现，不加载图标。
 ## 拖拽丢弃 / 自动整理（5.8）留待 M4。
 
@@ -241,7 +242,7 @@ func _make_slot() -> Button:
 	_apply_slot_base(b)
 	return b
 
-## 背包格：使用 ItemSlot（交易会话中可拖出到货郎的出售托盘）。
+## 背包格：使用 ItemSlot（可用物品拖到快捷栏；交易时装备可拖到出售托盘）。
 ## 装备槽仍是普通 Button——卸下走点击，不需要拖放。
 func _make_item_slot(role: int, index: int) -> ItemSlot:
 	var b := ItemSlot.new()
@@ -430,6 +431,9 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 		return out
 	if kind == "quest":
 		out.append("任务物品，不可使用")
+		return out
+	if kind == "misc" and item.get("itemId") == HotbarConfig.TOWN_SCROLL:
+		out.append("双击或拖到快捷栏使用；从野外返回幸存者营地")
 		return out
 	out.append("杂项物品，暂未开放使用（M4）")
 	return out

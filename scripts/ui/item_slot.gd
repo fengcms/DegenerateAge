@@ -23,7 +23,7 @@ signal item_dropped(tray_index: int, payload: Dictionary)
 var role: int = ROLE_BAG
 var index: int = -1              # 背包下标（ROLE_BAG）/ 托盘下标（ROLE_TRAY）
 var item: Dictionary = {}        # 当前格内物品实例（由面板在刷新时写入）
-var draggable: bool = false      # 是否允许拖出（仅交易会话中的背包格打开）
+var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交易装备 / 仓库存取）
 
 # ---- 拖出（ROLE_BAG）----
 

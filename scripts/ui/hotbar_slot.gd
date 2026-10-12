@@ -11,23 +11,44 @@ var _cooldown: Label
 
 func _ready() -> void:
 	_count = Label.new()
-	_count.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_count.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	_count.add_theme_font_size_override("font_size", 10)
+	_count.add_theme_constant_override("outline_size", 2)
 	_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_count)
 	_cooldown = Label.new()
-	_cooldown.set_anchors_preset(Control.PRESET_CENTER)
+	_cooldown.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cooldown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cooldown.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_cooldown.add_theme_font_size_override("font_size", 12)
 	_cooldown.add_theme_color_override("font_color", Color("ffcb71"))
 	_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_cooldown)
 
 func _process(_delta: float) -> void:
-	if entry is Dictionary and String(entry.kind) == "potion":
-		var left := Consumable.cd_of(String(entry.id))
+	if entry is Dictionary and ["potion", "auto_potion"].has(String(entry.kind)):
+		var left := _remaining_cooldown()
 		_cooldown.text = "%.0fs" % ceilf(left) if left > 0.0 else ""
 	else:
 		_cooldown.text = ""
+
+func _remaining_cooldown() -> float:
+	if String(entry.kind) == "potion":
+		return Consumable.cd_of(String(entry.id))
+	var minimum := INF
+	for raw in GameState.inventory:
+		if not raw is Dictionary or raw.get("kind") != "potion":
+			continue
+		var template = DataLoader.get_entry("potions", String(raw.get("itemId", "")))
+		if not template is Dictionary or template.get("kind") != entry.id:
+			continue
+		var remaining := Consumable.cd_of(String(raw.itemId))
+		if remaining <= 0.0:
+			return 0.0
+		minimum = minf(minimum, remaining)
+	return 0.0 if minimum == INF else minimum
 
 func set_count(amount: int) -> void:
 	_count.text = str(amount) if amount > 0 else ""
