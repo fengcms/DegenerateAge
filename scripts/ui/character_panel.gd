@@ -115,7 +115,7 @@ func _refresh() -> void:
 		var button: Button = _slots[sid]
 		var item: Variant = GameState.equipment.get(sid)
 		button.text = "%s：%s" % [String(def.label), ItemUtil.display_name(item) if item is Dictionary else "空"]
-		button.tooltip_text = InventoryPanelTooltip.describe(item) if item is Dictionary else "空槽"
+		button.tooltip_text = _equipment_tooltip(item) if item is Dictionary else "空槽"
 		button.disabled = not item is Dictionary
 	var p := GameState.player
 	var bonus := GameState.equip_bonus()
@@ -135,3 +135,8 @@ func _unequip(slot_id: String) -> void:
 	if not bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(String(result.get("reason", "卸下失败")), "danger")
 	_refresh()
+
+func _equipment_tooltip(item: Dictionary) -> String:
+	var lines: Array[String] = [ItemUtil.display_name(item)]
+	lines.append_array(ItemUtil.attr_lines(item))
+	return "\n".join(PackedStringArray(lines))
