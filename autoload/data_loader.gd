@@ -213,8 +213,10 @@ func validate_all() -> Array[String]:
 				if typeof(npc) != TYPE_DICTIONARY:
 					continue
 				var role := String(npc.get("role", ""))
-				if role != "shop" and role != "quest" and role != "carter":
-					report.append("[maps] %s 的 npc role '%s' 非法（应为 shop / quest / carter）" % [mid_map, role])
+				if role != "shop" and role != "quest" and role != "carter" and role != "blacksmith":
+					report.append("[maps] %s 的 npc role '%s' 非法（应为 shop / quest / carter / blacksmith）" % [mid_map, role])
+				if role == "blacksmith" and (String(npc.get("npcName", "")).is_empty() or String(npc.get("greeting", "")).is_empty()):
+					report.append("[maps] %s 的铁匠缺少 npcName 或 greeting" % mid_map)
 				var sid := String(npc.get("shopId", ""))
 				if role == "shop" and not shop_ids.has(sid):
 					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])

@@ -7,7 +7,7 @@ const NPC_SCENE := preload("res://scenes/entities/Npc.tscn")
 ## 世界按「当前地图」数据驱动装配（M3-1）：
 ##   · 怪物点 → `maps.json` 的 `spawnPoints`（`MonsterSpawner.spawn_from_map`）
 ##   · Boss 点 → `maps.json` 的 `bossSpawn`（含墓碑刷新，M3-5 启用墓碑实体）
-##   · NPC    → `maps.json` 的 `npcs`（货郎 / 任务官 / 车夫）
+##   · NPC    → `maps.json` 的 `npcs`（货郎 / 任务官 / 车夫 / 铁匠）
 ## 切图 = 重载场景（`MapService.travel_to`，拍板 D1-A）：旧图实体随场景一并销毁（T15）。
 ## ⚠ 原 M1/M2 单图期的 `TEST_SPAWNS` / `TEST_ELITES` / `TEST_NPCS` 硬编码已随 M3 恢复清单移除
 ##   （见工程文档 13 §6 R3 与 04「M5 移除清单」）；营地保留 3 只教学木桩（产品 07 §7.6，`ai:false`）。
@@ -28,10 +28,21 @@ const DEBUG_WEAPON_ID := "debug_blade_overpower"
 @onready var _damage_numbers: Node2D = $DamageNumbers
 
 var _explored_cell := Vector2i(-1, -1)
+var _pending_npc: Npc = null
 
 func _process(_delta: float) -> void:
 	if GameState.panel_open or _player.is_dead:
+		_pending_npc = null
 		return
+	if _pending_npc != null:
+		if not is_instance_valid(_pending_npc) or not _pending_npc.is_inside_tree():
+			_pending_npc = null
+		elif _pending_npc.is_player_in_range():
+			var arrived := _pending_npc
+			_pending_npc = null
+			_interact_with(arrived)
+		elif not _player.map_move_active:
+			_pending_npc = null
 	var cell := Vector2i(Iso.world_to_grid(_player.global_position).round())
 	if cell != _explored_cell:
 		_explored_cell = cell
@@ -130,6 +141,7 @@ func _spawn_npcs() -> void:
 		npc.shop_id = String(spec.get("shopId", ""))
 		npc.role = String(spec.get("role", "shop"))
 		npc.npc_name = String(spec.get("npcName", ""))
+		npc.greeting = String(spec.get("greeting", ""))
 		npc.position = Iso.grid_to_world(_cell_of(spec))
 		_npcs.add_child(npc)
 
@@ -190,7 +202,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			cycle_target()
 			get_viewport().set_input_as_handled()
 			return
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if event is InputEventMouseButton and event.pressed and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
+			var npc := npc_at_screen(event.position)
+			if npc != null:
+				_request_npc_interaction(npc)
+				get_viewport().set_input_as_handled()
+				return
+			_pending_npc = null
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				_player.map_move_active = false
+				_player.manual_attack_active = false
+				_player.begin_manual_command()
+				get_viewport().set_input_as_handled()
+				return
 			var enemy := enemy_at_screen(event.position)
 			if enemy != null:
 				_player.request_target_attack(enemy)
@@ -252,21 +276,49 @@ func auto_pilot() -> AutoBattle:
 
 ## 就近与 NPC 交互：成功派发返回 true（6.3 通用交互入口，后续对话系统 9.8 在此扩展）。
 ## M2：按 NPC role 派发 —— quest = 任务面板，shop = 货郎面板；
-## M3-2：carter = 车夫面板（跨图出行）。
+## M3-2：carter = 车夫面板（跨图出行）；M4-2：blacksmith = 铁匠对话。
 func _try_interact() -> bool:
 	var npc := nearest_npc()
 	if npc == null:
 		return false
+	_pending_npc = null
+	return _interact_with(npc)
+
+func _interact_with(npc: Npc) -> bool:
 	if npc.role == "quest":
 		EventBus.quest_panel_requested.emit(npc.npc_name)
 		return true
 	if npc.role == "carter":
 		EventBus.carter_panel_requested.emit(npc.npc_name)
 		return true
+	if npc.role == "blacksmith":
+		EventBus.blacksmith_panel_requested.emit(npc.npc_name, npc.greeting)
+		return true
 	if not npc.shop_id.is_empty():
 		EventBus.shop_open_requested.emit(npc.shop_id)
 		return true
 	return false
+
+## 鼠标点击 NPC：近距离直接对话，远距离先步行到 NPC，进入 2 格范围后自动打开。
+func _request_npc_interaction(npc: Npc) -> void:
+	_pending_npc = null
+	if npc.is_player_in_range():
+		_interact_with(npc)
+	elif _player.request_map_move(_ground.clamp_to_map(npc.global_position)):
+		_pending_npc = npc
+
+func npc_at_screen(point: Vector2) -> Npc:
+	var best: Npc = null
+	var best_distance := INF
+	for child in _npcs.get_children():
+		var npc := child as Npc
+		if npc == null or not npc.contains_screen_point(point):
+			continue
+		var distance := npc.get_global_transform_with_canvas().origin.distance_squared_to(point)
+		if distance < best_distance:
+			best = npc
+			best_distance = distance
+	return best
 
 ## 交互半径内的最近 NPC（无则 null）。
 func nearest_npc() -> Npc:

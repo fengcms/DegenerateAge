@@ -50,6 +50,10 @@ signal quest_panel_requested(npc_name: String)
 signal carter_panel_requested(npc_name: String)
 signal map_traveled(from_id: String, to_id: String)
 
+# ---- 铁匠 / 升星（M4）----
+signal blacksmith_panel_requested(npc_name: String, greeting: String)
+signal upgrade_panel_requested()
+
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)
 signal panel_opened(panel_id: String)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Game.tscn" id="2_game"]
@@ -11,6 +11,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/ui/MapBigPanel.tscn" id="9_map"]
 [ext_resource type="PackedScene" path="res://scenes/ui/UpgradePanel.tscn" id="10_upgrade"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BlacksmithPanel.tscn" id="11_blacksmith"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -34,6 +35,8 @@ script = ExtResource("1_main")
 [node name="MapBigPanel" parent="UI" instance=ExtResource("9_map")]
 
 [node name="UpgradePanel" parent="UI" instance=ExtResource("10_upgrade")]
+
+[node name="BlacksmithPanel" parent="UI" instance=ExtResource("11_blacksmith")]
 
 [node name="DragLayer" type="Control" parent="UI" groups=["drag_ghost_layer"]]
 anchors_preset = 15

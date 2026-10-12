@@ -4,8 +4,8 @@ extends Node2D
 ##
 ## 占位素材（R5）：程序化绘制斗篷人形；头顶名称 / 提示用 Label（走项目主题的
 ## SystemFont CJK 字体，避免 draw_string 用引擎内置字体导致中文方框）。
-## 交互派发：由 scripts/world/game.gd 统一处理 interact 键（E），本节点只暴露
-## shop_id 与近距判定，不自己抢输入（保持单一输入出口，便于 9.8 对话系统接管）。
+## 交互派发：由 scripts/world/game.gd 统一处理 E / 鼠标点击；本节点暴露
+## shop_id、近距和命中判定，不自己抢输入。
 ## 碰撞：MVP 不加碰撞体（避免把玩家卡住）；M3 补静态碰撞与逐句对话推进。
 
 ## 交互半径 2 格（6.3 安全区交互距离）
@@ -22,6 +22,8 @@ const COLOR_SKIN := Color("e8c9a0")
 @export var role: String = "shop"
 ## 头顶名称；为空时从配置表取名。
 @export var npc_name: String = ""
+## 文本配置的自我介绍，功能面板打开时显示。
+@export var greeting: String = ""
 
 var _near: bool = false
 var _phase: float = 0.0
@@ -60,7 +62,14 @@ func is_player_in_range() -> bool:
 		return false
 	return (p as Node2D).global_position.distance_to(global_position) <= INTERACT_RANGE
 
+## 屏幕点击命中：覆盖人物与头顶名称；由世界统一决定接近和交互。
+func contains_screen_point(point: Vector2) -> bool:
+	var local := get_global_transform_with_canvas().affine_inverse() * point
+	return Rect2(-38.0, -52.0, 76.0, 68.0).has_point(local)
+
 func _draw() -> void:
+	var cloak_color := Color("956b4b") if role == "blacksmith" else COLOR_CLOAK
+	var edge := Color("463226") if role == "blacksmith" else COLOR_CLOAK_EDGE
 	# 脚下阴影
 	draw_set_transform(Vector2(0.0, 8.0), 0.0, Vector2(1.0, 0.5))
 	draw_circle(Vector2.ZERO, 12.0, Color(0, 0, 0, 0.28))
@@ -70,17 +79,19 @@ func _draw() -> void:
 	var cloak := PackedVector2Array([
 		Vector2(-12.0, 10.0), Vector2(12.0, 10.0), Vector2(7.0, -6.0), Vector2(-7.0, -6.0),
 	])
-	draw_colored_polygon(cloak, COLOR_CLOAK)
+	draw_colored_polygon(cloak, cloak_color)
 	draw_polyline(PackedVector2Array([
 		Vector2(-12.0, 10.0), Vector2(12.0, 10.0), Vector2(7.0, -6.0),
 		Vector2(-7.0, -6.0), Vector2(-12.0, 10.0),
-	]), COLOR_CLOAK_EDGE, 1.5)
+	]), edge, 1.5)
 
 	# 头部
 	draw_circle(Vector2(0.0, -13.0), 6.5, COLOR_SKIN)
-	draw_arc(Vector2(0.0, -13.0), 6.5, 0.0, TAU, 20, COLOR_CLOAK_EDGE, 1.5, true)
+	draw_arc(Vector2(0.0, -13.0), 6.5, 0.0, TAU, 20, edge, 1.5, true)
 	# 兜帽（上半圆弧加粗）
-	draw_arc(Vector2(0.0, -13.0), 8.0, PI, TAU, 18, COLOR_CLOAK, 5.0, true)
+	draw_arc(Vector2(0.0, -13.0), 8.0, PI, TAU, 18, cloak_color, 5.0, true)
+	if role == "blacksmith":
+		draw_rect(Rect2(-7.0, -2.0, 14.0, 11.0), Color("55585d"))
 
 	# 靠近时脚下高亮圈（9.5 目标选中指示的简化版）
 	if _near:

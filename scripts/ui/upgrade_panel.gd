@@ -1,5 +1,5 @@
 extends Control
-## 升星十字面板（M4-1）。M4-2 铁匠 NPC 将通过 set_open 接入；如意格 M4-5 启用。
+## 升星十字面板（M4-1）。由铁匠对话的功能按钮打开；如意格 M4-5 启用。
 
 const PANEL_ID := "upgrade"
 const WIDTH := 560.0
@@ -26,11 +26,15 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_on_items_changed)
 	EventBus.equipment_changed.connect(_on_items_changed)
 	EventBus.gold_changed.connect(_on_gold_changed)
+	EventBus.upgrade_panel_requested.connect(_on_requested)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("pause"):
+	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
 		set_open(false)
 		get_viewport().set_input_as_handled()
+
+func _on_requested() -> void:
+	set_open(true)
 
 func set_open(open: bool) -> void:
 	visible = open

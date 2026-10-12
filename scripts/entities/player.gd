@@ -182,7 +182,7 @@ func _physics_process(delta: float) -> void:
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	manual_input_active = dir.length() > MANUAL_EPS
-	if manual_input_active or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+	if manual_input_active:
 		map_move_active = false
 		manual_attack_active = false
 	if Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:

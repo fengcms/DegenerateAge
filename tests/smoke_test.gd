@@ -32,6 +32,7 @@ func _ready() -> void:
 	await _test_claim_fly()
 	_test_equipment()
 	_test_upgrade()
+	await _test_blacksmith()
 	_test_shop()
 	await _test_trade_panel()
 	_test_debug_seed()
@@ -59,6 +60,58 @@ func _expect(cond: bool, msg: String) -> void:
 func _test_data_validation() -> void:
 	var report: Array[String] = DataLoader.validate_all()
 	_expect(report.is_empty(), "数据校验未通过：%s" % [report])
+
+func _test_blacksmith() -> void:
+	GameState.reset_to_defaults()
+	var item := _equip_instance("weapon_starter", "smith_weapon", {"atk": 10})
+	GameState.inventory[0] = item
+	GameState.add_gold(500)
+	var main := preload("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var world: Node = main.get_node("Game")
+	var player: Node2D = world.get_node("Entities/Player")
+	var smith: Npc = null
+	for child in world.get_node("Npcs").get_children():
+		if child is Npc and child.role == "blacksmith":
+			smith = child
+			break
+	_expect(smith != null, "营地应生成铁匠 NPC")
+	if smith != null:
+		_expect(world.npc_at_screen(smith.get_global_transform_with_canvas().origin) == smith,
+			"点击铁匠的人物区域应准确命中")
+		_expect(not smith.is_player_in_range(), "铁匠应与出生点有可辨识距离")
+		world._request_npc_interaction(smith)
+		_expect(player.map_move_active, "远距离点击铁匠应开始自动靠近")
+		player.global_position = smith.global_position + Vector2(32.0, 0.0)
+		world._process(0.0)
+		var dialogue: Control = main.get_node("UI/BlacksmithPanel")
+		var upgrade: Control = main.get_node("UI/UpgradePanel")
+		_expect(dialogue.visible and GameState.panel_open,
+			"到达铁匠身边应打开对话并阻止世界操作")
+		dialogue._show_menu()
+		dialogue._open_upgrade()
+		_expect(not dialogue.visible and upgrade.visible and GameState.panel_open,
+			"铁匠菜单应切换到升星十字面板")
+		upgrade._on_upgrade()
+		_expect(item.star == 1 and GameState.gold == 0,
+			"玩家通过铁匠对话应完成金币扣费和装备升星")
+		upgrade.set_open(false)
+		_expect(not GameState.panel_open, "关闭升星面板应恢复世界操作")
+		player.global_position = smith.global_position + Vector2(32.0, 0.0)
+		_expect(world._try_interact() and dialogue.visible,
+			"靠近铁匠按 E 应能再次打开对话")
+		dialogue.set_open(false)
+		player.global_position = smith.global_position + Vector2(300.0, 0.0)
+		world._request_npc_interaction(smith)
+		player.map_move_active = false
+		world._process(0.0)
+		player.global_position = smith.global_position + Vector2(32.0, 0.0)
+		world._process(0.0)
+		_expect(not dialogue.visible, "手动打断走向 NPC 后不应延迟弹出对话")
+	main.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
 
 func _test_upgrade() -> void:
 	GameState.reset_to_defaults()
