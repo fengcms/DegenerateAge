@@ -16,6 +16,11 @@ const IFRAME := 0.5            # 3.4：受击后无敌帧时长（s）
 const HITSTUN := 0.25          # 3.4：受击硬直时长（s，期间无法主动行动）
 const DEATH_REVIVE_DELAY := 3.0  # 4.7 死亡流程占位（正式复活对话框见 M3）
 const MANUAL_EPS := 0.05       # 手动输入判定阈值（摇杆量）
+const REGEN_COMBAT_DELAY := 5.0
+const IDLE_HP_RATE := 0.01      # 每秒按最大值恢复；小数余量逐帧累积
+const IDLE_MP_RATE := 0.02
+const SIT_HP_RATE := 0.03
+const SIT_MP_RATE := 0.05
 
 ## 减速是实体运行态，死亡清除，不写存档。
 var _slow_pct := 0.0
@@ -60,6 +65,9 @@ var _map_check_t := 0.0
 var _map_last_distance := INF
 var _map_stuck_count := 0
 var _map_background := false
+var _combat_cooldown := 0.0
+var _hp_regen_rest := 0.0
+var _mp_regen_rest := 0.0
 
 func valid_target(target: Variant) -> bool:
 	return is_instance_valid(target) and target is Node2D and not target.is_queued_for_deletion() and target.get("is_dead") != true and target.has_method("take_hit")
@@ -167,6 +175,7 @@ func _physics_process(delta: float) -> void:
 			_revive()
 		_update_blink()
 		return
+	_tick_regen(delta)
 
 	_stun = maxf(0.0, _stun - delta)
 
@@ -218,6 +227,7 @@ func apply_damage(amount: int) -> int:
 		return 0
 	_invuln = IFRAME
 	_stun = HITSTUN
+	_mark_combat()
 	var actual := mini(amount, int(GameState.player.hp))
 	if GameState.damage_player(amount):
 		_begin_death()
@@ -232,6 +242,8 @@ func _begin_death() -> void:
 	_slow_remaining = 0.0
 	_slow_pct = 0.0
 	is_dead = true
+	_hp_regen_rest = 0.0
+	_mp_regen_rest = 0.0
 	_death_t = 0.0
 	velocity = Vector2.ZERO
 	queue_redraw()
@@ -303,6 +315,7 @@ func perform_attack(target: Node) -> Dictionary:
 		return {}
 	if target.get("is_dead") == true or not target.has_method("take_hit"):
 		return {}
+	_mark_combat()
 
 	var result := Combat.resolve(
 		float(GameState.total_attack()),
@@ -318,6 +331,37 @@ func perform_attack(target: Node) -> Dictionary:
 		select_target(target as Node2D, false)
 	target.take_hit(result, self)
 	return result
+
+func _mark_combat() -> void:
+	_combat_cooldown = REGEN_COMBAT_DELAY
+	_hp_regen_rest = 0.0
+	_mp_regen_rest = 0.0
+
+func _tick_regen(delta: float) -> void:
+	if _map_background or get_tree().paused:
+		return
+	_combat_cooldown = maxf(0.0, _combat_cooldown - delta)
+	var pilot := get_node_or_null("AutoPilot") as AutoBattle
+	if _combat_cooldown > 0.0 or manual_attack_active or (pilot != null and pilot.current_target() != null):
+		return
+	var hp_max := GameState.max_hp()
+	var mp_max := GameState.max_mp()
+	if int(GameState.player.hp) < hp_max:
+		_hp_regen_rest += float(hp_max) * IDLE_HP_RATE * delta
+		var hp_points := int(floorf(_hp_regen_rest))
+		if hp_points > 0:
+			_hp_regen_rest -= hp_points
+			GameState.heal_player(hp_points)
+	else:
+		_hp_regen_rest = 0.0
+	if int(GameState.player.mp) < mp_max:
+		_mp_regen_rest += float(mp_max) * IDLE_MP_RATE * delta
+		var mp_points := int(floorf(_mp_regen_rest))
+		if mp_points > 0:
+			_mp_regen_rest -= mp_points
+			GameState.restore_mp(mp_points)
+	else:
+		_mp_regen_rest = 0.0
 
 ## 攻击范围内的最近敌人（手动普攻的目标搜索；自动战斗为 3.14 的锚点搜索）。
 func find_nearest_enemy_in_range() -> Node:
