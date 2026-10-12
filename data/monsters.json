@@ -149,7 +149,7 @@
     "bossSkill": {
       "phases": [
         { "hpAbove": 0.6, "behavior": "chase_claw", "desc": "普通追击 + 爪击" },
-        { "hpBelow": 0.6, "behavior": "aoe_stomp", "warn": true, "desc": "周期性范围践踏，伤害前显示地面警示圈" },
+        { "hpBelow": 0.6, "behavior": "aoe_stomp", "warn": true, "warnDelay": 0.8, "desc": "周期性范围践踏，伤害前显示地面警示圈" },
         { "hpBelow": 0.3, "behavior": "enrage_summon", "addAttackSpeedPct": 0.3, "summon": "wolf_corrupted", "summonCount": 2, "desc": "狂暴 + 召唤少量普通怪" }
       ]
     },

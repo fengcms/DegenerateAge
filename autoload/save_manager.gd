@@ -182,6 +182,7 @@ func _is_test_scene() -> bool:
 	return cs != null and String(cs.scene_file_path).begins_with("res://tests/")
 
 func _connect_events() -> void:
+	EventBus.boss_first_clear.connect(func(_id: String) -> void: request_autosave())
 	EventBus.player_leveled.connect(func(_lv: int) -> void: request_autosave())
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())

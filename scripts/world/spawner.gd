@@ -29,6 +29,8 @@ func spawn_from_specs(specs: Array) -> void:
 				"respawn_time": maxf(1.0, float(s.get("respawnTime", 30.0))),
 				"ai": bool(s.get("ai", true)),
 				"entry": null,
+				"tombstone": bool(s.get("tombstone", false)),
+				"marker": null,
 				"timer": 0.0,
 			}
 			_points.append(point)
@@ -61,6 +63,8 @@ func _process(delta: float) -> void:
 		if p.entry != null and is_instance_valid(p.entry):
 			continue
 		p.timer = float(p.timer) + delta
+		if is_instance_valid(p.marker):
+			p.marker.set_remaining(maxf(0, float(p.respawn_time) - float(p.timer)))
 		if float(p.timer) >= float(p.respawn_time):
 			_spawn(p)
 
@@ -77,7 +81,10 @@ func _spawn(point: Dictionary) -> void:
 	m.monster_id = String(point.get("monster_id", "wolf_corrupted"))
 	m.spawn_level = int(point.get("level", 0))
 	m.ai_enabled = bool(point.get("ai", true))
-	var pos := _random_spawn_position()
+	var pos: Vector2 = point.position if point.tombstone and point.has("position") else _random_spawn_position()
+	if is_instance_valid(point.marker):
+		point.marker.queue_free()
+	point.marker = null
 	point.position = pos
 	m.position = pos
 	m.spawn_position = pos
@@ -87,6 +94,13 @@ func _spawn(point: Dictionary) -> void:
 	point.timer = 0.0
 
 func _on_monster_died(point: Dictionary) -> void:
+	if point.tombstone and is_instance_valid(point.entry):
+		point.position = point.entry.position
+		var marker := BossTombstone.new()
+		marker.position = point.position
+		marker.set_remaining(float(point.respawn_time))
+		add_child(marker)
+		point.marker = marker
 	point.entry = null
 	point.timer = 0.0
 

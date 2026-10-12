@@ -19,6 +19,7 @@ signal player_hp_changed(current: int, maximum: int)
 signal player_mp_changed(current: int, maximum: int)
 signal player_xp_changed(current: int, maximum: int)
 signal target_changed(target: Node)
+signal boss_first_clear(monster_id: String)
 
 # ---- 物品 / 经济 ----
 signal item_dropped(item_id: String)
