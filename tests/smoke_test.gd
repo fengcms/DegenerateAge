@@ -1923,6 +1923,12 @@ func _test_auto_battle() -> void:
 			seen_combat = true
 	_expect(pilot.current_target() != null, "自动战斗应锁定锚点半径内的目标")
 	_expect(seen_combat, "开 F 后应进入「接近目标」或「攻击目标」状态")
+	GameState.set_panel_open("test", true)
+	for _i in range(8):
+		await get_tree().physics_frame
+	_expect(pilot.current_state() != AutoBattle.State.RECOVER and pilot.current_target() != null,
+		"打开面板后自动战斗应继续寻怪与战斗")
+	GameState.set_panel_open("test", false)
 
 	# 4.6 手动接管：模拟按住方向键 → 立即转「手动接管」
 	Input.action_press("move_left")
@@ -3552,7 +3558,8 @@ func _test_fog_ui() -> void:
 	var held := player.global_position
 	var manual_t := float(pilot.get("_manual_t"))
 	await get_tree().create_timer(0.2).timeout
-	_expect(player.global_position.is_equal_approx(held) and is_equal_approx(float(pilot.get("_manual_t")), manual_t), "打开地图后路线/接管计时未冻结")
+	_expect(player.global_position.is_equal_approx(held) and float(pilot.get("_manual_t")) < manual_t,
+		"打开地图后手动路线应停下，自动战斗接管倒计时应继续")
 	EventBus.panel_opened.emit("inventory")
 	_expect(not panel.visible, "地图未与其他面板互斥")
 	GameState.set_panel_open("inventory", false)
@@ -3743,7 +3750,8 @@ func _test_auto_hud_reload() -> void:
 		_expect(pilot.current_phase().contains("1 秒"), "恢复倒计时 1")
 		GameState.set_panel_open("test", true)
 		pilot._physics_process(1.0)
-		_expect(is_equal_approx(pilot._manual_t, 0.9), "面板打开冻结恢复计时")
+		_expect(pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE,
+			"面板打开后恢复倒计时应继续推进")
 		GameState.set_panel_open("test", false)
 		pilot._physics_process(1.0)
 		_expect(pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE, "倒计时结束恢复决策")

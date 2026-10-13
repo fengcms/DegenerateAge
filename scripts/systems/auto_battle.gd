@@ -16,7 +16,7 @@ extends Node
 ##   ③ 手动接管 → 立即取消、3 秒后恢复（4.6）；
 ##   ④ 背包满 → 不走向该掉落物、不循环重试（T10，靠节流 + 目标剔除，不做每帧重试）；
 ##   ⑤ MP / 冷却不足 → 不施放该技能（T11，见 choose_skill）；
-##   ⑥ 死亡 → 自动转 off；暂停 / 面板打开 → 停决策。窗口失焦仍继续挂机。
+##   ⑥ 死亡 → 自动转 off；真正暂停 → 停决策；面板打开与窗口失焦仍继续挂机。
 ##
 ## M1 范围说明（见工程文档 02 / 产品文档 03 §3.14）：
 ##   · 玩家 Lv1 仅解锁普攻 basic_slash，故本阶段实际施放普攻；`choose_skill`
@@ -162,14 +162,14 @@ func _physics_process(delta: float) -> void:
 		_set_state(State.RECOVER, "打坐中")
 		return
 
-	# 面板打开 / 游戏暂停时停止决策；切到别的窗口不影响挂机战斗。
-	if GameState.panel_open or get_tree().paused:
+	# 界面面板只拦截手动输入；已经开启的挂机战斗继续运行。
+	if get_tree().paused:
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.RECOVER, "暂停中")
 		return
 
 	# 持续手动操作先刷新计时；松手后才开始倒计时，避免按住时提前恢复。
-	if _player.map_move_active or _player.manual_attack_active or _has_manual_input():
+	if _player.map_move_active or _player.manual_attack_active or (not GameState.panel_open and _has_manual_input()):
 		begin_manual_override()
 		return
 	if _manual_t > 0.0:

@@ -205,8 +205,8 @@ func _physics_process(delta: float) -> void:
 			_update_blink()
 			return
 
-	# 面板打开时屏蔽操控（面板不暂停世界模拟，仅屏蔽玩家指令，避免开背包时误攻击 / 误走位）
-	if GameState.panel_open:
+	# 面板接管手动输入；F 挂机已开启时仍执行自动战斗的移动意图。
+	if GameState.panel_open and not GameState.auto_battle_on:
 		auto_move = Vector2.ZERO
 		manual_input_active = false
 		velocity = Vector2.ZERO
@@ -215,12 +215,15 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
-	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var dir := Vector2.ZERO if GameState.panel_open else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	manual_input_active = dir.length() > MANUAL_EPS
+	if GameState.panel_open:
+		manual_attack_active = false
+		map_move_active = false
 	if manual_input_active:
 		map_move_active = false
 		manual_attack_active = false
-	if Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:
+	if not GameState.panel_open and Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:
 		if valid_target(locked_target):
 			request_target_attack(locked_target)
 		else:
@@ -240,7 +243,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# 普攻：按住攻击键，冷却结束即发动一次（每次发动 = 一次结算）
-	if not manual_attack_active and _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
+	if not GameState.panel_open and not manual_attack_active and _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
 		_try_attack()
 
 	_update_blink()

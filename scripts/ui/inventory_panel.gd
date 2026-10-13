@@ -116,7 +116,7 @@ func _apply_trade_layout(trade: bool) -> void:
 		return
 	_center.set_docked(trade, 0.0, TRADE_LEFT_RATIO)
 	if _dim != null:
-		_dim.visible = not trade
+		_dim.visible = false
 	for b in _bag_buttons:
 		b.draggable = trade or not HotbarConfig.entry_for_item(b.item).is_empty()
 
@@ -125,6 +125,7 @@ func _apply_trade_layout(trade: bool) -> void:
 func _build() -> void:
 	_dim = ColorRect.new()
 	_dim.color = Color(0, 0, 0, 0.35)
+	_dim.visible = false
 	_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_dim)
