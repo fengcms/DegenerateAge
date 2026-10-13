@@ -105,8 +105,43 @@ func _ready() -> void:
 	await _check_visual_tab()
 	await _check_panels_matrix()
 	await _check_embedded_resize()
+	_check_display_preferences()
 	print("[SettingsTest] 全部通过 ✅")
 	get_tree().quit()
+
+func _check_display_preferences() -> void:
+	var path := SettingsRuntime.DISPLAY_PREFS_PATH
+	var had_file := FileAccess.file_exists(path)
+	var old_contents := FileAccess.get_file_as_string(path) if had_file else ""
+	var old_settings := GameState.settings.duplicate(true)
+	GameState.settings["uiScale"] = 1.75
+	GameState.settings["mapScale"] = 1.25
+	GameState.settings["textScale"] = 2.0
+	_check(SettingsRuntime.save_display_preferences(), "显示偏好应独立保存")
+	GameState.reset_to_defaults()
+	_check(is_equal_approx(float(GameState.settings.uiScale), 1.75)
+		and is_equal_approx(float(GameState.settings.mapScale), 1.25)
+		and is_equal_approx(float(GameState.settings.textScale), 2.0),
+		"重新初始化时应从独立偏好恢复显示倍率")
+	_check(ThemeDB.get_project_theme().get_font_size("font_size", "TooltipLabel") == 32,
+		"背包装备等原生悬浮提示应跟随文字倍率")
+	var slot_data := SaveManager._collect()
+	slot_data.settings.uiScale = 1.0
+	slot_data.settings.mapScale = 1.0
+	slot_data.settings.textScale = 1.0
+	SaveManager.apply_to_game_state(slot_data)
+	_check(is_equal_approx(float(GameState.settings.uiScale), 1.75)
+		and is_equal_approx(float(GameState.settings.mapScale), 1.25)
+		and is_equal_approx(float(GameState.settings.textScale), 2.0),
+		"读取另一个角色槽时不应覆盖本机显示偏好")
+	if had_file:
+		var original := FileAccess.open(path, FileAccess.WRITE)
+		if original != null:
+			original.store_string(old_contents)
+	else:
+		DirAccess.remove_absolute(path)
+	GameState.settings = old_settings
+	SettingsRuntime.apply_all()
 
 ## M5-9d：设置面板「画面」页新控件自洽（档位清单 + 显示适配两模式 + 选档即写设置）。
 func _check_visual_tab() -> void:

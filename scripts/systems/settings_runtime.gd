@@ -226,6 +226,10 @@ static func ui_scale_value() -> float:
 	return clampf(float(GameState.settings.get("uiScale", 1.0)), UI_SCALE_MIN, UI_SCALE_MAX) * display_scale_factor()
 
 static func _apply_text_scale() -> void:
+	# 引擎的原生悬浮提示不在 UI CanvasLayer 下，必须单独给 TooltipLabel 设置字号。
+	var theme := ThemeDB.get_project_theme()
+	if theme != null:
+		theme.set_font_size("font_size", "TooltipLabel", maxi(9, roundi(16.0 * text_scale_value())))
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or tree.current_scene == null:
 		return
