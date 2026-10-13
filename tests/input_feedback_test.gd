@@ -25,6 +25,8 @@ func click(point: Vector2) -> void:
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	# 交互回归需要可攻击的近距离怪；营地出生点位于免战区内。
+	GameState.current_map = "wild_trial"
 	var main: Node = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame
@@ -128,10 +130,15 @@ func _ready() -> void:
 	Input.action_release("move_left")
 	pilot._physics_process(1.0)
 	check(pilot.current_phase().contains("2 秒") and String(hud.get_node("%AutoLabel").text).contains("2 秒"), "HUD 显示真实倒计时")
-	pilot._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	pilot.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	pilot._physics_process(1.0)
-	check(pilot._manual_t == 2.0, "后台冻结倒计时")
-	pilot._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
+	check(pilot._manual_t == 1.0, "窗口失焦后自动战斗的接管倒计时仍推进")
+	pilot._manual_t = 0.0
+	pilot._target = enemies[0]
+	pilot._physics_process(0.35)
+	check(pilot.current_state() in [AutoBattle.State.PATH_TO_TARGET, AutoBattle.State.ATTACK_TARGET],
+		"窗口失焦后自动战斗仍追怪或攻击")
+	pilot.notification(NOTIFICATION_APPLICATION_FOCUS_IN)
 	GameState.set_auto_battle(false)
 	for enemy in enemies:
 		if is_instance_valid(enemy):

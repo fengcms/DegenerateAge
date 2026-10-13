@@ -16,7 +16,7 @@ extends Node
 ##   ③ 手动接管 → 立即取消、3 秒后恢复（4.6）；
 ##   ④ 背包满 → 不走向该掉落物、不循环重试（T10，靠节流 + 目标剔除，不做每帧重试）；
 ##   ⑤ MP / 冷却不足 → 不施放该技能（T11，见 choose_skill）；
-##   ⑥ 死亡 → 自动转 off；暂停 / 后台 / 面板打开 → 停决策。
+##   ⑥ 死亡 → 自动转 off；暂停 / 面板打开 → 停决策。窗口失焦仍继续挂机。
 ##
 ## M1 范围说明（见工程文档 02 / 产品文档 03 §3.14）：
 ##   · 玩家 Lv1 仅解锁普攻 basic_slash，故本阶段实际施放普攻；`choose_skill`
@@ -83,7 +83,6 @@ var _stuck_count: int = 0
 var _blocked_t: float = 0.0
 var _manual_t: float = 0.0
 var _danger_t: float = 0.0
-var _background: bool = false
 var _roam_points: Array[Vector2] = []
 var _roam_index: int = -1
 var _roam_last_dist := INF
@@ -132,13 +131,6 @@ func reset_after_travel() -> void:
 	else:
 		_set_state(State.SEARCH_TARGET)
 
-func _notification(what: int) -> void:
-	# 应用失去焦点（切到后台）→ 停决策（3.14 ⑥）
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		_background = true
-	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
-		_background = false
-
 func _physics_process(delta: float) -> void:
 	_tick_blacklist(delta)
 	if _player == null or not is_instance_valid(_player):
@@ -170,8 +162,8 @@ func _physics_process(delta: float) -> void:
 		_set_state(State.RECOVER, "打坐中")
 		return
 
-	# ⑥ 面板打开 / 后台 / 暂停 → 停决策（不暂停世界模拟，仅停本机决策）
-	if GameState.panel_open or _background or get_tree().paused:
+	# 面板打开 / 游戏暂停时停止决策；切到别的窗口不影响挂机战斗。
+	if GameState.panel_open or get_tree().paused:
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.RECOVER, "暂停中")
 		return
