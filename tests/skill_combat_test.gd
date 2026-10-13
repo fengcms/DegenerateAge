@@ -37,6 +37,7 @@ func _ready() -> void:
 	var behind := _enemy(player.global_position + Vector2(-65, 0))
 	var cleave: Dictionary = DataLoader.get_entry("skills", "earth_cleave")
 	_check(player.skill_targets(cleave, near).size() == 3, "扇形只取最近三个目标")
+	_check(player.skill_targets(cleave, fourth).has(fourth), "扇形多目标上限时保留锁定目标")
 	var before := int(GameState.player.mp)
 	_check(player.cast_skill("earth_cleave", near), "Lv5 可施放裂地斩")
 	_check(int(GameState.player.mp) == before - 15 and player.skill_cooldown("earth_cleave") == 4.0, "耗蓝与冷却只结算一次")
@@ -67,6 +68,27 @@ func _ready() -> void:
 		"圆形范围内每只怪各受击一次")
 	_check(not player.cast_skill("whirlwind") and int(GameState.player.mp) == 75,
 		"旋风斩冷却阻止重复施放")
+	player.skill_cooldowns.clear()
+	player._attack_cd = 0.0
+	var original_position := player.global_position
+	var original_fourth := fourth.global_position
+	fourth.global_position = original_position + Vector2(400, 0)
+	player.select_target(fourth)
+	var before_chase := int(GameState.player.mp)
+	_check(player.request_skill("whirlwind"), "远处锁定目标的旋风斩接受追击指令")
+	_check(player.manual_attack_active and int(GameState.player.mp) == before_chase
+		and player.skill_cooldown("whirlwind") == 0.0, "追击开始时不提前耗蓝或进入冷却")
+	_check(not player.cast_skill("whirlwind", fourth) and int(GameState.player.mp) == before_chase,
+		"身边有其他怪时也不能提前命中远处锁定目标")
+	_check(player._manual_attack_direction(0.016) != Vector2.ZERO and fourth.hits == 1,
+		"未到技能范围继续接近目标")
+	player.global_position = fourth.global_position - Vector2(80, 0)
+	player._manual_attack_direction(0.016)
+	_check(fourth.hits == 2 and int(GameState.player.mp) == before_chase - 25
+		and not player.manual_attack_active, "进入范围后只施放一次并命中锁定目标")
+	player.global_position = original_position
+	fourth.global_position = original_fourth
+	player.select_target(null)
 	player.skill_cooldowns.clear()
 	player._attack_cd = 0.0
 	var pilot := AutoBattle.new()

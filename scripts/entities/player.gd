@@ -426,6 +426,15 @@ func request_skill(skill_id: String) -> bool:
 			return false
 		begin_manual_command()
 		return cast_skill(skill_id)
+	# 已锁定敌人时，所有攻击技能都先按各自射程接近该目标。
+	# 圆形技能也不能因身边另有敌人就提前空放在远处的锁定目标上。
+	if valid_target(locked_target):
+		map_move_active = false
+		manual_attack_active = true
+		_pending_skill_id = skill_id
+		reset_move_progress(locked_target.global_position)
+		begin_manual_command()
+		return true
 	if String(skill.get("shape", "")) == "circle":
 		if skill_targets(skill).is_empty():
 			EventBus.toast_requested.emit("范围内没有可攻击的怪物", "danger")
@@ -435,15 +444,8 @@ func request_skill(skill_id: String) -> bool:
 			EventBus.toast_requested.emit("当前无法施放技能", "danger")
 			return false
 		return true
-	if not valid_target(locked_target):
-		EventBus.toast_requested.emit("请先选中怪物", "danger")
-		return false
-	map_move_active = false
-	manual_attack_active = true
-	_pending_skill_id = skill_id
-	reset_move_progress(locked_target.global_position)
-	begin_manual_command()
-	return true
+	EventBus.toast_requested.emit("请先选中怪物", "danger")
+	return false
 
 ## 所有入口共用的实际施放；失败时不耗蓝、不进入冷却。
 func cast_skill(skill_id: String, target: Node = null) -> bool:
@@ -465,6 +467,9 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 		return true
 	if _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
+	if target != null:
+		if not valid_target(target) or global_position.distance_to((target as Node2D).global_position) > float(skill.get("range", 1.0)) * Iso.TILE_W:
+			return false
 	var targets := skill_targets(skill, target)
 	if targets.is_empty() or not GameState.spend_mp(mana_cost):
 		return false
@@ -511,6 +516,10 @@ func skill_targets(skill: Dictionary, target: Node = null) -> Array[Node2D]:
 		result.append(enemy)
 	result.sort_custom(func(a: Node2D, b: Node2D) -> bool:
 		return global_position.distance_squared_to(a.global_position) < global_position.distance_squared_to(b.global_position))
+	if shape == "cone" and target is Node2D and result.has(target):
+		# 有命中数量上限时保留玩家明确指定的目标，其余名额给最近的怪。
+		result.erase(target)
+		result.push_front(target)
 	if shape == "cone" and result.size() > int(skill.get("maxTargets", 3)):
 		result.resize(int(skill.get("maxTargets", 3)))
 	return result
