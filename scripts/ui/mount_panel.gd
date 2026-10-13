@@ -10,6 +10,7 @@ var _name: Label
 var _details: Label
 var _action: Button
 var _selected_mount := ""
+var _center: FloatingWindow
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -26,11 +27,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(not visible)
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("pause"):
+		if not _center.is_top_window():
+			return
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id != PANEL_ID and visible:
+	if panel_id not in [PANEL_ID, "inventory", "character", "skill"] and visible:
 		set_open(false)
 
 func set_open(open: bool) -> void:
@@ -41,17 +44,18 @@ func set_open(open: bool) -> void:
 			_selected_mount = GameState.active_mount
 		_refresh()
 		EventBus.panel_opened.emit(PANEL_ID)
+		_center.show_window()
 
 func _build() -> void:
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.42)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = FloatingWindow.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.06, 0.07, 0.10, 0.98)
@@ -59,7 +63,7 @@ func _build() -> void:
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(8)
 	panel.add_theme_stylebox_override("panel", style)
-	center.add_child(panel)
+	_center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
@@ -79,6 +83,7 @@ func _build() -> void:
 	close.text = "关闭 · Esc"
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	_center.setup(self, panel, head, Vector2(0.52, 0.34))
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 16)
 	root.add_child(body)

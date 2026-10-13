@@ -46,6 +46,7 @@ func _ready() -> void:
 	await _test_warehouse()
 	_test_shop()
 	await _test_trade_panel()
+	await _test_floating_panels()
 	_test_debug_seed()
 	await _test_drag_layer()
 	await _test_auto_battle()
@@ -1734,6 +1735,37 @@ func _test_trade_panel() -> void:
 	inv.set_open(false)
 	inv.queue_free()
 	shop.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_floating_panels() -> void:
+	GameState.reset_to_defaults()
+	var main: Node = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var inv: Control = main.get_node("UI/InventoryPanel")
+	var character: Control = main.get_node("UI/CharacterPanel")
+	var skill: Control = main.get_node("UI/SkillPanel")
+	var mount: Control = main.get_node("UI/MountPanel")
+	for panel in [inv, character, skill, mount]:
+		panel.set_open(true)
+	await get_tree().process_frame
+	_expect(inv.visible and character.visible and skill.visible and mount.visible,
+		"背包、人物、技能、坐骑应可同时打开")
+	var window: FloatingWindow = character._center
+	_expect(window.size.x > 0.0 and window.size.y > 0.0,
+		"浮窗应按内容占据实际大小")
+	window.position = Vector2(99999, 99999)
+	window._clamp()
+	_expect(window.position.x <= maxi(0, int(character.size.x - window.size.x))
+		and window.position.y <= maxi(0, int(character.size.y - window.size.y)),
+		"拖动后浮窗应被限制在可见区域")
+	inv._center.bring_forward()
+	_expect(inv._center.is_top_window() and not mount._center.is_top_window(),
+		"点选窗口应置于其余浮窗之上")
+	for panel in [inv, character, skill, mount]:
+		panel.set_open(false)
+	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
 

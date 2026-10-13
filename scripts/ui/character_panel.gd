@@ -4,10 +4,11 @@ extends Control
 var _slots: Dictionary = {}
 var _stats: Label
 var _title: Label
+var _center: FloatingWindow
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
@@ -21,6 +22,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(not visible)
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("pause"):
+		if not _center.is_top_window():
+			return
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
@@ -30,21 +33,22 @@ func set_open(open: bool) -> void:
 	if open:
 		_refresh()
 		EventBus.panel_opened.emit("character")
+		_center.show_window()
 
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id != "character" and visible:
+	if panel_id not in ["character", "inventory", "skill", "mount"] and visible:
 		set_open(false)
 
 func _build() -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.42)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = FloatingWindow.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("11171d")
@@ -52,7 +56,7 @@ func _build() -> void:
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(8)
 	panel.add_theme_stylebox_override("panel", style)
-	center.add_child(panel)
+	_center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
@@ -71,6 +75,7 @@ func _build() -> void:
 	close.text = "关闭 · Esc"
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	_center.setup(self, panel, head, Vector2(0.34, 0.18))
 	root.add_child(HSeparator.new())
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 22)

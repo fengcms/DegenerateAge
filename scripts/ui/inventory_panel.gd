@@ -36,7 +36,7 @@ var _equip_title: Label
 var _bag_title: Label
 var _organize_button: Button
 var _summary: Label
-var _center: CenterContainer
+var _center: FloatingWindow
 var _dim: ColorRect
 var _last_click_index: int = -1
 var _last_click_ms: int = 0
@@ -66,6 +66,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			set_open(not visible)
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("pause"):
+		if not _center.is_top_window():
+			return
 		if _trade_active:
 			EventBus.shop_close_requested.emit()
 		else:
@@ -82,12 +84,13 @@ func set_open(open: bool) -> void:
 	if open:
 		EventBus.panel_opened.emit("inventory")
 		_refresh()
+		_center.show_window()
 
 ## 其他面板打开时自动关闭本面板，保证互斥——**例外**：交易会话中的货郎面板（见 05 方案）。
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id == "inventory":
 		return
-	if panel_id == "shop" and _trade_active:
+	if panel_id in ["shop", "character", "skill", "mount"]:
 		return
 	if visible:
 		set_open(false)
@@ -111,14 +114,7 @@ func _on_trade_mode_changed(active: bool) -> void:
 func _apply_trade_layout(trade: bool) -> void:
 	if _center == null:
 		return
-	if trade:
-		_center.anchor_left = 0.0
-		_center.anchor_right = TRADE_LEFT_RATIO
-	else:
-		_center.anchor_left = 0.0
-		_center.anchor_right = 1.0
-	_center.offset_left = 0.0
-	_center.offset_right = 0.0
+	_center.set_docked(trade, 0.0, TRADE_LEFT_RATIO)
 	if _dim != null:
 		_dim.visible = not trade
 	for b in _bag_buttons:
@@ -133,7 +129,7 @@ func _build() -> void:
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_dim)
 
-	_center = CenterContainer.new()
+	_center = FloatingWindow.new()
 	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
@@ -168,6 +164,7 @@ func _build() -> void:
 	close.custom_minimum_size = Vector2(32, 28)
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	_center.setup(self, box, head, Vector2(0.20, 0.30))
 
 	root.add_child(HSeparator.new())
 

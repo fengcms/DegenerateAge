@@ -1,6 +1,8 @@
 extends Control
 ## 技能图鉴。战斗系统当前只接通普攻，因此其余技能展示解锁要求但不提供无效拖放。
 
+var _center: FloatingWindow
+
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -14,6 +16,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(not visible)
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("pause"):
+		if not _center.is_top_window():
+			return
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
@@ -26,9 +30,10 @@ func set_open(open: bool) -> void:
 	if open:
 		_refresh()
 		EventBus.panel_opened.emit("skill")
+		_center.show_window()
 
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id != "skill" and visible:
+	if panel_id not in ["skill", "inventory", "character", "mount"] and visible:
 		set_open(false)
 
 var _list: VBoxContainer
@@ -39,10 +44,10 @@ func _build() -> void:
 	dim.color = Color(0, 0, 0, 0.42)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = FloatingWindow.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("11171d")
@@ -50,7 +55,7 @@ func _build() -> void:
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(8)
 	panel.add_theme_stylebox_override("panel", style)
-	center.add_child(panel)
+	_center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
@@ -70,6 +75,7 @@ func _build() -> void:
 	close.text = "关闭 · Esc"
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	_center.setup(self, panel, head, Vector2(0.42, 0.26))
 	root.add_child(HSeparator.new())
 	_list = VBoxContainer.new()
 	root.add_child(_list)
