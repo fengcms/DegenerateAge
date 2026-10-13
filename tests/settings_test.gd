@@ -78,6 +78,7 @@ func _ready() -> void:
 		and not SettingsRuntime.valid_choice("resolution", "2560x1440"),
 		"1920×1200 窗口档位应被接受、未登记档位应被拒绝")
 	await _check_visual_tab()
+	await _check_panels_matrix()
 	await _check_embedded_resize()
 	print("[SettingsTest] 全部通过 ✅")
 	get_tree().quit()
@@ -161,6 +162,110 @@ func _option_texts(options: OptionButton) -> Array:
 	for i in options.item_count:
 		out.append(options.get_item_text(i))
 	return out
+
+## M5-9f（09-A §5）：逐面板复验 —— 在「窗口尺寸 × 界面倍率」矩阵下，UI 下全部控件根
+## 四边贴合逻辑视口；HUD 四角锚点控件不越界；z_index 层级约定不变（面板 0 ＜ Toast 2048 ＜ 拖拽 4096）。
+func _check_panels_matrix() -> void:
+	GameState.reset_to_defaults()
+	GameState.menu_mode = "world"
+	GameState.clear_save_pos()
+	var embedded := SubViewport.new()
+	embedded.size = Vector2i(1280, 800)
+	add_child(embedded)
+	var main: Node = (load("res://scenes/Main.tscn") as PackedScene).instantiate()
+	embedded.add_child(main)
+	for _i in range(5):
+		await get_tree().process_frame
+	var ui := main.get_node_or_null("UI") as CanvasLayer
+	_check(ui != null, "Main.tscn 应含 UI CanvasLayer")
+	if ui == null:
+		embedded.queue_free()
+		return
+	var panels: Array[Control] = []
+	for child in ui.get_children():
+		if child is Control:
+			panels.append(child as Control)
+	# Hud + 14 面板 + DragLayer = 16；新增面板自动纳入本轮检查（下限断言，不锁死数量）
+	_check(panels.size() >= 16, "UI 下控件应不少于 16 个（Hud + 14 面板 + DragLayer），实际 %d" % panels.size())
+	var hud := ui.get_node_or_null("Hud") as Control
+	var toast := _find_by_name(main, "ToastBox") as Control
+	var drag := ui.get_node_or_null("DragLayer") as Control
+	_check(toast != null and int(toast.z_index) == 2048, "ToastBox z_index 应为 2048")
+	_check(drag != null and int(drag.z_index) == 4096, "DragLayer z_index 应为 4096")
+	for panel in panels:
+		if panel == drag:
+			continue   # DragLayer 恒在最上（4096），本就是拖拽幽灵层，不参与「面板 0」断言
+		_check(int(panel.z_index) == 0, "%s z_index 应为 0（面板不压 Toast / DragLayer）" % panel.name)
+	for viewport_size in [Vector2i(1280, 800), Vector2i(1920, 1200), Vector2i(1153, 721)]:
+		embedded.size = viewport_size
+		for factor in [0.8, 1.0, 1.5]:
+			GameState.settings["uiScale"] = factor
+			GameState.settings["mapScale"] = 1.0
+			SettingsRuntime.apply_ui_scale_to(ui)
+			SettingsRuntime.apply_world_text_scale()
+			await get_tree().process_frame
+			var logical: Vector2 = Vector2(viewport_size) / factor
+			for panel in panels:
+				_check(panel.size.is_equal_approx(logical),
+					"%s 根尺寸应贴合逻辑视口 %s（uiScale=%.1f，窗口 %s），实际 %s" % [
+						panel.name, str(logical), factor, str(viewport_size), str(panel.size)])
+			if hud != null:
+				var map_panel := hud.get_node_or_null("MapPanel") as Control
+				var hotbar := hud.get_node_or_null("Hotbar") as Control
+				if map_panel != null:
+					_check(map_panel.position.x >= 0 and map_panel.position.x + map_panel.size.x <= logical.x + 1,
+						"小地图留在可见宽度内（%.1f @ %s）" % [factor, str(viewport_size)])
+				if hotbar != null:
+					_check(hotbar.position.y >= 0 and hotbar.position.y + hotbar.size.y <= logical.y + 1,
+						"快捷栏留在可见高度内（%.1f @ %s）" % [factor, str(viewport_size)])
+	# ⑥ 点击坐标一致（创意 09 §8-5「看到哪点到哪」）：把玩家移到一只怪旁，按怪物的**屏幕坐标**
+	# 点选，各相机倍率下都应命中同一只 —— 屏幕↔世界映射随 zoom 正确变化（点击链全走
+	# canvas transform，见 game.gd::enemy_at_screen / npc_at_screen / request_map_move）。
+	var game_node := main.get_node_or_null("Game") as Node2D
+	var cam := main.get_node_or_null("Game/Entities/Player/Camera2D") as Camera2D
+	var player := main.get_node_or_null("Game/Entities/Player") as Node2D
+	var target: Node2D = null
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e is Node2D and (e as Node2D).is_visible_in_tree():
+			target = e as Node2D
+			break
+	if game_node != null and cam != null and player != null:
+		_check(target != null, "营地（初始图）应有可见敌人，否则点击复验空转")
+	if game_node != null and cam != null and player != null and target != null:
+		# 关平滑求确定性（8.0 的平滑速度在 1 帧内赶不完传送距离，会留下几个像素的残差）
+		var smoothing := cam.position_smoothing_enabled
+		cam.position_smoothing_enabled = false
+		player.global_position = target.global_position + Vector2(48.0, 0.0)
+		cam.reset_smoothing()
+		await get_tree().process_frame
+		var npc_target: Npc = null
+		var npcs_node := main.get_node_or_null("Game/Npcs")
+		if npcs_node != null:
+			for n in npcs_node.get_children():
+				if n is Npc:
+					npc_target = n as Npc
+					break
+		for factor in [1.0, 0.8, 1.5]:
+			GameState.settings["mapScale"] = factor
+			SettingsRuntime.apply_map_scale_to(cam)
+			cam.reset_smoothing()
+			await get_tree().process_frame
+			# 敌人在世界坐标不动 ⇒ 屏幕坐标随 zoom 变；按屏幕坐标点选应命中同一敌人
+			var screen_pos: Vector2 = target.get_global_transform_with_canvas().origin
+			var hit: Node2D = game_node.enemy_at_screen(screen_pos)
+			_check(hit == target,
+				"地图倍率 %.1f 下按屏幕坐标应点选到同一怪物（看到哪点到哪）" % factor)
+			# NPC 点选同理（contains_screen_point 路径；npc_at_screen 不过滤可见性，营地必有 NPC）
+			if npc_target != null:
+				var npc_screen: Vector2 = npc_target.get_global_transform_with_canvas().origin
+				var npc_hit: Npc = game_node.npc_at_screen(npc_screen)
+				_check(npc_hit == npc_target,
+					"地图倍率 %.1f 下按屏幕坐标应点选到同一 NPC" % factor)
+		cam.position_smoothing_enabled = smoothing
+	GameState.settings["uiScale"] = 1.0
+	GameState.reset_to_defaults()
+	embedded.queue_free()
+	await get_tree().process_frame
 
 func _check_embedded_resize() -> void:
 	var embedded := SubViewport.new()
