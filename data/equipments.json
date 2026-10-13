@@ -152,5 +152,19 @@
     "price": 30,
     "icon": "res://assets/sprites/equip/necklace_basic.png",
     "desc": "项链，提供生命加成。"
+  },
+  {
+    "id": "weapon_legendary_vein_guard",
+    "name": "镇脉之刃",
+    "slot": "weapon",
+    "tier": 1,
+    "levelReq": 9,
+    "quality": "legendary",
+    "baseAttrs": { "atk": 30 },
+    "pctAttrs": [],
+    "affixes": [ { "stat": "atk", "value": 6 }, { "stat": "hp", "value": 20 } ],
+    "price": 300,
+    "icon": "res://assets/sprites/equip/weapon_legendary_vein_guard.png",
+    "desc": "封印曾借这柄刃导回灵能。刻纹还亮着，握住它的人却换了一代。"
   }
 ]

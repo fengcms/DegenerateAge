@@ -1,0 +1,12 @@
+[
+  {
+    "id": "normal",
+    "desc": "常规装备池（M6-0b / 创意 07 §7）：全部非 debug 装备，排除传说模板 —— 传说只能由传说池产出，不能被抽成白装。",
+    "excludeQuality": ["legendary"]
+  },
+  {
+    "id": "legendary",
+    "desc": "传说装备池（M6-0b / 创意 07 §7）：仅含传说品质模板，供 Boss 传说追加槽使用。",
+    "onlyQuality": ["legendary"]
+  }
+]

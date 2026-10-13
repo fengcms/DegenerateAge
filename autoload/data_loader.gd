@@ -15,6 +15,7 @@ const TABLES := {
 	"monsters": "monsters.json",
 	"affixes": "affixes.json",
 	"dropTables": "dropTables.json",
+	"lootPools": "lootPools.json",
 	"quests": "quests.json",
 	"shops": "shops.json",
 	"upgrade": "upgrade.json",
@@ -28,7 +29,7 @@ const TABLES := {
 }
 
 ## 需要做「ID 唯一」校验的表（数组型）。
-const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables"]
+const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
 
 ## 各表用作「唯一键」的字段名（缺省为 id）。shops 以 npcId 为键（见 docs 第 10 章 schema）。
 const KEY_FIELDS := {
@@ -223,6 +224,8 @@ func validate_all() -> Array[String]:
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
+	# 4b) 装备池合法性（M6-0b / 创意 07 §7：池定义合法、传说池非空、模板存在、非 debug）
+	report.append_array(_validate_loot_pools())
 	var runes = tables.get("runes")
 	if runes is Array:
 		for rune in runes:
@@ -261,6 +264,7 @@ func _validate_drop_tables() -> Array[String]:
 	var potion_ids := _id_set("potions")
 	var rune_ids := _id_set("runes")
 	var misc_ids := _id_set("miscItems")
+	var pool_ids := _id_set("lootPools")
 	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
 	var valid_kinds := ["coin", "potion", "equip", "rune", "misc", "mount"]
 
@@ -321,13 +325,78 @@ func _validate_drop_tables() -> Array[String]:
 				"equip":
 					if not (en.get("levelRange", null) is Array):
 						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
+					# M6-0b：countRange 分组件数（[lo,hi] 整数，≥1，lo≤hi）。
+					if en.has("countRange"):
+						var cr = en.get("countRange")
+						if not (cr is Array) or cr.size() != 2 \
+							or not _is_whole_level(cr[0]) or not _is_whole_level(cr[1]) \
+							or int(cr[0]) < 1 or int(cr[1]) < int(cr[0]):
+							report.append("[dropTables] %s equip 条目的 countRange 应为 [≥1 整数, ≥lo 整数]" % did)
+					# M6-0b：templatePool 引用合法性。
+					if en.has("templatePool"):
+						var pool_id := String(en.get("templatePool", ""))
+						if pool_id.is_empty() or not pool_ids.has(pool_id):
+							report.append("[dropTables] %s equip 条目引用未定义装备池 '%s'" % [did, pool_id])
 					var qw = en.get("qualityWeight", {})
 					if not (qw is Dictionary) or qw.is_empty():
 						report.append("[dropTables] %s equip 条目缺少 qualityWeight" % did)
 					else:
+						var qsum := 0.0
 						for q in qw.keys():
 							if not quality_enum.has(String(q)):
 								report.append("[dropTables] %s 品质权重含未知品质 '%s'" % [did, q])
+							else:
+								qsum += float(qw[q])
+						# 创意 07 §7：所有品质概率必须合计 100（容差）。
+						if absf(qsum - 100.0) > 0.5:
+							report.append("[dropTables] %s equip 条目品质概率合计应为 100（实际 %.1f）" % [did, qsum])
+	return report
+
+## M6-0b：校验装备池（创意 07 §7 —— 池定义合法、传说池非空、模板存在、非 debug）。
+func _validate_loot_pools() -> Array[String]:
+	var report: Array[String] = []
+	var pools = tables.get("lootPools")
+	if not (pools is Array) or pools.is_empty():
+		report.append("[lootPools] 需要非空数组")
+		return report
+	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
+	var equips = tables.get("equipments")
+	for p in pools:
+		if typeof(p) != TYPE_DICTIONARY:
+			continue
+		var pid := String(p.get("id", "?"))
+		var only: Array = []
+		var raw_only = p.get("onlyQuality", [])
+		if raw_only is Array:
+			only = raw_only
+		var exclude: Array = []
+		var raw_exclude = p.get("excludeQuality", [])
+		if raw_exclude is Array:
+			exclude = raw_exclude
+		for q in only:
+			if not quality_enum.has(String(q)):
+				report.append("[lootPools] %s 的 onlyQuality 含未知品质 '%s'" % [pid, q])
+		for q in exclude:
+			if not quality_enum.has(String(q)):
+				report.append("[lootPools] %s 的 excludeQuality 含未知品质 '%s'" % [pid, q])
+		if not only.is_empty() and not exclude.is_empty():
+			report.append("[lootPools] %s 不应同时声明 onlyQuality 与 excludeQuality" % pid)
+		# 池必须至少能选出一个非 debug 模板（§7：空池 ⇒ 启动明确报错，不静默少发）。
+		var n := 0
+		if equips is Array:
+			for e in equips:
+				if not (e is Dictionary) or bool(e.get("debug", false)):
+					continue
+				var q := String(e.get("quality", "common"))
+				var ok := true
+				if not only.is_empty():
+					ok = only.has(q)
+				elif not exclude.is_empty():
+					ok = not exclude.has(q)
+				if ok:
+					n += 1
+		if n == 0:
+			report.append("[lootPools] %s 池为空（无任何非 debug 模板匹配）" % pid)
 	return report
 
 ## 取某表的 id 集合（数组型）。

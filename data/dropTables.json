@@ -19,11 +19,12 @@
   },
   {
     "id": "DT_Elite_L1",
-    "desc": "精英怪掉落表（L1–5，优奖：金币 L×15±20%、装备必掉、优品权重上移）",
+    "desc": "精英怪掉落表（L1–5，M6-0b 分组：基础 2~3 件 + 好装备 1 件 + 金币 + 药水；创意 07 §5）",
     "entries": [
       { "kind": "coin", "chance": 1.0, "goldRange": [48, 72] },
-      { "kind": "equip", "chance": 1.0, "levelRange": [3, 5], "qualityWeight": { "uncommon": 50, "rare": 40, "epic": 10 } },
-      { "kind": "potion", "chance": 0.4, "itemId": "potion_hp_small" }
+      { "kind": "equip", "chance": 1.0, "countRange": [2, 3], "levelRange": [3, 5], "templatePool": "normal", "qualityWeight": { "common": 70, "uncommon": 30 } },
+      { "kind": "equip", "chance": 1.0, "countRange": [1, 1], "levelRange": [3, 5], "templatePool": "normal", "qualityWeight": { "uncommon": 70, "rare": 27, "epic": 3 } },
+      { "kind": "potion", "chance": 1.0, "itemId": "potion_hp_small" }
     ]
   },
   {
@@ -37,15 +38,14 @@
   },
   {
     "id": "DT_Boss_L1",
-    "desc": "腐化源头 / Boss 掉落表",
+    "desc": "腐化源头 / Boss 掉落表（M6-0b 分组：基础 5~8 件 + 好装备 2 件 + 传说追加 5% + 金币 + 药水×2 + 如意；创意 07 §6）",
     "entries": [
+      { "kind": "equip", "chance": 1.0, "countRange": [5, 8], "levelRange": [9, 10], "templatePool": "normal", "qualityWeight": { "common": 70, "uncommon": 30 } },
+      { "kind": "equip", "chance": 1.0, "countRange": [2, 2], "levelRange": [9, 10], "templatePool": "normal", "qualityWeight": { "rare": 75, "epic": 25 } },
+      { "kind": "equip", "chance": 0.05, "countRange": [1, 1], "levelRange": [9, 10], "templatePool": "legendary", "qualityWeight": { "legendary": 100 } },
       { "kind": "coin", "chance": 1.0, "goldRange": [720, 880] },
-      { "kind": "equip", "chance": 1.0, "levelRange": [9, 10], "qualityWeight": { "rare": 50, "epic": 40, "legendary": 10 } },
-      { "kind": "potion", "chance": 0.5, "itemId": "potion_hp_large" },
-      { "kind": "rune", "chance": 0.18, "itemId": "rune_iron" },
-      { "kind": "rune", "chance": 0.12, "itemId": "rune_jade" },
-      { "kind": "rune", "chance": 0.06, "itemId": "rune_gold" },
-      { "kind": "rune", "chance": 0.03, "itemId": "rune_diamond" },
+      { "kind": "potion", "chance": 1.0, "itemId": "potion_hp_large", "count": 2 },
+      { "kind": "rune", "chance": 0.30, "itemIds": ["rune_iron", "rune_jade"] },
       { "kind": "mount", "chance": 0.2, "itemId": "mount_corrupted_wing" }
     ]
   }

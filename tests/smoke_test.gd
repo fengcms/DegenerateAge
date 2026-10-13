@@ -26,6 +26,7 @@ func _ready() -> void:
 	await _test_spawner()
 	await _test_level_gap()
 	_test_loot()
+	_test_grouped_drop()
 	_test_balance_calibration()
 	_test_inventory()
 	_test_inventory_sort()
@@ -332,14 +333,21 @@ func _test_warehouse() -> void:
 	GameState.reset_to_defaults()
 
 func _test_rune_loot() -> void:
+	# M6-0b（创意 07 §6）：如意口径收敛为「固定 1 份、30%、iron/jade 各 50%」。
 	var found := {}
+	var max_per_batch := 0
 	for seed_value in range(500):
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_value
+		var n := 0
 		for item in Loot.roll("DT_Boss_L1", rng, "boss_corrupted_beast"):
 			if String(item.get("kind", "")) == "rune":
 				found[String(item.get("itemId", ""))] = true
-	_expect(found.size() == 4, "四种如意都应能从 Boss 掉落表产出")
+				n += 1
+		max_per_batch = maxi(max_per_batch, n)
+	_expect(found.size() == 2 and found.has("rune_iron") and found.has("rune_jade"),
+		"Boss 如意应只产 iron/jade 两种，实际 %s" % [found.keys()])
+	_expect(max_per_batch <= 1, "Boss 每批如意应不超过 1 份，实际 %d" % max_per_batch)
 	var other_rng := RandomNumberGenerator.new()
 	other_rng.seed = 42
 	for item in Loot.roll("DT_Boss_L1", other_rng, "wolf_corrupted"):
@@ -711,15 +719,27 @@ func _test_loot() -> void:
 			_expect(not String(it.get("instanceId", "")).is_empty(), "装备实例需带 instanceId")
 	_expect(has_coin, "DT_Wild_L1 coin 概率 1.0，应必出金币")
 
-	# Boss 表品质权重仅 rare/epic/legendary（10.2 权重约束）
+	# M6-0b（创意 07 §6）：Boss 分组掉落 —— 基础 5~8 件（普70/优30）+ 好装备 2 件（稀75/史25）+ 传说追加（5%）
 	for s in range(40):
 		var br := RandomNumberGenerator.new()
 		br.seed = s
-		for it2 in Loot.roll("DT_Boss_L1", br):
-			if String(it2.get("kind", "")) == "equip":
-				var q := String(it2.get("quality", ""))
-				_expect(q in ["rare", "epic", "legendary"],
-					"Boss 装备品质应限于 rare/epic/legendary，实际 %s" % q)
+		var base_n := 0
+		var good_n := 0
+		for it2 in Loot.roll("DT_Boss_L1", br, "boss_corrupted_beast"):
+			if String(it2.get("kind", "")) != "equip":
+				continue
+			var q := String(it2.get("quality", ""))
+			_expect(ItemUtil.is_valid_quality(q), "Boss 装备品质非法：%s" % q)
+			var lv := int(it2.get("level", 0))
+			_expect(lv == 9 or lv == 10, "Boss 装备等级应为 9/10，实际 %d" % lv)
+			_expect(DataLoader.get_entry("equipments", String(it2.get("itemId", ""))) != null,
+				"掉落的装备模板未定义：%s" % String(it2.get("itemId", "")))
+			if q in ["common", "uncommon"]:
+				base_n += 1
+			elif q in ["rare", "epic"]:
+				good_n += 1
+		_expect(base_n >= 5 and base_n <= 8, "Boss 基础槽应 5~8 件，实际 %d" % base_n)
+		_expect(good_n == 2, "Boss 好装备槽应固定 2 件，实际 %d" % good_n)
 
 	# M2（R1）：misc 品类 —— 裂壳虫专属表必掉灵能碎片（Q003 收集物来源，Q3 选专属表）
 	var s_rng := RandomNumberGenerator.new()
@@ -739,6 +759,103 @@ func _test_loot() -> void:
 
 	# 无效掉落表 → 空（不崩溃）
 	_expect(Loot.roll("DT_NOT_EXIST").is_empty(), "无效掉落表应返回空数组")
+
+# ---- M6-0b：分组掉落 + 传说池 + 固定词条（创意 07 §5/§6/§7/§12）----
+func _test_grouped_drop() -> void:
+	# ① countRange 整数等概率展开：Boss 基础槽 countRange[5,8] 应覆盖 5/6/7/8 全部取值
+	var counts := {}
+	for s in range(800):
+		var r := RandomNumberGenerator.new()
+		r.seed = s
+		var n := 0
+		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
+			if String(it.get("kind", "")) == "equip" and String(it.get("quality", "")) in ["common", "uncommon"]:
+				n += 1
+		counts[n] = int(counts.get(n, 0)) + 1
+	for k in [5, 6, 7, 8]:
+		_expect(counts.has(k), "Boss 基础槽应覆盖 %d 件（countRange[5,8] 等概率），实际样本 %s" % [k, counts])
+	for k in counts.keys():
+		_expect(int(k) >= 5 and int(k) <= 8, "Boss 基础槽件数越界：%d" % int(k))
+
+	# ② 传说独立判定：必为传说品质 + 传说池模板 + 固定词条（atk+6 / hp+20），且概率≈5%
+	var legendary_n := 0
+	var samples := 2000
+	for s in range(samples):
+		var r := RandomNumberGenerator.new()
+		r.seed = 100000 + s
+		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
+			if String(it.get("quality", "")) != "legendary":
+				continue
+			legendary_n += 1
+			_expect(String(it.get("kind", "")) == "equip", "传说应为装备")
+			_expect(String(it.get("itemId", "")) == "weapon_legendary_vein_guard",
+				"传说应取传说池模板，实际 %s" % String(it.get("itemId", "")))
+			var aff = it.get("affixes", [])
+			_expect(aff is Array and aff.size() == 2, "传说应带固定 2 条词条，实际 %s" % [aff])
+			var has_atk := false
+			var has_hp := false
+			if aff is Array:
+				for a in aff:
+					if a is Dictionary and String(a.get("stat", "")) == "atk" and int(a.get("value", 0)) == 6:
+						has_atk = true
+					if a is Dictionary and String(a.get("stat", "")) == "hp" and int(a.get("value", 0)) == 20:
+						has_hp = true
+			_expect(has_atk and has_hp, "传说固定词条应为 atk+6 / hp+20，实际 %s" % [aff])
+	var rate := float(legendary_n) / float(samples)
+	_expect(rate > 0.03 and rate < 0.07, "传说掉落率应≈5%%，实际 %.3f" % rate)
+
+	# ③ 池隔离：精英不得掉传说；非传说品质不得使用传说模板（普通池排除传说，§7）
+	for s in range(300):
+		var r := RandomNumberGenerator.new()
+		r.seed = s
+		for it in Loot.roll("DT_Elite_L1", r):
+			_expect(String(it.get("quality", "")) != "legendary", "精英不得掉传说")
+	for s in range(300):
+		var r := RandomNumberGenerator.new()
+		r.seed = s
+		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
+			if String(it.get("kind", "")) == "equip" and String(it.get("quality", "")) != "legendary":
+				_expect(String(it.get("itemId", "")) != "weapon_legendary_vein_guard",
+					"普通池须排除传说模板，不得抽成白装")
+
+	# ④ Boss 药水 count=2（一个物品包两瓶，§6/§12）
+	var potion_seen := false
+	for s in range(50):
+		var r := RandomNumberGenerator.new()
+		r.seed = s
+		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
+			if String(it.get("kind", "")) == "potion":
+				potion_seen = true
+				_expect(String(it.get("itemId", "")) == "potion_hp_large", "Boss 药水应为 potion_hp_large")
+				_expect(int(it.get("count", 0)) == 2, "Boss 药水应为 count=2，实际 %d" % int(it.get("count", 0)))
+	_expect(potion_seen, "Boss 应必出大型生命药水")
+
+	# ⑤ 启动校验负向验证：空传说池 / 非法 countRange 应被明确拒绝（§7 / §12）
+	var original_pools: Array = DataLoader.tables["lootPools"]
+	var empty_pools := original_pools.duplicate(true)
+	for p in empty_pools:
+		if String(p.get("id", "")) == "legendary":
+			p["onlyQuality"] = []
+			p["excludeQuality"] = ["common", "uncommon", "rare", "epic", "legendary"]
+	DataLoader.tables["lootPools"] = empty_pools
+	var report_empty: Array[String] = DataLoader.validate_all()
+	_expect(" ".join(PackedStringArray(report_empty)).contains("legendary 池为空"),
+		"M6-0b：空传说池应被启动校验拒绝")
+	DataLoader.tables["lootPools"] = original_pools
+
+	var original_dts: Array = DataLoader.tables["dropTables"]
+	var bad_dts := original_dts.duplicate(true)
+	for d in bad_dts:
+		if String(d.get("id", "")) == "DT_Elite_L1":
+			for en in d.get("entries", []):
+				if String(en.get("kind", "")) == "equip":
+					en["countRange"] = [3, 2]
+					break
+	DataLoader.tables["dropTables"] = bad_dts
+	var report_cr: Array[String] = DataLoader.validate_all()
+	_expect(" ".join(PackedStringArray(report_cr)).contains("countRange"),
+		"M6-0b：非法 countRange（lo>hi）应被启动校验拒绝")
+	DataLoader.tables["dropTables"] = original_dts
 
 # ---- M1 收尾 / 数值校准（07 方案 §7）：防回归断言 ----
 ## 校准值一旦被误改回旧值，此用例立即失败。
@@ -777,8 +894,11 @@ func _test_balance_calibration() -> void:
 	if dt == null:
 		_expect(false, "C3 缺少 DT_Elite_L1 掉落表")
 	else:
+		# M6-0b（创意 07 §5）：分组后精英表 = 基础 2~3 件（普70/优30）+ 好装备 1 件（优70/稀27/史3）+ 金币 + 药水。
 		var coin_ok := false
-		var equip_ok := false
+		var base_ok := false
+		var good_ok := false
+		var potion_ok := false
 		for e in dt.get("entries", []):
 			var kind := String(e.get("kind", ""))
 			if kind == "coin":
@@ -786,28 +906,43 @@ func _test_balance_calibration() -> void:
 				coin_ok = gr is Array and gr.size() >= 2 and int(gr[0]) == 48 and int(gr[1]) == 72
 			elif kind == "equip":
 				_expect(is_equal_approx(float(e.get("chance", 0.0)), 1.0),
-					"C3 精英装备应必掉（chance 1.0）")
+					"C3 精英装备槽应必掉（chance 1.0）")
 				var qw = e.get("qualityWeight", {})
-				equip_ok = qw is Dictionary and int(qw.get("uncommon", 0)) == 50 \
-					and int(qw.get("rare", 0)) == 40 and int(qw.get("epic", 0)) == 10
+				var cr = e.get("countRange", [])
+				if cr is Array and cr.size() == 2 and int(cr[0]) == 2 and int(cr[1]) == 3 \
+					and int(qw.get("common", 0)) == 70 and int(qw.get("uncommon", 0)) == 30:
+					base_ok = true
+				elif int(qw.get("uncommon", 0)) == 70 and int(qw.get("rare", 0)) == 27 and int(qw.get("epic", 0)) == 3:
+					good_ok = true
+			elif kind == "potion":
+				potion_ok = String(e.get("itemId", "")) == "potion_hp_small" and is_equal_approx(float(e.get("chance", 0.0)), 1.0)
 		_expect(coin_ok, "C3 DT_Elite_L1 金币范围应为 [48,72]")
-		_expect(equip_ok, "C3 DT_Elite_L1 品质权重应为 优50/稀40/史10")
+		_expect(base_ok, "C3 精英基础槽应为 countRange[2,3]（普70/优30）")
+		_expect(good_ok, "C3 精英好装备槽应为 优70/稀27/史3")
+		_expect(potion_ok, "C3 精英药水应为固定 1 瓶 potion_hp_small")
 
-	# 精英掉落实测：金币落 [48,72] 且必出装备（多轮验证）
-	var seen_equip := false
+	# 精英掉落实测（M6-0b）：金币落 [48,72]、装备 3~4 件、至少 1 件优秀以上
 	for s in range(30):
 		var r := RandomNumberGenerator.new()
 		r.seed = 900 + s
+		var coin_seen := false
+		var equip_n := 0
+		var good_seen := false
 		for it in Loot.roll("DT_Elite_L1", r):
 			var k := String(it.get("kind", ""))
 			if k == "coin":
+				coin_seen = true
 				var g := int(it.get("gold", 0))
 				_expect(g >= 48 and g <= 72, "C3 精英金币应在 [48,72]，实际 %d" % g)
 			elif k == "equip":
-				seen_equip = true
+				equip_n += 1
 				var q := String(it.get("quality", ""))
-				_expect(q in ["uncommon", "rare", "epic"], "C3 精英装备品质越界：%s" % q)
-	_expect(seen_equip, "C3 精英应必出装备（30 轮抽取全未见 equip，异常）")
+				_expect(q in ["common", "uncommon", "rare", "epic"], "C3 精英装备品质越界（不应含传说）：%s" % q)
+				if q in ["uncommon", "rare", "epic"]:
+					good_seen = true
+		_expect(coin_seen, "C3 精英应必出金币")
+		_expect(equip_n >= 3 and equip_n <= 4, "C3 精英应掉 3~4 件装备，实际 %d" % equip_n)
+		_expect(good_seen, "C3 精英应至少 1 件优秀以上（好装备槽保底）")
 
 # ---- M1-6 / T10：背包存储与满包判定（5.8）----
 func _test_inventory() -> void:
