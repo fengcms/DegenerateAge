@@ -80,10 +80,18 @@ func _get_tooltip(at_position: Vector2) -> String:
 	if minimap:
 		return "点击打开大地图 · M"
 	for marker in _markers:
-		var cell := Vector2i(Iso.world_to_grid(marker.position).round())
-		if (marker.revealed or Fog.is_explored(GameState.current_map, cell)) and world_to_canvas(marker.position).distance_to(at_position) <= 14:
+		if _marker_visible(marker) and world_to_canvas(marker.position).distance_to(at_position) <= 14:
 			return String(marker.name)
 	return "点击本图位置步行前往"
+
+func _marker_visible(marker: Dictionary) -> bool:
+	var kind := String(marker.get("kind", ""))
+	if minimap and (kind == "exit" or kind == "carter"):
+		return get_viewport().get_visible_rect().has_point(get_viewport().get_canvas_transform() * Vector2(marker.position))
+	if not minimap and bool(marker.get("always_big", false)):
+		return true
+	var cell := Vector2i(Iso.world_to_grid(marker.position).round())
+	return bool(marker.get("revealed", false)) or Fog.is_explored(GameState.current_map, cell)
 
 func _polygon(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
 	return PackedVector2Array([world_to_canvas(Iso.grid_pt(x0, y0)), world_to_canvas(Iso.grid_pt(x1, y0)), world_to_canvas(Iso.grid_pt(x1, y1)), world_to_canvas(Iso.grid_pt(x0, y1))])
@@ -109,15 +117,24 @@ func _draw() -> void:
 	border.append(outline[0])
 	draw_polyline(border, Color("859a8b"), 1, true)
 	for marker in _markers:
-		var cell := Vector2i(Iso.world_to_grid(marker.position).round())
-		if not marker.revealed and not Fog.is_explored(GameState.current_map, cell):
+		if not _marker_visible(marker):
 			continue
 		var p := world_to_canvas(marker.position)
 		var kind := String(marker.kind)
-		var color := Color("f2cb5b") if kind == "quest" else (Color("da85ec") if kind == "boss" else Color("89b8ee"))
-		draw_circle(p, 3 if minimap else 5, color)
+		var color := Color("f2cb5b") if kind == "quest" else (Color("da85ec") if kind == "boss" else (Color("7ee1cf") if kind == "exit" else (Color("d6b47b") if kind == "carter" else Color("89b8ee"))))
+		if kind == "exit":
+			draw_line(p + Vector2(-5, 0), p + Vector2(5, 0), color, 2, true)
+			draw_line(p + Vector2(-5, 0), p + Vector2(-2, -3), color, 2, true)
+			draw_line(p + Vector2(5, 0), p + Vector2(2, 3), color, 2, true)
+		elif kind == "carter":
+			draw_arc(p, 4 if minimap else 6, 0, TAU, 16, color, 2, true)
+			draw_circle(p, 1.5, color)
+		else:
+			draw_circle(p, 3 if minimap else 5, color)
 		if not minimap:
-			var glyph := ("!B" if bool(marker.get("boss", false)) else "!") if kind == "quest" else ("B" if kind == "boss" else "N")
+			var glyph := ("!B" if bool(marker.get("boss", false)) else "!") if kind == "quest" else ("B" if kind == "boss" else ("↔" if kind == "exit" else ("◎" if kind == "carter" else "N")))
+			if kind == "exit":
+				glyph = "%s%s %s" % ["锁 " if not bool(marker.get("unlocked", true)) else "", glyph, MapService.display_name(String(marker.get("to_map", "")))]
 			draw_string(MONO_FONT, p + Vector2(7, 4), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
 	draw_circle(world_to_canvas(_player_position), 4 if minimap else 6, Color("6eebe6"))
 	draw_arc(world_to_canvas(_player_position), 6 if minimap else 9, 0, TAU, 24, Color.WHITE, 1, true)

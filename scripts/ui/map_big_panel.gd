@@ -92,7 +92,7 @@ func _build() -> void:
 	_map.destination_selected.connect(_on_destination)
 	root.add_child(_map)
 	var legend := Label.new()
-	legend.text = "青色圈：你　·　N：NPC　·　!：已接任务目标　·　B：Boss　·　暗色：未探索"
+	legend.text = "青色圈：你　·　↔：免费道路　·　◎：车夫　·　N：NPC　·　!：任务　·　B：Boss　·　暗色：未探索"
 	legend.add_theme_font_size_override("font_size", 13)
 	root.add_child(legend)
 	_hint = Label.new()

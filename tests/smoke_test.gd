@@ -2636,6 +2636,9 @@ func _test_map_travel() -> void:
 	invalid_cluster[1]["hubId"] = "missing"
 	_expect(not DataLoader._validate_carter_clusters(invalid_cluster).is_empty(), "无效集群归属应被启动校验捕获")
 	_expect(MapService.is_linked("ash_land") and MapService.is_linked("corruption_source"), "营地车夫应列出集群所有地图")
+	GameState.current_map = "ash_land"
+	_expect(not Quest._in_scope(Quest.template("S001")), "任务范围不得随车夫集群扩张")
+	GameState.current_map = "camp"
 	_expect(MapService.fee_to("wild_trial") == 0 and MapService.fee_to("ash_land") == 50 and MapService.fee_to("corruption_source") == 150, "营地逐对车费应正确")
 	var dests: Array = MapService.destinations()
 	_expect(dests.size() == 3, "营地应显示三处集群目的地")
@@ -2776,6 +2779,8 @@ func _test_rest_zone() -> void:
 ## （真实重载行为 = 销毁旧 Game + `Game._ready` 按 `GameState.current_map` 重建，见 MapService 头注）。
 func _test_map_reload() -> void:
 	GameState.reset_to_defaults()
+	GameState.add_unclaimed_loot("camp", "travel_camp", _equip_instance("weapon_starter", "travel_camp_item", {"atk": 4}), Iso.grid_to_world(Vector2i(20, 18)))
+	GameState.add_unclaimed_loot("wild_trial", "travel_wild", _equip_instance("weapon_starter", "travel_wild_item", {"atk": 4}), Iso.grid_to_world(Vector2i(30, 20)))
 
 	# ① 营地世界：3 只教学木桩 + 3 个 NPC（货郎 / 长老 / 车夫）
 	var camp_game: Node = load("res://scenes/Game.tscn").instantiate()
@@ -2843,9 +2848,22 @@ func _test_map_reload() -> void:
 	add_child(returned)
 	await get_tree().process_frame
 	var returned_explored: Array = Fog.encode().get("camp", [])
+	var return_loot := returned.get_node("LootRoot").get_children().filter(func(node: Node) -> bool: return node is GroundItem and node.persistent and String(node.item.get("instanceId", "")) == "travel_camp_item")
+	_expect(return_loot.size() == 1 and GameState.unclaimed_count("camp") == 1, "乘车返回后未领取物应恰好重建一次且不重复入包")
 	for sector in camp_explored:
 		_expect(returned_explored.has(sector), "返回营地后不能丢失既有探索区域 %s" % sector)
 	returned.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	MapService.walk_key_released = true
+	MapService.walk_locked_until_msec = 0
+	_expect(bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(34, 20))).ok), "步行前往野外应成功")
+	var walked: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(walked)
+	await get_tree().process_frame
+	var walk_loot := walked.get_node("LootRoot").get_children().filter(func(node: Node) -> bool: return node is GroundItem and node.persistent and String(node.item.get("instanceId", "")) == "travel_wild_item")
+	_expect(walk_loot.size() == 1 and GameState.unclaimed_count("wild_trial") == 1, "步行抵达后未领取物应恰好重建一次")
+	walked.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
@@ -3381,6 +3399,14 @@ func _test_fog_ui() -> void:
 	var player: PlayerCharacter = main.get_node("Game/Entities/Player")
 	var world: Node = main.get_node("Game")
 	var markers := MapMarkers.for_world(world)
+	var roads := markers.filter(func(marker: Dictionary) -> bool: return marker.kind == "exit")
+	var carters := markers.filter(func(marker: Dictionary) -> bool: return marker.kind == "carter")
+	_expect(roads.size() == 2 and carters.size() == 1, "野外地图应显示两条道路与一名车夫")
+	_expect(roads.all(func(marker: Dictionary) -> bool: return marker.always_big and String(marker.name).contains("免费")), "道路标记应在大地图始终显示目的地与免费提示")
+	_expect(carters[0].always_big if not carters.is_empty() else false, "车夫标记应与普通 NPC 区分")
+	canvas.refresh()
+	if not roads.is_empty():
+		_expect(canvas._marker_visible(roads[0]), "未探索道路也应在大地图显示独立标记")
 	var targets := markers.filter(func(marker: Dictionary) -> bool: return marker.kind == "quest")
 	_expect(targets.size() == 6 and targets.all(func(marker: Dictionary) -> bool: return marker.revealed), "接取狼任务未揭示六个实际刷新点")
 	_expect(MapMarkers.drops_item("shellback_bug", "spirit_shard") and not MapMarkers.drops_item("training_dummy", "spirit_shard"), "收集标记没有按真实掉落表过滤")

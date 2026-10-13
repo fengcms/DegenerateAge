@@ -21,7 +21,7 @@
     "mapScope": ["wild_trial"],
     "prev": "Q001",
     "abandonable": false,
-    "desc": "击败 5 只腐化野狼。"
+    "desc": "沿营地路牌可免费走到试炼野外，也可找车夫乘坐免费教学线路；击败 5 只腐化野狼。"
   },
   {
     "id": "Q003",
