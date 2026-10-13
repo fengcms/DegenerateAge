@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/SkillPanel.tscn" id="15_skill"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="16_settings"]
 [ext_resource type="PackedScene" path="res://scenes/ui/MenuPanel.tscn" id="17_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BossHealthBar.tscn" id="18_bossbar"]
 
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
@@ -27,6 +28,9 @@ script = ExtResource("1_main")
 process_mode = 3
 
 [node name="Hud" parent="UI" unique_id=360693552 instance=ExtResource("3_hud")]
+
+[node name="BossHealthBar" parent="UI" instance=ExtResource("18_bossbar")]
+layout_mode = 3
 
 [node name="InventoryPanel" parent="UI" unique_id=115460546 instance=ExtResource("4_inv")]
 layout_mode = 3

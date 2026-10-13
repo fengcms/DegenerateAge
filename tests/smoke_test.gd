@@ -64,6 +64,7 @@ func _ready() -> void:
 	await _test_display_scale()
 	await _test_world_text_scale()
 	await _test_scale_invariance()
+	await _test_boss_health_bar()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -2963,6 +2964,58 @@ func _test_elite_affixes() -> void:
 	player._begin_death()
 	_expect(player.movement_multiplier() == 1.0, "死亡清理减速")
 	container.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+## M6-0a（创意 07 §4）：三档敌人外观半径 / 头顶血条尺寸 + Boss 顶部血条显隐与死亡淡出。
+func _test_boss_health_bar() -> void:
+	GameState.reset_to_defaults()
+	var scene := load("res://scenes/entities/Monster.tscn") as PackedScene
+	var container := Node2D.new()
+	add_child(container)
+	# ① 三档：普通 13 / 34×4、精英 19 / 64×6、Boss 36 / 100×8
+	var cases := [
+		["training_dummy", "normal", Monster.RADIUS, Vector2(34, 4)],
+		["elite_wolf_king", "elite", Monster.RADIUS_ELITE, Vector2(64, 6)],
+		["boss_corrupted_beast", "boss", Monster.RADIUS_BOSS, Vector2(100, 8)],
+	]
+	for c in cases:
+		var id := String(c[0])
+		var mon := scene.instantiate() as Monster
+		mon.monster_id = id
+		container.add_child(mon)
+		mon.set_physics_process(false)
+		_expect(mon._kind() == String(c[1]), "%s 档次应为 %s" % [id, String(c[1])])
+		_expect(is_equal_approx(mon.radius, float(c[2])), "%s 外观半径应为 %.0f" % [id, float(c[2])])
+		var want_size: Vector2 = c[3]
+		_expect(mon._head_hp_size().is_equal_approx(want_size), "%s 头顶血条尺寸应为 %s" % [id, str(want_size)])
+		mon.queue_free()
+	await get_tree().process_frame
+	container.queue_free()
+	await get_tree().process_frame
+
+	# ② Boss 顶部血条：初始隐藏 → 广播显示 → hp<=0 淡出后隐藏
+	var main: Node = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var bar: Control = main.get_node_or_null("UI/BossHealthBar") as Control
+	_expect(bar != null, "Main.tscn 应含 UI/BossHealthBar")
+	if bar == null:
+		main.queue_free()
+		GameState.reset_to_defaults()
+		return
+	_expect(int(bar.z_index) == 0, "Boss 顶部血条 z_index 应为 0（不压 Toast/DragLayer）")
+	_expect(not bar.visible, "Boss 顶部血条初始应隐藏")
+	EventBus.boss_hp_changed.emit("腐化巨兽", 1800, 3000, 1)
+	await get_tree().process_frame
+	_expect(bar.visible and int(bar._hp) == 1800 and int(bar._max_hp) == 3000 and int(bar._phase) == 1,
+		"广播后血条应显示并记录血量/阶段")
+	EventBus.boss_hp_changed.emit("腐化巨兽", 0, 3000, 2)
+	await get_tree().process_frame
+	_expect(bool(bar._dying) and int(bar._hp) == 0, "hp<=0 应进入死亡淡出")
+	await get_tree().create_timer(1.2).timeout
+	_expect(not bar.visible, "淡出结束后血条应隐藏")
+	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
 

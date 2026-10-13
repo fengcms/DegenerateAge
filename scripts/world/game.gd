@@ -149,9 +149,15 @@ func enemy_at_screen(point: Vector2) -> Node2D:
 	var best: Node2D = null
 	var nearest := INF
 	for enemy in visible_enemies():
+		# M6-0a：命中半径取怪物**自身**档次半径（普通 13 / 精英 19 / Boss 36），
+		# 与 `Monster._draw` 同源，避免"大 Boss 画得大却点不中"。
+		var mon := enemy as Monster
+		var r := Monster.RADIUS
+		if mon != null:
+			r = mon.radius
 		var local: Vector2 = enemy.get_global_transform_with_canvas().affine_inverse() * point
-		var distance := local.distance_to(Vector2(0, -Monster.RADIUS * 0.6))
-		if distance <= Monster.RADIUS + 9 and distance < nearest:
+		var distance := local.distance_to(Vector2(0, -r * 0.6))
+		if distance <= r + 9.0 and distance < nearest:
 			nearest = distance
 			best = enemy
 	return best

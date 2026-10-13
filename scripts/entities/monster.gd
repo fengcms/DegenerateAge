@@ -17,10 +17,19 @@ const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
 
-const RADIUS := 13.0
+## M6-0a（创意 07 §4）：三档敌人外观。普通沿用既有半径；精英 / Boss 放大并加轮廓与地面标识。
+const RADIUS := 13.0          # 普通（兼容既有引用）
+const RADIUS_ELITE := 19.0
+const RADIUS_BOSS := 36.0
 const COLOR_BODY := Color("9c5a4a")
 const COLOR_AGGRO := Color("c9553f")
 const COLOR_EDGE := Color("3d221c")
+const COLOR_ELITE_BODY := Color("8a5f2c")
+const COLOR_ELITE_EDGE := Color("f3c85b")
+const COLOR_BOSS_BODY := Color("6b2a2a")
+const COLOR_BOSS_BODY_ENRAGED := Color("b0296b")
+const COLOR_BOSS_EDGE := Color("8f2020")
+const COLOR_BOSS_RING := Color("5a1414")
 const COLOR_HP_BG := Color(0.08, 0.08, 0.10, 0.85)
 const COLOR_HP_FG := Color("d2383c")
 
@@ -64,8 +73,11 @@ var is_ranged: bool = false
 var defense_power := 0.0
 var active_affixes: Array[Dictionary] = []
 var _life_steal_credit := 0.0
+## M6-0a：当前外观半径（按 kind 决定），绘制与点击命中同源（见 game.gd::enemy_at_screen）。
+var radius: float = RADIUS
 var boss_phase := 0
 var _boss_enraged := false
+var _boss_beat := 0.0
 var _stomp_pending := false
 var _stomp_remaining := 0.0
 var _stomp_cooldown := 0.0
@@ -94,6 +106,7 @@ func _load_template() -> void:
 		push_warning("[Monster] 未找到怪物模板 '%s'" % monster_id)
 		template = {}
 	display_name = String(template.get("name", monster_id))
+	radius = radius_for_kind(_kind())
 	var tpl_level: int = int(template.get("level", 1))
 	level = spawn_level if spawn_level > 0 else tpl_level
 	max_hp = _derive_max_hp(tpl_level)
@@ -180,6 +193,7 @@ func _update_boss(delta: float) -> bool:
 		return false
 	var skill: Dictionary = template.get("bossSkill", {})
 	var phases: Array = skill.get("phases", [])
+	var prev_phase := boss_phase
 	for i in range(phases.size()):
 		var phase: Dictionary = phases[i]
 		if phase.has("hpBelow") and hp_ratio() < float(phase.hpBelow):
@@ -190,6 +204,8 @@ func _update_boss(delta: float) -> bool:
 				attack_interval = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval / (1.0 + float(phase.get("addAttackSpeedPct", 0))))
 				_spawn_summons.call_deferred(String(phase.get("summon", "")), int(phase.get("summonCount", 0)))
 				EventBus.toast_requested.emit("%s 进入狂暴！" % display_name, "danger")
+	if boss_phase != prev_phase:
+		_announce_boss_hp()
 	_stomp_cooldown = maxf(0.0, _stomp_cooldown - delta)
 	if _stomp_pending:
 		_stomp_remaining = maxf(0.0, _stomp_remaining - delta)
@@ -245,6 +261,27 @@ func get_dodge() -> float:
 func hp_ratio() -> float:
 	return float(hp) / float(maxi(1, max_hp))
 
+## M6-0a：敌人档次（normal / elite / boss）。
+func _kind() -> String:
+	return String(template.get("kind", "normal"))
+
+## M6-0a（创意 07 §4）：按 kind 取外观半径（普通 13 / 精英 19 / Boss 36）。
+## 绘制与点击命中同源，避免「大 Boss 点不中」。
+static func radius_for_kind(kind: String) -> float:
+	match kind:
+		"elite":
+			return RADIUS_ELITE
+		"boss":
+			return RADIUS_BOSS
+		_:
+			return RADIUS
+
+## M6-0a（创意 07 §4）：向 HUD 广播 Boss 血量，供顶部血条刷新。
+func _announce_boss_hp() -> void:
+	if _kind() != "boss":
+		return
+	EventBus.boss_hp_changed.emit(display_name, hp, max_hp, boss_phase)
+
 # ---- 物理 / 状态机 ----
 
 func _physics_process(delta: float) -> void:
@@ -265,6 +302,13 @@ func _physics_process(delta: float) -> void:
 	velocity = Vector2.ZERO
 	if ai_enabled and not _update_boss(delta):
 		_update_ai(delta)
+	# M6-0a：交战期间每秒续期顶部血条（脱战即停 ⇒ HUD 3s 后隐藏）。
+	if _kind() == "boss":
+		_boss_beat -= delta
+		if _boss_beat <= 0.0:
+			_boss_beat = 1.0
+			if state == State.CHASE or state == State.ATTACK:
+				_announce_boss_hp()
 	move_and_slide()
 
 func _enter(s: int) -> void:
@@ -272,6 +316,9 @@ func _enter(s: int) -> void:
 		return
 	state = s
 	_state_t = 0.0
+	# M6-0a：Boss 进入仇恨即点亮顶部血条（脱战停止心跳后由 HUD 自行隐藏）。
+	if s == State.CHASE:
+		_announce_boss_hp()
 	queue_redraw()
 
 func _update_ai(delta: float) -> void:
@@ -382,6 +429,7 @@ func take_hit(result: Dictionary, from: Node = null) -> void:
 	else:
 		if ai_enabled and from is Node2D and state != State.CHASE and state != State.ATTACK:
 			_enter(State.CHASE)
+		_announce_boss_hp()
 		queue_redraw()
 
 func _die() -> void:
@@ -391,6 +439,7 @@ func _die() -> void:
 	state = State.DEAD
 	velocity = Vector2.ZERO
 	_stomp_pending = false
+	_announce_boss_hp()   # M6-0a：hp 已归零 ⇒ 触发顶部血条淡出
 	_settle_first_clear()
 	_settle_rewards()
 	_spawn_death_summons.call_deferred()
@@ -461,21 +510,92 @@ func _draw() -> void:
 		draw_arc(center, _stomp_radius, 0, TAU, 64, Color("ff623a"), 3.0, true)
 		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), "践踏预警", HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
 	if selected and not is_dead:
-		draw_arc(Vector2.ZERO, RADIUS + 7, 0, TAU, 40, Color("6eebe6"), 2.5, true)
-	var aggro := state == State.CHASE or state == State.ATTACK
-	var body := Color("b0296b") if _boss_enraged else (COLOR_AGGRO if aggro else COLOR_BODY)
+		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
+	match _kind():
+		"elite":
+			_draw_elite()
+		"boss":
+			_draw_boss()
+		_:
+			_draw_normal()
+	_draw_head_hp_bar()
+
+## 受击白闪 / 仇恨变色的统一体色。
+func _current_body(base: Color) -> Color:
 	if _flash_t > 0.0:
-		body = Color.WHITE
-	var body_center := Vector2(0.0, -RADIUS * 0.6)
-	draw_circle(body_center, RADIUS, body)
-	var elite: bool = template.get("kind", "normal") == "elite"
-	draw_arc(body_center, RADIUS, 0.0, TAU, 24, Color("f3c85b") if elite else COLOR_EDGE, 3.0 if elite else 2.0, true)
-	if elite:
-		draw_string(MONO_FONT, Vector2(-100, -RADIUS * 3.1), display_name, HORIZONTAL_ALIGNMENT_CENTER, 200, 13, Color("f3c85b"))
-	# 头顶血条（9.5：目标血条）
-	var w := 34.0
-	var h := 4.0
-	var x := -w * 0.5
-	var y := -RADIUS * 2.4
-	draw_rect(Rect2(x, y, w, h), COLOR_HP_BG)
-	draw_rect(Rect2(x, y, w * hp_ratio(), h), COLOR_HP_FG)
+		return Color.WHITE
+	return COLOR_AGGRO if (state == State.CHASE or state == State.ATTACK) else base
+
+## 普通怪（创意 07 §4）：既有圆身 + 深描边，无名，血条 34×4。
+func _draw_normal() -> void:
+	var c := Vector2(0.0, -radius * 0.6)
+	draw_circle(c, radius, _current_body(COLOR_BODY))
+	draw_arc(c, radius, 0.0, TAU, 24, COLOR_EDGE, 2.0, true)
+
+## 精英（创意 07 §4）：双肩尖耳 + 单爪 + 金色双描边 + 金色菱形地面标识 + 常显名，血条 64×6。
+func _draw_elite() -> void:
+	var c := Vector2(0.0, -radius * 0.6)
+	var body := _current_body(COLOR_ELITE_BODY)
+	_draw_ground_mark(Color(0.95, 0.78, 0.36, 0.30), radius * 0.75)
+	draw_colored_polygon(PackedVector2Array([
+		c + Vector2(-radius * 0.90, -radius * 0.40),
+		c + Vector2(-radius * 0.38, -radius * 1.30),
+		c + Vector2(-radius * 0.10, -radius * 0.55)]), body)
+	draw_colored_polygon(PackedVector2Array([
+		c + Vector2(radius * 0.90, -radius * 0.40),
+		c + Vector2(radius * 0.38, -radius * 1.30),
+		c + Vector2(radius * 0.10, -radius * 0.55)]), body)
+	draw_circle(c, radius, body)
+	draw_arc(c, radius, 0.0, TAU, 28, COLOR_ELITE_EDGE, 3.0, true)
+	draw_arc(c, radius - 3.5, 0.0, TAU, 28, Color(0.99, 0.87, 0.47, 0.6), 1.3, true)
+	draw_line(c + Vector2(radius * 0.70, radius * 0.30), c + Vector2(radius * 1.35, radius * 0.92), COLOR_ELITE_EDGE, 2.6, true)
+	draw_string(MONO_FONT, Vector2(c.x - 110.0, -radius * 2.4 - 6.0), display_name,
+		HORIZONTAL_ALIGNMENT_CENTER, 220.0, 13, COLOR_ELITE_EDGE)
+
+## Boss（创意 07 §4）：双角双爪 + 暗红封印环（四刻度）+ 常显名，血条 100×8。
+func _draw_boss() -> void:
+	var c := Vector2(0.0, -radius * 0.6)
+	var body := _current_body(COLOR_BOSS_BODY_ENRAGED if _boss_enraged else COLOR_BOSS_BODY)
+	draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 48, COLOR_BOSS_RING, 2.2, true)
+	for i in range(4):
+		var a := TAU * float(i) / 4.0 + PI * 0.25
+		var dir := Vector2(cos(a), sin(a))
+		draw_line(dir * (radius + 1.0), dir * (radius + 12.0), COLOR_BOSS_EDGE, 3.0, true)
+	draw_colored_polygon(PackedVector2Array([
+		c + Vector2(-radius * 0.72, -radius * 0.55),
+		c + Vector2(-radius * 0.46, -radius * 1.38),
+		c + Vector2(-radius * 0.04, -radius * 0.64)]), COLOR_BOSS_EDGE)
+	draw_colored_polygon(PackedVector2Array([
+		c + Vector2(radius * 0.72, -radius * 0.55),
+		c + Vector2(radius * 0.46, -radius * 1.38),
+		c + Vector2(radius * 0.04, -radius * 0.64)]), COLOR_BOSS_EDGE)
+	draw_circle(c, radius, body)
+	draw_arc(c, radius, 0.0, TAU, 40, COLOR_BOSS_EDGE, 3.2, true)
+	draw_line(c + Vector2(-radius * 0.68, radius * 0.42), c + Vector2(-radius * 1.24, radius * 1.00), COLOR_BOSS_EDGE, 3.0, true)
+	draw_line(c + Vector2(radius * 0.68, radius * 0.42), c + Vector2(radius * 1.24, radius * 1.00), COLOR_BOSS_EDGE, 3.0, true)
+	draw_string(MONO_FONT, Vector2(c.x - 150.0, -radius * 2.4 - 6.0), display_name,
+		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, Color("f4c9c9"))
+
+## 金色菱形地面标识（精英；创意 07 §4「地面标识」）。
+func _draw_ground_mark(color: Color, r: float) -> void:
+	var g := Vector2(0.0, 6.0)
+	draw_colored_polygon(PackedVector2Array([
+		g + Vector2(0.0, -r), g + Vector2(r, 0.0), g + Vector2(0.0, r), g + Vector2(-r, 0.0)]), color)
+
+## 头顶血条（9.5）：尺寸随档次 34×4 / 64×6 / 100×8（创意 07 §4）。
+func _draw_head_hp_bar() -> void:
+	var s := _head_hp_size()
+	var x := -s.x * 0.5
+	var y := -radius * 2.4
+	draw_rect(Rect2(x, y, s.x, s.y), COLOR_HP_BG)
+	draw_rect(Rect2(x, y, s.x * hp_ratio(), s.y), COLOR_HP_FG)
+	draw_rect(Rect2(x, y, s.x, s.y), Color(0, 0, 0, 0.5), false, 1.0)
+
+func _head_hp_size() -> Vector2:
+	match _kind():
+		"elite":
+			return Vector2(64.0, 6.0)
+		"boss":
+			return Vector2(100.0, 8.0)
+		_:
+			return Vector2(34.0, 4.0)

@@ -21,6 +21,9 @@ signal player_sitting_changed(sitting: bool)
 signal player_xp_changed(current: int, maximum: int)
 signal target_changed(target: Node)
 signal boss_first_clear(monster_id: String)
+## Boss 顶部血条（M6-0a / 创意 07 §4）：Monster 在受击 / 阶段变更 / 进入仇恨 / 死亡时广播。
+## `hp <= 0` 表示死亡，HUD 据此触发淡出。
+signal boss_hp_changed(boss_name: String, hp: int, max_hp: int, phase: int)
 
 # ---- 物品 / 经济 ----
 signal item_dropped(item_id: String)
