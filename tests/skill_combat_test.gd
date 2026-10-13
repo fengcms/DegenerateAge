@@ -91,6 +91,27 @@ func _ready() -> void:
 	add_child(next_map_player)
 	next_map_player.set_physics_process(false)
 	_check(next_map_player.skill_cooldown("whirlwind") > 0.0, "重建地图角色后冷却继续")
+	GameState.player.level = 15
+	GameState.player.mp = 100
+	player._attack_cd = 0.0
+	pilot._target = near
+	_check(pilot._try_battle_focus(near), "自动战斗在有效近战目标前施放增益")
+	_check(GameState.buff_remaining("battle_focus") > 0.0 and int(GameState.player.mp) == 70,
+		"自动施放复用耗蓝和运行态")
+	_check(not pilot._try_battle_focus(near) and int(GameState.player.mp) == 70, "持续期间不叠加")
+	GameState.clear_buffs()
+	player.skill_cooldowns.clear()
+	_check(not pilot._try_battle_focus(null), "无目标不空放")
+	near.global_position = player.global_position + Vector2(player.melee_range_px() + 100.0, 0)
+	_check(not pilot._try_battle_focus(near), "追路期间不提前施放")
+	near.global_position = player.global_position + Vector2(30, 0)
+	GameState.player.mp = 29
+	_check(not pilot._try_battle_focus(near), "缺蓝时继续保留普通攻击")
+	GameState.player.mp = 100
+	pilot._target = near
+	pilot._tick(0.016)
+	_check(GameState.buff_remaining("battle_focus") > 0.0 and player.skill_cooldown("battle_focus") == 30.0,
+		"自动战斗实际决策优先施放增益")
 	if _failures.is_empty():
 		print("[SkillCombatTest] 全部通过 ✅")
 		get_tree().quit(0)

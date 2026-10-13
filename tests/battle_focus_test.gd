@@ -48,6 +48,11 @@ func _ready() -> void:
 	player._begin_death()
 	check(GameState.buff_remaining("battle_focus") == 0.0, "死亡清除增益")
 	GameState.start_buff("battle_focus")
+	var snapshot := SaveManager._collect()
+	check(not snapshot.has("activeBuffs"), "增益不写入存档")
+	SaveManager.apply_to_game_state(snapshot)
+	check(GameState.buff_remaining("battle_focus") == 0.0, "读档清除增益")
+	GameState.start_buff("battle_focus")
 	GameState.reset_to_defaults()
 	check(GameState.buff_remaining("battle_focus") == 0.0, "新游戏清除增益")
 	if failures.is_empty():

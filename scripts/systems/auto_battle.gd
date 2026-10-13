@@ -269,10 +269,27 @@ func _tick(delta: float) -> void:
 	_player.set_auto_move(Vector2.ZERO)
 	_set_state(State.ATTACK_TARGET)
 	_stuck_count = 0
+	if _try_battle_focus(_target):
+		return
 	var skill := _best_area_skill(_target)
 	if not skill.is_empty() and _player.cast_skill(String(skill.id), _target):
 		return
 	_player.try_auto_attack(_target)
+
+## 只在真实可攻击目标已进入近战范围时启动自身增益；巡游、追路和拾取阶段均不空放。
+func _try_battle_focus(target: Node) -> bool:
+	if not _player.valid_target(target) or not _player.is_attack_ready():
+		return false
+	if _player.global_position.distance_to((target as Node2D).global_position) > _player.melee_range_px():
+		return false
+	if GameState.buff_remaining("battle_focus") > 0.0:
+		return false
+	var skill = DataLoader.get_entry("skills", "battle_focus")
+	if not skill is Dictionary or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
+		return false
+	if int(GameState.player.mp) < int(skill.get("manaCost", 0)) or _player.skill_cooldown("battle_focus") > 0.0:
+		return false
+	return _player.cast_skill("battle_focus")
 
 ## 按实际命中集合选择范围技；只有至少两只怪在技能形状内才消耗法力。
 func _best_area_skill(target: Node) -> Dictionary:
