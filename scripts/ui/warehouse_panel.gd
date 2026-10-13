@@ -18,6 +18,8 @@ var _detail: Label
 var _expand: Button
 var _bag_grid: GridContainer
 var _store_grid: GridContainer
+var _bag_scroll: ScrollContainer
+var _store_scroll: ScrollContainer
 var _last_side := ""
 var _last_index := -1
 var _last_click_ms := 0
@@ -26,6 +28,9 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
+	get_viewport().size_changed.connect(_update_layout)
+	EventBus.settings_changed.connect(_update_layout)
+	_update_layout.call_deferred()
 	visible = false
 	EventBus.warehouse_panel_requested.connect(_on_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
@@ -54,6 +59,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
+		_update_layout()
 		_detail.text = "双击物品存取，也可拖到另一侧的空格。"
 		_refresh()
 		EventBus.panel_opened.emit(PANEL_ID)
@@ -109,7 +115,8 @@ func _build() -> void:
 	_bag_organize.tooltip_text = "整理背包"
 	_bag_organize.pressed.connect(_on_bag_organize)
 	bag_head.add_child(_bag_organize)
-	_bag_grid = _make_grid(bag_column)
+	_bag_scroll = _make_scroll(bag_column)
+	_bag_grid = _make_grid(_bag_scroll)
 	var store_column := VBoxContainer.new()
 	columns.add_child(store_column)
 	var store_head := HBoxContainer.new()
@@ -122,7 +129,8 @@ func _build() -> void:
 	_store_organize.tooltip_text = "整理仓库"
 	_store_organize.pressed.connect(_on_store_organize)
 	store_head.add_child(_store_organize)
-	_store_grid = _make_grid(store_column)
+	_store_scroll = _make_scroll(store_column)
+	_store_grid = _make_grid(_store_scroll)
 	_detail = Label.new()
 	_detail.custom_minimum_size.y = 48
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -136,17 +144,34 @@ func _build() -> void:
 	_expand.pressed.connect(_on_expand)
 	footer.add_child(_expand)
 
-func _make_grid(parent: VBoxContainer) -> GridContainer:
+func _make_scroll(parent: VBoxContainer) -> ScrollContainer:
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(406, 312)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	parent.add_child(scroll)
+	return scroll
+
+func _make_grid(scroll: ScrollContainer) -> GridContainer:
 	var grid := GridContainer.new()
 	grid.columns = COLUMNS
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
 	scroll.add_child(grid)
 	return grid
+
+func _update_layout() -> void:
+	if _bag_scroll == null or _store_scroll == null:
+		return
+	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
+	var available := maxf(280.0, logical.x - 46.0)
+	var column_width := (available - 14.0) * 0.5
+	var count := clampi(int(floor((column_width - 10.0 + 4.0) / 50.0)), 3, COLUMNS)
+	var width := minf(406.0, float(count * 46 + (count - 1) * 4 + 10))
+	var height := minf(312.0, maxf(100.0, logical.y - 190.0))
+	_bag_grid.columns = count
+	_store_grid.columns = count
+	_bag_scroll.custom_minimum_size = Vector2(width, height)
+	_store_scroll.custom_minimum_size = Vector2(width, height)
 
 func _refresh() -> void:
 	if not visible:

@@ -4,11 +4,15 @@ var _title: Label
 var _info: Label
 var _map: MapCanvas
 var _hint: Label
+var _root: VBoxContainer
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
+	get_viewport().size_changed.connect(_update_layout)
+	EventBus.settings_changed.connect(_update_layout)
+	_update_layout.call_deferred()
 	visible = false
 	EventBus.map_panel_requested.connect(func() -> void: set_open(true))
 	EventBus.panel_opened.connect(_on_panel_opened)
@@ -29,6 +33,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("map", open)
 	if open:
+		_update_layout()
 		_title.text = "%s　·　大地图" % MapService.display_name(GameState.current_map)
 		var cell := Iso.world_to_grid(MapService.entry_point(GameState.current_map))
 		var player := get_tree().get_first_node_in_group("player") as Node2D
@@ -71,6 +76,7 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 16)
 	box.add_child(margin)
 	var root := VBoxContainer.new()
+	_root = root
 	root.custom_minimum_size = Vector2(800, 0)
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
@@ -89,17 +95,29 @@ func _build() -> void:
 	_map = MapCanvas.new()
 	_map.name = "MapCanvas"
 	_map.custom_minimum_size = Vector2(800, 400)
+	_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_map.destination_selected.connect(_on_destination)
 	root.add_child(_map)
 	var legend := Label.new()
 	legend.text = "青色圈：你　·　↔：免费道路　·　◎：车夫　·　N：NPC　·　!：任务　·　B：Boss　·　暗色：未探索"
 	legend.add_theme_font_size_override("font_size", 13)
+	legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(legend)
 	_hint = Label.new()
 	_hint.add_theme_font_size_override("font_size", 13)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_hint)
 	var targets := Label.new()
 	targets.text = "任务标记显示当前图的刷新区域；其他地图目标随车夫切图查看。"
 	targets.add_theme_font_size_override("font_size", 12)
 	targets.modulate = Color("a0afb7")
+	targets.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(targets)
+
+func _update_layout() -> void:
+	if _root == null or _map == null:
+		return
+	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
+	var width := minf(800.0, maxf(280.0, logical.x - 48.0))
+	_root.custom_minimum_size.x = width
+	_map.custom_minimum_size = Vector2(0, minf(400.0, maxf(96.0, logical.y - 210.0)))

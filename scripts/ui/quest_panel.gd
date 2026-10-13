@@ -29,11 +29,16 @@ var _title: Label
 var _list: VBoxContainer
 var _center: CenterContainer
 var _dim: ColorRect
+var _root: VBoxContainer
+var _scroll: ScrollContainer
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
+	get_viewport().size_changed.connect(_update_layout)
+	EventBus.settings_changed.connect(_update_layout)
+	_update_layout.call_deferred()
 	visible = false
 	EventBus.quest_panel_requested.connect(_on_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
@@ -68,6 +73,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("quest", open)
 	if open:
+		_update_layout()
 		_refresh()
 		EventBus.panel_opened.emit("quest")
 
@@ -111,6 +117,7 @@ func _build() -> void:
 	box.add_child(margin)
 
 	var root := VBoxContainer.new()
+	_root = root
 	root.add_theme_constant_override("separation", 8)
 	root.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	margin.add_child(root)
@@ -143,6 +150,7 @@ func _build() -> void:
 	root.add_child(HSeparator.new())
 
 	var scroll := ScrollContainer.new()
+	_scroll = scroll
 	scroll.custom_minimum_size = Vector2(PANEL_WIDTH, 460)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(scroll)
@@ -157,6 +165,13 @@ func _build() -> void:
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
+
+func _update_layout() -> void:
+	if _root == null or _scroll == null:
+		return
+	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
+	_root.custom_minimum_size.x = minf(PANEL_WIDTH, maxf(280.0, logical.x - 48.0))
+	_scroll.custom_minimum_size = Vector2(0, minf(460.0, maxf(100.0, logical.y - 132.0)))
 
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()

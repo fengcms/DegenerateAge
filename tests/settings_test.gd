@@ -223,6 +223,7 @@ func _check_panels_matrix() -> void:
 			SettingsRuntime.apply_ui_scale_to(ui)
 			SettingsRuntime.apply_text_scale_to(ui)
 			SettingsRuntime.apply_world_text_scale()
+			EventBus.settings_changed.emit()
 			await get_tree().process_frame
 			var logical: Vector2 = Vector2(viewport_size) / factor
 			for panel in panels:
@@ -253,6 +254,21 @@ func _check_panels_matrix() -> void:
 					and content.global_position.y + content.size.y <= logical.y + 1,
 					"设置窗口应完整落在可见区域（%.1f @ %s）：%s / %s" % [factor, str(viewport_size), content.global_position, content.size])
 				settings.set_open(false)
+			if viewport_size == Vector2i(2280, 1425) or viewport_size == Vector2i(1280, 800):
+				for name in ["QuestPanel", "MapBigPanel", "WarehousePanel"]:
+					var responsive := ui.get_node_or_null(name) as Control
+					responsive.visible = true
+					await get_tree().process_frame
+					var boxes := responsive.find_children("*", "PanelContainer", true, false)
+					var largest: Control = null
+					for box in boxes:
+						if box is Control and (largest == null or box.size.x * box.size.y > largest.size.x * largest.size.y):
+							largest = box as Control
+					_check(largest != null and largest.global_position.x >= -1 and largest.global_position.y >= -1
+						and largest.global_position.x + largest.size.x <= logical.x + 1
+						and largest.global_position.y + largest.size.y <= logical.y + 1,
+						"%s 应完整落在可见区域（%.1f @ %s）" % [name, factor, viewport_size])
+					responsive.visible = false
 	# 新增文字应在入树后自动获得同一倍率，不依赖再次打开设置。
 	GameState.settings["uiScale"] = 1.5
 	GameState.settings["textScale"] = 1.5
