@@ -89,6 +89,21 @@ func _ready() -> void:
 	get_viewport().push_input(right, true)
 	await get_tree().process_frame
 	_check(GameState.hotbar[6] == null, "右键清空绑定")
+	# 永久来源：清掉默认自动药项后，仍可从技能面板重新绑定。
+	skills.set_open(true)
+	var source_red: SkillDragButton = skills._list.get_child(skills._list.get_child_count() - 2).get_child(0)
+	var source_blue: SkillDragButton = skills._list.get_child(skills._list.get_child_count() - 1).get_child(0)
+	GameState.set_hotbar_entry(0, null)
+	GameState.set_hotbar_entry(1, null)
+	var red_payload: Dictionary = source_red._get_drag_data(Vector2.ZERO)
+	var blue_payload: Dictionary = source_blue._get_drag_data(Vector2.ZERO)
+	_check(hud._hotbar_buttons[0]._can_drop_data(Vector2.ZERO, red_payload), "自动红药可重新拖入")
+	_check(hud._hotbar_buttons[1]._can_drop_data(Vector2.ZERO, blue_payload), "自动蓝药可重新拖入")
+	hud._hotbar_buttons[0]._drop_data(Vector2.ZERO, red_payload)
+	hud._hotbar_buttons[1]._drop_data(Vector2.ZERO, blue_payload)
+	_check(GameState.hotbar[0] == {"kind": "auto_potion", "id": "red"} and
+		GameState.hotbar[1] == {"kind": "auto_potion", "id": "blue"}, "清空后两种自动药都能恢复")
+	skills.set_open(false)
 	GameState.inventory[0] = null
 	EventBus.inventory_changed.emit()
 	_check(GameState.hotbar[5].id == "potion_hp_small" and is_equal_approx(hud._hotbar_buttons[5].modulate.a, 0.45),

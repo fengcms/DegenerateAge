@@ -114,3 +114,16 @@ func _refresh() -> void:
 			String(skill.get("desc", ""))]
 		desc.custom_minimum_size.x = 500
 		row.add_child(desc)
+	for kind in ["red", "blue"]:
+		var row := HBoxContainer.new()
+		_list.add_child(row)
+		var button := SkillDragButton.new()
+		button.custom_minimum_size = Vector2(72, 48)
+		button.text = "红药" if kind == "red" else "蓝药"
+		button.binding = {"kind": "auto_potion", "id": kind}
+		button.tooltip_text = "拖到快捷栏；自动选用背包中的对应药品"
+		row.add_child(button)
+		var desc := Label.new()
+		desc.text = "自动%s药　·　可随时重新拖入快捷栏" % ("红" if kind == "red" else "蓝")
+		desc.custom_minimum_size.x = 500
+		row.add_child(desc)

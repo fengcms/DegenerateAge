@@ -366,6 +366,8 @@ func _on_binding_dropped(index: int, payload: Dictionary) -> void:
 		GameState.swap_hotbar_entries(int(payload.get("index", -1)), index)
 	elif kind == "hotbar_skill":
 		GameState.set_hotbar_entry(index, {"kind": "skill", "id": payload.get("id")})
+	elif kind == "hotbar_binding":
+		GameState.set_hotbar_entry(index, payload.get("entry"))
 	elif int(payload.get("from", -1)) == ItemSlot.ROLE_BAG:
 		var source := int(payload.get("index", -1))
 		if source >= 0 and source < GameState.inventory.size() and GameState.inventory[source] is Dictionary:

@@ -84,6 +84,8 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 		return source >= 0 and source < HotbarConfig.SIZE and GameState.hotbar[source] != null
 	if data.get("kind") == "hotbar_skill":
 		return HotbarConfig.valid_entry({"kind": "skill", "id": data.get("id")})
+	if data.get("kind") == "hotbar_binding":
+		return HotbarConfig.valid_entry(data.get("entry")) and data.get("entry") != null
 	if int(data.get("from", -1)) == ItemSlot.ROLE_BAG:
 		var source := int(data.get("index", -1))
 		if source < 0 or source >= GameState.inventory.size() or not GameState.inventory[source] is Dictionary:
