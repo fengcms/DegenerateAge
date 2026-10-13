@@ -1809,7 +1809,7 @@ func _test_auto_battle() -> void:
 	mon.monster_id = "training_dummy"
 	mon.ai_enabled = false
 	game.get_node("Spawner").add_child(mon)
-	mon.global_position = player.global_position + Vector2(220.0, 0.0)
+	mon.global_position = Iso.grid_to_world(Vector2i(30, 20)) # 营地安全区外的固定可视目标
 	await get_tree().process_frame
 
 	GameState.set_auto_battle(true)
@@ -3060,7 +3060,7 @@ func _test_map_scale() -> void:
 	GameState.settings["mapScale"] = 0.8
 	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 0.8), "mapScale=0.8 应取 0.8")
 	GameState.settings["mapScale"] = 9.0
-	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 1.5), "mapScale 超上限应 clamp 到 1.5")
+	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 2.0), "mapScale 超上限应 clamp 到 2.0")
 	GameState.settings["mapScale"] = 0.1
 	_expect(is_equal_approx(SettingsRuntime.map_scale_value(), 0.8), "mapScale 超下限应 clamp 到 0.8")
 	GameState.settings.erase("mapScale")
@@ -3075,6 +3075,9 @@ func _test_map_scale() -> void:
 	GameState.settings["mapScale"] = 1.25
 	SettingsRuntime.apply_map_scale_to(cam)
 	_expect(cam.zoom.is_equal_approx(Vector2(1.25, 1.25)), "mapScale=1.25 应使 zoom=(1.25,1.25)，实际 %s" % str(cam.zoom))
+	GameState.settings["mapScale"] = 2.0
+	SettingsRuntime.apply_map_scale_to(cam)
+	_expect(cam.zoom.is_equal_approx(Vector2(2.0, 2.0)), "mapScale=2.0 应使 zoom=(2,2)，实际 %s" % str(cam.zoom))
 	cam.queue_free()
 
 	# ③ 世界装配时补应用（切图 reload 会重建 Player/Camera2D，见 game.gd 相机段）
@@ -3228,11 +3231,16 @@ func _test_world_text_scale() -> void:
 	tomb.set_remaining(95.0)
 	await get_tree().process_frame
 	_expect(tomb.is_in_group("world_text"), "墓碑倒计时应入 world_text 组")
+	GameState.settings["mapScale"] = 2.0
+	GameState.settings["textScale"] = 2.0
+	SettingsRuntime.apply_all()
+	_expect(name_label.scale.is_equal_approx(Vector2.ONE) and hint_label.scale.is_equal_approx(Vector2.ONE),
+		"地图/文字均 200% 时，世界文字仅随相机放大一次")
 
 	for node in [dn_label, name_label, hint_label, tomb, dn, npc]:
 		if node != null:
 			node.queue_free()
-	for key in ["displayScaleMode", "displayScale", "mapScale"]:
+	for key in ["displayScaleMode", "displayScale", "mapScale", "textScale"]:
 		GameState.settings.erase(key)
 	await get_tree().process_frame
 

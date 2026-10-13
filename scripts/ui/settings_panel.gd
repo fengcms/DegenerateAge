@@ -184,8 +184,8 @@ func _build_visual(tabs: TabContainer) -> void:
 	var box := _tab(tabs, "画面")
 	# M5-9d（09-A）：三轴各自档位化 + 显示适配（自动/手动）。
 	_option_row(box, "界面大小", "uiScale", [80, 100, 125, 150, 175, 200])
-	_option_row(box, "地图显示大小", "mapScale", [80, 100, 125, 150])
-	_option_row(box, "文字大小", "textScale", [100, 110, 125, 150])
+	_option_row(box, "地图显示大小", "mapScale", [80, 100, 125, 150, 175, 200])
+	_option_row(box, "文字大小", "textScale", [100, 110, 125, 150, 175, 200])
 	_build_display_adapt(box)
 	_checkbox(box, "全屏显示", "fullscreen")
 	var resolution := OptionButton.new()

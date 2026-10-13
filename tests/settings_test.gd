@@ -81,7 +81,17 @@ func _ready() -> void:
 		"界面/文字/手动适配均 150% 时，最终文字应为 225% 而非重复叠乘")
 	GameState.settings["displayScaleMode"] = "auto"
 	GameState.settings["displayScale"] = 1.0
+	GameState.settings["uiScale"] = 2.0
+	GameState.settings["mapScale"] = 2.0
+	GameState.settings["textScale"] = 2.0
+	SettingsRuntime.apply_ui_scale_to(ui)
+	SettingsRuntime.apply_text_scale_to(ui)
+	_check(is_equal_approx(ui.transform.x.x, 2.0)
+		and absf(float(font_probe.get_theme_font_size("font_size")) * ui.transform.x.x - 32.0) <= 1.0
+		and is_equal_approx(SettingsRuntime.world_text_scale_value(), 1.0),
+		"界面/地图/文字均 200% 时，最终字体为 200%，世界文字不重复放大")
 	GameState.settings["textScale"] = 1.0
+	GameState.settings["mapScale"] = 1.0
 	font_probe.queue_free()
 	# M5-9d：界面大小上限开到 200%（大窗口 + 200% ⇒ 逻辑视口回到设计基准尺寸）
 	GameState.settings["uiScale"] = 2.0
@@ -148,12 +158,12 @@ func _check_visual_tab() -> void:
 			"界面大小档位应为 80/100/125/150/175/200，实际 %s" % str(items))
 	if dropdowns.has("地图显示大小"):
 		var items := _option_texts(dropdowns["地图显示大小"])
-		_check(items == ["80%", "100%", "125%", "150%"],
-			"地图显示大小档位应为 80/100/125/150，实际 %s" % str(items))
+		_check(items == ["80%", "100%", "125%", "150%", "175%", "200%"],
+			"地图显示大小档位应为 80/100/125/150/175/200，实际 %s" % str(items))
 	if dropdowns.has("文字大小"):
 		var items := _option_texts(dropdowns["文字大小"])
-		_check(items == ["100%", "110%", "125%", "150%"],
-			"文字大小档位应为 100/110/125/150，实际 %s" % str(items))
+		_check(items == ["100%", "110%", "125%", "150%", "175%", "200%"],
+			"文字大小档位应为 100/110/125/150/175/200，实际 %s" % str(items))
 	if dropdowns.has("显示适配"):
 		var mode: OptionButton = dropdowns["显示适配"]
 		_check(mode.item_count == 2 and String(mode.get_item_text(0)).begins_with("自动"),
@@ -179,6 +189,24 @@ func _check_visual_tab() -> void:
 			"选 200% 档位应即时应用到界面轴")
 		GameState.settings["uiScale"] = 1.0
 		SettingsRuntime.apply_all()
+	for field in ["地图显示大小", "文字大小"]:
+		if dropdowns.has(field):
+			var options: OptionButton = dropdowns[field]
+			options.select(options.item_count - 1)
+			options.item_selected.emit(options.item_count - 1)
+			await get_tree().process_frame
+	_check(is_equal_approx(float(GameState.settings.get("mapScale", 0.0)), 2.0)
+		and is_equal_approx(float(GameState.settings.get("textScale", 0.0)), 2.0)
+		and is_equal_approx(SettingsRuntime.world_text_scale_value(), 1.0),
+		"地图与文字选 200% 后应即时生效，世界字形不应重复放大")
+	var scaled_save := SaveManager._collect()
+	_check(SaveManager._is_valid_save(scaled_save)
+		and is_equal_approx(float(SaveManager._migrate(scaled_save).settings.get("mapScale", 0.0)), 2.0)
+		and is_equal_approx(float(SaveManager._migrate(scaled_save).settings.get("textScale", 0.0)), 2.0),
+		"地图和文字 200% 设置应通过存档校验并在读取后保持")
+	GameState.settings["mapScale"] = 1.0
+	GameState.settings["textScale"] = 1.0
+	SettingsRuntime.apply_all()
 	GameState.settings.erase("displayScaleMode")
 	panel.queue_free()
 	await get_tree().process_frame
@@ -234,9 +262,10 @@ func _check_panels_matrix() -> void:
 	for viewport_size in [Vector2i(1280, 800), Vector2i(1920, 1200), Vector2i(2280, 1425), Vector2i(1153, 721)]:
 		embedded.size = viewport_size
 		for factor in [0.8, 1.0, 1.5, 2.0]:
+			var text_factor := 2.0 if viewport_size == Vector2i(2280, 1425) and factor == 2.0 else 1.5
 			GameState.settings["uiScale"] = factor
-			GameState.settings["textScale"] = 1.5
-			GameState.settings["mapScale"] = 1.0
+			GameState.settings["textScale"] = text_factor
+			GameState.settings["mapScale"] = 2.0 if text_factor == 2.0 else 1.0
 			SettingsRuntime.apply_ui_scale_to(ui)
 			SettingsRuntime.apply_text_scale_to(ui)
 			SettingsRuntime.apply_world_text_scale()
@@ -251,8 +280,8 @@ func _check_panels_matrix() -> void:
 				var hp_text := hud.get_node_or_null("StatusPanel/HpText") as Label
 				if hp_text != null:
 					var effective_font: float = float(hp_text.get_theme_font_size("font_size")) * factor
-					_check(absf(effective_font - 12.0 * 1.5) <= factor,
-						"血条文字最终大小应只跟随文字 150%%，实际 %.1f" % effective_font)
+					_check(absf(effective_font - 12.0 * text_factor) <= factor,
+						"血条文字最终大小应只跟随文字倍率 %.1f，实际 %.1f" % [text_factor, effective_font])
 				var map_panel := hud.get_node_or_null("MapPanel") as Control
 				var hotbar := hud.get_node_or_null("Hotbar") as Control
 				if map_panel != null:

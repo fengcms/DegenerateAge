@@ -9,16 +9,15 @@ const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "
 	"hotbar_10", "hotbar_11", "hotbar_12"]
 
 ## M5-9c（09-A §4）：显示适配手动系数与 UI/文字/地图三轴的档位上下限。
-## M5-9d：界面大小档位上限开到 200%（UI_SCALE_MAX 1.5→2.0）；文字/地图保持 150% 上限
-## （文字旧档值 0.8–1.5 必须继续被 clamp 接纳，见 09-A §M5-9d 表）。
+## 4K 试玩修订：界面、地图、文字三轴均可选到 200%；旧档值继续按原值读取。
 const DISPLAY_SCALE_MIN := 0.75
 const DISPLAY_SCALE_MAX := 1.5
 const UI_SCALE_MIN := 0.8
 const UI_SCALE_MAX := 2.0
 const MAP_SCALE_MIN := 0.8
-const MAP_SCALE_MAX := 1.5
+const MAP_SCALE_MAX := 2.0
 const TEXT_SCALE_MIN := 0.8
-const TEXT_SCALE_MAX := 1.5
+const TEXT_SCALE_MAX := 2.0
 
 ## 无头判定唯一可靠方式。⚠ `OS.has_feature("headless")` 实测恒为 false（无头下也 false），勿用。
 static func is_headless() -> bool:
@@ -205,7 +204,7 @@ static func _text_scale_node(node: Node, factor: float) -> void:
 	for child in node.get_children():
 		_text_scale_node(child, factor)
 
-## M5-9b（09-A §4）：地图显示大小 = 相机 zoom（80/100/125/150% ⇒ 0.8/1.0/1.25/1.5）。
+## 地图显示大小 = 相机 zoom（80/100/125/150/175/200%）。
 ## zoom < 1 时可见范围等比例变大（不改碰撞、射程、怪物数量、拾取距离，创意 09 §4）；
 ## 数据不变时相机被 limit 夹住 ⇒ 地图外围会出现底色空白 —— 属"地图真实边界外仍受相机限制"
 ## 的预期行为，不视为缺陷（是否给边界外做装饰留 M6）。
@@ -224,7 +223,7 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 		return
 	camera.zoom = Vector2.ONE * map_scale_value()
 
-## 地图显示倍率（0.8–1.5 × 显示适配系数）。缺键取默认 1.0，故 M5-9d 新增档位**无需 schema 升级**。
+## 地图显示倍率（0.8–2.0 × 显示适配系数）。缺键取默认 1.0，无需 schema 升级。
 ## M5-9c：最终值 = clamp(mapScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
 static func map_scale_value() -> float:
 	return clampf(float(GameState.settings.get("mapScale", 1.0)), MAP_SCALE_MIN, MAP_SCALE_MAX) * display_scale_factor()
