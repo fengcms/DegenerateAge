@@ -26,6 +26,6 @@ func _draw() -> void:
 	draw_line(Vector2(0, -22), Vector2(0, -6), Color("c4c7cc"), 2)
 	var seconds := maxi(0, _shown_seconds)
 	var text := "Boss 刷新 %02d:%02d" % [seconds / 60, seconds % 60]
-	# M5-9e：字号按地图倍率反向取（zoom<1 时字变大、zoom>1 时字变小 ⇒ 屏幕上恒定可读）
-	var font_size := 15.0 / SettingsRuntime.map_scale_value()
+	# 字号抵消地图倍率，再按玩家设定的最终文字倍率显示。
+	var font_size := 15.0 * SettingsRuntime.world_text_scale_value()
 	draw_string(MONO_FONT, Vector2(-100, -38), text, HORIZONTAL_ALIGNMENT_CENTER, 200, font_size, Color("f2cc71"))

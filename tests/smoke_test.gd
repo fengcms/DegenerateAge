@@ -3130,8 +3130,8 @@ func _test_display_scale() -> void:
 	_expect(screen.size.is_equal_approx(viewport_size / 1.25),
 		"UI 根尺寸应随显示适配调整：实际 %s 视口 %s" % [screen.size, viewport_size])
 	var base_font := int(label.get_meta("base_font_size", 0))
-	_expect(int(label.get_theme_font_size("font_size")) == maxi(9, roundi(base_font * 1.25)),
-		"显示适配应作用于文字轴：基础 %d 实际 %d" % [base_font, label.get_theme_font_size("font_size")])
+	_expect(int(label.get_theme_font_size("font_size")) == base_font,
+		"手动适配系数由 UI 层应用一次，字体字号不得重复放大")
 	SettingsRuntime.apply_map_scale_to(cam)
 	_expect(cam.zoom.is_equal_approx(Vector2(1.25, 1.25)), "显示适配应作用于地图轴：实际 %s" % str(cam.zoom))
 
@@ -3192,13 +3192,13 @@ func _test_world_text_scale() -> void:
 		"mapScale=0.8 时头顶名称应放大到 1.25，实际 %s" % str(name_label.scale))
 	_expect(hint_label.scale.is_equal_approx(Vector2(1.25, 1.25)), "交互提示应同步反补偿")
 
-	# ③ 与显示适配系数相乘：manual 1.25 × mapScale 0.8 ⇒ 总倍率 1.0 ⇒ 不补偿
+	# ③ 手动适配仅应用一次：地图总倍率 1.0、目标文字 1.25 ⇒ 节点倍率 1.25。
 	GameState.settings["displayScaleMode"] = "manual"
 	GameState.settings["displayScale"] = 1.25
 	SettingsRuntime.apply_all()
 	await get_tree().process_frame
-	_expect(name_label.scale.is_equal_approx(Vector2.ONE),
-		"总倍率=1.0（0.8×1.25）时世界文字不应补偿，实际 %s" % str(name_label.scale))
+	_expect(name_label.scale.is_equal_approx(Vector2.ONE * SettingsRuntime.text_scale_value()),
+		"地图倍率 1.0 时世界文字仍须遵守文字倍率，实际 %s" % str(name_label.scale))
 
 	# ④ 动态飘字：生成即按当前倍率自应用（不等下一次组重扫）
 	GameState.settings["displayScaleMode"] = "auto"
@@ -3307,6 +3307,10 @@ func _test_scale_invariance() -> void:
 	GameState.settings["textScale"] = 1.25
 	SettingsRuntime.apply_all()
 	await get_tree().process_frame
+	var ui_base_font := int(label.get_meta("base_font_size", 0))
+	_expect(absf(float(label.get_theme_font_size("font_size")) * ui.transform.x.x
+		- float(ui_base_font) * SettingsRuntime.text_scale_value()) <= 0.75,
+		"UI 150%% + 文字 125%% 的最终字应为 125%%，不得叠乘")
 	_expect(cam.zoom.is_equal_approx(Vector2.ONE),
 		"uiScale/textScale 变化不应影响相机 zoom，实际 %s" % str(cam.zoom))
 	_expect(is_equal_approx(ui.transform.x.x, 1.5), "uiScale=1.5 应作用于界面轴，实际 %.4f" % ui.transform.x.x)
@@ -3325,16 +3329,16 @@ func _test_scale_invariance() -> void:
 	await get_tree().process_frame
 	SettingsRuntime.apply_world_text_scale_to(world_label)
 	var total_ms: float = SettingsRuntime.map_scale_value()
-	_expect(is_equal_approx(world_label.scale.x * total_ms, 1.0),
-		"世界文字应反补偿到屏幕尺寸不变（scale×总倍率=1）：scale=%.4f 总倍率=%.4f"
+	_expect(is_equal_approx(world_label.scale.x * total_ms, SettingsRuntime.text_scale_value()),
+		"世界文字应按目标文字倍率显示：scale=%.4f 地图倍率=%.4f"
 			% [world_label.scale.x, total_ms])
 	# 手动系数把总倍率抬回 1.0 ⇒ 不补偿（0.8×1.25）
 	GameState.settings["displayScaleMode"] = "manual"
 	GameState.settings["displayScale"] = 1.25
 	SettingsRuntime.apply_world_text_scale_to(world_label)
 	total_ms = SettingsRuntime.map_scale_value()
-	_expect(is_equal_approx(total_ms, 1.0) and is_equal_approx(world_label.scale.x, 1.0),
-		"总倍率=1.0 时世界文字不应补偿：scale=%.4f 总倍率=%.4f" % [world_label.scale.x, total_ms])
+	_expect(is_equal_approx(total_ms, 1.0) and is_equal_approx(world_label.scale.x, SettingsRuntime.text_scale_value()),
+		"地图总倍率=1.0 时仍须遵守文字倍率：scale=%.4f 总倍率=%.4f" % [world_label.scale.x, total_ms])
 
 	cam.position_smoothing_enabled = smoothing
 	for node in [world_label, label, screen, ui, mon]:

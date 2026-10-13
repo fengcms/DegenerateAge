@@ -448,12 +448,12 @@ func _draw_quality_augment(kind: String, quality: String, col: Color) -> void:
 		draw_polyline(loop, Color(tint.r, tint.g, tint.b, 0.8), 1.4)
 
 ## M6-0d（§9）：装备名称与品质 —— 稀有以上常显，普通 / 优秀悬停显示。
-## 世界文字：字号按地图倍率反向取（zoom<1 时字变大 ⇒ 屏幕上恒定可读，M5-9e）。
+## 世界文字：抵消地图倍率，并按最终文字倍率显示。
 func _draw_label(kind: String, quality: String, col: Color, center: Vector2) -> void:
 	if kind != "equip":
 		return
 	if not (quality in ["rare", "epic", "legendary"] or _hovered):
 		return
-	var font_size := 13.0 / maxf(0.4, SettingsRuntime.map_scale_value())
+	var font_size := 13.0 * SettingsRuntime.world_text_scale_value()
 	draw_string(MONO_FONT, Vector2(center.x - 120.0, center.y - 20.0), ItemUtil.display_name(item),
 		HORIZONTAL_ALIGNMENT_CENTER, 240.0, font_size, col)

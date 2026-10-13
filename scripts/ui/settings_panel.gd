@@ -14,11 +14,14 @@ var _capture_label: Label
 var _conflict: ConfirmationDialog
 var _pending_action := ""
 var _pending_code := 0
+var _layout_root: VBoxContainer
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
+	get_viewport().size_changed.connect(_update_layout)
+	_update_layout.call_deferred()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
 
@@ -57,6 +60,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("settings", open)
 	if open:
+		_update_layout()
 		_refresh_keys()
 		EventBus.panel_opened.emit("settings")
 	else:
@@ -89,6 +93,7 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 16)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
+	_layout_root = root
 	root.custom_minimum_size = Vector2(650, 430)
 	margin.add_child(root)
 	var head := HBoxContainer.new()
@@ -116,11 +121,24 @@ func _build() -> void:
 	add_child(_conflict)
 
 func _tab(tabs: TabContainer, title: String) -> VBoxContainer:
+	var scroll := ScrollContainer.new()
+	scroll.name = title
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tabs.add_child(scroll)
 	var box := VBoxContainer.new()
-	box.name = title
+	box.name = title + "内容"
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 12)
-	tabs.add_child(box)
+	scroll.add_child(box)
 	return box
+
+func _update_layout() -> void:
+	if _layout_root == null:
+		return
+	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
+	_layout_root.custom_minimum_size = Vector2(minf(650.0, maxf(320.0, logical.x - 64.0)),
+		minf(430.0, maxf(260.0, logical.y - 64.0)))
 
 func _slider(box: VBoxContainer, label: String, field: String, minimum: float, maximum: float, step: float) -> void:
 	var row := HBoxContainer.new()
@@ -159,6 +177,7 @@ func _build_audio(tabs: TabContainer) -> void:
 	_slider(box, "音效音量", "sfxVolume", 0.0, 1.0, 0.05)
 	var hint := Label.new()
 	hint.text = "音量应用于 Music / SFX 声道；当前版本尚无游戏内音乐资源。"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 func _build_visual(tabs: TabContainer) -> void:
@@ -185,6 +204,7 @@ func _build_visual(tabs: TabContainer) -> void:
 	_checkbox(box, "强光闪烁", "strongFlash")
 	var hint := Label.new()
 	hint.text = "界面 / 地图 / 文字三轴独立缩放；地图倍率越小，同一窗口看到的野外越大。震动和闪烁开关已保存。"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 ## M5-9d：百分比档位下拉（界面大小 / 地图显示大小 / 文字大小共用，写入 float 设置键）。
@@ -258,7 +278,8 @@ func _build_display_adapt(box: VBoxContainer) -> void:
 		value.text = "%.0f%%" % (v * 100.0)
 		_changed())
 	var hint := Label.new()
-	hint.text = "自动：系统已按屏幕密度换算，游戏不再补偿（推荐）。手动：统一放大 / 缩小界面、文字与地图。"
+	hint.text = "自动：使用系统显示尺寸。手动：再统一调整界面、文字与地图。各项百分比表示最终大小，不会互相叠乘。"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 func _build_game(tabs: TabContainer) -> void:
@@ -279,6 +300,7 @@ func _build_game(tabs: TabContainer) -> void:
 	box.add_child(filter)
 	var hint := Label.new()
 	hint.text = "品质筛选仅作后续自动拾取预设，当前掉落仍生成即入包。"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 func _build_controls(tabs: TabContainer) -> void:
@@ -305,6 +327,7 @@ func _build_data(tabs: TabContainer) -> void:
 	box.add_child(button)
 	var note := Label.new()
 	note.text = "设置保存在当前活动存档槽；新游戏请先手动建立存档。"
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(note)
 
 func _refresh_keys() -> void:
@@ -343,4 +366,5 @@ func _confirm_swap() -> void:
 
 func _changed() -> void:
 	SettingsRuntime.apply_all()
+	_update_layout.call_deferred()
 	EventBus.settings_changed.emit()

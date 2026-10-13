@@ -157,7 +157,7 @@ static func _apply_ui_scale() -> void:
 ## 与游戏 SubViewport 尺寸不同；拿 root.size 会让右/下锚点随窗口改变而漂出游戏区域。
 ## M5-9c：最终倍率 = clamp(uiScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
 static func apply_ui_scale_to(ui: CanvasLayer) -> void:
-	var scale_value := clampf(float(GameState.settings.get("uiScale", 1.0)), UI_SCALE_MIN, UI_SCALE_MAX) * display_scale_factor()
+	var scale_value := ui_scale_value()
 	var viewport_size := ui.get_viewport().get_visible_rect().size
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
@@ -170,6 +170,9 @@ static func apply_ui_scale_to(ui: CanvasLayer) -> void:
 			control.position = Vector2.ZERO
 			control.size = logical_size
 	ui.transform = Transform2D(Vector2(scale_value, 0), Vector2(0, scale_value), Vector2.ZERO)
+
+static func ui_scale_value() -> float:
+	return clampf(float(GameState.settings.get("uiScale", 1.0)), UI_SCALE_MIN, UI_SCALE_MAX) * display_scale_factor()
 
 static func _apply_text_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
@@ -186,7 +189,9 @@ static func text_scale_value() -> float:
 static func apply_text_scale_to(ui: Node) -> void:
 	if ui == null:
 		return
-	_text_scale_node(ui, text_scale_value())
+	# CanvasLayer 已放大整个控件树；字体只补「目标文字倍率 / 当前界面倍率」。
+	# 因此界面 150% + 文字 150% 的最终字体仍为 150%，不会叠成 225%。
+	_text_scale_node(ui, text_scale_value() / ui_scale_value())
 
 static func _text_scale_node(node: Node, factor: float) -> void:
 	if node is Label or node is Button or node is LineEdit or node is OptionButton:
@@ -221,12 +226,15 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 static func map_scale_value() -> float:
 	return clampf(float(GameState.settings.get("mapScale", 1.0)), MAP_SCALE_MIN, MAP_SCALE_MAX) * display_scale_factor()
 
+static func world_text_scale_value() -> float:
+	return text_scale_value() / map_scale_value()
+
 # ---- M5-9e（创意 09 §7）：世界文字反向补偿 ----
 ##
 ## 人物 / 地形 / 物品形状随相机 zoom 缩放（世界坐标画布，天然跟随）；但**头顶名称、交互提示、
 ## 伤害飘字、墓碑倒计时**必须保持可读的文字像素尺寸 —— zoom<1 时它们会跟着变小，正是"看不清"的来源。
 ##
-## 实现：文字节点入组 `world_text`，倍率 = 1 / map_scale_value()（含显示适配系数的**总**倍率）。
+## 实现：文字节点入组 `world_text`，倍率 = 目标文字倍率 / 地图倍率。
 ## - Control（Label）：设 `scale` + `pivot_offset = size/2`（绕自身中心缩放，位置不动）。
 ##   入组节点在 `_ready` 里**自应用一次**（覆盖生成时刻 / 切图重建 / 动态飘字），
 ##   运行时改档位由本组统一重扫（apply_all → 本函数）。
@@ -245,7 +253,7 @@ static func apply_world_text_scale_to(node: Node) -> void:
 		return
 	if node is Control:
 		var control := node as Control
-		var factor := 1.0 / map_scale_value()
+		var factor := world_text_scale_value()
 		control.scale = Vector2(factor, factor)
 		# 绕自身中心缩放：pivot 未设时默认绕左上角，文字会向右下漂
 		control.pivot_offset = control.size * 0.5

@@ -68,6 +68,21 @@ func _ready() -> void:
 	_check(screen.size.is_equal_approx(get_viewport().get_visible_rect().size / 1.5),
 		"UI 根尺寸随缩放调整：实际 %s 视口 %s" % [screen.size, get_viewport().get_visible_rect().size])
 	_check(is_equal_approx(AudioServer.get_bus_volume_linear(AudioServer.get_bus_index("Music")), 0.4), "音乐音量即时生效")
+	var font_probe := Label.new()
+	font_probe.add_theme_font_size_override("font_size", 16)
+	ui.add_child(font_probe)
+	GameState.settings["uiScale"] = 1.5
+	GameState.settings["textScale"] = 1.5
+	GameState.settings["displayScaleMode"] = "manual"
+	GameState.settings["displayScale"] = 1.5
+	SettingsRuntime.apply_ui_scale_to(ui)
+	SettingsRuntime.apply_text_scale_to(ui)
+	_check(absf(float(font_probe.get_theme_font_size("font_size")) * ui.transform.x.x - 16.0 * 2.25) <= 1.0,
+		"界面/文字/手动适配均 150% 时，最终文字应为 225% 而非重复叠乘")
+	GameState.settings["displayScaleMode"] = "auto"
+	GameState.settings["displayScale"] = 1.0
+	GameState.settings["textScale"] = 1.0
+	font_probe.queue_free()
 	# M5-9d：界面大小上限开到 200%（大窗口 + 200% ⇒ 逻辑视口回到设计基准尺寸）
 	GameState.settings["uiScale"] = 2.0
 	SettingsRuntime.apply_ui_scale_to(ui)
@@ -90,11 +105,14 @@ func _check_visual_tab() -> void:
 	await get_tree().process_frame
 	# ⚠ 面板是代码逐层建的；代码创建的控件入树后名字是 "@类型@N" 自动名（TabContainer 也是），
 	# 只有 `_tab()` 显式设过名的页容器才是真名 ⇒ 直接找「画面」页，不经过 TabContainer。
-	var visual := _find_by_name(panel, "画面") as VBoxContainer
+	var visual_tab := _find_by_name(panel, "画面") as ScrollContainer
+	var visual: VBoxContainer = visual_tab.get_child(0) as VBoxContainer if visual_tab != null else null
 	_check(visual != null, "设置面板应含「画面」页")
 	if visual == null:
 		panel.queue_free()
 		return
+	_check(visual_tab.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		"设置页应纵向滚动，避免高倍率下横向溢出")
 	# 收集「标签行 → 下拉」：manual_row 里只有 HSlider 无 OptionButton，天然被跳过
 	var dropdowns := {}
 	for row in visual.get_children():
@@ -196,12 +214,14 @@ func _check_panels_matrix() -> void:
 		if panel == drag:
 			continue   # DragLayer 恒在最上（4096），本就是拖拽幽灵层，不参与「面板 0」断言
 		_check(int(panel.z_index) == 0, "%s z_index 应为 0（面板不压 Toast / DragLayer）" % panel.name)
-	for viewport_size in [Vector2i(1280, 800), Vector2i(1920, 1200), Vector2i(1153, 721)]:
+	for viewport_size in [Vector2i(1280, 800), Vector2i(1920, 1200), Vector2i(2280, 1425), Vector2i(1153, 721)]:
 		embedded.size = viewport_size
-		for factor in [0.8, 1.0, 1.5]:
+		for factor in [0.8, 1.0, 1.5, 2.0]:
 			GameState.settings["uiScale"] = factor
+			GameState.settings["textScale"] = 1.5
 			GameState.settings["mapScale"] = 1.0
 			SettingsRuntime.apply_ui_scale_to(ui)
+			SettingsRuntime.apply_text_scale_to(ui)
 			SettingsRuntime.apply_world_text_scale()
 			await get_tree().process_frame
 			var logical: Vector2 = Vector2(viewport_size) / factor
@@ -210,6 +230,11 @@ func _check_panels_matrix() -> void:
 					"%s 根尺寸应贴合逻辑视口 %s（uiScale=%.1f，窗口 %s），实际 %s" % [
 						panel.name, str(logical), factor, str(viewport_size), str(panel.size)])
 			if hud != null:
+				var hp_text := hud.get_node_or_null("StatusPanel/HpText") as Label
+				if hp_text != null:
+					var effective_font: float = float(hp_text.get_theme_font_size("font_size")) * factor
+					_check(absf(effective_font - 12.0 * 1.5) <= factor,
+						"血条文字最终大小应只跟随文字 150%%，实际 %.1f" % effective_font)
 				var map_panel := hud.get_node_or_null("MapPanel") as Control
 				var hotbar := hud.get_node_or_null("Hotbar") as Control
 				if map_panel != null:
@@ -218,6 +243,27 @@ func _check_panels_matrix() -> void:
 				if hotbar != null:
 					_check(hotbar.position.y >= 0 and hotbar.position.y + hotbar.size.y <= logical.y + 1,
 						"快捷栏留在可见高度内（%.1f @ %s）" % [factor, str(viewport_size)])
+			var settings := ui.get_node_or_null("SettingsPanel") as Control
+			if settings != null:
+				settings.set_open(true)
+				await get_tree().process_frame
+				var content: Control = settings._layout_root.get_parent().get_parent()
+				_check(content.global_position.x >= -1 and content.global_position.y >= -1
+					and content.global_position.x + content.size.x <= logical.x + 1
+					and content.global_position.y + content.size.y <= logical.y + 1,
+					"设置窗口应完整落在可见区域（%.1f @ %s）：%s / %s" % [factor, str(viewport_size), content.global_position, content.size])
+				settings.set_open(false)
+	# 新增文字应在入树后自动获得同一倍率，不依赖再次打开设置。
+	GameState.settings["uiScale"] = 1.5
+	GameState.settings["textScale"] = 1.5
+	SettingsRuntime.apply_ui_scale_to(ui)
+	var dynamic := Label.new()
+	dynamic.add_theme_font_size_override("font_size", 12)
+	toast.add_child(dynamic)
+	await get_tree().process_frame
+	_check(int(dynamic.get_theme_font_size("font_size")) == 12,
+		"运行中新建提示不得与 150% UI 再次叠乘")
+	dynamic.queue_free()
 	# ⑥ 点击坐标一致（创意 09 §8-5「看到哪点到哪」）：把玩家移到一只怪旁，按怪物的**屏幕坐标**
 	# 点选，各相机倍率下都应命中同一只 —— 屏幕↔世界映射随 zoom 正确变化（点击链全走
 	# canvas transform，见 game.gd::enemy_at_screen / npc_at_screen / request_map_move）。
@@ -263,6 +309,7 @@ func _check_panels_matrix() -> void:
 					"地图倍率 %.1f 下按屏幕坐标应点选到同一 NPC" % factor)
 		cam.position_smoothing_enabled = smoothing
 	GameState.settings["uiScale"] = 1.0
+	GameState.settings["textScale"] = 1.0
 	GameState.reset_to_defaults()
 	embedded.queue_free()
 	await get_tree().process_frame
