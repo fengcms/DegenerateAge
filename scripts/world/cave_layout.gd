@@ -63,7 +63,7 @@ func path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 	return _astar.get_id_path(nearest_walkable(from_cell), nearest_walkable(to_cell))
 
 ## Keep the player's collision radius away from cave walls when joining path nodes.
-func segment_walkable(start: Vector2, finish: Vector2, clearance: float = 10.0) -> bool:
+func segment_walkable(start: Vector2, finish: Vector2, clearance: float = 14.0) -> bool:
 	var delta := finish - start
 	var length := delta.length()
 	var tangent := delta / length if length > 0.001 else Vector2.RIGHT
