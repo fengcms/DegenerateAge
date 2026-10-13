@@ -331,6 +331,7 @@ func _begin_death() -> void:
 	_slow_pct = 0.0
 	is_dead = true
 	GameState.set_auto_battle(false)
+	preload("res://scripts/systems/death_penalty.gd").drop_one(self)
 	_hp_regen_rest = 0.0
 	_mp_regen_rest = 0.0
 	_death_t = 0.0
