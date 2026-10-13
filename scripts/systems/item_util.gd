@@ -41,6 +41,22 @@ const STACKABLE_KINDS := ["potion", "misc", "rune", "quest"]
 ## 默认堆叠上限（无 stackMax 配置时，5.8：药品 / 材料堆叠 99）。
 const DEFAULT_STACK_MAX := 99
 
+## 药品始终以形状文字区分；友好预设同时换成色弱更容易辨识的黄/青组合。
+static func potion_kind(item_id: String) -> String:
+	var template = DataLoader.get_entry("potions", item_id)
+	return String(template.get("kind", "")) if template is Dictionary else ""
+
+static func potion_marker(kind: String) -> String:
+	return "十" if kind == "red" else ("滴" if kind == "blue" else "")
+
+static func potion_marker_color(kind: String) -> Color:
+	var friendly := String(GameState.settings.get("colorblindMode", "off")) == "friendly"
+	if kind == "red":
+		return Color("f2c14e") if friendly else Color("ff8585")
+	if kind == "blue":
+		return Color("56d2c9") if friendly else Color("80aaff")
+	return Color.WHITE
+
 static func is_valid_quality(q: String) -> bool:
 	return QUALITIES.has(q)
 

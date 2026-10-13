@@ -5,9 +5,13 @@ signal binding_dropped(index: int, payload: Dictionary)
 signal clear_requested(index: int)
 
 var index := 0
-var entry: Variant = null
+var entry: Variant = null:
+	set(value):
+		entry = value
+		_refresh_potion_marker()
 var _count: Label
 var _cooldown: Label
+var _potion_marker: Label
 
 func _ready() -> void:
 	_count = Label.new()
@@ -26,6 +30,26 @@ func _ready() -> void:
 	_cooldown.add_theme_color_override("font_color", Color("ffcb71"))
 	_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_cooldown)
+	_potion_marker = Label.new()
+	_potion_marker.offset_left = 2
+	_potion_marker.offset_top = 1
+	_potion_marker.add_theme_font_size_override("font_size", 13)
+	_potion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_potion_marker)
+	_refresh_potion_marker()
+	EventBus.settings_changed.connect(_refresh_potion_marker)
+
+func _refresh_potion_marker() -> void:
+	if _potion_marker == null:
+		return
+	var kind := ""
+	if entry is Dictionary:
+		if String(entry.get("kind", "")) == "auto_potion":
+			kind = String(entry.get("id", ""))
+		elif String(entry.get("kind", "")) == "potion":
+			kind = ItemUtil.potion_kind(String(entry.get("id", "")))
+	_potion_marker.text = ItemUtil.potion_marker(kind)
+	_potion_marker.add_theme_color_override("font_color", ItemUtil.potion_marker_color(kind))
 
 func _process(_delta: float) -> void:
 	if entry is Dictionary and ["potion", "auto_potion"].has(String(entry.kind)):

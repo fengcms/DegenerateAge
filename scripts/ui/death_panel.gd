@@ -7,7 +7,6 @@ var _hint: Label
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	z_index = 3000
 	_build()
 	visible = false
 	EventBus.player_died.connect(func() -> void: _show_after_death.call_deferred())

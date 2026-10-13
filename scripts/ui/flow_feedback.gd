@@ -12,7 +12,6 @@ var _guide_text: Label
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 2500
 	_build()
 	EventBus.loading_changed.connect(_on_loading)
 	EventBus.quest_accepted.connect(_on_quest_accepted)

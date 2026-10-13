@@ -106,6 +106,8 @@ static func valid_bindings(value: Dictionary) -> bool:
 	return true
 
 static func valid_choice(key: String, value: String) -> bool:
+	if key == "colorblindMode":
+		return ["off", "friendly"].has(value)
 	if key == "qualityFilter":
 		return ["all", "rare", "epic", "legendary"].has(value)
 	if key == "lowGearMaxQuality":

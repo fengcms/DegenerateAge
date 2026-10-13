@@ -29,11 +29,13 @@ var item: Dictionary = {}:
 	set(value):
 		item = value
 		_refresh_count()
+		_refresh_potion_marker()
 		_apply_sample_icon.call_deferred()
 		queue_redraw()
 
 ## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
 var _count: Label
+var _potion_marker: Label
 
 func _ready() -> void:
 	_count = Label.new()
@@ -47,6 +49,22 @@ func _ready() -> void:
 	_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_count)
 	_refresh_count()
+	_potion_marker = Label.new()
+	_potion_marker.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_potion_marker.offset_left = 3
+	_potion_marker.offset_top = 2
+	_potion_marker.add_theme_font_size_override("font_size", 15)
+	_potion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_potion_marker)
+	_refresh_potion_marker()
+	EventBus.settings_changed.connect(_refresh_potion_marker)
+
+func _refresh_potion_marker() -> void:
+	if _potion_marker == null:
+		return
+	var kind := ItemUtil.potion_kind(String(item.get("itemId", ""))) if String(item.get("kind", "")) == "potion" else ""
+	_potion_marker.text = ItemUtil.potion_marker(kind)
+	_potion_marker.add_theme_color_override("font_color", ItemUtil.potion_marker_color(kind))
 
 ## 依据 `item.count` 刷新角标文本。`_ready` 前被赋值时安全跳过（`_count` 为 null）。
 func _refresh_count() -> void:

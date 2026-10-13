@@ -183,6 +183,7 @@ func default_settings() -> Dictionary:
 		"qualityFilter": "all",
 		"tutorialSeen": false,
 		"firstBattleHintSeen": false,
+		"colorblindMode": "off",
 		"lowGearLevelLimit": 5,
 		"lowGearMaxQuality": "common",
 		"keyBindings": {},

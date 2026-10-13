@@ -186,6 +186,20 @@ func _build_visual(tabs: TabContainer) -> void:
 	_option_row(box, "界面大小", "uiScale", [80, 100, 125, 150, 175, 200])
 	_option_row(box, "地图显示大小", "mapScale", [80, 100, 125, 150, 175, 200])
 	_option_row(box, "文字大小", "textScale", [100, 110, 125, 150, 175, 200])
+	var color_row := HBoxContainer.new()
+	box.add_child(color_row)
+	var color_label := Label.new()
+	color_label.text = "色盲友好配色"
+	color_label.custom_minimum_size.x = 160
+	color_row.add_child(color_label)
+	var color_options := OptionButton.new()
+	color_options.add_item("关闭")
+	color_options.add_item("开启（药品黄/青配色）")
+	color_options.select(1 if String(GameState.settings.get("colorblindMode", "off")) == "friendly" else 0)
+	color_options.item_selected.connect(func(index: int) -> void:
+		GameState.settings["colorblindMode"] = "friendly" if index == 1 else "off"
+		_changed())
+	color_row.add_child(color_options)
 	_build_display_adapt(box)
 	_checkbox(box, "全屏显示", "fullscreen")
 	var resolution := OptionButton.new()
