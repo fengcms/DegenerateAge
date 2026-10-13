@@ -15,6 +15,18 @@ const CAMP_TILES := [
 	preload("res://assets/tiles/camp/tile_2.png"),
 	preload("res://assets/tiles/camp/tile_3.png"),
 ]
+const WILD_TILES := [
+	preload("res://assets/tiles/wild/tile_0.png"),
+	preload("res://assets/tiles/wild/tile_1.png"),
+	preload("res://assets/tiles/wild/tile_2.png"),
+	preload("res://assets/tiles/wild/tile_3.png"),
+]
+const ASH_TILES := [
+	preload("res://assets/tiles/ash/tile_0.png"),
+	preload("res://assets/tiles/ash/tile_1.png"),
+	preload("res://assets/tiles/ash/tile_2.png"),
+	preload("res://assets/tiles/ash/tile_3.png"),
+]
 
 const WALL_THICKNESS := 10.0
 const COLOR_FILL := Color("36423a")     # 地面底色
@@ -35,6 +47,10 @@ func _ready() -> void:
 	_load_map()
 	if map_id == "camp" or sample_camp_theme:
 		add_child(preload("res://scripts/world/sample_camp_props.gd").new())
+	elif map_id == "wild_trial" or map_id == "ash_land":
+		var props := preload("res://scripts/world/environment_props.gd").new()
+		props.map_id = map_id
+		add_child(props)
 	_build_boundary()
 	queue_redraw()
 
@@ -111,8 +127,11 @@ func _draw() -> void:
 
 	# 地面填充（整块菱形，一次绘制）
 	var camp_style := map_id == "camp" or sample_camp_theme
-	draw_colored_polygon(corners, Color("806346") if camp_style else COLOR_FILL)
-	if camp_style:
+	var themed := camp_style or map_id == "wild_trial" or map_id == "ash_land"
+	var fill := Color("806346") if camp_style else (Color("515a42") if map_id == "wild_trial" else Color("4b4443"))
+	draw_colored_polygon(corners, fill if themed else COLOR_FILL)
+	if themed:
+		var tiles: Array = CAMP_TILES if camp_style else (WILD_TILES if map_id == "wild_trial" else ASH_TILES)
 		for col in range(w):
 			for row in range(h):
 				var tile := 0
@@ -122,11 +141,13 @@ func _draw() -> void:
 				elif variation == 5:
 					tile = 2
 				var road_center := 20 if sample_camp_theme else h / 2
-				if absi(row - road_center) <= 1 or absi(col - road_center) <= 1:
+				if camp_style and (absi(row - road_center) <= 1 or absi(col - road_center) <= 1):
 					tile = 3
-				draw_texture(CAMP_TILES[tile], Iso.grid_to_world(Vector2i(col, row)) - Vector2(32, 16))
+				if not camp_style and absi(row - h / 2) <= 1:
+					tile = 3
+				draw_texture(tiles[tile], Iso.grid_to_world(Vector2i(col, row)) - Vector2(32, 16))
 		var camp_outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
-		draw_polyline(camp_outline, Color("a89978"), 2.0)
+		draw_polyline(camp_outline, Color("a89978") if camp_style else Color("747565"), 2.0)
 		return
 
 	# 网格线：两组共 w+h+2 条（性能友好，避免逐格绘制）
