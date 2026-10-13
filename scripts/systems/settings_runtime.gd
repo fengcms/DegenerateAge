@@ -54,7 +54,12 @@ static func with_display_preferences(settings: Dictionary) -> Dictionary:
 		result[key] = preferences[key]
 	return result
 
-static func save_display_preferences() -> bool:
+static func save_display_preferences(force_in_tests: bool = false) -> bool:
+	# 测试场景会频繁切换倍率，不能把测试值留作下一次启动偏好。
+	var tree := Engine.get_main_loop() as SceneTree
+	if not force_in_tests and tree != null and tree.current_scene != null \
+			and String(tree.current_scene.scene_file_path).begins_with("res://tests/"):
+		return true
 	var values := {}
 	for key in DISPLAY_PREF_KEYS:
 		values[key] = GameState.settings.get(key, GameState.default_settings()[key])

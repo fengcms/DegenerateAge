@@ -117,7 +117,7 @@ func _check_display_preferences() -> void:
 	GameState.settings["uiScale"] = 1.75
 	GameState.settings["mapScale"] = 1.25
 	GameState.settings["textScale"] = 2.0
-	_check(SettingsRuntime.save_display_preferences(), "显示偏好应独立保存")
+	_check(SettingsRuntime.save_display_preferences(true), "显示偏好应独立保存")
 	GameState.reset_to_defaults()
 	_check(is_equal_approx(float(GameState.settings.uiScale), 1.75)
 		and is_equal_approx(float(GameState.settings.mapScale), 1.25)
