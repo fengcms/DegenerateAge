@@ -103,6 +103,8 @@ func _ready() -> void:
 	second.set_physics_process(false)
 	second._die()
 	check(clears == 1, "二次击杀不重复首通")
+	check(not SaveManager._valid_item({"kind": "coin", "itemId": "coin", "gold": 1, "count": 1}), "地面金币不能混入背包物品")
+	check(SaveManager._valid_unclaimed_loot(SaveManager._collect().unclaimedLoot), "首领地面金币可随未领装备一起存档")
 	check(SaveManager.save_slot(3, true), "首杀写档")
 	var stored := SaveManager.read_slot(3)
 	GameState.first_clear.clear()
