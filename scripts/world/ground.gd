@@ -7,6 +7,14 @@ extends Node2D
 ## 本节点对外接口（get_map_center_world / get_world_bounds）保持不变，上层无需改动。
 
 @export var map_id: String = "camp"
+@export var sample_camp_theme := false
+
+const CAMP_TILES := [
+	preload("res://assets/tiles/camp/tile_0.png"),
+	preload("res://assets/tiles/camp/tile_1.png"),
+	preload("res://assets/tiles/camp/tile_2.png"),
+	preload("res://assets/tiles/camp/tile_3.png"),
+]
 
 const WALL_THICKNESS := 10.0
 const COLOR_FILL := Color("36423a")     # 地面底色
@@ -17,12 +25,16 @@ var map_data: Dictionary = {}
 var grid_size: Vector2i = Vector2i(40, 40)
 
 func _ready() -> void:
+	z_index = -4096
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	# M3-1：地面按「当前地图」加载。Game.tscn 的 @export map_id 仅作编辑器预览默认值，
 	# 运行时一律以 GameState.current_map 为准（切图 = 重载场景，见 MapService 头注）。
 	var cur := String(GameState.current_map)
 	if not cur.is_empty():
 		map_id = cur
 	_load_map()
+	if map_id == "camp" or sample_camp_theme:
+		add_child(preload("res://scripts/world/sample_camp_props.gd").new())
 	_build_boundary()
 	queue_redraw()
 
@@ -98,7 +110,24 @@ func _draw() -> void:
 	var corners := _outer_corners()
 
 	# 地面填充（整块菱形，一次绘制）
-	draw_colored_polygon(corners, COLOR_FILL)
+	var camp_style := map_id == "camp" or sample_camp_theme
+	draw_colored_polygon(corners, Color("806346") if camp_style else COLOR_FILL)
+	if camp_style:
+		for col in range(w):
+			for row in range(h):
+				var tile := 0
+				var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
+				if variation < 4:
+					tile = 1
+				elif variation == 5:
+					tile = 2
+				var road_center := 20 if sample_camp_theme else h / 2
+				if absi(row - road_center) <= 1 or absi(col - road_center) <= 1:
+					tile = 3
+				draw_texture(CAMP_TILES[tile], Iso.grid_to_world(Vector2i(col, row)) - Vector2(32, 16))
+		var camp_outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
+		draw_polyline(camp_outline, Color("a89978"), 2.0)
+		return
 
 	# 网格线：两组共 w+h+2 条（性能友好，避免逐格绘制）
 	var lines := PackedVector2Array()

@@ -29,6 +29,7 @@ var item: Dictionary = {}:
 	set(value):
 		item = value
 		_refresh_count()
+		_apply_sample_icon.call_deferred()
 
 ## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
 var _count: Label
@@ -115,3 +116,6 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	item_dropped.emit(index, data as Dictionary)
+
+func _apply_sample_icon() -> void:
+	SampleArt.decorate(self, SampleArt.icon_for(item))

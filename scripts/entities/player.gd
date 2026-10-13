@@ -8,6 +8,7 @@ extends CharacterBody2D
 ## 锁定目标超距接近与点击普攻已接入；技能格随后续技能系统接线。
 
 const RADIUS := 12.0
+const ART_SCALE := 1.25  # 玩家外观放大；碰撞和战斗距离仍使用原逻辑尺寸。
 const COLOR_BODY := Color("e8c07d")
 const COLOR_EDGE := Color("6d4c1f")
 const COLOR_DEAD := Color("8a8a8a")
@@ -50,6 +51,7 @@ var _stun: float = 0.0
 var _death_t: float = 0.0
 var is_dead: bool = false
 var is_sitting: bool = false
+var sample_art: SampleActorArt
 
 ## 自动战斗的移动意图（3.14）：由 AutoBattle 写入。
 ## **手动输入优先**——玩家一按方向键即完全接管（4.6），无需 AutoBattle 额外干预。
@@ -163,6 +165,8 @@ func _map_direction(delta: float) -> Vector2:
 	return global_position.direction_to(_map_destination)
 
 func _ready() -> void:
+	sample_art = SampleActorArt.attach(self, "res://assets/sprites/player/guardian/guardian_atlas.png", Vector2(32, 64))
+	sample_art.scale = Vector2.ONE * ART_SCALE
 	add_to_group("player")
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
 	var b = DataLoader.get_entry("skills", "basic_slash")
@@ -248,6 +252,8 @@ func apply_damage(amount: int) -> int:
 	if is_dead or _invuln > 0.0 or amount <= 0 or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return 0
 	set_sitting(false)
+	if sample_art != null:
+		sample_art.hit()
 	_invuln = IFRAME
 	_stun = HITSTUN
 	_mark_combat()
@@ -338,6 +344,12 @@ func perform_attack(target: Node) -> Dictionary:
 	if is_dead or MapService.is_in_safe_area(GameState.current_map, global_position) or not valid_target(target):
 		return {}
 	_mark_combat()
+	if sample_art != null:
+		sample_art.attack((target as Node2D).global_position - global_position, float(GameState.player.get("attackInterval", 0.8)))
+		var slash := preload("res://scripts/systems/sample_slash.gd").new() as Node2D
+		slash.direction = ((target as Node2D).global_position - global_position).angle()
+		slash.position = Vector2(0, -16 * ART_SCALE)
+		add_child(slash)
 
 	var result := Combat.resolve(
 		float(GameState.total_attack()),
@@ -407,6 +419,13 @@ func _target_dodge(t: Node) -> float:
 	return t.get_dodge() if t.has_method("get_dodge") else 0.0
 
 func _draw() -> void:
+	if sample_art != null:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1, 0.45))
+		draw_circle(Vector2.ZERO, 14 * ART_SCALE, Color(0, 0, 0, 0.3))
+		draw_set_transform(Vector2.ZERO)
+		if is_sitting:
+			draw_arc(Vector2.ZERO, 19, 0, TAU, 24, Color("78d8d0"), 1.0)
+		return
 	# 占位角色：圆形身体 + 描边；死亡态转灰（脚底碰撞体见 CollisionShape2D）
 	var body := COLOR_DEAD if is_dead else COLOR_BODY
 	if is_sitting:

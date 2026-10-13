@@ -1,0 +1,39 @@
+class_name SampleArt
+extends RefCounted
+## Resource lookup is deliberately limited to this approved sample batch.
+## Unmade assets continue to use the existing text/procedural fallback.
+
+const ICONS := {
+	"weapon_starter": preload("res://assets/sprites/equip/weapon_starter.png"),
+	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small.png"),
+	"spirit_shard": preload("res://assets/sprites/items/spirit_shard.png"),
+}
+const GROUND := {
+	"weapon_starter": preload("res://assets/sprites/items/weapon_starter_ground.png"),
+	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small_ground.png"),
+	"spirit_shard": preload("res://assets/sprites/items/spirit_shard_ground.png"),
+}
+
+static func icon_for(item: Variant) -> Texture2D:
+	if not item is Dictionary:
+		return null
+	return ICONS.get(String(item.get("itemId", ""))) as Texture2D
+
+static func ground_for(item: Dictionary) -> Texture2D:
+	return GROUND.get(String(item.get("itemId", ""))) as Texture2D
+
+static func binding_icon(binding: Variant) -> Texture2D:
+	if not binding is Dictionary:
+		return null
+	if binding.get("kind") == "auto_potion" and binding.get("id") == "red":
+		return ICONS.potion_hp_small
+	return ICONS.get(String(binding.get("id", ""))) as Texture2D
+
+static func decorate(button: Button, texture: Texture2D) -> void:
+	button.icon = texture
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_constant_override("icon_max_width", 34)
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if texture != null:
+		button.text = ""

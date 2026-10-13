@@ -312,6 +312,7 @@ func _refresh() -> void:
 			b.add_theme_color_override("font_color", COL_TEXT_DIM)
 			_apply_slot_style(b, COL_BORDER, false)
 			b.tooltip_text = "%s（空槽）" % String(d.label)
+		SampleArt.decorate(b, SampleArt.icon_for(it))
 	_equip_title.text = "装备  %d / %d" % [worn, Equipment.SLOT_DEFS.size()]
 
 	for i in range(_bag_buttons.size()):
@@ -331,6 +332,7 @@ func _refresh() -> void:
 			b2.text = ""
 			_apply_slot_style(b2, COL_BORDER, false)
 			b2.tooltip_text = ""
+		SampleArt.decorate(b2, SampleArt.icon_for(it2))
 	_bag_title.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
 	_refresh_summary()
 

@@ -116,6 +116,9 @@ func _refresh() -> void:
 		var item: Variant = GameState.equipment.get(sid)
 		button.text = "%s：%s" % [String(def.label), ItemUtil.display_name(item) if item is Dictionary else "空"]
 		button.tooltip_text = _equipment_tooltip(item) if item is Dictionary else "空槽"
+		button.icon = SampleArt.icon_for(item)
+		button.expand_icon = true
+		button.add_theme_constant_override("icon_max_width", 32)
 		button.disabled = not item is Dictionary
 	var p := GameState.player
 	var bonus := GameState.equip_bonus()

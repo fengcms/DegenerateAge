@@ -391,6 +391,11 @@ func _draw() -> void:
 	# 物品图形（上下浮动 + 出场弧线）：金币为圆片，其余为菱形（占位素材，R5）
 	var lift := sin(_phase) * 2.0 + _drop_offset()
 	var c := Vector2(0, -16 + lift)
+	var sample_texture := SampleArt.ground_for(item)
+	if sample_texture != null:
+		draw_texture(sample_texture, c + Vector2(-16, -24))
+		_draw_label(kind, quality, col, c)
+		return
 	if kind == "coin":
 		draw_circle(c, 8.0, col)
 		draw_arc(c, 8.0, 0.0, TAU, 18, Color(0, 0, 0, 0.55), 1.5, true)

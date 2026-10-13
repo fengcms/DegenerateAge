@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "created": "2026-10-13",
+  "status": "playable_keypose_prototype",
+  "generator": "built-in image_gen",
+  "prompt_set": "docs/素材设计/样板/可玩样板-v1/prompts.json",
+  "source_root": "art_source/playable_sample",
+  "actors": [
+    {
+      "id": "guardian",
+      "path": "assets/sprites/player/guardian/guardian_atlas.png",
+      "cell": [
+        64,
+        80
+      ],
+      "pivot": [
+        32,
+        64
+      ],
+      "columns": 8,
+      "rows": 8,
+      "source_unique_pose_rows": 7,
+      "hit_reuses_recoil": true,
+      "display_scale": 1.25
+    },
+    {
+      "id": "wolf_corrupted",
+      "path": "assets/sprites/monsters/wolf_corrupted/wolf_atlas.png",
+      "cell": [
+        80,
+        80
+      ],
+      "pivot": [
+        40,
+        64
+      ],
+      "columns": 8,
+      "rows": 8,
+      "source_unique_pose_rows": 8,
+      "hit_reuses_recoil": false
+    }
+  ],
+  "direction_order": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "states": {
+    "idle": {
+      "rows": [
+        0,
+        1
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "walk": {
+      "rows": [
+        2,
+        3
+      ],
+      "fps": 10,
+      "loop": true
+    },
+    "attack": {
+      "rows": [
+        5,
+        4
+      ],
+      "duration": "clamp(attackInterval * 0.65, 0.12, 0.36)",
+      "loop": false,
+      "gameplay_callbacks": false
+    },
+    "hit": {
+      "rows": [
+        6
+      ],
+      "duration": 0.12,
+      "loop": false
+    },
+    "death": {
+      "rows": [
+        7
+      ],
+      "duration": "owner-controlled fade or revival",
+      "loop": false
+    }
+  },
+  "icons": [
+    {
+      "id": "weapon_starter",
+      "path": "assets/sprites/equip/weapon_starter.png",
+      "size": [
+        48,
+        48
+      ],
+      "ground_path": "assets/sprites/items/weapon_starter_ground.png"
+    },
+    {
+      "id": "potion_hp_small",
+      "path": "assets/sprites/items/potion_hp_small.png",
+      "size": [
+        48,
+        48
+      ],
+      "ground_path": "assets/sprites/items/potion_hp_small_ground.png"
+    },
+    {
+      "id": "spirit_shard",
+      "path": "assets/sprites/items/spirit_shard.png",
+      "size": [
+        48,
+        48
+      ],
+      "ground_path": "assets/sprites/items/spirit_shard_ground.png"
+    }
+  ],
+  "ground_item_size": [
+    32,
+    32
+  ],
+  "ground_item_pivot": [
+    16,
+    24
+  ],
+  "tiles": [
+    {
+      "path": "assets/tiles/camp/tile_0.png",
+      "size": [
+        64,
+        32
+      ],
+      "pivot": [
+        32,
+        16
+      ]
+    },
+    {
+      "path": "assets/tiles/camp/tile_1.png",
+      "size": [
+        64,
+        32
+      ],
+      "pivot": [
+        32,
+        16
+      ]
+    },
+    {
+      "path": "assets/tiles/camp/tile_2.png",
+      "size": [
+        64,
+        32
+      ],
+      "pivot": [
+        32,
+        16
+      ]
+    },
+    {
+      "path": "assets/tiles/camp/tile_3.png",
+      "size": [
+        64,
+        32
+      ],
+      "pivot": [
+        32,
+        16
+      ]
+    }
+  ],
+  "props": [
+    {
+      "id": "campfire",
+      "path": "assets/tiles/camp/campfire.png",
+      "size": [
+        64,
+        80
+      ],
+      "pivot": [
+        32,
+        64
+      ],
+      "decorative": true
+    },
+    {
+      "id": "crate",
+      "path": "assets/tiles/camp/crate.png",
+      "size": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        48
+      ],
+      "decorative": true
+    }
+  ],
+  "validation": {
+    "engine": "Godot 4.7.2",
+    "tests": [
+      "ArtSampleTest",
+      "HotbarUiTest",
+      "InputFeedbackTest",
+      "SmokeTest"
+    ],
+    "result": "passed",
+    "screenshots": {
+      "resolution": [
+        1440,
+        900
+      ],
+      "map_scales": [
+        0.8,
+        1,
+        1.5
+      ]
+    },
+    "full_animation_frame_counts_met": false,
+    "release_performance_validated": false
+  }
+}

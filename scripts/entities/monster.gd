@@ -55,6 +55,7 @@ var max_hp: int = 1
 var hp: int = 1
 var is_dead: bool = false
 var selected := false
+var sample_art: SampleActorArt
 
 func set_selected(value: bool) -> void:
 	selected = value
@@ -96,6 +97,8 @@ func _ready() -> void:
 	add_to_group("enemies")
 	_rng.randomize()
 	_load_template()
+	if monster_id == "wolf_corrupted":
+		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64))
 	if spawn_position == Vector2.ZERO:
 		spawn_position = position
 	_state_t = _rng.randf() * IDLE_TIME   # 错开巡逻相位
@@ -421,6 +424,8 @@ func _do_attack(player: Node2D) -> void:
 	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
+	if sample_art != null:
+		sample_art.attack(player.global_position - global_position, attack_interval)
 	if attack_power <= 0.0:
 		return
 	var res := Combat.resolve(
@@ -443,6 +448,8 @@ func take_hit(result: Dictionary, from: Node = null) -> void:
 		return
 	hp = maxi(0, hp - int(result.get("damage", 0)))
 	_flash_t = HIT_FLASH
+	if sample_art != null:
+		sample_art.hit()
 	if hp <= 0:
 		_die()
 	else:
@@ -658,6 +665,12 @@ func _draw() -> void:
 		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), "践踏预警", HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
 	if selected and not is_dead:
 		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
+	if sample_art != null:
+		draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.45))
+		draw_circle(Vector2.ZERO, 17, Color(0, 0, 0, 0.28))
+		draw_set_transform(Vector2.ZERO)
+		_draw_head_hp_bar()
+		return
 	match _kind():
 		"elite":
 			_draw_elite()
@@ -733,7 +746,7 @@ func _draw_ground_mark(color: Color, r: float) -> void:
 func _draw_head_hp_bar() -> void:
 	var s := _head_hp_size()
 	var x := -s.x * 0.5
-	var y := -radius * 2.4
+	var y := -46.0 if sample_art != null else -radius * 2.4
 	draw_rect(Rect2(x, y, s.x, s.y), COLOR_HP_BG)
 	draw_rect(Rect2(x, y, s.x * hp_ratio(), s.y), COLOR_HP_FG)
 	draw_rect(Rect2(x, y, s.x, s.y), Color(0, 0, 0, 0.5), false, 1.0)

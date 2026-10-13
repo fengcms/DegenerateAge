@@ -298,6 +298,7 @@ func _refresh_hotbar() -> void:
 		slot.text = name.substr(0, 1) if binding != null else ""
 		slot.tooltip_text = "%s · 快捷格 %d · 右键清空" % [name, i + 1]
 		slot.set_count(_binding_count(binding))
+		SampleArt.decorate(slot, SampleArt.binding_icon(binding))
 
 func _binding_name(binding: Variant) -> String:
 	if not binding is Dictionary:
