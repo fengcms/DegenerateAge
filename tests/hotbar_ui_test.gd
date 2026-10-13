@@ -76,7 +76,9 @@ func _ready() -> void:
 	_check(GameState.hotbar[6].id == "basic_slash", "已接通技能可拖入")
 	_check(hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "earth_cleave"}),
 		"裂地斩接通后可拖入")
-	_check(not hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "whirlwind"}),
+	_check(hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "whirlwind"}),
+		"旋风斩接通后可拖入")
+	_check(not hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "battle_focus"}),
 		"尚未接通技能不可拖入")
 	var right := InputEventMouseButton.new()
 	right.position = hud._hotbar_buttons[6].get_global_rect().get_center()

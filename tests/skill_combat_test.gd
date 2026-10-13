@@ -56,6 +56,17 @@ func _ready() -> void:
 	near.is_dead = true
 	_check(not player.cast_skill("earth_cleave", near) and int(GameState.player.mp) == 100,
 		"目标失效不扣蓝")
+	near.is_dead = false
+	GameState.player.level = 10
+	GameState.player.mp = 100
+	player._attack_cd = 0.0
+	_check(player.cast_skill("whirlwind"), "Lv10 无锁定目标可施放旋风斩")
+	_check(int(GameState.player.mp) == 75 and player.skill_cooldown("whirlwind") == 6.0,
+		"旋风斩耗蓝与冷却正确")
+	_check(near.hits == 2 and upper.hits == 2 and lower.hits == 2 and fourth.hits == 1 and behind.hits == 1,
+		"圆形范围内每只怪各受击一次")
+	_check(not player.cast_skill("whirlwind") and int(GameState.player.mp) == 75,
+		"旋风斩冷却阻止重复施放")
 	if _failures.is_empty():
 		print("[SkillCombatTest] 全部通过 ✅")
 		get_tree().quit(0)

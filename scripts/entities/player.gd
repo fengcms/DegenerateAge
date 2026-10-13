@@ -376,6 +376,15 @@ func request_skill(skill_id: String) -> bool:
 	if skill_cooldown(skill_id) > 0.0:
 		EventBus.toast_requested.emit("技能冷却中", "danger")
 		return false
+	if String(skill.get("shape", "")) == "circle":
+		if skill_targets(skill).is_empty():
+			EventBus.toast_requested.emit("范围内没有可攻击的怪物", "danger")
+			return false
+		begin_manual_command()
+		if not cast_skill(skill_id):
+			EventBus.toast_requested.emit("当前无法施放技能", "danger")
+			return false
+		return true
 	if not valid_target(locked_target):
 		EventBus.toast_requested.emit("请先选中怪物", "danger")
 		return false
@@ -406,6 +415,11 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	_mark_combat()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
+	var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
+	range_fx.shape = String(skill.get("shape", "circle"))
+	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
+	range_fx.facing = global_position.direction_to((targets[0] as Node2D).global_position)
+	add_child(range_fx)
 	for enemy in targets:
 		var result := Combat.resolve(float(GameState.total_attack()), _target_defense(enemy),
 			float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
