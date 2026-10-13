@@ -19,7 +19,7 @@ const LISTED_QUALITIES := ["rare", "epic", "legendary"]
 const LEGENDARY_PREFIX := "传说 · "
 
 ## 批次摘要文本。`rolled` = `Loot.roll` 产出数组；`unclaimed_equip` = 本批未入包的装备件数。
-static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: int) -> String:
+static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: int, manual_pickup: bool = false) -> String:
 	var equip := 0
 	var q_count := {}
 	var gold := 0
@@ -50,7 +50,7 @@ static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: i
 		parts.append("如意×%d" % rune)
 	var text := "%s 掉落：%s" % [monster_name, " · ".join(parts)]
 	if unclaimed_equip > 0:
-		text += " · 背包不足，%d 件装备已保留" % unclaimed_equip
+		text += (" · %d 件装备待手动拾取" if manual_pickup else " · 背包不足，%d 件装备已保留") % unclaimed_equip
 	return text
 
 ## 品质括号："（稀有 1、史诗 1）"；无稀有以上时返回空串（§10）。

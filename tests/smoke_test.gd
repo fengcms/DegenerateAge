@@ -203,6 +203,8 @@ func _test_mount_core() -> void:
 		_expect(String(drop.get("kind", "")) != "mount", "非指定 Boss 不得产出该坐骑")
 	var ground := preload("res://scenes/entities/GroundItem.tscn").instantiate()
 	ground.item = {"kind": "mount", "itemId": "mount_corrupted_wing", "count": 1}
+	ground.auto_claim = true
+	GameState.set_auto_pickup(true)
 	add_child(ground)
 	_expect(GameState.owned_mounts == ["mount_corrupted_wing"] and GameState.inventory_used() == 0,
 		"坐骑拾取后应进入独立收藏，不占背包")
@@ -1005,6 +1007,7 @@ func _test_loot_summary() -> void:
 ## M6-0e（创意 07 §10）：精英死亡 → 批次摘要广播（关闭动画即时 / 开启动画延迟到装备雨结束）。
 func _test_loot_summary_toast() -> void:
 	GameState.reset_to_defaults()
+	GameState.set_auto_pickup(true)
 	var got: Array[String] = []
 	var cb := func(text: String, _kind: String) -> void:
 		got.append(text)
@@ -1174,6 +1177,7 @@ func _test_inventory() -> void:
 # ---- M1-6：靠近自动拾取 / T10 满包留地（9.9）----
 func _test_pickup() -> void:
 	GameState.reset_to_defaults()
+	GameState.set_auto_pickup(true)
 	GameState.settings["dropFlyAnim"] = false   # 本用例验「入包」语义：关掉飞行表现以便即时判定
 	var loot_root := Node2D.new()
 	loot_root.add_to_group("loot_root")
@@ -1219,6 +1223,24 @@ func _test_pickup() -> void:
 	_expect(is_instance_valid(gi3), "背包满时地面物品应留地（T10）")
 	_expect(GameState.inventory_used() == 40, "背包满时应保持 40 件")
 
+	# 关闭 G：生成认领与靠近拾取均禁用，只有点击才入包。
+	GameState.reset_to_defaults()
+	var manual: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	manual.auto_claim = true
+	manual.hold_time = 0.0
+	manual.item = {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "manual_pick", "count": 1}
+	loot_root.add_child(manual)
+	manual.global_position = Vector2(20.0, 0.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_expect(not manual.is_claimed() and GameState.inventory_used() == 0,
+		"关闭自动拾取时装备应留在地上，靠近也不能入包")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	manual._on_click_area_input_event(get_viewport(), click, 0)
+	_expect(GameState.inventory_used() == 1, "关闭自动拾取时点击应拾取装备")
+
 	player.queue_free()
 	loot_root.queue_free()
 	await get_tree().process_frame
@@ -1230,6 +1252,7 @@ func _test_pickup() -> void:
 ##       ④ `auto_claim=false`（玩家丢弃物）保留旧地面语义（停驻期 + 靠近拾取）。
 func _test_claim_fly() -> void:
 	GameState.reset_to_defaults()
+	GameState.set_auto_pickup(true)
 	GameState.settings["dropFlyAnim"] = true
 	var loot_root := Node2D.new()
 	loot_root.add_to_group("loot_root")
@@ -1243,6 +1266,7 @@ func _test_claim_fly() -> void:
 	player.global_position = Vector2(900.0, 900.0)
 
 	var gi: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi.auto_claim = true
 	gi.item = {"kind": "coin", "itemId": "coin", "gold": 9, "count": 1}
 	loot_root.add_child(gi)
 	gi.global_position = Vector2(20.0, 0.0)
@@ -1282,6 +1306,7 @@ func _test_claim_fly() -> void:
 ## M6-0c（创意 07 §8/§11）：批次结算 + 品质优先入包 + 未领取持久化 + 存档 schema 8。
 func _test_unclaimed_loot() -> void:
 	GameState.reset_to_defaults()
+	GameState.set_auto_pickup(true)
 	GameState.settings["dropFlyAnim"] = false   # 本用例判「入包」语义，关飞行以便即时结算
 
 	var coin := {"kind": "coin", "itemId": "coin", "gold": 6, "count": 1}
@@ -1313,6 +1338,7 @@ func _test_unclaimed_loot() -> void:
 	for i in range(39):
 		Inventory.add(GameState.inventory, _equip_instance("weapon_starter", "fill_%d" % i, {"atk": 1}))
 	var gi_leg: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi_leg.auto_claim = true
 	gi_leg.item = leg_e
 	gi_leg.persistent = true
 	gi_leg.batch_id = "b_test"
@@ -1320,6 +1346,7 @@ func _test_unclaimed_loot() -> void:
 	loot_root.add_child(gi_leg)
 	gi_leg.global_position = Vector2(0.0, 0.0)
 	var gi_common: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi_common.auto_claim = true
 	gi_common.item = common_e
 	gi_common.persistent = true
 	gi_common.batch_id = "b_test"
@@ -1372,6 +1399,7 @@ func _test_unclaimed_loot() -> void:
 	_expect(not SaveManager._is_valid_save(bad), "未领取结构非法（uid 非字符串 / item 非法）应拒档")
 
 	# ⑤ 领取成功 → 注销未领取记录（§11.3）
+	GameState.set_auto_pickup(true)
 	GameState.inventory[0] = null
 	player.global_position = gi_common.global_position
 	await get_tree().physics_frame

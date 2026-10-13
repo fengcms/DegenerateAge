@@ -14,12 +14,11 @@ extends Node2D
 ##   ③ **FLY**：二次贝塞尔抛物线**追踪玩家当前位置**，缩小淡出，抵达回收。
 ##   ④ 「拾取」提示在**飞行结束**时弹出，使「掉落 → 飞行 → 入包」在时间上成立。
 ##
-## 未认领（`auto_claim=false` 的玩家丢弃物，或认领失败＝背包满 / 金币满）：
-##   保持**地面物旧语义**——`hold_time` 内不自动拾取（左键点击不受限），之后靠近 / 点击入包；
+## 未认领（关闭自动拾取、玩家丢弃物，或认领失败＝背包满 / 金币满）：
+##   关闭 G 时只接受左键点击；开启 G 后保护期结束才允许靠近自动拾取；
 ##   背包满则留地并节流提示（9.9 / 3.14 T10 不破）；地面存在 60s 后淡出。
 ##
-## 说明：`G`（自动拾取开关）只控制 AutoBattle 是否**顺路拾取未认领物**；
-## 已认领物的飞行只是表现，与 G 无关，照飞（工程文档 10 Q4）。
+## `G` 同时控制生成认领、靠近拾取和自动战斗顺路拾取；已认领物的飞行不受切换影响。
 
 const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 
@@ -51,7 +50,7 @@ enum Stage { GROUND, HOLD, FLY }
 ## 停驻 / 保护期（s）。导出以便测试注入 0 复用即时拾取语义。
 @export var hold_time: float = HOLD_TIME
 ## 生成即认领：怪物掉落 = true；**玩家丢弃物应传 false**（留地 + 60s 消失，见工程文档 10 §5）。
-@export var auto_claim: bool = true
+@export var auto_claim: bool = false
 ## 同批多件起飞错峰（s）：由掉落方按序号传入（`Monster._spawn_drop`）。
 @export var stagger_delay: float = 0.0
 ## M6-0c（创意 07 §11）：精英 / Boss 掉落为 true ⇒ 入包失败登记为「未领取战利品」，
@@ -106,8 +105,10 @@ func _ready() -> void:
 		area.mouse_exited.connect(_on_hover.bind(false))
 	queue_redraw()
 	# 生成即认领（方案 C 核心）：不再依赖玩家走近
-	if auto_claim:
+	if auto_claim and GameState.auto_pickup_on:
 		_try_claim()
+	elif persistent:
+		_register_unclaimed.call_deferred()
 
 ## 出场（可见 + 缩放回弹）。M6-0d：出场时刻由 `appear_delay` 决定。
 func _reveal() -> void:
@@ -149,6 +150,9 @@ func _physics_process(delta: float) -> void:
 			return
 	# 停驻 / 保护期内不自动拾取（点击不受限，见 _on_click_area_input_event）
 	if _spawn_t < appear_delay + maxf(hold_time, 0.0):
+		return
+	# G 关闭时任何地面物都必须由玩家点击拾取。
+	if not GameState.auto_pickup_on:
 		return
 	# 靠近自动拾取（9.9）
 	var player := _get_player()
@@ -349,10 +353,12 @@ func _on_hover(state: bool) -> void:
 	queue_redraw()
 
 ## 左键点击拾取（9.9）。已认领（飞行中）的物品不再响应点击。
-func _on_click_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+func _on_click_area_input_event(viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if _claimed:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if viewport is Viewport:
+			(viewport as Viewport).set_input_as_handled()
 		if _try_pickup():
 			queue_free()
 

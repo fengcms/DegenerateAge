@@ -583,7 +583,7 @@ func _announce_batch_summary(rolled: Array, kind: String, plan: Array, unclaimed
 		_announce_drops(rolled)
 		return
 	var delay := LootNotify.summary_delay(plan, anim)
-	_emit_toast_delayed(LootNotify.summary_text(display_name, rolled, unclaimed_equip), "drop", delay)
+	_emit_toast_delayed(LootNotify.summary_text(display_name, rolled, unclaimed_equip, not GameState.auto_pickup_on), "drop", delay)
 	var legend := LootNotify.legendary_text(rolled)
 	if not legend.is_empty():
 		_emit_toast_delayed(legend, "legendary", delay)
@@ -618,7 +618,7 @@ func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = fals
 		return null
 	var gi: GroundItem = GROUND_ITEM_SCENE.instantiate()
 	gi.item = item
-	gi.auto_claim = true   # 怪物掉落 = 生成即认领（工程文档 10 方案 C）
+	gi.auto_claim = GameState.auto_pickup_on
 	gi.batch_id = batch_id
 	gi.persistent = persistent
 	gi.silent_pickup = persistent and String(item.get("kind", "")) == "equip"
