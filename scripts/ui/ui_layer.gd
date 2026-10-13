@@ -5,7 +5,7 @@ func _ready() -> void:
 	get_tree().node_added.connect(_on_node_added)
 
 func _on_node_added(node: Node) -> void:
-	if node is Label or node is Button or node is LineEdit or node is OptionButton:
+	if node is Label or node is Button or node is LineEdit or node is OptionButton or node is TabBar:
 		_apply_new_text.call_deferred(node)
 
 func _apply_new_text(node: Node) -> void:

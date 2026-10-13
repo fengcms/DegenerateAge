@@ -113,6 +113,23 @@ func _check_visual_tab() -> void:
 		return
 	_check(visual_tab.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
 		"设置页应纵向滚动，避免高倍率下横向溢出")
+	var tabs := visual_tab.get_parent() as TabContainer
+	var tab_bar := tabs.get_tab_bar()
+	var old_ui := float(GameState.settings.get("uiScale", 1.0))
+	var old_text := float(GameState.settings.get("textScale", 1.0))
+	GameState.settings["uiScale"] = 1.5
+	GameState.settings["textScale"] = 1.0
+	SettingsRuntime.apply_text_scale_to(panel)
+	var base := int(tab_bar.get_meta("base_font_size", 0))
+	var small := tab_bar.get_theme_font_size("font_size")
+	GameState.settings["textScale"] = 1.5
+	SettingsRuntime.apply_text_scale_to(panel)
+	var large := tab_bar.get_theme_font_size("font_size")
+	_check(base > 0 and small == maxi(9, roundi(float(base) / 1.5)) and large == base and large > small,
+		"选项卡标题字体应随文字倍率变化，且与界面倍率不重复叠乘（base=%d small=%d large=%d）" % [base, small, large])
+	GameState.settings["uiScale"] = old_ui
+	GameState.settings["textScale"] = old_text
+	SettingsRuntime.apply_text_scale_to(panel)
 	# 收集「标签行 → 下拉」：manual_row 里只有 HSlider 无 OptionButton，天然被跳过
 	var dropdowns := {}
 	for row in visual.get_children():

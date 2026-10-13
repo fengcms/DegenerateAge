@@ -194,7 +194,10 @@ static func apply_text_scale_to(ui: Node) -> void:
 	_text_scale_node(ui, text_scale_value() / ui_scale_value())
 
 static func _text_scale_node(node: Node, factor: float) -> void:
-	if node is Label or node is Button or node is LineEdit or node is OptionButton:
+	if node is TabContainer:
+		# TabBar 是 TabContainer 的内部子节点，默认 get_children() 不会遍历到。
+		_text_scale_node((node as TabContainer).get_tab_bar(), factor)
+	if node is Label or node is Button or node is LineEdit or node is OptionButton or node is TabBar:
 		var control := node as Control
 		if not control.has_meta("base_font_size"):
 			control.set_meta("base_font_size", control.get_theme_font_size("font_size"))
