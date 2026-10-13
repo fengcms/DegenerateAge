@@ -102,11 +102,9 @@ func _on_trade_mode_changed(active: bool) -> void:
 		if not visible:
 			set_open(true)
 	else:
-		if not visible:
-			_apply_trade_layout(false)
-			return
-		set_open(false)
 		_apply_trade_layout(false)
+		if visible:
+			_refresh()
 
 ## 交易布局：左半屏居中 + 去遮罩（两层黑遮罩叠加会把对面面板压暗）；
 ## 普通布局：全屏居中 + 恢复遮罩。

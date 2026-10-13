@@ -1711,11 +1711,12 @@ func _test_trade_panel() -> void:
 	_expect(shop._tray.is_empty(), "确认出售后托盘应清空")
 	_expect(GameState.gold > gold_before, "确认出售应加金币，实际 %d→%d" % [gold_before, GameState.gold])
 
-	# 关闭货郎面板 → 背包面板随之关闭（交易会话整体退出）
+	# 关闭货郎面板 → 背包保留，玩家可继续整理物品。
 	shop.set_open(false)
 	await get_tree().process_frame
-	_expect(not shop.visible and not inv.visible, "关闭货郎面板应同时关闭背包面板")
-	_expect(not GameState.panel_open, "退出交易后角色操控应解除屏蔽")
+	_expect(not shop.visible and inv.visible and not inv._trade_active,
+		"关闭货郎面板后背包应保留且退出交易布局")
+	_expect(GameState.panel_open, "背包仍打开时角色操控应继续屏蔽")
 
 	# 关闭时托盘内未确认装备应退回背包（不静默丢失，🔴R3）
 	EventBus.shop_open_requested.emit("peddler_camp")
@@ -1730,6 +1731,7 @@ func _test_trade_panel() -> void:
 	_expect(shop._tray.is_empty(), "关闭后面板托盘应清空")
 	_expect(_index_of_instance("p_lost") >= 0, "关闭面板时未确认的装备应退回背包")
 
+	inv.set_open(false)
 	inv.queue_free()
 	shop.queue_free()
 	await get_tree().process_frame

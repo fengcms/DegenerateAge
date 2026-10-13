@@ -95,7 +95,7 @@ func set_open(open: bool) -> void:
 	else:
 		_return_tray()
 		_trade_active = false
-		EventBus.trade_mode_changed.emit(false)  # 再关闭背包面板
+		EventBus.trade_mode_changed.emit(false)  # 背包回到独立窗口，保持打开
 		_apply_trade_layout(false)
 
 ## 其他面板打开时自动关闭：交易会话中忽略背包面板（那是会话伙伴，见工程文档 05 §3.2）。
