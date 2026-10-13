@@ -802,7 +802,8 @@ func _valid_unclaimed_loot(raw: Variant) -> bool:
 			if not (record.get("uid") is String) or not (record.get("batchId") is String):
 				return false
 			var item: Variant = record.get("item")
-			if not (item is Dictionary) or (not _valid_item(item) and not _valid_ground_coin(item)):
+			if not (item is Dictionary) or (not _valid_item(item) and not _valid_ground_coin(item)
+					and not _valid_ground_mount(item)):
 				return false
 			var pos: Variant = record.get("pos", null)
 			if not (pos is Array) or (pos as Array).size() != 2:
@@ -816,6 +817,11 @@ func _valid_unclaimed_loot(raw: Variant) -> bool:
 func _valid_ground_coin(item: Dictionary) -> bool:
 	return String(item.get("kind", "")) == "coin" and String(item.get("itemId", "")) == "coin" \
 		and _whole(item.get("gold"), 1, GameState.GOLD_CAP) and _whole(item.get("count", 1), 1)
+
+## 坐骑拾取后进入收藏而非背包，同样仅在未领取地面物中允许。
+func _valid_ground_mount(item: Dictionary) -> bool:
+	return String(item.get("kind", "")) == "mount" and DataLoader.get_entry("mounts", String(item.get("itemId", ""))) is Dictionary \
+		and _whole(item.get("count", 1), 1, 1)
 
 ## 先复制到临时文件再替换备份，复制失败不得先删除旧备份。
 func _copy_over(src: String, dst: String) -> bool:

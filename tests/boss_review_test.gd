@@ -104,7 +104,20 @@ func _ready() -> void:
 	second._die()
 	check(clears == 1, "二次击杀不重复首通")
 	check(not SaveManager._valid_item({"kind": "coin", "itemId": "coin", "gold": 1, "count": 1}), "地面金币不能混入背包物品")
-	check(SaveManager._valid_unclaimed_loot(SaveManager._collect().unclaimedLoot), "首领地面金币可随未领装备一起存档")
+	check(not SaveManager._valid_item({"kind": "mount", "itemId": "mount_corrupted_wing", "count": 1}), "地面坐骑不能混入背包物品")
+	check(SaveManager._valid_unclaimed_loot({"corruption_source": [
+		{"uid": "coin_test", "batchId": "boss_test", "item": {"kind": "coin", "itemId": "coin", "gold": 10, "count": 1}, "pos": [0, 0]},
+		{"uid": "mount_test", "batchId": "boss_test", "item": {"kind": "mount", "itemId": "mount_corrupted_wing", "count": 1}, "pos": [0, 0]},
+	]}), "未领取金币和坐骑均允许存档")
+	var pending_loot: Dictionary = SaveManager._collect().unclaimedLoot
+	if not SaveManager._valid_unclaimed_loot(pending_loot):
+		for map_id in pending_loot:
+			for record in pending_loot[map_id]:
+				if not SaveManager._valid_item(record.item) and not SaveManager._valid_ground_coin(record.item) and not SaveManager._valid_ground_mount(record.item):
+					print("[BossReview] 非法待领物：", record.item)
+				if not record.pos is Array or record.pos.size() != 2:
+					print("[BossReview] 非法待领坐标：", record.pos)
+	check(SaveManager._valid_unclaimed_loot(pending_loot), "首领地面金币可随未领装备一起存档")
 	check(SaveManager.save_slot(3, true), "首杀写档")
 	var stored := SaveManager.read_slot(3)
 	GameState.first_clear.clear()
