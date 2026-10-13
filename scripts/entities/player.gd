@@ -12,6 +12,8 @@ const ART_SCALE := 1.25  # 玩家外观放大；碰撞和战斗距离仍使用�
 const COLOR_BODY := Color("e8c07d")
 const COLOR_EDGE := Color("6d4c1f")
 const COLOR_DEAD := Color("8a8a8a")
+const COLOR_HEAD_HP_BG := Color(0.08, 0.08, 0.10, 0.85)
+const COLOR_HEAD_HP_FG := Color("61c985")
 const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 
 const IFRAME := 0.5            # 3.4：受击后无敌帧时长（s）
@@ -223,6 +225,7 @@ func _ready() -> void:
 	var b = DataLoader.get_entry("skills", "basic_slash")
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
 	skill_cooldowns = GameState.skill_cooldowns
+	EventBus.player_hp_changed.connect(func(_current: int, _maximum: int) -> void: queue_redraw())
 
 func _physics_process(delta: float) -> void:
 	if locked_target != null and not valid_target(locked_target):
@@ -586,7 +589,8 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 		if is_sitting:
 			draw_arc(Vector2.ZERO, 19, 0, TAU, 24, Color("78d8d0"), 1.0)
-		_draw_overhead_name(-87.0)
+		_draw_overhead_name(-99.0)
+		_draw_overhead_hp(-92.0)
 		return
 	# 占位角色：圆形身体 + 描边；死亡态转灰（脚底碰撞体见 CollisionShape2D）
 	var body := COLOR_DEAD if is_dead else COLOR_BODY
@@ -598,6 +602,7 @@ func _draw() -> void:
 		draw_circle(Vector2.ZERO, RADIUS, body)
 		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 28, COLOR_EDGE, 2.0, true)
 	_draw_overhead_name(-37.0)
+	_draw_overhead_hp(-30.0)
 
 func _draw_overhead_name(baseline_y: float) -> void:
 	var name := String(GameState.player.get("name", "守护者"))
@@ -606,6 +611,15 @@ func _draw_overhead_name(baseline_y: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER, 180.0, 14, Color(0.0, 0.0, 0.0, 0.85))
 	draw_string(MONO_FONT, origin, name,
 		HORIZONTAL_ALIGNMENT_CENTER, 180.0, 14, Color("a7efed"))
+
+func _draw_overhead_hp(y: float) -> void:
+	var width := 60.0
+	var height := 5.0
+	var ratio := clampf(float(GameState.player.hp) / float(maxi(1, GameState.max_hp())), 0.0, 1.0)
+	var rect := Rect2(-width * 0.5, y, width, height)
+	draw_rect(rect, COLOR_HEAD_HP_BG)
+	draw_rect(Rect2(rect.position, Vector2(width * ratio, height)), COLOR_HEAD_HP_FG)
+	draw_rect(rect, Color(0, 0, 0, 0.65), false, 1.0)
 
 func set_sitting(value: bool) -> void:
 	if is_dead and value or is_sitting == value:
