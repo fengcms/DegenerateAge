@@ -5,6 +5,7 @@
     "size": { "w": 40, "h": 40 },
     "tierRange": [1, 1],
     "safeZone": true,
+    "safeArea": { "min": [11, 11], "max": [27, 28] },
     "recommendedLevel": 1,
     "kind": "hub",
     "hubId": "camp",
@@ -28,7 +29,7 @@
       { "role": "warehouse", "npcName": "仓库管理员", "cell": [14, 14] },
       { "role": "carter", "npcName": "车夫", "cell": [20, 24] }
     ],
-    "desc": "安全区：复活锚点 / 回城落点，聚集货郎、铁匠、车夫、任务官、仓库。"
+    "desc": "营地 NPC 周围为矩形安全区；区外可以战斗。"
   },
   {
     "id": "wild_trial",

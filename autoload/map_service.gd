@@ -20,17 +20,12 @@ extends Node
 const DEFAULT_MAP := "camp"
 const WALK_RANGE_CELLS := 1.5
 const WALK_ARRIVAL_LOCK_MSEC := 1000
-const REST_RADIUS_CELLS := 3.0
 
 ## 跨场景保留防抖状态；仅步行出口使用，车夫线路不受影响。
 var walk_locked_until_msec: int = 0
 var walk_key_released: bool = true
-var _rest_zones_cache: Dictionary = {}
 ## 请求与世界装配之间的运行态事务；绝不写入存档。
 var pending_travel: Dictionary = {}
-
-func _ready() -> void:
-	EventBus.data_loaded.connect(func() -> void: _rest_zones_cache.clear())
 
 # ---- 查询 ----
 
@@ -138,36 +133,31 @@ func current_exits() -> Array:
 	var exits = current_data().get("exits", [])
 	return exits if exits is Array else []
 
-## 从地图数据推导休整区，不增存档字段；所有距离都在逻辑网格中计算。
-func rest_zones(map_id: String) -> Array[Dictionary]:
-	if _rest_zones_cache.has(map_id):
-		return _rest_zones_cache[map_id]
-	var out: Array[Dictionary] = []
+## 只有配置了 safeArea 的城镇拥有局部免战区；min/max 是包含端点的逻辑格。
+func safe_area_cells(map_id: String) -> Rect2:
 	var data := data_for(map_id)
-	if data.is_empty():
-		return out
-	for exit_data in data.get("exits", []):
-		if exit_data is Dictionary:
-			_add_rest_zone(out, "exit", exit_data.get("cell", null))
-	var entrances: Variant = data.get("entrances", {})
-	if entrances is Dictionary:
-		for entrance_id in entrances.keys():
-			_add_rest_zone(out, "entrance", entrances[entrance_id])
-	_add_rest_zone(out, "carter", data.get("carterArrival", null))
-	_rest_zones_cache[map_id] = out
-	return out
+	var area: Variant = data.get("safeArea", null)
+	if not bool(data.get("safeZone", false)) or not area is Dictionary:
+		return Rect2()
+	var lower: Variant = area.get("min", [])
+	var upper: Variant = area.get("max", [])
+	if not lower is Array or not upper is Array or lower.size() != 2 or upper.size() != 2:
+		return Rect2()
+	var first := Vector2(float(lower[0]), float(lower[1]))
+	var last := Vector2(float(upper[0]), float(upper[1]))
+	return Rect2(first, last - first)
 
-func _add_rest_zone(out: Array[Dictionary], kind: String, value: Variant) -> void:
-	if not value is Array or value.size() != 2:
-		return
-	out.append({"kind": kind, "cell": Vector2(float(value[0]), float(value[1]))})
-
-func is_in_rest_zone(map_id: String, world_position: Vector2) -> bool:
+func is_in_safe_area(map_id: String, world_position: Vector2) -> bool:
+	var area := safe_area_cells(map_id)
+	if not area.has_area():
+		return false
 	var cell := Iso.world_to_grid(world_position)
-	for zone in rest_zones(map_id):
-		if cell.distance_to(zone.cell) <= REST_RADIUS_CELLS:
-			return true
-	return false
+	return cell.x >= area.position.x - 0.5 and cell.x <= area.end.x + 0.5 \
+		and cell.y >= area.position.y - 0.5 and cell.y <= area.end.y + 0.5
+
+## 兼容已有战斗、刷怪调用；判定语义已统一为「城镇矩形安全区」。
+func is_in_rest_zone(map_id: String, world_position: Vector2) -> bool:
+	return is_in_safe_area(map_id, world_position)
 
 func carter_arrival(map_id: String) -> Vector2:
 	var cell: Variant = data_for(map_id).get("carterArrival", null)

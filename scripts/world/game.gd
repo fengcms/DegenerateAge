@@ -197,8 +197,6 @@ func _cell_of(spec: Dictionary) -> Vector2i:
 ## 抵达提示（切图 / 读档 / 新游戏开局各一次）：延后一帧调用，确保 HUD 已就绪。
 func _notify_arrival() -> void:
 	EventBus.toast_requested.emit("抵达　%s" % MapService.display_name(GameState.current_map), "levelup")
-	if GameState.auto_battle_on and MapService.is_in_rest_zone(GameState.current_map, _player.global_position):
-		EventBus.toast_requested.emit("自动战斗暂停：出行休整区", "info")
 
 ## 使用画布投影后的视口范围，随相机、缩放与窗口尺寸变化。
 func visible_enemies() -> Array[Node2D]:

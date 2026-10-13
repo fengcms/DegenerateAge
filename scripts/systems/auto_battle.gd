@@ -127,10 +127,10 @@ func reset_after_travel() -> void:
 	_blocked_t = 0.0
 	_search_t = 0.0
 	_repath_t = 0.0
-	if GameState.auto_battle_on and MapService.is_in_rest_zone(GameState.current_map, _player.global_position):
-		_set_state(State.RECOVER, "自动战斗暂停：出行休整区")
-	elif not GameState.auto_battle_on:
+	if not GameState.auto_battle_on:
 		_set_state(State.OFF)
+	else:
+		_set_state(State.SEARCH_TARGET)
 
 func _notification(what: int) -> void:
 	# 应用失去焦点（切到后台）→ 停决策（3.14 ⑥）
@@ -180,14 +180,6 @@ func _physics_process(delta: float) -> void:
 	if _player.map_move_active or _player.manual_attack_active or _has_manual_input():
 		begin_manual_override()
 		return
-	if MapService.is_in_rest_zone(GameState.current_map, _player.global_position):
-		_player.set_auto_move(Vector2.ZERO)
-		_target = null
-		_loot = null
-		_roam_index = -1
-		_set_state(State.RECOVER, "自动战斗暂停：出行休整区")
-		return
-
 	if _manual_t > 0.0:
 		_manual_t = maxf(0.0, _manual_t - delta)
 		if _manual_t > 0.0:
@@ -258,7 +250,8 @@ func _tick(delta: float) -> void:
 	var dist := _player.global_position.distance_to(target2d.global_position)
 	var reach := _player.melee_range_px() - STOP_GAP
 
-	if dist > reach:
+	# 安全区只屏蔽伤害，不屏蔽寻怪/移动。靠近边缘目标时先穿出边界再攻击。
+	if dist > reach or MapService.is_in_safe_area(GameState.current_map, _player.global_position):
 		_set_state(State.PATH_TO_TARGET)
 		_tick_stuck(delta, dist)
 		if _blocked_t > 0.0:

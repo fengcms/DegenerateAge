@@ -209,6 +209,7 @@ func validate_all() -> Array[String]:
 					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])
 	report.append_array(_validate_carter_clusters(maps))
 	report.append_array(_validate_walk_exits(maps))
+	report.append_array(_validate_safe_areas(maps))
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
@@ -460,6 +461,37 @@ func _validate_carter_clusters(maps: Variant) -> Array[String]:
 
 func _nonnegative_whole(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and float(value) >= 0.0 and float(value) == floor(float(value))
+
+func _validate_safe_areas(maps: Variant) -> Array[String]:
+	var report: Array[String] = []
+	if not maps is Array:
+		return report
+	for entry in maps:
+		if not entry is Dictionary:
+			continue
+		var id := String(entry.get("id", ""))
+		var area: Variant = entry.get("safeArea", null)
+		if not bool(entry.get("safeZone", false)):
+			if area != null:
+				report.append("[maps] %s 非城镇地图不得配置 safeArea" % id)
+			continue
+		if not area is Dictionary or not _valid_walk_cell(area.get("min", null), entry) \
+				or not _valid_walk_cell(area.get("max", null), entry):
+			report.append("[maps] %s 的安全区矩形坐标无效" % id)
+			continue
+		var lo: Array = area.min
+		var hi: Array = area.max
+		if int(lo[0]) >= int(hi[0]) or int(lo[1]) >= int(hi[1]):
+			report.append("[maps] %s 的安全区矩形必须有正面积" % id)
+			continue
+		for npc in entry.get("npcs", []):
+			if not npc is Dictionary or not _valid_walk_cell(npc.get("cell", null), entry):
+				continue
+			var cell: Array = npc.cell
+			if int(cell[0]) < int(lo[0]) or int(cell[0]) > int(hi[0]) \
+					or int(cell[1]) < int(lo[1]) or int(cell[1]) > int(hi[1]):
+				report.append("[maps] %s 的 NPC 位于安全区外" % id)
+	return report
 
 func _validate_walk_exits(maps: Variant) -> Array[String]:
 	var report: Array[String] = []

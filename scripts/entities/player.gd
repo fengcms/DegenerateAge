@@ -71,8 +71,6 @@ var _hp_regen_rest := 0.0
 var _mp_regen_rest := 0.0
 
 func valid_target(target: Variant) -> bool:
-	if MapService.is_in_rest_zone(GameState.current_map, global_position):
-		return false
 	return is_instance_valid(target) and target is Node2D and not target.is_queued_for_deletion() and target.get("is_dead") != true and target.has_method("take_hit") and not MapService.is_in_rest_zone(GameState.current_map, target.global_position)
 
 func clear_travel_intent() -> void:
@@ -122,7 +120,8 @@ func _manual_attack_direction(delta: float) -> Vector2:
 		manual_attack_active = false
 		select_target(null)
 		return Vector2.ZERO
-	if global_position.distance_to(locked_target.global_position) <= melee_range_px() - AutoBattle.STOP_GAP:
+	if not MapService.is_in_safe_area(GameState.current_map, global_position) \
+			and global_position.distance_to(locked_target.global_position) <= melee_range_px() - AutoBattle.STOP_GAP:
 		_map_stuck_count = 0
 		_map_check_t = 0.0
 		_map_last_distance = INF
@@ -308,7 +307,7 @@ func is_attack_ready() -> bool:
 ## 自动战斗对指定目标发动一次普攻。返回是否真正发动。
 ## 冷却中 / 硬直中 / 目标已失效 → 返回 false（不结算、不推进冷却）。
 func try_auto_attack(target: Node) -> bool:
-	if not is_attack_ready():
+	if not is_attack_ready() or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
 	if not valid_target(target):
 		return false
@@ -326,6 +325,8 @@ func melee_range_px() -> float:
 
 ## 尝试普攻：优先锁定目标；无锁定时使用范围内最近敌人。
 func _try_attack() -> void:
+	if MapService.is_in_safe_area(GameState.current_map, global_position):
+		return
 	var target: Node = locked_target if valid_target(locked_target) else find_nearest_enemy_in_range()
 	if target == null or global_position.distance_to(target.global_position) > melee_range_px():
 		return
@@ -334,7 +335,7 @@ func _try_attack() -> void:
 
 ## 对指定目标结算一次普攻（供手动 / 自动化测试调用）。返回结算结果。
 func perform_attack(target: Node) -> Dictionary:
-	if is_dead or not valid_target(target):
+	if is_dead or MapService.is_in_safe_area(GameState.current_map, global_position) or not valid_target(target):
 		return {}
 	_mark_combat()
 
