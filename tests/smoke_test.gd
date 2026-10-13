@@ -1753,6 +1753,12 @@ func _test_floating_panels() -> void:
 	await get_tree().process_frame
 	_expect(inv.visible and character.visible and skill.visible and mount.visible,
 		"背包、人物、技能、坐骑应可同时打开")
+	_expect(character._slots.size() == 14 and character._slots.values().all(func(slot: Variant) -> bool: return slot is EquipmentSlot),
+		"人物面板应有 14 个图标装备槽")
+	_expect(inv._summary.text.begins_with("金币") and not inv._summary.text.contains("攻击"),
+		"背包底部只应显示金币，不应重复人物属性")
+	_expect(not inv._dim.visible and not skill.get_child(0).visible and not mount.get_child(0).visible,
+		"多个浮窗打开时不应叠加全屏暗色遮罩")
 	var window: FloatingWindow = character._center
 	_expect(window.size.x > 0.0 and window.size.y > 0.0,
 		"浮窗应按内容占据实际大小")

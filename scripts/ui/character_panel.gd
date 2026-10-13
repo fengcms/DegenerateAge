@@ -82,28 +82,50 @@ func _build() -> void:
 	body.add_theme_constant_override("separation", 22)
 	root.add_child(body)
 	var equip := VBoxContainer.new()
-	equip.custom_minimum_size.x = 320
+	equip.custom_minimum_size.x = 350
 	body.add_child(equip)
-	var avatar := Label.new()
-	avatar.text = "◉  灵刃战士"
-	avatar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	avatar.add_theme_font_size_override("font_size", 17)
-	equip.add_child(avatar)
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
-	equip.add_child(grid)
-	for def in Equipment.SLOT_DEFS:
-		var sid := String(def.id)
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(155, 36)
-		button.clip_text = true
-		button.pressed.connect(_unequip.bind(sid))
-		grid.add_child(button)
-		_slots[sid] = button
+	var figure := HBoxContainer.new()
+	figure.add_theme_constant_override("separation", 8)
+	equip.add_child(figure)
+	var left := VBoxContainer.new()
+	var right := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 5)
+	right.add_theme_constant_override("separation", 5)
+	figure.add_child(left)
+	var portrait_frame := PanelContainer.new()
+	var portrait_style := StyleBoxFlat.new()
+	portrait_style.bg_color = Color("1a2530")
+	portrait_style.border_color = Color("63828f")
+	portrait_style.set_border_width_all(1)
+	portrait_style.set_corner_radius_all(6)
+	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
+	portrait_frame.custom_minimum_size = Vector2(172, 410)
+	figure.add_child(portrait_frame)
+	var portrait := TextureRect.new()
+	var atlas := AtlasTexture.new()
+	atlas.atlas = preload("res://assets/sprites/player/guardian/guardian_atlas.png")
+	atlas.region = Rect2(0, 0, 64, 80)
+	portrait.texture = atlas
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait_frame.add_child(portrait)
+	figure.add_child(right)
+	var left_ids := ["helmet", "necklace", "armor", "bracer_1", "bracelet_1", "ring_1", "knee_1"]
+	var right_ids := ["weapon", "shield", "shoes", "bracer_2", "bracelet_2", "ring_2", "knee_2"]
+	for side in [left, right]:
+		for sid in (left_ids if side == left else right_ids):
+			var def := Equipment.slot_def(sid)
+			var button := EquipmentSlot.new()
+			button.slot_id = sid
+			button.slot_kind = String(def.get("kind", ""))
+			button.custom_minimum_size = Vector2(52, 52)
+			button.tooltip_text = String(def.get("label", sid))
+			button.pressed.connect(_on_slot_pressed.bind(sid))
+			side.add_child(button)
+			_slots[sid] = button
 	var hint := Label.new()
-	hint.text = "点击已穿戴装备可卸下；背包满时无法卸下"
+	hint.text = "与背包同时打开后，可拖放或双击穿脱装备"
 	hint.add_theme_font_size_override("font_size", 12)
 	equip.add_child(hint)
 	body.add_child(VSeparator.new())
@@ -118,14 +140,13 @@ func _refresh() -> void:
 	_title.text = "%s · Lv%d" % [GameState.player.get("name", "守护者"), int(GameState.player.get("level", 1))]
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
-		var button: Button = _slots[sid]
+		var button: EquipmentSlot = _slots[sid]
 		var item: Variant = GameState.equipment.get(sid)
-		button.text = "%s：%s" % [String(def.label), ItemUtil.display_name(item) if item is Dictionary else "空"]
-		button.tooltip_text = _equipment_tooltip(item) if item is Dictionary else "空槽"
-		button.icon = SampleArt.icon_for(item)
-		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", 32)
-		button.disabled = not item is Dictionary
+		button.item = item if item is Dictionary else {}
+		button.text = ""
+		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else "%s（空槽）" % String(def.label)
+		SampleArt.decorate(button, SampleArt.icon_for(item))
+		button.queue_redraw()
 	var p := GameState.player
 	var bonus := GameState.equip_bonus()
 	_stats.text = "战斗属性\n\n生命  %d / %d\n法力  %d / %d\n攻击  %d\n防御  %d\n等级  %d\n移动速度  %.2f\n暴击率  %.1f%%\n暴击伤害  %.2f×\n攻击间隔  %.2f 秒\n闪避  %.1f%%\n格挡  %.1f%%\n冷却缩减  %.1f%%" % [
@@ -139,11 +160,8 @@ func _refresh() -> void:
 		100.0 * (float(p.block) + float(bonus.get("block", 0.0))),
 		100.0 * (float(p.cdr) + float(bonus.get("cdr", 0.0)))]
 
-func _unequip(slot_id: String) -> void:
-	var result := GameState.unequip_slot(slot_id)
-	if not bool(result.get("ok", false)):
-		EventBus.toast_requested.emit(String(result.get("reason", "卸下失败")), "danger")
-	_refresh()
+func _on_slot_pressed(_slot_id: String) -> void:
+	pass  # 单击只显示槽位与悬停说明；双击交互由下一节点接入。
 
 func _equipment_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = [ItemUtil.display_name(item)]

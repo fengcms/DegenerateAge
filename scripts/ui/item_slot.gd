@@ -30,6 +30,7 @@ var item: Dictionary = {}:
 		item = value
 		_refresh_count()
 		_apply_sample_icon.call_deferred()
+		queue_redraw()
 
 ## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
 var _count: Label

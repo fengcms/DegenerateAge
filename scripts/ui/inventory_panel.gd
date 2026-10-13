@@ -16,7 +16,6 @@ extends Control
 
 const SLOT_MIN := Vector2(46, 46)
 const BAG_COLUMNS := 8
-const EQUIP_COLUMNS := 2
 const DOUBLE_CLICK_MS := 400
 
 ## 交易会话中本面板占据的屏幕横向区间（左侧），右侧留给货郎面板（见 shop_panel.gd）。
@@ -30,9 +29,7 @@ const COL_SLOT_HOVER := Color(0.20, 0.22, 0.26, 0.98)
 const COL_TEXT := Color(0.90, 0.92, 0.95)
 const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 
-var _slot_buttons: Dictionary = {}          # slot_id -> Button
 var _bag_buttons: Array[ItemSlot] = []
-var _equip_title: Label
 var _bag_title: Label
 var _organize_button: Button
 var _summary: Label
@@ -51,8 +48,6 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_refresh)
 	EventBus.equipment_changed.connect(_refresh)
 	EventBus.gold_changed.connect(_on_gold_changed)
-	EventBus.player_hp_changed.connect(_on_stat_changed)
-	EventBus.player_mp_changed.connect(_on_stat_changed)
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
 	_refresh()
@@ -154,7 +149,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	var title := Label.new()
-	title.text = "背包与装备"
+	title.text = "背包"
 	title.add_theme_font_size_override("font_size", 18)
 	head.add_child(title)
 	var spacer := Control.new()
@@ -169,35 +164,10 @@ func _build() -> void:
 
 	root.add_child(HSeparator.new())
 
-	# 主体：左装备栏 / 右背包
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 16)
-	root.add_child(body)
-
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 6)
-	body.add_child(left)
-	_equip_title = Label.new()
-	_equip_title.add_theme_font_size_override("font_size", 14)
-	left.add_child(_equip_title)
-	var equip_grid := GridContainer.new()
-	equip_grid.columns = EQUIP_COLUMNS
-	equip_grid.add_theme_constant_override("h_separation", 6)
-	equip_grid.add_theme_constant_override("v_separation", 6)
-	left.add_child(equip_grid)
-	for d in Equipment.SLOT_DEFS:
-		var sid := String(d.id)
-		var b := _make_slot()
-		b.tooltip_text = String(d.label)
-		b.pressed.connect(_on_slot_pressed.bind(sid))
-		equip_grid.add_child(b)
-		_slot_buttons[sid] = b
-
-	body.add_child(VSeparator.new())
-
+	# 背包只管理物品；穿戴槽与战斗属性统一放到人物面板。
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 6)
-	body.add_child(right)
+	root.add_child(right)
 	var bag_head := HBoxContainer.new()
 	right.add_child(bag_head)
 	_bag_title = Label.new()
@@ -228,15 +198,10 @@ func _build() -> void:
 	root.add_child(_summary)
 
 	var hint := Label.new()
-	hint.text = "双击穿戴 / 使用 · 药品与回城卷可拖到快捷栏 · 点击装备槽卸下 · 向货郎买/卖时把装备拖到右侧托盘 · I / Esc 关闭"
+	hint.text = "与人物面板并开可穿戴装备 · 双击使用药品 / 回城卷 · 装备可拖到货郎托盘 · I / Esc 关闭"
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
-
-func _make_slot() -> Button:
-	var b := Button.new()
-	_apply_slot_base(b)
-	return b
 
 ## 背包格：使用 ItemSlot（可用物品拖到快捷栏；交易时装备可拖到出售托盘）。
 ## 装备槽仍是普通 Button——卸下走点击，不需要拖放。
@@ -291,26 +256,6 @@ func _on_organize_pressed() -> void:
 	GameState.organize_inventory()
 
 func _refresh() -> void:
-	var worn := 0
-	for d in Equipment.SLOT_DEFS:
-		var sid := String(d.id)
-		var b: Button = _slot_buttons[sid]
-		var it = GameState.equipment.get(sid)
-		if it is Dictionary:
-			worn += 1
-			var col := ItemUtil.quality_color(String(it.get("quality", "common")))
-			b.text = _short_name(it)
-			b.add_theme_color_override("font_color", col)
-			_apply_slot_style(b, col, true)
-			b.tooltip_text = _equip_tooltip(it, String(d.label))
-		else:
-			b.text = String(d.label)
-			b.add_theme_color_override("font_color", COL_TEXT_DIM)
-			_apply_slot_style(b, COL_BORDER, false)
-			b.tooltip_text = "%s（空槽）" % String(d.label)
-		SampleArt.decorate(b, SampleArt.icon_for(it))
-	_equip_title.text = "装备  %d / %d" % [worn, Equipment.SLOT_DEFS.size()]
-
 	for i in range(_bag_buttons.size()):
 		var b2: ItemSlot = _bag_buttons[i]
 		var it2 = GameState.inventory[i] if i < GameState.inventory.size() else null
@@ -335,21 +280,9 @@ func _refresh() -> void:
 func _refresh_summary() -> void:
 	if _summary == null:
 		return
-	var b := GameState.equip_bonus()
-	var atk_b := int(round(float(b.get("atk", 0.0))))
-	var def_b := int(round(float(b.get("def", 0.0))))
-	_summary.text = "攻击 %d（装备 +%d）　防御 %d（装备 +%d）　生命 %d / %d　法力 %d / %d　金币 %d" % [
-		GameState.total_attack(), atk_b,
-		GameState.total_defense(), def_b,
-		int(GameState.player.hp), GameState.max_hp(),
-		int(GameState.player.mp), GameState.max_mp(),
-		GameState.gold,
-	]
+	_summary.text = "金币  %d" % GameState.gold
 
 func _on_gold_changed(_amount: int) -> void:
-	_refresh_summary()
-
-func _on_stat_changed(_current: int, _maximum: int) -> void:
 	_refresh_summary()
 
 # ---- 文本 ----
@@ -362,15 +295,6 @@ func _item_color(item: Dictionary) -> Color:
 	if String(item.get("kind", "")) == "equip":
 		return ItemUtil.quality_color(String(item.get("quality", "common")))
 	return ItemUtil.kind_color(String(item.get("kind", "misc")))
-
-func _equip_tooltip(item: Dictionary, slot_label: String) -> String:
-	var lines: Array[String] = []
-	lines.append(ItemUtil.display_name(item))
-	lines.append("%s · 需求等级 %d" % [slot_label, Equipment.level_req(item)])
-	lines.append_array(ItemUtil.attr_lines(item))
-	lines.append("")
-	lines.append("点击卸下")
-	return "\n".join(PackedStringArray(lines))
 
 func _bag_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = []
@@ -448,11 +372,6 @@ func _worn_same_kind(item: Dictionary) -> Dictionary:
 	return {}
 
 # ---- 交互 ----
-
-func _on_slot_pressed(slot_id: String) -> void:
-	if GameState.equipment.get(slot_id) == null:
-		return
-	GameState.unequip_slot(slot_id)
 
 ## 双击（400ms 内两次点击同一格）→ 使用 / 穿戴。
 ## M2.5：改走 `GameState.use_item`，由它按品类分流（药水 → 使用；装备 → 穿戴），
