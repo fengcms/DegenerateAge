@@ -165,7 +165,7 @@ func reset_to_defaults() -> void:
 	spawn_respawn = {}
 	unclaimed_loot = {}             # M6-0c：未领取战利品（新游戏 / 初始化清空）
 	clear_save_pos()
-	settings = default_settings()
+	settings = SettingsRuntime.with_display_preferences(default_settings())
 	hotbar = HotbarConfig.defaults()
 	SettingsRuntime.apply_all()
 

@@ -46,6 +46,20 @@ var _resume_toast: String = ""
 func _ready() -> void:
 	_ensure_dir()
 	_connect_events()
+	# 首次升级时导入最近使用角色的显示倍率，主菜单随即按该倍率展示。
+	# 此后以独立偏好文件为准，切换角色不会改掉屏幕设置。
+	if SettingsRuntime.read_display_preferences().is_empty():
+		var last := _read_last_slot()
+		if last >= 1 and last <= MAX_SLOTS:
+			var previous := read_slot(last)
+			if bool(previous.get("ok", false)):
+				var saved: Variant = (previous.get("data", {}) as Dictionary).get("settings", {})
+				if saved is Dictionary:
+					for key in SettingsRuntime.DISPLAY_PREF_KEYS:
+						if (saved as Dictionary).has(key):
+							GameState.settings[key] = saved[key]
+					SettingsRuntime.save_display_preferences()
+					SettingsRuntime.apply_all()
 	# M4-7：启动先显示主菜单；玩家选择「继续」后才读取上次存档。
 
 func _process(delta: float) -> void:
@@ -400,6 +414,10 @@ func apply_to_game_state(data: Dictionary) -> void:
 		GameState.unlocks = {}
 	if data.get("settings", null) is Dictionary:
 		GameState.settings = _migrate_settings(data["settings"] as Dictionary)
+		if SettingsRuntime.read_display_preferences().is_empty():
+			# 未有本机偏好时，首次读取旧槽即迁入独立文件。
+			SettingsRuntime.save_display_preferences()
+		GameState.settings = SettingsRuntime.with_display_preferences(GameState.settings)
 		SettingsRuntime.apply_all()
 
 	# 坐标：交给 Game._ready 消费（10.3 当前地图与坐标）

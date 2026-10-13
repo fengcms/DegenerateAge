@@ -367,4 +367,5 @@ func _confirm_swap() -> void:
 func _changed() -> void:
 	SettingsRuntime.apply_all()
 	_update_layout.call_deferred()
+	SettingsRuntime.save_display_preferences()
 	EventBus.settings_changed.emit()

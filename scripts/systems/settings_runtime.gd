@@ -18,6 +18,58 @@ const MAP_SCALE_MIN := 0.8
 const MAP_SCALE_MAX := 2.0
 const TEXT_SCALE_MIN := 0.8
 const TEXT_SCALE_MAX := 2.0
+## 与角色进度分离的本机显示偏好；旧槽的 settings 字段继续保留以兼容旧档。
+const DISPLAY_PREFS_PATH := "user://display_preferences.json"
+const DISPLAY_PREF_KEYS := ["uiScale", "mapScale", "textScale", "displayScaleMode", "displayScale",
+	"fullscreen", "resolution"]
+
+static func read_display_preferences() -> Dictionary:
+	if not FileAccess.file_exists(DISPLAY_PREFS_PATH):
+		return {}
+	var file := FileAccess.open(DISPLAY_PREFS_PATH, FileAccess.READ)
+	if file == null:
+		return {}
+	var raw: Variant = JSON.parse_string(file.get_as_text())
+	if not raw is Dictionary:
+		return {}
+	var source := raw as Dictionary
+	var out := {}
+	for key in DISPLAY_PREF_KEYS:
+		if not source.has(key):
+			continue
+		var value: Variant = source[key]
+		if key in ["uiScale", "mapScale", "textScale", "displayScale"]:
+			if (value is int or value is float) and is_finite(float(value)):
+				out[key] = value
+		elif key == "fullscreen" and value is bool:
+			out[key] = value
+		elif value is String and valid_choice(key, value):
+			out[key] = value
+	return out
+
+static func with_display_preferences(settings: Dictionary) -> Dictionary:
+	var result := settings.duplicate(true)
+	var preferences := read_display_preferences()
+	for key in preferences:
+		result[key] = preferences[key]
+	return result
+
+static func save_display_preferences() -> bool:
+	var values := {}
+	for key in DISPLAY_PREF_KEYS:
+		values[key] = GameState.settings.get(key, GameState.default_settings()[key])
+	var tmp := DISPLAY_PREFS_PATH + ".tmp"
+	var file := FileAccess.open(tmp, FileAccess.WRITE)
+	if file == null:
+		push_warning("[SettingsRuntime] 无法写入显示偏好")
+		return false
+	file.store_string(JSON.stringify(values, "\t"))
+	file.close()
+	if DirAccess.rename_absolute(tmp, DISPLAY_PREFS_PATH) != OK:
+		DirAccess.remove_absolute(tmp)
+		push_warning("[SettingsRuntime] 无法保存显示偏好")
+		return false
+	return true
 
 ## 无头判定唯一可靠方式。⚠ `OS.has_feature("headless")` 实测恒为 false（无头下也 false），勿用。
 static func is_headless() -> bool:
