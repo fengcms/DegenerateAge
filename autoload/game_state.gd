@@ -38,6 +38,8 @@ var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2
 var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
 var settings: Dictionary = {}
 var hotbar: Array = []             # 12 格模板引用；背包整理、切图后保持绑定（M4-8）
+## 主动技能冷却是本次会话运行态：跨图保留，读档/新游戏清零，不写存档。
+var skill_cooldowns: Dictionary = {}
 ## 本次运行的菜单流程状态；不入档。切图与读档重建 Main 时保留 world。
 var menu_mode: String = "menu"
 ## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
@@ -93,6 +95,8 @@ func _ready() -> void:
 ## 否则面板销毁会导致冷却永久停摆（见工程文档 12 §5 R-h）。
 func _process(delta: float) -> void:
 	Consumable.tick(delta)
+	for skill_id in skill_cooldowns.keys():
+		skill_cooldowns[skill_id] = maxf(0.0, float(skill_cooldowns[skill_id]) - delta)
 	world_time += delta    # M4-10：世界时钟（面板打开照常走、暂停时冻结；见字段注释）
 
 ## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
@@ -165,6 +169,7 @@ func reset_to_defaults() -> void:
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
+	skill_cooldowns = {}
 	world_time = 0.0                # M4-10：世界时钟与刷新状态重置（新游戏 / 初始化）
 	spawn_respawn = {}
 	unclaimed_loot = {}             # M6-0c：未领取战利品（新游戏 / 初始化清空）

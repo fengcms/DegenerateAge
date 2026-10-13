@@ -62,9 +62,8 @@ const ROAM_ARRIVE_EPS := 12.0
 const DEFAULT_POTION_THRESHOLD := 0.35
 const DANGER_TOAST_CD := 4.0           # 「危险血量」提示节流（s）
 
-## M1 已接线的自动施放技能（普攻由攻击间隔单独驱动，不进此表）。
-## M3 技能系统落地后追加技能 id 即可让 choose_skill 的返回值真正生效。
-const WIRED_SKILLS: Array[String] = []
+## 已接线的自动施放范围技；普攻由攻击间隔单独驱动，不进此表。
+const WIRED_SKILLS: Array[String] = ["earth_cleave", "whirlwind"]
 
 var _player: PlayerCharacter = null
 var _state: int = State.OFF
@@ -258,7 +257,30 @@ func _tick(delta: float) -> void:
 	_player.set_auto_move(Vector2.ZERO)
 	_set_state(State.ATTACK_TARGET)
 	_stuck_count = 0
+	var skill := _best_area_skill(_target)
+	if not skill.is_empty() and _player.cast_skill(String(skill.id), _target):
+		return
 	_player.try_auto_attack(_target)
+
+## 按实际命中集合选择范围技；只有至少两只怪在技能形状内才消耗法力。
+func _best_area_skill(target: Node) -> Dictionary:
+	if not _player.is_attack_ready():
+		return {}
+	var chosen := {}
+	var best_count := 1
+	for skill_id in WIRED_SKILLS:
+		var skill = DataLoader.get_entry("skills", skill_id)
+		if not skill is Dictionary:
+			continue
+		var hit_count := _player.skill_targets(skill, target).size()
+		if hit_count < 2 or choose_skill([skill], int(GameState.player.level),
+			int(GameState.player.mp), _player.skill_cooldowns, hit_count).is_empty():
+			continue
+		if hit_count > best_count or (hit_count == best_count and
+			int(skill.get("manaCost", 0)) < int(chosen.get("manaCost", 2147483647))):
+			chosen = skill
+			best_count = hit_count
+	return chosen
 
 # ---- 自动喝药（M2.5；3.14「自动只调用与玩家相同的喝药接口」）----
 

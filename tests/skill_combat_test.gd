@@ -67,6 +67,30 @@ func _ready() -> void:
 		"圆形范围内每只怪各受击一次")
 	_check(not player.cast_skill("whirlwind") and int(GameState.player.mp) == 75,
 		"旋风斩冷却阻止重复施放")
+	player.skill_cooldowns.clear()
+	player._attack_cd = 0.0
+	var pilot := AutoBattle.new()
+	player.add_child(pilot)
+	pilot.set_physics_process(false)
+	_check(String(pilot._best_area_skill(near).get("id", "")) == "whirlwind",
+		"自动战斗按实际圆形命中数优先旋风斩")
+	GameState.player.mp = 20
+	_check(String(pilot._best_area_skill(near).get("id", "")) == "earth_cleave",
+		"蓝量不足时改选可用的裂地斩")
+	GameState.player.mp = 100
+	GameState.player.level = 4
+	_check(pilot._best_area_skill(near).is_empty(), "未解锁时自动战斗回退普攻")
+	GameState.player.level = 10
+	player.global_position += Vector2(50, 0)
+	pilot._target = near
+	var before_auto := int(GameState.player.mp)
+	pilot._tick(0.016)
+	_check(int(GameState.player.mp) == before_auto - 25 and player.skill_cooldown("whirlwind") > 0.0,
+		"自动战斗通过玩家统一入口施放范围技")
+	var next_map_player := PlayerCharacter.new()
+	add_child(next_map_player)
+	next_map_player.set_physics_process(false)
+	_check(next_map_player.skill_cooldown("whirlwind") > 0.0, "重建地图角色后冷却继续")
 	if _failures.is_empty():
 		print("[SkillCombatTest] 全部通过 ✅")
 		get_tree().quit(0)

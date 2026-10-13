@@ -188,6 +188,7 @@ func _ready() -> void:
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
 	var b = DataLoader.get_entry("skills", "basic_slash")
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
+	skill_cooldowns = GameState.skill_cooldowns
 
 func _physics_process(delta: float) -> void:
 	if locked_target != null and not valid_target(locked_target):
@@ -196,8 +197,6 @@ func _physics_process(delta: float) -> void:
 	_slow_remaining = maxf(0.0, _slow_remaining - delta)
 	_invuln = maxf(0.0, _invuln - delta)
 	_attack_cd = maxf(0.0, _attack_cd - delta)
-	for skill_id in skill_cooldowns.keys():
-		skill_cooldowns[skill_id] = maxf(0.0, float(skill_cooldowns[skill_id]) - delta)
 
 	if is_dead:
 		auto_move = Vector2.ZERO
@@ -418,7 +417,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
 	range_fx.shape = String(skill.get("shape", "circle"))
 	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
-	range_fx.facing = global_position.direction_to((targets[0] as Node2D).global_position)
+	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if String(skill.get("shape", "")) == "cone" else Vector2.RIGHT
 	add_child(range_fx)
 	for enemy in targets:
 		var result := Combat.resolve(float(GameState.total_attack()), _target_defense(enemy),
