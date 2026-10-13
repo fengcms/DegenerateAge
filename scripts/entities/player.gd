@@ -12,6 +12,7 @@ const ART_SCALE := 1.25  # 玩家外观放大；碰撞和战斗距离仍使用�
 const COLOR_BODY := Color("e8c07d")
 const COLOR_EDGE := Color("6d4c1f")
 const COLOR_DEAD := Color("8a8a8a")
+const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 
 const IFRAME := 0.5            # 3.4：受击后无敌帧时长（s）
 const HITSTUN := 0.25          # 3.4：受击硬直时长（s，期间无法主动行动）
@@ -428,6 +429,7 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 		if is_sitting:
 			draw_arc(Vector2.ZERO, 19, 0, TAU, 24, Color("78d8d0"), 1.0)
+		_draw_overhead_name(-87.0)
 		return
 	# 占位角色：圆形身体 + 描边；死亡态转灰（脚底碰撞体见 CollisionShape2D）
 	var body := COLOR_DEAD if is_dead else COLOR_BODY
@@ -438,6 +440,15 @@ func _draw() -> void:
 	else:
 		draw_circle(Vector2.ZERO, RADIUS, body)
 		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 28, COLOR_EDGE, 2.0, true)
+	_draw_overhead_name(-37.0)
+
+func _draw_overhead_name(baseline_y: float) -> void:
+	var name := String(GameState.player.get("name", "守护者"))
+	var origin := Vector2(-90.0, baseline_y)
+	draw_string(MONO_FONT, origin + Vector2(1.0, 1.0), name,
+		HORIZONTAL_ALIGNMENT_CENTER, 180.0, 14, Color(0.0, 0.0, 0.0, 0.85))
+	draw_string(MONO_FONT, origin, name,
+		HORIZONTAL_ALIGNMENT_CENTER, 180.0, 14, Color("a7efed"))
 
 func set_sitting(value: bool) -> void:
 	if is_dead and value or is_sitting == value:
