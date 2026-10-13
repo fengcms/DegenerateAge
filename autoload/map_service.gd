@@ -20,10 +20,15 @@ extends Node
 const DEFAULT_MAP := "camp"
 const WALK_RANGE_CELLS := 1.5
 const WALK_ARRIVAL_LOCK_MSEC := 1000
+const REST_RADIUS_CELLS := 3.0
 
 ## 跨场景保留防抖状态；仅步行出口使用，车夫线路不受影响。
 var walk_locked_until_msec: int = 0
 var walk_key_released: bool = true
+var _rest_zones_cache: Dictionary = {}
+
+func _ready() -> void:
+	EventBus.data_loaded.connect(func() -> void: _rest_zones_cache.clear())
 
 # ---- 查询 ----
 
@@ -111,6 +116,43 @@ func current_boss() -> Dictionary:
 func current_exits() -> Array:
 	var exits = current_data().get("exits", [])
 	return exits if exits is Array else []
+
+## 从地图数据推导休整区，不增存档字段；所有距离都在逻辑网格中计算。
+func rest_zones(map_id: String) -> Array[Dictionary]:
+	if _rest_zones_cache.has(map_id):
+		return _rest_zones_cache[map_id]
+	var out: Array[Dictionary] = []
+	var data := data_for(map_id)
+	if data.is_empty():
+		return out
+	for exit_data in data.get("exits", []):
+		if exit_data is Dictionary:
+			_add_rest_zone(out, "exit", exit_data.get("cell", null))
+	var entrances: Variant = data.get("entrances", {})
+	if entrances is Dictionary:
+		for entrance_id in entrances.keys():
+			_add_rest_zone(out, "entrance", entrances[entrance_id])
+	_add_rest_zone(out, "carter", data.get("carterArrival", null))
+	_rest_zones_cache[map_id] = out
+	return out
+
+func _add_rest_zone(out: Array[Dictionary], kind: String, value: Variant) -> void:
+	if not value is Array or value.size() != 2:
+		return
+	out.append({"kind": kind, "cell": Vector2(float(value[0]), float(value[1]))})
+
+func is_in_rest_zone(map_id: String, world_position: Vector2) -> bool:
+	var cell := Iso.world_to_grid(world_position)
+	for zone in rest_zones(map_id):
+		if cell.distance_to(zone.cell) <= REST_RADIUS_CELLS:
+			return true
+	return false
+
+func carter_arrival(map_id: String) -> Vector2:
+	var cell: Variant = data_for(map_id).get("carterArrival", null)
+	if cell is Array and cell.size() == 2:
+		return Iso.grid_to_world(Vector2i(int(cell[0]), int(cell[1])))
+	return entry_point(map_id)
 
 func walk_exit(exit_id: String) -> Dictionary:
 	for entry in current_exits():
@@ -203,7 +245,7 @@ func travel_to(map_id: String) -> Dictionary:
 
 	var from_id := GameState.current_map
 	GameState.current_map = map_id
-	GameState.save_pos = entry_point(map_id)
+	GameState.save_pos = carter_arrival(map_id)
 	GameState.has_save_pos = true
 	GameState.close_all_panels()
 	EventBus.map_traveled.emit(from_id, map_id)

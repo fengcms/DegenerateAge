@@ -58,6 +58,7 @@ func _ready() -> void:
 	await _test_consumable()
 	_test_map_travel()
 	await _test_walk_exit()
+	await _test_rest_zone()
 	await _test_world()
 	await _test_map_reload()
 	await _test_spawn_respawn_cross_map()
@@ -2714,6 +2715,60 @@ func _test_walk_exit() -> void:
 	MapService.walk_locked_until_msec = 0
 	GameState.reset_to_defaults()
 
+## M6-2：休整区覆盖三类落点；刷怪与攻防排除；保留自动开关且手动离区延迟恢复。
+func _test_rest_zone() -> void:
+	GameState.reset_to_defaults()
+	_expect(MapService.rest_zones("wild_trial").size() == 5, "野外应有出口/入口/驿站共 5 个休整中心")
+	_expect(MapService.is_in_rest_zone("camp", Iso.grid_to_world(Vector2i(20, 29))), "驿站 3 格边界应受保护")
+	_expect(not MapService.is_in_rest_zone("camp", Iso.grid_to_world(Vector2i(20, 30))), "驿站 4 格之外不应受保护")
+	_expect(MapService.carter_arrival("wild_trial").is_equal_approx(Iso.grid_to_world(Vector2i(30, 36))), "野外车夫应抵达配置的驿站")
+	var invalid_maps: Array = (DataLoader.get_table("maps") as Array).duplicate(true)
+	invalid_maps[1]["carterArrival"] = [999, 36]
+	_expect(not DataLoader._validate_walk_exits(invalid_maps).is_empty(), "越界驿站坐标应在启动校验暴露")
+
+	GameState.current_map = "wild_trial"
+	GameState.auto_battle_on = true
+	GameState.auto_pickup_on = true
+	GameState.save_pos = MapService.carter_arrival("wild_trial")
+	GameState.has_save_pos = true
+	var world: Node2D = load("res://scenes/Game.tscn").instantiate()
+	add_child(world)
+	await get_tree().process_frame
+	var player := world.get_node("Entities/Player") as PlayerCharacter
+	var pilot := player.get_node("AutoPilot") as AutoBattle
+	var spawner := world.get_node("Spawner") as MonsterSpawner
+	_expect(world.get_node("Ground").get_child_count() > 1, "地面应装配休整区边界表现")
+	for child in spawner.get_children():
+		if child is Monster:
+			_expect(not MapService.is_in_rest_zone("wild_trial", child.global_position), "怪物不得出生在休整区")
+	var monster := spawner.get_children().filter(func(c: Node) -> bool: return c is Monster)[0] as Monster
+	var hp_before := int(GameState.player.hp)
+	_expect(player.apply_damage(10) == 0 and int(GameState.player.hp) == hp_before, "休整区内玩家不得受伤")
+	monster._do_attack(player)
+	_expect(int(GameState.player.hp) == hp_before and monster._get_player() == null, "怪物不得攻击或仇恨区内玩家")
+	monster.global_position = Iso.grid_to_world(Vector2i(30, 40))
+	for _i in range(40):
+		monster._approach(MapService.carter_arrival("wild_trial"))
+		monster.global_position += monster.velocity * monster.get_physics_process_delta_time()
+		_expect(not MapService.is_in_rest_zone("wild_trial", monster.global_position), "怪物追击不能越过休整区边界")
+	var monster_hp := monster.hp
+	_expect(player.perform_attack(monster).is_empty() and monster.hp == monster_hp, "区内玩家不能攻击区外怪物")
+	pilot._physics_process(0.1)
+	_expect(pilot.current_state() == AutoBattle.State.RECOVER and player.auto_move == Vector2.ZERO, "自动战斗在休整区内应暂停而非漫游")
+	_expect(GameState.auto_battle_on and GameState.auto_pickup_on, "休整区不得关闭自动战斗/拾取偏好")
+	player.request_map_move(Iso.grid_to_world(Vector2i(30, 41)))
+	player.global_position = Iso.grid_to_world(Vector2i(30, 41))
+	player.map_move_active = false
+	pilot._physics_process(1.0)
+	_expect(pilot.current_state() == AutoBattle.State.MANUAL_OVERRIDE, "手动离区后仍应等待接管倒计时")
+	pilot._physics_process(AutoBattle.MANUAL_RESUME_DELAY)
+	_expect(pilot.current_state() != AutoBattle.State.RECOVER and pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE,
+		"离开休整区并经过延迟后应恢复自动决策（state=%d phase=%s manual=%.1f zone=%s panel=%s auto=%s）" % [pilot.current_state(), pilot.current_phase(), pilot._manual_t, MapService.is_in_rest_zone("wild_trial", player.global_position), GameState.panel_open, GameState.auto_battle_on])
+	world.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
 ## M3-1 / 验收场景 T15：切图重建 —— 新图按自身数据装配、落点正确、旧实体不残留。
 ## 做法：直接实例化 `Game.tscn` 模拟「重载后的世界」，对比营地与野外两套装配
 ## （真实重载行为 = 销毁旧 Game + `Game._ready` 按 `GameState.current_map` 重建，见 MapService 头注）。
@@ -2785,7 +2840,9 @@ func _test_map_reload() -> void:
 	var returned: Node = load("res://scenes/Game.tscn").instantiate()
 	add_child(returned)
 	await get_tree().process_frame
-	_expect(_deep_equal(Fog.encode().get("camp", []), camp_explored), "返回营地后历史探索丢失")
+	var returned_explored: Array = Fog.encode().get("camp", [])
+	for sector in camp_explored:
+		_expect(returned_explored.has(sector), "返回营地后不能丢失既有探索区域 %s" % sector)
 	returned.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame

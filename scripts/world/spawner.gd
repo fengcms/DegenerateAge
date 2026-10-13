@@ -193,7 +193,8 @@ func _tombstone_position(point: Dictionary) -> Vector2:
 ## 生成位置：墓碑类点沿用固定位置（原位复活），其余随机。
 func _spawn_position(point: Dictionary) -> Vector2:
 	if bool(point.get("tombstone", false)):
-		return _tombstone_position(point)
+		var saved := _tombstone_position(point)
+		return _random_spawn_position() if MapService.is_in_rest_zone(_map_id, saved) else saved
 	return _random_spawn_position()
 
 ## 在（网格）地图内随机取点，且与玩家出生点保持 MIN_SPAWN_DIST 以上距离。
@@ -210,6 +211,18 @@ func _random_spawn_position() -> Vector2:
 	for _i in range(40):
 		var c := Vector2i(_rng.randi_range(lo, hx), _rng.randi_range(lo, hy))
 		var pos := Iso.grid_to_world(c)
-		if pos.distance_to(center) >= MIN_SPAWN_DIST:
+		if pos.distance_to(center) >= MIN_SPAWN_DIST and not MapService.is_in_rest_zone(_map_id, pos):
 			return pos
-	return Iso.grid_to_world(Vector2i(gs.x / 2 + 8, gs.y / 2 + 8))
+	# 随机采样极端情况下可能连中休整区；确定性扫描保证兜底仍在区外。
+	for y in range(lo, hy + 1):
+		for x in range(lo, hx + 1):
+			var pos := Iso.grid_to_world(Vector2i(x, y))
+			if pos.distance_to(center) >= MIN_SPAWN_DIST and not MapService.is_in_rest_zone(_map_id, pos):
+				return pos
+	for y in range(lo, hy + 1):
+		for x in range(lo, hx + 1):
+			var pos := Iso.grid_to_world(Vector2i(x, y))
+			if not MapService.is_in_rest_zone(_map_id, pos):
+				return pos
+	push_warning("[MonsterSpawner] 地图 %s 没有休整区外的可用刷新格" % _map_id)
+	return center

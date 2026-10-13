@@ -184,6 +184,10 @@ func _spawn_summons(id: String, count: int, after_death: bool = false) -> void:
 		var dims := MapService.grid_size(GameState.current_map)
 		grid = grid.clamp(Vector2.ZERO, Vector2(dims) - Vector2.ONE)
 		point = Iso.grid_pt(grid.x, grid.y)
+		if MapService.is_in_rest_zone(GameState.current_map, point):
+			point = global_position
+		if MapService.is_in_rest_zone(GameState.current_map, point):
+			continue
 		child.position = get_parent().to_local(point)
 		child.spawn_position = point
 		get_parent().add_child(child)
@@ -383,13 +387,21 @@ func _patrol(delta: float) -> void:
 	_approach(_patrol_target)
 
 func _random_patrol_point() -> Vector2:
-	var ang := _rng.randf() * TAU
-	var r := _rng.randf_range(20.0, PATROL_RADIUS)
-	return spawn_position + Vector2(cos(ang), sin(ang)) * r
+	for _i in range(8):
+		var ang := _rng.randf() * TAU
+		var r := _rng.randf_range(20.0, PATROL_RADIUS)
+		var candidate := spawn_position + Vector2(cos(ang), sin(ang)) * r
+		if not MapService.is_in_rest_zone(GameState.current_map, candidate):
+			return candidate
+	return spawn_position
 
 func _approach(target_pos: Vector2) -> void:
 	var to := target_pos - global_position
 	if to.length() < 0.001:
+		return
+	var step := to.normalized() * move_speed_px * get_physics_process_delta_time()
+	if MapService.is_in_rest_zone(GameState.current_map, global_position + step):
+		velocity = Vector2.ZERO
 		return
 	velocity = to.normalized() * move_speed_px
 
@@ -399,11 +411,15 @@ func _get_player() -> Node2D:
 		return null
 	if p.get("is_dead") == true:
 		return null
+	if MapService.is_in_rest_zone(GameState.current_map, (p as Node2D).global_position):
+		return null
 	return p as Node2D
 
 # ---- 攻击 ----
 
 func _do_attack(player: Node2D) -> void:
+	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
+		return
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
 	if attack_power <= 0.0:
 		return
@@ -422,6 +438,8 @@ func _do_attack(player: Node2D) -> void:
 ## 承受一次已结算的攻击（由 Combat.resolve 产出）。miss 不扣血；受击转仇恨。
 func take_hit(result: Dictionary, from: Node = null) -> void:
 	if is_dead or bool(result.get("miss", false)):
+		return
+	if from is PlayerCharacter and (MapService.is_in_rest_zone(GameState.current_map, (from as Node2D).global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position)):
 		return
 	hp = maxi(0, hp - int(result.get("damage", 0)))
 	_flash_t = HIT_FLASH

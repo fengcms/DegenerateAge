@@ -428,6 +428,8 @@ func _validate_walk_exits(maps: Variant) -> Array[String]:
 		if not exits is Array or not entrances is Dictionary:
 			report.append("[maps] %s 缺少 exits 数组或 entrances 字典" % map_id)
 			continue
+		if not _valid_walk_cell(entry.get("carterArrival", null), entry):
+			report.append("[maps] %s 的车夫抵达坐标无效" % map_id)
 		for entrance_id in entrances.keys():
 			if String(entrance_id).is_empty() or not _valid_walk_cell(entrances[entrance_id], entry):
 				report.append("[maps] %s 的入口 %s 坐标无效" % [map_id, entrance_id])

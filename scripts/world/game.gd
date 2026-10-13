@@ -70,6 +70,7 @@ func _ready() -> void:
 	var pilot := _player.get_node_or_null("AutoPilot") as AutoBattle
 	if pilot != null:
 		pilot._on_auto_state_changed(GameState.auto_battle_on, GameState.auto_pickup_on)
+		pilot.reset_after_travel()
 
 	# 相机限制到地图包围盒，避免露出边界外的空白
 	var b: Rect2 = _ground.get_world_bounds()
@@ -82,6 +83,7 @@ func _ready() -> void:
 	_camera.reset_smoothing()
 
 	# 怪物点 / Boss 点 / NPC：全部按当前地图数据装配（M3-1）
+	_ground.add_child(RestZoneOverlay.new())
 	_spawner.setup(_ground, _player)
 	_spawner.spawn_from_map(GameState.current_map)
 	var boss := MapService.current_boss()
@@ -185,6 +187,8 @@ func _cell_of(spec: Dictionary) -> Vector2i:
 ## 抵达提示（切图 / 读档 / 新游戏开局各一次）：延后一帧调用，确保 HUD 已就绪。
 func _notify_arrival() -> void:
 	EventBus.toast_requested.emit("抵达　%s" % MapService.display_name(GameState.current_map), "levelup")
+	if GameState.auto_battle_on and MapService.is_in_rest_zone(GameState.current_map, _player.global_position):
+		EventBus.toast_requested.emit("自动战斗暂停：出行休整区", "info")
 
 ## 使用画布投影后的视口范围，随相机、缩放与窗口尺寸变化。
 func visible_enemies() -> Array[Node2D]:

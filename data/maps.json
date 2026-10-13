@@ -13,6 +13,7 @@
       { "id": "to_wild", "cell": [34, 20], "toMap": "wild_trial", "toEntrance": "from_camp" }
     ],
     "entrances": { "from_wild": [31, 20] },
+    "carterArrival": [20, 26],
     "spawnPoints": [
       { "monsterId": "training_dummy", "level": 1, "respawnTime": 20, "count": 3, "ai": false }
     ],
@@ -41,6 +42,7 @@
       { "id": "to_ash", "cell": [54, 30], "toMap": "ash_land", "toEntrance": "from_wild" }
     ],
     "entrances": { "from_camp": [8, 30], "from_ash": [51, 30] },
+    "carterArrival": [30, 36],
     "spawnPoints": [
       { "monsterId": "wolf_corrupted", "level": 2, "respawnTime": 30, "count": 6 },
       { "monsterId": "shellback_bug", "level": 3, "respawnTime": 30, "count": 2 },
@@ -67,6 +69,7 @@
       { "id": "to_source", "cell": [54, 30], "toMap": "corruption_source", "toEntrance": "from_ash" }
     ],
     "entrances": { "from_wild": [8, 30], "from_source": [51, 30] },
+    "carterArrival": [30, 36],
     "spawnPoints": [
       { "monsterId": "ash_wraith", "level": 6, "respawnTime": 45, "count": 3 },
       { "monsterId": "shellback_bug", "level": 7, "respawnTime": 45, "count": 3 }
@@ -92,6 +95,7 @@
       { "id": "to_ash", "cell": [5, 25], "toMap": "ash_land", "toEntrance": "from_source" }
     ],
     "entrances": { "from_ash": [8, 25] },
+    "carterArrival": [25, 31],
     "spawnPoints": [
       { "monsterId": "shellback_bug", "level": 10, "respawnTime": 60, "count": 4 }
     ],

@@ -71,7 +71,17 @@ var _hp_regen_rest := 0.0
 var _mp_regen_rest := 0.0
 
 func valid_target(target: Variant) -> bool:
-	return is_instance_valid(target) and target is Node2D and not target.is_queued_for_deletion() and target.get("is_dead") != true and target.has_method("take_hit")
+	if MapService.is_in_rest_zone(GameState.current_map, global_position):
+		return false
+	return is_instance_valid(target) and target is Node2D and not target.is_queued_for_deletion() and target.get("is_dead") != true and target.has_method("take_hit") and not MapService.is_in_rest_zone(GameState.current_map, target.global_position)
+
+func clear_travel_intent() -> void:
+	map_move_active = false
+	manual_attack_active = false
+	auto_move = Vector2.ZERO
+	velocity = Vector2.ZERO
+	_map_destination = global_position
+	select_target(null)
 
 func select_target(target: Node2D, manual: bool = true) -> void:
 	if target != null and not valid_target(target):
@@ -236,7 +246,7 @@ func _physics_process(delta: float) -> void:
 
 ## 承受怪物攻击，返回实际扣血量；无敌帧内返回 0，供吸血与附伤判定。
 func apply_damage(amount: int) -> int:
-	if is_dead or _invuln > 0.0 or amount <= 0:
+	if is_dead or _invuln > 0.0 or amount <= 0 or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return 0
 	set_sitting(false)
 	_invuln = IFRAME
@@ -300,9 +310,7 @@ func is_attack_ready() -> bool:
 func try_auto_attack(target: Node) -> bool:
 	if not is_attack_ready():
 		return false
-	if target == null or not is_instance_valid(target):
-		return false
-	if target.get("is_dead") == true or not target.has_method("take_hit"):
+	if not valid_target(target):
 		return false
 	if not target is Node2D or global_position.distance_to(target.global_position) > melee_range_px():
 		return false
@@ -326,9 +334,7 @@ func _try_attack() -> void:
 
 ## 对指定目标结算一次普攻（供手动 / 自动化测试调用）。返回结算结果。
 func perform_attack(target: Node) -> Dictionary:
-	if is_dead or target == null or not is_instance_valid(target):
-		return {}
-	if target.get("is_dead") == true or not target.has_method("take_hit"):
+	if is_dead or not valid_target(target):
 		return {}
 	_mark_combat()
 
@@ -385,9 +391,7 @@ func find_nearest_enemy_in_range() -> Node:
 	var best: Node = null
 	var best_d := INF
 	for e in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(e) or e.get("is_dead") == true:
-			continue
-		if not (e is Node2D):
+		if not valid_target(e):
 			continue
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d <= rng_px and d < best_d:

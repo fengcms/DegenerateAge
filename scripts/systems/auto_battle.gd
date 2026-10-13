@@ -115,6 +115,23 @@ func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 		_loot = null
 		_roam_index = -1
 
+## 切图/读档后丢弃旧世界的目标、走位与攻击意图；保留 F/G 开关。
+func reset_after_travel() -> void:
+	if _player == null:
+		return
+	_player.clear_travel_intent()
+	_target = null
+	_loot = null
+	_roam_index = -1
+	_manual_t = 0.0
+	_blocked_t = 0.0
+	_search_t = 0.0
+	_repath_t = 0.0
+	if GameState.auto_battle_on and MapService.is_in_rest_zone(GameState.current_map, _player.global_position):
+		_set_state(State.RECOVER, "自动战斗暂停：出行休整区")
+	elif not GameState.auto_battle_on:
+		_set_state(State.OFF)
+
 func _notification(what: int) -> void:
 	# 应用失去焦点（切到后台）→ 停决策（3.14 ⑥）
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
@@ -163,6 +180,13 @@ func _physics_process(delta: float) -> void:
 	if _player.map_move_active or _player.manual_attack_active or _has_manual_input():
 		begin_manual_override()
 		return
+	if MapService.is_in_rest_zone(GameState.current_map, _player.global_position):
+		_player.set_auto_move(Vector2.ZERO)
+		_target = null
+		_loot = null
+		_roam_index = -1
+		_set_state(State.RECOVER, "自动战斗暂停：出行休整区")
+		return
 
 	if _manual_t > 0.0:
 		_manual_t = maxf(0.0, _manual_t - delta)
@@ -170,6 +194,7 @@ func _physics_process(delta: float) -> void:
 			_set_state(State.MANUAL_OVERRIDE, "手动接管 · %d 秒后恢复" % ceili(_manual_t))
 			return
 		_toast("自动战斗恢复", "info")
+		_set_state(State.SEARCH_TARGET)
 
 	_tick(delta)
 
