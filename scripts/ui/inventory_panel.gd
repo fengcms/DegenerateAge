@@ -80,12 +80,18 @@ func set_open(open: bool) -> void:
 		EventBus.panel_opened.emit("inventory")
 		_refresh()
 		_center.show_window()
+	else:
+		var character := get_node_or_null("../CharacterPanel")
+		if character != null and character.visible:
+			character._refresh()
 
 ## 其他面板打开时自动关闭本面板，保证互斥——**例外**：交易会话中的货郎面板（见 05 方案）。
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id == "inventory":
 		return
 	if panel_id in ["shop", "character", "skill", "mount"]:
+		if panel_id == "character" and visible:
+			_refresh()
 		return
 	if visible:
 		set_open(false)
@@ -188,6 +194,7 @@ func _build() -> void:
 	for i in range(GameState.inventory.size()):
 		var b2 := _make_item_slot(ItemSlot.ROLE_BAG, i)
 		b2.pressed.connect(_on_bag_pressed.bind(i))
+		b2.item_dropped.connect(_on_bag_item_dropped.bind(i))
 		bag_grid.add_child(b2)
 		_bag_buttons.append(b2)
 
@@ -204,7 +211,7 @@ func _build() -> void:
 	root.add_child(hint)
 
 ## 背包格：使用 ItemSlot（可用物品拖到快捷栏；交易时装备可拖到出售托盘）。
-## 装备槽仍是普通 Button——卸下走点击，不需要拖放。
+## 人物面板的装备槽由 EquipmentSlot 负责，这里只创建背包等物品格。
 func _make_item_slot(role: int, index: int) -> ItemSlot:
 	var b := ItemSlot.new()
 	b.role = role
@@ -262,7 +269,8 @@ func _refresh() -> void:
 		if it2 is Dictionary:
 			var col2 := _item_color(it2)
 			b2.item = it2          # 供拖拽载荷携带（ItemSlot._get_drag_data）
-			b2.draggable = _trade_active or not HotbarConfig.entry_for_item(it2).is_empty()
+			b2.draggable = _trade_active or not HotbarConfig.entry_for_item(it2).is_empty() \
+				or (String(it2.get("kind", "")) == "equip" and _character_visible())
 			b2.text = _short_name(it2)
 			b2.add_theme_color_override("font_color", col2)
 			_apply_slot_style(b2, col2, true)
@@ -323,7 +331,7 @@ func _bag_tooltip(item: Dictionary) -> String:
 		lines.append("已穿戴：%s" % ItemUtil.display_name(worn))
 		lines.append("评分 %.1f vs %.1f　%s" % [s_new, s_old, mark])
 	lines.append("")
-	lines.append("双击穿戴" if ok else "等级不足，无法穿戴")
+	lines.append(("双击穿戴 / 拖到人物槽" if _character_visible() else "打开人物面板后可穿戴") if ok else "等级不足，无法穿戴")
 	return "\n".join(PackedStringArray(lines))
 
 ## 非装备物品的 tooltip（M2.5）：药水显示恢复量 / 冷却 / 使用方式；
@@ -381,7 +389,26 @@ func _on_bag_pressed(index: int) -> void:
 	if index == _last_click_index and now - _last_click_ms <= DOUBLE_CLICK_MS:
 		_last_click_index = -1
 		_last_click_ms = 0
-		GameState.use_item(index)
+		var item: Variant = GameState.inventory[index] if index >= 0 and index < GameState.inventory.size() else null
+		if item is Dictionary and String(item.get("kind", "")) == "equip":
+			if _character_visible():
+				GameState.equip_from_inventory(index)
+		else:
+			GameState.use_item(index)
 	else:
 		_last_click_index = index
 		_last_click_ms = now
+
+func _character_visible() -> bool:
+	var character := get_node_or_null("../CharacterPanel")
+	return character != null and character.visible
+
+func _on_bag_item_dropped(_target_index: int, payload: Dictionary, index: int) -> void:
+	if not visible or not _character_visible() or int(payload.get("from", -1)) != ItemSlot.ROLE_EQUIP:
+		return
+	var sid := String(payload.get("slot_id", ""))
+	var current: Variant = GameState.equipment.get(sid)
+	if not current is Dictionary or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+		EventBus.toast_requested.emit("装备位置已变化，请重新拖动", "danger")
+		return
+	GameState.unequip_slot_to_inventory(sid, index)

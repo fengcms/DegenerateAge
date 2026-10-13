@@ -142,6 +142,19 @@ static func unequip(slots: Dictionary, inv: Array, slot_id: String) -> Dictionar
 	slots[slot_id] = null
 	return {"ok": true, "reason": "", "item": item}
 
+## 拖到背包指定空格卸下；失败时两侧都不改变。
+static func unequip_to_index(slots: Dictionary, inv: Array, slot_id: String, inv_index: int) -> Dictionary:
+	var item: Variant = slots.get(slot_id)
+	if not item is Dictionary:
+		return {"ok": false, "reason": "该槽位为空", "item": {}}
+	if inv_index < 0 or inv_index >= inv.size():
+		return {"ok": false, "reason": "背包格不存在", "item": {}}
+	if inv[inv_index] != null:
+		return {"ok": false, "reason": "请拖到背包空格", "item": {}}
+	inv[inv_index] = item
+	slots[slot_id] = null
+	return {"ok": true, "reason": "", "item": item}
+
 # ---- 属性汇总 ----
 
 ## 汇总已穿戴装备的属性加成（固定值累加、百分比累加）。

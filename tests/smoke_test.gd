@@ -47,6 +47,7 @@ func _ready() -> void:
 	_test_shop()
 	await _test_trade_panel()
 	await _test_floating_panels()
+	await _test_equipment_panel_interaction()
 	await _test_quest_target_navigation()
 	_test_debug_seed()
 	await _test_drag_layer()
@@ -1772,6 +1773,77 @@ func _test_floating_panels() -> void:
 		"点选窗口应置于其余浮窗之上")
 	for panel in [inv, character, skill, mount]:
 		panel.set_open(false)
+	main.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_equipment_panel_interaction() -> void:
+	GameState.reset_to_defaults()
+	var main: Node = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var bag: Control = main.get_node("UI/InventoryPanel")
+	var character: Control = main.get_node("UI/CharacterPanel")
+	var weapon := _equip_instance("weapon_starter", "panel_weapon", {"atk": 5})
+	GameState.inventory[0] = weapon
+	EventBus.inventory_changed.emit()
+	bag.set_open(true)
+	bag._on_bag_pressed(0)
+	bag._on_bag_pressed(0)
+	_expect(GameState.inventory[0] == weapon and GameState.equipment.get("weapon") == null,
+		"只开背包时双击装备不得穿戴")
+	character.set_open(true)
+	bag._on_bag_pressed(0)
+	bag._on_bag_pressed(0)
+	_expect(GameState.equipment.get("weapon") == weapon and GameState.inventory[0] == null,
+		"两窗同开时双击背包装备应穿戴")
+	var worn: EquipmentSlot = character._slots["weapon"]
+	_expect(worn.role == ItemSlot.ROLE_EQUIP and worn.draggable,
+		"人物装备槽应标记为可拖动的装备来源")
+	character._on_slot_pressed("weapon")
+	character._on_slot_pressed("weapon")
+	_expect(GameState.equipment.get("weapon") == null and GameState.inventory[0] == weapon,
+		"两窗同开时双击人物装备应卸下")
+	var bag_payload: Dictionary = bag._bag_buttons[0]._get_drag_data(Vector2.ZERO)
+	_expect(character._slots["weapon"]._can_drop_data(Vector2.ZERO, bag_payload),
+		"人物装备槽应接收背包装备拖放")
+	character._on_equipment_dropped(-1, bag_payload, "weapon")
+	_expect(GameState.equipment.get("weapon") == weapon and GameState.inventory[0] == null,
+		"背包拖至对应装备槽应穿戴")
+	var equipped_payload: Dictionary = character._slots["weapon"]._get_drag_data(Vector2.ZERO)
+	_expect(bag._bag_buttons[2]._can_drop_data(Vector2.ZERO, equipped_payload),
+		"背包格应接收人物装备拖放")
+	GameState.inventory[1] = _equip_instance("helmet_cloth", "occupied_slot", {"def": 1})
+	bag._on_bag_item_dropped(-1, equipped_payload, 1)
+	_expect(GameState.equipment.get("weapon") == weapon and GameState.inventory[1] != null,
+		"拖到已有物品的背包格应保留双方原状")
+	bag._on_bag_item_dropped(-1, equipped_payload, 2)
+	_expect(GameState.equipment.get("weapon") == null and GameState.inventory[2] == weapon,
+		"人物装备拖至背包指定格应卸下")
+	character._on_equipment_dropped(-1, bag_payload, "weapon")
+	_expect(GameState.equipment.get("weapon") == null and GameState.inventory[2] == weapon,
+		"背包物品移动后，过时拖拽载荷不得穿戴其他物品")
+	GameState.equip_from_inventory(2, "weapon")
+	bag.set_open(false)
+	character._on_slot_pressed("weapon")
+	character._on_slot_pressed("weapon")
+	_expect(GameState.equipment.get("weapon") == weapon,
+		"只开人物面板时双击装备不得卸下")
+	character.set_open(false)
+	bag.set_open(true)
+	GameState.unequip_slot("weapon")
+	var index := -1
+	for i in range(GameState.inventory.size()):
+		if GameState.inventory[i] == weapon:
+			index = i
+			break
+	_expect(index >= 0, "卸下后装备应进入背包")
+	if index >= 0:
+		bag._on_bag_pressed(index)
+		bag._on_bag_pressed(index)
+		_expect(GameState.inventory[index] == weapon and GameState.equipment.get("weapon") == null,
+			"关闭人物面板后双击背包装备仍不得穿戴")
+	bag.set_open(false)
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()

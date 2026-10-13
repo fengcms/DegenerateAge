@@ -470,6 +470,15 @@ func unequip_slot(slot_id: String) -> Dictionary:
 		EventBus.toast_requested.emit(String(res.get("reason", "无法卸下")), "danger")
 	return res
 
+func unequip_slot_to_inventory(slot_id: String, inv_index: int) -> Dictionary:
+	var res := Equipment.unequip_to_index(equipment, inventory, slot_id, inv_index)
+	if bool(res.get("ok", false)):
+		_after_equip_change()
+		EventBus.toast_requested.emit("卸下：" + ItemUtil.display_name(res.get("item", {})), "info")
+	else:
+		EventBus.toast_requested.emit(String(res.get("reason", "无法卸下")), "danger")
+	return res
+
 ## 穿脱后统一收尾（T06：穿戴后属性立即生效）：
 ## 广播装备 / 背包变更；上限可能降低时把当前 HP / MP 收敛到新上限（不补满、不按比例）。
 func _after_equip_change() -> void:

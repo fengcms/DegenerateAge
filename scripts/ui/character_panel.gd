@@ -5,6 +5,8 @@ var _slots: Dictionary = {}
 var _stats: Label
 var _title: Label
 var _center: FloatingWindow
+var _last_slot_id := ""
+var _last_slot_click_ms := 0
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -30,12 +32,18 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("character", open)
+	_last_slot_id = ""
 	if open:
 		_refresh()
 		EventBus.panel_opened.emit("character")
 		_center.show_window()
+	var bag := get_node_or_null("../InventoryPanel")
+	if bag != null and bag.visible:
+		bag._refresh()
 
 func _on_panel_opened(panel_id: String) -> void:
+	if panel_id == "inventory" and visible:
+		_refresh()
 	if panel_id not in ["character", "inventory", "skill", "mount"] and visible:
 		set_open(false)
 
@@ -117,11 +125,13 @@ func _build() -> void:
 		for sid in (left_ids if side == left else right_ids):
 			var def := Equipment.slot_def(sid)
 			var button := EquipmentSlot.new()
+			button.role = ItemSlot.ROLE_EQUIP
 			button.slot_id = sid
 			button.slot_kind = String(def.get("kind", ""))
 			button.custom_minimum_size = Vector2(52, 52)
 			button.tooltip_text = String(def.get("label", sid))
 			button.pressed.connect(_on_slot_pressed.bind(sid))
+			button.item_dropped.connect(_on_equipment_dropped.bind(sid))
 			side.add_child(button)
 			_slots[sid] = button
 	var hint := Label.new()
@@ -143,6 +153,7 @@ func _refresh() -> void:
 		var button: EquipmentSlot = _slots[sid]
 		var item: Variant = GameState.equipment.get(sid)
 		button.item = item if item is Dictionary else {}
+		button.draggable = item is Dictionary and _bag_visible()
 		button.text = ""
 		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else "%s（空槽）" % String(def.label)
 		SampleArt.decorate(button, SampleArt.icon_for(item))
@@ -160,8 +171,32 @@ func _refresh() -> void:
 		100.0 * (float(p.block) + float(bonus.get("block", 0.0))),
 		100.0 * (float(p.cdr) + float(bonus.get("cdr", 0.0)))]
 
-func _on_slot_pressed(_slot_id: String) -> void:
-	pass  # 单击只显示槽位与悬停说明；双击交互由下一节点接入。
+func _bag_visible() -> bool:
+	var bag := get_node_or_null("../InventoryPanel")
+	return bag != null and bag.visible
+
+func _on_slot_pressed(slot_id: String) -> void:
+	var now := Time.get_ticks_msec()
+	if slot_id == _last_slot_id and now - _last_slot_click_ms <= 400:
+		_last_slot_id = ""
+		_last_slot_click_ms = 0
+		if _bag_visible() and GameState.equipment.get(slot_id) is Dictionary:
+			GameState.unequip_slot(slot_id)
+	else:
+		_last_slot_id = slot_id
+		_last_slot_click_ms = now
+
+func _on_equipment_dropped(_index: int, payload: Dictionary, slot_id: String) -> void:
+	if not visible or not _bag_visible() or int(payload.get("from", -1)) != ItemSlot.ROLE_BAG:
+		return
+	var index := int(payload.get("index", -1))
+	if index < 0 or index >= GameState.inventory.size():
+		return
+	var current: Variant = GameState.inventory[index]
+	if not current is Dictionary or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+		EventBus.toast_requested.emit("物品位置已变化，请重新拖动", "danger")
+		return
+	GameState.equip_from_inventory(index, slot_id)
 
 func _equipment_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = [ItemUtil.display_name(item)]

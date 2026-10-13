@@ -15,7 +15,7 @@ extends Button
 ## _can_drop_data / _drop_data），必须在脚本里覆写；界面为代码构建，无法给 Button 实例
 ## 单独挂虚方法，故统一由此类承载拖出与接收两端。
 
-enum { ROLE_BAG, ROLE_TRAY, ROLE_WAREHOUSE }
+enum { ROLE_BAG, ROLE_TRAY, ROLE_WAREHOUSE, ROLE_EQUIP }
 
 ## 目标格收到投放时回传（target_index 为本格下标，payload 见文件头）。
 signal item_dropped(tray_index: int, payload: Dictionary)
@@ -113,7 +113,8 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	var source := int((data as Dictionary).get("from", -1))
 	return (role == ROLE_TRAY and source == ROLE_BAG) \
 		or (role == ROLE_WAREHOUSE and source == ROLE_BAG) \
-		or (role == ROLE_BAG and source == ROLE_WAREHOUSE)
+		or (role == ROLE_BAG and source == ROLE_WAREHOUSE) \
+		or (role == ROLE_BAG and source == ROLE_EQUIP)
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	item_dropped.emit(index, data as Dictionary)
