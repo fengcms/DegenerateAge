@@ -71,6 +71,9 @@ var _map_destination := Vector2.ZERO
 var _map_check_t := 0.0
 var _map_last_distance := INF
 var _map_stuck_count := 0
+var _cave_path: Array[Vector2] = []
+var _cave_path_index := 0
+var _cave_target_cell := Vector2i(-1, -1)
 var _map_background := false
 var _combat_cooldown := 0.0
 var _hp_regen_rest := 0.0
@@ -122,6 +125,9 @@ func reset_move_progress(point: Vector2) -> void:
 	_map_last_distance = global_position.distance_to(point)
 	_map_check_t = 0.0
 	_map_stuck_count = 0
+	_cave_path.clear()
+	_cave_path_index = 0
+	_cave_target_cell = Vector2i(-1, -1)
 
 func _manual_attack_direction(delta: float) -> Vector2:
 	if not valid_target(locked_target):
@@ -169,6 +175,34 @@ func _map_direction(delta: float) -> Vector2:
 	if distance <= AutoBattle.LOOT_ARRIVE_EPS:
 		map_move_active = false
 		return Vector2.ZERO
+	var waypoint := _map_destination
+	var world := get_tree().get_first_node_in_group("map_world")
+	if world != null:
+		var ground := world.get_node_or_null("Ground") as IsoGround
+		if ground != null and ground.cave != null:
+			var target_cell := Vector2i(Iso.world_to_grid(_map_destination).round())
+			if _cave_path.is_empty() or target_cell != _cave_target_cell:
+				_cave_path = ground.route(global_position, _map_destination)
+				_cave_target_cell = target_cell
+				_cave_path_index = 0
+			if _cave_path.is_empty():
+				map_move_active = false
+				manual_attack_active = false
+				EventBus.toast_requested.emit("目标不可达，请换一个位置", "danger")
+				return Vector2.ZERO
+			var old_index := _cave_path_index
+			while _cave_path_index < _cave_path.size() and global_position.distance_to(_cave_path[_cave_path_index]) < 9.0:
+				_cave_path_index += 1
+			if _cave_path_index != old_index:
+				_map_last_distance = INF
+				_map_stuck_count = 0
+				_map_check_t = 0.0
+			if _cave_path_index < _cave_path.size():
+				waypoint = _cave_path[_cave_path_index]
+			elif target_cell != Vector2i(Iso.world_to_grid(global_position).round()):
+				_cave_path.clear()
+				return Vector2.ZERO
+			distance = global_position.distance_to(waypoint)
 	_map_check_t += delta
 	if _map_check_t >= AutoBattle.STUCK_INTERVAL:
 		_map_check_t = 0.0
@@ -179,7 +213,7 @@ func _map_direction(delta: float) -> Vector2:
 			manual_attack_active = false
 			EventBus.toast_requested.emit("前往目标受阻，请换一个位置或目标", "danger")
 			return Vector2.ZERO
-	return global_position.direction_to(_map_destination)
+	return global_position.direction_to(waypoint)
 
 func _ready() -> void:
 	sample_art = SampleActorArt.attach(self, "res://assets/sprites/player/guardian/guardian_atlas.png", Vector2(32, 64), "res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png", "res://assets/sprites/player/guardian/guardian_walk_atlas.png")

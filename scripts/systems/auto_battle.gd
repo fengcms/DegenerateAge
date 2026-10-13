@@ -85,6 +85,8 @@ var _roam_index: int = -1
 var _roam_last_dist := INF
 var _roam_stuck_t := 0.0
 var _roam_stuck_count := 0
+var _cave_nav := CaveNavigator.new()
+var _last_position := Vector2.INF
 
 ## instance_id → 剩余秒数（短期黑名单，3.14 ①）
 var _blacklist: Dictionary = {}
@@ -104,6 +106,8 @@ func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 		_repath_t = 0.0
 		_stuck_count = 0
 		_last_dist = INF
+		_last_position = Vector2.INF
+		_cave_nav.clear()
 		_blacklist.clear()
 		_roam_index = -1
 	else:
@@ -119,6 +123,9 @@ func reset_after_travel() -> void:
 	_target = null
 	_loot = null
 	_roam_index = -1
+	_roam_points.clear()
+	_cave_nav.clear()
+	_last_position = Vector2.INF
 	_manual_t = 0.0
 	_blocked_t = 0.0
 	_search_t = 0.0
@@ -233,6 +240,8 @@ func _tick(delta: float) -> void:
 				_player.select_target(_target as Node2D, _player.target_is_manual and _player.locked_target == _target)
 				_last_dist = INF
 				_stuck_count = 0
+				_last_position = Vector2.INF
+				_cave_nav.clear()
 		if _target == null:
 			_tick_roam(delta)
 		return
@@ -244,13 +253,16 @@ func _tick(delta: float) -> void:
 	# 安全区只屏蔽伤害，不屏蔽寻怪/移动。靠近边缘目标时先穿出边界再攻击。
 	if dist > reach or MapService.is_in_safe_area(GameState.current_map, _player.global_position):
 		_set_state(State.PATH_TO_TARGET)
+		if _cave_ground() != null and _direction_to(target2d.global_position) == Vector2.ZERO:
+			_blacklist_target(_target)
+			return
 		_tick_stuck(delta, dist)
 		if _blocked_t > 0.0:
 			return
 		_repath_t = maxf(0.0, _repath_t - delta)
 		if _repath_t <= 0.0:
 			_repath_t = REPATH_INTERVAL
-			_player.set_auto_move((target2d.global_position - _player.global_position).normalized())
+			_player.set_auto_move(_direction_to(target2d.global_position))
 		return
 
 	# 已在攻击范围内 → 停步并攻击（施放节奏由玩家自身攻击冷却控制，3.9 不绕过攻速）
@@ -308,7 +320,8 @@ func _try_drink() -> bool:
 func _find_target() -> Node:
 	# 明确选中的目标优先；黑名单仍生效，避免不可达目标循环。
 	if _player.target_is_manual and _player.valid_target(_player.locked_target) and not _is_blacklisted(_player.locked_target):
-		return _player.locked_target
+		if _route_reachable((_player.locked_target as Node2D).global_position):
+			return _player.locked_target
 	var allow_boss := bool(GameState.settings.get("allowBoss", false))
 	var best: Node = null
 	var best_dist := INF
@@ -320,6 +333,8 @@ func _find_target() -> Node:
 		if not is_instance_valid(e) or e.get("is_dead") == true or not (e is Node2D):
 			continue
 		if _is_blacklisted(e):
+			continue
+		if not _route_reachable((e as Node2D).global_position):
 			continue
 		if not allow_boss:
 			var tpl = e.get("template")
@@ -348,6 +363,8 @@ func _find_loot() -> GroundItem:
 		var d := _player.global_position.distance_to(gi.global_position)
 		if d > radius:
 			continue
+		if not _route_reachable(gi.global_position):
+			continue
 		if d < best_d:
 			best_d = d
 			best = gi
@@ -367,7 +384,11 @@ func _tick_loot() -> bool:
 		_set_state(State.PICK_UP)                 # 进入 1.5 格后由 GroundItem 自动入包（9.9）
 		return true
 	_set_state(State.PATH_TO_LOOT)
-	_player.set_auto_move(((_loot as Node2D).global_position - _player.global_position).normalized())
+	var direction := _direction_to((_loot as Node2D).global_position)
+	_player.set_auto_move(direction)
+	if _cave_ground() != null and direction == Vector2.ZERO:
+		_loot = null
+		return false
 	return true
 
 ## 无可见怪物时按地图有效格往返巡游；每个物理帧仍走上方的节流搜怪。
@@ -400,8 +421,27 @@ func _tick_roam(delta: float) -> void:
 		if _roam_stuck_count >= STUCK_LIMIT:
 			_advance_roam()
 			point = _roam_points[_roam_index]
-	_player.set_auto_move(_player.global_position.direction_to(point))
+	var direction := _direction_to(point)
+	if direction == Vector2.ZERO and _cave_ground() != null:
+		_advance_roam()
+		_player.set_auto_move(Vector2.ZERO)
+		return
+	_player.set_auto_move(direction)
 	_set_state(State.ROAM)
+
+func _direction_to(point: Vector2) -> Vector2:
+	var world := get_tree().get_first_node_in_group("map_world")
+	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	return _cave_nav.direction(ground, _player.global_position, point)
+
+func _cave_ground() -> IsoGround:
+	var world := get_tree().get_first_node_in_group("map_world")
+	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	return ground if ground != null and ground.cave != null else null
+
+func _route_reachable(point: Vector2) -> bool:
+	var ground := _cave_ground()
+	return ground == null or not ground.route(_player.global_position, point).is_empty()
 
 func _build_roam_points() -> void:
 	_roam_points.clear()
@@ -424,7 +464,11 @@ func _build_roam_points() -> void:
 	for row in range(ys.size()):
 		for col in range(xs.size()):
 			var x: int = xs[col] if row % 2 == 0 else xs[xs.size() - col - 1]
-			_roam_points.append(ground.clamp_to_map(Iso.grid_to_world(Vector2i(x, ys[row]))))
+			var cell := Vector2i(x, ys[row])
+			if ground.is_walkable_cell(cell):
+				var point := Iso.grid_to_world(cell)
+				if ground.cave == null or not ground.route(_player.global_position, point).is_empty():
+					_roam_points.append(point)
 
 func _advance_roam() -> void:
 	_roam_index = (_roam_index + 1) % _roam_points.size()
@@ -450,6 +494,19 @@ func _tick_stuck(delta: float, dist: float) -> void:
 	if _stuck_t < STUCK_INTERVAL:
 		return
 	_stuck_t = 0.0
+	if GameState.current_map == "corruption_source":
+		var moved := _player.global_position.distance_to(_last_position) if _last_position.is_finite() else INF
+		_last_position = _player.global_position
+		if moved >= 2.0:
+			_stuck_count = 0
+			_last_dist = dist
+			return
+		_stuck_count += 1
+		if _stuck_count == STUCK_LIMIT:
+			_cave_nav.clear()
+		if _stuck_count >= STUCK_LIMIT * 2:
+			_blacklist_target(_target)
+		return
 	if _last_dist - dist < STUCK_PROGRESS_EPS:
 		_stuck_count += 1
 		if _stuck_count >= STUCK_LIMIT:
@@ -464,6 +521,8 @@ func _blacklist_target(t: Node) -> void:
 		_blacklist[t.get_instance_id()] = BLACKLIST_TIME
 		_toast("目标不可达，已改选", "info")
 	_target = null
+	_cave_nav.clear()
+	_last_position = Vector2.INF
 	_last_dist = INF
 	_stuck_count = 0
 	_blocked_t = BLOCKED_TIME

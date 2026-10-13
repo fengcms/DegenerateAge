@@ -93,6 +93,7 @@ var _state_t: float = 0.0
 var _patrol_target: Vector2 = Vector2.ZERO
 var _flash_t: float = 0.0
 var _flash_dirty: bool = false
+var _cave_nav := CaveNavigator.new()
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -200,7 +201,7 @@ func _spawn_summons(id: String, count: int, after_death: bool = false) -> void:
 		var grid := Iso.world_to_grid(point)
 		var dims := MapService.grid_size(GameState.current_map)
 		grid = grid.clamp(Vector2.ZERO, Vector2(dims) - Vector2.ONE)
-		point = Iso.grid_pt(grid.x, grid.y)
+		point = _clamp_to_map(Iso.grid_pt(grid.x, grid.y))
 		if MapService.is_in_rest_zone(GameState.current_map, point):
 			point = global_position
 		if MapService.is_in_rest_zone(GameState.current_map, point):
@@ -415,14 +416,16 @@ func _random_patrol_point() -> Vector2:
 	return spawn_position
 
 func _approach(target_pos: Vector2) -> void:
-	var to := target_pos - global_position
+	var world := get_tree().get_first_node_in_group("map_world")
+	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	var to := _cave_nav.direction(ground, global_position, target_pos)
 	if to.length() < 0.001:
 		return
-	var step := to.normalized() * move_speed_px * get_physics_process_delta_time()
+	var step := to * move_speed_px * get_physics_process_delta_time()
 	if MapService.is_in_rest_zone(GameState.current_map, global_position + step):
 		velocity = Vector2.ZERO
 		return
-	velocity = to.normalized() * move_speed_px
+	velocity = to * move_speed_px
 
 func _get_player() -> Node2D:
 	var p := get_tree().get_first_node_in_group("player")

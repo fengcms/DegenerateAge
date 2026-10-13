@@ -27,6 +27,12 @@ const ASH_TILES := [
 	preload("res://assets/tiles/ash/tile_2.png"),
 	preload("res://assets/tiles/ash/tile_3.png"),
 ]
+const CAVE_TILES := [
+	preload("res://assets/tiles/cave/tile_0.png"),
+	preload("res://assets/tiles/cave/tile_1.png"),
+	preload("res://assets/tiles/cave/tile_2.png"),
+	preload("res://assets/tiles/cave/tile_3.png"),
+]
 
 const WALL_THICKNESS := 10.0
 const COLOR_FILL := Color("36423a")     # 地面底色
@@ -35,6 +41,7 @@ const COLOR_BORDER := Color("5f7563")   # 外边框
 
 var map_data: Dictionary = {}
 var grid_size: Vector2i = Vector2i(40, 40)
+var cave: CaveLayout = null
 
 func _ready() -> void:
 	z_index = -4096
@@ -45,6 +52,9 @@ func _ready() -> void:
 	if not cur.is_empty():
 		map_id = cur
 	_load_map()
+	if map_id == "corruption_source":
+		cave = CaveLayout.new()
+		add_child(preload("res://scripts/world/cave_props.gd").new())
 	if map_id == "camp" or sample_camp_theme:
 		add_child(preload("res://scripts/world/sample_camp_props.gd").new())
 	elif map_id == "wild_trial" or map_id == "ash_land":
@@ -66,7 +76,8 @@ func _load_map() -> void:
 
 ## 地图中心的世界坐标（用作玩家出生点）
 func get_map_center_world() -> Vector2:
-	return Iso.grid_to_world(Vector2i(grid_size.x / 2, grid_size.y / 2))
+	var cell := Vector2i(grid_size.x / 2, grid_size.y / 2)
+	return Iso.grid_to_world(cave.nearest_walkable(cell) if cave != null else cell)
 
 ## 把世界坐标夹回地图可用范围（M1-10 读档坐标容错）：
 ## 坏档 / 版本变更导致坐标越界时，玩家仍会落在边界内而不是墙外。
@@ -75,7 +86,25 @@ func clamp_to_map(world: Vector2) -> Vector2:
 	var margin := 2.0
 	var hi_x := maxf(margin, float(grid_size.x - 1) - margin)
 	var hi_y := maxf(margin, float(grid_size.y - 1) - margin)
-	return Iso.grid_pt(clampf(g.x, margin, hi_x), clampf(g.y, margin, hi_y))
+	var bounded := Iso.grid_pt(clampf(g.x, margin, hi_x), clampf(g.y, margin, hi_y))
+	if cave == null:
+		return bounded
+	var cell := Vector2i(Iso.world_to_grid(bounded).round())
+	return bounded if cave.is_walkable(cell) else Iso.grid_to_world(cave.nearest_walkable(cell))
+
+func is_walkable_cell(cell: Vector2i) -> bool:
+	return cave == null or cave.is_walkable(cell)
+
+func route(from_world: Vector2, to_world: Vector2) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	if cave == null:
+		result.append(to_world)
+		return result
+	var start := Vector2i(Iso.world_to_grid(from_world).round())
+	var finish := Vector2i(Iso.world_to_grid(to_world).round())
+	for cell in cave.path(start, finish):
+		result.append(Iso.grid_to_world(cell))
+	return result
 
 ## 地图（菱形区域）的世界包围盒，用于相机限制
 func get_world_bounds() -> Rect2:
@@ -109,6 +138,18 @@ func _build_boundary() -> void:
 	add_child(body)
 	for i in range(pts.size()):
 		_add_wall(body, pts[i], pts[(i + 1) % pts.size()])
+	if cave != null:
+		var rock := StaticBody2D.new()
+		rock.name = "CaveWalls"
+		add_child(rock)
+		var diamond := PackedVector2Array([Vector2(-31, 0), Vector2(0, -15), Vector2(31, 0), Vector2(0, 15)])
+		for cell in cave.boundary_cells():
+			var shape := ConvexPolygonShape2D.new()
+			shape.points = diamond
+			var hit := CollisionShape2D.new()
+			hit.shape = shape
+			hit.position = Iso.grid_to_world(cell)
+			rock.add_child(hit)
 
 func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 	var seg := b - a
@@ -124,6 +165,21 @@ func _draw() -> void:
 	var w := grid_size.x
 	var h := grid_size.y
 	var corners := _outer_corners()
+	if cave != null:
+		# Cave void continues beyond the rectangular planning grid; the outer
+		# isometric diamond is a camera extent, not a visible island edge.
+		draw_rect(Rect2(-Vector2.ONE * 10000.0, Vector2.ONE * 20000.0), Color("090806"))
+		for col in range(w):
+			for row in range(h):
+				var cell := Vector2i(col, row)
+				if not cave.is_walkable(cell):
+					continue
+				var center := Iso.grid_to_world(cell)
+				var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
+				var tile := 1 if variation < 4 else 2 if variation == 5 else 0
+				draw_texture(CAVE_TILES[tile], center - Vector2(32, 16))
+				_draw_cave_edge(cell, center)
+		return
 
 	# 地面填充（整块菱形，一次绘制）
 	var camp_style := map_id == "camp" or sample_camp_theme
@@ -163,3 +219,28 @@ func _draw() -> void:
 	# 外边框
 	var outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 	draw_polyline(outline, COLOR_BORDER, 2.0)
+
+func _draw_cave_edge(cell: Vector2i, center: Vector2) -> void:
+	# Only boundary cells emit a rim. The two screen-facing sides show a short
+	# striated cliff face into the void; rear edges receive a thin light lip.
+	if not cave.is_walkable(cell + Vector2i(-1, 0)):
+		_draw_cliff_face(center + Vector2(-32, 0), center + Vector2(0, 16), cell)
+	if not cave.is_walkable(cell + Vector2i(0, -1)):
+		_draw_cliff_face(center + Vector2(0, 16), center + Vector2(32, 0), cell)
+	if not cave.is_walkable(cell + Vector2i(1, 0)):
+		draw_line(center + Vector2(0, -16), center + Vector2(32, 0), Color("d5c6a5"), 1.5)
+	if not cave.is_walkable(cell + Vector2i(0, 1)):
+		draw_line(center + Vector2(-32, 0), center + Vector2(0, -16), Color("d5c6a5"), 1.5)
+
+func _draw_cliff_face(a: Vector2, b: Vector2, cell: Vector2i) -> void:
+	var fall := Vector2(0, 21)
+	var top := PackedVector2Array([a, a.lerp(b, 0.25) + Vector2(0, -2), a.lerp(b, 0.5) + Vector2(0, 2), a.lerp(b, 0.75) + Vector2(0, -3), b])
+	var face := PackedVector2Array([top[0], top[1], top[2], top[3], top[4], top[4] + fall, top[3] + fall + Vector2(0, 3), top[2] + fall, top[1] + fall + Vector2(0, 4), top[0] + fall])
+	draw_colored_polygon(face, Color("766a58"))
+	draw_polyline(top, Color("e0d0a8"), 2.0)
+	draw_line(a + fall, b + fall, Color("3e372f"), 2.0)
+	for i in range(1, 5):
+		var t := float(i) / 5.0
+		var notch := a.lerp(b, t)
+		var depth := 12.0 + float(posmod(cell.x * 17 + cell.y * 31 + i * 7, 10))
+		draw_line(notch, notch + Vector2(1, depth), Color("3b332b") if i % 2 == 0 else Color("aa9b7c"), 1.0)

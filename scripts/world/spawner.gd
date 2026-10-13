@@ -184,14 +184,17 @@ func _tombstone_position(point: Dictionary) -> Vector2:
 	var recorded: Variant = GameState.spawn_dead_pos(
 		_state_map_id(), String(point.get("monster_id", "")), int(point.get("ordinal", 0)))
 	if recorded is Vector2:
-		return recorded
+		return _ground.clamp_to_map(recorded) if _ground != null else recorded
 	var previous: Variant = point.get("position", null)
 	if previous is Vector2:
-		return previous
+		return _ground.clamp_to_map(previous) if _ground != null else previous
 	return _random_spawn_position()
 
 ## 生成位置：墓碑类点沿用固定位置（原位复活），其余随机。
 func _spawn_position(point: Dictionary) -> Vector2:
+	if _ground != null and _ground.cave != null and String(point.get("monster_id", "")) == "boss_corrupted_beast":
+		var boss_cell: Array = _ground.cave.points.get("boss_arena", [40, 26])
+		return Iso.grid_to_world(Vector2i(int(boss_cell[0]), int(boss_cell[1])))
 	if bool(point.get("tombstone", false)):
 		var saved := _tombstone_position(point)
 		return _random_spawn_position() if MapService.is_in_rest_zone(_map_id, saved) else saved
@@ -211,18 +214,18 @@ func _random_spawn_position() -> Vector2:
 	for _i in range(40):
 		var c := Vector2i(_rng.randi_range(lo, hx), _rng.randi_range(lo, hy))
 		var pos := Iso.grid_to_world(c)
-		if pos.distance_to(center) >= MIN_SPAWN_DIST and not MapService.is_in_rest_zone(_map_id, pos):
+		if pos.distance_to(center) >= MIN_SPAWN_DIST and not MapService.is_in_rest_zone(_map_id, pos) and (_ground == null or _ground.is_walkable_cell(c)):
 			return pos
 	# 随机采样极端情况下可能连中休整区；确定性扫描保证兜底仍在区外。
 	for y in range(lo, hy + 1):
 		for x in range(lo, hx + 1):
 			var pos := Iso.grid_to_world(Vector2i(x, y))
-			if pos.distance_to(center) >= MIN_SPAWN_DIST and not MapService.is_in_rest_zone(_map_id, pos):
+			if pos.distance_to(center) >= MIN_SPAWN_DIST and not MapService.is_in_rest_zone(_map_id, pos) and (_ground == null or _ground.is_walkable_cell(Vector2i(x, y))):
 				return pos
 	for y in range(lo, hy + 1):
 		for x in range(lo, hx + 1):
 			var pos := Iso.grid_to_world(Vector2i(x, y))
-			if not MapService.is_in_rest_zone(_map_id, pos):
+			if not MapService.is_in_rest_zone(_map_id, pos) and (_ground == null or _ground.is_walkable_cell(Vector2i(x, y))):
 				return pos
 	push_warning("[MonsterSpawner] 地图 %s 没有休整区外的可用刷新格" % _map_id)
 	return center
