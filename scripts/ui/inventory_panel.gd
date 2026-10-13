@@ -32,6 +32,8 @@ const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 var _bag_buttons: Array[ItemSlot] = []
 var _bag_title: Label
 var _organize_button: Button
+var _expand_button: Button
+var _bag_grid: GridContainer
 var _summary: Label
 var _center: FloatingWindow
 var _dim: ColorRect
@@ -185,18 +187,20 @@ func _build() -> void:
 	_organize_button.tooltip_text = "按品类整理背包并合并相同物品"
 	_organize_button.pressed.connect(_on_organize_pressed)
 	bag_head.add_child(_organize_button)
+	_expand_button = Button.new()
+	_expand_button.pressed.connect(_on_expand_pressed)
+	bag_head.add_child(_expand_button)
 
-	var bag_grid := GridContainer.new()
-	bag_grid.columns = BAG_COLUMNS
-	bag_grid.add_theme_constant_override("h_separation", 6)
-	bag_grid.add_theme_constant_override("v_separation", 6)
-	right.add_child(bag_grid)
-	for i in range(GameState.inventory.size()):
-		var b2 := _make_item_slot(ItemSlot.ROLE_BAG, i)
-		b2.pressed.connect(_on_bag_pressed.bind(i))
-		b2.item_dropped.connect(_on_bag_item_dropped.bind(i))
-		bag_grid.add_child(b2)
-		_bag_buttons.append(b2)
+	var bag_scroll := ScrollContainer.new()
+	bag_scroll.custom_minimum_size = Vector2(410, 360)
+	bag_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(bag_scroll)
+	_bag_grid = GridContainer.new()
+	_bag_grid.columns = BAG_COLUMNS
+	_bag_grid.add_theme_constant_override("h_separation", 6)
+	_bag_grid.add_theme_constant_override("v_separation", 6)
+	bag_scroll.add_child(_bag_grid)
+	_ensure_bag_slots()
 
 	root.add_child(HSeparator.new())
 
@@ -263,6 +267,7 @@ func _on_organize_pressed() -> void:
 	GameState.organize_inventory()
 
 func _refresh() -> void:
+	_ensure_bag_slots()
 	for i in range(_bag_buttons.size()):
 		var b2: ItemSlot = _bag_buttons[i]
 		var it2 = GameState.inventory[i] if i < GameState.inventory.size() else null
@@ -283,6 +288,27 @@ func _refresh() -> void:
 			b2.tooltip_text = ""
 		SampleArt.decorate(b2, SampleArt.icon_for(it2))
 	_bag_title.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
+	var cost := Warehouse.next_cost(GameState.inventory_expansions)
+	_expand_button.disabled = cost < 0
+	_expand_button.text = "已达上限" if cost < 0 else "扩容 +%d（%d 金币）" % [
+		Warehouse.capacity(GameState.inventory_expansions + 1) - GameState.inventory.size(), cost]
+	_refresh_summary()
+
+func _ensure_bag_slots() -> void:
+	while _bag_buttons.size() < GameState.inventory.size():
+		var index := _bag_buttons.size()
+		var button := _make_item_slot(ItemSlot.ROLE_BAG, index)
+		button.pressed.connect(_on_bag_pressed.bind(index))
+		button.item_dropped.connect(_on_bag_item_dropped.bind(index))
+		_bag_grid.add_child(button)
+		_bag_buttons.append(button)
+	while _bag_buttons.size() > GameState.inventory.size():
+		var button: ItemSlot = _bag_buttons.pop_back()
+		_bag_grid.remove_child(button)
+		button.queue_free()
+
+func _on_expand_pressed() -> void:
+	GameState.inventory_expand()
 	_refresh_summary()
 
 func _refresh_summary() -> void:

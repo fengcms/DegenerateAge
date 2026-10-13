@@ -24,6 +24,7 @@ var gold: int = 0
 var current_map: String = "camp"
 var visited_maps: Array[String] = ["camp"]
 var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
+var inventory_expansions: int = 0
 var warehouse: Array = []           # 仓库物品，空位为 null（6.8）
 var warehouse_expansions: int = 0
 var owned_mounts: Array[String] = [] # 独立坐骑收藏，不占背包格（M4-4）
@@ -147,6 +148,7 @@ func reset_to_defaults() -> void:
 	current_map = "camp"
 	visited_maps = ["camp"]
 	inventory = Inventory.create(INVENTORY_SIZE)
+	inventory_expansions = 0
 	warehouse_expansions = 0
 	warehouse = Warehouse.create()
 	owned_mounts = []
@@ -340,6 +342,20 @@ func organize_inventory() -> bool:
 		EventBus.inventory_organized.emit()
 	EventBus.toast_requested.emit("背包已整理", "info")
 	return changed
+
+func inventory_expand() -> Dictionary:
+	var cost := Warehouse.next_cost(inventory_expansions)
+	if cost < 0:
+		return _warehouse_fail("背包已达容量上限")
+	if gold < cost:
+		return _warehouse_fail("金币不足（背包扩容需 %d，现有 %d）" % [cost, gold])
+	var old_capacity := inventory.size()
+	add_gold(-cost)
+	inventory_expansions += 1
+	inventory.resize(Warehouse.capacity(inventory_expansions))
+	EventBus.inventory_changed.emit()
+	EventBus.toast_requested.emit("背包扩容：%d → %d 格（-%d 金币）" % [old_capacity, inventory.size(), cost], "pickup")
+	return {"ok": true, "cost": cost, "capacity": inventory.size(), "reason": ""}
 
 # ---- 仓库（M4-3；背包中的所有合法物品）----
 

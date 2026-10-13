@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_balance_calibration()
 	_test_inventory()
 	_test_inventory_sort()
+	_test_inventory_expansion()
 	_test_warehouse_sort()
 	_test_mount_core()
 	await _test_pickup()
@@ -161,6 +162,42 @@ func _test_inventory_sort() -> void:
 	_expect(not GameState.organize_inventory(), "重复整理应保持稳定顺序")
 	panel.set_open(false)
 	panel.queue_free()
+	GameState.reset_to_defaults()
+
+func _test_inventory_expansion() -> void:
+	GameState.reset_to_defaults()
+	var no_gold := GameState.inventory_expand()
+	_expect(not no_gold.ok and GameState.inventory.size() == 40,
+		"金币不足时背包不得扩容")
+	GameState.gold = 3000
+	var first := GameState.inventory_expand()
+	_expect(first.ok and GameState.gold == 2000 and GameState.inventory.size() == 50,
+		"首次背包扩容应花 1000 金币并增加 10 格")
+	var second := GameState.inventory_expand()
+	_expect(second.ok and GameState.gold == 400 and GameState.inventory.size() == 60,
+		"第二次背包扩容应按独立次数花 1600 金币")
+	GameState.inventory[59] = _equip_instance("weapon_starter", "expanded_slot", {"atk": 3})
+	var bag_panel := preload("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	add_child(bag_panel)
+	bag_panel.set_open(true)
+	_expect(bag_panel._bag_buttons.size() == 60 and bag_panel._bag_title.text.contains("/ 60"),
+		"扩容后背包面板应创建并展示新增格")
+	bag_panel.set_open(false)
+	remove_child(bag_panel)
+	bag_panel.free()
+	var saved := SaveManager._collect()
+	_expect(SaveManager._is_valid_save(saved), "扩容后的背包应通过完整存档校验")
+	GameState.reset_to_defaults()
+	SaveManager.apply_to_game_state(saved)
+	_expect(GameState.inventory_expansions == 2 and GameState.inventory.size() == 60
+		and GameState.inventory[59] is Dictionary,
+		"读档后应保留扩容次数与新增格中的物品")
+	GameState.reset_to_defaults()
+	var old := SaveManager._collect()
+	old.schemaVersion = 9
+	old.erase("inventoryExpansions")
+	_expect(SaveManager._is_valid_save(old) and int(SaveManager._migrate(old).inventoryExpansions) == 0,
+		"schema 9 旧档应迁移为未扩容的 40 格背包")
 	GameState.reset_to_defaults()
 
 func _test_warehouse_sort() -> void:
@@ -1386,7 +1423,7 @@ func _test_unclaimed_loot() -> void:
 	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
-	_expect(SaveManager.CURRENT_SCHEMA == 9, "M6-3 后存档 schema 应为 9，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	_expect(SaveManager.CURRENT_SCHEMA == 10, "背包扩容后存档 schema 应为 10，实际 %d" % SaveManager.CURRENT_SCHEMA)
 	GameState.unclaimed_loot = {}
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")

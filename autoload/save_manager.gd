@@ -18,7 +18,7 @@ const MAX_SLOTS := 3
 ## 存档 schema 版本（工程文档 06）。
 ## v7（M4-10 / 工程文档 14 §3.1 ④）新增：`worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态）。
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
-const CURRENT_SCHEMA := 9
+const CURRENT_SCHEMA := 10
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -116,6 +116,7 @@ func _collect() -> Dictionary:
 		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
+		"inventoryExpansions": GameState.inventory_expansions,
 		"warehouse": GameState.warehouse.duplicate(true),
 		"warehouseExpansions": GameState.warehouse_expansions,
 		"ownedMounts": GameState.owned_mounts.duplicate(),
@@ -229,6 +230,7 @@ func _connect_events() -> void:
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
 	EventBus.upgrade_completed.connect(func() -> void: request_autosave())
 	EventBus.inventory_organized.connect(func() -> void: request_autosave())
+	EventBus.inventory_changed.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
 	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())
 	EventBus.fog_changed.connect(func(_m: String) -> void: request_autosave())
@@ -369,6 +371,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 			var previous_map := String(data.get("currentMap", ""))
 			if previous_map != "camp" and DataLoader.get_entry("maps", previous_map) is Dictionary:
 				data.visitedMaps.append(previous_map)
+		if v < 10:
+			data.inventoryExpansions = 0
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -395,7 +399,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.apply_spawn_respawn(data.get("spawnRespawn", {}))
 	# M6-0c：未领取战利品同样须在重载场景前恢复 —— `Game._ready` 会据此重建地面物（创意 07 §11.2）。
 	GameState.apply_unclaimed_loot(_deep_int(data.get("unclaimedLoot", {})))
-	GameState.inventory = _migrate_inventory(data.get("inventory", []))
+	GameState.inventory_expansions = int(data.get("inventoryExpansions", 0))
+	GameState.inventory = _migrate_inventory(data.get("inventory", []), GameState.inventory_expansions)
 	GameState.warehouse_expansions = int(data.get("warehouseExpansions", 0))
 	GameState.warehouse = _migrate_warehouse(data.get("warehouse", []), GameState.warehouse_expansions)
 	GameState.owned_mounts.clear()
@@ -455,12 +460,12 @@ func _migrate_settings(raw: Dictionary) -> Dictionary:
 	return _deep_int(out) as Dictionary
 
 ## 背包迁移：定长 40 格（5.8）；多余丢弃、不足补空、非法项置空。
-func _migrate_inventory(raw) -> Array:
-	var out := Inventory.create(GameState.INVENTORY_SIZE)
+func _migrate_inventory(raw, expansions: int = 0) -> Array:
+	var out := Inventory.create(Warehouse.capacity(expansions))
 	if not (raw is Array):
 		return out
 	var arr := raw as Array
-	for i in range(mini(arr.size(), GameState.INVENTORY_SIZE)):
+	for i in range(mini(arr.size(), out.size())):
 		if arr[i] is Dictionary:
 			out[i] = _deep_int((arr[i] as Dictionary).duplicate(true))
 	return out
@@ -623,7 +628,9 @@ func _is_valid_save(raw: Variant) -> bool:
 	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps"]:
 		if not data.get(key) is Dictionary:
 			return false
-	if not data.get("inventory") is Array or data.inventory.size() != GameState.INVENTORY_SIZE:
+	if not _whole(data.get("inventoryExpansions"), 0, Warehouse.max_expansions()):
+		return false
+	if not data.get("inventory") is Array or data.inventory.size() != Warehouse.capacity(int(data.inventoryExpansions)):
 		return false
 	if not _whole(data.get("warehouseExpansions"), 0, Warehouse.max_expansions()):
 		return false
