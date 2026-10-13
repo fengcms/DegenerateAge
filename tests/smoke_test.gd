@@ -27,6 +27,7 @@ func _ready() -> void:
 	await _test_level_gap()
 	_test_loot()
 	_test_grouped_drop()
+	_test_loot_burst()
 	_test_balance_calibration()
 	_test_inventory()
 	_test_inventory_sort()
@@ -857,6 +858,94 @@ func _test_grouped_drop() -> void:
 	_expect(" ".join(PackedStringArray(report_cr)).contains("countRange"),
 		"M6-0b：非法 countRange（lo>hi）应被启动校验拒绝")
 	DataLoader.tables["dropTables"] = original_dts
+
+## M6-0d（创意 07 §9）：装备雨展示编排 —— 分组 / 出场时序 / 停驻 / 错峰起飞 / 分环散布。
+func _test_loot_burst() -> void:
+	# ① 分组判定（kind + 品质 → 基础 / 好装备 / 传说）
+	_expect(LootBurst.order_of({"kind": "coin"}) == LootBurst.ORDER_COIN, "金币应归基础组（最先出场）")
+	_expect(LootBurst.order_of({"kind": "potion"}) == LootBurst.ORDER_POTION, "药水应归基础组")
+	_expect(LootBurst.order_of({"kind": "rune"}) == LootBurst.ORDER_RUNE, "如意应归基础组")
+	_expect(LootBurst.order_of({"kind": "equip", "quality": "common"}) == LootBurst.ORDER_COMMON, "普通装备应归基础组")
+	_expect(LootBurst.order_of({"kind": "equip", "quality": "uncommon"}) == LootBurst.ORDER_UNCOMMON, "优秀装备应归基础组")
+	_expect(LootBurst.order_of({"kind": "equip", "quality": "rare"}) == LootBurst.ORDER_RARE, "稀有装备应归好装备组")
+	_expect(LootBurst.order_of({"kind": "equip", "quality": "epic"}) == LootBurst.ORDER_EPIC, "史诗装备应归好装备组")
+	_expect(LootBurst.order_of({"kind": "equip", "quality": "legendary"}) == LootBurst.ORDER_LEGENDARY, "传说装备应归传说组")
+
+	var base := [
+		{"kind": "coin", "itemId": "coin", "gold": 800, "count": 1},
+		{"kind": "potion", "itemId": "potion_hp_large", "count": 2},
+		{"kind": "equip", "quality": "common", "instanceId": "e1"},
+		{"kind": "equip", "quality": "uncommon", "instanceId": "e2"},
+	]
+	var good := [
+		{"kind": "equip", "quality": "rare", "instanceId": "e3"},
+		{"kind": "equip", "quality": "epic", "instanceId": "e4"},
+	]
+	var legend := [{"kind": "equip", "quality": "legendary", "instanceId": "e5"}]
+
+	# ② Boss 时序（§9）：基础 t=0.45 起每 0.05s；好装备接续（+0.20，间隔 0.15）；传说最后（+0.25）
+	var plan := LootBurst.build(base + good + legend, "boss")
+	var n := plan.size()
+	_expect(n == 7, "整批应保留 7 份（含传说），实际 %d" % n)
+	_expect(int(plan[0]["order"]) == LootBurst.ORDER_COIN and int(plan[n - 1]["order"]) == LootBurst.ORDER_LEGENDARY,
+		"展示序应为 金币 → … → 传说")
+	_expect(is_equal_approx(float(plan[0]["appear"]), 0.45), "Boss 基础组首份应从 t=0.45 出场，实际 %.2f" % float(plan[0]["appear"]))
+	_expect(is_equal_approx(float(plan[1]["appear"]) - float(plan[0]["appear"]), 0.05), "基础组内间隔应为 0.05s")
+	_expect(is_equal_approx(float(plan[3]["appear"]), 0.60), "基础组最后一份应为 t=0.60，实际 %.2f" % float(plan[3]["appear"]))
+	_expect(is_equal_approx(float(plan[4]["appear"]), 0.80), "Boss 好装备应在基础组后 0.20s（t=0.80），实际 %.2f" % float(plan[4]["appear"]))
+	_expect(is_equal_approx(float(plan[5]["appear"]) - float(plan[4]["appear"]), 0.15), "Boss 好装备两件间隔 0.15s")
+	_expect(is_equal_approx(float(plan[6]["appear"]) - float(plan[5]["appear"]), 0.25), "Boss 传说应在最后一件好装备后 0.25s")
+	for i in range(n - 1):
+		_expect(float(plan[i]["appear"]) <= float(plan[i + 1]["appear"]) + 0.0001, "出场时刻应随展示序单调不减")
+
+	# ③ 精英时序（§9）：基础 t=0.15 起每 0.05s；好装备 +0.15
+	var eplan := LootBurst.build(base + good, "elite")
+	_expect(is_equal_approx(float(eplan[0]["appear"]), 0.15), "精英基础组应从 t=0.15 出场，实际 %.2f" % float(eplan[0]["appear"]))
+	_expect(is_equal_approx(float(eplan[3]["appear"]), 0.30), "精英基础组最后一份应为 t=0.30，实际 %.2f" % float(eplan[3]["appear"]))
+	_expect(is_equal_approx(float(eplan[4]["appear"]), 0.45), "精英好装备应在基础组后 0.15s（t=0.45），实际 %.2f" % float(eplan[4]["appear"]))
+	_expect(eplan.size() == 6, "精英表不应产生传说（§5）")
+
+	# ④ 落地时长 / 停驻 / 错峰起飞（§9）
+	_expect(is_equal_approx(float(plan[0]["land_time"]), float(LootBurst.LAND_TIME["boss"])), "Boss 落地动画应为 0.30s")
+	_expect(is_equal_approx(float(plan[0]["fly_time"]), float(LootBurst.FLY_TIME["boss"])), "Boss 飞行应为 0.90s")
+	var last_land := 0.0
+	for row in plan:
+		last_land = maxf(last_land, float(row["appear"]) + float(row["land_time"]))
+	var hold_first_expected: float = last_land + float(LootBurst.BURST_HOLD["boss"]) \
+		- (float(plan[0]["appear"]) + float(plan[0]["land_time"]))
+	_expect(is_equal_approx(float(plan[0]["hold"]), hold_first_expected),
+		"首份停驻应到「最后落地 + 停留」为止，期望 %.2f 实际 %.2f" % [hold_first_expected, float(plan[0]["hold"])])
+	var hold_last_expected: float = float(LootBurst.BURST_HOLD["boss"]) + float(LootBurst.FLY_STAGGER["boss"]) * float(n - 1)
+	_expect(is_equal_approx(float(plan[n - 1]["hold"]), hold_last_expected),
+		"末份停驻应含起飞错峰（期望 %.2f，实际 %.2f）" % [hold_last_expected, float(plan[n - 1]["hold"])])
+	_expect(float(plan[0]["hold"]) > float(plan[n - 1]["hold"]), "越早出场停驻越久（后一份候场更短）")
+
+	# ⑤ 分环散布（§9）：半径在环带内 + 中心间距 ≥0.35 格 + 好装备 / 传说优先内侧
+	var offsets: Array = []
+	for row in plan:
+		offsets.append(row["offset"])
+	var ring: Array = LootBurst.RING_TILES["boss"]
+	var r_lo: float = float(ring[0]) * LootBurst.TILE
+	var r_hi: float = float(ring[1]) * LootBurst.TILE
+	for off in offsets:
+		var r := (off as Vector2).length()
+		_expect(r >= r_lo - 1.0 and r <= r_hi + 1.0,
+			"Boss 落点半径应在 [%.1f, %.1f]，实际 %.1f" % [r_lo, r_hi, r])
+	var min_d: float = LootBurst.MIN_SPACING_TILES * LootBurst.TILE
+	for i in range(offsets.size()):
+		for j in range(i + 1, offsets.size()):
+			var d := (offsets[i] as Vector2).distance_to(offsets[j] as Vector2)
+			_expect(d >= min_d - 0.5, "装备中心间距应 ≥0.35 格（%.1f），实际 %.1f" % [min_d, d])
+	_expect((offsets[n - 1] as Vector2).length() < (offsets[0] as Vector2).length(),
+		"传说应比金币更靠内（好装备 / 传说优先内侧）")
+
+	# ⑥ 边界：空批次 / 单件 / 未知档次回退
+	_expect(LootBurst.build([], "boss").is_empty(), "空批次应返回空编排")
+	var single := LootBurst.build([{"kind": "coin", "itemId": "coin", "gold": 1, "count": 1}], "boss")
+	_expect(single.size() == 1 and is_equal_approx(float(single[0]["hold"]), float(LootBurst.BURST_HOLD["boss"])),
+		"单件应有一份且停驻＝停留时长")
+	_expect(LootBurst.build([{"kind": "equip", "quality": "common", "instanceId": "x"}], "unknown").size() == 1,
+		"未知档次应回退 normal 而非崩溃")
 
 # ---- M1 收尾 / 数值校准（07 方案 §7）：防回归断言 ----
 ## 校准值一旦被误改回旧值，此用例立即失败。

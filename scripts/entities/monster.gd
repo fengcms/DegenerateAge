@@ -7,7 +7,6 @@ extends CharacterBody2D
 ## AI 参数来自 monsters.json；木桩等静态目标 ai_enabled=false。
 
 const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
-const DROP_SCATTER := 18.0     # 掉落物散落半径（px）
 
 const M_HP_PER_LV := 0.12      # 7.5：每高 1 级约 +12% 生命（初始参数）
 const AGGRO_RANGE := 200.0     # 仇恨半径（px，≈3 格）
@@ -472,14 +471,17 @@ func _settle_rewards() -> void:
 		return
 
 	var rolled := Loot.roll(table_id, null, monster_id)
-	# M6-0c（创意 07 §8）：整批掉落一次抽取（随机结果只生成一次），批次带唯一 ID；
-	# 认领序按品质优先（只影响背包空间分配；展示顺序由 M6-0d 装备雨负责）。
+	# M6-0c（创意 07 §8）：整批掉落一次抽取（随机结果只生成一次），批次带唯一 ID。
 	_batch_seq += 1
 	var batch_id := "b_%d_%d" % [Time.get_ticks_msec(), _batch_seq]
-	var persistent := _kind() in ["elite", "boss"]   # 精英 / Boss 未领取 ⇒ 跨图 / 跨档保留（§11）
-	var ordered := _priority_order(rolled)
-	for i in range(ordered.size()):
-		_spawn_drop(ordered[i], i, batch_id, persistent)
+	var kind := _kind()
+	var persistent := kind in ["elite", "boss"]   # 精英 / Boss 未领取 ⇒ 跨图 / 跨档保留（§11）
+	var anim := bool(GameState.settings.get("dropFlyAnim", true))   # 关闭 ⇒ 不散落 / 不飞行（§10）
+	# M6-0d（创意 07 §9）：装备雨展示编排（出场时序 + 落地 + 停留 + 错峰起飞 + 分环散布）
+	var plan := LootBurst.build(rolled, kind)
+	# 认领序（§8，仅决定背包空间分配）与展示序（§9）解耦：高品质优先入包，展示按 plan 自带时序
+	for row in _order_rows_by_claim(plan):
+		_spawn_drop(row, batch_id, persistent, anim)
 	_announce_drops(rolled)
 
 ## 入包认领序（创意 07 §8）：传说→史诗→稀有→优秀→普通；同品质按生成序号。
@@ -510,6 +512,26 @@ static func _claim_rank(item: Dictionary) -> int:
 		return 2 + int(_QUALITY_RANK.get(String(item.get("quality", "common")), 0))
 	return 1
 
+## M6-0d（创意 07 §8 / §9）：把「展示编排行」按**入包认领序**重排（高品质优先占背包空间）。
+## 与展示序解耦 —— 每行的出场 / 停驻 / 落点由 `LootBurst.build` 自带，不随本排序改变。
+static func _order_rows_by_claim(rows: Array) -> Array:
+	var buckets := {}
+	for row in rows:
+		if not (row is Dictionary):
+			continue
+		var rank := _claim_rank((row as Dictionary).get("item", {}))
+		if not buckets.has(rank):
+			buckets[rank] = []
+		(buckets[rank] as Array).append(row)
+	var ranks: Array = buckets.keys()
+	ranks.sort()
+	ranks.reverse()
+	var out: Array = []
+	for rank in ranks:
+		for row in buckets[rank]:
+			out.append(row)
+	return out
+
 ## 聚合广播一条掉落提示：如「腐化野狼 掉落：金币 ×6 · 生命药水 · 稀有 布甲头盔 Lv2」。
 func _announce_drops(items: Array) -> void:
 	var parts: Array[String] = []
@@ -520,27 +542,53 @@ func _announce_drops(items: Array) -> void:
 		return
 	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(PackedStringArray(parts))], "drop")
 
-## 在死亡位置附近生成一件地面掉落物（7.6 / 9.9）。
-## `index` 为同批序号：用于 `stagger_delay` 起飞错峰，避免多件同时飞行叠成一坨。
+## 生成一件地面掉落物（7.6 / 9.9）。
 ## M6-0c：`persistent`（精英 / Boss）⇒ 入包失败登记为「未领取战利品」，跨图 / 跨档保留（创意 07 §11）。
-func _spawn_drop(item: Dictionary, index: int = 0, batch_id: String = "", persistent: bool = false) -> void:
-	if item.is_empty():
+## M6-0d（创意 07 §9）：`row` 为 `LootBurst.build` 产出的展示编排行（出场延迟 / 落地时长 /
+##   停驻 / 飞行时长 / 落点偏移）；`anim=false`（关闭 dropFlyAnim）⇒ 立即出场、不散落、不飞行（§10）。
+func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = false, anim: bool = true) -> void:
+	var item_v: Variant = row.get("item", {})
+	if not (item_v is Dictionary) or (item_v as Dictionary).is_empty():
 		return
+	var item: Dictionary = item_v
 	var layer := get_tree().get_first_node_in_group("loot_root")
 	if layer == null:
 		return
 	var gi: GroundItem = GROUND_ITEM_SCENE.instantiate()
 	gi.item = item
 	gi.auto_claim = true   # 怪物掉落 = 生成即认领（工程文档 10 方案 C）
-	gi.stagger_delay = minf(float(index) * GroundItem.STAGGER_PER_ITEM, GroundItem.STAGGER_MAX)
 	gi.batch_id = batch_id
 	gi.persistent = persistent
+	var offset := Vector2.ZERO
+	if anim:
+		gi.appear_delay = maxf(0.0, float(row.get("appear", 0.0)))
+		gi.land_time = maxf(0.01, float(row.get("land_time", GroundItem.DROP_ARC_TIME)))
+		gi.hold_time = maxf(0.0, float(row.get("hold", GroundItem.HOLD_TIME)))
+		gi.fly_time = maxf(0.05, float(row.get("fly_time", GroundItem.FLY_TIME)))
+		var off_v: Variant = row.get("offset", Vector2.ZERO)
+		offset = off_v if off_v is Vector2 else Vector2.ZERO
+	else:
+		gi.appear_delay = 0.0
+		gi.hold_time = 0.0
 	layer.add_child(gi)
-	var ang := _rng.randf() * TAU
-	var r := _rng.randf() * DROP_SCATTER
-	gi.global_position = global_position + Vector2(cos(ang), sin(ang)) * r
+	# 落点：死亡位置 + 分环偏移（关闭动画则不散落）；至少夹回地图边界内（§9）
+	gi.global_position = _clamp_to_map(global_position + offset)
 	EventBus.item_dropped.emit(String(item.get("itemId", "")))
 	EventBus.loot_spawned.emit(item)
+
+## M6-0d（创意 07 §9）：落点至少满足地图边界内；完整可走网格校验待障碍系统落地后复用。
+## 找不到地面节点（测试 / 无世界上下文）时原样返回。
+func _clamp_to_map(pos: Vector2) -> Vector2:
+	var layer := get_tree().get_first_node_in_group("loot_root")
+	if layer == null:
+		return pos
+	var world := layer.get_parent()
+	if world == null:
+		return pos
+	var ground := world.get_node_or_null("Ground")
+	if ground is IsoGround:
+		return (ground as IsoGround).clamp_to_map(pos)
+	return pos
 
 func _draw() -> void:
 	if _stomp_pending and not is_dead:
