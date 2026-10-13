@@ -68,9 +68,99 @@ func _ready() -> void:
 	_check(screen.size.is_equal_approx(get_viewport().get_visible_rect().size / 1.5),
 		"UI 根尺寸随缩放调整：实际 %s 视口 %s" % [screen.size, get_viewport().get_visible_rect().size])
 	_check(is_equal_approx(AudioServer.get_bus_volume_linear(AudioServer.get_bus_index("Music")), 0.4), "音乐音量即时生效")
+	# M5-9d：界面大小上限开到 200%（大窗口 + 200% ⇒ 逻辑视口回到设计基准尺寸）
+	GameState.settings["uiScale"] = 2.0
+	SettingsRuntime.apply_ui_scale_to(ui)
+	_check(is_equal_approx(ui.transform.x.x, 2.0), "uiScale=2.0 应生效（M5-9d 上限 2.0）")
+	GameState.settings["uiScale"] = 1.0
+	SettingsRuntime.apply_ui_scale_to(ui)
+	_check(SettingsRuntime.valid_choice("resolution", "1920x1200")
+		and not SettingsRuntime.valid_choice("resolution", "2560x1440"),
+		"1920×1200 窗口档位应被接受、未登记档位应被拒绝")
+	await _check_visual_tab()
 	await _check_embedded_resize()
 	print("[SettingsTest] 全部通过 ✅")
 	get_tree().quit()
+
+## M5-9d：设置面板「画面」页新控件自洽（档位清单 + 显示适配两模式 + 选档即写设置）。
+func _check_visual_tab() -> void:
+	var panel: Control = (load("res://scenes/ui/SettingsPanel.tscn") as PackedScene).instantiate()
+	add_child(panel)
+	await get_tree().process_frame
+	# ⚠ 面板是代码逐层建的；代码创建的控件入树后名字是 "@类型@N" 自动名（TabContainer 也是），
+	# 只有 `_tab()` 显式设过名的页容器才是真名 ⇒ 直接找「画面」页，不经过 TabContainer。
+	var visual := _find_by_name(panel, "画面") as VBoxContainer
+	_check(visual != null, "设置面板应含「画面」页")
+	if visual == null:
+		panel.queue_free()
+		return
+	# 收集「标签行 → 下拉」：manual_row 里只有 HSlider 无 OptionButton，天然被跳过
+	var dropdowns := {}
+	for row in visual.get_children():
+		if row is HBoxContainer:
+			var options: OptionButton = null
+			for node in row.get_children():
+				if node is OptionButton:
+					options = node as OptionButton
+			if options != null and row.get_child(0) is Label:
+				dropdowns[String((row.get_child(0) as Label).text)] = options
+	_check(dropdowns.has("界面大小") and dropdowns.has("地图显示大小") and dropdowns.has("文字大小")
+		and dropdowns.has("显示适配"), "画面页应有 界面/地图/文字/显示适配 四个档位行")
+	if dropdowns.has("界面大小"):
+		var items := _option_texts(dropdowns["界面大小"])
+		_check(items == ["80%", "100%", "125%", "150%", "175%", "200%"],
+			"界面大小档位应为 80/100/125/150/175/200，实际 %s" % str(items))
+	if dropdowns.has("地图显示大小"):
+		var items := _option_texts(dropdowns["地图显示大小"])
+		_check(items == ["80%", "100%", "125%", "150%"],
+			"地图显示大小档位应为 80/100/125/150，实际 %s" % str(items))
+	if dropdowns.has("文字大小"):
+		var items := _option_texts(dropdowns["文字大小"])
+		_check(items == ["100%", "110%", "125%", "150%"],
+			"文字大小档位应为 100/110/125/150，实际 %s" % str(items))
+	if dropdowns.has("显示适配"):
+		var mode: OptionButton = dropdowns["显示适配"]
+		_check(mode.item_count == 2 and String(mode.get_item_text(0)).begins_with("自动"),
+			"显示适配应有「自动 / 手动」两档")
+		# 选「手动」⇒ 写 displayScaleMode 并显示系数行
+		mode.select(1)
+		mode.item_selected.emit(1)
+		await get_tree().process_frame
+		_check(String(GameState.settings.get("displayScaleMode", "")) == "manual", "选「手动」应写入 displayScaleMode")
+		mode.select(0)
+		mode.item_selected.emit(0)
+		await get_tree().process_frame
+		_check(String(GameState.settings.get("displayScaleMode", "")) == "auto", "选「自动」应写回 displayScaleMode")
+	# 选 200% ⇒ uiScale=2.0 且即时应用（经 _changed → apply_all 链路）
+	if dropdowns.has("界面大小"):
+		var scale_options: OptionButton = dropdowns["界面大小"]
+		scale_options.select(5)
+		scale_options.item_selected.emit(5)
+		await get_tree().process_frame
+		_check(is_equal_approx(float(GameState.settings.get("uiScale", 0.0)), 2.0),
+			"选 200% 档位应写 uiScale=2.0")
+		_check(is_equal_approx((panel.get_parent().get_node_or_null("UI") as CanvasLayer).transform.x.x, 2.0),
+			"选 200% 档位应即时应用到界面轴")
+		GameState.settings["uiScale"] = 1.0
+		SettingsRuntime.apply_all()
+	GameState.settings.erase("displayScaleMode")
+	panel.queue_free()
+	await get_tree().process_frame
+
+func _find_by_name(node: Node, name: String) -> Node:
+	if String(node.name) == name:
+		return node
+	for child in node.get_children():
+		var found := _find_by_name(child, name)
+		if found != null:
+			return found
+	return null
+
+func _option_texts(options: OptionButton) -> Array:
+	var out := []
+	for i in options.item_count:
+		out.append(options.get_item_text(i))
+	return out
 
 func _check_embedded_resize() -> void:
 	var embedded := SubViewport.new()

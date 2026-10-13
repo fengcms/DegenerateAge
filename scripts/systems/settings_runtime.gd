@@ -9,10 +9,12 @@ const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "
 	"hotbar_10", "hotbar_11", "hotbar_12"]
 
 ## M5-9c（09-A §4）：显示适配手动系数与 UI/文字/地图三轴的档位上下限。
+## M5-9d：界面大小档位上限开到 200%（UI_SCALE_MAX 1.5→2.0）；文字/地图保持 150% 上限
+## （文字旧档值 0.8–1.5 必须继续被 clamp 接纳，见 09-A §M5-9d 表）。
 const DISPLAY_SCALE_MIN := 0.75
 const DISPLAY_SCALE_MAX := 1.5
 const UI_SCALE_MIN := 0.8
-const UI_SCALE_MAX := 1.5
+const UI_SCALE_MAX := 2.0
 const MAP_SCALE_MIN := 0.8
 const MAP_SCALE_MAX := 1.5
 const TEXT_SCALE_MIN := 0.8
@@ -51,7 +53,7 @@ static func valid_choice(key: String, value: String) -> bool:
 	if key == "qualityFilter":
 		return ["all", "rare", "epic", "legendary"].has(value)
 	if key == "resolution":
-		return ["auto", "1280x800", "1440x900", "1600x900"].has(value)
+		return ["auto", "1280x800", "1440x900", "1600x900", "1920x1200"].has(value)
 	# M5-9c：显示适配模式。⚠ 漏掉本分支会让 _is_valid_save 对默认值为 String 的键一律判非法
 	# （它只按"默认值类型"分派，不看键名），进而把**所有存档**判为损坏 —— 新增 String 设置键时必须同步此处。
 	if key == "displayScaleMode":
@@ -229,3 +231,4 @@ static func _apply_window() -> void:
 			"1280x800": window.size = Vector2i(1280, 800)
 			"1440x900": window.size = Vector2i(1440, 900)
 			"1600x900": window.size = Vector2i(1600, 900)
+			"1920x1200": window.size = Vector2i(1920, 1200)   # M5-9d：直接验证"窗口更大看得更多"

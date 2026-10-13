@@ -163,26 +163,16 @@ func _build_audio(tabs: TabContainer) -> void:
 
 func _build_visual(tabs: TabContainer) -> void:
 	var box := _tab(tabs, "画面")
-	var row := HBoxContainer.new()
-	box.add_child(row)
-	var label := Label.new()
-	label.text = "UI 缩放"
-	label.custom_minimum_size.x = 160
-	row.add_child(label)
-	var scale := OptionButton.new()
-	for pct in [80, 100, 120, 150]:
-		scale.add_item("%d%%" % pct, pct)
-		if is_equal_approx(float(GameState.settings.get("uiScale", 1.0)), float(pct) / 100.0):
-			scale.select(scale.item_count - 1)
-	scale.item_selected.connect(func(index: int) -> void:
-		GameState.settings["uiScale"] = float(scale.get_item_id(index)) / 100.0
-		_changed())
-	row.add_child(scale)
-	_slider(box, "文字缩放", "textScale", 0.8, 1.5, 0.1)
+	# M5-9d（09-A）：三轴各自档位化 + 显示适配（自动/手动）。
+	_option_row(box, "界面大小", "uiScale", [80, 100, 125, 150, 175, 200])
+	_option_row(box, "地图显示大小", "mapScale", [80, 100, 125, 150])
+	_option_row(box, "文字大小", "textScale", [100, 110, 125, 150])
+	_build_display_adapt(box)
 	_checkbox(box, "全屏显示", "fullscreen")
 	var resolution := OptionButton.new()
 	for entry in [{"id": "auto", "label": "自由窗口大小"}, {"id": "1280x800", "label": "1280×800"},
-		{"id": "1440x900", "label": "1440×900"}, {"id": "1600x900", "label": "1600×900"}]:
+		{"id": "1440x900", "label": "1440×900"}, {"id": "1600x900", "label": "1600×900"},
+		{"id": "1920x1200", "label": "1920×1200"}]:
 		resolution.add_item(String(entry.label))
 		resolution.set_item_metadata(resolution.item_count - 1, String(entry.id))
 		if String(GameState.settings.get("resolution", "auto")) == String(entry.id):
@@ -194,7 +184,81 @@ func _build_visual(tabs: TabContainer) -> void:
 	_checkbox(box, "屏幕震动", "screenShake")
 	_checkbox(box, "强光闪烁", "strongFlash")
 	var hint := Label.new()
-	hint.text = "震动和闪烁开关已保存；对应战斗特效会在视觉阶段接入。"
+	hint.text = "界面 / 地图 / 文字三轴独立缩放；地图倍率越小，同一窗口看到的野外越大。震动和闪烁开关已保存。"
+	box.add_child(hint)
+
+## M5-9d：百分比档位下拉（界面大小 / 地图显示大小 / 文字大小共用，写入 float 设置键）。
+## 旧档值不在档位表内时（如 9d 前的 uiScale=1.2）：选中最接近档位**但不改写设置** ——
+## 玩家不动它就保持原值生效，一动即落到新档位（与 textScale clamp 兼容旧档同一思路）。
+func _option_row(box: VBoxContainer, label: String, field: String, percents: Array) -> void:
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	var caption := Label.new()
+	caption.text = label
+	caption.custom_minimum_size.x = 160
+	row.add_child(caption)
+	var options := OptionButton.new()
+	var current := float(GameState.settings.get(field, 1.0))
+	var exact := -1
+	var nearest := 0
+	var nearest_gap := INF
+	for pct in percents:
+		var value := float(int(pct)) / 100.0
+		options.add_item("%d%%" % int(pct), int(pct))
+		if is_equal_approx(value, current):
+			exact = options.item_count - 1
+		var gap: float = absf(value - current)
+		if gap < nearest_gap:
+			nearest_gap = gap
+			nearest = options.item_count - 1
+	options.select(exact if exact >= 0 else nearest)
+	options.item_selected.connect(func(index: int) -> void:
+		GameState.settings[field] = float(options.get_item_id(index)) / 100.0
+		_changed())
+	row.add_child(options)
+
+## M5-9c/d：显示适配 —— 自动（默认）/ 手动（75–150% 统一系数，乘到界面、文字、地图三轴）。
+func _build_display_adapt(box: VBoxContainer) -> void:
+	# 手动系数行先建后加：模式行在上、系数行在下（仅手动模式可见）。
+	# ⚠ 代码创建的控件入树后名字是 "@类型@N" 自动名，勿按名字引用；顺序由 add_child 决定。
+	var manual_row := HBoxContainer.new()
+	manual_row.visible = SettingsRuntime.display_scale_mode() == "manual"
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	var caption := Label.new()
+	caption.text = "显示适配"
+	caption.custom_minimum_size.x = 160
+	row.add_child(caption)
+	var mode := OptionButton.new()
+	mode.add_item("自动（推荐）")
+	mode.add_item("手动")
+	mode.select(1 if SettingsRuntime.display_scale_mode() == "manual" else 0)
+	mode.item_selected.connect(func(index: int) -> void:
+		GameState.settings["displayScaleMode"] = "manual" if index == 1 else "auto"
+		manual_row.visible = index == 1
+		_changed())
+	row.add_child(mode)
+	box.add_child(manual_row)
+	var spacer := Label.new()
+	spacer.custom_minimum_size.x = 160
+	manual_row.add_child(spacer)
+	var slider := HSlider.new()
+	slider.custom_minimum_size.x = 300
+	slider.min_value = SettingsRuntime.DISPLAY_SCALE_MIN
+	slider.max_value = SettingsRuntime.DISPLAY_SCALE_MAX
+	slider.step = 0.05
+	slider.value = clampf(float(GameState.settings.get("displayScale", 1.0)),
+		SettingsRuntime.DISPLAY_SCALE_MIN, SettingsRuntime.DISPLAY_SCALE_MAX)
+	manual_row.add_child(slider)
+	var value := Label.new()
+	value.text = "%.0f%%" % (slider.value * 100.0)
+	manual_row.add_child(value)
+	slider.value_changed.connect(func(v: float) -> void:
+		GameState.settings["displayScale"] = v
+		value.text = "%.0f%%" % (v * 100.0)
+		_changed())
+	var hint := Label.new()
+	hint.text = "自动：系统已按屏幕密度换算，游戏不再补偿（推荐）。手动：统一放大 / 缩小界面、文字与地图。"
 	box.add_child(hint)
 
 func _build_game(tabs: TabContainer) -> void:
