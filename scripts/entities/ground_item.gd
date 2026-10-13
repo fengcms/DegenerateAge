@@ -158,6 +158,7 @@ func _physics_process(delta: float) -> void:
 	var player := _get_player()
 	if player != null and player.global_position.distance_to(global_position) <= PICKUP_RANGE_PX:
 		if _try_pickup():
+			_claimed = true
 			queue_free()
 
 # ---- 认领（方案 C）----
@@ -360,6 +361,7 @@ func _on_click_area_input_event(viewport: Node, event: InputEvent, _shape_idx: i
 		if viewport is Viewport:
 			(viewport as Viewport).set_input_as_handled()
 		if _try_pickup():
+			_claimed = true
 			queue_free()
 
 # ---- 表现 ----
