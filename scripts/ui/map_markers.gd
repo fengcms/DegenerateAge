@@ -8,13 +8,13 @@ static func for_world(world: Node) -> Array[Dictionary]:
 	for npc: Node2D in world.get_node("Npcs").get_children():
 		var carter := String(npc.get("role")) == "carter"
 		out.append({"position": npc.global_position, "kind": "carter" if carter else "npc",
-			"name": "%s · 可直达已到访地图" % String(npc.get("npc_name")) if carter else String(npc.get("npc_name")),
+			"name": Localization.tr_key("ui.map.carter_marker") % String(npc.get("npc_name")) if carter else String(npc.get("npc_name")),
 			"revealed": false, "always_big": carter})
 	for exit_node: Node2D in world.get_node("Exits").get_children():
 		var destination := String(exit_node.get("to_map"))
-		var label := "道路 → %s · 免费 · 推荐 Lv%d" % [MapService.display_name(destination), MapService.recommended_level(destination)]
+		var label := Localization.tr_key("ui.map.exit_marker") % [MapService.display_name(destination), MapService.recommended_level(destination)]
 		if not MapService.is_unlocked(destination):
-			label += " · 尚未解锁"
+			label += Localization.tr_key("ui.map.locked_suffix")
 		out.append({"position": exit_node.global_position, "kind": "exit", "name": label,
 			"to_map": destination, "unlocked": MapService.is_unlocked(destination),
 			"revealed": false, "always_big": true})

@@ -34,13 +34,13 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open("map", open)
 	if open:
 		_update_layout()
-		_title.text = "%s　·　大地图" % MapService.display_name(GameState.current_map)
+		_title.text = Localization.tr_key("ui.map_big_panel.p001") % MapService.display_name(GameState.current_map)
 		var cell := Iso.world_to_grid(MapService.entry_point(GameState.current_map))
 		var player := get_tree().get_first_node_in_group("player") as Node2D
 		if player != null:
 			cell = Iso.world_to_grid(player.global_position)
-		_info.text = "当前位置 (%d, %d)　·　推荐 Lv%d" % [roundi(cell.x), roundi(cell.y), MapService.recommended_level(GameState.current_map)]
-		_hint.text = "点击本图位置步行前往 · WASD / 攻击可接管 · M / Esc 关闭"
+		_info.text = Localization.tr_key("ui.map_big_panel.p002") % [roundi(cell.x), roundi(cell.y), MapService.recommended_level(GameState.current_map)]
+		_hint.text = Localization.tr_key("ui.map_big_panel.p003")
 		_map.refresh()
 		_map.queue_redraw()
 		EventBus.panel_opened.emit("map")
@@ -48,7 +48,7 @@ func set_open(open: bool) -> void:
 func _on_destination(point: Vector2) -> void:
 	var world := get_tree().get_first_node_in_group("map_world")
 	if world == null or not world.request_map_move(point):
-		_hint.text = "当前无法移动，请等待角色恢复"
+		_hint.text = Localization.tr_key("ui.map_big_panel.p004")
 		EventBus.toast_requested.emit(_hint.text, "danger")
 		return
 	set_open(false)
@@ -87,7 +87,7 @@ func _build() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
 	var close := Button.new()
-	close.text = "关闭 · Esc"
+	close.text = Localization.tr_key("ui.map_big_panel.p005")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	_info = Label.new()
@@ -99,7 +99,7 @@ func _build() -> void:
 	_map.destination_selected.connect(_on_destination)
 	root.add_child(_map)
 	var legend := Label.new()
-	legend.text = "青色圈：你　·　↔：免费道路　·　◎：车夫　·　N：NPC　·　!：任务　·　B：Boss　·　暗色：未探索"
+	legend.text = Localization.tr_key("ui.map_big_panel.p006")
 	legend.add_theme_font_size_override("font_size", 13)
 	legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(legend)
@@ -108,7 +108,7 @@ func _build() -> void:
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_hint)
 	var targets := Label.new()
-	targets.text = "任务标记显示当前图的刷新区域；其他地图目标随车夫切图查看。"
+	targets.text = Localization.tr_key("ui.map_big_panel.p007")
 	targets.add_theme_font_size_override("font_size", 12)
 	targets.modulate = Color("a0afb7")
 	targets.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

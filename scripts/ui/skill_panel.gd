@@ -68,12 +68,12 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	var title := Label.new()
-	title.text = "技能"
+	title.text = Localization.tr_key("ui.skill_panel.p001")
 	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	var close := Button.new()
-	close.text = "关闭 · Esc"
+	close.text = Localization.tr_key("ui.skill_panel.p002")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	_center.setup(self, panel, head, Vector2(0.42, 0.26))
@@ -81,7 +81,7 @@ func _build() -> void:
 	_list = VBoxContainer.new()
 	root.add_child(_list)
 	var hint := Label.new()
-	hint.text = "已接通的技能可拖到下方快捷栏；其余技能待战斗系统接线"
+	hint.text = Localization.tr_key("ui.skill_panel.p003")
 	hint.add_theme_font_size_override("font_size", 12)
 	root.add_child(hint)
 
@@ -103,14 +103,14 @@ func _refresh() -> void:
 		_list.add_child(row)
 		var icon := SkillDragButton.new()
 		icon.custom_minimum_size = Vector2(72, 48)
-		icon.text = String(skill.get("name", "技能")).substr(0, 2)
+		icon.text = String(skill.get("name", Localization.tr_key("ui.skill_panel.p001"))).substr(0, 2)
 		icon.skill_id = String(skill.get("id", ""))
 		icon.disabled = not unlocked or not wired
-		icon.tooltip_text = "拖动到快捷栏" if not icon.disabled else "暂不可配置"
+		icon.tooltip_text = Localization.tr_key("ui.skill_panel.p004") if not icon.disabled else Localization.tr_key("ui.skill_panel.p005")
 		row.add_child(icon)
 		var desc := Label.new()
 		desc.text = "%s　Lv%d · %s\n%s" % [String(skill.get("name", "")), int(skill.get("unlockLevel", 1)),
-			"可用" if unlocked and wired else ("未解锁" if not unlocked else "战斗接线待完成"),
+			Localization.tr_key("ui.skill.available") if unlocked and wired else (Localization.tr_key("ui.skill.locked") if not unlocked else Localization.tr_key("ui.skill.unwired")),
 			String(skill.get("desc", ""))]
 		desc.custom_minimum_size.x = 500
 		row.add_child(desc)
@@ -119,11 +119,11 @@ func _refresh() -> void:
 		_list.add_child(row)
 		var button := SkillDragButton.new()
 		button.custom_minimum_size = Vector2(72, 48)
-		button.text = "红药" if kind == "red" else "蓝药"
+		button.text = Localization.tr_key("ui.skill_panel.p006") if kind == "red" else Localization.tr_key("ui.skill_panel.p007")
 		button.binding = {"kind": "auto_potion", "id": kind}
-		button.tooltip_text = "拖到快捷栏；自动选用背包中的对应药品"
+		button.tooltip_text = Localization.tr_key("ui.skill_panel.p008")
 		row.add_child(button)
 		var desc := Label.new()
-		desc.text = "自动%s药　·　可随时重新拖入快捷栏" % ("红" if kind == "red" else "蓝")
+		desc.text = Localization.tr_key("ui.skill_panel.p009") % (Localization.tr_key("ui.skill_panel.p010") if kind == "red" else Localization.tr_key("ui.skill_panel.p011"))
 		desc.custom_minimum_size.x = 500
 		row.add_child(desc)

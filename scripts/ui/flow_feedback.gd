@@ -63,7 +63,7 @@ func _build() -> void:
 	_warning_text.add_theme_color_override("font_color", Color("ffad8c"))
 	warning_row.add_child(_warning_text)
 	var dismiss := Button.new()
-	dismiss.text = "关闭"
+	dismiss.text = Localization.tr_key("ui.flow_feedback.p001")
 	dismiss.pressed.connect(func() -> void: _warning.visible = false)
 	warning_row.add_child(dismiss)
 	_warning.visible = false
@@ -83,7 +83,7 @@ func _build() -> void:
 	_guide_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	guide_box.add_child(_guide_text)
 	var close_guide := Button.new()
-	close_guide.text = "知道了"
+	close_guide.text = Localization.tr_key("ui.flow_feedback.p002")
 	close_guide.pressed.connect(_dismiss_guide)
 	guide_box.add_child(close_guide)
 	_guide.visible = false
@@ -91,13 +91,13 @@ func _build() -> void:
 func _on_loading(active: bool, message: String) -> void:
 	_loading.visible = active
 	if active:
-		_loading_title.text = message if not message.is_empty() else "正在载入"
+		_loading_title.text = message if not message.is_empty() else Localization.tr_key("ui.flow_feedback.p003")
 		_tip.text = Localization.tr_key("loading.tip.%d" % randi_range(1, 3))
 
 func show_config_errors(report: Array[String]) -> void:
 	if report.is_empty():
 		return
-	_warning_text.text = "配置异常（%d 项），请检查游戏数据：\n%s" % [report.size(), "\n".join(PackedStringArray(report.slice(0, 3)))]
+	_warning_text.text = Localization.tr_key("ui.flow_feedback.p004") % [report.size(), "\n".join(PackedStringArray(report.slice(0, 3)))]
 	_warning.visible = true
 
 func _maybe_first_guide() -> void:
@@ -106,14 +106,14 @@ func _maybe_first_guide() -> void:
 	var state: Variant = GameState.quest_states.get("Q001", null)
 	if state is Dictionary and String(state.get("state", "")) == "rewarded":
 		return
-	_guide_text.text = "WASD 移动 · Space 攻击 · F 自动战斗 · G 自动拾取\n先与长老交谈，开始守护者的旅程。"
+	_guide_text.text = Localization.tr_key("ui.flow_feedback.p005")
 	_guide.visible = true
 	_guide.set_meta("guide_key", "tutorialSeen")
 
 func _on_quest_accepted(quest_id: String) -> void:
 	if quest_id != "Q002" or bool(GameState.settings.get("firstBattleHintSeen", false)):
 		return
-	_guide_text.text = "首战目标：击败腐化野狼。可按 F 开启自动战斗，按 G 控制自动拾取。"
+	_guide_text.text = Localization.tr_key("ui.flow_feedback.p006")
 	_guide.visible = true
 	_guide.set_meta("guide_key", "firstBattleHintSeen")
 

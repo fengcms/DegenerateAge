@@ -59,7 +59,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_requested(npc_name: String) -> void:
 	if not npc_name.is_empty():
-		_title.text = "%s　任务" % npc_name
+		_title.text = Localization.tr_key("ui.quest_panel.p001") % npc_name
 	set_open(true)
 
 ## 其他面板打开时自动关闭（与背包 / 货郎面板互斥，I / E 键）。
@@ -127,7 +127,7 @@ func _build() -> void:
 	head.add_theme_constant_override("separation", 12)
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = "长老　任务"
+	_title.text = Localization.tr_key("ui.quest_panel.p002")
 	_title.add_theme_font_size_override("font_size", 18)
 	head.add_child(_title)
 	var spacer := Control.new()
@@ -141,7 +141,7 @@ func _build() -> void:
 
 	# NPC 自我介绍（08 §8.5「自我介绍 + 任务列表」）
 	var greet := Label.new()
-	greet.text = "「守护者，末法之世要靠你了。这些事，先做起来。」"
+	greet.text = Localization.tr_key("ui.quest_panel.p003")
 	greet.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	greet.add_theme_font_size_override("font_size", 13)
 	greet.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -160,7 +160,7 @@ func _build() -> void:
 	scroll.add_child(_list)
 
 	var hint := Label.new()
-	hint.text = "「完成」= 目标未达成（禁用）　·　「已完成」= 点击领取金币与经验奖励　·　E / Esc 关闭"
+	hint.text = Localization.tr_key("ui.quest_panel.p004")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -192,7 +192,7 @@ func _refresh() -> void:
 	var entries: Array[Dictionary] = Quest.list_states()
 	if entries.is_empty():
 		var l := Label.new()
-		l.text = "暂无任务。"
+		l.text = Localization.tr_key("ui.quest_panel.p005")
 		l.add_theme_color_override("font_color", COL_TEXT_DIM)
 		_list.add_child(l)
 		return
@@ -224,7 +224,7 @@ func _make_row(e: Dictionary) -> Control:
 	row.add_child(info)
 
 	var title := Label.new()
-	title.text = "%s%s" % ["〔支线〕" if is_side else "", String(e.get("name", qid))]
+	title.text = "%s%s" % [Localization.tr_key("ui.quest_panel.p006") if is_side else "", String(e.get("name", qid))]
 	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", _title_color(state, is_side))
 	info.add_child(title)
@@ -236,7 +236,7 @@ func _make_row(e: Dictionary) -> Control:
 		goal.add_theme_constant_override("separation", 3)
 		info.add_child(goal)
 		var prefix := Label.new()
-		prefix.text = "击败 "
+		prefix.text = Localization.tr_key("ui.quest_panel.p007")
 		prefix.add_theme_font_size_override("font_size", 12)
 		goal.add_child(prefix)
 		var target := QuestTargetLink.new()
@@ -264,8 +264,8 @@ func _make_row(e: Dictionary) -> Control:
 	# 支线放弃按钮（仅进行中；08 §8.2 / §8.4）
 	if is_side and state == Quest.STATE_ACTIVE:
 		var ab := Button.new()
-		ab.text = "放弃"
-		ab.tooltip_text = "放弃后计数清零，可立即重接（08 §8.4）"
+		ab.text = Localization.tr_key("ui.quest_panel.p008")
+		ab.tooltip_text = Localization.tr_key("ui.quest_panel.p009")
 		ab.custom_minimum_size = Vector2(64, 30)
 		ab.pressed.connect(_on_abandon.bind(qid))
 		row.add_child(ab)
@@ -277,9 +277,9 @@ func _on_target_pressed(quest_id: String) -> void:
 	var result := Quest.start_target_navigation(quest_id)
 	if bool(result.get("ok", false)):
 		set_open(false)
-		EventBus.toast_requested.emit("正在前往任务怪物刷新区域", "info")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.quest_panel.p010"), "info")
 	else:
-		EventBus.toast_requested.emit(String(result.get("reason", "无法导航到目标")), "danger")
+		EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("ui.quest_panel.p011"))), "danger")
 
 ## 状态按钮（08 §8.5 三态 + locked / rewarded 的禁用渲染）。
 func _make_action_button(qid: String, state: String) -> Button:
@@ -287,24 +287,24 @@ func _make_action_button(qid: String, state: String) -> Button:
 	b.custom_minimum_size = Vector2(92, 30)
 	match state:
 		Quest.STATE_AVAILABLE:
-			b.text = "接受任务"
+			b.text = Localization.tr_key("ui.quest_panel.p012")
 			b.pressed.connect(_on_accept.bind(qid))
 		Quest.STATE_ACTIVE:
-			b.text = "完成"
+			b.text = Localization.tr_key("ui.quest_panel.p013")
 			b.disabled = true
-			b.tooltip_text = "目标达成后可领取奖励"
+			b.tooltip_text = Localization.tr_key("ui.quest_panel.p014")
 		Quest.STATE_COMPLETED:
-			b.text = "已完成"
-			b.tooltip_text = "点击领取金币与经验奖励"
+			b.text = Localization.tr_key("ui.quest_panel.p015")
+			b.tooltip_text = Localization.tr_key("ui.quest_panel.p016")
 			b.add_theme_color_override("font_color", COL_DONE)
 			b.pressed.connect(_on_deliver.bind(qid))
 		Quest.STATE_REWARDED:
-			b.text = "✓ 已领奖"
+			b.text = Localization.tr_key("ui.quest_panel.p017")
 			b.disabled = true
 		Quest.STATE_LOCKED:
-			b.text = "未解锁"
+			b.text = Localization.tr_key("ui.quest_panel.p018")
 			b.disabled = true
-			b.tooltip_text = "前置任务未完成"
+			b.tooltip_text = Localization.tr_key("ui.quest_panel.p019")
 		_:
 			b.text = "—"
 			b.disabled = true

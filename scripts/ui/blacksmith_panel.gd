@@ -24,7 +24,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _on_requested(npc_name: String, greeting: String) -> void:
-	_title.text = "%s　·　铁匠" % npc_name
+	_title.text = Localization.tr_key("ui.blacksmith_panel.p001") % npc_name
 	_greeting.text = "「%s」" % greeting
 	set_open(true)
 
@@ -69,7 +69,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = "铁匠"
+	_title.text = Localization.tr_key("ui.blacksmith_panel.p002")
 	_title.add_theme_font_size_override("font_size", 18)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
@@ -81,11 +81,11 @@ func _build() -> void:
 	_greeting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_greeting)
 	_continue = Button.new()
-	_continue.text = "继续"
+	_continue.text = Localization.tr_key("ui.blacksmith_panel.p003")
 	_continue.pressed.connect(_show_menu)
 	root.add_child(_continue)
 	_upgrade = Button.new()
-	_upgrade.text = "升星装备"
+	_upgrade.text = Localization.tr_key("ui.blacksmith_panel.p004")
 	_upgrade.pressed.connect(_open_upgrade)
 	root.add_child(_upgrade)
 

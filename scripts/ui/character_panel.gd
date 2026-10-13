@@ -81,7 +81,7 @@ func _build() -> void:
 	_title.add_theme_font_size_override("font_size", 20)
 	head.add_child(_title)
 	var close := Button.new()
-	close.text = "关闭 · Esc"
+	close.text = Localization.tr_key("ui.character_panel.p001")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	_center.setup(self, panel, head, Vector2(0.34, 0.18))
@@ -135,7 +135,7 @@ func _build() -> void:
 			side.add_child(button)
 			_slots[sid] = button
 	var hint := Label.new()
-	hint.text = "与背包同时打开后，可拖放或双击穿脱装备"
+	hint.text = Localization.tr_key("ui.character_panel.p002")
 	hint.add_theme_font_size_override("font_size", 12)
 	equip.add_child(hint)
 	body.add_child(VSeparator.new())
@@ -147,7 +147,7 @@ func _build() -> void:
 func _refresh() -> void:
 	if _title == null:
 		return
-	_title.text = "%s · Lv%d" % [GameState.player.get("name", "守护者"), int(GameState.player.get("level", 1))]
+	_title.text = "%s · Lv%d" % [GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")), int(GameState.player.get("level", 1))]
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
@@ -155,12 +155,12 @@ func _refresh() -> void:
 		button.item = item if item is Dictionary else {}
 		button.draggable = item is Dictionary and _bag_visible()
 		button.text = ""
-		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else "%s（空槽）" % String(def.label)
+		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else Localization.tr_key("ui.character_panel.p004") % String(def.label)
 		SampleArt.decorate(button, SampleArt.icon_for(item))
 		button.queue_redraw()
 	var p := GameState.player
 	var bonus := GameState.equip_bonus()
-	_stats.text = "战斗属性\n\n生命  %d / %d\n法力  %d / %d\n攻击  %d\n防御  %d\n等级  %d\n移动速度  %.2f\n暴击率  %.1f%%\n暴击伤害  %.2f×\n攻击间隔  %.2f 秒\n闪避  %.1f%%\n格挡  %.1f%%\n冷却缩减  %.1f%%" % [
+	_stats.text = Localization.tr_key("ui.character_panel.p005") % [
 		int(p.hp), GameState.max_hp(), int(p.mp), GameState.max_mp(),
 		GameState.total_attack(), GameState.total_defense(), int(p.level),
 		float(p.movementSpeed) + float(bonus.get("movementSpeed", 0.0)),
@@ -194,7 +194,7 @@ func _on_equipment_dropped(_index: int, payload: Dictionary, slot_id: String) ->
 		return
 	var current: Variant = GameState.inventory[index]
 	if not current is Dictionary or not Warehouse.token_matches(current, String(payload.get("token", ""))):
-		EventBus.toast_requested.emit("物品位置已变化，请重新拖动", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.character_panel.p006"), "danger")
 		return
 	GameState.equip_from_inventory(index, slot_id)
 

@@ -32,7 +32,7 @@ func _build() -> void:
 	box.add_theme_constant_override("separation", 12)
 	margin.add_child(box)
 	var title := Label.new()
-	title.text = "你倒下了"
+	title.text = Localization.tr_key("ui.death_panel.p001")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 24)
 	box.add_child(title)
@@ -43,7 +43,7 @@ func _build() -> void:
 	_revive_here.pressed.connect(revive_here)
 	box.add_child(_revive_here)
 	var camp := Button.new()
-	camp.text = "回安全区复活（免费）"
+	camp.text = Localization.tr_key("ui.death_panel.p002")
 	camp.pressed.connect(revive_camp)
 	box.add_child(camp)
 
@@ -61,9 +61,9 @@ func _refresh() -> void:
 	for item in GameState.inventory:
 		if item is Dictionary and String(item.get("itemId", "")) == "misc_revive_scroll":
 			count += int(item.get("count", 1))
-	_revive_here.text = "原地复活（消耗复活卷 ×1；持有 %d）" % count
+	_revive_here.text = Localization.tr_key("ui.death_panel.p003") % count
 	_revive_here.disabled = count <= 0
-	_hint.text = "复活后恢复全部生命和法力"
+	_hint.text = Localization.tr_key("ui.death_panel.p004")
 
 func revive_here() -> bool:
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter

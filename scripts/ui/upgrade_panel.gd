@@ -42,7 +42,7 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
-		_feedback.text = "如意可选填四格；结算后成功或失败都会消耗金币与已选如意。"
+		_feedback.text = Localization.tr_key("ui.upgrade_panel.p001")
 		_refresh_choices()
 		EventBus.panel_opened.emit(PANEL_ID)
 
@@ -87,7 +87,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	var title := Label.new()
-	title.text = "装备升星"
+	title.text = Localization.tr_key("ui.upgrade_panel.p002")
 	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
@@ -114,7 +114,7 @@ func _build() -> void:
 		elif [1, 3, 5, 7].has(index):
 			var rune_cell := VBoxContainer.new()
 			var title_label := Label.new()
-			title_label.text = "如意 %d" % (_rune_pickers.size() + 1)
+			title_label.text = Localization.tr_key("ui.upgrade_panel.p003") % (_rune_pickers.size() + 1)
 			title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			rune_cell.add_child(title_label)
 			var picker := OptionButton.new()
@@ -134,7 +134,7 @@ func _build() -> void:
 	_price.add_theme_color_override("font_color", COL_GOLD)
 	root.add_child(_price)
 	_upgrade_button = Button.new()
-	_upgrade_button.text = "升星"
+	_upgrade_button.text = Localization.tr_key("ui.upgrade_panel.p004")
 	_upgrade_button.custom_minimum_size.y = 38
 	_upgrade_button.pressed.connect(_on_upgrade)
 	root.add_child(_upgrade_button)
@@ -149,13 +149,13 @@ func _refresh_choices() -> void:
 		var sid := String(slot.id)
 		var item = GameState.equipment.get(sid)
 		if item is Dictionary:
-			_add_choice("worn", sid, item, "已穿戴 · %s" % String(slot.label))
+			_add_choice("worn", sid, item, Localization.tr_key("ui.upgrade.worn_slot") % String(slot.label))
 	for index in range(GameState.inventory.size()):
 		var item = GameState.inventory[index]
 		if item is Dictionary and String(item.get("kind", "")) == "equip":
-			_add_choice("bag", index, item, "背包 · 第 %d 格" % (index + 1))
+			_add_choice("bag", index, item, Localization.tr_key("ui.upgrade.bag_slot") % (index + 1))
 	if _choices.is_empty():
-		_picker.add_item("暂无可升星装备")
+		_picker.add_item(Localization.tr_key("ui.upgrade_panel.p005"))
 		_picker.disabled = true
 		_selected_id = ""
 	else:
@@ -180,7 +180,7 @@ func _refresh_runes() -> void:
 	for slot in range(_rune_pickers.size()):
 		var picker := _rune_pickers[slot]
 		picker.clear()
-		picker.add_item("空")
+		picker.add_item(Localization.tr_key("ui.upgrade_panel.p006"))
 		var selected_index := 0
 		if templates is Array:
 			for template in templates:
@@ -227,7 +227,7 @@ func _selected_item() -> Dictionary:
 func _refresh_details() -> void:
 	var item := _selected_item()
 	if item.is_empty():
-		_center.text = "选择装备"
+		_center.text = Localization.tr_key("ui.upgrade_panel.p007")
 		_preview.text = ""
 		_price.text = ""
 		_upgrade_button.disabled = true
@@ -235,22 +235,22 @@ func _refresh_details() -> void:
 	var star := int(item.get("star", 0))
 	_center.text = "%s\n+%d" % [ItemUtil.template_name(item), star]
 	if star >= Upgrade.max_star():
-		_preview.text = "已达到最高星级。"
-		_price.text = "当前金币：%d" % GameState.gold
+		_preview.text = Localization.tr_key("ui.upgrade_panel.p008")
+		_price.text = Localization.tr_key("ui.upgrade_panel.p009") % GameState.gold
 		_upgrade_button.disabled = true
 		return
 	var next_item := item.duplicate(true)
 	next_item["star"] = star + 1
-	_preview.text = "固定属性：%s\n升星后：%s" % [", ".join(ItemUtil.attr_lines(item).slice(0, Upgrade.base_attrs(item).size())),
+	_preview.text = Localization.tr_key("ui.upgrade_panel.p010") % [", ".join(ItemUtil.attr_lines(item).slice(0, Upgrade.base_attrs(item).size())),
 		", ".join(ItemUtil.attr_lines(next_item).slice(0, Upgrade.base_attrs(item).size()))]
 	var price := Upgrade.cost(star)
 	var plan := Upgrade.rune_plan(GameState.inventory, _rune_choices)
 	var rune_bonus := float(plan.get("bonus", 0.0))
-	_price.text = "+%d → +%d　成功率 %.0f%% + 如意 %.0f%% = %.0f%%\n费用 %d 金币　持有 %d" % [
+	_price.text = Localization.tr_key("ui.upgrade_panel.p011") % [
 		star, star + 1, Upgrade.success_rate(star), rune_bonus,
 		Upgrade.final_rate(star, rune_bonus), price, GameState.gold]
 	_upgrade_button.disabled = GameState.gold < price or not plan.get("ok", false)
-	_upgrade_button.tooltip_text = "金币不足" if GameState.gold < price else String(plan.get("reason", ""))
+	_upgrade_button.tooltip_text = Localization.tr_key("ui.upgrade_panel.p012") if GameState.gold < price else String(plan.get("reason", ""))
 
 func _on_upgrade() -> void:
 	var index := _picker.selected

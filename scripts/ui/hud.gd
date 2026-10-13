@@ -74,7 +74,7 @@ func _process(_delta: float) -> void:
 	_update_coords()
 	_update_target()
 	var remaining := GameState.buff_remaining("battle_focus")
-	_buff_label.text = "战意觉醒  %.1f 秒" % remaining if remaining > 0.0 else ""
+	_buff_label.text = Localization.tr_key("ui.hud.p001") % remaining if remaining > 0.0 else ""
 
 # ---- 事件回调 ----
 
@@ -93,7 +93,7 @@ func _on_xp(current: int, maximum: int) -> void:
 	_exp_bar.value = current
 
 func _on_gold(amount: int) -> void:
-	_gold_label.text = "金币  %d" % amount
+	_gold_label.text = Localization.tr_key("ui.hud.p002") % amount
 
 func _on_level(level: int) -> void:
 	_level_label.text = "Lv%d" % level
@@ -106,7 +106,7 @@ func _on_map_changed(_map_id: String) -> void:
 	_map_name.text = _current_map_name()
 
 func _on_inventory_changed() -> void:
-	_bag_label.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
+	_bag_label.text = Localization.tr_key("ui.hud.p003") % [GameState.inventory_used(), GameState.inventory.size()]
 	_refresh_hotbar()
 
 # ---- 自动战斗状态指示（M1-9；4.6「界面明显显示自动中 / 手动接管 / 暂停中」）----
@@ -126,18 +126,18 @@ func _on_sitting_changed(_sitting: bool) -> void:
 func _refresh_auto() -> void:
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 	if player != null and player.is_sitting:
-		_auto_label.text = "打坐中（X 起身）" if not _auto_battle else "打坐中 · 自动暂停（X 起身）"
+		_auto_label.text = Localization.tr_key("ui.hud.p004") if not _auto_battle else Localization.tr_key("ui.hud.p005")
 		_auto_label.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
 		return
 	if not _auto_battle:
-		_auto_label.text = "自动  关（F 开启）"
+		_auto_label.text = Localization.tr_key("ui.hud.p006")
 		_auto_label.add_theme_color_override("font_color", COL_AUTO_OFF)
 		return
 	var tail := ""
-	if _auto_pickup and not _auto_phase.begins_with("手动接管"):
-		tail = " · 拾取 G 开"
-	_auto_label.text = "自动  %s%s" % [_auto_phase if not _auto_phase.is_empty() else "启动中", tail]
-	var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with("手动接管") else COL_AUTO_ON
+	if _auto_pickup and not _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")):
+		tail = Localization.tr_key("ui.hud.pickup_on")
+	_auto_label.text = Localization.tr_key("ui.hud.p007") % [_auto_phase if not _auto_phase.is_empty() else Localization.tr_key("ui.hud.p008"), tail]
+	var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) else COL_AUTO_ON
 	_auto_label.add_theme_color_override("font_color", col)
 
 ## 系统提示 Toast（9.6，最小版；完整样式在 M5-5 完善）。
@@ -176,7 +176,7 @@ func _toast_color(kind: String) -> Color:
 # ---- 刷新 ----
 
 func _refresh_all() -> void:
-	_name_label.text = String(GameState.player.get("name", "守护者"))
+	_name_label.text = String(GameState.player.get("name", Localization.tr_key("ui.hud.p009")))
 	_on_level(int(GameState.player.get("level", 1)))
 	_on_hp(int(GameState.player.hp), GameState.max_hp())
 	_on_mp(int(GameState.player.mp), GameState.max_mp())
@@ -212,7 +212,7 @@ func _refresh_quests() -> void:
 		shown += 1
 	if items.size() > QUEST_LIST_MAX:
 		var more := Label.new()
-		more.text = "…还有 %d 条" % (items.size() - QUEST_LIST_MAX)
+		more.text = Localization.tr_key("ui.hud.p010") % (items.size() - QUEST_LIST_MAX)
 		more.add_theme_font_size_override("font_size", 11)
 		more.add_theme_color_override("font_color", COL_AUTO_OFF)
 		more.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -227,7 +227,7 @@ func _make_quest_row(e: Dictionary) -> Control:
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var text := "%s%s" % ["⚑ " if done else "· ", String(e.get("name", ""))]
 	if done:
-		text += "　可交付"
+		text += Localization.tr_key("ui.hud.p011")
 		lbl.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
 	else:
 		var need := int(e.get("need", 0))
@@ -247,7 +247,7 @@ func _make_quest_row(e: Dictionary) -> Control:
 	target.pressed.connect(func() -> void:
 		var result := Quest.start_target_navigation(String(e.get("id", "")))
 		if not bool(result.get("ok", false)):
-			EventBus.toast_requested.emit(String(result.get("reason", "无法导航到目标")), "danger"))
+			EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("ui.hud.p012"))), "danger"))
 	row.add_child(target)
 	return row
 
@@ -266,7 +266,7 @@ func _update_target() -> void:
 		_target_hp.max_value = maxi(1, int(_target.get("max_hp")))
 		_target_hp.value = int(_target.get("hp"))
 	else:
-		_target_name.text = "无目标"
+		_target_name.text = Localization.tr_key("ui.hud.p013")
 		_target_hp.value = 0
 
 func _target_is_boss(target: Node) -> bool:
@@ -297,10 +297,10 @@ func _build_hotbar() -> void:
 		if i >= 12:
 			var button := Button.new()
 			button.custom_minimum_size = Vector2(32, 32)
-			var names := ["人", "包", "技", "骑"]
+			var names := [Localization.tr_key("ui.hud.character_short"), Localization.tr_key("ui.hud.inventory_short"), Localization.tr_key("ui.hud.skill_short"), Localization.tr_key("ui.hud.mount_short")]
 			var keys := ["C", "I", "K", "N"]
 			button.text = names[i - 12]
-			button.tooltip_text = "%s 面板（%s）" % [names[i - 12], keys[i - 12]]
+			button.tooltip_text = Localization.tr_key("ui.hud.p014") % [names[i - 12], keys[i - 12]]
 			button.pressed.connect(_open_panel.bind(i))
 			_hotbar.add_child(button)
 			continue
@@ -321,15 +321,15 @@ func _refresh_hotbar() -> void:
 		var slot := _hotbar_buttons[i]
 		slot.entry = binding
 		slot.text = name.substr(0, 1) if binding != null else ""
-		slot.tooltip_text = "%s · 快捷格 %d · 右键清空" % [name, i + 1]
+		slot.tooltip_text = Localization.tr_key("ui.hud.p015") % [name, i + 1]
 		slot.set_count(_binding_count(binding))
 		SampleArt.decorate(slot, SampleArt.binding_icon(binding))
 
 func _binding_name(binding: Variant) -> String:
 	if not binding is Dictionary:
-		return "空"
+		return Localization.tr_key("ui.hud.p016")
 	match String(binding.kind):
-		"auto_potion": return "自动红药" if binding.id == "red" else "自动蓝药"
+		"auto_potion": return Localization.tr_key("ui.hud.auto_red") if binding.id == "red" else Localization.tr_key("ui.hud.auto_blue")
 		"skill":
 			var skill = DataLoader.get_entry("skills", String(binding.id))
 			return String(skill.get("name", binding.id)) if skill is Dictionary else String(binding.id)
@@ -337,7 +337,7 @@ func _binding_name(binding: Variant) -> String:
 			var table := "potions" if binding.kind == "potion" else "miscItems"
 			var template = DataLoader.get_entry(table, String(binding.id))
 			return String(template.get("name", binding.id)) if template is Dictionary else String(binding.id)
-	return "空"
+	return Localization.tr_key("ui.hud.p016")
 
 func _binding_count(binding: Variant) -> int:
 	if not binding is Dictionary or binding.kind == "skill":
@@ -391,7 +391,7 @@ func _activate_hotbar(index: int) -> void:
 			if source >= 0:
 				GameState.use_item(source)
 			else:
-				EventBus.toast_requested.emit("背包中没有%s" % _binding_name(binding), "danger")
+				EventBus.toast_requested.emit(Localization.tr_key("ui.hud.p017") % _binding_name(binding), "danger")
 		"skill":
 			var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 			if player != null:
@@ -411,7 +411,7 @@ func _use_potion(kind: String) -> void:
 	if idx >= 0:
 		GameState.use_item(idx)
 	else:
-		EventBus.toast_requested.emit("背包中没有%s" % ("红药" if kind == Consumable.KIND_RED else "蓝药"), "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.hud.p017") % (Localization.tr_key("ui.hud.p018") if kind == Consumable.KIND_RED else Localization.tr_key("ui.hud.p019")), "danger")
 
 func _open_panel(index: int) -> void:
 	var nodes := ["CharacterPanel", "InventoryPanel", "SkillPanel", "MountPanel"]

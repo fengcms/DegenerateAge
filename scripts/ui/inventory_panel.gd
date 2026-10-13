@@ -162,7 +162,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	var title := Label.new()
-	title.text = "背包"
+	title.text = Localization.tr_key("ui.inventory_panel.p001")
 	title.add_theme_font_size_override("font_size", 18)
 	head.add_child(title)
 	var spacer := Control.new()
@@ -188,8 +188,8 @@ func _build() -> void:
 	_bag_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bag_head.add_child(_bag_title)
 	_organize_button = Button.new()
-	_organize_button.text = "整理"
-	_organize_button.tooltip_text = "按品类整理背包并合并相同物品"
+	_organize_button.text = Localization.tr_key("ui.inventory_panel.p002")
+	_organize_button.tooltip_text = Localization.tr_key("ui.inventory_panel.p003")
 	_organize_button.pressed.connect(_on_organize_pressed)
 	bag_head.add_child(_organize_button)
 	_expand_button = Button.new()
@@ -198,18 +198,18 @@ func _build() -> void:
 	var action_row := HBoxContainer.new()
 	right.add_child(action_row)
 	_sell_low_button = Button.new()
-	_sell_low_button.text = "一键卖出低级装备"
+	_sell_low_button.text = Localization.tr_key("ui.inventory_panel.p004")
 	_sell_low_button.pressed.connect(_on_sell_low_pressed)
 	action_row.add_child(_sell_low_button)
 	var filter_toggle := Button.new()
-	filter_toggle.text = "筛选设置"
+	filter_toggle.text = Localization.tr_key("ui.inventory_panel.p005")
 	filter_toggle.pressed.connect(func() -> void: _filter_row.visible = not _filter_row.visible)
 	action_row.add_child(filter_toggle)
 	_filter_row = HBoxContainer.new()
 	_filter_row.visible = false
 	right.add_child(_filter_row)
 	var level_label := Label.new()
-	level_label.text = "装备等级低于"
+	level_label.text = Localization.tr_key("ui.inventory_panel.p006")
 	_filter_row.add_child(level_label)
 	_filter_level = SpinBox.new()
 	_filter_level.min_value = 1
@@ -219,10 +219,10 @@ func _build() -> void:
 	_filter_level.value_changed.connect(_on_filter_level_changed)
 	_filter_row.add_child(_filter_level)
 	var quality_label := Label.new()
-	quality_label.text = "且成色不高于"
+	quality_label.text = Localization.tr_key("ui.inventory_panel.p007")
 	_filter_row.add_child(quality_label)
 	_filter_quality = OptionButton.new()
-	for label in ["普通", "优秀", "稀有", "史诗", "传说"]:
+	for label in [Localization.tr_key("ui.inventory_panel.p008"), Localization.tr_key("ui.inventory_panel.p009"), Localization.tr_key("ui.inventory_panel.p010"), Localization.tr_key("ui.inventory_panel.p011"), Localization.tr_key("ui.inventory_panel.p012")]:
 		_filter_quality.add_item(label)
 	_filter_quality.item_selected.connect(_on_filter_quality_changed)
 	_filter_row.add_child(_filter_quality)
@@ -245,7 +245,7 @@ func _build() -> void:
 	root.add_child(_summary)
 
 	var hint := Label.new()
-	hint.text = "与人物面板并开可穿戴装备 · 双击使用药品 / 回城卷 · 装备可拖到货郎托盘 · I / Esc 关闭"
+	hint.text = Localization.tr_key("ui.inventory_panel.p013")
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
@@ -323,13 +323,13 @@ func _refresh() -> void:
 			_apply_slot_style(b2, COL_BORDER, false)
 			b2.tooltip_text = ""
 		SampleArt.decorate(b2, SampleArt.icon_for(it2))
-	_bag_title.text = "背包  %d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
+	_bag_title.text = Localization.tr_key("ui.inventory_panel.p014") % [GameState.inventory_used(), GameState.inventory.size()]
 	var cost := Warehouse.next_cost(GameState.inventory_expansions)
 	_expand_button.disabled = cost < 0
-	_expand_button.text = "已达上限" if cost < 0 else "扩容 +%d（%d 金币）" % [
+	_expand_button.text = Localization.tr_key("ui.inventory_panel.p015") if cost < 0 else Localization.tr_key("ui.inventory_panel.p016") % [
 		Warehouse.capacity(GameState.inventory_expansions + 1) - GameState.inventory.size(), cost]
 	_sell_low_button.disabled = int(GameState.player.get("level", 1)) < 15
-	_sell_low_button.tooltip_text = "达到 15 级后解锁；按下方筛选设置直接出售背包装备" if _sell_low_button.disabled else "直接出售符合筛选条件的背包装备"
+	_sell_low_button.tooltip_text = Localization.tr_key("ui.inventory_panel.p017") if _sell_low_button.disabled else Localization.tr_key("ui.inventory_panel.p018")
 	_filter_level.set_value_no_signal(float(GameState.settings.get("lowGearLevelLimit", 5)))
 	_filter_quality.select(maxi(0, Shop.QUALITY_ORDER.find(String(GameState.settings.get("lowGearMaxQuality", "common")))))
 	_refresh_summary()
@@ -364,7 +364,7 @@ func _on_filter_quality_changed(index: int) -> void:
 func _refresh_summary() -> void:
 	if _summary == null:
 		return
-	_summary.text = "金币  %d" % GameState.gold
+	_summary.text = Localization.tr_key("ui.inventory_panel.p019") % GameState.gold
 
 func _on_gold_changed(_amount: int) -> void:
 	_refresh_summary()
@@ -391,23 +391,23 @@ func _bag_tooltip(item: Dictionary) -> String:
 	var req := Equipment.level_req(item)
 	var ok := Equipment.meets_level(item, level)
 	if ok:
-		lines.append("需求等级 %d" % req)
+		lines.append(Localization.tr_key("ui.inventory_panel.p020") % req)
 	else:
-		lines.append("需求等级 %d（当前 Lv%d，不足）" % [req, level])
+		lines.append(Localization.tr_key("ui.inventory_panel.p021") % [req, level])
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
 
 	var worn := _worn_same_kind(item)
 	var s_new := Equipment.score(item)
 	if worn.is_empty():
-		lines.append("同槽为空 · 评分 %.1f" % s_new)
+		lines.append(Localization.tr_key("ui.inventory_panel.p022") % s_new)
 	else:
 		var s_old := Equipment.score(worn)
-		var mark := "↑ 更高" if s_new > s_old else ("↓ 更低" if s_new < s_old else "＝ 持平")
-		lines.append("已穿戴：%s" % ItemUtil.display_name(worn))
-		lines.append("评分 %.1f vs %.1f　%s" % [s_new, s_old, mark])
+		var mark := Localization.tr_key("ui.inventory.score_higher") if s_new > s_old else (Localization.tr_key("ui.inventory.score_lower") if s_new < s_old else Localization.tr_key("ui.inventory.score_equal"))
+		lines.append(Localization.tr_key("ui.inventory_panel.p023") % ItemUtil.display_name(worn))
+		lines.append(Localization.tr_key("ui.inventory_panel.p024") % [s_new, s_old, mark])
 	lines.append("")
-	lines.append(("双击穿戴 / 拖到人物槽" if _character_visible() else "打开人物面板后可穿戴") if ok else "等级不足，无法穿戴")
+	lines.append((Localization.tr_key("ui.inventory_panel.p025") if _character_visible() else Localization.tr_key("ui.inventory_panel.p026")) if ok else Localization.tr_key("ui.inventory_panel.p027"))
 	return "\n".join(PackedStringArray(lines))
 
 ## 非装备物品的 tooltip（M2.5）：药水显示恢复量 / 冷却 / 使用方式；
@@ -421,30 +421,30 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 		if tpl is Dictionary:
 			var t: Dictionary = tpl
 			var color := String(t.get("kind", Consumable.KIND_RED))
-			out.append("恢复 %d %s" % [
+			out.append(Localization.tr_key("ui.inventory_panel.p028") % [
 				int(t.get("restoreAmount", 0)), Consumable.stat_label(color)])
-			out.append("冷却 %ds（各药水独立计时，互不影响）" % int(t.get("cooldown", 0)))
+			out.append(Localization.tr_key("ui.inventory_panel.p029") % int(t.get("cooldown", 0)))
 			var key := "1" if color == Consumable.KIND_RED else "2"
 			var left := Consumable.cd_of(item_id)
 			if left > 0.0:
 				out.append("")
-				out.append("冷却中：还需 %.1fs" % left)
+				out.append(Localization.tr_key("ui.inventory_panel.p030") % left)
 				return out
 			out.append("")
-			out.append("双击使用（或按 %s）" % key)
+			out.append(Localization.tr_key("ui.inventory_panel.p031") % key)
 			return out
-		out.append("（药水数据缺失）")
+		out.append(Localization.tr_key("ui.inventory_panel.p032"))
 		return out
 	if kind == "quest":
-		out.append("任务物品，不可使用")
+		out.append(Localization.tr_key("ui.inventory_panel.p033"))
 		return out
 	if kind == "misc" and item.get("itemId") == HotbarConfig.TOWN_SCROLL:
-		out.append("双击或拖到快捷栏使用；从野外返回幸存者营地")
+		out.append(Localization.tr_key("ui.inventory_panel.p034"))
 		return out
 	if kind == "misc" and item.get("itemId") == HotbarConfig.RANDOM_TICKET:
-		out.append("双击或拖到快捷栏使用；传送到本图可到达位置")
+		out.append(Localization.tr_key("ui.inventory_panel.p035"))
 		return out
-	out.append("杂项物品，暂未开放使用（M4）")
+	out.append(Localization.tr_key("ui.inventory_panel.p036"))
 	return out
 
 ## 同类型槽中第一件已穿戴装备（用于 5.9 对比）。
@@ -488,6 +488,6 @@ func _on_bag_item_dropped(_target_index: int, payload: Dictionary, index: int) -
 	var sid := String(payload.get("slot_id", ""))
 	var current: Variant = GameState.equipment.get(sid)
 	if not current is Dictionary or not Warehouse.token_matches(current, String(payload.get("token", ""))):
-		EventBus.toast_requested.emit("装备位置已变化，请重新拖动", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.inventory_panel.p037"), "danger")
 		return
 	GameState.unequip_slot_to_inventory(sid, index)

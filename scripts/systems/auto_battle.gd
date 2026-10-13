@@ -163,13 +163,13 @@ func _physics_process(delta: float) -> void:
 		_player.set_auto_move(Vector2.ZERO)
 		_target = null
 		_loot = null
-		_set_state(State.RECOVER, "打坐中")
+		_set_state(State.RECOVER, Localization.tr_key("ui.auto.sitting"))
 		return
 
 	# 界面面板只拦截手动输入；已经开启的挂机战斗继续运行。
 	if get_tree().paused:
 		_player.set_auto_move(Vector2.ZERO)
-		_set_state(State.RECOVER, "暂停中")
+		_set_state(State.RECOVER, Localization.tr_key("ui.auto.paused"))
 		return
 
 	# 持续手动操作先刷新计时；松手后才开始倒计时，避免按住时提前恢复。
@@ -179,9 +179,9 @@ func _physics_process(delta: float) -> void:
 	if _manual_t > 0.0:
 		_manual_t = maxf(0.0, _manual_t - delta)
 		if _manual_t > 0.0:
-			_set_state(State.MANUAL_OVERRIDE, "手动接管 · %.1f 秒后恢复" % _manual_t)
+			_set_state(State.MANUAL_OVERRIDE, Localization.tr_key("ui.auto.manual_countdown") % _manual_t)
 			return
-		_toast("自动战斗恢复", "info")
+		_toast(Localization.tr_key("ui.auto.resumed"), "info")
 		_set_state(State.SEARCH_TARGET)
 
 	_tick(delta)
@@ -194,7 +194,7 @@ func begin_manual_override() -> void:
 	_roam_index = -1
 	_manual_t = MANUAL_RESUME_DELAY if GameState.auto_battle_on else 0.0
 	if GameState.auto_battle_on:
-		_set_state(State.MANUAL_OVERRIDE, "手动接管 · 操作结束后恢复")
+		_set_state(State.MANUAL_OVERRIDE, Localization.tr_key("ui.auto.manual_wait"))
 
 # ---- 决策主体 ----
 
@@ -216,7 +216,7 @@ func _tick(delta: float) -> void:
 		_danger_t = maxf(0.0, _danger_t - delta)       # 无药 / 全在冷却 → 继续战斗（不停战）
 		if _danger_t <= 0.0:
 			_danger_t = DANGER_TOAST_CD
-			_toast("生命过低且无药可用，继续战斗", "danger")
+			_toast(Localization.tr_key("ui.auto.low_hp_no_potion"), "danger")
 
 	# ② 每帧校验目标有效性（死亡 / 释放 / 进黑名单 → 停旧指令）
 	if _target != null and (not is_instance_valid(_target)
@@ -326,7 +326,7 @@ func _try_drink() -> bool:
 			continue
 		var res := Consumable.use(idx, true)
 		if bool(res.get("ok", false)):
-			_toast("自动喝药 · %s" % String(res.get("message", "")), "info")
+			_toast(Localization.tr_key("ui.auto.auto_potion") % String(res.get("message", "")), "info")
 			return true
 	return false
 
@@ -536,7 +536,7 @@ func _tick_stuck(delta: float, dist: float) -> void:
 func _blacklist_target(t: Node) -> void:
 	if t != null and is_instance_valid(t):
 		_blacklist[t.get_instance_id()] = BLACKLIST_TIME
-		_toast("目标不可达，已改选", "info")
+		_toast(Localization.tr_key("ui.auto.unreachable"), "info")
 	_target = null
 	_cave_nav.clear()
 	_last_position = Vector2.INF
@@ -593,29 +593,29 @@ func _toast(text: String, kind: String = "info") -> void:
 static func state_name(s: int) -> String:
 	match s:
 		State.OFF:
-			return "关闭"
+			return Localization.tr_key("ui.auto.off")
 		State.SEARCH_TARGET:
-			return "搜索目标"
+			return Localization.tr_key("ui.auto.search_target")
 		State.PATH_TO_TARGET:
-			return "接近目标"
+			return Localization.tr_key("ui.auto.approach")
 		State.ATTACK_TARGET:
-			return "攻击中"
+			return Localization.tr_key("ui.auto.attacking")
 		State.SEARCH_LOOT:
-			return "搜索掉落"
+			return Localization.tr_key("ui.auto.search_loot")
 		State.PATH_TO_LOOT:
-			return "走向掉落"
+			return Localization.tr_key("ui.auto.approach_loot")
 		State.PICK_UP:
-			return "拾取中"
+			return Localization.tr_key("ui.auto.pickup")
 		State.RECOVER:
-			return "暂停中"
+			return Localization.tr_key("ui.auto.paused")
 		State.MANUAL_OVERRIDE:
-			return "手动接管"
+			return Localization.tr_key("ui.auto.manual")
 		State.BLOCKED:
-			return "受阻改选"
+			return Localization.tr_key("ui.auto.blocked")
 		State.ROAM:
-			return "漫游寻怪"
+			return Localization.tr_key("ui.auto.roaming")
 		_:
-			return "未知"
+			return Localization.tr_key("ui.auto.unknown")
 
 func current_state() -> int:
 	return _state

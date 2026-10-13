@@ -72,17 +72,17 @@ func _gui_input(event: InputEvent) -> void:
 		var grid := canvas_to_grid(event.position)
 		var dims := MapService.grid_size(GameState.current_map)
 		if grid.x < -0.5 or grid.y < -0.5 or grid.x >= dims.x - 0.5 or grid.y >= dims.y - 0.5:
-			EventBus.toast_requested.emit("请点击地图范围内的位置", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("ui.map_canvas.p001"), "danger")
 			return
 		destination_selected.emit(Iso.grid_pt(grid.x, grid.y))
 
 func _get_tooltip(at_position: Vector2) -> String:
 	if minimap:
-		return "点击打开大地图 · M"
+		return Localization.tr_key("ui.map_canvas.p002")
 	for marker in _markers:
 		if _marker_visible(marker) and world_to_canvas(marker.position).distance_to(at_position) <= 14:
 			return String(marker.name)
-	return "点击本图位置步行前往"
+	return Localization.tr_key("ui.map_canvas.p003")
 
 func _marker_visible(marker: Dictionary) -> bool:
 	var kind := String(marker.get("kind", ""))
@@ -144,7 +144,7 @@ func _draw() -> void:
 		if not minimap:
 			var glyph := ("!B" if bool(marker.get("boss", false)) else "!") if kind == "quest" else ("B" if kind == "boss" else ("↔" if kind == "exit" else ("◎" if kind == "carter" else "N")))
 			if kind == "exit":
-				glyph = "%s%s %s" % ["锁 " if not bool(marker.get("unlocked", true)) else "", glyph, MapService.display_name(String(marker.get("to_map", "")))]
+				glyph = "%s%s %s" % [Localization.tr_key("ui.map.locked_short") if not bool(marker.get("unlocked", true)) else "", glyph, MapService.display_name(String(marker.get("to_map", "")))]
 			draw_string(MONO_FONT, p + Vector2(7, 4), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
 	draw_circle(world_to_canvas(_player_position), 4 if minimap else 6, Color("6eebe6"))
 	draw_arc(world_to_canvas(_player_position), 6 if minimap else 9, 0, TAU, 24, Color.WHITE, 1, true)

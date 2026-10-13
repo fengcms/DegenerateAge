@@ -13,7 +13,7 @@ const BAR_W := 480.0
 const BAR_H := 18.0
 const TOP_Y := 22.0
 ## 三阶段名（对应 monsters.json 的 bossSkill.phases 0/1/2，创意 07 §4）。
-const PHASE_NAMES := ["封印束缚", "封印开裂", "腐化狂暴"]
+const PHASE_KEYS := ["ui.boss.phase_sealed", "ui.boss.phase_cracked", "ui.boss.phase_corrupted"]
 
 const COL_BG := Color(0.06, 0.02, 0.03, 0.88)
 const COL_EDGE := Color(0.58, 0.18, 0.18, 0.95)
@@ -102,6 +102,6 @@ func _draw() -> void:
 	# 血量数值（左）+ 阶段名（中）
 	draw_string(MONO_FONT, Vector2(left + 8.0, TOP_Y + BAR_H - 4.0), "%d / %d" % [_hp, _max_hp],
 		HORIZONTAL_ALIGNMENT_LEFT, BAR_W - 16.0, 11, COL_HP_TEXT)
-	var phase_name := String(PHASE_NAMES[clampi(_phase, 0, PHASE_NAMES.size() - 1)])
+	var phase_name := Localization.tr_key(PHASE_KEYS[clampi(_phase, 0, PHASE_KEYS.size() - 1)])
 	draw_string(MONO_FONT, Vector2(left, TOP_Y + BAR_H - 4.0), phase_name,
 		HORIZONTAL_ALIGNMENT_CENTER, BAR_W, 11, COL_PHASE)

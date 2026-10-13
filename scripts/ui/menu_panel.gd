@@ -66,19 +66,19 @@ func _show(mode: String) -> void:
 	GameState.set_panel_open("menu", true)
 	for child in _root.get_children():
 		child.queue_free()
-	_title.text = "末法纪元 · 最后的守护者" if mode == MAIN else "暂停"
+	_title.text = Localization.tr_key("ui.menu_panel.p001") if mode == MAIN else Localization.tr_key("ui.menu_panel.p002")
 	if mode == MAIN:
-		_continue = _button("继续游戏", _continue_game)
+		_continue = _button(Localization.tr_key("ui.menu_panel.p003"), _continue_game)
 		_continue.disabled = SaveManager.continue_slot() < 0
-		_button("新游戏", _open_new_slots)
-		_button("读取存档", _open_load_slots)
-		_button("设置", _open_settings)
-		_button("退出游戏", _quit_game)
+		_button(Localization.tr_key("ui.menu_panel.p004"), _open_new_slots)
+		_button(Localization.tr_key("ui.menu_panel.p005"), _open_load_slots)
+		_button(Localization.tr_key("ui.menu_panel.p006"), _open_settings)
+		_button(Localization.tr_key("ui.menu_panel.p007"), _quit_game)
 	else:
-		_button("继续游戏", resume_game)
-		_button("设置", _open_settings)
-		_button("保存 / 读取", _open_manage_slots)
-		_button("返回主菜单", _return_to_main)
+		_button(Localization.tr_key("ui.menu_panel.p003"), resume_game)
+		_button(Localization.tr_key("ui.menu_panel.p006"), _open_settings)
+		_button(Localization.tr_key("ui.menu_panel.p008"), _open_manage_slots)
+		_button(Localization.tr_key("ui.menu_panel.p009"), _return_to_main)
 	EventBus.panel_opened.emit("menu")
 
 func _on_panel_opened(panel_id: String) -> void:
@@ -131,7 +131,7 @@ func _build() -> void:
 func _continue_game() -> void:
 	if not SaveManager.resume_last():
 		_continue.disabled = true
-		EventBus.toast_requested.emit("上次存档不可用，请选择读取存档", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.menu_panel.p010"), "danger")
 		return
 	_start_world()
 

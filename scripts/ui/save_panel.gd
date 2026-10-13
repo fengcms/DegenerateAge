@@ -101,7 +101,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	var title := Label.new()
-	title.text = "存档"
+	title.text = Localization.tr_key("ui.save_panel.p001")
 	title.add_theme_font_size_override("font_size", 18)
 	head.add_child(title)
 	var spacer := Control.new()
@@ -116,15 +116,15 @@ func _build() -> void:
 	root.add_child(HSeparator.new())
 	_name_row = HBoxContainer.new()
 	var name_label := Label.new()
-	name_label.text = "角色名称"
+	name_label.text = Localization.tr_key("ui.save_panel.p002")
 	_name_row.add_child(name_label)
 	_name_input = LineEdit.new()
-	_name_input.text = "守护者"
+	_name_input.text = Localization.tr_key("ui.save_panel.p003")
 	_name_input.max_length = 16
 	_name_input.custom_minimum_size = Vector2(190, 30)
 	_name_row.add_child(_name_input)
 	var class_label := Label.new()
-	class_label.text = "职业：灵刃战士"
+	class_label.text = Localization.tr_key("ui.save_panel.p004")
 	_name_row.add_child(class_label)
 	root.add_child(_name_row)
 
@@ -142,7 +142,7 @@ func _build() -> void:
 	_hint.custom_minimum_size = CARD_MIN
 	root.add_child(_hint)
 	_overwrite_dialog = ConfirmationDialog.new()
-	_overwrite_dialog.title = "覆盖存档"
+	_overwrite_dialog.title = Localization.tr_key("ui.save_panel.p005")
 	_overwrite_dialog.confirmed.connect(_on_overwrite_confirmed)
 	add_child(_overwrite_dialog)
 
@@ -169,7 +169,7 @@ func _build_card(slot: int, parent: Node) -> void:
 	row.add_child(col)
 
 	var title := Label.new()
-	title.text = "槽 %d" % slot
+	title.text = Localization.tr_key("ui.save_panel.p006") % slot
 	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", COL_TEXT)
 	col.add_child(title)
@@ -183,26 +183,26 @@ func _build_card(slot: int, parent: Node) -> void:
 	btns.add_theme_constant_override("separation", 6)
 	row.add_child(btns)
 
-	var save_b := _make_button("保存")
+	var save_b := _make_button(Localization.tr_key("ui.save_panel.p007"))
 	save_b.pressed.connect(_on_save_pressed.bind(slot))
 	btns.add_child(save_b)
 
-	var load_b := _make_button("读取")
+	var load_b := _make_button(Localization.tr_key("ui.save_panel.p008"))
 	load_b.pressed.connect(_on_load_pressed.bind(slot))
 	btns.add_child(load_b)
 
-	var del_b := _make_button("删除")
+	var del_b := _make_button(Localization.tr_key("ui.save_panel.p009"))
 	del_b.pressed.connect(_on_delete_pressed.bind(slot))
 	btns.add_child(del_b)
 
 	# 二次确认（9.4：删除需二次确认）——两段式按钮，避免引入模态对话框（M4 才做统一对话框）
-	var yes_b := _make_button("确认删除")
+	var yes_b := _make_button(Localization.tr_key("ui.save_panel.p010"))
 	yes_b.add_theme_color_override("font_color", COL_WARN)
 	yes_b.visible = false
 	yes_b.pressed.connect(_on_delete_confirmed.bind(slot))
 	btns.add_child(yes_b)
 
-	var no_b := _make_button("取消")
+	var no_b := _make_button(Localization.tr_key("ui.save_panel.p011"))
 	no_b.visible = false
 	no_b.pressed.connect(_on_delete_cancelled.bind(slot))
 	btns.add_child(no_b)
@@ -241,9 +241,9 @@ func _card_style() -> StyleBoxFlat:
 
 func _refresh() -> void:
 	_name_row.visible = _mode == "new"
-	_hint.text = "选择存档槽开始新游戏；覆盖已有槽位前需要确认。" if _mode == "new" else \
-		"选择存档槽读取游戏。" if _mode == "load" else \
-		"保存后该槽成为活动槽：定时、关键事件与退出时自动写入本槽。"
+	_hint.text = Localization.tr_key("ui.save_panel.p012") if _mode == "new" else \
+		Localization.tr_key("ui.save_panel.load_hint") if _mode == "load" else \
+		Localization.tr_key("ui.save_panel.manage_hint")
 	for c in _cards:
 		var slot := int(c.slot)
 		var s := SaveManager.slot_summary(slot)
@@ -256,9 +256,9 @@ func _refresh() -> void:
 		c.del.visible = true
 
 		if bool(s.get("ok", false)):
-			var tag := "● 活动槽" if active else "○"
-			var src := "（从备份恢复）" if String(s.get("source", "")) == "backup" else ""
-			info.text = "%s %s　灵刃战士 Lv%d　金币 %d　%s　%s %s" % [
+			var tag := Localization.tr_key("ui.save_panel.active_slot") if active else "○"
+			var src := Localization.tr_key("ui.save_panel.backup_recovered") if String(s.get("source", "")) == "backup" else ""
+			info.text = Localization.tr_key("ui.save_panel.p013") % [
 				tag, String(s.get("name", "")), int(s.get("level", 1)), int(s.get("gold", 0)),
 				String(s.get("mapName", "")), String(s.get("savedAt", "")), src,
 			]
@@ -270,18 +270,18 @@ func _refresh() -> void:
 			c.del.disabled = false
 		elif bool(s.get("exists", false)):
 			# 文件在但不可用（损坏且备份不可用）：明确提示，不给"读取"假希望（10.3 不静默）
-			info.text = "⚠ 存档损坏，无法读取：%s" % String(s.get("message", ""))
+			info.text = Localization.tr_key("ui.save_panel.p014") % String(s.get("message", ""))
 			info.add_theme_color_override("font_color", COL_WARN)
 			c.load.disabled = true
 			c.del.disabled = false
 		else:
-			info.text = "（空）　—　保存将在此建立新存档"
+			info.text = Localization.tr_key("ui.save_panel.p015")
 			info.add_theme_color_override("font_color", COL_TEXT_DIM)
 			c.load.disabled = true
 			c.del.disabled = true
 
 		c.save.visible = _mode != "load"
-		c.save.text = ("覆盖" if bool(s.get("exists", false)) else "新建") if _mode == "new" else "保存"
+		c.save.text = (Localization.tr_key("ui.save_panel.p016") if bool(s.get("exists", false)) else Localization.tr_key("ui.save_panel.p017")) if _mode == "new" else Localization.tr_key("ui.save_panel.p007")
 		c.save.add_theme_color_override("font_color", COL_OK if active else COL_TEXT)
 
 # ---- 操作 ----
@@ -292,7 +292,7 @@ func _on_save_pressed(slot: int) -> void:
 			return
 		if bool(SaveManager.slot_summary(slot).get("exists", false)):
 			_pending_overwrite = slot
-			_overwrite_dialog.dialog_text = "槽 %d 已有存档。确认覆盖并开始新游戏？此操作不能撤销。" % slot
+			_overwrite_dialog.dialog_text = Localization.tr_key("ui.save_panel.p018") % slot
 			_overwrite_dialog.popup_centered()
 		else:
 			_create_new_slot(slot)
@@ -313,7 +313,7 @@ func _valid_new_name() -> bool:
 	var name := _name_input.text.strip_edges()
 	if name.length() >= 2 and name.length() <= 16:
 		return true
-	EventBus.toast_requested.emit("角色名称需要 2–16 个字符", "danger")
+	EventBus.toast_requested.emit(Localization.tr_key("ui.save_panel.p019"), "danger")
 	_name_input.grab_focus()
 	return false
 
@@ -356,5 +356,5 @@ func _on_delete_cancelled(_slot: int) -> void:
 
 func _on_delete_confirmed(slot: int) -> void:
 	SaveManager.delete_slot(slot)
-	EventBus.toast_requested.emit("已删除槽 %d 的存档" % slot, "info")
+	EventBus.toast_requested.emit(Localization.tr_key("ui.save_panel.p020") % slot, "info")
 	_refresh()

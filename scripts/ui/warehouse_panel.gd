@@ -44,7 +44,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _on_requested(npc_name: String) -> void:
-	_title.text = "%s　·　仓库" % npc_name
+	_title.text = Localization.tr_key("ui.warehouse_panel.p001") % npc_name
 	set_open(true)
 
 func _on_panel_opened(panel_id: String) -> void:
@@ -60,7 +60,7 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
 		_update_layout()
-		_detail.text = "双击物品存取，也可拖到另一侧的空格。"
+		_detail.text = Localization.tr_key("ui.warehouse_panel.p002")
 		_refresh()
 		EventBus.panel_opened.emit(PANEL_ID)
 
@@ -92,7 +92,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = "仓库"
+	_title.text = Localization.tr_key("ui.warehouse_panel.p003")
 	_title.add_theme_font_size_override("font_size", 18)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
@@ -111,8 +111,8 @@ func _build() -> void:
 	_bag_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bag_head.add_child(_bag_count)
 	_bag_organize = Button.new()
-	_bag_organize.text = "整理"
-	_bag_organize.tooltip_text = "整理背包"
+	_bag_organize.text = Localization.tr_key("ui.warehouse_panel.p004")
+	_bag_organize.tooltip_text = Localization.tr_key("ui.warehouse_panel.p005")
 	_bag_organize.pressed.connect(_on_bag_organize)
 	bag_head.add_child(_bag_organize)
 	_bag_scroll = _make_scroll(bag_column)
@@ -125,8 +125,8 @@ func _build() -> void:
 	_store_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	store_head.add_child(_store_count)
 	_store_organize = Button.new()
-	_store_organize.text = "整理"
-	_store_organize.tooltip_text = "整理仓库"
+	_store_organize.text = Localization.tr_key("ui.warehouse_panel.p004")
+	_store_organize.tooltip_text = Localization.tr_key("ui.warehouse_panel.p006")
 	_store_organize.pressed.connect(_on_store_organize)
 	store_head.add_child(_store_organize)
 	_store_scroll = _make_scroll(store_column)
@@ -202,12 +202,12 @@ func _rebuild_grid(grid: GridContainer, items: Array, side: String) -> void:
 		grid.add_child(button)
 
 func _refresh_summary() -> void:
-	_bag_count.text = "背包　%d / %d" % [GameState.inventory_used(), GameState.inventory.size()]
-	_store_count.text = "仓库　%d / %d" % [Inventory.used_slots(GameState.warehouse), GameState.warehouse.size()]
-	_gold.text = "金币：%d" % GameState.gold
+	_bag_count.text = Localization.tr_key("ui.warehouse_panel.p007") % [GameState.inventory_used(), GameState.inventory.size()]
+	_store_count.text = Localization.tr_key("ui.warehouse_panel.p008") % [Inventory.used_slots(GameState.warehouse), GameState.warehouse.size()]
+	_gold.text = Localization.tr_key("ui.warehouse_panel.p009") % GameState.gold
 	var cost := Warehouse.next_cost(GameState.warehouse_expansions)
 	_expand.disabled = cost < 0
-	_expand.text = "已达上限" if cost < 0 else "扩容 +%d 格（%d 金币）" % [
+	_expand.text = Localization.tr_key("ui.warehouse_panel.p010") if cost < 0 else Localization.tr_key("ui.warehouse_panel.p011") % [
 		Warehouse.capacity(GameState.warehouse_expansions + 1) - GameState.warehouse.size(), cost]
 
 func _on_bag_organize() -> void:
@@ -233,7 +233,7 @@ func _on_slot_pressed(side: String, index: int) -> void:
 		if item is Dictionary:
 			var id := Warehouse.item_token(item)
 			var result := GameState.warehouse_store(index, id) if side == "bag" else GameState.warehouse_take(index, id)
-			_detail.text = String(result.get("reason", "存取完成")) if not result.get("ok", false) else "存取完成"
+			_detail.text = String(result.get("reason", Localization.tr_key("ui.warehouse_panel.p012"))) if not result.get("ok", false) else Localization.tr_key("ui.warehouse_panel.p012")
 		return
 	_last_side = side
 	_last_index = index
@@ -241,7 +241,7 @@ func _on_slot_pressed(side: String, index: int) -> void:
 	if item is Dictionary:
 		_detail.text = "%s　%s" % [ItemUtil.display_name(item), "，".join(ItemUtil.attr_lines(item))]
 	else:
-		_detail.text = "空格"
+		_detail.text = Localization.tr_key("ui.warehouse_panel.p013")
 
 func _on_drop(target_index: int, payload: Dictionary, target_side: String) -> void:
 	var source_index := int(payload.get("index", -1))
@@ -255,9 +255,9 @@ func _on_drop(target_index: int, payload: Dictionary, target_side: String) -> vo
 	elif target_side == "bag" and int(payload.get("from", -1)) == ItemSlot.ROLE_WAREHOUSE:
 		result = GameState.warehouse_take(source_index, id, target_index)
 	if not result.is_empty():
-		_detail.text = "存取完成" if result.get("ok", false) else String(result.get("reason", "无法存取"))
+		_detail.text = Localization.tr_key("ui.warehouse_panel.p012") if result.get("ok", false) else String(result.get("reason", Localization.tr_key("ui.warehouse_panel.p014")))
 
 func _on_expand() -> void:
 	var result := GameState.warehouse_expand()
-	_detail.text = "扩容完成，当前 %d 格" % result.get("capacity", 0) if result.get("ok", false) \
-		else String(result.get("reason", "扩容失败"))
+	_detail.text = Localization.tr_key("ui.warehouse_panel.p015") % result.get("capacity", 0) if result.get("ok", false) \
+		else String(result.get("reason", Localization.tr_key("ui.warehouse.expand_failed")))

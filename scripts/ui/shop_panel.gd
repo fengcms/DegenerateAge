@@ -166,7 +166,7 @@ func _build() -> void:
 	head.add_theme_constant_override("separation", 12)
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = "货郎"
+	_title.text = Localization.tr_key("ui.shop_panel.p001")
 	_title.add_theme_font_size_override("font_size", 18)
 	head.add_child(_title)
 	var spacer := Control.new()
@@ -192,11 +192,11 @@ func _build() -> void:
 
 	_tabs.add_child(_build_buy_page())
 	_tabs.add_child(_build_sell_page())
-	_tabs.set_tab_title(0, "购买")
-	_tabs.set_tab_title(1, "出售")
+	_tabs.set_tab_title(0, Localization.tr_key("ui.shop_panel.p002"))
+	_tabs.set_tab_title(1, Localization.tr_key("ui.shop_panel.p003"))
 
 	var hint := Label.new()
-	hint.text = "购买：点右侧按钮；出售：把左侧背包里的装备拖到托盘　·　E / Esc 关闭（托盘内未确认的装备会退回背包）"
+	hint.text = Localization.tr_key("ui.shop_panel.p004")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -218,7 +218,7 @@ func _build_sell_page() -> Control:
 	page.add_theme_constant_override("separation", 8)
 
 	var tip := Label.new()
-	tip.text = "从左侧背包拖拽装备到下方托盘（货郎只收购装备）。点托盘中的装备可取回。"
+	tip.text = Localization.tr_key("ui.shop_panel.p005")
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tip.add_theme_font_size_override("font_size", 12)
 	tip.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -244,18 +244,18 @@ func _build_sell_page() -> Control:
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(sp)
 	_return_all_btn = Button.new()
-	_return_all_btn.text = "全部取回"
+	_return_all_btn.text = Localization.tr_key("ui.shop_panel.p006")
 	_return_all_btn.custom_minimum_size = Vector2(96, 32)
 	_return_all_btn.pressed.connect(_on_return_all_pressed)
 	bar.add_child(_return_all_btn)
 	_stage_all_btn = Button.new()
-	_stage_all_btn.text = "一键移入"
-	_stage_all_btn.tooltip_text = "15 级解锁；按背包中的等级与成色筛选移入待售托盘"
+	_stage_all_btn.text = Localization.tr_key("ui.shop_panel.p007")
+	_stage_all_btn.tooltip_text = Localization.tr_key("ui.shop_panel.p008")
 	_stage_all_btn.custom_minimum_size = Vector2(96, 32)
 	_stage_all_btn.pressed.connect(_on_stage_all_pressed)
 	bar.add_child(_stage_all_btn)
 	_confirm_btn = Button.new()
-	_confirm_btn.text = "确认出售"
+	_confirm_btn.text = Localization.tr_key("ui.shop_panel.p009")
 	_confirm_btn.custom_minimum_size = Vector2(96, 32)
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	bar.add_child(_confirm_btn)
@@ -324,14 +324,14 @@ func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 func _refresh() -> void:
 	if not visible:
 		return
-	_title.text = "%s　买卖" % Shop.display_name(_shop_id)
+	_title.text = Localization.tr_key("ui.shop_panel.p010") % Shop.display_name(_shop_id)
 	_refresh_gold()
 	_rebuild_buy()
 	_refresh_tray()
 
 func _refresh_gold() -> void:
 	if _gold_label != null:
-		_gold_label.text = "金币  %d" % GameState.gold
+		_gold_label.text = Localization.tr_key("ui.shop_panel.p011") % GameState.gold
 
 func _rebuild_buy() -> void:
 	for c in _buy_list.get_children():
@@ -340,7 +340,7 @@ func _rebuild_buy() -> void:
 	var items := Shop.buy_items(_shop_id)
 	if items.is_empty():
 		var l := Label.new()
-		l.text = "该货郎暂无商品。"
+		l.text = Localization.tr_key("ui.shop_panel.p012")
 		l.add_theme_color_override("font_color", COL_TEXT_DIM)
 		_buy_list.add_child(l)
 		return
@@ -377,13 +377,13 @@ func _make_buy_row(e: Dictionary) -> Control:
 	info.add_child(nm)
 
 	var desc := Label.new()
-	desc.text = "%s　·　已拥有 %d" % [Shop.describe(item_id), _owned_count(item_id)]
+	desc.text = Localization.tr_key("ui.shop_panel.p013") % [Shop.describe(item_id), _owned_count(item_id)]
 	desc.add_theme_font_size_override("font_size", 12)
 	desc.add_theme_color_override("font_color", COL_TEXT_DIM)
 	info.add_child(desc)
 
 	var pr := Label.new()
-	pr.text = "%d 金币" % price
+	pr.text = Localization.tr_key("ui.shop_panel.p014") % price
 	pr.custom_minimum_size = Vector2(90, 0)
 	pr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	pr.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -394,7 +394,7 @@ func _make_buy_row(e: Dictionary) -> Control:
 	row.add_child(pr)
 
 	var buy := Button.new()
-	buy.text = "购买"
+	buy.text = Localization.tr_key("ui.shop_panel.p002")
 	buy.custom_minimum_size = Vector2(72, 30)
 	buy.pressed.connect(_on_buy_pressed.bind(item_id))
 	row.add_child(buy)
@@ -417,7 +417,7 @@ func _refresh_tray() -> void:
 			b.item = {}
 			b.text = ""
 			_apply_slot_style(b, COL_BORDER, false)
-			b.tooltip_text = "把左侧背包里的装备拖到这里"
+			b.tooltip_text = Localization.tr_key("ui.shop_panel.p015")
 
 	var total := 0
 	var upgraded := 0
@@ -425,8 +425,8 @@ func _refresh_tray() -> void:
 		total += Shop.sell_price(it2)
 		if GameState.is_upgrade_over_worn(it2):
 			upgraded += 1
-	_tray_summary.text = "暂存 %d / %d 件　·　结算 %d 金币" % [_tray.size(), _tray_slots.size(), total]
-	_tray_warn.text = ("⚠ 其中 %d 件优于已穿戴，请确认后再出售（6.4 二次确认对话框见 M4）" % upgraded) if upgraded > 0 else ""
+	_tray_summary.text = Localization.tr_key("ui.shop_panel.p016") % [_tray.size(), _tray_slots.size(), total]
+	_tray_warn.text = (Localization.tr_key("ui.shop_panel.p017") % upgraded) if upgraded > 0 else ""
 	_confirm_btn.disabled = _tray.is_empty()
 	_stage_all_btn.disabled = int(GameState.player.get("level", 1)) < 15 or GameState.inventory_used() == 0
 	_return_all_btn.disabled = _tray.is_empty()
@@ -444,14 +444,14 @@ func _on_tray_drop(_tray_index: int, payload: Dictionary) -> void:
 	if item.is_empty():
 		return
 	if not Shop.can_sell(item):
-		EventBus.toast_requested.emit("货郎只收购装备", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p018"), "danger")
 		return
 	if _tray.size() >= _tray_slots.size():
-		EventBus.toast_requested.emit("出售栏已满（%d 格），请先确认出售或取回" % _tray_slots.size(), "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p019") % _tray_slots.size(), "danger")
 		return
 	var idx := _index_of_instance(String(item.get("instanceId", "")))
 	if idx < 0:
-		EventBus.toast_requested.emit("该装备已不在背包", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p020"), "danger")
 		_refresh()
 		return
 	var taken := GameState.remove_item_at(idx)
@@ -468,7 +468,7 @@ func _on_tray_slot_pressed(tray_index: int) -> void:
 	var one: Array = [_tray[tray_index]]
 	var back := GameState.shop_unstage(one)
 	if back == 0:
-		EventBus.toast_requested.emit("背包已满，无法取回", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p021"), "danger")
 		return
 	_tray.remove_at(tray_index)
 	_refresh_tray()
@@ -476,7 +476,7 @@ func _on_tray_slot_pressed(tray_index: int) -> void:
 ## 一键移入（6.4）：把背包中所有可售装备批量移入托盘（一格一件）；优于已穿戴的不移入。
 func _on_stage_all_pressed() -> void:
 	if int(GameState.player.get("level", 1)) < 15:
-		EventBus.toast_requested.emit("达到 15 级后才可一键移入低级装备", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p022"), "danger")
 		return
 	var moved := 0
 	var full := false
@@ -494,29 +494,29 @@ func _on_stage_all_pressed() -> void:
 			_tray.append(taken)
 			moved += 1
 		i -= 1
-	var msg := "移入 %d 件" % moved
+	var msg := Localization.tr_key("ui.shop.staged_count") % moved
 	if full:
-		msg += "（出售栏已满）"
-	EventBus.toast_requested.emit(msg if moved > 0 else "没有可移入的装备", "pickup" if moved > 0 else "danger")
+		msg += Localization.tr_key("ui.shop.tray_full_suffix")
+	EventBus.toast_requested.emit(msg if moved > 0 else Localization.tr_key("ui.shop_panel.p023"), "pickup" if moved > 0 else "danger")
 	_refresh_tray()
 
 ## 全部取回：清空托盘退回背包。
 func _on_return_all_pressed() -> void:
 	var back := _return_tray()
 	if back > 0:
-		EventBus.toast_requested.emit("已取回 %d 件" % back, "info")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p024") % back, "info")
 	_refresh_tray()
 
 func _on_confirm_pressed() -> void:
 	if _tray.is_empty():
-		EventBus.toast_requested.emit("请先把要出售的装备拖到托盘", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p025"), "danger")
 		return
 	var res := GameState.shop_sell_staged(_tray)
 	var n := int(res.get("count", 0))
 	var gold := int(res.get("gold", 0))
 	_tray.clear()
 	if n > 0:
-		EventBus.toast_requested.emit("出售 %d 件（+%d 金币）" % [n, gold], "pickup")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p026") % [n, gold], "pickup")
 	_refresh_tray()
 
 ## 把托盘内装备退回背包（关闭面板 / 全部取回）。返回退回件数；背包满的件保留在托盘。
@@ -525,7 +525,7 @@ func _return_tray() -> int:
 		return 0
 	var back := GameState.shop_unstage(_tray)
 	if back < _tray.size():
-		EventBus.toast_requested.emit("背包已满，%d 件仍留在出售栏" % (_tray.size() - back), "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p027") % (_tray.size() - back), "danger")
 	return back
 
 # ---- 文本 ----
@@ -557,8 +557,8 @@ func _tray_tooltip(item: Dictionary) -> String:
 	lines.append(ItemUtil.display_name(item))
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
-	lines.append("售价 %d 金币" % Shop.sell_price(item))
+	lines.append(Localization.tr_key("ui.shop_panel.p028") % Shop.sell_price(item))
 	if GameState.is_upgrade_over_worn(item):
-		lines.append("⚠ 优于已穿戴（「一键移入」不会移入，手动拖入需确认）")
-	lines.append("点击取回背包")
+		lines.append(Localization.tr_key("ui.shop_panel.p029"))
+	lines.append(Localization.tr_key("ui.shop_panel.p030"))
 	return "\n".join(PackedStringArray(lines))

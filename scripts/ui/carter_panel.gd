@@ -43,7 +43,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_requested(npc_name: String) -> void:
 	if not npc_name.is_empty():
-		_title.text = "%s　出行" % npc_name
+		_title.text = Localization.tr_key("ui.carter_panel.p001") % npc_name
 	set_open(true)
 
 ## 其他面板打开时自动关闭（与背包 / 货郎 / 任务面板互斥）。
@@ -99,7 +99,7 @@ func _build() -> void:
 	head.add_theme_constant_override("separation", 12)
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = "车夫　出行"
+	_title.text = Localization.tr_key("ui.carter_panel.p002")
 	_title.add_theme_font_size_override("font_size", 18)
 	head.add_child(_title)
 	var spacer := Control.new()
@@ -112,7 +112,7 @@ func _build() -> void:
 	head.add_child(close)
 
 	var greet := Label.new()
-	greet.text = "「到过的地方，我都能直接送你去。头一趟先认认路。」"
+	greet.text = Localization.tr_key("ui.carter_panel.p003")
 	greet.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	greet.add_theme_font_size_override("font_size", 13)
 	greet.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -141,7 +141,7 @@ func _panel_style() -> StyleBoxFlat:
 # ---- 刷新 ----
 
 func _reset_hint() -> void:
-	_hint.text = "点击「前往」扣费并切换地图。当前金币 %d。" % GameState.gold
+	_hint.text = Localization.tr_key("ui.carter_panel.p004") % GameState.gold
 	_hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 
 func _refresh() -> void:
@@ -153,7 +153,7 @@ func _refresh() -> void:
 	var dests: Array = MapService.destinations()
 	if dests.is_empty():
 		var l := Label.new()
-		l.text = "车夫暂无可用线路。"
+		l.text = Localization.tr_key("ui.carter_panel.p005")
 		l.add_theme_color_override("font_color", COL_TEXT_DIM)
 		_list.add_child(l)
 		return
@@ -192,7 +192,7 @@ func _make_row(d: Dictionary) -> Control:
 	info.add_child(title)
 
 	var sub := Label.new()
-	sub.text = "推荐 Lv%d　·　%s" % [int(d.get("recommendedLevel", 1)), _fee_text(cost)]
+	sub.text = Localization.tr_key("ui.carter_panel.p006") % [int(d.get("recommendedLevel", 1)), _fee_text(cost)]
 	sub.add_theme_font_size_override("font_size", 12)
 	sub.add_theme_color_override("font_color", COL_GOLD if cost > 0 else COL_TEXT_DIM)
 	info.add_child(sub)
@@ -202,11 +202,11 @@ func _make_row(d: Dictionary) -> Control:
 
 func _make_travel_button(map_id: String, unlocked: bool, afford: bool) -> Button:
 	var b := Button.new()
-	b.text = "前往"
+	b.text = Localization.tr_key("ui.carter_panel.p007")
 	b.custom_minimum_size = Vector2(84, 30)
 	if not unlocked:
 		b.disabled = true
-		var reason := "尚未解锁"
+		var reason := Localization.tr_key("ui.carter.locked")
 		for destination in MapService.destinations():
 			if String(destination.get("id", "")) == map_id:
 				reason = String(destination.get("reason", reason))
@@ -214,7 +214,7 @@ func _make_travel_button(map_id: String, unlocked: bool, afford: bool) -> Button
 		b.tooltip_text = reason
 	elif not afford:
 		b.disabled = true
-		b.tooltip_text = "金币不足（现有 %d）" % GameState.gold
+		b.tooltip_text = Localization.tr_key("ui.carter_panel.p008") % GameState.gold
 	else:
 		b.pressed.connect(_on_travel.bind(map_id))
 	return b
@@ -235,7 +235,7 @@ func _row_style(unlocked: bool, afford: bool) -> StyleBoxFlat:
 	return sb
 
 func _fee_text(cost: int) -> String:
-	return "免费" if cost <= 0 else "%d 金" % cost
+	return Localization.tr_key("ui.carter_panel.p009") if cost <= 0 else Localization.tr_key("ui.carter_panel.p010") % cost
 
 # ---- 交互 ----
 
@@ -245,7 +245,7 @@ func _on_travel(map_id: String) -> void:
 		set_open(false)
 		MapService.reload_world()   # 场景重载；抵达提示由 Game._ready 发出
 		return
-	var reason := String(res.get("reason", "无法前往"))
+	var reason := String(res.get("reason", Localization.tr_key("ui.carter.travel_failed")))
 	_hint.text = reason
 	_hint.add_theme_color_override("font_color", COL_WARN)
 	EventBus.toast_requested.emit(reason, "danger")

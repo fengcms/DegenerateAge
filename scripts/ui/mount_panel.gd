@@ -76,12 +76,12 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = "坐骑收藏"
+	_title.text = Localization.tr_key("ui.mount_panel.p001")
 	_title.add_theme_font_size_override("font_size", 20)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
 	var close := Button.new()
-	close.text = "关闭 · Esc"
+	close.text = Localization.tr_key("ui.mount_panel.p002")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	_center.setup(self, panel, head, Vector2(0.52, 0.34))
@@ -112,7 +112,7 @@ func _build() -> void:
 	_action.pressed.connect(_on_action)
 	preview.add_child(_action)
 	var hint := Label.new()
-	hint.text = "N 打开 / 关闭 · 20 级可骑乘 · 坐骑掉落进入收藏"
+	hint.text = Localization.tr_key("ui.mount_panel.p003")
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.modulate = Color(0.7, 0.72, 0.76)
 	root.add_child(hint)
@@ -134,17 +134,17 @@ func _refresh() -> void:
 		var mount_id := String(template.get("id", ""))
 		var button := Button.new()
 		var owned := GameState.owned_mounts.has(mount_id)
-		button.text = "%s%s" % [String(template.get("name", mount_id)), " ✓" if owned else " · 未获得"]
-		button.tooltip_text = "查看坐骑详情"
+		button.text = "%s%s" % [String(template.get("name", mount_id)), " ✓" if owned else Localization.tr_key("ui.mount_panel.p004")]
+		button.tooltip_text = Localization.tr_key("ui.mount_panel.p005")
 		button.pressed.connect(_select.bind(mount_id))
 		_list.add_child(button)
 	var selected = DataLoader.get_entry("mounts", _selected_mount)
 	if not selected is Dictionary:
 		_image.texture = null
-		_name.text = "暂无坐骑"
-		_details.text = "击败指定 Boss 后有机会获得坐骑。"
+		_name.text = Localization.tr_key("ui.mount_panel.p006")
+		_details.text = Localization.tr_key("ui.mount_panel.p007")
 		_action.disabled = true
-		_action.text = "不可骑乘"
+		_action.text = Localization.tr_key("ui.mount_panel.p008")
 		return
 	var icon := String(selected.get("icon", ""))
 	_image.texture = load(icon) as Texture2D if not icon.is_empty() and ResourceLoader.exists(icon) else null
@@ -152,17 +152,17 @@ func _refresh() -> void:
 	var required := int(selected.get("levelReq", 20))
 	var bonus := float(selected.get("speedBonus", 0.0)) * 100.0
 	var boss = DataLoader.get_entry("monsters", String(selected.get("dropBossId", "")))
-	var boss_name := String(boss.get("name", "指定 Boss")) if boss is Dictionary else "指定 Boss"
+	var boss_name := String(boss.get("name", Localization.tr_key("ui.mount.designated_boss"))) if boss is Dictionary else Localization.tr_key("ui.mount.designated_boss")
 	var owned := GameState.owned_mounts.has(_selected_mount)
-	_details.text = "移动速度 +%.0f%% · 需要 Lv%d\n来源：%s\n%s" % [bonus, required, boss_name,
-		"已收藏" if owned else "尚未获得，击败 Boss 后有机会掉落"]
+	_details.text = Localization.tr_key("ui.mount_panel.p009") % [bonus, required, boss_name,
+		Localization.tr_key("ui.mount.collected") if owned else Localization.tr_key("ui.mount.not_collected")]
 	_action.disabled = not owned or int(GameState.player.get("level", 1)) < required
 	if not owned:
-		_action.text = "尚未获得"
+		_action.text = Localization.tr_key("ui.mount_panel.p010")
 	elif int(GameState.player.get("level", 1)) < required:
-		_action.text = "Lv%d 解锁骑乘" % required
+		_action.text = Localization.tr_key("ui.mount_panel.p011") % required
 	else:
-		_action.text = "下骑" if GameState.active_mount == _selected_mount else "骑乘"
+		_action.text = Localization.tr_key("ui.mount_panel.p012") if GameState.active_mount == _selected_mount else Localization.tr_key("ui.mount_panel.p013")
 
 func _select(mount_id: String) -> void:
 	_selected_mount = mount_id
@@ -174,5 +174,5 @@ func _on_action() -> void:
 	else:
 		var result := GameState.ride_mount(_selected_mount)
 		if not result.get("ok", false):
-			EventBus.toast_requested.emit(String(result.get("reason", "无法骑乘")), "danger")
+			EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("ui.mount_panel.p014"))), "danger")
 	_refresh()

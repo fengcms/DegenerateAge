@@ -2,10 +2,10 @@ extends Control
 ## M4-6 设置：即时预览，写入当前存档；冲突键位经确认后交换。
 
 const ACTION_NAMES := {
-	"move_up": "向上移动", "move_down": "向下移动", "move_left": "向左移动", "move_right": "向右移动",
-	"attack": "普通攻击", "target_next": "切换目标", "sit_toggle": "打坐 / 起身", "auto_battle": "自动战斗", "auto_pickup": "自动拾取",
-	"interact": "交互", "pause": "关闭 / 暂停", "panel_inventory": "背包", "panel_character": "人物",
-	"panel_map": "地图", "panel_skill": "技能", "panel_mount": "坐骑",
+	"move_up": "ui.action.move_up", "move_down": "ui.action.move_down", "move_left": "ui.action.move_left", "move_right": "ui.action.move_right",
+	"attack": "ui.action.attack", "target_next": "ui.action.target_next", "sit_toggle": "ui.action.sit_toggle", "auto_battle": "ui.action.auto_battle", "auto_pickup": "ui.action.auto_pickup",
+	"interact": "ui.action.interact", "pause": "ui.action.pause", "panel_inventory": "ui.action.panel_inventory", "panel_character": "ui.action.panel_character",
+	"panel_map": "ui.action.panel_map", "panel_skill": "ui.action.panel_skill", "panel_mount": "ui.action.panel_mount",
 }
 
 var _key_list: VBoxContainer
@@ -37,10 +37,10 @@ func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key.physical_keycode == KEY_ESCAPE:
 		_capture_action = ""
-		_capture_label.text = "已取消改键"
+		_capture_label.text = Localization.tr_key("ui.settings_panel.p001")
 		return
 	if key.physical_keycode <= 0 or key.ctrl_pressed or key.alt_pressed or key.meta_pressed or key.shift_pressed:
-		_capture_label.text = "请按单个普通按键；Esc 取消"
+		_capture_label.text = Localization.tr_key("ui.settings_panel.p002")
 		return
 	var action := _capture_action
 	_capture_action = ""
@@ -48,12 +48,12 @@ func _input(event: InputEvent) -> void:
 	if not conflict.is_empty():
 		_pending_action = action
 		_pending_code = key.physical_keycode
-		_conflict.dialog_text = "%s 已用于「%s」。是否交换两个功能的按键？" % [OS.get_keycode_string(key.physical_keycode), _action_name(conflict)]
+		_conflict.dialog_text = Localization.tr_key("ui.settings_panel.p003") % [OS.get_keycode_string(key.physical_keycode), _action_name(conflict)]
 		_conflict.popup_centered()
-		_capture_label.text = "等待确认键位交换"
+		_capture_label.text = Localization.tr_key("ui.settings_panel.p004")
 	else:
 		SettingsRuntime.set_binding(action, key.physical_keycode)
-		_capture_label.text = "已设置「%s」" % _action_name(action)
+		_capture_label.text = Localization.tr_key("ui.settings_panel.p005") % _action_name(action)
 		_refresh_keys()
 
 func set_open(open: bool) -> void:
@@ -99,12 +99,12 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	var title := Label.new()
-	title.text = "设置"
+	title.text = Localization.tr_key("ui.settings_panel.p006")
 	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	var close := Button.new()
-	close.text = "关闭 · Esc"
+	close.text = Localization.tr_key("ui.settings_panel.p007")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	var tabs := TabContainer.new()
@@ -116,7 +116,7 @@ func _build() -> void:
 	_build_controls(tabs)
 	_build_data(tabs)
 	_conflict = ConfirmationDialog.new()
-	_conflict.title = "按键冲突"
+	_conflict.title = Localization.tr_key("ui.settings_panel.p008")
 	_conflict.confirmed.connect(_confirm_swap)
 	add_child(_conflict)
 
@@ -127,7 +127,7 @@ func _tab(tabs: TabContainer, title: String) -> VBoxContainer:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	tabs.add_child(scroll)
 	var box := VBoxContainer.new()
-	box.name = title + "内容"
+	box.name = title + "Content"
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 12)
 	scroll.add_child(box)
@@ -172,38 +172,38 @@ func _checkbox(box: VBoxContainer, label: String, field: String) -> void:
 	box.add_child(check)
 
 func _build_audio(tabs: TabContainer) -> void:
-	var box := _tab(tabs, "音频")
-	_slider(box, "音乐音量", "musicVolume", 0.0, 1.0, 0.05)
-	_slider(box, "音效音量", "sfxVolume", 0.0, 1.0, 0.05)
+	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p009"))
+	_slider(box, Localization.tr_key("ui.settings_panel.p010"), "musicVolume", 0.0, 1.0, 0.05)
+	_slider(box, Localization.tr_key("ui.settings_panel.p011"), "sfxVolume", 0.0, 1.0, 0.05)
 	var hint := Label.new()
-	hint.text = "音量应用于 Music / SFX 声道；当前版本尚无游戏内音乐资源。"
+	hint.text = Localization.tr_key("ui.settings_panel.p012")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 func _build_visual(tabs: TabContainer) -> void:
-	var box := _tab(tabs, "画面")
+	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p013"))
 	# M5-9d（09-A）：三轴各自档位化 + 显示适配（自动/手动）。
-	_option_row(box, "界面大小", "uiScale", [80, 100, 125, 150, 175, 200])
-	_option_row(box, "地图显示大小", "mapScale", [80, 100, 125, 150, 175, 200])
-	_option_row(box, "文字大小", "textScale", [100, 110, 125, 150, 175, 200])
+	_option_row(box, Localization.tr_key("ui.settings_panel.p014"), "uiScale", [80, 100, 125, 150, 175, 200])
+	_option_row(box, Localization.tr_key("ui.settings_panel.p015"), "mapScale", [80, 100, 125, 150, 175, 200])
+	_option_row(box, Localization.tr_key("ui.settings_panel.p016"), "textScale", [100, 110, 125, 150, 175, 200])
 	var color_row := HBoxContainer.new()
 	box.add_child(color_row)
 	var color_label := Label.new()
-	color_label.text = "色盲友好配色"
+	color_label.text = Localization.tr_key("ui.settings_panel.p017")
 	color_label.custom_minimum_size.x = 160
 	color_row.add_child(color_label)
 	var color_options := OptionButton.new()
-	color_options.add_item("关闭")
-	color_options.add_item("开启（药品黄/青配色）")
+	color_options.add_item(Localization.tr_key("ui.settings_panel.p018"))
+	color_options.add_item(Localization.tr_key("ui.settings_panel.p019"))
 	color_options.select(1 if String(GameState.settings.get("colorblindMode", "off")) == "friendly" else 0)
 	color_options.item_selected.connect(func(index: int) -> void:
 		GameState.settings["colorblindMode"] = "friendly" if index == 1 else "off"
 		_changed())
 	color_row.add_child(color_options)
 	_build_display_adapt(box)
-	_checkbox(box, "全屏显示", "fullscreen")
+	_checkbox(box, Localization.tr_key("ui.settings_panel.p020"), "fullscreen")
 	var resolution := OptionButton.new()
-	for entry in [{"id": "auto", "label": "自由窗口大小"}, {"id": "1280x800", "label": "1280×800"},
+	for entry in [{"id": "auto", "label": Localization.tr_key("ui.settings_panel.p021")}, {"id": "1280x800", "label": "1280×800"},
 		{"id": "1440x900", "label": "1440×900"}, {"id": "1600x900", "label": "1600×900"},
 		{"id": "1920x1200", "label": "1920×1200"}]:
 		resolution.add_item(String(entry.label))
@@ -214,10 +214,10 @@ func _build_visual(tabs: TabContainer) -> void:
 		GameState.settings["resolution"] = resolution.get_item_metadata(index)
 		_changed())
 	box.add_child(resolution)
-	_checkbox(box, "屏幕震动", "screenShake")
-	_checkbox(box, "强光闪烁", "strongFlash")
+	_checkbox(box, Localization.tr_key("ui.settings_panel.p022"), "screenShake")
+	_checkbox(box, Localization.tr_key("ui.settings_panel.p023"), "strongFlash")
 	var hint := Label.new()
-	hint.text = "界面 / 地图 / 文字三轴独立缩放；地图倍率越小，同一窗口看到的野外越大。震动和闪烁开关已保存。"
+	hint.text = Localization.tr_key("ui.settings_panel.p024")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
@@ -260,12 +260,12 @@ func _build_display_adapt(box: VBoxContainer) -> void:
 	var row := HBoxContainer.new()
 	box.add_child(row)
 	var caption := Label.new()
-	caption.text = "显示适配"
+	caption.text = Localization.tr_key("ui.settings_panel.p025")
 	caption.custom_minimum_size.x = 160
 	row.add_child(caption)
 	var mode := OptionButton.new()
-	mode.add_item("自动（推荐）")
-	mode.add_item("手动")
+	mode.add_item(Localization.tr_key("ui.settings_panel.p026"))
+	mode.add_item(Localization.tr_key("ui.settings_panel.p027"))
 	mode.select(1 if SettingsRuntime.display_scale_mode() == "manual" else 0)
 	mode.item_selected.connect(func(index: int) -> void:
 		GameState.settings["displayScaleMode"] = "manual" if index == 1 else "auto"
@@ -292,18 +292,18 @@ func _build_display_adapt(box: VBoxContainer) -> void:
 		value.text = "%.0f%%" % (v * 100.0)
 		_changed())
 	var hint := Label.new()
-	hint.text = "自动：使用系统显示尺寸。手动：再统一调整界面、文字与地图。各项百分比表示最终大小，不会互相叠乘。"
+	hint.text = Localization.tr_key("ui.settings_panel.p028")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 func _build_game(tabs: TabContainer) -> void:
-	var box := _tab(tabs, "游戏")
-	_slider(box, "自动喝药阈值", "potionThreshold", 0.1, 0.9, 0.05)
-	_checkbox(box, "自动战斗允许 Boss", "allowBoss")
-	_checkbox(box, "拾取飞行动画", "dropFlyAnim")
+	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p029"))
+	_slider(box, Localization.tr_key("ui.settings_panel.p030"), "potionThreshold", 0.1, 0.9, 0.05)
+	_checkbox(box, Localization.tr_key("ui.settings_panel.p031"), "allowBoss")
+	_checkbox(box, Localization.tr_key("ui.settings_panel.p032"), "dropFlyAnim")
 	var filter := OptionButton.new()
-	for entry in [{"id": "all", "label": "拾取全部品质"}, {"id": "rare", "label": "稀有及以上"},
-		{"id": "epic", "label": "史诗及以上"}, {"id": "legendary", "label": "仅传说"}]:
+	for entry in [{"id": "all", "label": Localization.tr_key("ui.settings_panel.p033")}, {"id": "rare", "label": Localization.tr_key("ui.settings_panel.p034")},
+		{"id": "epic", "label": Localization.tr_key("ui.settings_panel.p035")}, {"id": "legendary", "label": Localization.tr_key("ui.settings_panel.p036")}]:
 		filter.add_item(String(entry.label))
 		filter.set_item_metadata(filter.item_count - 1, String(entry.id))
 		if String(GameState.settings.get("qualityFilter", "all")) == String(entry.id):
@@ -313,14 +313,14 @@ func _build_game(tabs: TabContainer) -> void:
 		_changed())
 	box.add_child(filter)
 	var hint := Label.new()
-	hint.text = "品质筛选仅作后续自动拾取预设，当前掉落仍生成即入包。"
+	hint.text = Localization.tr_key("ui.settings_panel.p037")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 
 func _build_controls(tabs: TabContainer) -> void:
-	var root := _tab(tabs, "控制")
+	var root := _tab(tabs, Localization.tr_key("ui.settings_panel.p038"))
 	_capture_label = Label.new()
-	_capture_label.text = "点击右侧按键，再按新键；冲突时可交换。Esc 取消。"
+	_capture_label.text = Localization.tr_key("ui.settings_panel.p039")
 	root.add_child(_capture_label)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -330,9 +330,9 @@ func _build_controls(tabs: TabContainer) -> void:
 	_refresh_keys()
 
 func _build_data(tabs: TabContainer) -> void:
-	var box := _tab(tabs, "数据")
+	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p040"))
 	var button := Button.new()
-	button.text = "打开存档管理"
+	button.text = Localization.tr_key("ui.settings_panel.p041")
 	button.pressed.connect(func() -> void:
 		set_open(false)
 		var save_panel := get_node("../SavePanel")
@@ -340,7 +340,7 @@ func _build_data(tabs: TabContainer) -> void:
 		save_panel.set_open(true))
 	box.add_child(button)
 	var note := Label.new()
-	note.text = "设置保存在当前活动存档槽；新游戏请先手动建立存档。"
+	note.text = Localization.tr_key("ui.settings_panel.p042")
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(note)
 
@@ -364,16 +364,16 @@ func _refresh_keys() -> void:
 
 func _action_name(action: String) -> String:
 	if action.begins_with("hotbar_"):
-		return "快捷格 %s" % action.trim_prefix("hotbar_")
-	return String(ACTION_NAMES.get(action, action))
+		return Localization.tr_key("ui.settings_panel.p043") % action.trim_prefix("hotbar_")
+	return Localization.tr_key(String(ACTION_NAMES[action])) if ACTION_NAMES.has(action) else action
 
 func _start_capture(action: String) -> void:
 	_capture_action = action
-	_capture_label.text = "正在设置「%s」：请按新键，Esc 取消" % _action_name(action)
+	_capture_label.text = Localization.tr_key("ui.settings_panel.p044") % _action_name(action)
 
 func _confirm_swap() -> void:
 	SettingsRuntime.set_binding(_pending_action, _pending_code)
-	_capture_label.text = "已交换冲突按键"
+	_capture_label.text = Localization.tr_key("ui.settings_panel.p045")
 	_pending_action = ""
 	_pending_code = 0
 	_refresh_keys()
