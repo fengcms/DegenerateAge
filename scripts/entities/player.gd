@@ -18,7 +18,6 @@ const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 
 const IFRAME := 0.5            # 3.4：受击后无敌帧时长（s）
 const HITSTUN := 0.25          # 3.4：受击硬直时长（s，期间无法主动行动）
-const DEATH_REVIVE_DELAY := 3.0  # 4.7 死亡流程占位（正式复活对话框见 M3）
 const MANUAL_EPS := 0.05       # 手动输入判定阈值（摇杆量）
 const REGEN_COMBAT_DELAY := 5.0
 const IDLE_HP_RATE := 0.01      # 每秒按最大值恢复；小数余量逐帧累积
@@ -240,9 +239,6 @@ func _physics_process(delta: float) -> void:
 		manual_input_active = false
 		velocity = Vector2.ZERO
 		move_and_slide()
-		_death_t += delta
-		if _death_t >= DEATH_REVIVE_DELAY:
-			_revive()
 		_update_blink()
 		return
 	_tick_regen(delta)
@@ -334,14 +330,15 @@ func _begin_death() -> void:
 	_slow_remaining = 0.0
 	_slow_pct = 0.0
 	is_dead = true
+	GameState.set_auto_battle(false)
 	_hp_regen_rest = 0.0
 	_mp_regen_rest = 0.0
 	_death_t = 0.0
 	velocity = Vector2.ZERO
 	queue_redraw()
-	EventBus.toast_requested.emit("你倒下了……%.0f 秒后恢复（占位流程，正式死亡/复活见后续阶段）" % DEATH_REVIVE_DELAY, "danger")
+	EventBus.toast_requested.emit("你倒下了，请选择复活地点", "danger")
 
-## 占位复活：满 HP / MP 原地恢复（4.7「不掉等级 / 装备 / 金币」）。
+## 由死亡选择界面调用；消耗复活卷的校验和扣除由界面入口负责。
 func _revive() -> void:
 	is_dead = false
 	_death_t = 0.0
@@ -351,7 +348,7 @@ func _revive() -> void:
 	GameState.player.mp = GameState.max_mp()
 	GameState.emit_all()
 	queue_redraw()
-	EventBus.toast_requested.emit("已恢复（占位复活）", "info")
+	EventBus.toast_requested.emit("已复活", "info")
 
 ## 受击闪烁：无敌帧内高频闪烁，死亡保留半透明。
 func _update_blink() -> void:

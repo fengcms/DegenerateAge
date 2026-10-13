@@ -149,6 +149,10 @@ func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 	if not MapService.pending_travel.is_empty():
 		EventBus.toast_requested.emit("地图切换中，请稍后存档", "danger")
 		return false
+	var live_player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+	if live_player != null and live_player.is_dead and not new_game:
+		EventBus.toast_requested.emit("请先选择复活方式，再保存进度", "danger")
+		return false
 	_ensure_dir()
 	var data := _collect()
 	data["slotId"] = slot
@@ -213,6 +217,9 @@ func request_autosave() -> void:
 ## 是否允许自动存 / 退出存写盘。
 ## 三重闸门：① 已开档；② 不在读档抑制期；③ 总开关开且（非测试场景 或 显式放开测试）。
 func _autosave_allowed() -> bool:
+	var live_player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+	if live_player != null and live_player.is_dead:
+		return false
 	if active_slot < 0 or _suppress_autosave or not autosave_enabled or not MapService.pending_travel.is_empty():
 		return false
 	if not autosave_in_tests and _is_test_scene():
