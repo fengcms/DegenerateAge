@@ -420,6 +420,12 @@ func request_skill(skill_id: String) -> bool:
 	if skill_cooldown(skill_id) > 0.0:
 		EventBus.toast_requested.emit("技能冷却中", "danger")
 		return false
+	if String(skill.get("kind", "")) == "buff":
+		if GameState.buff_remaining(skill_id) > 0.0:
+			EventBus.toast_requested.emit("增益已生效", "danger")
+			return false
+		begin_manual_command()
+		return cast_skill(skill_id)
 	if String(skill.get("shape", "")) == "circle":
 		if skill_targets(skill).is_empty():
 			EventBus.toast_requested.emit("范围内没有可攻击的怪物", "danger")
@@ -444,12 +450,20 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	var skill = DataLoader.get_entry("skills", skill_id)
 	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or skill_id == "basic_slash" or not skill is Dictionary:
 		return false
-	if is_dead or _stun > 0.0 or _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
+	if is_dead or _stun > 0.0:
 		return false
 	if int(GameState.player.level) < int(skill.get("unlockLevel", 1)) or skill_cooldown(skill_id) > 0.0:
 		return false
 	var mana_cost := int(skill.get("manaCost", 0))
 	if int(GameState.player.mp) < mana_cost:
+		return false
+	if String(skill.get("kind", "")) == "buff" and String(skill.get("shape", "")) == "self":
+		if not GameState.start_buff(skill_id):
+			return false
+		GameState.spend_mp(mana_cost)
+		skill_cooldowns[skill_id] = float(skill.get("cooldown", 0.0))
+		return true
+	if _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
 	var targets := skill_targets(skill, target)
 	if targets.is_empty() or not GameState.spend_mp(mana_cost):

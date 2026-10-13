@@ -26,6 +26,20 @@ func _ready() -> void:
 	GameState.tick_buffs(8.0)
 	check(GameState.buff_remaining("battle_focus") == 0.0, "8秒后失效")
 	check(is_equal_approx(player.effective_attack_power(), float(base_attack)) and is_equal_approx(player.effective_attack_interval(), base_interval), "失效后恢复基值")
+	check(HotbarConfig.valid_entry({"kind": "skill", "id": "battle_focus"}), "技能可配置到快捷栏")
+	GameState.player.level = 14
+	GameState.player.mp = 100
+	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == 100, "未解锁不耗蓝")
+	GameState.player.level = 15
+	GameState.player.mp = 29
+	check(not player.request_skill("battle_focus") and player.skill_cooldown("battle_focus") == 0.0, "缺蓝不进冷却")
+	GameState.player.mp = 100
+	check(player.request_skill("battle_focus"), "安全区无目标可手动施放")
+	check(int(GameState.player.mp) == 70 and player.skill_cooldown("battle_focus") == 30.0, "手动施放耗蓝与冷却")
+	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == 70, "冷却时不重复扣蓝")
+	player.skill_cooldowns.clear()
+	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == 70, "增益生效时不可叠层")
+	GameState.clear_buffs()
 	GameState.start_buff("battle_focus")
 	player.set_sitting(true)
 	check(GameState.buff_remaining("battle_focus") == 0.0, "打坐清除增益")

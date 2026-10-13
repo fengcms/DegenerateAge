@@ -4,7 +4,7 @@ extends RefCounted
 
 const SIZE := 12
 const TOWN_SCROLL := "misc_town_scroll"
-const ACTIVE_SKILLS := ["basic_slash", "earth_cleave", "whirlwind"]
+const ACTIVE_SKILLS := ["basic_slash", "earth_cleave", "whirlwind", "battle_focus"]
 
 static func defaults() -> Array:
 	var slots: Array = [{"kind": "auto_potion", "id": "red"},

@@ -22,6 +22,7 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _gold_label: Label = %GoldLabel
 @onready var _bag_label: Label = %BagLabel
 @onready var _auto_label: Label = %AutoLabel
+@onready var _buff_label: Label = %BuffLabel
 @onready var _toast_box: VBoxContainer = %ToastBox
 @onready var _map_name: Label = %MapName
 @onready var _map_coords: Label = %MapCoords
@@ -72,6 +73,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	_update_coords()
 	_update_target()
+	var remaining := GameState.buff_remaining("battle_focus")
+	_buff_label.text = "战意觉醒  %.1f 秒" % remaining if remaining > 0.0 else ""
 
 # ---- 事件回调 ----
 
