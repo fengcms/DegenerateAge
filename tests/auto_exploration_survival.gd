@@ -10,6 +10,11 @@ func _ready() -> void:
 	for _i in range(8):
 		await get_tree().process_frame
 	var game: Node = main.get_node("Game")
+	# 与 affix_shot / input_feedback_test / auto_control_acceptance 同一惯例：
+	# 直接 queue_free 怪物不走 died 信号 ⇒ 刷新点「无死亡登记」，下一帧即在随机位置重生，
+	# 随机新怪会与本测试的搜怪 / 巡游断言竞争（2026-10-13 实测偶发失败，失败项逐次不同）。
+	# 关掉刷新进程，保证「只剩 chosen 一只怪」的局面确定。
+	game.get_node("Spawner").set_process(false)
 	var player := game.get_node("Entities/Player") as PlayerCharacter
 	var pilot := player.get_node("AutoPilot") as AutoBattle
 	var enemies := get_tree().get_nodes_in_group("enemies")

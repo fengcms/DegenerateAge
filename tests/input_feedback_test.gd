@@ -56,16 +56,18 @@ func _ready() -> void:
 	key(KEY_TAB)
 	check(player.locked_target == enemies[0], "Tab 循环不选屏外怪")
 	check(not player.try_auto_attack(enemies[1]), "超距离不能直接扣血")
-	# 自动获得的旧目标不能绕过新锚点范围；显式锁定优先，但仍遵守不可达黑名单。
-	pilot._anchor = enemies[2].global_position
+	# 无锁定目标时按「可见范围」选最近者（屏外 2000px 不参选）；显式锁定优先，
+	# 但锁定目标进黑名单后回退最近可见。
+	# （M4-9 起搜怪以 visible_enemies 为准，旧锚点 _anchor 已移除 ——
+	#  2026-10-13 M5-7 回归时重写本节，原锚点范围断言随 API 废止。）
 	player.select_target(enemies[0], false)
-	check(pilot._find_target() == enemies[2], "自动旧目标不绕过锚点范围")
-	player.select_target(enemies[0])
-	check(pilot._find_target() == enemies[0], "用户锁定目标优先")
-	pilot._blacklist[enemies[0].get_instance_id()] = 8.0
-	check(pilot._find_target() != enemies[0], "锁定目标仍遵守不可达黑名单")
+	check(pilot._find_target() == enemies[0], "无锁定应选最近可见目标")
+	player.select_target(enemies[1])
+	check(pilot._find_target() == enemies[1], "用户锁定目标优先")
+	pilot._blacklist[enemies[1].get_instance_id()] = 8.0
+	check(pilot._find_target() == enemies[0], "锁定目标被拉黑后回退最近可见目标")
 	pilot._blacklist.clear()
-	pilot._anchor = player.global_position
+	player.select_target(null)
 	# 空地移动使用世界投影，与相机位置无关。
 	var start := player.global_position
 	var point := start + Vector2(0, 130)

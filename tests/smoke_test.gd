@@ -63,6 +63,7 @@ func _ready() -> void:
 	await _test_map_scale()
 	await _test_display_scale()
 	await _test_world_text_scale()
+	await _test_scale_invariance()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -2651,6 +2652,122 @@ func _test_world_text_scale() -> void:
 		if node != null:
 			node.queue_free()
 	for key in ["displayScaleMode", "displayScale", "mapScale"]:
+		GameState.settings.erase(key)
+	await get_tree().process_frame
+
+# ---- M5-7（批次③ 收口）：显示适配「倍率无关」不变量 ----
+## M5-9f 的 16 面板 × 3 窗口 × 3 界面倍率矩阵在 tests/settings_test.gd（点击坐标一致已含
+## mapScale 档位）；这里随冒烟固化 **gameplay 链**的三条不变量，任意倍率组合下成立：
+##   ① 点击链全走 canvas transform ⇒ 按实体屏幕坐标点选恒命中同一实体
+##     （补 manual 显示系数 × mapScale **乘积**组合，settings_test 矩阵未扫手动系数）；
+##   ② 三轴隔离：uiScale / textScale 只动界面与文字，mapScale 只动相机 zoom；
+##   ③ 世界文字屏幕上尺寸恒定：node.scale × 地图总倍率 ≈ 1（创意 09 §7 的定量表述）。
+func _test_scale_invariance() -> void:
+	GameState.reset_to_defaults()
+	var game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	var player: Node2D = game.get_node("Entities/Player") as Node2D
+	var cam: Camera2D = player.get_node_or_null("Camera2D") as Camera2D
+	_expect(cam != null, "Player 下应有 Camera2D")
+	if cam == null:
+		game.queue_free()
+		return
+
+	# 与 auto_exploration_survival 同一惯例：关刷新进程 + 只留一只静态怪 ——
+	# 随机重生怪位置不定，会进入点选候选使结果不确定。
+	game.get_node("Spawner").set_process(false)
+	for e in get_tree().get_nodes_in_group("enemies"):
+		e.queue_free()
+	var mon: Monster = (load("res://scenes/entities/Monster.tscn") as PackedScene).instantiate() as Monster
+	mon.monster_id = "training_dummy"
+	mon.ai_enabled = false
+	game.get_node("Entities").add_child(mon)
+	mon.global_position = player.global_position + Vector2(180.0, 0.0)
+	# 关相机平滑求确定性（平滑速度一帧赶不完位移，留残差；settings_test 同法）
+	var smoothing := cam.position_smoothing_enabled
+	cam.position_smoothing_enabled = false
+	cam.reset_smoothing()
+	await get_tree().process_frame
+
+	# ① 点击链往返：mapScale 各档 × 手动显示系数 1.25（总倍率 = 两者乘积）
+	var factors: Array[float] = [0.8, 1.0, 1.5]
+	for ms in factors:
+		GameState.settings["mapScale"] = ms
+		GameState.settings["displayScaleMode"] = "manual"
+		GameState.settings["displayScale"] = 1.25
+		SettingsRuntime.apply_all()
+		SettingsRuntime.apply_map_scale_to(cam)
+		await get_tree().process_frame
+		var total: float = ms * 1.25
+		_expect(cam.zoom.is_equal_approx(Vector2(total, total)),
+			"相机 zoom 应为地图总倍率 %.3f，实际 %s" % [total, str(cam.zoom)])
+		var screen_pos: Vector2 = mon.get_global_transform_with_canvas().origin
+		_expect(game.enemy_at_screen(screen_pos) == mon,
+			"总倍率 %.2f 下按怪物屏幕坐标点选应命中同一只（看到哪点到哪）" % total)
+		var npc: Npc = null
+		for child in game.get_node("Npcs").get_children():
+			if child is Npc:
+				npc = child as Npc
+				break
+		if npc != null:
+			var npc_screen: Vector2 = npc.get_global_transform_with_canvas().origin
+			_expect(game.npc_at_screen(npc_screen) == npc,
+				"总倍率 %.2f 下按 NPC 屏幕坐标点选应命中同一个" % total)
+
+	# ② 三轴隔离：界面 / 文字倍率不动相机；地图倍率不动界面
+	GameState.settings["displayScaleMode"] = "auto"
+	GameState.settings["mapScale"] = 1.0
+	SettingsRuntime.apply_all()
+	SettingsRuntime.apply_map_scale_to(cam)
+	await get_tree().process_frame
+	var ui := CanvasLayer.new()
+	ui.name = "UI"
+	add_child(ui)
+	var screen := Control.new()
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(screen)
+	var label := Label.new()
+	ui.add_child(label)
+	await get_tree().process_frame
+	GameState.settings["uiScale"] = 1.5
+	GameState.settings["textScale"] = 1.25
+	SettingsRuntime.apply_all()
+	await get_tree().process_frame
+	_expect(cam.zoom.is_equal_approx(Vector2.ONE),
+		"uiScale/textScale 变化不应影响相机 zoom，实际 %s" % str(cam.zoom))
+	_expect(is_equal_approx(ui.transform.x.x, 1.5), "uiScale=1.5 应作用于界面轴，实际 %.4f" % ui.transform.x.x)
+	GameState.settings["mapScale"] = 0.8
+	SettingsRuntime.apply_all()
+	SettingsRuntime.apply_map_scale_to(cam)
+	await get_tree().process_frame
+	_expect(is_equal_approx(ui.transform.x.x, 1.5),
+		"mapScale 变化不应影响界面轴，实际 %.4f" % ui.transform.x.x)
+	_expect(cam.zoom.is_equal_approx(Vector2(0.8, 0.8)), "mapScale=0.8 应只动相机，实际 %s" % str(cam.zoom))
+
+	# ③ 世界文字有效屏幕尺寸恒定：scale × 地图总倍率 ≈ 1（屏幕上一样大）
+	var world_label := Label.new()
+	world_label.text = "头顶名"
+	game.get_node("Entities").add_child(world_label)
+	await get_tree().process_frame
+	SettingsRuntime.apply_world_text_scale_to(world_label)
+	var total_ms: float = SettingsRuntime.map_scale_value()
+	_expect(is_equal_approx(world_label.scale.x * total_ms, 1.0),
+		"世界文字应反补偿到屏幕尺寸不变（scale×总倍率=1）：scale=%.4f 总倍率=%.4f"
+			% [world_label.scale.x, total_ms])
+	# 手动系数把总倍率抬回 1.0 ⇒ 不补偿（0.8×1.25）
+	GameState.settings["displayScaleMode"] = "manual"
+	GameState.settings["displayScale"] = 1.25
+	SettingsRuntime.apply_world_text_scale_to(world_label)
+	total_ms = SettingsRuntime.map_scale_value()
+	_expect(is_equal_approx(total_ms, 1.0) and is_equal_approx(world_label.scale.x, 1.0),
+		"总倍率=1.0 时世界文字不应补偿：scale=%.4f 总倍率=%.4f" % [world_label.scale.x, total_ms])
+
+	cam.position_smoothing_enabled = smoothing
+	for node in [world_label, label, screen, ui, mon]:
+		node.queue_free()
+	game.queue_free()
+	for key in ["mapScale", "displayScaleMode", "displayScale", "uiScale", "textScale"]:
 		GameState.settings.erase(key)
 	await get_tree().process_frame
 
