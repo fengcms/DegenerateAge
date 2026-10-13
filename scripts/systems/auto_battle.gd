@@ -221,6 +221,11 @@ func _tick(delta: float) -> void:
 		_last_dist = INF
 		_stuck_count = 0
 
+	# F/G 同开时优先捡可收取的地面物；背包无空间时 _can_pick 会将其排除。
+	if GameState.auto_pickup_on and _tick_loot():
+		return
+	_loot = null
+
 	if _target == null:
 		_search_t = maxf(0.0, _search_t - delta)
 		if _search_t <= 0.0:
@@ -232,9 +237,6 @@ func _tick(delta: float) -> void:
 				_last_dist = INF
 				_stuck_count = 0
 		if _target == null:
-			# 无怪可打 → 自动拾取（9.9：G 仅控制自动战斗时是否顺路拾取）
-			if GameState.auto_pickup_on and _tick_loot():
-				return
 			_tick_roam(delta)
 		return
 
@@ -338,7 +340,6 @@ func _tick_loot() -> bool:
 			or (_loot as GroundItem).item.is_empty() or not _can_pick(_loot as GroundItem)):
 		_loot = null
 	if _loot == null:
-		_set_state(State.SEARCH_LOOT)
 		_loot = _find_loot()
 		if _loot == null:
 			return false
@@ -418,6 +419,8 @@ func _reset_roam_progress() -> void:
 
 ## T10：该掉落物当前是否可被拾取（背包满则不可，避免无限拾取满背包）。
 func _can_pick(gi: GroundItem) -> bool:
+	if not gi.visible or gi.is_queued_for_deletion():
+		return false
 	if String(gi.item.get("kind", "")) == "coin":
 		return not GameState.gold_is_capped()
 	return Inventory.has_space_for(GameState.inventory, gi.item)

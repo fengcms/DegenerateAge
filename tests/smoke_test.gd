@@ -2001,6 +2001,28 @@ func _test_auto_battle() -> void:
 			seen_combat = true
 	_expect(pilot.current_target() != null, "自动战斗应锁定锚点半径内的目标")
 	_expect(seen_combat, "开 F 后应进入「接近目标」或「攻击目标」状态")
+	var priority_loot: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	priority_loot.item = _equip_instance("weapon_starter", "priority_loot", {"atk": 2})
+	priority_loot.hold_time = 10.0
+	game.get_node("LootRoot").add_child(priority_loot)
+	priority_loot.global_position = player.global_position + Vector2(150, 0)
+	GameState.set_auto_pickup(true)
+	pilot.set_physics_process(false)
+	player.set_physics_process(false)
+	pilot._target = mon
+	pilot._tick(0.016)
+	_expect(pilot.current_state() == AutoBattle.State.PATH_TO_LOOT and pilot.current_target() == mon,
+		"有怪物目标时也应先走向可拾取的地面装备")
+	for i in range(GameState.inventory.size()):
+		GameState.inventory[i] = _equip_instance("helmet_cloth", "priority_full_%d" % i, {"def": 1})
+	pilot._tick(0.016)
+	_expect(pilot.current_state() in [AutoBattle.State.PATH_TO_TARGET, AutoBattle.State.ATTACK_TARGET],
+		"背包已满时应跳过装备拾取并继续战斗")
+	GameState.inventory = Inventory.create()
+	GameState.set_auto_pickup(false)
+	priority_loot.queue_free()
+	pilot.set_physics_process(true)
+	player.set_physics_process(true)
 	GameState.set_panel_open("test", true)
 	for _i in range(8):
 		await get_tree().physics_frame
