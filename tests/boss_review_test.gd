@@ -39,6 +39,10 @@ func _ready() -> void:
 	boss.global_position = player.global_position + Vector2(60, 0)
 	boss.set_physics_process(false)
 	player.select_target(boss)
+	var hud: Control = main.get_node("UI/Hud")
+	check(not hud.get_node("TargetPanel").visible, "锁定 Boss 时隐藏重复的普通目标信息")
+	boss._announce_boss_hp()
+	check(main.get_node("UI/BossHealthBar").visible, "锁定 Boss 时仍显示专用大血条")
 	var hp := int(GameState.player.hp)
 	boss.hp = 1800
 	boss._update_boss(0)

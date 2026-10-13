@@ -241,14 +241,22 @@ func _update_coords() -> void:
 		_map_coords.text = "(%d, %d)" % [int(round(g.x)), int(round(g.y))]
 
 func _update_target() -> void:
-	$TargetPanel.visible = is_instance_valid(_target) and not _target.is_queued_for_deletion() and _target.get("is_dead") != true
-	if _target != null and is_instance_valid(_target) and _target.get("is_dead") != true:
+	var valid: bool = is_instance_valid(_target) and not _target.is_queued_for_deletion() and _target.get("is_dead") != true
+	# Boss 由顶部专用血条展示，同一目标无需再占用普通目标卡。
+	$TargetPanel.visible = valid and not _target_is_boss(_target)
+	if valid:
 		_target_name.text = String(_target.get("display_name"))
 		_target_hp.max_value = maxi(1, int(_target.get("max_hp")))
 		_target_hp.value = int(_target.get("hp"))
 	else:
 		_target_name.text = "无目标"
 		_target_hp.value = 0
+
+func _target_is_boss(target: Node) -> bool:
+	if target == null or not is_instance_valid(target):
+		return false
+	var template: Variant = target.get("template")
+	return template is Dictionary and String((template as Dictionary).get("kind", "")) == "boss"
 
 func _current_map_name() -> String:
 	var m = DataLoader.get_entry("maps", GameState.current_map)
