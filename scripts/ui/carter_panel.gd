@@ -112,7 +112,7 @@ func _build() -> void:
 	head.add_child(close)
 
 	var greet := Label.new()
-	greet.text = "「路我熟，给够车钱就送你过去。远的地方得中转。」"
+	greet.text = "「到过的地方，我都能直接送你去。头一趟先认认路。」"
 	greet.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	greet.add_theme_font_size_override("font_size", 13)
 	greet.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -206,7 +206,12 @@ func _make_travel_button(map_id: String, unlocked: bool, afford: bool) -> Button
 	b.custom_minimum_size = Vector2(84, 30)
 	if not unlocked:
 		b.disabled = true
-		b.tooltip_text = "尚未解锁"
+		var reason := "尚未解锁"
+		for destination in MapService.destinations():
+			if String(destination.get("id", "")) == map_id:
+				reason = String(destination.get("reason", reason))
+				break
+		b.tooltip_text = reason
 	elif not afford:
 		b.disabled = true
 		b.tooltip_text = "金币不足（现有 %d）" % GameState.gold

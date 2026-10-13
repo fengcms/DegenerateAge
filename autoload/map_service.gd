@@ -26,6 +26,8 @@ const REST_RADIUS_CELLS := 3.0
 var walk_locked_until_msec: int = 0
 var walk_key_released: bool = true
 var _rest_zones_cache: Dictionary = {}
+## 请求与世界装配之间的运行态事务；绝不写入存档。
+var pending_travel: Dictionary = {}
 
 func _ready() -> void:
 	EventBus.data_loaded.connect(func() -> void: _rest_zones_cache.clear())
@@ -73,10 +75,24 @@ func is_safe_zone(map_id: String) -> bool:
 
 # ---- 车夫拓扑与费用 ----
 
-## 当前图的车夫可达拓扑（`maps.json.carterLinks`）。
+## 所属集群及枢纽相邻集群；按配置顺序去重。
 func links() -> Array:
-	var l = current_data().get("carterLinks", [])
-	return l if l is Array else []
+	var out: Array = []
+	var hub_id := String(current_data().get("hubId", ""))
+	var hub := data_for(hub_id)
+	if hub.is_empty():
+		return out
+	out.append(hub_id)
+	for map_data in DataLoader.get_table("maps"):
+		if map_data is Dictionary and String(map_data.get("hubId", "")) == hub_id:
+			var id := String(map_data.get("id", ""))
+			if not out.has(id):
+				out.append(id)
+	for linked in hub.get("hubLinks", []):
+		if not out.has(linked):
+			out.append(linked)
+	out.erase(GameState.current_map)
+	return out
 
 ## 从当前图能否直达目标图（无需中转）。
 func is_linked(to_id: String) -> bool:
@@ -96,12 +112,17 @@ func is_unlocked(map_id: String) -> bool:
 		return true
 	return bool(GameState.unlocks.get(need, false))
 
-## 从当前图前往目标图的费用（`maps.json.carterFees`；缺省 0）。
+## 显式逐对价格优先；否则使用所属枢纽对目标类型的缺省价。
 func fee_to(map_id: String) -> int:
-	var fees = current_data().get("carterFees", {})
-	if fees is Dictionary:
-		return maxi(0, int((fees as Dictionary).get(map_id, 0)))
-	return 0
+	var fees: Variant = current_data().get("carterFares", {})
+	if fees is Dictionary and fees.has(map_id):
+		return int(fees[map_id])
+	var hub := data_for(String(current_data().get("hubId", "")))
+	var defaults: Variant = hub.get("carterFare", {})
+	var kind := String(data_for(map_id).get("kind", ""))
+	if defaults is Dictionary and defaults.has(kind):
+		return int(defaults[kind])
+	return -1
 
 ## 当前图 NPC 点原始数据（`maps.json.npcs`；cell 为 `[x, y]` 数组）。
 func current_npcs() -> Array:
@@ -166,6 +187,8 @@ func can_use_walk_exit() -> bool:
 ## 步行只接受本图已配置的出口，且必须在逻辑网格 1.5 格内。
 ## 不读车夫费用；出口落点由目标图入口 ID 决定。
 func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
+	if not pending_travel.is_empty():
+		return _fail("正在切换地图")
 	if not can_use_walk_exit():
 		return _fail("请松开交互键，稍后再走")
 	var exit_data := walk_exit(exit_id)
@@ -189,16 +212,12 @@ func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
 	var arrival: Variant = entrances[entrance_id]
 	if not arrival is Array or arrival.size() != 2:
 		return _fail("道路入口配置无效")
-	var from_id := GameState.current_map
-	GameState.current_map = to_id
-	GameState.save_pos = Iso.grid_to_world(Vector2i(int(arrival[0]), int(arrival[1])))
-	GameState.has_save_pos = true
-	GameState.close_all_panels()
+	var result := _prepare_travel(to_id, "walk", 0, Iso.grid_to_world(Vector2i(int(arrival[0]), int(arrival[1]))))
+	if not bool(result.ok):
+		return result
 	walk_key_released = false
 	walk_locked_until_msec = Time.get_ticks_msec() + WALK_ARRIVAL_LOCK_MSEC
-	EventBus.map_traveled.emit(from_id, to_id)
-	EventBus.map_changed.emit(to_id)
-	return {"ok": true, "reason": ""}
+	return result
 
 ## 车夫可达目的地列表（供 CarterPanel 渲染）：
 ##   [{id, name, recommendedLevel, cost, unlocked, reason}]
@@ -208,14 +227,22 @@ func destinations() -> Array:
 		var id := String(lid)
 		if not exists(id):
 			continue
-		var unlocked := is_unlocked(id)
+		var visited := GameState.is_visited(id)
+		var taught := GameState.current_map == DEFAULT_MAP and id == "wild_trial"
+		var unlocked := is_unlocked(id) and (visited or taught)
+		var reason := ""
+		if not is_unlocked(id):
+			reason = "尚未解锁"
+		elif not visited and not taught:
+			reason = "先步行到访，开放直达"
 		out.append({
 			"id": id,
 			"name": display_name(id),
 			"recommendedLevel": recommended_level(id),
 			"cost": fee_to(id),
 			"unlocked": unlocked,
-			"reason": "" if unlocked else "尚未解锁",
+			"visited": visited,
+			"reason": reason,
 		})
 	return out
 
@@ -228,35 +255,88 @@ func destinations() -> Array:
 ## 这样无头测试可以只验证「状态 + 扣费 + 落点」而不触发 `reload_current_scene`
 ## （否则在 SmokeTest 里调用会把测试场景本身重载掉）。
 func travel_to(map_id: String) -> Dictionary:
+	if not pending_travel.is_empty():
+		return _fail("正在切换地图")
 	if not exists(map_id):
 		return _fail("未知地图：%s" % map_id)
 	if map_id == GameState.current_map:
 		return _fail("已在%s" % display_name(map_id))
 	if not is_linked(map_id):
-		return _fail("车夫不到%s，需经其他地图中转" % display_name(map_id))
+		return _fail("车夫无法直达%s" % display_name(map_id))
 	if not is_unlocked(map_id):
 		return _fail("%s尚未解锁" % display_name(map_id))
+	if not GameState.is_visited(map_id) and not (GameState.current_map == DEFAULT_MAP and map_id == "wild_trial"):
+		return _fail("先步行到访%s，再开放车夫直达" % display_name(map_id))
 	var fee := fee_to(map_id)
+	if fee < 0:
+		return _fail("%s车费配置缺失" % display_name(map_id))
 	if fee > 0 and GameState.gold < fee:
 		return _fail("金币不足：前往%s需 %d（现有 %d）" % [display_name(map_id), fee, GameState.gold])
 
-	if fee > 0:
-		GameState.add_gold(-fee)
+	return _prepare_travel(map_id, "carter", fee, carter_arrival(map_id))
 
-	var from_id := GameState.current_map
-	GameState.current_map = map_id
-	GameState.save_pos = carter_arrival(map_id)
+func _prepare_travel(to_id: String, mode: String, fee: int, arrival: Vector2) -> Dictionary:
+	if not pending_travel.is_empty():
+		return _fail("正在切换地图")
+	pending_travel = {
+		"from": GameState.current_map, "to": to_id, "mode": mode, "fee": fee,
+		"gold": GameState.gold, "save_pos": GameState.save_pos,
+		"has_save_pos": GameState.has_save_pos,
+		"scene_path": get_tree().current_scene.scene_file_path if get_tree().current_scene != null else "",
+	}
+	GameState.gold -= fee
+	GameState.current_map = to_id
+	GameState.save_pos = arrival
 	GameState.has_save_pos = true
 	GameState.close_all_panels()
-	EventBus.map_traveled.emit(from_id, map_id)
-	EventBus.map_changed.emit(map_id)
 	return {"ok": true, "reason": ""}
+
+## Game._ready 完成装配后调用；所有事件与到访标记只在此时生效。
+func commit_arrival() -> bool:
+	if pending_travel.is_empty():
+		GameState.mark_visited(GameState.current_map)
+		return true
+	if String(pending_travel.get("to", "")) != GameState.current_map:
+		rollback_travel()
+		return false
+	var request := pending_travel.duplicate(true)
+	pending_travel.clear()
+	var first_visit := not GameState.is_visited(GameState.current_map)
+	GameState.mark_visited(GameState.current_map)
+	if int(request.fee) > 0:
+		EventBus.gold_changed.emit(GameState.gold)
+	EventBus.map_traveled.emit(String(request.from), String(request.to))
+	EventBus.map_changed.emit(String(request.to))
+	if first_visit:
+		EventBus.toast_requested.emit("已到访%s，车夫直达已开放" % display_name(GameState.current_map), "info")
+	return true
+
+func rollback_travel() -> void:
+	if pending_travel.is_empty():
+		return
+	var request := pending_travel.duplicate(true)
+	pending_travel.clear()
+	GameState.gold = int(request.gold)
+	GameState.current_map = String(request.from)
+	GameState.save_pos = request.save_pos
+	GameState.has_save_pos = bool(request.has_save_pos)
+	EventBus.gold_changed.emit(GameState.gold)
+	EventBus.toast_requested.emit("前往失败，未收取车费", "danger")
 
 ## 出行成功后重载世界（拍板 D1-A：整场景重载 + `save_pos` 传位置）。
 ## 旧图实体随场景一并销毁（T15）；`Game._ready` 会消费 `save_pos` 把玩家放到落点。
 func reload_world() -> void:
 	# deferred：避免在信号回调栈内销毁发起方节点
-	get_tree().call_deferred("reload_current_scene")
+	call_deferred("_reload_world_now")
+
+func _reload_world_now() -> void:
+	var err := get_tree().reload_current_scene()
+	if err != OK and not pending_travel.is_empty():
+		var source_scene := String(pending_travel.get("scene_path", ""))
+		rollback_travel()
+		# 原场景若已卸载，用请求前的场景路径重建源图。
+		if get_tree().current_scene == null and not source_scene.is_empty():
+			get_tree().change_scene_to_file(source_scene)
 
 ## 目标图的落点世界坐标（地图中心；`IsoGround.clamp_to_map` 会再夹一次兜底）。
 func entry_point(map_id: String) -> Vector2:

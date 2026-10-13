@@ -6,8 +6,11 @@
     "tierRange": [1, 1],
     "safeZone": true,
     "recommendedLevel": 1,
-    "carterLinks": ["wild_trial"],
-    "carterFees": { "wild_trial": 0 },
+    "kind": "hub",
+    "hubId": "camp",
+    "hubLinks": [],
+    "carterFare": { "spoke": 50, "hub": 150 },
+    "carterFares": { "wild_trial": 0, "ash_land": 50, "corruption_source": 150 },
     "requiresUnlock": "",
     "exits": [
       { "id": "to_wild", "cell": [34, 20], "toMap": "wild_trial", "toEntrance": "from_camp" }
@@ -34,8 +37,9 @@
     "tierRange": [1, 5],
     "safeZone": false,
     "recommendedLevel": 2,
-    "carterLinks": ["camp", "ash_land"],
-    "carterFees": { "camp": 20, "ash_land": 50 },
+    "kind": "spoke",
+    "hubId": "camp",
+    "carterFares": { "camp": 20, "ash_land": 50, "corruption_source": 150 },
     "requiresUnlock": "",
     "exits": [
       { "id": "to_camp", "cell": [5, 30], "toMap": "camp", "toEntrance": "from_wild" },
@@ -61,8 +65,9 @@
     "tierRange": [5, 9],
     "safeZone": false,
     "recommendedLevel": 6,
-    "carterLinks": ["wild_trial", "corruption_source"],
-    "carterFees": { "wild_trial": 50, "corruption_source": 100 },
+    "kind": "spoke",
+    "hubId": "camp",
+    "carterFares": { "camp": 70, "wild_trial": 50, "corruption_source": 100 },
     "requiresUnlock": "",
     "exits": [
       { "id": "to_wild", "cell": [5, 30], "toMap": "wild_trial", "toEntrance": "from_ash" },
@@ -88,8 +93,9 @@
     "tierRange": [10, 10],
     "safeZone": false,
     "recommendedLevel": 10,
-    "carterLinks": ["ash_land"],
-    "carterFees": { "ash_land": 100 },
+    "kind": "spoke",
+    "hubId": "camp",
+    "carterFares": { "camp": 170, "wild_trial": 150, "ash_land": 100 },
     "requiresUnlock": "",
     "exits": [
       { "id": "to_ash", "cell": [5, 25], "toMap": "ash_land", "toEntrance": "from_source" }

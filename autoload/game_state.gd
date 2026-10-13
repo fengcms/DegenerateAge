@@ -22,6 +22,7 @@ const MP_PER_LV := 5.0
 var player: Dictionary = {}
 var gold: int = 0
 var current_map: String = "camp"
+var visited_maps: Array[String] = ["camp"]
 var inventory: Array = []           # 背包物品实例（40 格，见 Inventory / 5.8）
 var warehouse: Array = []           # 仓库物品，空位为 null（6.8）
 var warehouse_expansions: int = 0
@@ -144,6 +145,7 @@ func reset_to_defaults() -> void:
 	player = default_player()
 	gold = 0
 	current_map = "camp"
+	visited_maps = ["camp"]
 	inventory = Inventory.create(INVENTORY_SIZE)
 	warehouse_expansions = 0
 	warehouse = Warehouse.create()
@@ -166,6 +168,13 @@ func reset_to_defaults() -> void:
 	settings = default_settings()
 	hotbar = HotbarConfig.defaults()
 	SettingsRuntime.apply_all()
+
+func mark_visited(map_id: String) -> void:
+	if not visited_maps.has(map_id):
+		visited_maps.append(map_id)
+
+func is_visited(map_id: String) -> bool:
+	return visited_maps.has(map_id)
 
 func set_hotbar_entry(index: int, entry: Variant) -> bool:
 	if index < 0 or index >= HotbarConfig.SIZE or not HotbarConfig.valid_entry(entry):

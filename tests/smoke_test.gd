@@ -1356,7 +1356,7 @@ func _test_unclaimed_loot() -> void:
 	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
-	_expect(SaveManager.CURRENT_SCHEMA == 8, "M6-0c 后存档 schema 应为 8，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	_expect(SaveManager.CURRENT_SCHEMA == 9, "M6-3 后存档 schema 应为 9，实际 %d" % SaveManager.CURRENT_SCHEMA)
 	GameState.unclaimed_loot = {}
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")
@@ -2620,52 +2620,53 @@ func _test_world() -> void:
 ## M3-1 / M3-2：地图数据、车夫拓扑与出行校验链（工程文档 13 §3 / §6 R5）。
 func _test_map_travel() -> void:
 	GameState.reset_to_defaults()
-
-	# ① 地图数据与车夫拓扑（07 §7.8：营地 ⇄ 试炼野外；营地**不**直达灰烬之地）
-	_expect(MapService.exists("camp") and MapService.exists("wild_trial"), "camp / wild_trial 地图应存在")
-	_expect(MapService.display_name("camp") == "幸存者营地", "camp 显示名应为「幸存者营地」")
-	_expect(MapService.is_linked("wild_trial"), "营地应可直达试炼野外")
-	_expect(not MapService.is_linked("ash_land"), "营地不应直达灰烬之地（需中转，07 §7.8）")
-	_expect(MapService.is_unlocked("wild_trial"), "无 requiresUnlock 的地图应恒为已解锁")
-	_expect(MapService.fee_to("wild_trial") == 0, "营地→试炼野外应为免费（0）")
-
-	# ② 目的地列表
+	MapService.pending_travel.clear()
+	_expect(GameState.visited_maps == ["camp"], "新档仅到访营地")
+	var legacy_visit := SaveManager._collect()
+	legacy_visit.schemaVersion = 8
+	legacy_visit.currentMap = "ash_land"
+	legacy_visit.erase("visitedMaps")
+	_expect(SaveManager._is_valid_save(legacy_visit), "v8 旧档应可迁移到访记录")
+	var migrated_visit := SaveManager._migrate(legacy_visit)
+	_expect(migrated_visit.visitedMaps == ["camp", "ash_land"], "旧档应只补营地及合法当前图")
+	var invalid_visit := SaveManager._collect()
+	invalid_visit.visitedMaps = ["camp", "missing"]
+	_expect(not SaveManager._is_valid_save(invalid_visit), "未知到访地图应拒档")
+	var invalid_cluster: Array = (DataLoader.get_table("maps") as Array).duplicate(true)
+	invalid_cluster[1]["hubId"] = "missing"
+	_expect(not DataLoader._validate_carter_clusters(invalid_cluster).is_empty(), "无效集群归属应被启动校验捕获")
+	_expect(MapService.is_linked("ash_land") and MapService.is_linked("corruption_source"), "营地车夫应列出集群所有地图")
+	_expect(MapService.fee_to("wild_trial") == 0 and MapService.fee_to("ash_land") == 50 and MapService.fee_to("corruption_source") == 150, "营地逐对车费应正确")
 	var dests: Array = MapService.destinations()
-	_expect(dests.size() == 1, "营地车夫应有 1 条线路，实际 %d" % dests.size())
-	if dests.size() > 0:
-		var d0 := dests[0] as Dictionary
-		_expect(String(d0.get("id", "")) == "wild_trial", "营地线路应为 wild_trial")
-		_expect(int(d0.get("cost", -1)) == 0, "该线路费用应为 0")
-		_expect(bool(d0.get("unlocked", false)), "该线路应已解锁")
-
-	# ③ 拒绝分支：未知图 / 当前图 / 不连通 / 金币不足
-	_expect(not bool(MapService.travel_to("no_such_map").get("ok", false)), "未知地图应拒绝")
-	_expect(not bool(MapService.travel_to("camp").get("ok", false)), "已在当前图应拒绝")
-	_expect(not bool(MapService.travel_to("ash_land").get("ok", false)), "不连通目的地应拒绝（需中转）")
-	_expect(GameState.current_map == "camp", "被拒时不应改变当前地图")
-
-	GameState.current_map = "wild_trial"
-	_expect(MapService.fee_to("ash_land") == 50, "试炼野外→灰烬之地应为 50 金")
-	GameState.gold = 10
-	_expect(not bool(MapService.travel_to("ash_land").get("ok", false)), "金币不足应拒绝")
-	_expect(GameState.gold == 10, "被拒时不应扣费，实际 %d" % GameState.gold)
-	_expect(GameState.current_map == "wild_trial", "被拒时不应切图")
-
-	# ④ 成功出行：扣费 + 写 current_map + 写落点（travel_to 本身不触发场景重载）
+	_expect(dests.size() == 3, "营地应显示三处集群目的地")
+	_expect(bool(dests[0].unlocked) and not bool(dests[1].unlocked) and not bool(dests[2].unlocked), "教学线可用，未到访地图置灰")
+	_expect(not bool(MapService.travel_to("ash_land").ok), "未到访地图不得乘车")
+	_expect(not bool(MapService.travel_to("no_such_map").ok), "未知地图应拒绝")
+	_expect(not bool(MapService.travel_to("camp").ok), "当前地图应拒绝")
+	var first := MapService.travel_to("wild_trial")
+	_expect(bool(first.ok) and not MapService.pending_travel.is_empty(), "教学线应准备事务")
+	_expect(not bool(MapService.travel_to("wild_trial").ok), "重复出行请求应拒绝")
+	_expect(not GameState.is_visited("wild_trial"), "装配前不应标记到访")
+	_expect(not SaveManager.save_slot(1, true), "出行中禁止保存中间态")
+	MapService.rollback_travel()
+	_expect(GameState.current_map == "camp" and GameState.gold == 0 and not GameState.is_visited("wild_trial"), "回滚应恢复状态且不记录到访")
+	GameState.mark_visited("ash_land")
 	GameState.gold = 100
-	var res := MapService.travel_to("ash_land")
-	_expect(bool(res.get("ok", false)), "金币足够时应放行：%s" % res.get("reason", ""))
-	_expect(GameState.current_map == "ash_land", "成功后 current_map 应为 ash_land")
-	_expect(GameState.gold == 50, "成功后应扣 50 金，实际 %d" % GameState.gold)
-	_expect(GameState.has_save_pos, "成功后应写入落点供重载消费")
-	_expect(MapService.display_name(GameState.current_map) == "灰烬之地", "落点地图名应为灰烬之地")
-
-	# ⑤ Boss 点数据（M3-5 用；此处只验证数据可达与墓碑标记）
+	var paid := MapService.travel_to("ash_land")
+	_expect(bool(paid.ok) and GameState.gold == 50 and GameState.current_map == "ash_land", "已到访地图直达，准备阶段暂扣车费")
+	_expect(not SaveManager._autosave_allowed(), "待提交事务不得自动存档")
+	MapService.rollback_travel()
+	_expect(GameState.gold == 100 and GameState.current_map == "camp", "失败回滚应退还车费")
+	paid = MapService.travel_to("ash_land")
+	GameState.current_map = "missing"
+	_expect(not MapService.commit_arrival(), "装配目标不匹配应拒绝提交")
+	_expect(GameState.gold == 100 and GameState.current_map == "camp" and MapService.pending_travel.is_empty(), "装配失败应回滚且释放事务锁")
+	paid = MapService.travel_to("ash_land")
+	_expect(bool(paid.ok) and MapService.commit_arrival(), "装配成功后应提交出行")
+	_expect(MapService.pending_travel.is_empty() and GameState.gold == 50 and GameState.current_map == "ash_land", "提交后保留正确地图与费用")
 	_expect(MapService.current_boss().is_empty(), "灰烬之地不应有 Boss 点")
 	GameState.current_map = "corruption_source"
-	_expect(not MapService.current_boss().is_empty(), "腐化源头应配 Boss 点")
-	_expect(bool(MapService.current_boss().get("tombstone", false)), "Boss 点应启用墓碑")
-
+	_expect(bool(MapService.current_boss().get("tombstone", false)), "腐化源头 Boss 点应启用墓碑")
 	GameState.reset_to_defaults()
 
 ## M6-1：0 金币双向步行、距离/目标校验、入口落点与跨场景防抖。
@@ -2711,6 +2712,7 @@ func _test_walk_exit() -> void:
 		_expect(GameState.current_map == route[3] and GameState.gold == 0, "步行应到目标图且不扣金币")
 		_expect(GameState.has_save_pos and GameState.save_pos.is_equal_approx(Iso.grid_to_world(route[4])), "步行应落到目标图对应入口")
 		_expect(not MapService.can_use_walk_exit(), "切图后长按 E 或一秒内重按不能立即返回")
+		_expect(MapService.commit_arrival() and GameState.is_visited(route[3]), "步行装配提交后应标记到访")
 	MapService.walk_key_released = true
 	MapService.walk_locked_until_msec = 0
 	GameState.reset_to_defaults()

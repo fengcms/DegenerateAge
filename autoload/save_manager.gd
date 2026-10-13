@@ -18,7 +18,7 @@ const MAX_SLOTS := 3
 ## 存档 schema 版本（工程文档 06）。
 ## v7（M4-10 / 工程文档 14 §3.1 ④）新增：`worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态）。
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
-const CURRENT_SCHEMA := 8
+const CURRENT_SCHEMA := 9
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -99,6 +99,7 @@ func _collect() -> Dictionary:
 		"player": GameState.player.duplicate(true),
 		"gold": GameState.gold,
 		"currentMap": GameState.current_map,
+		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
 		"warehouse": GameState.warehouse.duplicate(true),
@@ -129,6 +130,9 @@ func _player_world_pos() -> Vector2:
 
 ## 保存到某槽。silent = true 时不弹成功提示（自动存用，避免刷屏；失败始终提示）。
 func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
+	if not MapService.pending_travel.is_empty():
+		EventBus.toast_requested.emit("地图切换中，请稍后存档", "danger")
+		return false
 	_ensure_dir()
 	var data := _collect()
 	data["slotId"] = slot
@@ -193,7 +197,7 @@ func request_autosave() -> void:
 ## 是否允许自动存 / 退出存写盘。
 ## 三重闸门：① 已开档；② 不在读档抑制期；③ 总开关开且（非测试场景 或 显式放开测试）。
 func _autosave_allowed() -> bool:
-	if active_slot < 0 or _suppress_autosave or not autosave_enabled:
+	if active_slot < 0 or _suppress_autosave or not autosave_enabled or not MapService.pending_travel.is_empty():
 		return false
 	if not autosave_in_tests and _is_test_scene():
 		return false
@@ -346,6 +350,11 @@ func _migrate(source: Dictionary) -> Dictionary:
 		if v < 8:
 			# M6-0c：旧档无未领取战利品 → 空集合（创意 07 §11）
 			data.unclaimedLoot = {}
+		if v < 9:
+			data.visitedMaps = ["camp"]
+			var previous_map := String(data.get("currentMap", ""))
+			if previous_map != "camp" and DataLoader.get_entry("maps", previous_map) is Dictionary:
+				data.visitedMaps.append(previous_map)
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -361,6 +370,10 @@ func apply_to_game_state(data: Dictionary) -> void:
 		GameState.player = _migrate_player(data["player"] as Dictionary)
 	GameState.gold = clampi(int(data.get("gold", 0)), 0, GameState.GOLD_CAP)
 	GameState.current_map = String(data.get("currentMap", "camp"))
+	GameState.visited_maps.clear()
+	for map_id in data.visitedMaps:
+		if not GameState.visited_maps.has(map_id):
+			GameState.visited_maps.append(map_id)
 	GameState.explored_maps = Fog.normalize(data.get("exploredMaps", {}))
 	# M4-10：世界时钟与怪物点刷新状态。须在读档重载场景**之前**恢复 ——
 	# `Game._ready` → `spawn_from_map` 装配怪物点时会立即读取该状态（决定是否建墓碑）。
@@ -611,6 +624,11 @@ func _is_valid_save(raw: Variant) -> bool:
 		return false
 	if not data.get("currentMap") is String or DataLoader.get_entry("maps", data.currentMap) == null:
 		return false
+	if not data.get("visitedMaps") is Array:
+		return false
+	for map_id in data.visitedMaps:
+		if not map_id is String or not DataLoader.get_entry("maps", map_id) is Dictionary:
+			return false
 	# M4-10：世界时钟与怪物点刷新状态（v7 起；旧档由 _migrate 补默认）
 	if not _number(data.get("worldTime")) or float(data.worldTime) < 0.0:
 		return false

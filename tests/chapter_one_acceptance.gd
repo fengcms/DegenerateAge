@@ -84,7 +84,10 @@ func _finish() -> void:
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	GameState.menu_mode = "world"
-	GameState.gold = 200  # 测试出行资金；野外刷金已在经济闭环单独验收。
+	GameState.gold = 400  # 覆盖多次乘车与跨图直达费用。
+	# 此场景验收车夫与 Boss；首次步行到访及存档门控由 SmokeTest 覆盖。
+	GameState.mark_visited("ash_land")
+	GameState.mark_visited("corruption_source")
 	GameState.quest_states = {"Q005": {"state": "active", "progress": 0}}
 	await get_tree().process_frame  # 避开根节点构造阶段的 add_child 锁。
 	var main := (load("res://scenes/Main.tscn") as PackedScene).instantiate()
@@ -98,7 +101,10 @@ func _ready() -> void:
 	if not await _travel("ash_land", 50):
 		_finish()
 		return
-	if not await _travel("corruption_source", 100):
+	if not await _travel("camp", 70):
+		_finish()
+		return
+	if not await _travel("corruption_source", 150):
 		_finish()
 		return
 	if get_tree().current_scene != null and GameState.current_map == "corruption_source":
@@ -115,6 +121,8 @@ func _ready() -> void:
 		if boss != null:
 			boss.set_physics_process(false)
 			player.get_node("AutoPilot").set_physics_process(false)
+			# 随机刷新点可能落在出行休整区边缘；首杀验收固定在战斗区域。
+			boss.global_position = Iso.grid_to_world(Vector2i(25, 20))
 			player.global_position = boss.global_position + Vector2(-48, 0)
 			GameState.player.attack = 99999  # 压缩验收耗时，仍走玩家真实普攻入口。
 			GameState.player.hp = GameState.max_hp()

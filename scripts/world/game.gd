@@ -55,6 +55,13 @@ func request_map_move(point: Vector2) -> bool:
 	return true
 
 func _ready() -> void:
+	# 出行事务只在目标地图地面与必要节点就绪后提交；失败则恢复源图。
+	if not MapService.pending_travel.is_empty() and (not MapService.exists(GameState.current_map)
+			or _ground.map_id != GameState.current_map or _ground.grid_size.x <= 0
+			or _ground.grid_size.y <= 0 or _player == null or _spawner == null):
+		MapService.rollback_travel()
+		MapService.reload_world()
+		return
 	_damage_numbers.add_to_group("damage_numbers")
 
 	# 出生点：读档 / 切图坐标优先（M1-10 + M3-1），否则地图中心。
@@ -96,6 +103,9 @@ func _ready() -> void:
 
 	# M6-0c（创意 07 §11.2）：重建本图未领取战利品 —— 切图 / 读档后恢复，跨档不丢
 	_rebuild_unclaimed_loot()
+	if not MapService.commit_arrival():
+		MapService.reload_world()
+		return
 
 	# 抵达提示（切图 / 读档后给一次系统提示；延后一帧等 HUD 就绪）
 	_notify_arrival.call_deferred()
@@ -229,7 +239,8 @@ func enemy_at_screen(point: Vector2) -> Node2D:
 			r = mon.radius
 		var local: Vector2 = enemy.get_global_transform_with_canvas().affine_inverse() * point
 		var distance := local.distance_to(Vector2(0, -r * 0.6))
-		if distance <= r + 9.0 and distance < nearest:
+		var art_hit := mon != null and mon.sample_art != null and Rect2(-36, -44, 72, 48).has_point(local)
+		if (distance <= r + 9.0 or art_hit) and distance < nearest:
 			nearest = distance
 			best = enemy
 	return best

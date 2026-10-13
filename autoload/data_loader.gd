@@ -192,20 +192,6 @@ func validate_all() -> Array[String]:
 			if typeof(mp) != TYPE_DICTIONARY:
 				continue
 			var mid_map := String(mp.get("id", "?"))
-			var links := []
-			var raw_links = mp.get("carterLinks", [])
-			if raw_links is Array:
-				links.assign(raw_links)
-			for lid in links:
-				if not map_ids.has(String(lid)):
-					report.append("[maps] %s 的 carterLinks 指向未定义地图 '%s'" % [mid_map, lid])
-			var fees = mp.get("carterFees", {})
-			if fees is Dictionary:
-				for fid in (fees as Dictionary).keys():
-					if not links.has(fid):
-						report.append("[maps] %s 的 carterFees 含未连通目的地 '%s'（不在 carterLinks 内）" % [mid_map, fid])
-					if not map_ids.has(String(fid)):
-						report.append("[maps] %s 的 carterFees 指向未定义地图 '%s'" % [mid_map, fid])
 			var npcs := []
 			var raw_npcs = mp.get("npcs", [])
 			if raw_npcs is Array:
@@ -221,6 +207,7 @@ func validate_all() -> Array[String]:
 				var sid := String(npc.get("shopId", ""))
 				if role == "shop" and not shop_ids.has(sid):
 					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])
+	report.append_array(_validate_carter_clusters(maps))
 	report.append_array(_validate_walk_exits(maps))
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
@@ -411,6 +398,69 @@ func _id_set(table_name: String) -> Dictionary:
 	return out
 
 ## M6-1：出口、入口必须有效且双向配对；错误在启动校验时暴露。
+func _validate_carter_clusters(maps: Variant) -> Array[String]:
+	var errors: Array[String] = []
+	if not maps is Array:
+		return ["[maps] 地图表不是数组"] as Array[String]
+	var by_id := {}
+	for entry in maps:
+		if entry is Dictionary:
+			by_id[String(entry.get("id", ""))] = entry
+	for entry in maps:
+		if not entry is Dictionary:
+			continue
+		var id := String(entry.get("id", ""))
+		var kind := String(entry.get("kind", ""))
+		var hub_id := String(entry.get("hubId", ""))
+		if not ["hub", "spoke"].has(kind):
+			errors.append("[maps] %s 的 kind 必须为 hub 或 spoke" % id)
+		var hub: Variant = by_id.get(hub_id, null)
+		if not hub is Dictionary or String(hub.get("kind", "")) != "hub":
+			errors.append("[maps] %s 的 hubId 未指向有效 hub" % id)
+		if kind == "hub" and hub_id != id:
+			errors.append("[maps] 枢纽 %s 必须指向自身" % id)
+		var hub_links: Variant = entry.get("hubLinks", null)
+		if kind == "hub":
+			if not hub_links is Array:
+				errors.append("[maps] %s 缺少 hubLinks 数组" % id)
+			else:
+				var seen := {}
+				for linked in hub_links:
+					var peer: Variant = by_id.get(String(linked), null)
+					if seen.has(linked) or linked == id or not peer is Dictionary or String(peer.get("kind", "")) != "hub":
+						errors.append("[maps] %s 的 hubLinks 含无效枢纽 %s" % [id, linked])
+					elif not peer.get("hubLinks", []) is Array or not peer.get("hubLinks", []).has(id):
+						errors.append("[maps] %s 与 %s 的 hubLinks 不双向" % [id, linked])
+					seen[linked] = true
+			var spoke_count := 0
+			for candidate in maps:
+				if candidate is Dictionary and String(candidate.get("kind", "")) == "spoke" and String(candidate.get("hubId", "")) == id:
+					spoke_count += 1
+			if spoke_count == 0:
+				errors.append("[maps] 枢纽 %s 缺少附属地图" % id)
+			var defaults: Variant = entry.get("carterFare", null)
+			if not defaults is Dictionary:
+				errors.append("[maps] 枢纽 %s 缺少 carterFare" % id)
+			else:
+				for target_kind in ["hub", "spoke"]:
+					if not _nonnegative_whole(defaults.get(target_kind, null)):
+						errors.append("[maps] 枢纽 %s 的 carterFare.%s 无效" % [id, target_kind])
+		elif entry.has("hubLinks") or entry.has("carterFare"):
+			errors.append("[maps] 附属地图 %s 不得配置枢纽字段" % id)
+		var fares: Variant = entry.get("carterFares", {})
+		if not fares is Dictionary:
+			errors.append("[maps] %s 的 carterFares 必须为字典" % id)
+		else:
+			for target_id in fares:
+				var target: Variant = by_id.get(String(target_id), null)
+				var reachable: bool = target is Dictionary and (String(target.get("hubId", "")) == hub_id or (hub is Dictionary and hub.get("hubLinks", []).has(target_id)))
+				if target_id == id or not reachable or not _nonnegative_whole(fares[target_id]):
+					errors.append("[maps] %s 的 carterFares 目标或费用无效：%s" % [id, target_id])
+	return errors
+
+func _nonnegative_whole(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value)) and float(value) >= 0.0 and float(value) == floor(float(value))
+
 func _validate_walk_exits(maps: Variant) -> Array[String]:
 	var report: Array[String] = []
 	if not maps is Array:
