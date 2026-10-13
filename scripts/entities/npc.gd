@@ -41,6 +41,12 @@ func _ready() -> void:
 	_name_label.text = npc_name
 	_hint_label.text = "[E] 交谈"
 	_hint_label.visible = false
+	# M5-9e（创意 09 §7）：头顶名称 / 交互提示是世界文字 —— 像素尺寸不随地图倍率变。
+	# 入组供改档位时统一重扫；此处自应用一次，覆盖生成与切图重建两种时刻。
+	_name_label.add_to_group("world_text")
+	_hint_label.add_to_group("world_text")
+	SettingsRuntime.apply_world_text_scale_to(_name_label)
+	SettingsRuntime.apply_world_text_scale_to(_hint_label)
 	queue_redraw()
 
 func _process(delta: float) -> void:

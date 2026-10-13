@@ -105,6 +105,7 @@ static func apply_all() -> void:
 	_apply_ui_scale()
 	_apply_text_scale()
 	_apply_map_scale()
+	apply_world_text_scale()   # M5-9e：世界文字反向补偿与地图倍率联动（见该函数）
 	_apply_window()
 
 ## M5-9a（09-A 显示适配，工程 17）：渲染策略 = disabled。
@@ -219,6 +220,37 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 ## M5-9c：最终值 = clamp(mapScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
 static func map_scale_value() -> float:
 	return clampf(float(GameState.settings.get("mapScale", 1.0)), MAP_SCALE_MIN, MAP_SCALE_MAX) * display_scale_factor()
+
+# ---- M5-9e（创意 09 §7）：世界文字反向补偿 ----
+##
+## 人物 / 地形 / 物品形状随相机 zoom 缩放（世界坐标画布，天然跟随）；但**头顶名称、交互提示、
+## 伤害飘字、墓碑倒计时**必须保持可读的文字像素尺寸 —— zoom<1 时它们会跟着变小，正是"看不清"的来源。
+##
+## 实现：文字节点入组 `world_text`，倍率 = 1 / map_scale_value()（含显示适配系数的**总**倍率）。
+## - Control（Label）：设 `scale` + `pivot_offset = size/2`（绕自身中心缩放，位置不动）。
+##   入组节点在 `_ready` 里**自应用一次**（覆盖生成时刻 / 切图重建 / 动态飘字），
+##   运行时改档位由本组统一重扫（apply_all → 本函数）。
+## - 自绘文字（CanvasItem 非 Control，如墓碑倒计时）：只 `queue_redraw`，由 `_draw` 按当时倍率取字号。
+## ⚠ 飘字 / 头顶名称均**无自身 scale 动画**（实测 U4），故直接缩放节点即可，无需父节点中转。
+static func apply_world_text_scale() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	for node in tree.get_nodes_in_group("world_text"):
+		apply_world_text_scale_to(node)
+
+## 对单个世界文字节点应用反向补偿（外部在 `_ready` 自应用时用）。
+static func apply_world_text_scale_to(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if node is Control:
+		var control := node as Control
+		var factor := 1.0 / map_scale_value()
+		control.scale = Vector2(factor, factor)
+		# 绕自身中心缩放：pivot 未设时默认绕左上角，文字会向右下漂
+		control.pivot_offset = control.size * 0.5
+	elif node is CanvasItem:
+		(node as CanvasItem).queue_redraw()
 
 static func _apply_window() -> void:
 	var tree := Engine.get_main_loop() as SceneTree

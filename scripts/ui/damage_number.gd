@@ -15,6 +15,10 @@ func setup(amount: int, is_crit: bool, is_miss: bool = false) -> void:
 
 func _ready() -> void:
 	var label: Label = $Label
+	# M5-9e（创意 09 §7）：飘字是世界文字 —— 像素尺寸不随地图倍率变（生成即自应用，
+	# 改档位由 world_text 组统一重扫）。本节点只动画 position / modulate，不碰 scale，无冲突。
+	label.add_to_group("world_text")
+	SettingsRuntime.apply_world_text_scale_to(label)
 	if _is_miss:
 		label.text = "Miss"
 		label.add_theme_color_override("font_color", Color("b9c0c8"))

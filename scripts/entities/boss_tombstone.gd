@@ -9,6 +9,10 @@ const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 var remaining := 0.0
 var _shown_seconds := -1
 
+func _ready() -> void:
+	# M5-9e（创意 09 §7）：倒计时是世界文字 —— 入组供改地图倍率时重绘（_draw 按当时倍率取字号）。
+	add_to_group("world_text")
+
 func set_remaining(seconds: float) -> void:
 	remaining = maxf(0, seconds)
 	var display := ceili(remaining)
@@ -22,4 +26,6 @@ func _draw() -> void:
 	draw_line(Vector2(0, -22), Vector2(0, -6), Color("c4c7cc"), 2)
 	var seconds := maxi(0, _shown_seconds)
 	var text := "Boss 刷新 %02d:%02d" % [seconds / 60, seconds % 60]
-	draw_string(MONO_FONT, Vector2(-100, -38), text, HORIZONTAL_ALIGNMENT_CENTER, 200, 15, Color("f2cc71"))
+	# M5-9e：字号按地图倍率反向取（zoom<1 时字变大、zoom>1 时字变小 ⇒ 屏幕上恒定可读）
+	var font_size := 15.0 / SettingsRuntime.map_scale_value()
+	draw_string(MONO_FONT, Vector2(-100, -38), text, HORIZONTAL_ALIGNMENT_CENTER, 200, font_size, Color("f2cc71"))

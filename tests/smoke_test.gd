@@ -62,6 +62,7 @@ func _ready() -> void:
 	await _test_item_slot_count()
 	await _test_map_scale()
 	await _test_display_scale()
+	await _test_world_text_scale()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -2586,6 +2587,70 @@ func _test_display_scale() -> void:
 		node.queue_free()
 	ui.queue_free()
 	for key in ["displayScaleMode", "displayScale", "uiScale", "mapScale", "textScale"]:
+		GameState.settings.erase(key)
+	await get_tree().process_frame
+
+# ---- M5-9e（创意 09 §7）：世界文字反向补偿（头顶名称 / 交互提示 / 飘字 / 墓碑倒计时）----
+func _test_world_text_scale() -> void:
+	GameState.settings["mapScale"] = 1.0
+	# ① NPC 双 Label：入组 + 生成即自应用；pivot 在自身中心（否则绕左上角缩放会向右下漂）
+	var npc: Node2D = (load("res://scenes/entities/Npc.tscn") as PackedScene).instantiate()
+	npc.set("npc_name", "测试官")
+	add_child(npc)
+	await get_tree().process_frame
+	var name_label := npc.get_node_or_null("NameLabel") as Label
+	var hint_label := npc.get_node_or_null("HintLabel") as Label
+	_expect(name_label != null and hint_label != null, "Npc 应有 NameLabel / HintLabel")
+	if name_label == null or hint_label == null:
+		npc.queue_free()
+		return
+	_expect(name_label.is_in_group("world_text") and hint_label.is_in_group("world_text"),
+		"NPC 双 Label 应入 world_text 组")
+	_expect(name_label.scale.is_equal_approx(Vector2.ONE), "mapScale=1.0 时头顶名称不缩放")
+	_expect(name_label.pivot_offset.is_equal_approx(name_label.size * 0.5),
+		"头顶名称 pivot 应在自身中心：实际 %s 尺寸 %s" % [name_label.pivot_offset, name_label.size])
+
+	# ② mapScale=0.8 ⇒ 组内统一反补偿到 1/0.8=1.25（文字屏幕上尺寸不变）
+	GameState.settings["mapScale"] = 0.8
+	SettingsRuntime.apply_all()
+	await get_tree().process_frame
+	_expect(name_label.scale.is_equal_approx(Vector2(1.25, 1.25)),
+		"mapScale=0.8 时头顶名称应放大到 1.25，实际 %s" % str(name_label.scale))
+	_expect(hint_label.scale.is_equal_approx(Vector2(1.25, 1.25)), "交互提示应同步反补偿")
+
+	# ③ 与显示适配系数相乘：manual 1.25 × mapScale 0.8 ⇒ 总倍率 1.0 ⇒ 不补偿
+	GameState.settings["displayScaleMode"] = "manual"
+	GameState.settings["displayScale"] = 1.25
+	SettingsRuntime.apply_all()
+	await get_tree().process_frame
+	_expect(name_label.scale.is_equal_approx(Vector2.ONE),
+		"总倍率=1.0（0.8×1.25）时世界文字不应补偿，实际 %s" % str(name_label.scale))
+
+	# ④ 动态飘字：生成即按当前倍率自应用（不等下一次组重扫）
+	GameState.settings["displayScaleMode"] = "auto"
+	SettingsRuntime.apply_all()
+	await get_tree().process_frame
+	var dn: Node2D = (load("res://scenes/ui/DamageNumber.tscn") as PackedScene).instantiate()
+	dn.setup(123, false)
+	add_child(dn)
+	await get_tree().process_frame
+	var dn_label := dn.get_node_or_null("Label") as Label
+	_expect(dn_label != null and dn_label.is_in_group("world_text"), "飘字 Label 应入 world_text 组")
+	if dn_label != null:
+		_expect(dn_label.scale.is_equal_approx(Vector2(1.25, 1.25)),
+			"飘字生成即自应用（1/0.8），实际 %s" % str(dn_label.scale))
+
+	# ⑤ 墓碑倒计时：自绘文字入组（倍率变化只触发重绘，字号在 _draw 里取）
+	var tomb := BossTombstone.new()
+	add_child(tomb)
+	tomb.set_remaining(95.0)
+	await get_tree().process_frame
+	_expect(tomb.is_in_group("world_text"), "墓碑倒计时应入 world_text 组")
+
+	for node in [dn_label, name_label, hint_label, tomb, dn, npc]:
+		if node != null:
+			node.queue_free()
+	for key in ["displayScaleMode", "displayScale", "mapScale"]:
 		GameState.settings.erase(key)
 	await get_tree().process_frame
 
