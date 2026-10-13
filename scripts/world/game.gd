@@ -285,7 +285,7 @@ func enemy_at_screen(point: Vector2) -> Node2D:
 			r = mon.radius
 		var local: Vector2 = enemy.get_global_transform_with_canvas().affine_inverse() * point
 		var distance := local.distance_to(Vector2(0, -r * 0.6))
-		var art_hit := mon != null and mon.sample_art != null and Rect2(-36, -44, 72, 48).has_point(local)
+		var art_hit := mon != null and (mon.sample_art != null or mon.dummy_art != null) and Rect2(-36, -52, 72, 56).has_point(local)
 		if (distance <= r + 9.0 or art_hit) and distance < nearest:
 			nearest = distance
 			best = enemy

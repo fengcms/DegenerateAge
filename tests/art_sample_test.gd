@@ -19,25 +19,43 @@ func _ready() -> void:
 	expect(SaveManager.active_slot == -1 and not SaveManager.autosave_enabled, "Sample must not autosave")
 	expect(ground.sample_camp_theme, "Sample ground theme must be active")
 	expect(player.sample_art.texture.get_size() == Vector2(512, 640), "Guardian frame atlas dimensions")
+	expect(player.sample_art.extra_texture.get_size() == Vector2(512, 160), "Guardian hit and sit atlas dimensions")
+	expect(player.sample_art.walk_texture.get_size() == Vector2(512, 320), "Guardian four-pose walk atlas dimensions")
 	expect((player.get_node("CollisionShape2D").shape as CircleShape2D).radius == 12, "Art must not enlarge player collision")
 	var art := player.sample_art
 	player.set_physics_process(false)
+	art._process(0.01)
+	expect(is_equal_approx(art.scale.x, 1.25) and art.offset == Vector2(-32, -64), "Guardian display scale keeps foot pivot")
 	for i in range(8):
 		art.face(Vector2.from_angle(PI / 2 + i * PI / 4))
 		expect(art.facing == i, "Screen direction %d" % i)
+	player.set_sitting(true)
+	art._process(0.01)
+	expect(art.pose == "sit" and art.frame_coords.y == 1 and art.vframes == 2, "Resting should use independent eight-way seated art")
+	player.set_sitting(false)
 	player.velocity = Vector2(100, 0)
 	art._process(0.1)
-	expect(art.pose == "walk" and art.facing == 6, "East movement should animate east walk")
+	expect(art.pose == "walk" and art.facing == 6 and art.vframes == 4 and art.phase >= 0 and art.phase < 8, "East movement should use eight walk beats")
+	var walk_rows := {}
+	for i in range(8):
+		art._process(0.1)
+		walk_rows[art.frame_coords.y] = true
+		expect(art.position.y >= -1.0 and art.position.y <= 0.0, "Walk pivot bob stays within one world pixel")
+	expect(walk_rows.size() == 4, "Guardian walk should show all four distinct pose rows")
 	player.velocity = Vector2.ZERO
 	art.attack(Vector2.DOWN, 0.8)
 	art._process(0.01)
 	expect(art.pose == "attack" and art.facing == 0, "Attack should face actual target")
+	art._process(0.1)
+	expect(art.pose == "attack" and art.phase > 0, "Attack should progress through recovery phases")
 	art.hit()
 	art._process(0.01)
-	expect(art.pose == "hit", "Hit should override attack visually")
+	expect(art.pose == "hit" and art.vframes == 2, "Separate guardian hit should override attack visually")
 	player.is_dead = true
 	art._process(0.01)
-	expect(art.pose == "death" and art.frame_coords.y == 7, "Dead actor should display death row")
+	expect(art.pose == "death" and art.vframes == 2 and art.frame_coords.y == 0, "Death should start with a brief recoil")
+	art._process(0.61)
+	expect(art.phase == 5 and art.vframes == 8 and art.frame_coords.y == 7, "Death transition should finish prone and hold")
 	player.is_dead = false
 	var wolf: Monster
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -46,6 +64,18 @@ func _ready() -> void:
 			wolf = enemy
 	if wolf != null:
 		expect(wolf.sample_art.texture.get_size() == Vector2(640, 640), "Wolf atlas dimensions")
+		expect(wolf.sample_art.walk_texture.get_size() == Vector2(640, 320), "Wolf four-pose walk atlas dimensions")
+		for atlas in [art.walk_texture, wolf.sample_art.walk_texture]:
+			var sheet := (atlas as Texture2D).get_image()
+			var cell_w := sheet.get_width() / 8
+			for row in range(4):
+				for col in range(8):
+					var frame_image := sheet.get_region(Rect2i(col * cell_w, row * 80, cell_w, 80))
+					var used := frame_image.get_used_rect()
+					expect(used.position.y + used.size.y == 64, "Walk frame must share the same foot anchor")
+		wolf.sample_art.hit()
+		wolf.sample_art._process(0.01)
+		expect(wolf.sample_art.pose == "hit" and wolf.sample_art.frame_coords.y == 6, "Wolf keeps its independent recoil art")
 		expect(wolf.radius == 13, "Art must not change combat radius")
 		var before := wolf.hp
 		var hit := {"damage": 1, "miss": false, "critical": false}

@@ -28,12 +28,23 @@ const COLOR_SKIN := Color("e8c9a0")
 var _near: bool = false
 var _phase: float = 0.0
 var _player: Node2D = null
+var _art: Sprite2D
 
 @onready var _name_label: Label = $NameLabel
 @onready var _hint_label: Label = $HintLabel
 
 func _ready() -> void:
 	add_to_group("npcs")
+	if role in ["quest", "shop", "blacksmith", "warehouse", "carter"]:
+		_art = Sprite2D.new()
+		_art.name = "RoleArt"
+		_art.texture = load("res://assets/sprites/npcs/%s/idle_atlas.png" % role) as Texture2D
+		_art.hframes = 8
+		_art.centered = false
+		_art.offset = Vector2(-32, -64)
+		_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(_art)
+		move_child(_art, 0)
 	if npc_name.is_empty() and not shop_id.is_empty():
 		npc_name = Shop.display_name(shop_id)
 	if npc_name.is_empty():
@@ -51,6 +62,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_phase += delta
+	z_index = clampi(roundi(global_position.y), -3500, 3500)
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group("player") as Node2D
 	var near := is_player_in_range()
@@ -60,6 +72,9 @@ func _process(delta: float) -> void:
 		queue_redraw()
 	if _near:
 		_hint_label.modulate.a = 0.7 + 0.3 * absf(sin(_phase * 3.0))
+	if _art != null:
+		var to_player := _player.global_position - global_position if _near and _player != null else Vector2.DOWN
+		_art.frame = posmod(roundi((to_player.angle() - PI / 2.0) / (PI / 4.0)), 8)
 
 ## 玩家是否处于交互范围内（6.3）。
 func is_player_in_range() -> bool:
@@ -71,7 +86,7 @@ func is_player_in_range() -> bool:
 ## 屏幕点击命中：覆盖人物与头顶名称；由世界统一决定接近和交互。
 func contains_screen_point(point: Vector2) -> bool:
 	var local := get_global_transform_with_canvas().affine_inverse() * point
-	return Rect2(-38.0, -52.0, 76.0, 68.0).has_point(local)
+	return Rect2(-38.0, -66.0, 76.0, 82.0).has_point(local)
 
 func _draw() -> void:
 	var cloak_color := Color("956b4b") if role == "blacksmith" else (Color("547784") if role == "warehouse" else COLOR_CLOAK)
@@ -80,6 +95,10 @@ func _draw() -> void:
 	draw_set_transform(Vector2(0.0, 8.0), 0.0, Vector2(1.0, 0.5))
 	draw_circle(Vector2.ZERO, 12.0, Color(0, 0, 0, 0.28))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if _art != null:
+		if _near:
+			draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 32, Color(0.95, 0.85, 0.4, 0.55), 2.0, true)
+		return
 
 	# 斗篷（梯形）+ 描边
 	var cloak := PackedVector2Array([

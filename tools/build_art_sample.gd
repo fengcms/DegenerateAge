@@ -5,6 +5,7 @@ const OUT := "res://docs/素材设计/样板/可玩样板-v1/"
 
 func _initialize() -> void:
 	pack_actor("res://art_source/playable_sample/guardian_source_atlas.png", "res://assets/sprites/player/guardian/guardian_atlas.png", Vector2i(64, 80), Vector2i(32, 64), 48, 56)
+	pack_guardian_extra()
 	pack_actor("res://art_source/playable_sample/wolf_source_atlas.png", "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2i(80, 80), Vector2i(40, 64), 40, 64)
 	pack_icon("weapon_starter", "res://assets/sprites/equip/weapon_starter.png")
 	pack_icon("potion_hp_small", "res://assets/sprites/items/potion_hp_small.png")
@@ -84,6 +85,38 @@ func pack_actor(source: String, destination: String, cell: Vector2i, pivot: Vect
 			var offset := Vector2i(col * cell.x + pivot.x - piece.get_width() / 2, row * cell.y + pivot.y - piece.get_height())
 			atlas.blit_rect(piece, Rect2i(Vector2i.ZERO, piece.get_size()), offset)
 	save(atlas, destination)
+
+func pack_guardian_extra() -> void:
+	var source := "res://art_source/playable_sample/guardian_hit_sit_source.png"
+	var image := Image.load_from_file(source)
+	assert(image != null, source)
+	clean(image)
+	var rows := bands(image)
+	assert(rows.size() == 2, "Expected hit and sit sprite rows")
+	var pieces: Array[Image] = []
+	var max_h := 1
+	var max_w := 1
+	for row in rows:
+		for col in range(8):
+			var x0 := roundi(float(col) * image.get_width() / 8.0)
+			var x1 := roundi(float(col + 1) * image.get_width() / 8.0)
+			var piece := image.get_region(Rect2i(x0, row.x, x1 - x0, row.y - row.x))
+			var bounds := piece.get_used_rect()
+			assert(bounds.size.x > 0 and bounds.size.y > 0, "Empty guardian extra cell")
+			piece = piece.get_region(bounds)
+			pieces.append(piece)
+			max_h = maxi(max_h, piece.get_height())
+			max_w = maxi(max_w, piece.get_width())
+	var factor := minf(48.0 / max_h, 56.0 / max_w)
+	var atlas := Image.create(64 * 8, 80 * 2, false, Image.FORMAT_RGBA8)
+	atlas.fill(Color.TRANSPARENT)
+	for row in range(2):
+		for col in range(8):
+			var piece := pieces[row * 8 + col].duplicate() as Image
+			piece.resize(maxi(1, roundi(piece.get_width() * factor)), maxi(1, roundi(piece.get_height() * factor)), Image.INTERPOLATE_NEAREST)
+			var offset := Vector2i(col * 64 + 32 - piece.get_width() / 2, row * 80 + 64 - piece.get_height())
+			atlas.blit_rect(piece, Rect2i(Vector2i.ZERO, piece.get_size()), offset)
+	save(atlas, "res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png")
 
 func pack_icon(id: String, destination: String) -> void:
 	var source := Image.load_from_file("res://art_source/playable_sample/%s.png" % id)

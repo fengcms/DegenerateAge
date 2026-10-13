@@ -56,6 +56,7 @@ var hp: int = 1
 var is_dead: bool = false
 var selected := false
 var sample_art: SampleActorArt
+var dummy_art: Sprite2D
 
 func set_selected(value: bool) -> void:
 	selected = value
@@ -99,6 +100,19 @@ func _ready() -> void:
 	_load_template()
 	if monster_id == "wolf_corrupted":
 		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64), "", "res://assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png")
+	elif monster_id == "shellback_bug":
+		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/shellback_bug/actor_atlas.png", Vector2(40, 64))
+	elif monster_id == "ash_wraith":
+		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/ash_wraith/actor_atlas.png", Vector2(32, 64))
+	elif monster_id == "training_dummy":
+		dummy_art = Sprite2D.new()
+		dummy_art.name = "DummyArt"
+		dummy_art.texture = load("res://assets/sprites/monsters/training_dummy/dummy_atlas.png") as Texture2D
+		dummy_art.hframes = 3
+		dummy_art.centered = false
+		dummy_art.offset = Vector2(-32, -64)
+		dummy_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(dummy_art)
 	if spawn_position == Vector2.ZERO:
 		spawn_position = position
 	_state_t = _rng.randf() * IDLE_TIME   # 错开巡逻相位
@@ -301,6 +315,8 @@ func _physics_process(delta: float) -> void:
 	elif _flash_dirty:
 		_flash_dirty = false
 		queue_redraw()
+	if dummy_art != null:
+		dummy_art.frame = 2 if is_dead else 1 if _flash_t > 0.0 else 0
 
 	if is_dead:
 		velocity = Vector2.ZERO
@@ -665,7 +681,7 @@ func _draw() -> void:
 		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), "践踏预警", HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
 	if selected and not is_dead:
 		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
-	if sample_art != null:
+	if sample_art != null or dummy_art != null:
 		draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.45))
 		draw_circle(Vector2.ZERO, 17, Color(0, 0, 0, 0.28))
 		draw_set_transform(Vector2.ZERO)
@@ -746,7 +762,7 @@ func _draw_ground_mark(color: Color, r: float) -> void:
 func _draw_head_hp_bar() -> void:
 	var s := _head_hp_size()
 	var x := -s.x * 0.5
-	var y := -46.0 if sample_art != null else -radius * 2.4
+	var y := -46.0 if sample_art != null or dummy_art != null else -radius * 2.4
 	draw_rect(Rect2(x, y, s.x, s.y), COLOR_HP_BG)
 	draw_rect(Rect2(x, y, s.x * hp_ratio(), s.y), COLOR_HP_FG)
 	draw_rect(Rect2(x, y, s.x, s.y), Color(0, 0, 0, 0.5), false, 1.0)
