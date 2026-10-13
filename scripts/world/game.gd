@@ -26,6 +26,7 @@ const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
 
 var _explored_cell := Vector2i(-1, -1)
 var _pending_npc: Npc = null
+var _pending_exit: TravelExit = null
 var _quest_nav_issued := false
 
 func _process(_delta: float) -> void:
@@ -35,7 +36,18 @@ func _process(_delta: float) -> void:
 	_tick_quest_navigation()
 	if GameState.panel_open or _player.is_dead:
 		_pending_npc = null
+		_pending_exit = null
 		return
+	if _pending_exit != null:
+		if not is_instance_valid(_pending_exit) or not _pending_exit.is_inside_tree():
+			_pending_exit = null
+		elif Iso.world_to_grid(_player.global_position).distance_to(Iso.world_to_grid(_pending_exit.global_position)) <= MapService.WALK_RANGE_CELLS:
+			var arrived_exit := _pending_exit
+			_pending_exit = null
+			_activate_exit(arrived_exit)
+			return
+		elif not _player.map_move_active:
+			_pending_exit = null
 	if _pending_npc != null:
 		if not is_instance_valid(_pending_npc) or not _pending_npc.is_inside_tree():
 			_pending_npc = null
@@ -302,12 +314,20 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event is InputEventMouseButton and event.pressed and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
+			if event.button_index == MOUSE_BUTTON_LEFT:
+				var clicked_exit := exit_at_screen(event.position)
+				if clicked_exit != null:
+					_request_exit_interaction(clicked_exit)
+					get_viewport().set_input_as_handled()
+					return
 			var npc := npc_at_screen(event.position)
 			if npc != null:
+				_pending_exit = null
 				_request_npc_interaction(npc)
 				get_viewport().set_input_as_handled()
 				return
 			_pending_npc = null
+			_pending_exit = null
 			if event.button_index == MOUSE_BUTTON_RIGHT:
 				_player.map_move_active = false
 				_player.manual_attack_active = false
@@ -352,18 +372,46 @@ func auto_pilot() -> AutoBattle:
 func _try_interact() -> bool:
 	var exit_node := nearest_exit()
 	if exit_node != null:
-		var result := MapService.request_walk(exit_node.exit_id, _player.global_position)
-		if bool(result.get("ok", false)):
-			_pending_npc = null
-			MapService.reload_world()
-		else:
-			EventBus.toast_requested.emit(String(result.get("reason", "无法通行")), "danger")
+		_activate_exit(exit_node)
 		return true
 	var npc := nearest_npc()
 	if npc == null:
 		return false
 	_pending_npc = null
 	return _interact_with(npc)
+
+func _activate_exit(exit_node: TravelExit) -> void:
+	var result := MapService.request_walk(exit_node.exit_id, _player.global_position)
+	if bool(result.get("ok", false)):
+		_pending_npc = null
+		_pending_exit = null
+		MapService.reload_world()
+	else:
+		EventBus.toast_requested.emit(String(result.get("reason", "无法通行")), "danger")
+
+func _request_exit_interaction(exit_node: TravelExit) -> void:
+	_pending_npc = null
+	_pending_exit = null
+	if not MapService.is_unlocked(exit_node.to_map):
+		EventBus.toast_requested.emit("道路封锁：%s尚未解锁" % MapService.display_name(exit_node.to_map), "danger")
+		return
+	if Iso.world_to_grid(_player.global_position).distance_to(Iso.world_to_grid(exit_node.global_position)) <= MapService.WALK_RANGE_CELLS:
+		_activate_exit(exit_node)
+	elif _player.request_map_move(_ground.clamp_to_map(exit_node.global_position)):
+		_pending_exit = exit_node
+
+func exit_at_screen(point: Vector2) -> TravelExit:
+	var best: TravelExit = null
+	var nearest := INF
+	for child in _exits.get_children():
+		var exit_node := child as TravelExit
+		if exit_node == null or not exit_node.contains_screen_point(point):
+			continue
+		var distance := exit_node.get_global_transform_with_canvas().origin.distance_squared_to(point)
+		if distance < nearest:
+			best = exit_node
+			nearest = distance
+	return best
 
 func _interact_with(npc: Npc) -> bool:
 	if npc.role == "quest":

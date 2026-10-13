@@ -119,20 +119,20 @@ func _ready() -> void:
 	await get_tree().physics_frame
 	await get_tree().process_frame
 	check(not is_instance_valid(player.locked_target) and not hud.get_node("TargetPanel").visible, "目标释放清理选中和 HUD")
-	# 持续按键超过 3 秒不会恢复，松开后倒计时。
+	# 持续按键不会恢复，松开后才开始 1.5 秒倒计时。
 	GameState.set_auto_battle(true)
 	pilot.set_physics_process(false)
 	player.set_physics_process(false)
 	Input.action_press("move_left")
 	for i in range(5):
 		pilot._physics_process(1.0)
-	check(pilot._manual_t == 3.0 and pilot.current_state() == AutoBattle.State.MANUAL_OVERRIDE, "持续手动操作刷新三秒")
+	check(pilot._manual_t == 1.5 and pilot.current_state() == AutoBattle.State.MANUAL_OVERRIDE, "持续手动操作刷新 1.5 秒")
 	Input.action_release("move_left")
 	pilot._physics_process(1.0)
-	check(pilot.current_phase().contains("2 秒") and String(hud.get_node("%AutoLabel").text).contains("2 秒"), "HUD 显示真实倒计时")
+	check(pilot.current_phase().contains("0.5 秒") and String(hud.get_node("%AutoLabel").text).contains("0.5 秒"), "HUD 显示真实倒计时")
 	pilot.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	pilot._physics_process(1.0)
-	check(pilot._manual_t == 1.0, "窗口失焦后自动战斗的接管倒计时仍推进")
+	check(pilot._manual_t == 0.0, "窗口失焦后自动战斗的接管倒计时仍推进")
 	pilot._manual_t = 0.0
 	pilot._target = enemies[0]
 	pilot._physics_process(0.35)

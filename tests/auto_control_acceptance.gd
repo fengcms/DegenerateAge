@@ -101,17 +101,17 @@ func _ready() -> void:
 	var timer_moved := false
 	for _i in range(85):
 		await get_tree().physics_frame
-		if pilot.current_phase().contains("2 秒"):
+		if pilot.current_phase().contains("1."):
 			timer_moved = true
 			break
-	_check(timer_moved, "T09 停止操作后倒计时应从 3 秒递减")
+	_check(timer_moved, "T09 停止操作后倒计时应从 1.5 秒递减")
 	var resumed := false
 	for _i in range(210):
 		await get_tree().physics_frame
 		if pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE and pilot.current_target() != null:
 			resumed = true
 			break
-	_check(resumed and GameState.auto_battle_on, "T09 3 秒后应恢复自动搜怪")
+	_check(resumed and GameState.auto_battle_on, "T09 1.5 秒后应恢复自动搜怪")
 
 	# 攻击目标的鼠标点击同样属于手动命令。
 	_click(near.get_global_transform_with_canvas().origin + Vector2(0, -8))

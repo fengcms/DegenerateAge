@@ -2875,6 +2875,13 @@ func _test_walk_exit() -> void:
 	_expect(world.nearest_exit() != null, "站在路牌上应找到出口")
 	world._process(0.0)
 	_expect((exits.get_child(0) as TravelExit).player_near, "靠近路牌应显示交互提示")
+	var road: TravelExit = exits.get_child(0)
+	_expect(world.exit_at_screen(road.get_global_transform_with_canvas().origin + Vector2(0, -24)) == road,
+		"左键应能命中路牌可见区域")
+	player.global_position = Iso.grid_to_world(Vector2i(26, 20))
+	world._request_exit_interaction(road)
+	_expect(world._pending_exit == road and player.map_move_active,
+		"远处点击路牌应先步行接近")
 	world.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -3821,11 +3828,11 @@ func _test_auto_hud_reload() -> void:
 		_expect(not String(hud.get_node("%AutoLabel").text).contains("关（F"), "切图后 HUD 应读取自动开关")
 		pilot.begin_manual_override()
 		pilot._physics_process(0.1)
-		_expect(pilot.current_phase().contains("3 秒"), "恢复倒计时 3")
+		_expect(pilot.current_phase().contains("1.4 秒"), "恢复倒计时 1.4")
 		pilot._physics_process(1.0)
-		_expect(pilot.current_phase().contains("2 秒"), "恢复倒计时 2")
+		_expect(pilot.current_phase().contains("0.4 秒"), "恢复倒计时 0.4")
 		pilot._physics_process(1.0)
-		_expect(pilot.current_phase().contains("1 秒"), "恢复倒计时 1")
+		_expect(pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE, "1.5 秒后恢复")
 		GameState.set_panel_open("test", true)
 		pilot._physics_process(1.0)
 		_expect(pilot.current_state() != AutoBattle.State.MANUAL_OVERRIDE,

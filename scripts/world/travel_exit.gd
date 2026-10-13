@@ -31,12 +31,16 @@ func set_player_near(value: bool) -> void:
 	_update_label()
 	queue_redraw()
 
+func contains_screen_point(point: Vector2) -> bool:
+	var local := get_global_transform_with_canvas().affine_inverse() * point
+	return Rect2(-38.0, -62.0, 76.0, 84.0).has_point(local)
+
 func _update_label() -> void:
 	if _label == null:
 		return
 	var name := MapService.display_name(to_map)
 	if player_near:
-		_label.text = "[E] 前往%s · 免费 · 推荐Lv%d" % [name, MapService.recommended_level(to_map)] if MapService.is_unlocked(to_map) else "道路封锁：%s尚未解锁" % name
+		_label.text = "[E / 点击] 前往%s · 免费 · 推荐Lv%d" % [name, MapService.recommended_level(to_map)] if MapService.is_unlocked(to_map) else "道路封锁：%s尚未解锁" % name
 	else:
 		_label.text = "⇄ %s" % name
 

@@ -13,7 +13,7 @@ extends Node
 ## 硬性异常规则（3.14「必须实现」）逐条落地：
 ##   ① 连续 3 次不推进 → 目标短期黑名单重搜（T08 不可达改选）；
 ##   ② 目标消失 / 死亡 / 切图 → 停旧指令（每帧校验目标有效性）；
-##   ③ 手动接管 → 立即取消、3 秒后恢复（4.6）；
+##   ③ 手动接管 → 立即取消、松手后 1.5 秒恢复（4.6）；
 ##   ④ 背包满 → 不走向该掉落物、不循环重试（T10，靠节流 + 目标剔除，不做每帧重试）；
 ##   ⑤ MP / 冷却不足 → 不施放该技能（T11，见 choose_skill）；
 ##   ⑥ 死亡 → 自动转 off；真正暂停 → 停决策；面板打开与窗口失焦仍继续挂机。
@@ -52,7 +52,7 @@ const STUCK_INTERVAL := 0.3            # 卡住检测间隔（s）
 const STUCK_PROGRESS_EPS := 6.0        # 两次检测间的最小接近量（px）
 const STUCK_LIMIT := 3                 # 连续不推进次数上限 → 黑名单（3.14 ①）
 const BLACKLIST_TIME := 8.0            # 目标黑名单时长（s）
-const MANUAL_RESUME_DELAY := 3.0       # 手动接管后恢复延迟（s，4.6）
+const MANUAL_RESUME_DELAY := 1.5       # 手动接管后恢复延迟（s，4.6）
 const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
 const LOOT_ARRIVE_EPS := 6.0           # 判定「已抵达掉落物」（px；≤1.5 格由 GroundItem 自动入包）
@@ -148,7 +148,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# ⑥ 死亡 → 自动转 off（4.7 / 3.14）。
-	# 必须排在「手动接管计时」之前：否则接管期间阵亡会因 3 秒计时未走完而漏关。
+	# 必须排在「手动接管计时」之前：否则接管期间阵亡会因计时未走完而漏关。
 	if _player.is_dead:
 		_player.set_auto_move(Vector2.ZERO)
 		_manual_t = 0.0
@@ -175,7 +175,7 @@ func _physics_process(delta: float) -> void:
 	if _manual_t > 0.0:
 		_manual_t = maxf(0.0, _manual_t - delta)
 		if _manual_t > 0.0:
-			_set_state(State.MANUAL_OVERRIDE, "手动接管 · %d 秒后恢复" % ceili(_manual_t))
+			_set_state(State.MANUAL_OVERRIDE, "手动接管 · %.1f 秒后恢复" % _manual_t)
 			return
 		_toast("自动战斗恢复", "info")
 		_set_state(State.SEARCH_TARGET)
