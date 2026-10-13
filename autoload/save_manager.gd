@@ -15,9 +15,10 @@ const SAVE_DIR := "user://saves/"
 const LAST_SLOT_FILE := SAVE_DIR + "last_slot.json"
 
 const MAX_SLOTS := 3
-## 存档 schema 版本（工程文档 06）。v7（M4-10 / 工程文档 14 §3.1 ④）新增：
-##   `worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态，含墓碑位置）。
-const CURRENT_SCHEMA := 7
+## 存档 schema 版本（工程文档 06）。
+## v7（M4-10 / 工程文档 14 §3.1 ④）新增：`worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态）。
+## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
+const CURRENT_SCHEMA := 8
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -114,6 +115,8 @@ func _collect() -> Dictionary:
 		# M4-10：世界时钟与怪物点刷新状态（墓碑跨图 / 跨档保持，见工程文档 14 §3.1 ④）
 		"worldTime": GameState.world_time,
 		"spawnRespawn": GameState.encode_spawn_respawn(),
+		# M6-0c：未领取战利品（精英 / Boss 入包失败，跨图 / 跨档保留；创意 07 §11）
+		"unclaimedLoot": GameState.encode_unclaimed_loot(),
 		# 注意：运行态自动战斗开关**不入档**（10.3：重启后自动战斗默认关闭）。
 	}
 
@@ -340,6 +343,9 @@ func _migrate(source: Dictionary) -> Dictionary:
 			# M4-10：旧档无世界时钟与刷新状态 → 视为「无墓碑」，从零起算（不报错）
 			data.worldTime = 0.0
 			data.spawnRespawn = {}
+		if v < 8:
+			# M6-0c：旧档无未领取战利品 → 空集合（创意 07 §11）
+			data.unclaimedLoot = {}
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -360,6 +366,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	# `Game._ready` → `spawn_from_map` 装配怪物点时会立即读取该状态（决定是否建墓碑）。
 	GameState.world_time = maxf(0.0, float(data.get("worldTime", 0.0)))
 	GameState.apply_spawn_respawn(data.get("spawnRespawn", {}))
+	# M6-0c：未领取战利品同样须在重载场景前恢复 —— `Game._ready` 会据此重建地面物（创意 07 §11.2）。
+	GameState.apply_unclaimed_loot(_deep_int(data.get("unclaimedLoot", {})))
 	GameState.inventory = _migrate_inventory(data.get("inventory", []))
 	GameState.warehouse_expansions = int(data.get("warehouseExpansions", 0))
 	GameState.warehouse = _migrate_warehouse(data.get("warehouse", []), GameState.warehouse_expansions)
@@ -608,6 +616,9 @@ func _is_valid_save(raw: Variant) -> bool:
 		return false
 	if not _valid_spawn_respawn(data.get("spawnRespawn")):
 		return false
+	# M6-0c：未领取战利品结构（v8 起；旧档由 _migrate 补空集合）
+	if not _valid_unclaimed_loot(data.get("unclaimedLoot")):
+		return false
 	if not data.get("savedAt") is String or not _whole(data.get("slotId"), -1, MAX_SLOTS):
 		return false
 	var pos: Variant = data.get("playerPos")
@@ -718,6 +729,31 @@ func _valid_spawn_respawn(raw: Variant) -> bool:
 		for value in (pos as Array):
 			if not _number(value):
 				return false
+	return true
+
+## M6-0c（创意 07 §11）：未领取战利品合法性。整体字典；每图须为数组；每条含字符串 `uid` /
+## `batchId`、合法物品 `item`、长度 2 的数对 `pos`。与 `_valid_spawn_respawn` 同口径——
+## **不认识的 map_id 不拒档**（地图数据变动不应导致读档失败；`apply_unclaimed_loot` 亦会忽略非法项）。
+func _valid_unclaimed_loot(raw: Variant) -> bool:
+	if not (raw is Dictionary):
+		return false
+	for map_id in (raw as Dictionary).keys():
+		var rows: Variant = (raw as Dictionary)[map_id]
+		if not (rows is Array):
+			return false
+		for record in (rows as Array):
+			if not (record is Dictionary):
+				return false
+			if not (record.get("uid") is String) or not (record.get("batchId") is String):
+				return false
+			if not (record.get("item") is Dictionary) or not _valid_item(record.item):
+				return false
+			var pos: Variant = record.get("pos", null)
+			if not (pos is Array) or (pos as Array).size() != 2:
+				return false
+			for value in (pos as Array):
+				if not _number(value):
+					return false
 	return true
 
 ## 先复制到临时文件再替换备份，复制失败不得先删除旧备份。

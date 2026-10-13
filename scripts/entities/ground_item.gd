@@ -49,8 +49,16 @@ enum Stage { GROUND, HOLD, FLY }
 @export var auto_claim: bool = true
 ## 同批多件起飞错峰（s）：由掉落方按序号传入（`Monster._spawn_drop`）。
 @export var stagger_delay: float = 0.0
+## M6-0c（创意 07 §11）：精英 / Boss 掉落为 true ⇒ 入包失败登记为「未领取战利品」，
+## **不走 60s 淡出**，跨图 / 跨档保留，直到领取或玩家主动丢弃。普通怪 / 玩家丢弃物保持 false。
+@export var persistent: bool = false
+## M6-0c（创意 07 §8）：所属掉落批次 ID（仅信息用途，便于批次级提示 / 排查）。
+@export var batch_id: String = ""
 
 @export var item: Dictionary = {}
+
+## M6-0c：登记后的未领取记录 uid（空 = 未登记）；领取成功时据此注销（§11.3）。
+var claim_uid: String = ""
 
 var _life: float = LIFETIME
 var _blocked_cd: float = 0.0
@@ -91,10 +99,12 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# ---- 未认领：地面物旧语义 ----
-	_life -= delta
-	if _life <= 0.0:
-		_fade_out()
-		return
+	# M6-0c：精英 / Boss 未领取战利品（persistent）不参与 60s 淡出，持续到领取（§11）。
+	if not persistent:
+		_life -= delta
+		if _life <= 0.0:
+			_fade_out()
+			return
 	# 停驻 / 保护期内不自动拾取（点击不受限，见 _on_click_area_input_event）
 	if _spawn_t < hold_time:
 		return
@@ -110,6 +120,10 @@ func _physics_process(delta: float) -> void:
 ## 失败（背包满 / 金币满）→ 保持未认领，回退旧留地语义（不静默丢失）。
 func _try_claim() -> void:
 	if not _try_pickup(false):        # 静默入包：拾取提示改在飞行结束时弹（Q2）
+		# M6-0c：精英 / Boss 入包失败 ⇒ 登记未领取战利品（§11.1）。
+		# ⚠ 延后一帧登记：掉落方在 `add_child` **之后**才设最终落点（`Monster._spawn_drop`），
+		#   立即登记会记到默认位置。deferred 在当前帧末 flush，此时落点已定。
+		_register_unclaimed.call_deferred()
 		return
 	_claimed = true
 	remove_from_group("ground_items")  # 关键收敛点：AutoBattle 顺路拾取立刻看不见它
@@ -122,6 +136,22 @@ func _try_claim() -> void:
 	_hold_until = maxf(hold_time, 0.0) + maxf(stagger_delay, 0.0)
 	_fly_from = global_position
 	queue_redraw()
+
+## M6-0c（创意 07 §11.2）：登记为「未领取战利品」。仅 persistent（精英 / Boss）、
+## 未认领、且未登记过时生效（幂等）。记录地图 ID / 批次 ID / 实例数据 / 落点。
+func _register_unclaimed() -> void:
+	if not persistent or _claimed or not claim_uid.is_empty():
+		return
+	claim_uid = GameState.add_unclaimed_loot(GameState.current_map, batch_id, item, global_position)
+	SaveManager.request_autosave()
+
+## M6-0c（创意 07 §11.3）：领取成功 → 注销未领取记录并请求保存（幂等；未登记时为 no-op）。
+func _clear_unclaimed_record() -> void:
+	if claim_uid.is_empty():
+		return
+	GameState.remove_unclaimed_loot(claim_uid)
+	claim_uid = ""
+	SaveManager.request_autosave()
 
 ## 是否播放飞行动画（设置项 10.3，默认开；关闭 = 认领后立即入包并消失）。
 func _fly_enabled() -> bool:
@@ -208,6 +238,7 @@ func _air_ratio() -> float:
 ## 背包满 / 金币满 → 留地并节流提示（不静默丢失）。
 func _try_pickup(announce: bool = true) -> bool:
 	if item.is_empty():
+		_clear_unclaimed_record()
 		queue_free()
 		return true
 
@@ -223,6 +254,7 @@ func _try_pickup(announce: bool = true) -> bool:
 		_pickup_msg = "拾取：金币 +%d" % got
 		if announce:
 			_announce_pickup()
+		_clear_unclaimed_record()
 		return true
 	if String(item.get("kind", "")) == "mount":
 		var mount_id := String(item.get("itemId", ""))
@@ -232,6 +264,7 @@ func _try_pickup(announce: bool = true) -> bool:
 		_pickup_msg = "获得坐骑：%s" % ItemUtil.display_name(item) if fresh else "该坐骑已收藏"
 		if announce:
 			_announce_pickup()
+		_clear_unclaimed_record()
 		return true
 
 	if Inventory.add(GameState.inventory, item):
@@ -240,6 +273,7 @@ func _try_pickup(announce: bool = true) -> bool:
 		_pickup_msg = "拾取：" + ItemUtil.display_name(item)
 		if announce:
 			_announce_pickup()
+		_clear_unclaimed_record()
 		return true
 	if _blocked_cd <= 0.0:
 		_blocked_cd = BLOCK_TOAST_CD

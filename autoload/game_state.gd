@@ -60,6 +60,14 @@ var world_time: float = 0.0
 ## 只记录**未刷新完成**的点；到点即清除（表不会无限增长，14 §5 R-d）。
 var spawn_respawn: Dictionary = {}
 
+## 未领取战利品（M6-0c / 创意 07 §11）：精英 / Boss 入包失败的掉落物，跨图 / 跨档保留，
+## 直到领取或玩家主动丢弃（普通怪与玩家自行丢弃物仍按 60s 淡出旧规则）。
+## key = map_id；value = Array[ { "uid": String, "batchId": String, "item": Dictionary, "pos": Vector2 } ]
+## ⚠ 与 spawn_respawn 同构：encode / apply 负责 JSON 往返（Vector2 ↔ [x,y]）。
+##   读档由 SaveManager.apply_to_game_state 调用，须在 `Game._ready` 重建地面物之前完成。
+var unclaimed_loot: Dictionary = {}
+var _unclaimed_seq: int = 0
+
 ## 读档待应用的玩家世界坐标（M1-10，10.3「当前地图与坐标」）。
 ## 写入方：SaveManager.apply_to_game_state；消费方：Game._ready（消费一次后 clear_save_pos）。
 ## has_save_pos = false 时按地图中心出生（新游戏 / 无坐标字段的旧档）。
@@ -153,6 +161,7 @@ func reset_to_defaults() -> void:
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
 	world_time = 0.0                # M4-10：世界时钟与刷新状态重置（新游戏 / 初始化）
 	spawn_respawn = {}
+	unclaimed_loot = {}             # M6-0c：未领取战利品（新游戏 / 初始化清空）
 	clear_save_pos()
 	settings = default_settings()
 	hotbar = HotbarConfig.defaults()
@@ -601,6 +610,94 @@ func _decode_pos(raw: Variant) -> Vector2:
 		if (arr[0] is int or arr[0] is float) and (arr[1] is int or arr[1] is float):
 			return Vector2(float(arr[0]), float(arr[1]))
 	return Vector2.ZERO
+
+# ---- 未领取战利品（M6-0c；创意 07 §11）----
+## 精英 / Boss 入包失败的掉落物登记于此：跨图 / 跨档保留，直到领取或玩家主动丢弃。
+## uid 全局唯一（跨图查找即可注销，调用方无需记 map_id）。
+
+## 登记一件未领取战利品，返回其唯一 uid（领取成功时据此注销）。
+func add_unclaimed_loot(map_id: String, batch_id: String, item: Dictionary, pos: Vector2) -> String:
+	if map_id.is_empty() or item.is_empty():
+		return ""
+	_unclaimed_seq += 1
+	var uid := "u_%d_%d" % [Time.get_ticks_msec(), _unclaimed_seq]
+	if not unclaimed_loot.has(map_id):
+		unclaimed_loot[map_id] = []
+	(unclaimed_loot[map_id] as Array).append({
+		"uid": uid, "batchId": batch_id, "item": item.duplicate(true), "pos": pos,
+	})
+	return uid
+
+## 注销某条未领取记录（领取成功后，§11.3）。uid 全局唯一，故跨图查找。返回是否命中。
+func remove_unclaimed_loot(uid: String) -> bool:
+	if uid.is_empty():
+		return false
+	for map_id in unclaimed_loot.keys():
+		var rows: Array = unclaimed_loot[map_id]
+		for i in range(rows.size()):
+			if String((rows[i] as Dictionary).get("uid", "")) == uid:
+				rows.remove_at(i)
+				if rows.is_empty():
+					unclaimed_loot.erase(map_id)
+				return true
+	return false
+
+## 某图当前未领取记录（深拷贝，供重建地面物）。
+func unclaimed_loot_for(map_id: String) -> Array:
+	if not unclaimed_loot.has(map_id):
+		return []
+	return (unclaimed_loot[map_id] as Array).duplicate(true)
+
+## 某图未领取件数（供界面 / 批次摘要提示，§11.6）。
+func unclaimed_count(map_id: String) -> int:
+	var rows: Variant = unclaimed_loot.get(map_id, [])
+	return (rows as Array).size() if rows is Array else 0
+
+## 存档编码：Vector2 → [x, y]（JSON 无 Vector2；与 encode_spawn_respawn 同构）。
+func encode_unclaimed_loot() -> Dictionary:
+	var out: Dictionary = {}
+	for map_id in unclaimed_loot.keys():
+		var rows: Array = []
+		for record in (unclaimed_loot[map_id] as Array):
+			if not (record is Dictionary):
+				continue
+			var pos_v: Variant = (record as Dictionary).get("pos", Vector2.ZERO)
+			var p: Vector2 = pos_v if pos_v is Vector2 else Vector2.ZERO
+			var item_v: Variant = (record as Dictionary).get("item", {})
+			rows.append({
+				"uid": String((record as Dictionary).get("uid", "")),
+				"batchId": String((record as Dictionary).get("batchId", "")),
+				"item": (item_v as Dictionary).duplicate(true) if item_v is Dictionary else {},
+				"pos": [p.x, p.y],
+			})
+		out[String(map_id)] = rows
+	return out
+
+## 读档解码：[x, y] → Vector2。非法项**忽略而非拒档**（地图数据变动不应导致读档失败）。
+func apply_unclaimed_loot(raw: Variant) -> void:
+	unclaimed_loot = {}
+	_unclaimed_seq = 0
+	if not (raw is Dictionary):
+		return
+	for map_id in (raw as Dictionary).keys():
+		var rows: Variant = (raw as Dictionary)[map_id]
+		if not (rows is Array):
+			continue
+		var clean: Array = []
+		for record in (rows as Array):
+			if not (record is Dictionary):
+				continue
+			var item_v: Variant = (record as Dictionary).get("item", {})
+			if not (item_v is Dictionary) or (item_v as Dictionary).is_empty():
+				continue
+			clean.append({
+				"uid": String((record as Dictionary).get("uid", "")),
+				"batchId": String((record as Dictionary).get("batchId", "")),
+				"item": (item_v as Dictionary).duplicate(true),
+				"pos": _decode_pos((record as Dictionary).get("pos", null)),
+			})
+		if not clean.is_empty():
+			unclaimed_loot[String(map_id)] = clean
 
 # ---- 自动战斗 / 自动拾取开关（M1-9，3.14 / 4.6）----
 

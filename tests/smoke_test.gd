@@ -34,6 +34,7 @@ func _ready() -> void:
 	_test_mount_core()
 	await _test_pickup()
 	await _test_claim_fly()
+	await _test_unclaimed_loot()
 	_test_equipment()
 	_test_upgrade()
 	_test_rune_upgrade()
@@ -1079,6 +1080,126 @@ func _test_claim_fly() -> void:
 	player.queue_free()
 	loot_root.queue_free()
 	await get_tree().process_frame
+
+## M6-0c（创意 07 §8/§11）：批次结算 + 品质优先入包 + 未领取持久化 + 存档 schema 8。
+func _test_unclaimed_loot() -> void:
+	GameState.reset_to_defaults()
+	GameState.settings["dropFlyAnim"] = false   # 本用例判「入包」语义，关飞行以便即时结算
+
+	var coin := {"kind": "coin", "itemId": "coin", "gold": 6, "count": 1}
+	var potion := {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	var common_e := _equip_instance("weapon_starter", "u_common", {"atk": 3})
+	var rare_e := _equip_instance("weapon_starter", "u_rare", {"atk": 7})
+	rare_e["quality"] = "rare"
+	var leg_e := _equip_instance("weapon_legendary_vein_guard", "u_leg", {"atk": 30})
+	leg_e["quality"] = "legendary"
+	leg_e["level"] = 9
+
+	# ① 入包认领序（§8）：传说→史诗→稀有→优秀→普通；之后药水 / 如意；金币最后。
+	var order_ids: Array = []
+	for row in Monster._priority_order([coin, common_e, potion, leg_e, rare_e]):
+		order_ids.append(String(row.get("instanceId", row.get("kind", ""))))
+	_expect(",".join(PackedStringArray(order_ids)) == "u_leg,u_rare,u_common,potion,coin",
+		"入包序应为 传说→稀有→普通→药水→金币，实际 %s" % ",".join(PackedStringArray(order_ids)))
+
+	var loot_root := Node2D.new()
+	loot_root.add_to_group("loot_root")
+	add_child(loot_root)
+	var player = load("res://scenes/entities/Player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector2(4000.0, 4000.0)   # 远离掉落点，避免「靠近拾取」干扰
+	await get_tree().physics_frame
+
+	# ② 满包仅 1 空位 + 按认领序投放（传说在前）→ 传说入包、普通登记为未领取（§8/§11.1）
+	GameState.inventory = Inventory.create(40)
+	for i in range(39):
+		Inventory.add(GameState.inventory, _equip_instance("weapon_starter", "fill_%d" % i, {"atk": 1}))
+	var gi_leg: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi_leg.item = leg_e
+	gi_leg.persistent = true
+	gi_leg.batch_id = "b_test"
+	gi_leg.hold_time = 0.0
+	loot_root.add_child(gi_leg)
+	gi_leg.global_position = Vector2(0.0, 0.0)
+	var gi_common: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi_common.item = common_e
+	gi_common.persistent = true
+	gi_common.batch_id = "b_test"
+	gi_common.hold_time = 0.0
+	loot_root.add_child(gi_common)
+	gi_common.global_position = Vector2(37.0, -12.0)
+	await get_tree().physics_frame
+	_expect(_index_of_instance("u_leg") >= 0, "满包时最高品质（传说）应优先入包")
+	_expect(_index_of_instance("u_common") < 0, "空间不足时低品质应留为未领取")
+	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "应有 1 件未领取战利品登记")
+	_expect(not gi_common.claim_uid.is_empty() and not gi_common.is_claimed(),
+		"未领取物应持有登记 uid 且未标记已认领")
+	var rec: Dictionary = GameState.unclaimed_loot_for(GameState.current_map)[0] if GameState.unclaimed_count(GameState.current_map) > 0 else {}
+	_expect(rec.get("pos", Vector2.ZERO) is Vector2
+		and (rec.get("pos", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(37.0, -12.0)),
+		"未领取记录落点应等于最终落点（延后登记），实际 %s" % str(rec.get("pos", null)))
+	_expect(String(rec.get("batchId", "")) == "b_test", "未领取记录应带批次 ID")
+
+	# ③ persistent 不走 60s 淡出；对照普通地面物仍按旧规则淡出（§11 首段）
+	gi_common._physics_process(GroundItem.LIFETIME + 5.0)
+	_expect(is_instance_valid(gi_common) and gi_common._life >= GroundItem.LIFETIME,
+		"未领取战利品不应参与 60s 淡出")
+	var gi_plain: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
+	gi_plain.item = _equip_instance("weapon_starter", "u_plain", {"atk": 2})
+	gi_plain.auto_claim = false
+	gi_plain.hold_time = 0.0
+	loot_root.add_child(gi_plain)
+	gi_plain.global_position = Vector2(0.0, 0.0)
+	await get_tree().physics_frame
+	gi_plain._physics_process(GroundItem.LIFETIME + 5.0)
+	_expect(gi_plain._life < 0.0, "普通地面物应仍按 60s 淡出（旧规则不变）")
+	gi_plain.queue_free()
+
+	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
+	var saved := SaveManager._collect()
+	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
+	_expect(SaveManager.CURRENT_SCHEMA == 8, "M6-0c 后存档 schema 应为 8，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	GameState.unclaimed_loot = {}
+	SaveManager.apply_to_game_state(saved)
+	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")
+	var legacy := SaveManager._collect()
+	legacy["schemaVersion"] = 7
+	legacy.erase("unclaimedLoot")
+	_expect(SaveManager._is_valid_save(legacy), "v7 旧档应可读（迁移补空未领取集合）")
+	var legacy_migrated: Dictionary = SaveManager._migrate(legacy)
+	_expect(legacy_migrated.get("unclaimedLoot", null) is Dictionary
+		and (legacy_migrated["unclaimedLoot"] as Dictionary).is_empty(), "v7 迁移应补空未领取集合")
+	var bad := SaveManager._collect()
+	bad["unclaimedLoot"] = {"camp": [{"uid": 1, "batchId": "x", "item": {}, "pos": [0, 0]}]}
+	_expect(not SaveManager._is_valid_save(bad), "未领取结构非法（uid 非字符串 / item 非法）应拒档")
+
+	# ⑤ 领取成功 → 注销未领取记录（§11.3）
+	GameState.inventory[0] = null
+	player.global_position = gi_common.global_position
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_expect(_index_of_instance("u_common") >= 0, "腾出空间后靠近应拾取未领取物")
+	_expect(GameState.unclaimed_count(GameState.current_map) == 0, "拾取成功后应注销未领取记录")
+
+	# ⑥ 切图 / 读档重建（§11.2）：进入地图从记录恢复未领取地面物
+	player.queue_free()
+	loot_root.queue_free()
+	await get_tree().process_frame
+	GameState.unclaimed_loot = {}
+	GameState.add_unclaimed_loot("camp", "b_rebuild", _equip_instance("weapon_starter", "u_rebuild", {"atk": 4}), Vector2(128.0, 128.0))
+	var main := preload("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var rebuilt_layer: Node = main.get_node("Game/LootRoot")
+	var rebuilt := 0
+	for child in rebuilt_layer.get_children():
+		if child is GroundItem and child.persistent and String(child.item.get("instanceId", "")) == "u_rebuild":
+			rebuilt += 1
+	_expect(rebuilt == 1, "进入地图应从记录重建未领取战利品，实际 %d" % rebuilt)
+	main.queue_free()
+	await get_tree().process_frame
+	GameState.unclaimed_loot = {}
+	GameState.reset_to_defaults()
 
 ## M1-7：装备栏 14 槽（5.1）、穿戴后属性立即生效（T06）、实例属性不重随（10.1）。
 func _test_equipment() -> void:

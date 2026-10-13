@@ -78,6 +78,8 @@ var radius: float = RADIUS
 var boss_phase := 0
 var _boss_enraged := false
 var _boss_beat := 0.0
+## M6-0c：本实例掉落批次序号（与 ticks 拼成批次 ID，见 _settle_rewards）。
+var _batch_seq: int = 0
 var _stomp_pending := false
 var _stomp_remaining := 0.0
 var _stomp_cooldown := 0.0
@@ -470,9 +472,43 @@ func _settle_rewards() -> void:
 		return
 
 	var rolled := Loot.roll(table_id, null, monster_id)
-	for i in range(rolled.size()):
-		_spawn_drop(rolled[i], i)
+	# M6-0c（创意 07 §8）：整批掉落一次抽取（随机结果只生成一次），批次带唯一 ID；
+	# 认领序按品质优先（只影响背包空间分配；展示顺序由 M6-0d 装备雨负责）。
+	_batch_seq += 1
+	var batch_id := "b_%d_%d" % [Time.get_ticks_msec(), _batch_seq]
+	var persistent := _kind() in ["elite", "boss"]   # 精英 / Boss 未领取 ⇒ 跨图 / 跨档保留（§11）
+	var ordered := _priority_order(rolled)
+	for i in range(ordered.size()):
+		_spawn_drop(ordered[i], i, batch_id, persistent)
 	_announce_drops(rolled)
+
+## 入包认领序（创意 07 §8）：传说→史诗→稀有→优秀→普通；同品质按生成序号。
+## 药水 / 如意 / 杂项排在装备之后，金币最后（独立入账）。分桶实现以保持**稳定次序**。
+const _QUALITY_RANK := {"common": 0, "uncommon": 1, "rare": 2, "epic": 3, "legendary": 4}
+
+static func _priority_order(items: Array) -> Array:
+	var buckets := {6: [], 5: [], 4: [], 3: [], 2: [], 1: [], 0: []}
+	for it in items:
+		if not (it is Dictionary):
+			continue
+		var rank := _claim_rank(it as Dictionary)
+		if not buckets.has(rank):
+			buckets[rank] = []
+		buckets[rank].append(it)
+	var out: Array = []
+	for rank in [6, 5, 4, 3, 2, 1, 0]:
+		for it in buckets.get(rank, []):
+			out.append(it)
+	return out
+
+## 认领优先级：金币 0 ＜ 药水 / 如意 / 杂项 1 ＜ 装备 2+品质序（普通 2 … 传说 6）。
+static func _claim_rank(item: Dictionary) -> int:
+	var kind := String(item.get("kind", ""))
+	if kind == "coin":
+		return 0
+	if kind == "equip":
+		return 2 + int(_QUALITY_RANK.get(String(item.get("quality", "common")), 0))
+	return 1
 
 ## 聚合广播一条掉落提示：如「腐化野狼 掉落：金币 ×6 · 生命药水 · 稀有 布甲头盔 Lv2」。
 func _announce_drops(items: Array) -> void:
@@ -486,7 +522,8 @@ func _announce_drops(items: Array) -> void:
 
 ## 在死亡位置附近生成一件地面掉落物（7.6 / 9.9）。
 ## `index` 为同批序号：用于 `stagger_delay` 起飞错峰，避免多件同时飞行叠成一坨。
-func _spawn_drop(item: Dictionary, index: int = 0) -> void:
+## M6-0c：`persistent`（精英 / Boss）⇒ 入包失败登记为「未领取战利品」，跨图 / 跨档保留（创意 07 §11）。
+func _spawn_drop(item: Dictionary, index: int = 0, batch_id: String = "", persistent: bool = false) -> void:
 	if item.is_empty():
 		return
 	var layer := get_tree().get_first_node_in_group("loot_root")
@@ -496,6 +533,8 @@ func _spawn_drop(item: Dictionary, index: int = 0) -> void:
 	gi.item = item
 	gi.auto_claim = true   # 怪物掉落 = 生成即认领（工程文档 10 方案 C）
 	gi.stagger_delay = minf(float(index) * GroundItem.STAGGER_PER_ITEM, GroundItem.STAGGER_MAX)
+	gi.batch_id = batch_id
+	gi.persistent = persistent
 	layer.add_child(gi)
 	var ang := _rng.randf() * TAU
 	var r := _rng.randf() * DROP_SCATTER

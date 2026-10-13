@@ -3,6 +3,7 @@ extends Node2D
 ## 依据产品文档 7.2（相机平滑跟随、防露边界）、7.9（怪物点刷新）、6.3（安全区 NPC）。
 
 const NPC_SCENE := preload("res://scenes/entities/Npc.tscn")
+const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
 
 ## 世界按「当前地图」数据驱动装配（M3-1）：
 ##   · 怪物点 → `maps.json` 的 `spawnPoints`（`MonsterSpawner.spawn_from_map`）
@@ -86,6 +87,9 @@ func _ready() -> void:
 	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()
 
+	# M6-0c（创意 07 §11.2）：重建本图未领取战利品 —— 切图 / 读档后恢复，跨档不丢
+	_rebuild_unclaimed_loot()
+
 	# 抵达提示（切图 / 读档后给一次系统提示；延后一帧等 HUD 就绪）
 	_notify_arrival.call_deferred()
 
@@ -104,6 +108,34 @@ func _spawn_npcs() -> void:
 		npc.greeting = String(spec.get("greeting", ""))
 		npc.position = Iso.grid_to_world(_cell_of(spec))
 		_npcs.add_child(npc)
+
+## M6-0c（创意 07 §11.2）：进入地图时重建本图未领取战利品，跨图 / 跨档不丢。
+## 重建物为「已登记」状态：`auto_claim=false`（不重复结算 / 不再飞向玩家）、`persistent=true`
+## （不走 60s 淡出），依靠靠近 / 点击拾取；领取成功再注销记录（见 `GroundItem`）。
+## 落点夹回图内 —— §11.4 的完整可走网格校验待障碍系统落地后再补（当前至少保证边界内）。
+func _rebuild_unclaimed_loot() -> void:
+	var records := GameState.unclaimed_loot_for(GameState.current_map)
+	if records.is_empty():
+		return
+	var layer := get_tree().get_first_node_in_group("loot_root")
+	if layer == null:
+		return
+	for record in records:
+		if not (record is Dictionary):
+			continue
+		var item_v: Variant = (record as Dictionary).get("item", {})
+		if not (item_v is Dictionary) or (item_v as Dictionary).is_empty():
+			continue
+		var gi: GroundItem = GROUND_ITEM_SCENE.instantiate()
+		gi.item = (item_v as Dictionary).duplicate(true)
+		gi.auto_claim = false
+		gi.persistent = true
+		gi.batch_id = String((record as Dictionary).get("batchId", ""))
+		gi.claim_uid = String((record as Dictionary).get("uid", ""))
+		layer.add_child(gi)
+		var pos_v: Variant = (record as Dictionary).get("pos", Vector2.ZERO)
+		var pos: Vector2 = pos_v if pos_v is Vector2 else Vector2.ZERO
+		gi.global_position = _ground.clamp_to_map(pos)
 
 ## `maps.json` 的 `cell` 是 `[x, y]` 数组（JSON 无 Vector2i）。
 func _cell_of(spec: Dictionary) -> Vector2i:
