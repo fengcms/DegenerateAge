@@ -5,6 +5,8 @@ var _failures: Array[String] = []
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	# The camp centre is now a safe area; hostile targets there are deliberately invalid.
+	GameState.current_map = "wild_trial"
 	var main: Node = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	for _i in range(8):
@@ -25,14 +27,13 @@ func _ready() -> void:
 	var chosen := enemies[0] as Node2D
 	for i in range(1, enemies.size()):
 		enemies[i].queue_free()
-	chosen.global_position = player.global_position + Vector2(420, 0)
-	await get_tree().process_frame
-	_expect(game.visible_enemies().has(chosen), "测试怪物应在当前画面中")
+	var chosen_distance: float = await _place_visible_enemy(game, player, chosen)
+	_expect(chosen_distance >= 160.0, "测试怪物应在当前画面较远处")
 	GameState.set_auto_battle(true)
 	for _i in range(30):
 		await get_tree().physics_frame
 	_expect(pilot.current_target() == chosen, "自动战斗应选中画面中远处的怪物")
-	_expect(player.global_position.distance_to(chosen.global_position) < 420, "应向远处可见怪物移动")
+	_expect(player.global_position.distance_to(chosen.global_position) < chosen_distance, "应向远处可见怪物移动")
 
 	chosen.queue_free()
 	await get_tree().process_frame
@@ -47,8 +48,8 @@ func _ready() -> void:
 	found.monster_id = "wolf_corrupted"
 	found.ai_enabled = false
 	game.get_node("Entities").add_child(found)
-	found.global_position = player.global_position + Vector2(320, 0)
-	await get_tree().process_frame
+	var found_distance: float = await _place_visible_enemy(game, player, found)
+	_expect(found_distance >= 160.0, "巡游后新怪应在当前画面中")
 	for _i in range(30):
 		await get_tree().physics_frame
 	_expect(pilot.current_target() == found, "巡游途中发现可见怪物后应立即追击")
@@ -106,6 +107,17 @@ func _ready() -> void:
 	game._unhandled_input(sit_key)
 	_expect(player.is_sitting, "X 键应进入打坐")
 	_finish()
+
+func _place_visible_enemy(game: Node, player: PlayerCharacter, enemy: Node2D) -> float:
+	var ground := game.get_node("Ground") as IsoGround
+	for offset in [Vector2(220, 0), Vector2(-220, 0), Vector2(0, 220), Vector2(0, -220),
+			Vector2(180, 120), Vector2(-180, -120)]:
+		enemy.global_position = ground.clamp_to_map(player.global_position + offset)
+		await get_tree().process_frame
+		var distance := player.global_position.distance_to(enemy.global_position)
+		if distance >= 160.0 and game.visible_enemies().has(enemy):
+			return distance
+	return -1.0
 
 func _expect(ok: bool, reason: String) -> void:
 	if not ok:
