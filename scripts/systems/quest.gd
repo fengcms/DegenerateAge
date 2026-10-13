@@ -327,6 +327,16 @@ static func objective_text(entry: Dictionary) -> String:
 		return "%s%s" % [verb, tname]
 	return "%s%s %d/%d" % [verb, tname, int(entry.get("cur", 0)), need]
 
+## 任务面板点击击杀目标：只导航至实际刷新点，不选择目标或发动攻击。
+static func start_target_navigation(quest_id: String) -> Dictionary:
+	if state_of(quest_id) != STATE_ACTIVE:
+		return {"ok": false, "reason": "任务未在进行中"}
+	var tpl := template(quest_id)
+	var objective: Dictionary = tpl.get("objective", {})
+	if String(objective.get("kind", "")) != "kill":
+		return {"ok": false, "reason": "该任务没有怪物刷新目标"}
+	return MapService.start_quest_navigation(String(objective.get("targetId", "")), tpl.get("mapScope", []))
+
 ## 目标对象显示名（怪物 / 收集物 / NPC）。
 static func _target_name(kind: String, target_id: String) -> String:
 	var table := ""

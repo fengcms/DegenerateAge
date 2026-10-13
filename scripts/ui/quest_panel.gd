@@ -229,13 +229,32 @@ func _make_row(e: Dictionary) -> Control:
 	title.add_theme_color_override("font_color", _title_color(state, is_side))
 	info.add_child(title)
 
-	var sub := Label.new()
 	var obj_text := String(e.get("objectiveText", ""))
-	sub.text = obj_text if not obj_text.is_empty() else String(e.get("desc", ""))
-	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	sub.add_theme_font_size_override("font_size", 12)
-	sub.add_theme_color_override("font_color", COL_TEXT_DIM if state != Quest.STATE_REWARDED else Color(0.45, 0.60, 0.45))
-	info.add_child(sub)
+	var objective: Dictionary = e.get("objective", {})
+	if state == Quest.STATE_ACTIVE and String(objective.get("kind", "")) == "kill":
+		var goal := HBoxContainer.new()
+		goal.add_theme_constant_override("separation", 3)
+		info.add_child(goal)
+		var prefix := Label.new()
+		prefix.text = "击败 "
+		prefix.add_theme_font_size_override("font_size", 12)
+		goal.add_child(prefix)
+		var target := QuestTargetLink.new()
+		target.text = Quest._target_name("kill", String(objective.get("targetId", "")))
+		target.add_theme_font_size_override("font_size", 12)
+		target.pressed.connect(_on_target_pressed.bind(qid))
+		goal.add_child(target)
+		var progress := Label.new()
+		progress.text = " %d/%d" % [int(e.get("cur", 0)), int(e.get("need", 0))]
+		progress.add_theme_font_size_override("font_size", 12)
+		goal.add_child(progress)
+	else:
+		var sub := Label.new()
+		sub.text = obj_text if not obj_text.is_empty() else String(e.get("desc", ""))
+		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sub.add_theme_font_size_override("font_size", 12)
+		sub.add_theme_color_override("font_color", COL_TEXT_DIM if state != Quest.STATE_REWARDED else Color(0.45, 0.60, 0.45))
+		info.add_child(sub)
 
 	# 完整描述放 tooltip（列表保持单行紧凑；08 §8.5 列表只要求「名称 / 目标 / 进度」）
 	var desc := String(e.get("desc", ""))
@@ -253,6 +272,14 @@ func _make_row(e: Dictionary) -> Control:
 
 	row.add_child(_make_action_button(qid, state))
 	return panel
+
+func _on_target_pressed(quest_id: String) -> void:
+	var result := Quest.start_target_navigation(quest_id)
+	if bool(result.get("ok", false)):
+		set_open(false)
+		EventBus.toast_requested.emit("正在前往任务怪物刷新区域", "info")
+	else:
+		EventBus.toast_requested.emit(String(result.get("reason", "无法导航到目标")), "danger")
 
 ## 状态按钮（08 §8.5 三态 + locked / rewarded 的禁用渲染）。
 func _make_action_button(qid: String, state: String) -> Button:

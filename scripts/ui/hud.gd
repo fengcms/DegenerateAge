@@ -216,7 +216,7 @@ func _refresh_quests() -> void:
 		_quest_list.add_child(more)
 
 ## 单条任务行：「· 初战试炼 3/5」；completed 显示「⚑ 名 可交付」高亮（9.1）。
-func _make_quest_row(e: Dictionary) -> Label:
+func _make_quest_row(e: Dictionary) -> Control:
 	var state := String(e.get("state", ""))
 	var done := state == Quest.STATE_COMPLETED
 	var lbl := Label.new()
@@ -232,7 +232,21 @@ func _make_quest_row(e: Dictionary) -> Label:
 			text += " %d/%d" % [int(e.get("cur", 0)), need]
 		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.91))
 	lbl.text = text
-	return lbl
+	var objective: Dictionary = e.get("objective", {})
+	if done or String(objective.get("kind", "")) != "kill":
+		return lbl
+	var row := VBoxContainer.new()
+	row.add_child(lbl)
+	var target := QuestTargetLink.new()
+	target.text = "→ " + Quest._target_name("kill", String(objective.get("targetId", "")))
+	target.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	target.add_theme_font_size_override("font_size", 11)
+	target.pressed.connect(func() -> void:
+		var result := Quest.start_target_navigation(String(e.get("id", "")))
+		if not bool(result.get("ok", false)):
+			EventBus.toast_requested.emit(String(result.get("reason", "无法导航到目标")), "danger"))
+	row.add_child(target)
+	return row
 
 func _update_coords() -> void:
 	var p := get_tree().get_first_node_in_group("player")

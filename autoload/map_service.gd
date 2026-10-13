@@ -26,6 +26,52 @@ var walk_locked_until_msec: int = 0
 var walk_key_released: bool = true
 ## 请求与世界装配之间的运行态事务；绝不写入存档。
 var pending_travel: Dictionary = {}
+## 任务目标导航只在运行中保留；跨图重载继续，普通存档不保存这条临时指令。
+var quest_nav_target: String = ""
+var quest_nav_map: String = ""
+
+func clear_quest_navigation() -> void:
+	quest_nav_target = ""
+	quest_nav_map = ""
+
+func start_quest_navigation(monster_id: String, allowed_maps: Array) -> Dictionary:
+	var queue: Array[String] = [GameState.current_map]
+	var visited := {GameState.current_map: true}
+	var first_hop := {GameState.current_map: ""}
+	while not queue.is_empty():
+		var map_id: String = queue.pop_front()
+		if allowed_maps.has(map_id) and _map_has_monster(map_id, monster_id):
+			quest_nav_target = monster_id
+			quest_nav_map = map_id
+			return {"ok": true, "map": map_id, "first_hop": first_hop[map_id]}
+		for exit_data in data_for(map_id).get("exits", []):
+			var next_id := String(exit_data.get("toMap", ""))
+			if next_id.is_empty() or visited.has(next_id) or not is_unlocked(next_id):
+				continue
+			visited[next_id] = true
+			first_hop[next_id] = next_id if map_id == GameState.current_map else first_hop[map_id]
+			queue.append(next_id)
+	return {"ok": false, "reason": "没有前往任务怪物刷新地图的已解锁道路"}
+
+func quest_next_exit() -> Dictionary:
+	if quest_nav_target.is_empty() or quest_nav_map.is_empty():
+		return {}
+	var route := start_quest_navigation(quest_nav_target, [quest_nav_map])
+	if not bool(route.get("ok", false)):
+		return {}
+	var hop := String(route.get("first_hop", ""))
+	for exit_data in current_exits():
+		if String(exit_data.get("toMap", "")) == hop:
+			return exit_data
+	return {}
+
+func _map_has_monster(map_id: String, monster_id: String) -> bool:
+	var map_data := data_for(map_id)
+	for spec in map_data.get("spawnPoints", []):
+		if String(spec.get("monsterId", "")) == monster_id and int(spec.get("count", 1)) > 0:
+			return true
+	var boss: Variant = map_data.get("bossSpawn", null)
+	return boss is Dictionary and String(boss.get("monsterId", "")) == monster_id
 
 # ---- 查询 ----
 

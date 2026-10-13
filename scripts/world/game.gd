@@ -26,11 +26,13 @@ const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
 
 var _explored_cell := Vector2i(-1, -1)
 var _pending_npc: Npc = null
+var _quest_nav_issued := false
 
 func _process(_delta: float) -> void:
 	if not Input.is_action_pressed("interact"):
 		MapService.walk_key_released = true
 	_update_exit_nearness()
+	_tick_quest_navigation()
 	if GameState.panel_open or _player.is_dead:
 		_pending_npc = null
 		return
@@ -53,6 +55,52 @@ func request_map_move(point: Vector2) -> bool:
 		return false
 	EventBus.toast_requested.emit("步行前往地图目标", "info")
 	return true
+
+func _tick_quest_navigation() -> void:
+	if MapService.quest_nav_target.is_empty() or GameState.panel_open or _player.is_dead:
+		return
+	if GameState.current_map == MapService.quest_nav_map:
+		var best := Vector2.ZERO
+		var best_distance := INF
+		for point in _spawner.marker_points():
+			if String(point.get("monster_id", "")) != MapService.quest_nav_target:
+				continue
+			var pos: Vector2 = point.get("position", Vector2.ZERO)
+			var distance := _player.global_position.distance_squared_to(pos)
+			if distance < best_distance:
+				best = pos
+				best_distance = distance
+		MapService.clear_quest_navigation()
+		if best_distance == INF:
+			EventBus.toast_requested.emit("当前没有可用的任务怪物刷新点", "danger")
+		else:
+			_player.request_map_move(_ground.clamp_to_map(best))
+			EventBus.toast_requested.emit("前往任务怪物刷新区域", "info")
+		return
+	var exit_data := MapService.quest_next_exit()
+	if exit_data.is_empty():
+		MapService.clear_quest_navigation()
+		EventBus.toast_requested.emit("当前没有可用的任务道路", "danger")
+		return
+	var cell: Array = exit_data.get("cell", [])
+	if cell.size() != 2:
+		MapService.clear_quest_navigation()
+		return
+	var exit_pos := Iso.grid_to_world(Vector2i(int(cell[0]), int(cell[1])))
+	if Iso.world_to_grid(_player.global_position).distance_to(Vector2(float(cell[0]), float(cell[1]))) <= MapService.WALK_RANGE_CELLS:
+		if MapService.can_use_walk_exit():
+			var result := MapService.request_walk(String(exit_data.get("id", "")), _player.global_position)
+			if bool(result.get("ok", false)):
+				MapService.reload_world()
+			else:
+				MapService.clear_quest_navigation()
+				EventBus.toast_requested.emit(String(result.get("reason", "道路不可用")), "danger")
+		return
+	if not _quest_nav_issued:
+		_quest_nav_issued = _player.request_map_move(_ground.clamp_to_map(exit_pos))
+	elif not _player.map_move_active:
+		MapService.clear_quest_navigation()
+		EventBus.toast_requested.emit("未能走到任务道路，请重新点击目标", "danger")
 
 func _ready() -> void:
 	# 出行事务只在目标地图地面与必要节点就绪后提交；失败则恢复源图。

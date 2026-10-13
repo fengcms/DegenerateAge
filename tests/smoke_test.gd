@@ -47,6 +47,7 @@ func _ready() -> void:
 	_test_shop()
 	await _test_trade_panel()
 	await _test_floating_panels()
+	await _test_quest_target_navigation()
 	_test_debug_seed()
 	await _test_drag_layer()
 	await _test_auto_battle()
@@ -1765,6 +1766,41 @@ func _test_floating_panels() -> void:
 		"点选窗口应置于其余浮窗之上")
 	for panel in [inv, character, skill, mount]:
 		panel.set_open(false)
+	main.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+func _test_quest_target_navigation() -> void:
+	GameState.reset_to_defaults()
+	GameState.quest_states["Q001"] = {"state": Quest.STATE_REWARDED, "progress": 1}
+	_expect(bool(Quest.accept("Q002").get("ok", false)), "前置任务完成后应可接取击杀任务")
+	var cross := Quest.start_target_navigation("Q002")
+	_expect(bool(cross.get("ok", false)) and String(cross.get("map", "")) == "wild_trial",
+		"营地点击腐化野狼应找到试炼野外刷新地图")
+	_expect(String(MapService.quest_next_exit().get("toMap", "")) == "wild_trial",
+		"跨图任务导航应沿已解锁道路出口前往")
+	MapService.clear_quest_navigation()
+	GameState.current_map = "wild_trial"
+	var main: Node = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var panel: Control = main.get_node("UI/QuestPanel")
+	panel.set_open(true)
+	var found_link := false
+	for row in panel._list.get_children():
+		for link in row.find_children("*", "Button", true, false):
+			if link is QuestTargetLink and link.text == "腐化野狼":
+				found_link = true
+				link.pressed.emit()
+				break
+		if found_link:
+			break
+	_expect(found_link and not panel.visible, "任务面板应高亮可点击怪名，点击后关闭面板")
+	await get_tree().process_frame
+	var player: PlayerCharacter = main.get_node("Game/Entities/Player")
+	_expect(player.map_move_active and not player.manual_attack_active,
+		"点击任务怪名应走向实际刷新点，不自动攻击")
+	MapService.clear_quest_navigation()
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
