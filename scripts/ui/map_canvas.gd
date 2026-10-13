@@ -106,16 +106,26 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color("101619"))
 	var dims := MapService.grid_size(GameState.current_map)
 	var outline := _polygon(-0.5, -0.5, dims.x - 0.5, dims.y - 0.5)
-	draw_colored_polygon(outline, Color("1f282d"))
-	var blocks := Fog.block_grid(GameState.current_map)
-	for y in range(blocks.y):
-		for x in range(blocks.x):
-			var cell := Vector2i(x * Fog.BLOCK_SIZE, y * Fog.BLOCK_SIZE)
-			if Fog.is_explored(GameState.current_map, cell):
-				draw_colored_polygon(_polygon(cell.x - 0.5, cell.y - 0.5, mini(cell.x + Fog.BLOCK_SIZE, dims.x) - 0.5, mini(cell.y + Fog.BLOCK_SIZE, dims.y) - 0.5), Color("536959"))
+	draw_colored_polygon(outline, Color("100e0b") if GameState.current_map == "corruption_source" else Color("1f282d"))
+	var world := get_tree().get_first_node_in_group("map_world")
+	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	if ground != null and ground.cave != null:
+		for y in range(dims.y):
+			for x in range(dims.x):
+				var cell := Vector2i(x, y)
+				if ground.cave.is_walkable(cell) and Fog.is_explored(GameState.current_map, cell):
+					draw_colored_polygon(_polygon(x - 0.5, y - 0.5, x + 0.5, y + 0.5), Color("b4a382"))
+	else:
+		var blocks := Fog.block_grid(GameState.current_map)
+		for y in range(blocks.y):
+			for x in range(blocks.x):
+				var cell := Vector2i(x * Fog.BLOCK_SIZE, y * Fog.BLOCK_SIZE)
+				if Fog.is_explored(GameState.current_map, cell):
+					draw_colored_polygon(_polygon(cell.x - 0.5, cell.y - 0.5, mini(cell.x + Fog.BLOCK_SIZE, dims.x) - 0.5, mini(cell.y + Fog.BLOCK_SIZE, dims.y) - 0.5), Color("536959"))
 	var border := outline.duplicate()
 	border.append(outline[0])
-	draw_polyline(border, Color("859a8b"), 1, true)
+	if ground == null or ground.cave == null:
+		draw_polyline(border, Color("859a8b"), 1, true)
 	for marker in _markers:
 		if not _marker_visible(marker):
 			continue

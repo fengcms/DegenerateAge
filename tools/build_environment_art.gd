@@ -4,17 +4,17 @@ extends SceneTree
 const SOURCE := "res://art_source/environment/"
 
 func _initialize() -> void:
-	for theme in ["wild", "ash"]:
+	for theme in ["wild", "ash", "cave"]:
 		_pack_tiles(theme)
 		_pack_props(theme)
 	quit()
 
 func _pack_tiles(theme: String) -> void:
-	var image := Image.load_from_file(SOURCE + theme + "_tiles.png")
+	var image := Image.load_from_file(SOURCE + theme + ("_tiles_v2.png" if theme == "cave" else "_tiles.png"))
 	assert(image != null)
 	image.convert(Image.FORMAT_RGBA8)
 	var cell := image.get_size() / 2
-	var fill := Color("515a42") if theme == "wild" else Color("4b4443")
+	var fill := Color("515a42") if theme == "wild" else Color("4b4443") if theme == "ash" else Color("d1b787")
 	for row in range(2):
 		for col in range(2):
 			var piece := image.get_region(Rect2i(Vector2i(col, row) * cell, cell))
@@ -25,11 +25,15 @@ func _pack_tiles(theme: String) -> void:
 			piece.resize(64, 32, Image.INTERPOLATE_NEAREST)
 			for y in range(32):
 				for x in range(64):
-					var inside := absf((x + 0.5 - 32.0) / 32.0) + absf((y + 0.5 - 16.0) / 16.0) <= 1.0
+					var edge := 1.0 - absf((x + 0.5 - 32.0) / 32.0) - absf((y + 0.5 - 16.0) / 16.0)
+					var inside := edge >= 0.0
 					if not inside:
 						piece.set_pixel(x, y, Color.TRANSPARENT)
 					elif piece.get_pixel(x, y).a < 0.5:
 						piece.set_pixel(x, y, fill)
+					elif theme == "cave" and edge < 0.22:
+						var color := piece.get_pixel(x, y)
+						piece.set_pixel(x, y, color.lerp(fill, 1.0 - clampf(edge / 0.22, 0.0, 1.0)))
 			_save(piece, "res://assets/tiles/%s/tile_%d.png" % [theme, row * 2 + col])
 
 func _pack_props(theme: String) -> void:
