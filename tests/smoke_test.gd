@@ -57,6 +57,7 @@ func _ready() -> void:
 	_test_quest_side()
 	await _test_consumable()
 	_test_map_travel()
+	await _test_walk_exit()
 	await _test_world()
 	await _test_map_reload()
 	await _test_spawn_respawn_cross_map()
@@ -2664,6 +2665,53 @@ func _test_map_travel() -> void:
 	_expect(not MapService.current_boss().is_empty(), "腐化源头应配 Boss 点")
 	_expect(bool(MapService.current_boss().get("tombstone", false)), "Boss 点应启用墓碑")
 
+	GameState.reset_to_defaults()
+
+## M6-1：0 金币双向步行、距离/目标校验、入口落点与跨场景防抖。
+func _test_walk_exit() -> void:
+	GameState.reset_to_defaults()
+	var broken_maps: Array = (DataLoader.get_table("maps") as Array).duplicate(true)
+	broken_maps[1]["exits"].remove_at(0)
+	_expect(not DataLoader._validate_walk_exits(broken_maps).is_empty(), "缺少反向路口必须在启动校验时暴露")
+	broken_maps = (DataLoader.get_table("maps") as Array).duplicate(true)
+	broken_maps[0]["entrances"]["from_wild"] = [999, 20]
+	_expect(not DataLoader._validate_walk_exits(broken_maps).is_empty(), "越界入口必须在启动校验时暴露")
+	MapService.walk_key_released = true
+	MapService.walk_locked_until_msec = 0
+	var world: Node2D = load("res://scenes/Game.tscn").instantiate()
+	add_child(world)
+	await get_tree().process_frame
+	var exits: Node = world.get_node("Exits")
+	_expect(exits.get_child_count() == 1, "营地应装配一个免费步行出口")
+	var player: Node2D = world.get_node("Entities/Player")
+	player.global_position = Iso.grid_to_world(Vector2i(34, 20))
+	_expect(world.nearest_exit() != null, "站在路牌上应找到出口")
+	world._process(0.0)
+	_expect((exits.get_child(0) as TravelExit).player_near, "靠近路牌应显示交互提示")
+	world.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_expect(not bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(20, 20))).ok), "远离路牌不能步行切图")
+	_expect(not bool(MapService.request_walk("missing", Iso.grid_to_world(Vector2i(34, 20))).ok), "不存在的路口不能切图")
+	var routes := [
+		["camp", "to_wild", Vector2i(34, 20), "wild_trial", Vector2i(8, 30)],
+		["wild_trial", "to_ash", Vector2i(54, 30), "ash_land", Vector2i(8, 30)],
+		["ash_land", "to_source", Vector2i(54, 30), "corruption_source", Vector2i(8, 25)],
+		["corruption_source", "to_ash", Vector2i(5, 25), "ash_land", Vector2i(51, 30)],
+		["ash_land", "to_wild", Vector2i(5, 30), "wild_trial", Vector2i(51, 30)],
+		["wild_trial", "to_camp", Vector2i(5, 30), "camp", Vector2i(31, 20)],
+	]
+	for route in routes:
+		MapService.walk_key_released = true
+		MapService.walk_locked_until_msec = 0
+		_expect(GameState.current_map == route[0], "步行路线起点应为 %s" % route[0])
+		var result := MapService.request_walk(route[1], Iso.grid_to_world(route[2]))
+		_expect(bool(result.get("ok", false)), "0 金币步行 %s → %s 应成功：%s" % [route[0], route[3], result.get("reason", "")])
+		_expect(GameState.current_map == route[3] and GameState.gold == 0, "步行应到目标图且不扣金币")
+		_expect(GameState.has_save_pos and GameState.save_pos.is_equal_approx(Iso.grid_to_world(route[4])), "步行应落到目标图对应入口")
+		_expect(not MapService.can_use_walk_exit(), "切图后长按 E 或一秒内重按不能立即返回")
+	MapService.walk_key_released = true
+	MapService.walk_locked_until_msec = 0
 	GameState.reset_to_defaults()
 
 ## M3-1 / 验收场景 T15：切图重建 —— 新图按自身数据装配、落点正确、旧实体不残留。

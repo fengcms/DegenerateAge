@@ -221,6 +221,7 @@ func validate_all() -> Array[String]:
 				var sid := String(npc.get("shopId", ""))
 				if role == "shop" and not shop_ids.has(sid):
 					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])
+	report.append_array(_validate_walk_exits(maps))
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
 	report.append_array(_validate_drop_tables())
@@ -408,6 +409,76 @@ func _id_set(table_name: String) -> Dictionary:
 			if typeof(e) == TYPE_DICTIONARY:
 				out[e.get("id", "")] = true
 	return out
+
+## M6-1：出口、入口必须有效且双向配对；错误在启动校验时暴露。
+func _validate_walk_exits(maps: Variant) -> Array[String]:
+	var report: Array[String] = []
+	if not maps is Array:
+		return report
+	var by_id := {}
+	for entry in maps:
+		if entry is Dictionary:
+			by_id[String(entry.get("id", ""))] = entry
+	for entry in maps:
+		if not entry is Dictionary:
+			continue
+		var map_id := String(entry.get("id", ""))
+		var exits: Variant = entry.get("exits", null)
+		var entrances: Variant = entry.get("entrances", null)
+		if not exits is Array or not entrances is Dictionary:
+			report.append("[maps] %s 缺少 exits 数组或 entrances 字典" % map_id)
+			continue
+		for entrance_id in entrances.keys():
+			if String(entrance_id).is_empty() or not _valid_walk_cell(entrances[entrance_id], entry):
+				report.append("[maps] %s 的入口 %s 坐标无效" % [map_id, entrance_id])
+		var seen := {}
+		for exit_data in exits:
+			if not exit_data is Dictionary:
+				report.append("[maps] %s 的出口必须是对象" % map_id)
+				continue
+			var exit_id := String(exit_data.get("id", ""))
+			if exit_id.is_empty() or seen.has(exit_id):
+				report.append("[maps] %s 的出口 id 为空或重复：%s" % [map_id, exit_id])
+			seen[exit_id] = true
+			if not _valid_walk_cell(exit_data.get("cell", null), entry):
+				report.append("[maps] %s 的出口 %s 坐标无效" % [map_id, exit_id])
+			var to_id := String(exit_data.get("toMap", ""))
+			if to_id == map_id or not by_id.has(to_id):
+				report.append("[maps] %s 的出口 %s 目标图无效" % [map_id, exit_id])
+				continue
+			var target: Dictionary = by_id[to_id]
+			var target_entrances: Variant = target.get("entrances", null)
+			var target_entrance := String(exit_data.get("toEntrance", ""))
+			if not target_entrances is Dictionary or not target_entrances.has(target_entrance):
+				report.append("[maps] %s 的出口 %s 找不到 %s 的入口 %s" % [map_id, exit_id, to_id, target_entrance])
+				continue
+			var reverse_found := false
+			var reverse_exits: Variant = target.get("exits", [])
+			if reverse_exits is Array:
+				for reverse in reverse_exits:
+					if reverse is Dictionary and String(reverse.get("toMap", "")) == map_id:
+						var own_entrances: Dictionary = entrances
+						if own_entrances.has(String(reverse.get("toEntrance", ""))):
+							reverse_found = true
+							break
+			if not reverse_found:
+				report.append("[maps] %s 的出口 %s 缺少 %s 的双向返回出口" % [map_id, exit_id, to_id])
+	return report
+
+func _valid_walk_cell(value: Variant, map_data: Dictionary) -> bool:
+	if not value is Array or value.size() != 2:
+		return false
+	var size_data: Variant = map_data.get("size", null)
+	if not size_data is Dictionary:
+		return false
+	for i in range(2):
+		var coordinate: Variant = value[i]
+		if not (coordinate is int or coordinate is float) or float(coordinate) != floor(float(coordinate)):
+			return false
+		var limit := int(size_data.get("w" if i == 0 else "h", 0))
+		if int(coordinate) < 0 or int(coordinate) >= limit:
+			return false
+	return true
 
 ## 词缀配置错误应在启动时暴露，避免运行中随机抽中才报错。
 func _validate_affixes() -> Array[String]:

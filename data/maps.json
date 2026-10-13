@@ -9,6 +9,10 @@
     "carterLinks": ["wild_trial"],
     "carterFees": { "wild_trial": 0 },
     "requiresUnlock": "",
+    "exits": [
+      { "id": "to_wild", "cell": [34, 20], "toMap": "wild_trial", "toEntrance": "from_camp" }
+    ],
+    "entrances": { "from_wild": [31, 20] },
     "spawnPoints": [
       { "monsterId": "training_dummy", "level": 1, "respawnTime": 20, "count": 3, "ai": false }
     ],
@@ -32,6 +36,11 @@
     "carterLinks": ["camp", "ash_land"],
     "carterFees": { "camp": 20, "ash_land": 50 },
     "requiresUnlock": "",
+    "exits": [
+      { "id": "to_camp", "cell": [5, 30], "toMap": "camp", "toEntrance": "from_wild" },
+      { "id": "to_ash", "cell": [54, 30], "toMap": "ash_land", "toEntrance": "from_wild" }
+    ],
+    "entrances": { "from_camp": [8, 30], "from_ash": [51, 30] },
     "spawnPoints": [
       { "monsterId": "wolf_corrupted", "level": 2, "respawnTime": 30, "count": 6 },
       { "monsterId": "shellback_bug", "level": 3, "respawnTime": 30, "count": 2 },
@@ -53,6 +62,11 @@
     "carterLinks": ["wild_trial", "corruption_source"],
     "carterFees": { "wild_trial": 50, "corruption_source": 100 },
     "requiresUnlock": "",
+    "exits": [
+      { "id": "to_wild", "cell": [5, 30], "toMap": "wild_trial", "toEntrance": "from_ash" },
+      { "id": "to_source", "cell": [54, 30], "toMap": "corruption_source", "toEntrance": "from_ash" }
+    ],
+    "entrances": { "from_wild": [8, 30], "from_source": [51, 30] },
     "spawnPoints": [
       { "monsterId": "ash_wraith", "level": 6, "respawnTime": 45, "count": 3 },
       { "monsterId": "shellback_bug", "level": 7, "respawnTime": 45, "count": 3 }
@@ -74,6 +88,10 @@
     "carterLinks": ["ash_land"],
     "carterFees": { "ash_land": 100 },
     "requiresUnlock": "",
+    "exits": [
+      { "id": "to_ash", "cell": [5, 25], "toMap": "ash_land", "toEntrance": "from_source" }
+    ],
+    "entrances": { "from_ash": [8, 25] },
     "spawnPoints": [
       { "monsterId": "shellback_bug", "level": 10, "respawnTime": 60, "count": 4 }
     ],

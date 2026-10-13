@@ -18,6 +18,12 @@ extends Node
 
 ## 新游戏的起始地图（与 GameState.reset_to_defaults 口径一致）。
 const DEFAULT_MAP := "camp"
+const WALK_RANGE_CELLS := 1.5
+const WALK_ARRIVAL_LOCK_MSEC := 1000
+
+## 跨场景保留防抖状态；仅步行出口使用，车夫线路不受影响。
+var walk_locked_until_msec: int = 0
+var walk_key_released: bool = true
 
 # ---- 查询 ----
 
@@ -101,6 +107,56 @@ func current_npcs() -> Array:
 func current_boss() -> Dictionary:
 	var b = current_data().get("bossSpawn", null)
 	return b if b is Dictionary else {}
+
+func current_exits() -> Array:
+	var exits = current_data().get("exits", [])
+	return exits if exits is Array else []
+
+func walk_exit(exit_id: String) -> Dictionary:
+	for entry in current_exits():
+		if entry is Dictionary and String(entry.get("id", "")) == exit_id:
+			return entry
+	return {}
+
+func can_use_walk_exit() -> bool:
+	return walk_key_released and Time.get_ticks_msec() >= walk_locked_until_msec
+
+## 步行只接受本图已配置的出口，且必须在逻辑网格 1.5 格内。
+## 不读车夫费用；出口落点由目标图入口 ID 决定。
+func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
+	if not can_use_walk_exit():
+		return _fail("请松开交互键，稍后再走")
+	var exit_data := walk_exit(exit_id)
+	if exit_data.is_empty():
+		return _fail("此处没有道路出口")
+	var to_id := String(exit_data.get("toMap", ""))
+	if not exists(to_id) or to_id == GameState.current_map:
+		return _fail("道路目的地无效")
+	var cell: Variant = exit_data.get("cell", null)
+	if not cell is Array or cell.size() != 2:
+		return _fail("道路出口配置无效")
+	var player_cell := Iso.world_to_grid(player_world)
+	if player_cell.distance_to(Vector2(float(cell[0]), float(cell[1]))) > WALK_RANGE_CELLS:
+		return _fail("请走近路牌")
+	if not is_unlocked(to_id):
+		return _fail("道路封锁：%s尚未解锁" % display_name(to_id))
+	var entrance_id := String(exit_data.get("toEntrance", ""))
+	var entrances: Variant = data_for(to_id).get("entrances", null)
+	if not entrances is Dictionary or not entrances.has(entrance_id):
+		return _fail("道路入口配置缺失")
+	var arrival: Variant = entrances[entrance_id]
+	if not arrival is Array or arrival.size() != 2:
+		return _fail("道路入口配置无效")
+	var from_id := GameState.current_map
+	GameState.current_map = to_id
+	GameState.save_pos = Iso.grid_to_world(Vector2i(int(arrival[0]), int(arrival[1])))
+	GameState.has_save_pos = true
+	GameState.close_all_panels()
+	walk_key_released = false
+	walk_locked_until_msec = Time.get_ticks_msec() + WALK_ARRIVAL_LOCK_MSEC
+	EventBus.map_traveled.emit(from_id, to_id)
+	EventBus.map_changed.emit(to_id)
+	return {"ok": true, "reason": ""}
 
 ## 车夫可达目的地列表（供 CarterPanel 渲染）：
 ##   [{id, name, recommendedLevel, cost, unlocked, reason}]

@@ -21,12 +21,16 @@ const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
 @onready var _camera: Camera2D = $Entities/Player/Camera2D
 @onready var _spawner: MonsterSpawner = $Spawner
 @onready var _npcs: Node2D = $Npcs
+@onready var _exits: Node2D = $Exits
 @onready var _damage_numbers: Node2D = $DamageNumbers
 
 var _explored_cell := Vector2i(-1, -1)
 var _pending_npc: Npc = null
 
 func _process(_delta: float) -> void:
+	if not Input.is_action_pressed("interact"):
+		MapService.walk_key_released = true
+	_update_exit_nearness()
 	if GameState.panel_open or _player.is_dead:
 		_pending_npc = null
 		return
@@ -86,6 +90,7 @@ func _ready() -> void:
 
 	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()
+	_spawn_exits()
 
 	# M6-0c（创意 07 §11.2）：重建本图未领取战利品 —— 切图 / 读档后恢复，跨档不丢
 	_rebuild_unclaimed_loot()
@@ -108,6 +113,37 @@ func _spawn_npcs() -> void:
 		npc.greeting = String(spec.get("greeting", ""))
 		npc.position = Iso.grid_to_world(_cell_of(spec))
 		_npcs.add_child(npc)
+
+func _spawn_exits() -> void:
+	for spec in MapService.current_exits():
+		if not (spec is Dictionary):
+			continue
+		var exit_node := TravelExit.new()
+		exit_node.exit_id = String(spec.get("id", ""))
+		exit_node.to_map = String(spec.get("toMap", ""))
+		exit_node.position = Iso.grid_to_world(_cell_of(spec))
+		_exits.add_child(exit_node)
+
+func _update_exit_nearness() -> void:
+	var nearest := nearest_exit()
+	for child in _exits.get_children():
+		var exit_node := child as TravelExit
+		if exit_node != null:
+			exit_node.set_player_near(exit_node == nearest and not GameState.panel_open and not _player.is_dead)
+
+func nearest_exit() -> TravelExit:
+	var player_cell := Iso.world_to_grid(_player.global_position)
+	var best: TravelExit = null
+	var best_distance := MapService.WALK_RANGE_CELLS
+	for child in _exits.get_children():
+		var exit_node := child as TravelExit
+		if exit_node == null:
+			continue
+		var distance := player_cell.distance_to(Iso.world_to_grid(exit_node.global_position))
+		if distance <= best_distance:
+			best = exit_node
+			best_distance = distance
+	return best
 
 ## M6-0c（创意 07 §11.2）：进入地图时重建本图未领取战利品，跨图 / 跨档不丢。
 ## 重建物为「已登记」状态：`auto_claim=false`（不重复结算 / 不再飞向玩家）、`persistent=true`
@@ -239,7 +275,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 	# 与 NPC 交互（6.3 通用交互）：靠近后按 E；面板打开时不响应
-	if event.is_action_pressed("interact") and not GameState.panel_open:
+	if event.is_action_pressed("interact") and not event.is_echo() and not GameState.panel_open and not _player.is_dead:
 		if _try_interact():
 			get_viewport().set_input_as_handled()
 
@@ -253,6 +289,15 @@ func auto_pilot() -> AutoBattle:
 ## M2：按 NPC role 派发 —— quest = 任务面板，shop = 货郎面板；
 ## M3-2：carter = 车夫面板（跨图出行）；M4-2：blacksmith = 铁匠对话。
 func _try_interact() -> bool:
+	var exit_node := nearest_exit()
+	if exit_node != null:
+		var result := MapService.request_walk(exit_node.exit_id, _player.global_position)
+		if bool(result.get("ok", false)):
+			_pending_npc = null
+			MapService.reload_world()
+		else:
+			EventBus.toast_requested.emit(String(result.get("reason", "无法通行")), "danger")
+		return true
 	var npc := nearest_npc()
 	if npc == null:
 		return false

@@ -18,6 +18,8 @@ map_id = "camp"
 
 [node name="Npcs" type="Node2D" parent="."]
 
+[node name="Exits" type="Node2D" parent="."]
+
 [node name="Spawner" type="Node2D" parent="."]
 script = ExtResource("4_spawner")
 
