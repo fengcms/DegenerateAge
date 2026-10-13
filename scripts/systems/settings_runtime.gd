@@ -108,6 +108,8 @@ static func valid_bindings(value: Dictionary) -> bool:
 static func valid_choice(key: String, value: String) -> bool:
 	if key == "qualityFilter":
 		return ["all", "rare", "epic", "legendary"].has(value)
+	if key == "lowGearMaxQuality":
+		return Shop.QUALITY_ORDER.has(value)
 	if key == "resolution":
 		return ["auto", "1280x800", "1440x900", "1600x900", "1920x1200"].has(value)
 	# M5-9c：显示适配模式。⚠ 漏掉本分支会让 _is_valid_save 对默认值为 String 的键一律判非法

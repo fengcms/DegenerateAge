@@ -138,6 +138,8 @@ func default_settings() -> Dictionary:
 		"fullscreen": false,
 		"resolution": "auto",
 		"qualityFilter": "all",
+		"lowGearLevelLimit": 5,
+		"lowGearMaxQuality": "common",
 		"keyBindings": {},
 	}
 
@@ -342,6 +344,39 @@ func organize_inventory() -> bool:
 		EventBus.inventory_organized.emit()
 	EventBus.toast_requested.emit("背包已整理", "info")
 	return changed
+
+func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
+	if level_limit < 1 or level_limit > 100 or not Shop.QUALITY_ORDER.has(max_quality):
+		return false
+	settings.lowGearLevelLimit = level_limit
+	settings.lowGearMaxQuality = max_quality
+	EventBus.settings_changed.emit()
+	return true
+
+func is_low_gear(item: Dictionary) -> bool:
+	return Shop.matches_low_gear(item, int(settings.get("lowGearLevelLimit", 5)),
+		String(settings.get("lowGearMaxQuality", "common")))
+
+func sell_low_gear() -> Dictionary:
+	if int(player.get("level", 1)) < 15:
+		return _trade_fail("达到 15 级后才可一键卖出低级装备")
+	var indices: Array[int] = []
+	var total := 0
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary and is_low_gear(inventory[i]):
+			indices.append(i)
+			total += Shop.sell_price(inventory[i])
+	if indices.is_empty():
+		return _trade_fail("背包没有符合筛选条件的装备")
+	if gold + total > GOLD_CAP:
+		return _trade_fail("金币将超过上限，请先调整筛选或使用金币")
+	for index in indices:
+		inventory[index] = null
+	add_gold(total)
+	EventBus.inventory_changed.emit()
+	EventBus.trade_done.emit("sell", "", total)
+	EventBus.toast_requested.emit("一键卖出 %d 件低级装备（+%d 金币）" % [indices.size(), total], "pickup")
+	return {"ok": true, "count": indices.size(), "gold": total}
 
 func inventory_expand() -> Dictionary:
 	var cost := Warehouse.next_cost(inventory_expansions)

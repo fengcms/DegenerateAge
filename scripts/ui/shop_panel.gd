@@ -63,6 +63,7 @@ func _ready() -> void:
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.equipment_changed.connect(_on_inventory_changed)
+	EventBus.player_leveled.connect(func(_level: int) -> void: _on_inventory_changed())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -249,7 +250,7 @@ func _build_sell_page() -> Control:
 	bar.add_child(_return_all_btn)
 	_stage_all_btn = Button.new()
 	_stage_all_btn.text = "一键移入"
-	_stage_all_btn.tooltip_text = "把背包中所有可售装备移入托盘（优于已穿戴的不会被移入，6.4）"
+	_stage_all_btn.tooltip_text = "15 级解锁；按背包中的等级与成色筛选移入待售托盘"
 	_stage_all_btn.custom_minimum_size = Vector2(96, 32)
 	_stage_all_btn.pressed.connect(_on_stage_all_pressed)
 	bar.add_child(_stage_all_btn)
@@ -427,7 +428,7 @@ func _refresh_tray() -> void:
 	_tray_summary.text = "暂存 %d / %d 件　·　结算 %d 金币" % [_tray.size(), _tray_slots.size(), total]
 	_tray_warn.text = ("⚠ 其中 %d 件优于已穿戴，请确认后再出售（6.4 二次确认对话框见 M4）" % upgraded) if upgraded > 0 else ""
 	_confirm_btn.disabled = _tray.is_empty()
-	_stage_all_btn.disabled = GameState.inventory_used() == 0
+	_stage_all_btn.disabled = int(GameState.player.get("level", 1)) < 15 or GameState.inventory_used() == 0
 	_return_all_btn.disabled = _tray.is_empty()
 
 # ---- 交互 ----
@@ -474,17 +475,15 @@ func _on_tray_slot_pressed(tray_index: int) -> void:
 
 ## 一键移入（6.4）：把背包中所有可售装备批量移入托盘（一格一件）；优于已穿戴的不移入。
 func _on_stage_all_pressed() -> void:
+	if int(GameState.player.get("level", 1)) < 15:
+		EventBus.toast_requested.emit("达到 15 级后才可一键移入低级装备", "danger")
+		return
 	var moved := 0
-	var skipped := 0
 	var full := false
 	var i := GameState.inventory.size() - 1
 	while i >= 0:
 		var it = GameState.inventory[i]
-		if not (it is Dictionary) or not Shop.can_sell(it):
-			i -= 1
-			continue
-		if GameState.is_upgrade_over_worn(it):
-			skipped += 1
+		if not (it is Dictionary) or not GameState.is_low_gear(it):
 			i -= 1
 			continue
 		if _tray.size() >= _tray_slots.size():
@@ -496,8 +495,6 @@ func _on_stage_all_pressed() -> void:
 			moved += 1
 		i -= 1
 	var msg := "移入 %d 件" % moved
-	if skipped > 0:
-		msg += "，保留 %d 件更优装备" % skipped
 	if full:
 		msg += "（出售栏已满）"
 	EventBus.toast_requested.emit(msg if moved > 0 else "没有可移入的装备", "pickup" if moved > 0 else "danger")

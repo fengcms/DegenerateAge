@@ -14,6 +14,15 @@ const QUALITY_SELL_MULT := {
 	"epic": 6.0,
 	"legendary": 12.0,
 }
+const QUALITY_ORDER := ["common", "uncommon", "rare", "epic", "legendary"]
+
+static func matches_low_gear(item: Dictionary, level_limit: int, max_quality: String) -> bool:
+	if not can_sell(item) or level_limit < 1:
+		return false
+	var quality_rank := QUALITY_ORDER.find(item_quality(item))
+	var maximum_rank := QUALITY_ORDER.find(max_quality)
+	return quality_rank >= 0 and maximum_rank >= 0 \
+		and int(item.get("level", 1)) < level_limit and quality_rank <= maximum_rank
 
 ## 6.2 每星加价 +8%。
 const STAR_SELL_BONUS := 0.08

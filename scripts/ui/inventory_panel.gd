@@ -33,6 +33,10 @@ var _bag_buttons: Array[ItemSlot] = []
 var _bag_title: Label
 var _organize_button: Button
 var _expand_button: Button
+var _sell_low_button: Button
+var _filter_row: HBoxContainer
+var _filter_level: SpinBox
+var _filter_quality: OptionButton
 var _bag_grid: GridContainer
 var _summary: Label
 var _center: FloatingWindow
@@ -49,6 +53,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.inventory_changed.connect(_refresh)
 	EventBus.equipment_changed.connect(_refresh)
+	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
@@ -190,6 +195,37 @@ func _build() -> void:
 	_expand_button = Button.new()
 	_expand_button.pressed.connect(_on_expand_pressed)
 	bag_head.add_child(_expand_button)
+	var action_row := HBoxContainer.new()
+	right.add_child(action_row)
+	_sell_low_button = Button.new()
+	_sell_low_button.text = "一键卖出低级装备"
+	_sell_low_button.pressed.connect(_on_sell_low_pressed)
+	action_row.add_child(_sell_low_button)
+	var filter_toggle := Button.new()
+	filter_toggle.text = "筛选设置"
+	filter_toggle.pressed.connect(func() -> void: _filter_row.visible = not _filter_row.visible)
+	action_row.add_child(filter_toggle)
+	_filter_row = HBoxContainer.new()
+	_filter_row.visible = false
+	right.add_child(_filter_row)
+	var level_label := Label.new()
+	level_label.text = "装备等级低于"
+	_filter_row.add_child(level_label)
+	_filter_level = SpinBox.new()
+	_filter_level.min_value = 1
+	_filter_level.max_value = 100
+	_filter_level.step = 1
+	_filter_level.custom_minimum_size.x = 78
+	_filter_level.value_changed.connect(_on_filter_level_changed)
+	_filter_row.add_child(_filter_level)
+	var quality_label := Label.new()
+	quality_label.text = "且成色不高于"
+	_filter_row.add_child(quality_label)
+	_filter_quality = OptionButton.new()
+	for label in ["普通", "优秀", "稀有", "史诗", "传说"]:
+		_filter_quality.add_item(label)
+	_filter_quality.item_selected.connect(_on_filter_quality_changed)
+	_filter_row.add_child(_filter_quality)
 
 	var bag_scroll := ScrollContainer.new()
 	bag_scroll.custom_minimum_size = Vector2(410, 360)
@@ -292,6 +328,10 @@ func _refresh() -> void:
 	_expand_button.disabled = cost < 0
 	_expand_button.text = "已达上限" if cost < 0 else "扩容 +%d（%d 金币）" % [
 		Warehouse.capacity(GameState.inventory_expansions + 1) - GameState.inventory.size(), cost]
+	_sell_low_button.disabled = int(GameState.player.get("level", 1)) < 15
+	_sell_low_button.tooltip_text = "达到 15 级后解锁；按下方筛选设置直接出售背包装备" if _sell_low_button.disabled else "直接出售符合筛选条件的背包装备"
+	_filter_level.set_value_no_signal(float(GameState.settings.get("lowGearLevelLimit", 5)))
+	_filter_quality.select(maxi(0, Shop.QUALITY_ORDER.find(String(GameState.settings.get("lowGearMaxQuality", "common")))))
 	_refresh_summary()
 
 func _ensure_bag_slots() -> void:
@@ -309,6 +349,16 @@ func _ensure_bag_slots() -> void:
 
 func _on_expand_pressed() -> void:
 	GameState.inventory_expand()
+
+func _on_sell_low_pressed() -> void:
+	GameState.sell_low_gear()
+
+func _on_filter_level_changed(value: float) -> void:
+	GameState.set_low_gear_filter(int(value), String(GameState.settings.get("lowGearMaxQuality", "common")))
+
+func _on_filter_quality_changed(index: int) -> void:
+	GameState.set_low_gear_filter(int(GameState.settings.get("lowGearLevelLimit", 5)),
+		String(Shop.QUALITY_ORDER[index]))
 	_refresh_summary()
 
 func _refresh_summary() -> void:

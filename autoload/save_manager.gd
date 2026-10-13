@@ -721,6 +721,8 @@ func _is_valid_save(raw: Variant) -> bool:
 				return false
 		elif not _number(value) or float(value) < 0:
 			return false
+	if not _whole(data.settings.get("lowGearLevelLimit"), 1, 100):
+		return false
 	return true
 
 func _number(value: Variant) -> bool:

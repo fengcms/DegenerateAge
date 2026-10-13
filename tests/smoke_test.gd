@@ -46,6 +46,7 @@ func _ready() -> void:
 	await _test_blacksmith()
 	await _test_warehouse()
 	_test_shop()
+	_test_low_gear_filter_sale()
 	await _test_trade_panel()
 	await _test_floating_panels()
 	await _test_equipment_panel_interaction()
@@ -1677,11 +1678,51 @@ func _test_shop() -> void:
 
 	GameState.reset_to_defaults()
 
+func _test_low_gear_filter_sale() -> void:
+	GameState.reset_to_defaults()
+	_expect(GameState.set_low_gear_filter(8, "rare"), "低级装备筛选应从 1 级即可配置")
+	var low := _equip_instance("weapon_starter", "low_rare", {"atk": 99})
+	low.level = 7
+	low.quality = "rare"
+	var boundary := _equip_instance("weapon_starter", "level_boundary", {"atk": 1})
+	boundary.level = 8
+	var high_quality := _equip_instance("weapon_starter", "quality_boundary", {"atk": 1})
+	high_quality.level = 7
+	high_quality.quality = "epic"
+	GameState.inventory[0] = low
+	GameState.inventory[1] = boundary
+	GameState.inventory[2] = high_quality
+	_expect(GameState.is_low_gear(low) and not GameState.is_low_gear(boundary)
+		and not GameState.is_low_gear(high_quality),
+		"等级使用严格小于、成色使用不高于，且不按装备属性评分")
+	GameState.player.level = 14
+	_expect(not GameState.sell_low_gear().get("ok", false) and GameState.inventory[0] == low,
+		"未到 15 级不得一键卖出")
+	GameState.player.level = 15
+	var sold := GameState.sell_low_gear()
+	_expect(sold.get("count", 0) == 1 and GameState.inventory[0] == null
+		and GameState.inventory[1] == boundary and GameState.inventory[2] == high_quality
+		and GameState.gold == Shop.sell_price(low),
+		"背包一键卖出只应结算满足两项阈值的装备")
+	var saved := SaveManager._collect()
+	_expect(SaveManager._is_valid_save(saved), "新筛选设置应通过存档校验")
+	GameState.reset_to_defaults()
+	SaveManager.apply_to_game_state(saved)
+	_expect(int(GameState.settings.lowGearLevelLimit) == 8
+		and String(GameState.settings.lowGearMaxQuality) == "rare",
+		"等级与成色阈值应随角色存档")
+	var old := saved.duplicate(true)
+	old.settings.erase("lowGearLevelLimit")
+	old.settings.erase("lowGearMaxQuality")
+	_expect(SaveManager._is_valid_save(old) and int(SaveManager._migrate(old).settings.lowGearLevelLimit) == 5,
+		"旧档缺筛选设置时应补默认值")
+	GameState.reset_to_defaults()
+
 ## 交易界面（双面板 + 拖拽出售，M1-8 改造）：面板级不变量与 6.4 托盘流程。
 ## 独立实例化两个面板（不加载世界），验证拖入 / 取回 / 确认结算 / 一键移入保留升级件 / 关闭退回。
 func _test_trade_panel() -> void:
 	GameState.reset_to_defaults()
-	GameState.player.level = 5
+	GameState.player.level = 15
 
 	var inv: Control = load("res://scenes/ui/InventoryPanel.tscn").instantiate()
 	var shop: Control = load("res://scenes/ui/ShopPanel.tscn").instantiate()
@@ -1708,6 +1749,7 @@ func _test_trade_panel() -> void:
 	GameState.inventory[0] = _equip_instance("weapon_starter", "p_weak", {"atk": 5})
 	GameState.inventory[1] = _equip_instance("helmet_cloth", "p_helm", {"def": 2})
 	GameState.inventory[2] = _equip_instance("weapon_starter", "p_better", {"atk": 30})
+	GameState.inventory[2].level = 5
 	EventBus.inventory_changed.emit()
 	await get_tree().process_frame
 
@@ -1736,11 +1778,11 @@ func _test_trade_panel() -> void:
 	_expect(shop._tray.is_empty(), "取回后托盘应清空")
 	_expect(_index_of_instance("p_weak") >= 0, "取回的装备应回到背包")
 
-	# 一键移入：移入可售装备、跳过优于已穿戴的武器
+	# 一键移入：按等级与成色阈值移入，装备评分不参与。
 	shop._on_stage_all_pressed()
 	await get_tree().process_frame
 	_expect(shop._tray.size() == 2, "一键移入应移入 2 件可售装备，实际 %d" % shop._tray.size())
-	_expect(_index_of_instance("p_better") >= 0, "优于已穿戴的武器不应被一键移入（6.4）")
+	_expect(_index_of_instance("p_better") >= 0, "等级达到阈值的装备不应被一键移入")
 	_expect(_index_of_instance("p_weak") < 0 and _index_of_instance("p_helm") < 0,
 		"可售装备应已移入托盘")
 
