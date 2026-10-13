@@ -102,9 +102,7 @@ func route(from_world: Vector2, to_world: Vector2) -> Array[Vector2]:
 		return result
 	var start := Vector2i(Iso.world_to_grid(from_world).round())
 	var finish := Vector2i(Iso.world_to_grid(to_world).round())
-	for cell in cave.path(start, finish):
-		result.append(Iso.grid_to_world(cell))
-	return result
+	return cave.smooth_path(from_world, cave.path(start, finish))
 
 ## 地图（菱形区域）的世界包围盒，用于相机限制
 func get_world_bounds() -> Rect2:
@@ -177,8 +175,13 @@ func _draw() -> void:
 				var center := Iso.grid_to_world(cell)
 				var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
 				var tile := 1 if variation < 4 else 2 if variation == 5 else 0
-				draw_texture(CAVE_TILES[tile], center - Vector2(32, 16))
-				_draw_cave_edge(cell, center)
+				draw_texture(CAVE_TILES[tile], center - Vector2(32, 16), Color("bdbdc2"))
+		# 墙面从黑暗的边界垂向洞内地面；先铺完地面再绘制，避免被相邻地砖盖住。
+		for col in range(w):
+			for row in range(h):
+				var cell := Vector2i(col, row)
+				if cave.is_walkable(cell):
+					_draw_cave_edge(cell, Iso.grid_to_world(cell))
 		return
 
 	# 地面填充（整块菱形，一次绘制）
@@ -221,26 +224,22 @@ func _draw() -> void:
 	draw_polyline(outline, COLOR_BORDER, 2.0)
 
 func _draw_cave_edge(cell: Vector2i, center: Vector2) -> void:
-	# Only boundary cells emit a rim. The two screen-facing sides show a short
-	# striated cliff face into the void; rear edges receive a thin light lip.
-	if not cave.is_walkable(cell + Vector2i(-1, 0)):
-		_draw_cliff_face(center + Vector2(-32, 0), center + Vector2(0, 16), cell)
-	if not cave.is_walkable(cell + Vector2i(0, -1)):
-		_draw_cliff_face(center + Vector2(0, 16), center + Vector2(32, 0), cell)
+	# Only the rear (screen-up) edges carry a wall. Its face hangs below the
+	# black void onto the walkable floor, reading as an interior cave wall.
 	if not cave.is_walkable(cell + Vector2i(1, 0)):
-		draw_line(center + Vector2(0, -16), center + Vector2(32, 0), Color("d5c6a5"), 1.5)
+		_draw_cliff_face(center + Vector2(0, -16), center + Vector2(32, 0), cell)
 	if not cave.is_walkable(cell + Vector2i(0, 1)):
-		draw_line(center + Vector2(-32, 0), center + Vector2(0, -16), Color("d5c6a5"), 1.5)
+		_draw_cliff_face(center + Vector2(-32, 0), center + Vector2(0, -16), cell)
 
 func _draw_cliff_face(a: Vector2, b: Vector2, cell: Vector2i) -> void:
 	var fall := Vector2(0, 21)
 	var top := PackedVector2Array([a, a.lerp(b, 0.25) + Vector2(0, -2), a.lerp(b, 0.5) + Vector2(0, 2), a.lerp(b, 0.75) + Vector2(0, -3), b])
 	var face := PackedVector2Array([top[0], top[1], top[2], top[3], top[4], top[4] + fall, top[3] + fall + Vector2(0, 3), top[2] + fall, top[1] + fall + Vector2(0, 4), top[0] + fall])
-	draw_colored_polygon(face, Color("766a58"))
-	draw_polyline(top, Color("e0d0a8"), 2.0)
-	draw_line(a + fall, b + fall, Color("3e372f"), 2.0)
+	draw_colored_polygon(face, Color("61594f"))
+	draw_polyline(top, Color("a99b82"), 1.5)
+	draw_line(a + fall, b + fall, Color("352f2b"), 2.0)
 	for i in range(1, 5):
 		var t := float(i) / 5.0
 		var notch := a.lerp(b, t)
 		var depth := 12.0 + float(posmod(cell.x * 17 + cell.y * 31 + i * 7, 10))
-		draw_line(notch, notch + Vector2(1, depth), Color("3b332b") if i % 2 == 0 else Color("aa9b7c"), 1.0)
+		draw_line(notch, notch + Vector2(1, depth), Color("302b28") if i % 2 == 0 else Color("928572"), 1.0)

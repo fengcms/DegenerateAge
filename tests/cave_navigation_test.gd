@@ -7,7 +7,20 @@ func _ready() -> void:
 	var origin := Iso.grid_to_world(Vector2i(8, 25))
 	var destination := Iso.grid_to_world(Vector2i(40, 26))
 	var route := ground.route(origin, destination)
-	assert(route.size() > 32, "Cave route must detour through passages")
+	assert(route.size() > 1 and route.size() < 20, "Cave route should join straight passages")
+	var anchor := origin
+	for waypoint in route:
+		assert(ground.cave.segment_walkable(anchor, waypoint), "Smoothed segment must clear cave walls")
+		anchor = waypoint
+	assert(not ground.cave.segment_walkable(origin, destination), "Straight line across cave wall is forbidden")
+	for goal_cell in [Vector2i(25, 29), Vector2i(15, 39), Vector2i(29, 13), Vector2i(34, 37)]:
+		var goal := Iso.grid_to_world(goal_cell)
+		var sample_route := ground.route(origin, goal)
+		assert(not sample_route.is_empty(), "Cave chambers should remain connected")
+		var previous := origin
+		for waypoint in sample_route:
+			assert(ground.cave.segment_walkable(previous, waypoint), "Detour needs collision clearance")
+			previous = waypoint
 	var nav := CaveNavigator.new()
 	var direction := nav.direction(ground, origin, destination)
 	assert(direction != Vector2.ZERO and nav.has_route(), "Reachable destination needs a route")

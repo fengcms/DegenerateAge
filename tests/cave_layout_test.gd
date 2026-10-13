@@ -23,7 +23,11 @@ func _ready() -> void:
 	var path := cave.path(Vector2i(8, 25), Vector2i(40, 26))
 	check(path.size() > 0 and path[0] == Vector2i(8, 25) and path.back() == Vector2i(40, 26), "入口可绕岩柱抵达 Boss 区")
 	for i in range(1, path.size()):
-		check(absi(path[i].x - path[i - 1].x) + absi(path[i].y - path[i - 1].y) == 1, "路线每一步必须四向相邻")
+		var step := path[i] - path[i - 1]
+		check(maxi(absi(step.x), absi(step.y)) == 1, "路线每一步必须八向相邻")
+		if absi(step.x) == 1 and absi(step.y) == 1:
+			check(cave.is_walkable(path[i - 1] + Vector2i(step.x, 0)) and
+				cave.is_walkable(path[i - 1] + Vector2i(0, step.y)), "斜向移动不可穿过墙角")
 	check(ground.clamp_to_map(Iso.grid_to_world(Vector2i(25, 20))) != Iso.grid_to_world(Vector2i(25, 20)), "阻挡格的落点会纠正")
 	var walls := ground.get_node("CaveWalls") as StaticBody2D
 	check(walls.get_child_count() == cave.boundary_cells().size(), "每个洞壁边缘都有物理碰撞")

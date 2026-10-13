@@ -27,7 +27,8 @@ func _init() -> void:
 				_blocked[cell] = true
 	_astar.region = Rect2i(Vector2i.ZERO, size)
 	_astar.cell_size = Vector2.ONE
-	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
+	# Diagonal steps are allowed only when both adjacent sides are open.
+	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	_astar.update()
 	for cell in _blocked:
 		_astar.set_point_solid(cell)
@@ -60,3 +61,35 @@ func nearest_walkable(cell: Vector2i) -> Vector2i:
 
 func path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 	return _astar.get_id_path(nearest_walkable(from_cell), nearest_walkable(to_cell))
+
+## Keep the player's collision radius away from cave walls when joining path nodes.
+func segment_walkable(start: Vector2, finish: Vector2, clearance: float = 10.0) -> bool:
+	var delta := finish - start
+	var length := delta.length()
+	var tangent := delta / length if length > 0.001 else Vector2.RIGHT
+	var normal := Vector2(-tangent.y, tangent.x)
+	var samples := maxi(1, ceili(length / 6.0))
+	for i in range(samples + 1):
+		var point := start.lerp(finish, float(i) / float(samples))
+		for offset in [Vector2.ZERO, normal * clearance, -normal * clearance]:
+			var cell := Vector2i(Iso.world_to_grid(point + offset).round())
+			if not is_walkable(cell):
+				return false
+	return true
+
+## Bounded string-pulling avoids repeated 90-degree turns without crossing a wall.
+func smooth_path(origin: Vector2, cells: Array[Vector2i]) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	var anchor := origin
+	var index := 0
+	while index < cells.size():
+		var best := index
+		for candidate in range(mini(cells.size() - 1, index + 12), index - 1, -1):
+			if segment_walkable(anchor, Iso.grid_to_world(cells[candidate])):
+				best = candidate
+				break
+		var waypoint := Iso.grid_to_world(cells[best])
+		result.append(waypoint)
+		anchor = waypoint
+		index = best + 1
+	return result
