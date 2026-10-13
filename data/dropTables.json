@@ -5,6 +5,7 @@
     "entries": [
       { "kind": "coin", "chance": 1.0, "goldRange": [4, 8] },
       { "kind": "potion", "chance": 0.15, "itemId": "potion_hp_small" },
+      { "kind": "potion", "chance": 0.10, "itemId": "potion_mp_small" },
       { "kind": "equip", "chance": 0.2, "levelRange": [1, 5], "qualityWeight": { "common": 70, "uncommon": 25, "rare": 5 } }
     ]
   },
@@ -14,6 +15,7 @@
     "entries": [
       { "kind": "coin", "chance": 1.0, "goldRange": [6, 10] },
       { "kind": "potion", "chance": 0.12, "itemId": "potion_hp_small" },
+      { "kind": "potion", "chance": 0.08, "itemId": "potion_mp_small" },
       { "kind": "misc", "chance": 1.0, "itemId": "spirit_shard" }
     ]
   },
@@ -24,7 +26,8 @@
       { "kind": "coin", "chance": 1.0, "goldRange": [48, 72] },
       { "kind": "equip", "chance": 1.0, "countRange": [2, 3], "levelRange": [3, 5], "templatePool": "normal", "qualityWeight": { "common": 70, "uncommon": 30 } },
       { "kind": "equip", "chance": 1.0, "countRange": [1, 1], "levelRange": [3, 5], "templatePool": "normal", "qualityWeight": { "uncommon": 70, "rare": 27, "epic": 3 } },
-      { "kind": "potion", "chance": 1.0, "itemId": "potion_hp_small" }
+      { "kind": "potion", "chance": 1.0, "itemId": "potion_hp_small" },
+      { "kind": "potion", "chance": 0.50, "itemId": "potion_mp_small" }
     ]
   },
   {
@@ -33,6 +36,7 @@
     "entries": [
       { "kind": "coin", "chance": 1.0, "goldRange": [15, 24] },
       { "kind": "potion", "chance": 0.18, "itemId": "potion_hp_mid" },
+      { "kind": "potion", "chance": 0.12, "itemId": "potion_mp_mid" },
       { "kind": "equip", "chance": 0.22, "levelRange": [5, 9], "qualityWeight": { "common": 55, "uncommon": 30, "rare": 13, "epic": 2 } }
     ]
   },
@@ -45,6 +49,7 @@
       { "kind": "equip", "chance": 0.05, "countRange": [1, 1], "levelRange": [9, 10], "templatePool": "legendary", "qualityWeight": { "legendary": 100 } },
       { "kind": "coin", "chance": 1.0, "goldRange": [720, 880] },
       { "kind": "potion", "chance": 1.0, "itemId": "potion_hp_large", "count": 2 },
+      { "kind": "potion", "chance": 1.0, "itemId": "potion_mp_large", "count": 2 },
       { "kind": "rune", "chance": 0.30, "itemIds": ["rune_iron", "rune_jade"] },
       { "kind": "mount", "chance": 0.2, "itemId": "mount_corrupted_wing" }
     ]
