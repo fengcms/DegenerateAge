@@ -155,7 +155,7 @@ func _open_settings() -> void:
 func _start_world() -> void:
 	GameState.menu_mode = "world"
 	get_tree().paused = false
-	get_tree().reload_current_scene.call_deferred()
+	MapService.reload_world()
 
 func _return_to_main() -> void:
 	SaveManager.save_on_quit()
@@ -163,7 +163,7 @@ func _return_to_main() -> void:
 	GameState.reset_to_defaults()
 	GameState.menu_mode = "menu"
 	get_tree().paused = false
-	get_tree().reload_current_scene.call_deferred()
+	MapService.reload_world()
 
 func _quit_game() -> void:
 	get_tree().quit()

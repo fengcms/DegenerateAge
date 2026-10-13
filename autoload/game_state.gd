@@ -181,6 +181,8 @@ func default_settings() -> Dictionary:
 		"fullscreen": false,
 		"resolution": "auto",
 		"qualityFilter": "all",
+		"tutorialSeen": false,
+		"firstBattleHintSeen": false,
 		"lowGearLevelLimit": 5,
 		"lowGearMaxQuality": "common",
 		"keyBindings": {},

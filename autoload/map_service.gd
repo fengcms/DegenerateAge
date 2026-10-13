@@ -26,6 +26,9 @@ var walk_locked_until_msec: int = 0
 var walk_key_released: bool = true
 ## 请求与世界装配之间的运行态事务；绝不写入存档。
 var pending_travel: Dictionary = {}
+var loading_active := false
+var loading_message := ""
+var _loading_token := 0
 ## 任务目标导航只在运行中保留；跨图重载继续，普通存档不保存这条临时指令。
 var quest_nav_target: String = ""
 var quest_nav_map: String = ""
@@ -363,9 +366,16 @@ func rollback_travel() -> void:
 ## 旧图实体随场景一并销毁（T15）；`Game._ready` 会消费 `save_pos` 把玩家放到落点。
 func reload_world() -> void:
 	# deferred：避免在信号回调栈内销毁发起方节点
+	_loading_token += 1
+	loading_active = true
+	loading_message = "正在载入%s" % display_name(GameState.current_map)
+	EventBus.loading_changed.emit(true, loading_message)
 	call_deferred("_reload_world_now")
 
 func _reload_world_now() -> void:
+	# 给遮罩一帧实际绘制机会；进度条为不定进度，不伪造百分比。
+	await get_tree().process_frame
+	var token := _loading_token
 	var err := get_tree().reload_current_scene()
 	if err != OK and not pending_travel.is_empty():
 		var source_scene := String(pending_travel.get("scene_path", ""))
@@ -373,6 +383,15 @@ func _reload_world_now() -> void:
 		# 原场景若已卸载，用请求前的场景路径重建源图。
 		if get_tree().current_scene == null and not source_scene.is_empty():
 			get_tree().change_scene_to_file(source_scene)
+	_finish_loading(token)
+
+func _finish_loading(token: int) -> void:
+	await get_tree().create_timer(0.3, true, false, true).timeout
+	if token != _loading_token:
+		return
+	loading_active = false
+	loading_message = ""
+	EventBus.loading_changed.emit(false, "")
 
 ## 目标图的落点世界坐标（地图中心；`IsoGround.clamp_to_map` 会再夹一次兜底）。
 func entry_point(map_id: String) -> Vector2:

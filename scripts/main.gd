@@ -18,6 +18,7 @@ func _ready() -> void:
 		print("[Main] 配置校验通过 ✅")
 	else:
 		push_warning("[Main] 配置校验存在问题（%d 项）:\n%s" % [report.size(), "\n".join(PackedStringArray(report))])
+		$UI/FlowFeedback.show_config_errors(report)
 
 	print("========================================")
 

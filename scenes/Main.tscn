@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/BossHealthBar.tscn" id="18_bossbar"]
 [ext_resource type="Script" path="res://scripts/ui/ui_layer.gd" id="19_ui"]
 [ext_resource type="Script" path="res://scripts/ui/death_panel.gd" id="20_death"]
+[ext_resource type="Script" path="res://scripts/ui/flow_feedback.gd" id="21_flow"]
 
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
@@ -80,6 +81,10 @@ layout_mode = 3
 [node name="DeathPanel" type="Control" parent="UI"]
 layout_mode = 3
 script = ExtResource("20_death")
+
+[node name="FlowFeedback" type="Control" parent="UI"]
+layout_mode = 3
+script = ExtResource("21_flow")
 
 [node name="DragLayer" type="Control" parent="UI" unique_id=47854683 groups=["drag_ghost_layer"]]
 z_index = 4096

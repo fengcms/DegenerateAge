@@ -342,7 +342,7 @@ func _start_loaded_world() -> void:
 	set_open(false)
 	GameState.menu_mode = "world"
 	get_tree().paused = false
-	get_tree().reload_current_scene.call_deferred()
+	MapService.reload_world()
 
 func _on_delete_pressed(slot: int) -> void:
 	for c in _cards:
