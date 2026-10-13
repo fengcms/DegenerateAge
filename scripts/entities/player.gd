@@ -43,6 +43,9 @@ func movement_multiplier() -> float:
 var _speed: float = 256.0
 ## 普攻冷却计时（s）
 var _attack_cd: float = 0.0
+## 主动技能冷却为角色运行态；切图保留、暂停冻结、读档重新创建。
+var skill_cooldowns: Dictionary = {}
+var _pending_skill_id := ""
 ## 普攻技能定义（skills.json: basic_slash）
 var _basic: Dictionary = {}
 ## 受击保护计时
@@ -79,6 +82,7 @@ func valid_target(target: Variant) -> bool:
 func clear_travel_intent() -> void:
 	map_move_active = false
 	manual_attack_active = false
+	_pending_skill_id = ""
 	auto_move = Vector2.ZERO
 	velocity = Vector2.ZERO
 	_map_destination = global_position
@@ -106,6 +110,7 @@ func request_target_attack(target: Node2D) -> bool:
 	if is_dead or not valid_target(target):
 		return false
 	select_target(target)
+	_pending_skill_id = ""
 	map_move_active = false
 	manual_attack_active = true
 	reset_move_progress(target.global_position)
@@ -123,12 +128,22 @@ func _manual_attack_direction(delta: float) -> Vector2:
 		manual_attack_active = false
 		select_target(null)
 		return Vector2.ZERO
+	var reach := melee_range_px()
+	if not _pending_skill_id.is_empty():
+		var pending = DataLoader.get_entry("skills", _pending_skill_id)
+		if pending is Dictionary:
+			reach = float(pending.get("range", 1.0)) * Iso.TILE_W
 	if not MapService.is_in_safe_area(GameState.current_map, global_position) \
-			and global_position.distance_to(locked_target.global_position) <= melee_range_px() - AutoBattle.STOP_GAP:
+		and global_position.distance_to(locked_target.global_position) <= reach - AutoBattle.STOP_GAP:
 		_map_stuck_count = 0
 		_map_check_t = 0.0
 		_map_last_distance = INF
-		try_auto_attack(locked_target)
+		if not _pending_skill_id.is_empty():
+			if cast_skill(_pending_skill_id, locked_target):
+				_pending_skill_id = ""
+				manual_attack_active = false
+		else:
+			try_auto_attack(locked_target)
 		return Vector2.ZERO
 	_map_destination = locked_target.global_position
 	return _map_direction(delta)
@@ -137,6 +152,7 @@ func request_map_move(point: Vector2) -> bool:
 	if is_dead or not point.is_finite():
 		return false
 	manual_attack_active = false
+	_pending_skill_id = ""
 	map_move_active = true
 	reset_move_progress(point)
 	begin_manual_command()
@@ -180,6 +196,8 @@ func _physics_process(delta: float) -> void:
 	_slow_remaining = maxf(0.0, _slow_remaining - delta)
 	_invuln = maxf(0.0, _invuln - delta)
 	_attack_cd = maxf(0.0, _attack_cd - delta)
+	for skill_id in skill_cooldowns.keys():
+		skill_cooldowns[skill_id] = maxf(0.0, float(skill_cooldowns[skill_id]) - delta)
 
 	if is_dead:
 		auto_move = Vector2.ZERO
@@ -220,10 +238,12 @@ func _physics_process(delta: float) -> void:
 	manual_input_active = dir.length() > MANUAL_EPS
 	if GameState.panel_open:
 		manual_attack_active = false
+		_pending_skill_id = ""
 		map_move_active = false
 	if manual_input_active:
 		map_move_active = false
 		manual_attack_active = false
+		_pending_skill_id = ""
 	if not GameState.panel_open and Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:
 		if valid_target(locked_target):
 			request_target_attack(locked_target)
@@ -272,6 +292,7 @@ func _begin_death() -> void:
 	set_sitting(false)
 	map_move_active = false
 	manual_attack_active = false
+	_pending_skill_id = ""
 	select_target(null)
 	_slow_remaining = 0.0
 	_slow_pct = 0.0
@@ -332,6 +353,95 @@ func try_auto_attack(target: Node) -> bool:
 ## 普攻的攻击距离上限（格 → 像素）。超距自动走位（3.15）与自动战斗（3.14）共用。
 func melee_range_px() -> float:
 	return float(_basic.get("range", 1.0)) * Iso.TILE_W
+
+func skill_cooldown(skill_id: String) -> float:
+	return float(skill_cooldowns.get(skill_id, 0.0))
+
+## 快捷栏手动指令：选中目标后接近至技能射程，再由同一施放入口结算。
+func request_skill(skill_id: String) -> bool:
+	var skill = DataLoader.get_entry("skills", skill_id)
+	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or not skill is Dictionary:
+		return false
+	if skill_id == "basic_slash":
+		if valid_target(locked_target):
+			return request_target_attack(locked_target)
+		EventBus.toast_requested.emit("请先选中怪物", "danger")
+		return false
+	if is_dead or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
+		EventBus.toast_requested.emit("技能尚未解锁", "danger")
+		return false
+	if int(GameState.player.mp) < int(skill.get("manaCost", 0)):
+		EventBus.toast_requested.emit("法力不足", "danger")
+		return false
+	if skill_cooldown(skill_id) > 0.0:
+		EventBus.toast_requested.emit("技能冷却中", "danger")
+		return false
+	if not valid_target(locked_target):
+		EventBus.toast_requested.emit("请先选中怪物", "danger")
+		return false
+	map_move_active = false
+	manual_attack_active = true
+	_pending_skill_id = skill_id
+	reset_move_progress(locked_target.global_position)
+	begin_manual_command()
+	return true
+
+## 所有入口共用的实际施放；失败时不耗蓝、不进入冷却。
+func cast_skill(skill_id: String, target: Node = null) -> bool:
+	var skill = DataLoader.get_entry("skills", skill_id)
+	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or skill_id == "basic_slash" or not skill is Dictionary:
+		return false
+	if is_dead or _stun > 0.0 or _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
+		return false
+	if int(GameState.player.level) < int(skill.get("unlockLevel", 1)) or skill_cooldown(skill_id) > 0.0:
+		return false
+	var mana_cost := int(skill.get("manaCost", 0))
+	if int(GameState.player.mp) < mana_cost:
+		return false
+	var targets := skill_targets(skill, target)
+	if targets.is_empty() or not GameState.spend_mp(mana_cost):
+		return false
+	skill_cooldowns[skill_id] = float(skill.get("cooldown", 0.0))
+	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
+	_mark_combat()
+	if sample_art != null:
+		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
+	for enemy in targets:
+		var result := Combat.resolve(float(GameState.total_attack()), _target_defense(enemy),
+			float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
+			float(GameState.player.get("criticalMultiplier", 1.5)), _target_dodge(enemy))
+		Fx.damage_number(get_tree(), enemy, result)
+		EventBus.damage_dealt.emit(enemy, int(result.get("damage", 0)), bool(result.get("critical", false)))
+		enemy.take_hit(result, self)
+	return true
+
+## 按真实位置求命中集合；圆形以自身为中心，扇形面向锁定目标。
+func skill_targets(skill: Dictionary, target: Node = null) -> Array[Node2D]:
+	var result: Array[Node2D] = []
+	var shape := String(skill.get("shape", "single"))
+	var reach := float(skill.get("range", 1.0)) * Iso.TILE_W
+	var facing := Vector2.RIGHT
+	if shape == "cone":
+		if not valid_target(target):
+			return result
+		facing = global_position.direction_to((target as Node2D).global_position)
+		if facing == Vector2.ZERO:
+			facing = Vector2.RIGHT
+	for raw in get_tree().get_nodes_in_group("enemies"):
+		if not valid_target(raw):
+			continue
+		var enemy := raw as Node2D
+		var offset := enemy.global_position - global_position
+		if offset.length() > reach:
+			continue
+		if shape == "cone" and offset.length() > 0.01 and facing.dot(offset.normalized()) < cos(PI / 4.0):
+			continue
+		result.append(enemy)
+	result.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		return global_position.distance_squared_to(a.global_position) < global_position.distance_squared_to(b.global_position))
+	if shape == "cone" and result.size() > int(skill.get("maxTargets", 3)):
+		result.resize(int(skill.get("maxTargets", 3)))
+	return result
 
 ## 尝试普攻：优先锁定目标；无锁定时使用范围内最近敌人。
 func _try_attack() -> void:

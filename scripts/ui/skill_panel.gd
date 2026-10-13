@@ -98,7 +98,7 @@ func _refresh() -> void:
 			continue
 		var skill: Dictionary = raw
 		var unlocked := int(GameState.player.level) >= int(skill.get("unlockLevel", 1))
-		var wired := String(skill.get("id", "")) == "basic_slash"
+		var wired := HotbarConfig.ACTIVE_SKILLS.has(String(skill.get("id", "")))
 		var row := HBoxContainer.new()
 		_list.add_child(row)
 		var icon := SkillDragButton.new()

@@ -13,7 +13,7 @@ func _ready() -> void:
 	_check(GameState.hotbar[4].id == "misc_town_scroll" and GameState.hotbar[5].id == "potion_hp_small", "交换后内容正确")
 	_check(GameState.set_hotbar_entry(5, null) and GameState.hotbar[5] == null, "右键清空状态")
 	_check(not GameState.set_hotbar_entry(6, {"kind": "item", "id": "misc_revive_scroll"}), "未接通卷轴不可绑定")
-	_check(not GameState.set_hotbar_entry(6, {"kind": "skill", "id": "earth_cleave"}), "未接通技能不可绑定")
+	_check(GameState.set_hotbar_entry(6, {"kind": "skill", "id": "earth_cleave"}), "裂地斩可绑定")
 	var data := SaveManager._collect()
 	_check(SaveManager._is_valid_save(data), "当前布局可写入存档")
 	GameState.reset_to_defaults()

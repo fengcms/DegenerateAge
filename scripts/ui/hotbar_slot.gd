@@ -31,6 +31,10 @@ func _process(_delta: float) -> void:
 	if entry is Dictionary and ["potion", "auto_potion"].has(String(entry.kind)):
 		var left := _remaining_cooldown()
 		_cooldown.text = "%.0fs" % ceilf(left) if left > 0.0 else ""
+	elif entry is Dictionary and String(entry.kind) == "skill":
+		var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+		var left := player.skill_cooldown(String(entry.id)) if player != null else 0.0
+		_cooldown.text = "%.0fs" % ceilf(left) if left > 0.0 else ""
 	else:
 		_cooldown.text = ""
 

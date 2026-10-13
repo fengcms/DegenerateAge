@@ -389,10 +389,8 @@ func _activate_hotbar(index: int) -> void:
 				EventBus.toast_requested.emit("背包中没有%s" % _binding_name(binding), "danger")
 		"skill":
 			var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
-			if player != null and player.valid_target(player.locked_target):
-				player.request_target_attack(player.locked_target)
-			else:
-				EventBus.toast_requested.emit("请先选中怪物", "danger")
+			if player != null:
+				player.request_skill(String(binding.id))
 
 func _first_item_index(item_id: String) -> int:
 	for i in range(GameState.inventory.size()):
