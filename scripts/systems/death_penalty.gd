@@ -28,5 +28,5 @@ static func drop_one(player: Node2D, rng: RandomNumberGenerator = null) -> Dicti
 	drop.position = layer.to_local(player.global_position)
 	layer.add_child(drop)
 	GameState.remove_item_at(index)
-	EventBus.toast_requested.emit("死亡掉落：%s" % ItemUtil.display_name(item), "danger")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.death_penalty.p001") % ItemUtil.display_name(item), "danger")
 	return {"index": index, "item": item.duplicate(true), "node": drop}

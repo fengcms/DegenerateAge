@@ -65,7 +65,7 @@ func _process(_delta: float) -> void:
 func request_map_move(point: Vector2) -> bool:
 	if not _player.request_map_move(_ground.clamp_to_map(point)):
 		return false
-	EventBus.toast_requested.emit("步行前往地图目标", "info")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game.p001"), "info")
 	return true
 
 func _tick_quest_navigation() -> void:
@@ -84,15 +84,15 @@ func _tick_quest_navigation() -> void:
 				best_distance = distance
 		MapService.clear_quest_navigation()
 		if best_distance == INF:
-			EventBus.toast_requested.emit("当前没有可用的任务怪物刷新点", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.game.p002"), "danger")
 		else:
 			_player.request_map_move(_ground.clamp_to_map(best))
-			EventBus.toast_requested.emit("前往任务怪物刷新区域", "info")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.game.p003"), "info")
 		return
 	var exit_data := MapService.quest_next_exit()
 	if exit_data.is_empty():
 		MapService.clear_quest_navigation()
-		EventBus.toast_requested.emit("当前没有可用的任务道路", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p004"), "danger")
 		return
 	var cell: Array = exit_data.get("cell", [])
 	if cell.size() != 2:
@@ -106,13 +106,13 @@ func _tick_quest_navigation() -> void:
 				MapService.reload_world()
 			else:
 				MapService.clear_quest_navigation()
-				EventBus.toast_requested.emit(String(result.get("reason", "道路不可用")), "danger")
+				EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("msg.game.p005"))), "danger")
 		return
 	if not _quest_nav_issued:
 		_quest_nav_issued = _player.request_map_move(_ground.clamp_to_map(exit_pos))
 	elif not _player.map_move_active:
 		MapService.clear_quest_navigation()
-		EventBus.toast_requested.emit("未能走到任务道路，请重新点击目标", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p006"), "danger")
 
 func _ready() -> void:
 	# 出行事务只在目标地图地面与必要节点就绪后提交；失败则恢复源图。
@@ -256,7 +256,7 @@ func _cell_of(spec: Dictionary) -> Vector2i:
 
 ## 抵达提示（切图 / 读档 / 新游戏开局各一次）：延后一帧调用，确保 HUD 已就绪。
 func _notify_arrival() -> void:
-	EventBus.toast_requested.emit("抵达　%s" % MapService.display_name(GameState.current_map), "levelup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game.p007") % MapService.display_name(GameState.current_map), "levelup")
 
 ## 使用画布投影后的视口范围，随相机、缩放与窗口尺寸变化。
 func visible_enemies() -> Array[Node2D]:
@@ -280,7 +280,7 @@ func cycle_target() -> void:
 	_player.begin_manual_command()
 	if candidates.is_empty():
 		_player.select_target(null)
-		EventBus.toast_requested.emit("可视范围内没有目标", "info")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p008"), "info")
 		return
 	var index := candidates.find(_player.locked_target)
 	_player.select_target(candidates[(index + 1) % candidates.size()])
@@ -387,13 +387,13 @@ func _activate_exit(exit_node: TravelExit) -> void:
 		_pending_exit = null
 		MapService.reload_world()
 	else:
-		EventBus.toast_requested.emit(String(result.get("reason", "无法通行")), "danger")
+		EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("msg.game.p009"))), "danger")
 
 func _request_exit_interaction(exit_node: TravelExit) -> void:
 	_pending_npc = null
 	_pending_exit = null
 	if not MapService.is_unlocked(exit_node.to_map):
-		EventBus.toast_requested.emit("道路封锁：%s尚未解锁" % MapService.display_name(exit_node.to_map), "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p010") % MapService.display_name(exit_node.to_map), "danger")
 		return
 	if Iso.world_to_grid(_player.global_position).distance_to(Iso.world_to_grid(exit_node.global_position)) <= MapService.WALK_RANGE_CELLS:
 		_activate_exit(exit_node)

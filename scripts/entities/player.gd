@@ -189,7 +189,7 @@ func _map_direction(delta: float) -> Vector2:
 			if _cave_path.is_empty():
 				map_move_active = false
 				manual_attack_active = false
-				EventBus.toast_requested.emit("目标不可达，请换一个位置", "danger")
+				EventBus.toast_requested.emit(Localization.tr_key("msg.player.p001"), "danger")
 				return Vector2.ZERO
 			var old_index := _cave_path_index
 			while _cave_path_index < _cave_path.size() and global_position.distance_to(_cave_path[_cave_path_index]) < 9.0:
@@ -212,7 +212,7 @@ func _map_direction(delta: float) -> Vector2:
 		if _map_stuck_count >= AutoBattle.STUCK_LIMIT:
 			map_move_active = false
 			manual_attack_active = false
-			EventBus.toast_requested.emit("前往目标受阻，请换一个位置或目标", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.player.p002"), "danger")
 			return Vector2.ZERO
 	return global_position.direction_to(waypoint)
 
@@ -337,7 +337,7 @@ func _begin_death() -> void:
 	_death_t = 0.0
 	velocity = Vector2.ZERO
 	queue_redraw()
-	EventBus.toast_requested.emit("你倒下了，请选择复活地点", "danger")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.player.p003"), "danger")
 
 ## 由死亡选择界面调用；消耗复活卷的校验和扣除由界面入口负责。
 func _revive() -> void:
@@ -349,7 +349,7 @@ func _revive() -> void:
 	GameState.player.mp = GameState.max_mp()
 	GameState.emit_all()
 	queue_redraw()
-	EventBus.toast_requested.emit("已复活", "info")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.player.p004"), "info")
 
 ## 受击闪烁：无敌帧内高频闪烁，死亡保留半透明。
 func _update_blink() -> void:
@@ -407,20 +407,20 @@ func request_skill(skill_id: String) -> bool:
 	if skill_id == "basic_slash":
 		if valid_target(locked_target):
 			return request_target_attack(locked_target)
-		EventBus.toast_requested.emit("请先选中怪物", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p005"), "danger")
 		return false
 	if is_dead or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
-		EventBus.toast_requested.emit("技能尚未解锁", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p006"), "danger")
 		return false
 	if int(GameState.player.mp) < int(skill.get("manaCost", 0)):
-		EventBus.toast_requested.emit("法力不足", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p007"), "danger")
 		return false
 	if skill_cooldown(skill_id) > 0.0:
-		EventBus.toast_requested.emit("技能冷却中", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p008"), "danger")
 		return false
 	if String(skill.get("kind", "")) == "buff":
 		if GameState.buff_remaining(skill_id) > 0.0:
-			EventBus.toast_requested.emit("增益已生效", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.player.p009"), "danger")
 			return false
 		begin_manual_command()
 		return cast_skill(skill_id)
@@ -435,14 +435,14 @@ func request_skill(skill_id: String) -> bool:
 		return true
 	if String(skill.get("shape", "")) == "circle":
 		if skill_targets(skill).is_empty():
-			EventBus.toast_requested.emit("范围内没有可攻击的怪物", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.player.p010"), "danger")
 			return false
 		begin_manual_command()
 		if not cast_skill(skill_id):
-			EventBus.toast_requested.emit("当前无法施放技能", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.player.p011"), "danger")
 			return false
 		return true
-	EventBus.toast_requested.emit("请先选中怪物", "danger")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.player.p005"), "danger")
 	return false
 
 ## 所有入口共用的实际施放；失败时不耗蓝、不进入冷却。

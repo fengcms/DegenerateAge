@@ -114,16 +114,16 @@ static func meets_level(item: Dictionary, level: int) -> bool:
 static func equip_from_inventory(slots: Dictionary, inv: Array, slot_id: String,
 		inv_index: int, level: int) -> Dictionary:
 	if inv_index < 0 or inv_index >= inv.size() or inv[inv_index] == null:
-		return {"ok": false, "reason": "该格没有物品", "replaced": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p001"), "replaced": {}}
 	var item: Dictionary = inv[inv_index]
 	if String(item.get("kind", "")) != "equip":
-		return {"ok": false, "reason": "该物品不可装备", "replaced": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p002"), "replaced": {}}
 	if not slots.has(slot_id):
-		return {"ok": false, "reason": "槽位不存在", "replaced": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p003"), "replaced": {}}
 	if not slot_accepts(slot_id, item):
-		return {"ok": false, "reason": "槽位不匹配", "replaced": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p004"), "replaced": {}}
 	if not meets_level(item, level):
-		return {"ok": false, "reason": "需要等级 %d 才能穿戴" % level_req(item), "replaced": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p005") % level_req(item), "replaced": {}}
 
 	var old = slots[slot_id]
 	# 新装备自身腾出的格始终足够容纳一件旧装备，直接交换保留实例属性。
@@ -135,9 +135,9 @@ static func equip_from_inventory(slots: Dictionary, inv: Array, slot_id: String,
 static func unequip(slots: Dictionary, inv: Array, slot_id: String) -> Dictionary:
 	var item = slots.get(slot_id)
 	if not (item is Dictionary):
-		return {"ok": false, "reason": "该槽位为空", "item": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p006"), "item": {}}
 	if not Inventory.has_space_for(inv, item):
-		return {"ok": false, "reason": "背包已满，无法卸下", "item": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p007"), "item": {}}
 	Inventory.add(inv, item)
 	slots[slot_id] = null
 	return {"ok": true, "reason": "", "item": item}
@@ -146,11 +146,11 @@ static func unequip(slots: Dictionary, inv: Array, slot_id: String) -> Dictionar
 static func unequip_to_index(slots: Dictionary, inv: Array, slot_id: String, inv_index: int) -> Dictionary:
 	var item: Variant = slots.get(slot_id)
 	if not item is Dictionary:
-		return {"ok": false, "reason": "该槽位为空", "item": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p006"), "item": {}}
 	if inv_index < 0 or inv_index >= inv.size():
-		return {"ok": false, "reason": "背包格不存在", "item": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p008"), "item": {}}
 	if inv[inv_index] != null:
-		return {"ok": false, "reason": "请拖到背包空格", "item": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p009"), "item": {}}
 	inv[inv_index] = item
 	slots[slot_id] = null
 	return {"ok": true, "reason": "", "item": item}

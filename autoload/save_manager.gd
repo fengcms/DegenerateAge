@@ -147,11 +147,11 @@ func _player_world_pos() -> Vector2:
 ## 保存到某槽。silent = true 时不弹成功提示（自动存用，避免刷屏；失败始终提示）。
 func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 	if not MapService.pending_travel.is_empty():
-		EventBus.toast_requested.emit("地图切换中，请稍后存档", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p001"), "danger")
 		return false
 	var live_player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 	if live_player != null and live_player.is_dead and not new_game:
-		EventBus.toast_requested.emit("请先选择复活方式，再保存进度", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p002"), "danger")
 		return false
 	_ensure_dir()
 	var data := _collect()
@@ -163,7 +163,7 @@ func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 		var center := Iso.grid_to_world(Vector2i(int(size.get("w", 40)) / 2, int(size.get("h", 40)) / 2))
 		data["playerPos"] = [center.x, center.y]
 	if slot < 1 or slot > MAX_SLOTS or not _is_valid_save(data):
-		EventBus.toast_requested.emit("当前状态不符合存档格式，未覆盖已有存档", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p003"), "danger")
 		return false
 
 	var path := slot_path(slot)
@@ -171,12 +171,12 @@ func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 	# 只有主档**有效**时才留备份——否则会把损坏内容覆盖掉可用的 .bak（T16 前提）。
 	if _is_valid_save(_read_file(path)):
 		if not _copy_over(path, backup_path(slot)):
-			EventBus.toast_requested.emit("备份写入失败，未覆盖已有存档", "danger")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p004"), "danger")
 			return false
 
 	if not _write_json_atomic(path, data):
 		push_error("[SaveManager] 保存失败：%s" % path)
-		EventBus.toast_requested.emit("存档写入失败（槽 %d），进度未保存！" % slot, "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p006") % slot, "danger")
 		return false
 	if new_game:
 		# 主档成功落盘后才清掉旧备份，避免日后把新角色恢复成旧角色。
@@ -191,7 +191,7 @@ func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 	_write_last_slot(slot)
 	print("[SaveManager] 已保存到槽 %d：%s" % [slot, path])
 	if not silent:
-		EventBus.toast_requested.emit("已保存到槽 %d（自动存档将写入本槽）" % slot, "pickup")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p007") % slot, "pickup")
 	return true
 
 ## 自动存（定时 / 关键事件 / 退出）：静默成功，失败必提示。
@@ -257,7 +257,7 @@ func _connect_events() -> void:
 func read_slot(slot: int) -> Dictionary:
 	var path := slot_path(slot)
 	if not FileAccess.file_exists(path) and not FileAccess.file_exists(backup_path(slot)):
-		return {"ok": false, "source": "", "data": {}, "message": "槽 %d 还没有存档" % slot}
+		return {"ok": false, "source": "", "data": {}, "message": Localization.tr_key("msg.save_manager.p008") % slot}
 
 	var main: Variant = _read_file(path)
 	if _is_valid_save(main):
@@ -270,11 +270,11 @@ func read_slot(slot: int) -> Dictionary:
 		var restored := _restore_backup(slot, bak as Dictionary)
 		return {
 			"ok": true, "source": "backup", "data": _migrate(bak as Dictionary),
-			"message": ("槽 %d 主存档不可用，已从备份恢复（原主档另存为 .corrupt）" if restored else "槽 %d 已读取备份，但主档修复写入失败；现场与备份已保留") % slot,
+			"message": (Localization.tr_key("msg.save_manager.p010") if restored else Localization.tr_key("msg.save_manager.p011")) % slot,
 		}
 	return {
 		"ok": false, "source": "", "data": {},
-		"message": "槽 %d 存档损坏且备份不可用（现场文件已保留）" % slot,
+		"message": Localization.tr_key("msg.save_manager.p012") % slot,
 	}
 
 ## 把备份内容写回主档（自愈），并把损坏的主档另存为 .corrupt 保留现场。
@@ -293,14 +293,14 @@ func _restore_backup(slot: int, data: Dictionary) -> bool:
 func load_into_game(slot: int) -> Dictionary:
 	var res := read_slot(slot)
 	if not bool(res.get("ok", false)):
-		EventBus.toast_requested.emit(String(res.get("message", "读档失败")), "danger")
+		EventBus.toast_requested.emit(String(res.get("message", Localization.tr_key("msg.save_manager.p013"))), "danger")
 		return res
 	apply_to_game_state(res.get("data", {}))
 	active_slot = slot
 	_write_last_slot(slot)
 	var msg := String(res.get("message", ""))
 	EventBus.toast_requested.emit(
-		msg if not msg.is_empty() else "已载入槽 %d 的存档" % slot,
+		msg if not msg.is_empty() else Localization.tr_key("msg.save_manager.p014") % slot,
 		"danger" if res.get("source", "main") == "backup" else "pickup")
 	res["applied"] = true
 	return res
@@ -314,13 +314,13 @@ func resume_last() -> bool:
 	var res := read_slot(slot)
 	if not bool(res.get("ok", false)):
 		push_warning("[SaveManager] 续档失败（槽 %d）：%s" % [slot, res.get("message", "")])
-		_resume_toast = "续档失败：%s" % String(res.get("message", ""))
+		_resume_toast = Localization.tr_key("msg.save_manager.p016") % String(res.get("message", ""))
 		return false
 	apply_to_game_state(res.get("data", {}))
 	active_slot = slot
 	_resume_toast = String(res.get("message", ""))
 	if _resume_toast.is_empty():
-		_resume_toast = "已继续上次存档（槽 %d）" % slot
+		_resume_toast = Localization.tr_key("msg.save_manager.p017") % slot
 	return true
 
 func _emit_resume_toast() -> void:
@@ -329,7 +329,7 @@ func _emit_resume_toast() -> void:
 		GameState.inventory_used()])
 	if _resume_toast.is_empty():
 		return
-	var kind := "danger" if _resume_toast.begins_with("续档失败") else "info"
+	var kind := "danger" if _resume_toast.begins_with(Localization.tr_key("msg.save_manager.p018")) else "info"
 	EventBus.toast_requested.emit(_resume_toast, kind)
 	_resume_toast = ""
 
@@ -387,7 +387,7 @@ func _migrate(source: Dictionary) -> Dictionary:
 ## 应用前完整校验；无效数据不修改运行态。只有明确旧版本允许迁移缺省字段。
 func apply_to_game_state(data: Dictionary) -> void:
 	if not _is_valid_save(data):
-		EventBus.toast_requested.emit("存档结构无效，未改变当前进度", "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p019"), "danger")
 		return
 	data = _migrate(data)
 	_suppress_autosave = true

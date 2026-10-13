@@ -16,7 +16,7 @@ extends RefCounted
 const LISTED_QUALITIES := ["rare", "epic", "legendary"]
 
 ## 传说提示前缀（§10「传说 · 镇脉之刃」）。
-const LEGENDARY_PREFIX := "传说 · "
+const LEGENDARY_PREFIX_KEY := "msg.loot_notify.legendary_prefix"
 
 ## 批次摘要文本。`rolled` = `Loot.roll` 产出数组；`unclaimed_equip` = 本批未入包的装备件数。
 static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: int, manual_pickup: bool = false) -> String:
@@ -41,16 +41,16 @@ static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: i
 			"rune":
 				rune += maxi(1, int(item.get("count", 1)))
 	var parts: Array[String] = []
-	parts.append("装备 %d 件%s" % [equip, _quality_bracket(q_count)])
+	parts.append(Localization.tr_key("msg.loot_notify.p001") % [equip, _quality_bracket(q_count)])
 	if gold > 0:
-		parts.append("金币 %d" % gold)
+		parts.append(Localization.tr_key("msg.loot_notify.p002") % gold)
 	if not potion.is_empty():
 		parts.append(potion)
 	if rune > 0:
-		parts.append("如意×%d" % rune)
-	var text := "%s 掉落：%s" % [monster_name, " · ".join(parts)]
+		parts.append(Localization.tr_key("msg.loot_notify.p003") % rune)
+	var text := Localization.tr_key("msg.loot_notify.p004") % [monster_name, " · ".join(parts)]
 	if unclaimed_equip > 0:
-		text += (" · %d 件装备待手动拾取" if manual_pickup else " · 背包不足，%d 件装备已保留") % unclaimed_equip
+		text += (Localization.tr_key("msg.loot_notify.p005") if manual_pickup else Localization.tr_key("msg.loot_notify.p006")) % unclaimed_equip
 	return text
 
 ## 品质括号："（稀有 1、史诗 1）"；无稀有以上时返回空串（§10）。
@@ -79,7 +79,7 @@ static func legendary_text(rolled: Array) -> String:
 			continue
 		var item: Dictionary = it
 		if String(item.get("kind", "")) == "equip" and String(item.get("quality", "")) == "legendary":
-			return LEGENDARY_PREFIX + ItemUtil.template_name(item)
+			return Localization.tr_key(LEGENDARY_PREFIX_KEY) + ItemUtil.template_name(item)
 	return ""
 
 ## 摘要弹出时刻（§10「最后一份出场完成时」）：全部落地时刻 = max(appear + land_time)。

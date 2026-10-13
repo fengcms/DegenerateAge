@@ -54,7 +54,7 @@ func start_quest_navigation(monster_id: String, allowed_maps: Array) -> Dictiona
 			visited[next_id] = true
 			first_hop[next_id] = next_id if map_id == GameState.current_map else first_hop[map_id]
 			queue.append(next_id)
-	return {"ok": false, "reason": "没有前往任务怪物刷新地图的已解锁道路"}
+	return {"ok": false, "reason": Localization.tr_key("msg.map_service.p001")}
 
 func quest_next_exit() -> Dictionary:
 	if quest_nav_target.is_empty() or quest_nav_map.is_empty():
@@ -227,30 +227,30 @@ func can_use_walk_exit() -> bool:
 ## 不读车夫费用；出口落点由目标图入口 ID 决定。
 func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
 	if not pending_travel.is_empty():
-		return _fail("正在切换地图")
+		return _fail(Localization.tr_key("msg.map_service.p002"))
 	if not can_use_walk_exit():
-		return _fail("请松开交互键，稍后再走")
+		return _fail(Localization.tr_key("msg.map_service.p003"))
 	var exit_data := walk_exit(exit_id)
 	if exit_data.is_empty():
-		return _fail("此处没有道路出口")
+		return _fail(Localization.tr_key("msg.map_service.p004"))
 	var to_id := String(exit_data.get("toMap", ""))
 	if not exists(to_id) or to_id == GameState.current_map:
-		return _fail("道路目的地无效")
+		return _fail(Localization.tr_key("msg.map_service.p005"))
 	var cell: Variant = exit_data.get("cell", null)
 	if not cell is Array or cell.size() != 2:
-		return _fail("道路出口配置无效")
+		return _fail(Localization.tr_key("msg.map_service.p006"))
 	var player_cell := Iso.world_to_grid(player_world)
 	if player_cell.distance_to(Vector2(float(cell[0]), float(cell[1]))) > WALK_RANGE_CELLS:
-		return _fail("请走近路牌")
+		return _fail(Localization.tr_key("msg.map_service.p007"))
 	if not is_unlocked(to_id):
-		return _fail("道路封锁：%s尚未解锁" % display_name(to_id))
+		return _fail(Localization.tr_key("msg.map_service.p008") % display_name(to_id))
 	var entrance_id := String(exit_data.get("toEntrance", ""))
 	var entrances: Variant = data_for(to_id).get("entrances", null)
 	if not entrances is Dictionary or not entrances.has(entrance_id):
-		return _fail("道路入口配置缺失")
+		return _fail(Localization.tr_key("msg.map_service.p009"))
 	var arrival: Variant = entrances[entrance_id]
 	if not arrival is Array or arrival.size() != 2:
-		return _fail("道路入口配置无效")
+		return _fail(Localization.tr_key("msg.map_service.p010"))
 	var result := _prepare_travel(to_id, "walk", 0, Iso.grid_to_world(Vector2i(int(arrival[0]), int(arrival[1]))))
 	if not bool(result.ok):
 		return result
@@ -271,9 +271,9 @@ func destinations() -> Array:
 		var unlocked := is_unlocked(id) and (visited or taught)
 		var reason := ""
 		if not is_unlocked(id):
-			reason = "尚未解锁"
+			reason = Localization.tr_key("msg.map_service.p011")
 		elif not visited and not taught:
-			reason = "先步行到访，开放直达"
+			reason = Localization.tr_key("msg.map_service.p012")
 		out.append({
 			"id": id,
 			"name": display_name(id),
@@ -295,28 +295,28 @@ func destinations() -> Array:
 ## （否则在 SmokeTest 里调用会把测试场景本身重载掉）。
 func travel_to(map_id: String) -> Dictionary:
 	if not pending_travel.is_empty():
-		return _fail("正在切换地图")
+		return _fail(Localization.tr_key("msg.map_service.p002"))
 	if not exists(map_id):
-		return _fail("未知地图：%s" % map_id)
+		return _fail(Localization.tr_key("msg.map_service.p013") % map_id)
 	if map_id == GameState.current_map:
-		return _fail("已在%s" % display_name(map_id))
+		return _fail(Localization.tr_key("msg.map_service.p014") % display_name(map_id))
 	if not is_linked(map_id):
-		return _fail("车夫无法直达%s" % display_name(map_id))
+		return _fail(Localization.tr_key("msg.map_service.p015") % display_name(map_id))
 	if not is_unlocked(map_id):
-		return _fail("%s尚未解锁" % display_name(map_id))
+		return _fail(Localization.tr_key("msg.map_service.p016") % display_name(map_id))
 	if not GameState.is_visited(map_id) and not (GameState.current_map == DEFAULT_MAP and map_id == "wild_trial"):
-		return _fail("先步行到访%s，再开放车夫直达" % display_name(map_id))
+		return _fail(Localization.tr_key("msg.map_service.p017") % display_name(map_id))
 	var fee := fee_to(map_id)
 	if fee < 0:
-		return _fail("%s车费配置缺失" % display_name(map_id))
+		return _fail(Localization.tr_key("msg.map_service.p018") % display_name(map_id))
 	if fee > 0 and GameState.gold < fee:
-		return _fail("金币不足：前往%s需 %d（现有 %d）" % [display_name(map_id), fee, GameState.gold])
+		return _fail(Localization.tr_key("msg.map_service.p019") % [display_name(map_id), fee, GameState.gold])
 
 	return _prepare_travel(map_id, "carter", fee, carter_arrival(map_id))
 
 func _prepare_travel(to_id: String, mode: String, fee: int, arrival: Vector2) -> Dictionary:
 	if not pending_travel.is_empty():
-		return _fail("正在切换地图")
+		return _fail(Localization.tr_key("msg.map_service.p002"))
 	pending_travel = {
 		"from": GameState.current_map, "to": to_id, "mode": mode, "fee": fee,
 		"gold": GameState.gold, "save_pos": GameState.save_pos,
@@ -347,7 +347,7 @@ func commit_arrival() -> bool:
 	EventBus.map_traveled.emit(String(request.from), String(request.to))
 	EventBus.map_changed.emit(String(request.to))
 	if first_visit:
-		EventBus.toast_requested.emit("已到访%s，车夫直达已开放" % display_name(GameState.current_map), "info")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.map_service.p020") % display_name(GameState.current_map), "info")
 	return true
 
 func rollback_travel() -> void:
@@ -360,7 +360,7 @@ func rollback_travel() -> void:
 	GameState.save_pos = request.save_pos
 	GameState.has_save_pos = bool(request.has_save_pos)
 	EventBus.gold_changed.emit(GameState.gold)
-	EventBus.toast_requested.emit("前往失败，未收取车费", "danger")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.map_service.p021"), "danger")
 
 ## 出行成功后重载世界（拍板 D1-A：整场景重载 + `save_pos` 传位置）。
 ## 旧图实体随场景一并销毁（T15）；`Game._ready` 会消费 `save_pos` 把玩家放到落点。
@@ -368,7 +368,7 @@ func reload_world() -> void:
 	# deferred：避免在信号回调栈内销毁发起方节点
 	_loading_token += 1
 	loading_active = true
-	loading_message = "正在载入%s" % display_name(GameState.current_map)
+	loading_message = Localization.tr_key("msg.map_service.p022") % display_name(GameState.current_map)
 	EventBus.loading_changed.emit(true, loading_message)
 	call_deferred("_reload_world_now")
 

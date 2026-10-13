@@ -23,18 +23,18 @@ static func final_rate(star: int, bonus_points: float = 0.0) -> float:
 ## 先计算四格如意的总需求及从背包扣除的具体堆叠；失败时不修改背包。
 static func rune_plan(inv: Array, rune_ids: Array) -> Dictionary:
 	if rune_ids.size() > 4:
-		return {"ok": false, "reason": "最多只能放入四枚如意"}
+		return {"ok": false, "reason": Localization.tr_key("msg.upgrade.p001")}
 	var wanted := {}
 	var bonus := 0.0
 	for value in rune_ids:
 		if not value is String:
-			return {"ok": false, "reason": "如意选择无效"}
+			return {"ok": false, "reason": Localization.tr_key("msg.upgrade.p002")}
 		var rune_id := String(value)
 		if rune_id.is_empty():
 			continue
 		var template = DataLoader.get_entry("runes", rune_id)
 		if not template is Dictionary:
-			return {"ok": false, "reason": "如意种类无效"}
+			return {"ok": false, "reason": Localization.tr_key("msg.upgrade.p003")}
 		wanted[rune_id] = int(wanted.get(rune_id, 0)) + 1
 		bonus += float(template.get("successBonus", 0.0)) * 100.0
 	var uses: Array[Dictionary] = []
@@ -51,7 +51,7 @@ static func rune_plan(inv: Array, rune_ids: Array) -> Dictionary:
 			if remaining == 0:
 				break
 		if remaining > 0:
-			return {"ok": false, "reason": "如意数量不足：%s" % String(rune_id), "bonus": bonus}
+			return {"ok": false, "reason": Localization.tr_key("msg.upgrade.p004") % String(rune_id), "bonus": bonus}
 	return {"ok": true, "uses": uses, "bonus": bonus, "count": rune_ids.size() - rune_ids.count("")}
 
 static func base_attrs(item: Dictionary) -> Dictionary:

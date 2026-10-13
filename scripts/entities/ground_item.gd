@@ -299,11 +299,11 @@ func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 		if GameState.gold_is_capped():
 			if _blocked_cd <= 0.0:
 				_blocked_cd = BLOCK_TOAST_CD
-				EventBus.toast_requested.emit("金币已达上限", "danger")
+				EventBus.toast_requested.emit(Localization.tr_key("msg.ground_item.p001"), "danger")
 			return false
 		var got := GameState.add_gold(int(item.get("gold", 0)))
 		EventBus.item_picked.emit("coin")
-		_pickup_msg = "拾取：金币 +%d" % got
+		_pickup_msg = Localization.tr_key("msg.ground_item.p002") % got
 		if announce:
 			_announce_pickup()
 		_clear_unclaimed_record()
@@ -313,7 +313,7 @@ func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 		if not DataLoader.get_entry("mounts", mount_id) is Dictionary:
 			return false
 		var fresh := GameState.collect_mount(mount_id)
-		_pickup_msg = "获得坐骑：%s" % ItemUtil.display_name(item) if fresh else "该坐骑已收藏"
+		_pickup_msg = Localization.tr_key("msg.ground_item.p003") % ItemUtil.display_name(item) if fresh else Localization.tr_key("msg.ground_item.p004")
 		if announce:
 			_announce_pickup()
 		_clear_unclaimed_record()
@@ -323,7 +323,7 @@ func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 		EventBus.item_picked.emit(String(item.get("itemId", "")))
 		EventBus.inventory_changed.emit()
 		if not silent_pickup:
-			_pickup_msg = "拾取：" + ItemUtil.display_name(item)
+			_pickup_msg = Localization.tr_key("msg.ground_item.p005") + ItemUtil.display_name(item)
 		if announce:
 			_announce_pickup()
 		_clear_unclaimed_record()
@@ -332,7 +332,7 @@ func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 	# 生成帧的失败不逐件播报（`quiet_block`）；之后靠近 / 点击仍给节流提示，避免玩家手动拾取无反馈。
 	if _blocked_cd <= 0.0 and not quiet_block:
 		_blocked_cd = BLOCK_TOAST_CD
-		EventBus.toast_requested.emit("背包已满，无法拾取：" + ItemUtil.display_name(item), "danger")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.ground_item.p006") + ItemUtil.display_name(item), "danger")
 	return false
 
 func _fade_out() -> void:

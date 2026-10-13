@@ -27,9 +27,9 @@ const MAX_ACTIVE := 5
 
 ## 目标类型 → 中文动词（UI 文案）。
 const KIND_VERB := {
-	"kill": "击败",
-	"collect": "收集",
-	"talk": "交谈",
+	"kill": "msg.quest.verb_kill",
+	"collect": "msg.quest.verb_collect",
+	"talk": "msg.quest.verb_talk",
 }
 
 ## 事件类型 → 任务目标类型（推进映射）。两处 kind 目前同名，独立列出便于将来分叉。
@@ -103,19 +103,19 @@ static func has_state(state: String) -> bool:
 static func accept(quest_id: String) -> Dictionary:
 	var tpl := template(quest_id)
 	if tpl.is_empty():
-		return _fail("任务不存在")
+		return _fail(Localization.tr_key("msg.quest.p001"))
 	var st := state_of(quest_id)
 	match st:
 		STATE_LOCKED:
-			return _fail("前置任务尚未完成")
+			return _fail(Localization.tr_key("msg.quest.p002"))
 		STATE_ACTIVE:
-			return _fail("任务已在进行中")
+			return _fail(Localization.tr_key("msg.quest.p003"))
 		STATE_COMPLETED:
-			return _fail("任务已完成，请先交付")
+			return _fail(Localization.tr_key("msg.quest.p004"))
 		STATE_REWARDED:
-			return _fail("任务已完成")
+			return _fail(Localization.tr_key("msg.quest.p005"))
 	if active_count() >= MAX_ACTIVE:
-		return _fail("同时进行的任务已达上限 %d" % MAX_ACTIVE)
+		return _fail(Localization.tr_key("msg.quest.p006") % MAX_ACTIVE)
 
 	var obj = tpl.get("objective", {})
 	var kind := ""
@@ -135,13 +135,13 @@ static func accept(quest_id: String) -> Dictionary:
 static func abandon(quest_id: String) -> Dictionary:
 	var tpl := template(quest_id)
 	if tpl.is_empty():
-		return _fail("任务不存在")
+		return _fail(Localization.tr_key("msg.quest.p001"))
 	if not bool(tpl.get("abandonable", false)):
-		return _fail("主线任务不可放弃")
+		return _fail(Localization.tr_key("msg.quest.p007"))
 	if state_of(quest_id) != STATE_ACTIVE:
-		return _fail("只有进行中的任务可以放弃")
+		return _fail(Localization.tr_key("msg.quest.p008"))
 	_write(quest_id, STATE_ABANDONED, 0)
-	EventBus.toast_requested.emit("已放弃：%s" % String(tpl.get("name", quest_id)), "info")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.quest.p009") % String(tpl.get("name", quest_id)), "info")
 	return {"ok": true, "reason": ""}
 
 # ---- 推进（11 §4.2）----
@@ -191,9 +191,9 @@ static func _in_scope(tpl: Dictionary) -> bool:
 static func deliver(quest_id: String) -> Dictionary:
 	var tpl := template(quest_id)
 	if tpl.is_empty():
-		return _fail("任务不存在")
+		return _fail(Localization.tr_key("msg.quest.p001"))
 	if state_of(quest_id) != STATE_COMPLETED:
-		return _fail("任务尚未完成，无法交付")
+		return _fail(Localization.tr_key("msg.quest.p010"))
 
 	var reward = tpl.get("reward", {})
 	if not (reward is Dictionary):
@@ -206,9 +206,9 @@ static func deliver(quest_id: String) -> Dictionary:
 	if not item_id.is_empty():
 		item = ItemFactory.make_any(item_id, 1)
 		if item.is_empty():
-			return _fail("奖励物品不存在：%s" % item_id)
+			return _fail(Localization.tr_key("msg.quest.p011") % item_id)
 		if not Inventory.has_space_for(GameState.inventory, item):
-			return _fail("背包已满，无法领取奖励（请腾出空位后再交付）")
+			return _fail(Localization.tr_key("msg.quest.p012"))
 
 	var gold := int(reward.get("gold", 0))
 	var xp := int(reward.get("xp", 0))
@@ -228,14 +228,14 @@ static func deliver(quest_id: String) -> Dictionary:
 
 	var parts: Array[String] = []
 	if gold > 0:
-		parts.append("%d 金币" % gold)
+		parts.append(Localization.tr_key("msg.quest.p013") % gold)
 	if xp > 0:
-		parts.append("%d 经验" % xp)
+		parts.append(Localization.tr_key("msg.quest.p014") % xp)
 	if not item.is_empty():
 		parts.append(ItemUtil.display_name(item))
 	if not unlock.is_empty():
-		parts.append("解锁 %s" % unlock)
-	EventBus.toast_requested.emit("任务完成：%s%s" % [
+		parts.append(Localization.tr_key("msg.quest.p015") % unlock)
+	EventBus.toast_requested.emit(Localization.tr_key("msg.quest.p016") % [
 		String(tpl.get("name", quest_id)),
 		"（%s）" % "，".join(PackedStringArray(parts)) if not parts.is_empty() else "",
 	], "levelup")
@@ -320,7 +320,7 @@ static func objective_text(entry: Dictionary) -> String:
 		return ""
 	var kind := String((obj as Dictionary).get("kind", ""))
 	var tid := String((obj as Dictionary).get("targetId", ""))
-	var verb := String(KIND_VERB.get(kind, ""))
+	var verb := Localization.tr_key(String(KIND_VERB[kind])) if KIND_VERB.has(kind) else ""
 	var tname := _target_name(kind, tid)
 	var need := int(entry.get("need", 0))
 	if need <= 1:
@@ -330,11 +330,11 @@ static func objective_text(entry: Dictionary) -> String:
 ## 任务面板点击击杀目标：只导航至实际刷新点，不选择目标或发动攻击。
 static func start_target_navigation(quest_id: String) -> Dictionary:
 	if state_of(quest_id) != STATE_ACTIVE:
-		return {"ok": false, "reason": "任务未在进行中"}
+		return {"ok": false, "reason": Localization.tr_key("msg.quest.p017")}
 	var tpl := template(quest_id)
 	var objective: Dictionary = tpl.get("objective", {})
 	if String(objective.get("kind", "")) != "kill":
-		return {"ok": false, "reason": "该任务没有怪物刷新目标"}
+		return {"ok": false, "reason": Localization.tr_key("msg.quest.p018")}
 	return MapService.start_quest_navigation(String(objective.get("targetId", "")), tpl.get("mapScope", []))
 
 ## 目标对象显示名（怪物 / 收集物 / NPC）。

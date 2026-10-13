@@ -226,7 +226,7 @@ func _update_boss(delta: float) -> bool:
 				queue_redraw()
 				attack_interval = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval / (1.0 + float(phase.get("addAttackSpeedPct", 0))))
 				_spawn_summons.call_deferred(String(phase.get("summon", "")), int(phase.get("summonCount", 0)))
-				EventBus.toast_requested.emit("%s 进入狂暴！" % display_name, "danger")
+				EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p001") % display_name, "danger")
 	if boss_phase != prev_phase:
 		_announce_boss_hp()
 	_stomp_cooldown = maxf(0.0, _stomp_cooldown - delta)
@@ -264,7 +264,7 @@ func _settle_first_clear() -> void:
 	if not unlock.is_empty():
 		GameState.unlocks[unlock] = true
 	EventBus.boss_first_clear.emit(monster_id)
-	EventBus.toast_requested.emit("首次击败 %s！" % display_name, "levelup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p002") % display_name, "levelup")
 
 ## 7.5：monsterMaxHP = max(1, round(hpBase × (1 + M_HP_PER_LV × (spawnLevel − templateLevel))))
 func _derive_max_hp(tpl_level: int) -> int:
@@ -511,7 +511,7 @@ func _settle_rewards() -> void:
 		var gold := int(template.get("goldReward", 0))
 		if gold > 0:
 			GameState.add_gold(gold)
-			EventBus.toast_requested.emit("%s 掉落：金币 ×%d" % [display_name, gold], "drop")
+			EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p003") % [display_name, gold], "drop")
 		return
 
 	var rolled := Loot.roll(table_id, null, monster_id)
@@ -592,7 +592,7 @@ func _announce_drops(items: Array) -> void:
 			parts.append(ItemUtil.display_name(it))
 	if parts.is_empty():
 		return
-	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(PackedStringArray(parts))], "drop")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p004") % [display_name, " · ".join(PackedStringArray(parts))], "drop")
 
 ## M6-0e（创意 07 §10）：批次摘要 + 传说提示。
 ## 精英 / Boss 用**批次摘要**替代旧逐件聚合提示（延迟到装备雨全部落地，§10「最后一份出场完成时」）；
@@ -681,7 +681,7 @@ func _draw() -> void:
 		var center := to_local(_stomp_center)
 		draw_circle(center, _stomp_radius, Color(1.0, 0.18, 0.05, 0.18))
 		draw_arc(center, _stomp_radius, 0, TAU, 64, Color("ff623a"), 3.0, true)
-		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), "践踏预警", HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
+		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), Localization.tr_key("msg.monster.p005"), HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
 	if selected and not is_dead:
 		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
 	if sample_art != null or dummy_art != null:

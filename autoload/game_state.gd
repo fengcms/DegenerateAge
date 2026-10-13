@@ -369,13 +369,13 @@ func mount_speed_multiplier() -> float:
 func ride_mount(mount_id: String) -> Dictionary:
 	var mount = DataLoader.get_entry("mounts", mount_id)
 	if not mount is Dictionary or not owned_mounts.has(mount_id):
-		return {"ok": false, "reason": "尚未获得该坐骑"}
+		return {"ok": false, "reason": Localization.tr_key("msg.game_state.p001")}
 	var required := int(mount.get("levelReq", 20))
 	if int(player.get("level", 1)) < required:
-		return {"ok": false, "reason": "需要达到 %d 级才能骑乘" % required}
+		return {"ok": false, "reason": Localization.tr_key("msg.game_state.p002") % required}
 	active_mount = mount_id
 	EventBus.mount_changed.emit()
-	EventBus.toast_requested.emit("已骑乘：%s" % String(mount.get("name", mount_id)), "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p003") % String(mount.get("name", mount_id)), "pickup")
 	return {"ok": true}
 
 func dismount() -> void:
@@ -383,14 +383,14 @@ func dismount() -> void:
 		return
 	active_mount = ""
 	EventBus.mount_changed.emit()
-	EventBus.toast_requested.emit("已下骑", "info")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p004"), "info")
 
 func organize_inventory() -> bool:
 	var changed := Inventory.organize(inventory)
 	if changed:
 		EventBus.inventory_changed.emit()
 		EventBus.inventory_organized.emit()
-	EventBus.toast_requested.emit("背包已整理", "info")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p005"), "info")
 	return changed
 
 func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
@@ -407,7 +407,7 @@ func is_low_gear(item: Dictionary) -> bool:
 
 func sell_low_gear() -> Dictionary:
 	if int(player.get("level", 1)) < 15:
-		return _trade_fail("达到 15 级后才可一键卖出低级装备")
+		return _trade_fail(Localization.tr_key("msg.game_state.p006"))
 	var indices: Array[int] = []
 	var total := 0
 	for i in range(inventory.size()):
@@ -415,30 +415,30 @@ func sell_low_gear() -> Dictionary:
 			indices.append(i)
 			total += Shop.sell_price(inventory[i])
 	if indices.is_empty():
-		return _trade_fail("背包没有符合筛选条件的装备")
+		return _trade_fail(Localization.tr_key("msg.game_state.p007"))
 	if gold + total > GOLD_CAP:
-		return _trade_fail("金币将超过上限，请先调整筛选或使用金币")
+		return _trade_fail(Localization.tr_key("msg.game_state.p008"))
 	for index in indices:
 		inventory[index] = null
 	add_gold(total)
 	EventBus.inventory_changed.emit()
 	EventBus.trade_done.emit("sell", "", total)
-	EventBus.toast_requested.emit("一键卖出 %d 件低级装备（+%d 金币）" % [indices.size(), total], "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p009") % [indices.size(), total], "pickup")
 	return {"ok": true, "count": indices.size(), "gold": total}
 
 func inventory_expand() -> Dictionary:
 	var cost := Warehouse.next_cost(inventory_expansions)
 	if cost < 0:
-		return _warehouse_fail("背包已达容量上限")
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p010"))
 	if gold < cost:
-		return _warehouse_fail("金币不足（背包扩容需 %d，现有 %d）" % [cost, gold])
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p011") % [cost, gold])
 	var old_capacity := inventory.size()
 	add_gold(-cost)
 	inventory_expansions += 1
 	inventory.resize(Warehouse.capacity(inventory_expansions))
 	EventBus.inventory_changed.emit()
 	EventBus.inventory_expanded.emit()
-	EventBus.toast_requested.emit("背包扩容：%d → %d 格（-%d 金币）" % [old_capacity, inventory.size(), cost], "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p012") % [old_capacity, inventory.size(), cost], "pickup")
 	return {"ok": true, "cost": cost, "capacity": inventory.size(), "reason": ""}
 
 # ---- 仓库（M4-3；背包中的所有合法物品）----
@@ -447,61 +447,61 @@ func organize_warehouse() -> bool:
 	var changed := Inventory.organize(warehouse)
 	if changed:
 		EventBus.warehouse_changed.emit()
-	EventBus.toast_requested.emit("仓库已整理", "info")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p013"), "info")
 	return changed
 
 func warehouse_store(inv_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or not inventory[inv_index] is Dictionary:
-		return _warehouse_fail("背包该格没有物品")
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p014"))
 	var item: Dictionary = inventory[inv_index]
 	if not Warehouse.token_matches(item, expected_id):
-		return _warehouse_fail("物品已移动，请重新选择")
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p015"))
 	var destination := target_index
 	if destination == -1:
 		if not Inventory.add(warehouse, item):
-			return _warehouse_fail("仓库已满，无法存入整堆物品")
+			return _warehouse_fail(Localization.tr_key("msg.game_state.p016"))
 	else:
 		if destination < 0 or destination >= warehouse.size() or warehouse[destination] != null:
-			return _warehouse_fail("仓库目标格不可用")
+			return _warehouse_fail(Localization.tr_key("msg.game_state.p017"))
 		warehouse[destination] = item.duplicate(true)
 	inventory[inv_index] = null
 	EventBus.inventory_changed.emit()
 	EventBus.warehouse_changed.emit()
-	EventBus.toast_requested.emit("存入仓库：%s" % ItemUtil.display_name(item), "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p018") % ItemUtil.display_name(item), "pickup")
 	return {"ok": true, "index": destination, "reason": ""}
 
 func warehouse_take(store_index: int, expected_id: String, target_index: int = -1) -> Dictionary:
 	if store_index < 0 or store_index >= warehouse.size() or not warehouse[store_index] is Dictionary:
-		return _warehouse_fail("仓库该格没有物品")
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p019"))
 	var item: Dictionary = warehouse[store_index]
 	if not Warehouse.token_matches(item, expected_id):
-		return _warehouse_fail("物品已移动，请重新选择")
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p015"))
 	var destination := target_index
 	if destination == -1:
 		if not Inventory.add(inventory, item):
-			return _warehouse_fail("背包已满，无法取出整堆物品")
+			return _warehouse_fail(Localization.tr_key("msg.game_state.p020"))
 	else:
 		if destination < 0 or destination >= inventory.size() or inventory[destination] != null:
-			return _warehouse_fail("背包目标格不可用")
+			return _warehouse_fail(Localization.tr_key("msg.game_state.p021"))
 		inventory[destination] = item.duplicate(true)
 	warehouse[store_index] = null
 	EventBus.inventory_changed.emit()
 	EventBus.warehouse_changed.emit()
-	EventBus.toast_requested.emit("取出仓库：%s" % ItemUtil.display_name(item), "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p022") % ItemUtil.display_name(item), "pickup")
 	return {"ok": true, "index": destination, "reason": ""}
 
 func warehouse_expand() -> Dictionary:
 	var cost := Warehouse.next_cost(warehouse_expansions)
 	if cost < 0:
-		return _warehouse_fail("仓库已达容量上限")
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p023"))
 	if gold < cost:
-		return _warehouse_fail("金币不足（扩容需 %d，现有 %d）" % [cost, gold])
+		return _warehouse_fail(Localization.tr_key("msg.game_state.p024") % [cost, gold])
 	var old_capacity := warehouse.size()
 	add_gold(-cost)
 	warehouse_expansions += 1
 	warehouse.resize(Warehouse.capacity(warehouse_expansions))
 	EventBus.warehouse_changed.emit()
-	EventBus.toast_requested.emit("仓库扩容：%d → %d 格（-%d 金币）" % [old_capacity, warehouse.size(), cost], "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p025") % [old_capacity, warehouse.size(), cost], "pickup")
 	return {"ok": true, "cost": cost, "capacity": warehouse.size(), "reason": ""}
 
 func _warehouse_fail(reason: String) -> Dictionary:
@@ -518,10 +518,10 @@ func _warehouse_fail(reason: String) -> Dictionary:
 func use_item(inv_index: int) -> Dictionary:
 	var inv: Array = inventory
 	if inv_index < 0 or inv_index >= inv.size() or inv[inv_index] == null:
-		return _use_fail("该格没有物品")
+		return _use_fail(Localization.tr_key("msg.game_state.p026"))
 	var it = inv[inv_index]
 	if not (it is Dictionary):
-		return _use_fail("该格没有物品")
+		return _use_fail(Localization.tr_key("msg.game_state.p026"))
 	var kind := String((it as Dictionary).get("kind", ""))
 	match kind:
 		"potion":
@@ -534,8 +534,8 @@ func use_item(inv_index: int) -> Dictionary:
 			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.RANDOM_TICKET:
 				return TravelItem.use_random_ticket(inv_index)
 		_:
-			return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))
-	return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))
+			return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(it))
+	return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(it))
 
 func _use_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
@@ -547,7 +547,7 @@ func _use_fail(reason: String) -> Dictionary:
 ## 返回 {ok, reason, replaced}；失败广播原因（背包满 / 等级不足 / 槽位不匹配），不静默。
 func equip_from_inventory(inv_index: int, slot_id: String = "") -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
-		return {"ok": false, "reason": "该格没有物品", "replaced": {}}
+		return {"ok": false, "reason": Localization.tr_key("msg.game_state.p026"), "replaced": {}}
 	var item: Dictionary = inventory[inv_index]
 	var target := slot_id
 	if target.is_empty():
@@ -556,9 +556,9 @@ func equip_from_inventory(inv_index: int, slot_id: String = "") -> Dictionary:
 		equipment, inventory, target, inv_index, int(player.level))
 	if bool(res.get("ok", false)):
 		_after_equip_change()
-		EventBus.toast_requested.emit("穿戴：" + ItemUtil.display_name(item), "pickup")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p028") + ItemUtil.display_name(item), "pickup")
 	else:
-		EventBus.toast_requested.emit(String(res.get("reason", "无法穿戴")), "danger")
+		EventBus.toast_requested.emit(String(res.get("reason", Localization.tr_key("msg.game_state.p029"))), "danger")
 	return res
 
 ## 卸下槽位装备（需背包空位，5.1）。返回 {ok, reason, item}。
@@ -567,18 +567,18 @@ func unequip_slot(slot_id: String) -> Dictionary:
 	if bool(res.get("ok", false)):
 		var item: Dictionary = res.get("item", {})
 		_after_equip_change()
-		EventBus.toast_requested.emit("卸下：" + ItemUtil.display_name(item), "info")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p030") + ItemUtil.display_name(item), "info")
 	else:
-		EventBus.toast_requested.emit(String(res.get("reason", "无法卸下")), "danger")
+		EventBus.toast_requested.emit(String(res.get("reason", Localization.tr_key("msg.game_state.p031"))), "danger")
 	return res
 
 func unequip_slot_to_inventory(slot_id: String, inv_index: int) -> Dictionary:
 	var res := Equipment.unequip_to_index(equipment, inventory, slot_id, inv_index)
 	if bool(res.get("ok", false)):
 		_after_equip_change()
-		EventBus.toast_requested.emit("卸下：" + ItemUtil.display_name(res.get("item", {})), "info")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p030") + ItemUtil.display_name(res.get("item", {})), "info")
 	else:
-		EventBus.toast_requested.emit(String(res.get("reason", "无法卸下")), "danger")
+		EventBus.toast_requested.emit(String(res.get("reason", Localization.tr_key("msg.game_state.p031"))), "danger")
 	return res
 
 ## 穿脱后统一收尾（T06：穿戴后属性立即生效）：
@@ -607,20 +607,20 @@ func upgrade_equipment(source: String, key: Variant, expected_id: String,
 		if candidate is Dictionary:
 			item = candidate
 	if item.is_empty() or expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
-		return _upgrade_fail("装备已移动，请重新选择")
+		return _upgrade_fail(Localization.tr_key("msg.game_state.p032"))
 	if String(item.get("kind", "")) != "equip":
-		return _upgrade_fail("只能给装备升星")
+		return _upgrade_fail(Localization.tr_key("msg.game_state.p033"))
 	var star := int(item.get("star", 0))
 	if star < 0 or star >= Upgrade.max_star():
-		return _upgrade_fail("装备已达到最高星级")
+		return _upgrade_fail(Localization.tr_key("msg.game_state.p034"))
 	var price := Upgrade.cost(star)
 	if price <= 0 or Upgrade.success_rate(star) <= 0.0:
-		return _upgrade_fail("升星配置不可用")
+		return _upgrade_fail(Localization.tr_key("msg.game_state.p035"))
 	var plan := Upgrade.rune_plan(inventory, rune_ids)
 	if not plan.get("ok", false):
-		return _upgrade_fail(String(plan.get("reason", "如意不可用")))
+		return _upgrade_fail(String(plan.get("reason", Localization.tr_key("msg.game_state.p036"))))
 	if gold < price:
-		return _upgrade_fail("金币不足（需 %d，现有 %d）" % [price, gold])
+		return _upgrade_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
 	for use in plan.uses:
 		var index := int(use.index)
 		var entry: Dictionary = inventory[index]
@@ -642,9 +642,9 @@ func upgrade_equipment(source: String, key: Variant, expected_id: String,
 	if (success and source == "bag") or not plan.uses.is_empty():
 		EventBus.inventory_changed.emit()
 	EventBus.upgrade_completed.emit()
-	var spend := "-%d 金币、-%d 如意" % [price, int(plan.count)] if int(plan.count) > 0 else "-%d 金币" % price
-	var message := "升星成功：%s（%s）" % [ItemUtil.display_name(item), spend] if success \
-		else "升星失败：保持 +%d（%s）" % [star, spend]
+	var spend := Localization.tr_key("msg.game_state.p038") % [price, int(plan.count)] if int(plan.count) > 0 else Localization.tr_key("msg.game_state.p039") % price
+	var message := Localization.tr_key("msg.game_state.p040") % [ItemUtil.display_name(item), spend] if success \
+		else Localization.tr_key("msg.game_state.p041") % [star, spend]
 	EventBus.toast_requested.emit(message, "pickup" if success else "danger")
 	return {"ok": true, "success": success, "cost": price, "star": int(item.get("star", 0)),
 		"runesUsed": int(plan.count), "rate": rate, "reason": message}
@@ -827,9 +827,9 @@ func set_auto_battle(on: bool) -> bool:
 		return auto_battle_on
 	auto_battle_on = on
 	EventBus.auto_state_changed.emit(auto_battle_on, auto_pickup_on)
-	var msg := "自动战斗：开" if on else "自动战斗：关"
+	var msg := Localization.tr_key("msg.game_state.p042") if on else Localization.tr_key("msg.game_state.p043")
 	if on and auto_pickup_on:
-		msg += "（自动拾取已开）"
+		msg += Localization.tr_key("msg.game_state.p044")
 	EventBus.toast_requested.emit(msg, "info")
 	return auto_battle_on
 
@@ -845,7 +845,7 @@ func set_auto_pickup(on: bool) -> bool:
 	auto_pickup_on = on
 	EventBus.auto_state_changed.emit(auto_battle_on, auto_pickup_on)
 	EventBus.toast_requested.emit(
-		"自动拾取：开（自动战斗时顺路拾取）" if on else "自动拾取：关", "info")
+		Localization.tr_key("msg.game_state.p045") if on else Localization.tr_key("msg.game_state.p046"), "info")
 	return auto_pickup_on
 
 ## 切换自动拾取（G）。
@@ -870,17 +870,17 @@ func set_panel_open(panel_id: String, open: bool) -> void:
 func shop_buy(shop_id: String, item_id: String) -> Dictionary:
 	var price := Shop.buy_price(shop_id, item_id)
 	if price < 0:
-		return _trade_fail("该货郎不出售此物")
+		return _trade_fail(Localization.tr_key("msg.game_state.p047"))
 	var item := Shop.make_item(item_id)
 	if item.is_empty():
-		return _trade_fail("物品不存在：%s" % item_id)
+		return _trade_fail(Localization.tr_key("msg.game_state.p048") % item_id)
 	if not Inventory.has_space_for(inventory, item):
-		return _trade_fail("背包已满，无法购买")
+		return _trade_fail(Localization.tr_key("msg.game_state.p049"))
 	if gold < price:
-		return _trade_fail("金币不足（需 %d，现有 %d）" % [price, gold])
+		return _trade_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
 	add_gold(-price)
 	add_item(item)
-	EventBus.toast_requested.emit("购买：%s（-%d 金币）" % [ItemUtil.display_name(item), price], "pickup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p050") % [ItemUtil.display_name(item), price], "pickup")
 	EventBus.trade_done.emit("buy", item_id, price)
 	return {"ok": true, "reason": "", "item": item, "price": price}
 
@@ -888,16 +888,16 @@ func shop_buy(shop_id: String, item_id: String) -> Dictionary:
 ## silent = true 时不广播单件 toast（供面板批量出售后自行汇总，避免刷屏）。
 func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
-		return _trade_fail("该格没有物品")
+		return _trade_fail(Localization.tr_key("msg.game_state.p026"))
 	var item: Dictionary = inventory[inv_index]
 	if not Shop.can_sell(item):
-		return _trade_fail("货郎只收购装备")
+		return _trade_fail(Localization.tr_key("msg.game_state.p051"))
 	var price := Shop.sell_price(item)
 	var label := ItemUtil.display_name(item)
 	remove_item_at(inv_index)
 	add_gold(price)
 	if not silent:
-		EventBus.toast_requested.emit("出售：%s（+%d 金币）" % [label, price], "pickup")
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p052") % [label, price], "pickup")
 	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), price)
 	return {"ok": true, "reason": "", "item": item, "price": price}
 
@@ -976,7 +976,7 @@ func _level_up() -> void:
 	EventBus.player_leveled.emit(int(player.level))
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
-	EventBus.toast_requested.emit("升级！Lv%d" % int(player.level), "levelup")
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p053") % int(player.level), "levelup")
 
 ## 广播全部数值（HUD 初始化 / 读档后同步）。
 func emit_all() -> void:

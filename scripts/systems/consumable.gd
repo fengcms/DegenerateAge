@@ -21,8 +21,8 @@ const KIND_CATEGORY := "potion"
 const KIND_RED := "red"
 const KIND_BLUE := "blue"
 
-const STAT_HP := "生命"
-const STAT_MP := "法力"
+const STAT_HP_KEY := "msg.consumable.hp"
+const STAT_MP_KEY := "msg.consumable.mp"
 
 ## item_id -> 剩余冷却秒数（运行态，不落档）
 static var _cd: Dictionary = {}
@@ -58,15 +58,15 @@ static func reset() -> void:
 static func use(inv_index: int, silent: bool = false) -> Dictionary:
 	var inv: Array = GameState.inventory
 	if inv_index < 0 or inv_index >= inv.size() or inv[inv_index] == null:
-		return _fail("该格没有物品", silent)
+		return _fail(Localization.tr_key("msg.consumable.p001"), silent)
 	var item: Dictionary = inv[inv_index]
 	if String(item.get("kind", "")) != KIND_CATEGORY:
-		return _fail("该物品无法使用", silent)
+		return _fail(Localization.tr_key("msg.consumable.p002"), silent)
 
 	var item_id := String(item.get("itemId", ""))
 	var tpl = DataLoader.get_entry("potions", item_id)
 	if not (tpl is Dictionary):
-		return _fail("药水数据缺失：%s" % item_id, silent)
+		return _fail(Localization.tr_key("msg.consumable.p003") % item_id, silent)
 	var t: Dictionary = tpl
 	var kind := String(t.get("kind", KIND_RED))
 	var restore := int(t.get("restoreAmount", 0))
@@ -75,12 +75,12 @@ static func use(inv_index: int, silent: bool = false) -> Dictionary:
 
 	var left := cd_of(item_id)
 	if left > 0.0:
-		return _fail("【%s】冷却中 %.1fs" % [pname, left], silent)
+		return _fail(Localization.tr_key("msg.consumable.p004") % [pname, left], silent)
 
 	var cur := current_of(kind)
 	var cap := max_of(kind)
 	if cur >= cap:
-		return _fail("%s已满" % stat_label(kind), silent)
+		return _fail(Localization.tr_key("msg.consumable.p005") % stat_label(kind), silent)
 
 	# 恢复量按缺口截断（5.11：恢复量不超过最大 HP / MP）
 	var restored := mini(restore, cap - cur)
@@ -172,7 +172,7 @@ static func max_of(kind: String) -> int:
 	return GameState.max_hp() if kind == KIND_RED else GameState.max_mp()
 
 static func stat_label(kind: String) -> String:
-	return STAT_HP if kind == KIND_RED else STAT_MP
+	return Localization.tr_key(STAT_HP_KEY if kind == KIND_RED else STAT_MP_KEY)
 
 ## 某药水是否正处冷却（供 tooltip）。
 static func is_cooling(item_id: String) -> bool:
