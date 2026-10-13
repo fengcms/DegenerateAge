@@ -441,6 +441,9 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 	if kind == "misc" and item.get("itemId") == HotbarConfig.TOWN_SCROLL:
 		out.append("双击或拖到快捷栏使用；从野外返回幸存者营地")
 		return out
+	if kind == "misc" and item.get("itemId") == HotbarConfig.RANDOM_TICKET:
+		out.append("双击或拖到快捷栏使用；传送到本图可到达位置")
+		return out
 	out.append("杂项物品，暂未开放使用（M4）")
 	return out
 

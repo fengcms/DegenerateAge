@@ -4,6 +4,7 @@ extends RefCounted
 
 const SIZE := 12
 const TOWN_SCROLL := "misc_town_scroll"
+const RANDOM_TICKET := "misc_random_ticket"
 const ACTIVE_SKILLS := ["basic_slash", "earth_cleave", "whirlwind", "battle_focus"]
 
 static func defaults() -> Array:
@@ -23,7 +24,7 @@ static func valid_entry(entry: Variant) -> bool:
 		"auto_potion": return id == "red" or id == "blue"
 		"potion": return DataLoader.get_entry("potions", id) is Dictionary
 		"skill": return ACTIVE_SKILLS.has(id) and DataLoader.get_entry("skills", id) is Dictionary
-		"item": return id == TOWN_SCROLL and DataLoader.get_entry("miscItems", id) is Dictionary
+		"item": return (id == TOWN_SCROLL or id == RANDOM_TICKET) and DataLoader.get_entry("miscItems", id) is Dictionary
 	return false
 
 static func valid_layout(layout: Variant) -> bool:

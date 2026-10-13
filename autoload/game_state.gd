@@ -528,6 +528,8 @@ func use_item(inv_index: int) -> Dictionary:
 		"misc":
 			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.TOWN_SCROLL:
 				return TravelItem.use_town_scroll(inv_index)
+			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.RANDOM_TICKET:
+				return TravelItem.use_random_ticket(inv_index)
 		_:
 			return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))
 	return _use_fail("该物品无法使用（%s）" % ItemUtil.display_name(it))

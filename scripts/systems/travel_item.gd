@@ -37,6 +37,57 @@ static func use_town_scroll(inv_index: int, reload_scene: bool = true) -> Dictio
 		MapService.reload_world()
 	return {"ok": true, "reason": "", "itemId": HotbarConfig.TOWN_SCROLL}
 
+## 随机券只在当前地图移动；先找到有效落点再扣物，不会穿墙或落在不可通行格。
+static func use_random_ticket(inv_index: int, rng: RandomNumberGenerator = null) -> Dictionary:
+	if inv_index < 0 or inv_index >= GameState.inventory.size() or not GameState.inventory[inv_index] is Dictionary:
+		return _fail("背包中没有随机券")
+	var item: Dictionary = GameState.inventory[inv_index]
+	if item.get("kind") != "misc" or item.get("itemId") != HotbarConfig.RANDOM_TICKET:
+		return _fail("该物品不是随机券")
+	var player := GameState.get_tree().get_first_node_in_group("player") as PlayerCharacter
+	if player == null or player.is_dead or int(GameState.player.get("hp", 0)) <= 0:
+		return _fail("当前不能使用随机券")
+	if not MapService.pending_travel.is_empty():
+		return _fail("地图切换中，随机券未消耗")
+	var world := GameState.get_tree().get_first_node_in_group("map_world")
+	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	if ground == null:
+		return _fail("当前地图不可用，随机券未消耗")
+	var destination := _random_destination(ground, player.global_position, rng)
+	if not destination.is_finite():
+		return _fail("本图没有可到达落点，随机券未消耗")
+	if int(item.get("count", 1)) > 1:
+		item.count = int(item.get("count", 1)) - 1
+		EventBus.inventory_changed.emit()
+	else:
+		GameState.remove_item_at(inv_index)
+	player.clear_travel_intent()
+	player.begin_manual_command()
+	player.global_position = destination
+	var camera := player.get_node_or_null("Camera2D") as Camera2D
+	if camera != null:
+		camera.reset_smoothing()
+	EventBus.toast_requested.emit("使用随机券，已传送至本图其他区域", "info")
+	SaveManager.request_autosave()
+	return {"ok": true, "reason": "", "itemId": HotbarConfig.RANDOM_TICKET, "position": destination}
+
+static func _random_destination(ground: IsoGround, origin: Vector2, rng: RandomNumberGenerator = null) -> Vector2:
+	if ground == null or ground.grid_size.x < 5 or ground.grid_size.y < 5:
+		return Vector2.INF
+	for _attempt in range(128):
+		var col := rng.randi_range(2, ground.grid_size.x - 3) if rng != null else randi_range(2, ground.grid_size.x - 3)
+		var row := rng.randi_range(2, ground.grid_size.y - 3) if rng != null else randi_range(2, ground.grid_size.y - 3)
+		var cell := Vector2i(col, row)
+		if not ground.is_walkable_cell(cell):
+			continue
+		var destination := Iso.grid_to_world(cell)
+		if origin.distance_to(destination) < 4.0 * Iso.TILE_W:
+			continue
+		if ground.cave != null and ground.route(origin, destination).is_empty():
+			continue
+		return destination
+	return Vector2.INF
+
 static func _fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "reason": reason}
