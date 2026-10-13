@@ -29,6 +29,7 @@ func _spawn_dummy(world: Node, point: Vector2) -> Monster:
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	GameState.current_map = "wild_trial" # 营地安全区会排除测试木桩，改在全图危险的野外验收。
 	var main := (load("res://scenes/Main.tscn") as PackedScene).instantiate()
 	add_child(main)
 	await get_tree().process_frame

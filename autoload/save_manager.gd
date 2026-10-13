@@ -18,6 +18,7 @@ const MAX_SLOTS := 3
 ## 存档 schema 版本（工程文档 06）。
 ## v7（M4-10 / 工程文档 14 §3.1 ④）新增：`worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态）。
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
+## v10（工程文档 22）新增：`inventoryExpansions`，存档校验按扩容次数检查背包长度。
 const CURRENT_SCHEMA := 10
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
@@ -230,7 +231,7 @@ func _connect_events() -> void:
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
 	EventBus.upgrade_completed.connect(func() -> void: request_autosave())
 	EventBus.inventory_organized.connect(func() -> void: request_autosave())
-	EventBus.inventory_changed.connect(func() -> void: request_autosave())
+	EventBus.inventory_expanded.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
 	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())
 	EventBus.fog_changed.connect(func(_m: String) -> void: request_autosave())

@@ -389,6 +389,7 @@ func inventory_expand() -> Dictionary:
 	inventory_expansions += 1
 	inventory.resize(Warehouse.capacity(inventory_expansions))
 	EventBus.inventory_changed.emit()
+	EventBus.inventory_expanded.emit()
 	EventBus.toast_requested.emit("背包扩容：%d → %d 格（-%d 金币）" % [old_capacity, inventory.size(), cost], "pickup")
 	return {"ok": true, "cost": cost, "capacity": inventory.size(), "reason": ""}
 

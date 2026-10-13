@@ -32,6 +32,7 @@ signal loot_spawned(item: Dictionary)
 signal gold_changed(amount: int)
 signal inventory_changed()
 signal inventory_organized()
+signal inventory_expanded()
 signal equipment_changed()
 signal upgrade_completed()
 
