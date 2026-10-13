@@ -130,6 +130,7 @@
 - **目标**：T01–**T17** 逐条通过并记录证据。
 - **交付**：`docs/工程文档/` 内新增回归记录（或在本文 §9 追加），每条附证据（冒烟用例 / 截图 / 无头输出）。
 - **说明**：T01–T17 现均已在各阶段 ✅（工程文档 02 §9），M5-7 的价值是**在打包前于当前代码基上全量复跑并留证**。
+- **进度**：✅ **已完成（2026-10-13）** —— 四层验证全绿 + 12 个无头断言场景全量复跑 + 开窗目验三项；顺带修复 `AutoExplorationSurvival`（刷新进程竞态）与 `InputFeedbackTest`（陈旧 `_anchor` 引用致挂起）两处测试基建缺陷；新增冒烟用例 `_test_scale_invariance`（倍率无关三不变量，负向验证有牙）。逐条证据见本文 §9「批次③」。
 
 ### M5-8 macOS 打包
 
@@ -259,3 +260,81 @@
 👉 结论：**非泄漏**；审计的稳定窗口设为 **5.0s**。附注：**连杀时 Toast 无上限合并**，属观感问题，归入 **M5-5**（09 §9.6）打磨，不属 M5-2 泄漏。
 
 **文档修正**：`04` 测试便利清单补 `PerfProbe`（含运行命令与移除清单）；`02 §12` / `08` 指向本记录。
+
+### 批次 ③「收口」M5-7 全量回归（2026-10-13 完成，代码基 `8aabf13`）
+
+**范围**：T01–T17 在当前代码基（M5-9f 之后、清理与打包之前）全量复跑并留证；顺带修两处**测试基建**缺陷、补一条「倍率无关」冒烟用例。**产品代码零改动**（仅 `tests/`）。
+
+**四层验证**（本轮每次运行的基线，全绿）：
+
+| 层 | 命令 | 结果 |
+|---|---|---|
+| A0 导入 | `--headless --path . --import` | exit 0 |
+| A 冒烟 | `res://tests/SmokeTest.tscn` | **全部通过 ✅**（含新增 `_test_scale_invariance`） |
+| A' 设置 | `res://tests/SettingsTest.tscn` | **全部通过 ✅** |
+| B 启动回归 | `--headless --path . --quit` | 0 SCRIPT ERROR + 「配置校验通过 ✅」 |
+
+全程 `md5(saves/slot_1.json) = 12115a88f16a1cc2af3e6df9f9e72ade` **前后一致**（用户真实进度零污染；SoakTest 自行快照/还原亦验证无损）。
+
+**无头断言场景全量复跑**：
+
+| 场景 | 覆盖 | 结果 |
+|---|---|---|
+| SmokeTest | T04/T05/T06/T07/T10/T11/T15/T16/T17 + 数据/装备/交易/消耗品/任务/迷雾/词缀 + M5-9 三轴 | ✅ |
+| SettingsTest | 旧档迁移 / 设置面板「画面」页 / 16 控件 × 3 窗口 × 3 倍率矩阵 / 点击坐标一致 | ✅ |
+| AutoControlAcceptance | T08 不可达改选 / T09 手动接管（真实物理帧 + Viewport 输入） | ✅ |
+| AutoExplorationSurvival | 可视区搜怪 / 无怪巡游 / 打坐与恢复 / 暂停不恢复 | ✅（修复后 5/5，见下） |
+| BossReviewTest | T12 三阶段 / 预警 / 狂暴召唤 / 首杀唯一 | ✅ |
+| ChapterOneAcceptance | 整章出口：真实车夫出行 → 两中转 → Boss 首杀入档 | ✅ |
+| ReviewRegressionTest | 背包整批入包 / 装备 / 存读 | ✅ |
+| MenuFlowTest | 主菜单 / 暂停 / 设置流转（槽 3 临时档并还原） | ✅ |
+| InputFeedbackTest | Tab 锁定 / 点击攻击 / 面板阻断 / HUD 不穿透 / 目标释放清理 | ✅（修复后 3/3，见下） |
+| HotbarConfigTest / HotbarUiTest / TownScrollTest | 快捷栏配置与 UI / 回城卷 | ✅ |
+| PerfProbe `--audit` | 面板×50 / 切图×40 / 击杀×200：孤儿 0、信号连接恒 88、分组回基线 | ✅ |
+| SoakTest 60s | 无崩溃 / 无卡死 / 无泄漏（fps 145 · 内存 199MB 平稳） | ✅ |
+
+**过程中修复的两个测试基建缺陷**（均**非产品代码回归**，根因均为测试与系统的既有耦合，非 M5-9 引入）：
+
+1. **`AutoExplorationSurvival`（M4-9）偶发失败**（实测失败率 ~75%，失败项逐次不同）：测试直接 `queue_free()` 怪物不走 `died` 信号 ⇒ `MonsterSpawner._process` 判「无死亡登记」**下一帧即在随机位置重生**，随机新怪与搜怪 / 巡游断言竞争。**修复**：采用 sibling 测试既有惯例 `game.get_node("Spawner").set_process(false)`（`affix_shot` / `input_feedback_test` / `auto_control_acceptance` / `boss_review_test` 本就如此，唯独本测试漏了）。
+2. **`InputFeedbackTest` 挂起 240s+ 且无任何输出**：L60 仍引用 M4-9 已移除的 `pilot._anchor`（**08 §7 坑 15 早有记载**「别再断言 `_anchor`」）⇒ `_ready` 内运行时 SCRIPT ERROR 中断协程，永远走不到 `quit()`。**修复**：按当前 API（`select_target` + `_find_target`：手动锁定优先、黑名单回退最近可见）重写该小节。
+
+**新增冒烟用例 `smoke_test.gd::_test_scale_invariance`**（M5-9 显示适配闭环的定量固化；负向验证有牙——故意改坏期望值后三档 zoom 断言精确失败并报出实际值 1.0 / 1.25 / 1.875）：
+
+- ① **点击链往返**：mapScale 0.8 / 1.0 / 1.5 × 手动显示系数 1.25（总倍率 1.0 / 1.25 / 1.875）下，按怪物 / NPC **屏幕坐标**点选恒命中同一实体（补 settings_test 矩阵未扫的「手动系数 × 地图倍率」乘积组合）；
+- ② **三轴隔离**：uiScale / textScale 变化不动相机 zoom；mapScale 变化不动界面轴；
+- ③ **世界文字屏幕尺寸恒定**：`node.scale × 地图总倍率 ≈ 1`；总倍率 1.0 时不补偿。
+
+**T01–T17 逐条证据**（本轮代码基）：
+
+| # | 场景 | 本轮证据 | 结果 |
+|---|---|---|---|
+| T01 | 八向移动 | InputFeedbackTest（点击行走实际位移 / WASD 取消走位）+ SmokeTest（输入响应）+ player.gd 八向归一化 | ✅ |
+| T02 | 撞墙 | SmokeTest `_test_world`（边界 4 段存在 + 出生点校验）+ 移动/碰撞核心代码自 M1-2（`deca47c`）后未经修改（git 证据），M1 期行为证据继续有效 | ✅ |
+| T03 | 禁斜切 | 同上（斜向归一化 + move_and_slide 碰撞，代码未动） | ✅ |
+| T04 | 单次结算 | SmokeTest `_test_single_resolution` / `_test_combat` | ✅ |
+| T05 | 升级结转 | SmokeTest `_test_level_up_carry` / `_test_upgrade` | ✅ |
+| T06 | 穿戴属性生效 | SmokeTest `_test_equipment` + ReviewRegressionTest | ✅ |
+| T07 | 掉落合法 | SmokeTest `_test_loot` / `_test_debug_seed`（固定种子 500 次 0 命中调试模板）+ 启动配置校验（掉落表 ID/引用/等级） | ✅ |
+| T08 | 不可达目标自动改选 | AutoControlAcceptance（冻结位移模拟不可达：拉黑 → 停顿 → 改选） | ✅ |
+| T09 | 手动接管自动战斗 | AutoControlAcceptance（Viewport 点击接管 / 3s 倒计时恢复）+ InputFeedbackTest | ✅ |
+| T10 | 背包满停止拾取 | SmokeTest `_test_pickup`（留地不认领） | ✅ |
+| T11 | 冷却 / MP 不足回退 | SmokeTest `_test_auto_battle`（`choose_skill` 纯静态：范围优先 / 单体回退 / MP / 冷却 / 等级） | ✅ |
+| T12 | Boss 首杀唯一 | BossReviewTest（三阶段 + 首杀仅结算一次 + 存读） | ✅ |
+| T13 | 暂停无收益增长 | AutoExplorationSurvival（`get_tree().paused` 期间 `_tick_regen` 零恢复）+ AutoControlAcceptance | ✅ |
+| T14 | 死亡自动关自动战斗 | AutoControlAcceptance + AutoExplorationSurvival + SmokeTest `_test_death_settles_once` | ✅ |
+| T15 | 切图 / 读档清旧实体 | SmokeTest `_test_map_reload` / `_test_map_travel`（切图清旧实体、不重复注册）+ ChapterOneAcceptance（真实 `reload_current_scene`） | ✅ |
+| T16 | 存档损坏恢复 | SettingsTest（当前版本档缺键 / 只填缺键语义）+ SmokeTest `_test_save` | ✅ |
+| T17 | 怪物点刷新跨图 / 跨档 | SmokeTest `_test_spawn_respawn_cross_map`（墓碑仍在 / 剩余递减 / 到点重生 / `encode→JSON→apply` 往返一致） | ✅ |
+
+**开窗目验**（当前代码基，截图亲验）：`FeedbackShot`（背包 / 仓库**数量角标** + Boss **墓碑倒计时**两态）、`QuestShot`（任务面板 7 行 + HUD 任务追踪不与 MapPanel 重叠）、`CarterShot`（营地车夫 1 条线路）——中文无方框、布局正常。
+
+**未纳入本轮证据的开发期工具**（均属 `04` §3 删除清单，批次③清理后自然消解；其断言面已有承载）：
+
+| 工具 | 状态 | 断言承载方 |
+|---|---|---|
+| `AutoBattleProbe` | 与 M4-9 同类重生竞态（未关 Spawner 即清怪），偶发不稳定 | AutoControlAcceptance / InputFeedbackTest / 冒烟 |
+| `PickupRepro` | 自 M3 批次 1 起营地无 AI 怪即空转（`[Repro] 未找到 AI 怪物，终止`） | 冒烟 `_test_claim_fly` |
+| `DragLayerProbe` | 无头 `gui_is_dragging()` 恒假，无法验拖拽 | 冒烟 `_test_drag_layer` |
+| 其余 `*Shot` | 纯人工目验向 | 本期「开窗目验」三项 + M4-6~9 用户原生验收 |
+
+**结论：M5-7 达标** —— T01–T17 全绿、两处测试基建缺陷已修（各连跑 5/3 次稳定）、倍率不变量已入冒烟。**可进入批次③清理 → M5-8 打包**。
