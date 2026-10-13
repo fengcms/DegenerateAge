@@ -479,10 +479,18 @@ func _settle_rewards() -> void:
 	var anim := bool(GameState.settings.get("dropFlyAnim", true))   # 关闭 ⇒ 不散落 / 不飞行（§10）
 	# M6-0d（创意 07 §9）：装备雨展示编排（出场时序 + 落地 + 停留 + 错峰起飞 + 分环散布）
 	var plan := LootBurst.build(rolled, kind)
-	# 认领序（§8，仅决定背包空间分配）与展示序（§9）解耦：高品质优先入包，展示按 plan 自带时序
+	# 认领序（§8，仅决定背包空间分配）与展示序（§9）解耦：高品质优先入包，展示按 plan 自带时序。
+	# 认领在 `add_child` 时同步判定，故循环结束时「未领取装备数」已可确定（§11.1）。
+	var unclaimed_equip := 0
 	for row in _order_rows_by_claim(plan):
-		_spawn_drop(row, batch_id, persistent, anim)
-	_announce_drops(rolled)
+		var gi := _spawn_drop(row, batch_id, persistent, anim)
+		if gi == null or gi.is_claimed():
+			continue
+		var it_v: Variant = row.get("item", {})
+		if it_v is Dictionary and String((it_v as Dictionary).get("kind", "")) == "equip":
+			unclaimed_equip += 1
+	# M6-0e（创意 07 §10）：精英 / Boss 批次摘要（延迟到装备雨结束）+ 传说单独提示
+	_announce_batch_summary(rolled, kind, plan, unclaimed_equip, anim)
 
 ## 入包认领序（创意 07 §8）：传说→史诗→稀有→优秀→普通；同品质按生成序号。
 ## 药水 / 如意 / 杂项排在装备之后，金币最后（独立入账）。分桶实现以保持**稳定次序**。
@@ -542,39 +550,73 @@ func _announce_drops(items: Array) -> void:
 		return
 	EventBus.toast_requested.emit("%s 掉落：%s" % [display_name, " · ".join(PackedStringArray(parts))], "drop")
 
+## M6-0e（创意 07 §10）：批次摘要 + 传说提示。
+## 精英 / Boss 用**批次摘要**替代旧逐件聚合提示（延迟到装备雨全部落地，§10「最后一份出场完成时」）；
+## 普通怪沿用旧即时聚合提示（§1 普通怪沿用现有规则）。
+func _announce_batch_summary(rolled: Array, kind: String, plan: Array, unclaimed_equip: int, anim: bool) -> void:
+	if not (kind in ["elite", "boss"]):
+		_announce_drops(rolled)
+		return
+	var delay := LootNotify.summary_delay(plan, anim)
+	_emit_toast_delayed(LootNotify.summary_text(display_name, rolled, unclaimed_equip), "drop", delay)
+	var legend := LootNotify.legendary_text(rolled)
+	if not legend.is_empty():
+		_emit_toast_delayed(legend, "legendary", delay)
+
+## 延迟广播 toast（相对死亡帧 t=0）。`delay <= 0` 立即发；否则用 `SceneTreeTimer`，
+## `process_always=false` ⇒ 暂停 / 后台冻结（与装备雨同一时钟，§9 / §10）。
+## 回调只捕获文本，不引用本节点 —— 死亡后 Monster 被释放也不影响。
+func _emit_toast_delayed(text: String, kind: String, delay: float) -> void:
+	if delay <= 0.0:
+		EventBus.toast_requested.emit(text, kind)
+		return
+	var tree := get_tree()
+	if tree == null:
+		EventBus.toast_requested.emit(text, kind)
+		return
+	tree.create_timer(delay, false).timeout.connect(func() -> void:
+		EventBus.toast_requested.emit(text, kind))
+
 ## 生成一件地面掉落物（7.6 / 9.9）。
 ## M6-0c：`persistent`（精英 / Boss）⇒ 入包失败登记为「未领取战利品」，跨图 / 跨档保留（创意 07 §11）。
 ## M6-0d（创意 07 §9）：`row` 为 `LootBurst.build` 产出的展示编排行（出场延迟 / 落地时长 /
 ##   停驻 / 飞行时长 / 落点偏移）；`anim=false`（关闭 dropFlyAnim）⇒ 立即出场、不散落、不飞行（§10）。
-func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = false, anim: bool = true) -> void:
+## M6-0e（创意 07 §10）：精英 / Boss **装备**不逐件弹「拾取」提示（由批次摘要统一说明）。
+## 返回生成的 `GroundItem`（供结算统计未领取件数）；无掉落层 / 非法物品时返回 `null`。
+func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = false, anim: bool = true) -> GroundItem:
 	var item_v: Variant = row.get("item", {})
 	if not (item_v is Dictionary) or (item_v as Dictionary).is_empty():
-		return
+		return null
 	var item: Dictionary = item_v
 	var layer := get_tree().get_first_node_in_group("loot_root")
 	if layer == null:
-		return
+		return null
 	var gi: GroundItem = GROUND_ITEM_SCENE.instantiate()
 	gi.item = item
 	gi.auto_claim = true   # 怪物掉落 = 生成即认领（工程文档 10 方案 C）
 	gi.batch_id = batch_id
 	gi.persistent = persistent
+	gi.silent_pickup = persistent and String(item.get("kind", "")) == "equip"
 	var offset := Vector2.ZERO
+	var off_v: Variant = row.get("offset", Vector2.ZERO)
+	if off_v is Vector2:
+		offset = off_v
 	if anim:
 		gi.appear_delay = maxf(0.0, float(row.get("appear", 0.0)))
 		gi.land_time = maxf(0.01, float(row.get("land_time", GroundItem.DROP_ARC_TIME)))
 		gi.hold_time = maxf(0.0, float(row.get("hold", GroundItem.HOLD_TIME)))
 		gi.fly_time = maxf(0.05, float(row.get("fly_time", GroundItem.FLY_TIME)))
-		var off_v: Variant = row.get("offset", Vector2.ZERO)
-		offset = off_v if off_v is Vector2 else Vector2.ZERO
 	else:
 		gi.appear_delay = 0.0
 		gi.hold_time = 0.0
 	layer.add_child(gi)
-	# 落点：死亡位置 + 分环偏移（关闭动画则不散落）；至少夹回地图边界内（§9）
-	gi.global_position = _clamp_to_map(global_position + offset)
+	# 落点：死亡位置 + 分环偏移。关闭动画时**认领物**不散落（立即飞走 / 消失），
+	# 但**未领取物**仍需错开，避免多件叠在同一点而看不见（§10「未领取物仍须有可见地面标记」）。
+	var apply_offset := anim or not gi.is_claimed()
+	gi.global_position = _clamp_to_map(global_position + (offset if apply_offset else Vector2.ZERO))
 	EventBus.item_dropped.emit(String(item.get("itemId", "")))
 	EventBus.loot_spawned.emit(item)
+	return gi
 
 ## M6-0d（创意 07 §9）：落点至少满足地图边界内；完整可走网格校验待障碍系统落地后复用。
 ## 找不到地面节点（测试 / 无世界上下文）时原样返回。

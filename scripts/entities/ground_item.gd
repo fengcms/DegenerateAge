@@ -65,6 +65,9 @@ enum Stage { GROUND, HOLD, FLY }
 @export var land_time: float = DROP_ARC_TIME
 ## M6-0d：飞行时长（s）。精英 0.70 / Boss 0.90（§9）。
 @export var fly_time: float = FLY_TIME
+## M6-0e（创意 07 §10）：精英 / Boss 装备为 true ⇒ 入包成功**不弹**「拾取」提示
+## （件数多，改由批次摘要统一说明，不逐件播报）。普通怪 / 玩家丢弃物保持 false。
+@export var silent_pickup: bool = false
 
 @export var item: Dictionary = {}
 
@@ -158,7 +161,7 @@ func _physics_process(delta: float) -> void:
 ## 生成瞬间尝试入包。成功 → 脱离 `ground_items` 组并进入表现阶段；
 ## 失败（背包满 / 金币满）→ 保持未认领，回退旧留地语义（不静默丢失）。
 func _try_claim() -> void:
-	if not _try_pickup(false):        # 静默入包：拾取提示改在飞行结束时弹（Q2）
+	if not _try_pickup(false, persistent):        # 静默入包：拾取提示改在飞行结束时弹（Q2）
 		# M6-0c：精英 / Boss 入包失败 ⇒ 登记未领取战利品（§11.1）。
 		# ⚠ 延后一帧登记：掉落方在 `add_child` **之后**才设最终落点（`Monster._spawn_drop`），
 		#   立即登记会记到默认位置。deferred 在当前帧末 flush，此时落点已定。
@@ -277,8 +280,10 @@ func _air_ratio() -> float:
 
 ## 拾取一次。金币 → 入金币（受上限约束，不占背包）；其余 → 入背包。
 ## `announce` 控制「拾取」提示是否立即广播（认领时静默，改在飞行结束时弹）。
+## `quiet_block`（M6-0e）＝入包失败不播「背包已满」逐件提示（精英 / Boss 生成帧，
+##   由批次摘要统一说明，§11.1）；之后靠近 / 点击拾取传 false，仍给节流反馈。
 ## 背包满 / 金币满 → 留地并节流提示（不静默丢失）。
-func _try_pickup(announce: bool = true) -> bool:
+func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 	if item.is_empty():
 		_clear_unclaimed_record()
 		queue_free()
@@ -312,12 +317,15 @@ func _try_pickup(announce: bool = true) -> bool:
 	if Inventory.add(GameState.inventory, item):
 		EventBus.item_picked.emit(String(item.get("itemId", "")))
 		EventBus.inventory_changed.emit()
-		_pickup_msg = "拾取：" + ItemUtil.display_name(item)
+		if not silent_pickup:
+			_pickup_msg = "拾取：" + ItemUtil.display_name(item)
 		if announce:
 			_announce_pickup()
 		_clear_unclaimed_record()
 		return true
-	if _blocked_cd <= 0.0:
+	# M6-0e（创意 07 §11.1）：精英 / Boss 未领取战利品**只发一条批次级提示**（批次摘要统一追加），
+	# 生成帧的失败不逐件播报（`quiet_block`）；之后靠近 / 点击仍给节流提示，避免玩家手动拾取无反馈。
+	if _blocked_cd <= 0.0 and not quiet_block:
 		_blocked_cd = BLOCK_TOAST_CD
 		EventBus.toast_requested.emit("背包已满，无法拾取：" + ItemUtil.display_name(item), "danger")
 	return false

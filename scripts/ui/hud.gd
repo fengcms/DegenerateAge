@@ -138,18 +138,20 @@ func _refresh_auto() -> void:
 	_auto_label.add_theme_color_override("font_color", col)
 
 ## 系统提示 Toast（9.6，最小版；完整样式在 M5-5 完善）。
+## M6-0e（创意 07 §10）：`legendary` 提示停留更久（合计 3s）并放大字号。
 func _on_toast(text: String, kind: String) -> void:
 	var lbl := Label.new()
 	lbl.text = text
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_font_size_override("font_size", 17 if kind == "legendary" else 15)
 	lbl.add_theme_color_override("font_color", _toast_color(kind))
 	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	lbl.add_theme_constant_override("outline_size", 4)
 	_toast_box.add_child(lbl)
+	var hold := 2.4 if kind == "legendary" else 1.4   # + 0.6s 淡出 = 3.0s / 2.0s
 	var tw := lbl.create_tween()
-	tw.tween_interval(1.4)
+	tw.tween_interval(hold)
 	tw.tween_property(lbl, "modulate:a", 0.0, 0.6)
 	tw.tween_callback(lbl.queue_free)
 
@@ -163,6 +165,8 @@ func _toast_color(kind: String) -> Color:
 			return Color("8fd07a")
 		"drop":
 			return Color("e8b46a")
+		"legendary":
+			return Color("b46ae0")
 		_:
 			return Color("e8e8e8")
 

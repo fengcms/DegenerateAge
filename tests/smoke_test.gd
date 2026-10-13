@@ -28,6 +28,8 @@ func _ready() -> void:
 	_test_loot()
 	_test_grouped_drop()
 	_test_loot_burst()
+	_test_loot_summary()
+	await _test_loot_summary_toast()
 	_test_balance_calibration()
 	_test_inventory()
 	_test_inventory_sort()
@@ -946,6 +948,111 @@ func _test_loot_burst() -> void:
 		"单件应有一份且停驻＝停留时长")
 	_expect(LootBurst.build([{"kind": "equip", "quality": "common", "instanceId": "x"}], "unknown").size() == 1,
 		"未知档次应回退 normal 而非崩溃")
+
+## M6-0e（创意 07 §10）：批次摘要 + 传说提示文本 / 时刻（纯静态，可精确断言）。
+func _test_loot_summary() -> void:
+	# ① 摘要：Boss 掉落（含传说 + 药水 count=2 + 如意），括号只列稀有以上
+	var rolled := [
+		{"kind": "coin", "itemId": "coin", "gold": 802, "count": 1},
+		{"kind": "equip", "quality": "common", "itemId": "weapon_starter"},
+		{"kind": "equip", "quality": "uncommon", "itemId": "weapon_starter"},
+		{"kind": "equip", "quality": "rare", "itemId": "weapon_starter"},
+		{"kind": "equip", "quality": "epic", "itemId": "weapon_starter"},
+		{"kind": "equip", "quality": "legendary", "itemId": "weapon_legendary_vein_guard"},
+		{"kind": "potion", "itemId": "potion_hp_large", "count": 2},
+		{"kind": "rune", "itemId": "rune_iron", "count": 1},
+	]
+	var potion_name := String(DataLoader.get_entry("potions", "potion_hp_large").get("name", ""))
+	var expected := "腐化巨兽 掉落：装备 5 件（稀有 1、史诗 1、传说 1） · 金币 802 · %s×2 · 如意×1" % potion_name
+	var text := LootNotify.summary_text("腐化巨兽", rolled, 0)
+	_expect(text == expected, "批次摘要格式应为「%s」，实际「%s」" % [expected, text])
+
+	# ② 无稀有以上 ⇒ 省略括号；无金币 / 无如意 ⇒ 省略对应项
+	var plain := [{"kind": "equip", "quality": "common", "itemId": "weapon_starter"}]
+	var t2 := LootNotify.summary_text("普通野狼", plain, 0)
+	_expect(t2 == "普通野狼 掉落：装备 1 件", "无稀有以上应省略括号，实际「%s」" % t2)
+
+	# ③ 未领取追加（§10 / §11.1）
+	var t3 := LootNotify.summary_text("腐化巨兽", rolled, 3)
+	_expect(t3.ends_with("· 背包不足，3 件装备已保留"), "未领取应追加保留提示，实际「%s」" % t3)
+
+	# ④ 传说提示文本（§10）
+	_expect(LootNotify.legendary_text(rolled) == "传说 · 镇脉之刃", "传说提示应为「传说 · 镇脉之刃」")
+	_expect(LootNotify.legendary_text(plain).is_empty(), "无传说时不应播报传说提示")
+
+	# ⑤ 摘要时刻（§10「最后一份出场完成时」）：= 全部落地时刻；关闭动画 ⇒ 0
+	var plan := LootBurst.build(rolled, "boss")
+	var last_land := 0.0
+	for row in plan:
+		last_land = maxf(last_land, float(row["appear"]) + float(row["land_time"]))
+	_expect(is_equal_approx(LootNotify.summary_delay(plan, true), last_land),
+		"摘要应在最后一份落地时弹出（期望 %.2f，实际 %.2f）" % [last_land, LootNotify.summary_delay(plan, true)])
+	_expect(is_equal_approx(LootNotify.summary_delay(plan, false), 0.0), "关闭 dropFlyAnim 应即时弹摘要")
+
+	# ⑥ 负向验证（断言有牙）：药水名必须取 `data` 表 —— 临时改表名后摘要应随之变化
+	var pot_table: Array = DataLoader.tables["potions"]
+	var backup := pot_table.duplicate(true)
+	for p in pot_table:
+		if String(p.get("id", "")) == "potion_hp_large":
+			p["name"] = "测试药水"
+	var mutated := LootNotify.summary_text("腐化巨兽", rolled, 0)
+	_expect(mutated.contains("测试药水×2"), "摘要药水名应取 `data` 表（改表名后应随之变化），实际「%s」" % mutated)
+	_expect(mutated != text, "负向验证：改表名后摘要应与原文本不同（否则断言无牙）")
+	DataLoader.tables["potions"] = backup
+
+## M6-0e（创意 07 §10）：精英死亡 → 批次摘要广播（关闭动画即时 / 开启动画延迟到装备雨结束）。
+func _test_loot_summary_toast() -> void:
+	GameState.reset_to_defaults()
+	var got: Array[String] = []
+	var cb := func(text: String, _kind: String) -> void:
+		got.append(text)
+	EventBus.toast_requested.connect(cb)
+	# 怪挂在 Node2D 世界下：精英可能带「死亡召唤」词缀，其 `_spawn_summons` 依赖 Node2D 父节点。
+	var world := Node2D.new()
+	add_child(world)
+	var loot_root := Node2D.new()
+	loot_root.add_to_group("loot_root")
+	world.add_child(loot_root)
+
+	# ① 关闭飞行动画 ⇒ 摘要即时广播（delay=0），死亡帧即可捕获
+	GameState.settings["dropFlyAnim"] = false
+	got.clear()
+	await _kill_monster(world, "elite_wolf_king", 4)
+	var summary_a := _find_summary(got)
+	_expect(not summary_a.is_empty(), "精英死亡应广播批次摘要，实际 %s" % [got])
+	_expect(summary_a.contains("装备 ") and summary_a.contains("金币 "),
+		"摘要应含装备与金币，实际「%s」" % summary_a)
+	_expect(not summary_a.contains("背包不足"), "背包有空间时摘要不应含保留提示，实际「%s」" % summary_a)
+
+	# ② 开启飞行动画 ⇒ 摘要延迟到装备雨全部落地（SceneTreeTimer，§10「最后一份出场完成时」）
+	GameState.settings["dropFlyAnim"] = true
+	got.clear()
+	await _kill_monster(world, "elite_wolf_king", 4)
+	_expect(_find_summary(got).is_empty(), "开启动画时摘要不应在死亡帧立即广播，实际 %s" % [got])
+	await get_tree().create_timer(1.6).timeout
+	_expect(not _find_summary(got).is_empty(), "装备雨结束后应广播批次摘要，实际 %s" % [got])
+
+	EventBus.toast_requested.disconnect(cb)
+	world.queue_free()
+	GameState.reset_to_defaults()
+	await get_tree().process_frame
+
+## 在 `parent` 下生成一只指定怪、一击必杀，返回时已过 1 物理帧（死亡结算完成）。
+func _kill_monster(parent: Node, monster_id: String, lv: int) -> void:
+	var m = load("res://scenes/entities/Monster.tscn").instantiate()
+	m.monster_id = monster_id
+	m.spawn_level = lv
+	parent.add_child(m)
+	await get_tree().process_frame
+	m.take_hit(Combat.resolve(999999.0, m.get_defense(), 1.0, 1.0, 1.0, 0.0), null)
+	await get_tree().process_frame
+
+## 从已捕获的 toast 文本中挑出批次摘要（含「掉落：装备」的那条）。
+func _find_summary(lines: Array[String]) -> String:
+	for t in lines:
+		if t.contains("掉落：装备"):
+			return t
+	return ""
 
 # ---- M1 收尾 / 数值校准（07 方案 §7）：防回归断言 ----
 ## 校准值一旦被误改回旧值，此用例立即失败。
