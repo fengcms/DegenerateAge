@@ -3009,7 +3009,7 @@ func _test_spawn_respawn_cross_map() -> void:
 	var boss_spec: Dictionary = (DataLoader.get_entry("maps", map_id) as Dictionary).get("bossSpawn", {}).duplicate()
 	boss_spec["ai"] = false   # 测试无玩家，关闭 AI 避免追击分支
 
-	# ① 装配：Boss（ordinal 0）+ 4 只壳背虫
+	# ① 装配：Boss（ordinal 0）+ 5 只裂壳虫（源头扩容后）
 	var sp1 := MonsterSpawner.new()
 	add_child(sp1)
 	sp1.setup(null, null)
@@ -3018,7 +3018,7 @@ func _test_spawn_respawn_cross_map() -> void:
 	await get_tree().process_frame
 	var boss := _find_monster(sp1, boss_id)
 	_expect(boss != null, "装配后应生成 Boss")
-	_expect(_count_monsters(sp1, "shellback_bug") == 4, "装配后应有 4 只壳背虫")
+	_expect(_count_monsters(sp1, "shellback_bug") == 5, "装配后应有 5 只裂壳虫")
 
 	# ② 击杀 Boss + 一只普通怪 → 登记刷新状态
 	var kill_time := GameState.world_time
@@ -3065,7 +3065,7 @@ func _test_spawn_respawn_cross_map() -> void:
 	await get_tree().process_frame
 	_expect(_find_monster(sp2, boss_id) == null, "未到点：跨图回来 Boss 不应复活")
 	_expect(_has_tombstone(sp2), "未到点：墓碑应存在")
-	_expect(_count_monsters(sp2, "shellback_bug") == 3, "未到点：被击杀的普通怪不应重生（应剩 3）")
+	_expect(_count_monsters(sp2, "shellback_bug") == 4, "未到点：被击杀的普通怪不应重生（应剩 4）")
 	var r_after := GameState.spawn_remaining(map_id, boss_id, 0)
 	_expect(r_after > 269.0 and r_after <= 270.0, "剩余应按流逝量递减（≈270s），实际 %.2f" % r_after)
 
@@ -3081,7 +3081,7 @@ func _test_spawn_respawn_cross_map() -> void:
 	await get_tree().process_frame
 	_expect(_find_monster(sp3, boss_id) != null, "到点后 Boss 应重生")
 	_expect(not _has_tombstone(sp3), "到点后墓碑应消失")
-	_expect(_count_monsters(sp3, "shellback_bug") == 4, "到点后普通怪应全部重生")
+	_expect(_count_monsters(sp3, "shellback_bug") == 5, "到点后普通怪应全部重生")
 	_expect(not GameState.spawn_respawn.has(GameState.spawn_key(map_id, boss_id, 0)),
 		"到点后刷新状态应被清除")
 

@@ -68,6 +68,21 @@ func _travel(to_map: String, expected_fee: int) -> bool:
 	var new_world: Node2D = new_main.get_node("Game")
 	_check(String(new_world.get_node("Ground").map_id) == to_map, "%s 地面应加载新地图" % to_map)
 	_check(new_world.get_node("Spawner").point_count() > 0, "%s 应装配怪物点" % to_map)
+	if to_map in ["ash_land", "corruption_source"]:
+		var normal_count := 0
+		var elite_count := 0
+		var boss_count := 0
+		for point in new_world.get_node("Spawner")._points:
+			var template: Dictionary = DataLoader.get_entry("monsters", String(point.monster_id))
+			match String(template.get("kind", "")):
+				"normal": normal_count += 1
+				"elite": elite_count += 1
+				"boss": boss_count += 1
+		var expected_normal := 6 if to_map == "ash_land" else 8
+		var expected_elite := 2 if to_map == "ash_land" else 4
+		_check(normal_count == expected_normal and elite_count == expected_elite and boss_count == (0 if to_map == "ash_land" else 1),
+			"%s 应为 %d 普通 + %d 精英 + %d Boss，实际 %d/%d/%d" % [to_map, expected_normal, expected_elite,
+				0 if to_map == "ash_land" else 1, normal_count, elite_count, boss_count])
 	_check(not GameState.has_save_pos, "%s 到达落点应消费一次" % to_map)
 	_check(not new_main.get_node("UI/CarterPanel").visible, "%s 重载后车夫面板应关闭" % to_map)
 	return true

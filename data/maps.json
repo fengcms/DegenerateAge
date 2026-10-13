@@ -2,114 +2,394 @@
   {
     "id": "camp",
     "name": "幸存者营地",
-    "size": { "w": 40, "h": 40 },
-    "tierRange": [1, 1],
+    "size": {
+      "w": 40,
+      "h": 40
+    },
+    "tierRange": [
+      1,
+      1
+    ],
     "safeZone": true,
-    "safeArea": { "min": [11, 11], "max": [27, 28] },
+    "safeArea": {
+      "min": [
+        11,
+        11
+      ],
+      "max": [
+        27,
+        28
+      ]
+    },
     "recommendedLevel": 1,
     "kind": "hub",
     "hubId": "camp",
     "hubLinks": [],
-    "carterFare": { "spoke": 50, "hub": 150 },
-    "carterFares": { "wild_trial": 0, "ash_land": 50, "corruption_source": 150 },
+    "carterFare": {
+      "spoke": 50,
+      "hub": 150
+    },
+    "carterFares": {
+      "wild_trial": 0,
+      "ash_land": 50,
+      "corruption_source": 150
+    },
     "requiresUnlock": "",
     "exits": [
-      { "id": "to_wild", "cell": [34, 20], "toMap": "wild_trial", "toEntrance": "from_camp" }
+      {
+        "id": "to_wild",
+        "cell": [
+          34,
+          20
+        ],
+        "toMap": "wild_trial",
+        "toEntrance": "from_camp"
+      }
     ],
-    "entrances": { "from_wild": [31, 20] },
-    "carterArrival": [20, 26],
+    "entrances": {
+      "from_wild": [
+        31,
+        20
+      ]
+    },
+    "carterArrival": [
+      20,
+      26
+    ],
     "spawnPoints": [
-      { "monsterId": "training_dummy", "level": 1, "respawnTime": 20, "count": 3, "ai": false }
+      {
+        "monsterId": "training_dummy",
+        "level": 1,
+        "respawnTime": 20,
+        "count": 3,
+        "ai": false
+      }
     ],
     "bossSpawn": null,
     "npcs": [
-      { "role": "shop", "shopId": "peddler_camp", "cell": [16, 20] },
-      { "role": "quest", "npcName": "长老", "cell": [24, 20] },
-      { "role": "blacksmith", "npcName": "铁匠", "greeting": "炉火还旺。带上装备和金币，我替你试试升星。", "cell": [20, 14] },
-      { "role": "warehouse", "npcName": "仓库管理员", "cell": [14, 14] },
-      { "role": "carter", "npcName": "车夫", "cell": [20, 24] }
+      {
+        "role": "shop",
+        "shopId": "peddler_camp",
+        "cell": [
+          16,
+          20
+        ]
+      },
+      {
+        "role": "quest",
+        "npcName": "长老",
+        "cell": [
+          24,
+          20
+        ]
+      },
+      {
+        "role": "blacksmith",
+        "npcName": "铁匠",
+        "greeting": "炉火还旺。带上装备和金币，我替你试试升星。",
+        "cell": [
+          20,
+          14
+        ]
+      },
+      {
+        "role": "warehouse",
+        "npcName": "仓库管理员",
+        "cell": [
+          14,
+          14
+        ]
+      },
+      {
+        "role": "carter",
+        "npcName": "车夫",
+        "cell": [
+          20,
+          24
+        ]
+      }
     ],
     "desc": "营地 NPC 周围为矩形安全区；区外可以战斗。"
   },
   {
     "id": "wild_trial",
     "name": "试炼野外",
-    "size": { "w": 60, "h": 60 },
-    "tierRange": [1, 5],
+    "size": {
+      "w": 60,
+      "h": 60
+    },
+    "tierRange": [
+      1,
+      5
+    ],
     "safeZone": false,
     "recommendedLevel": 2,
     "kind": "spoke",
     "hubId": "camp",
-    "carterFares": { "camp": 20, "ash_land": 50, "corruption_source": 150 },
+    "carterFares": {
+      "camp": 20,
+      "ash_land": 50,
+      "corruption_source": 150
+    },
     "requiresUnlock": "",
     "exits": [
-      { "id": "to_camp", "cell": [5, 30], "toMap": "camp", "toEntrance": "from_wild" },
-      { "id": "to_ash", "cell": [54, 30], "toMap": "ash_land", "toEntrance": "from_wild" }
+      {
+        "id": "to_camp",
+        "cell": [
+          5,
+          30
+        ],
+        "toMap": "camp",
+        "toEntrance": "from_wild"
+      },
+      {
+        "id": "to_ash",
+        "cell": [
+          54,
+          30
+        ],
+        "toMap": "ash_land",
+        "toEntrance": "from_wild"
+      }
     ],
-    "entrances": { "from_camp": [8, 30], "from_ash": [51, 30] },
-    "carterArrival": [30, 36],
+    "entrances": {
+      "from_camp": [
+        8,
+        30
+      ],
+      "from_ash": [
+        51,
+        30
+      ]
+    },
+    "carterArrival": [
+      30,
+      36
+    ],
     "spawnPoints": [
-      { "monsterId": "wolf_corrupted", "level": 2, "respawnTime": 30, "count": 6 },
-      { "monsterId": "shellback_bug", "level": 3, "respawnTime": 30, "count": 2 },
-      { "monsterId": "elite_wolf_king", "level": 4, "respawnTime": 120, "count": 1, "kind": "elite" }
+      {
+        "monsterId": "wolf_corrupted",
+        "level": 2,
+        "respawnTime": 30,
+        "count": 6
+      },
+      {
+        "monsterId": "shellback_bug",
+        "level": 3,
+        "respawnTime": 30,
+        "count": 2
+      },
+      {
+        "monsterId": "elite_wolf_king",
+        "level": 4,
+        "respawnTime": 120,
+        "count": 1,
+        "kind": "elite"
+      }
     ],
     "bossSpawn": null,
     "npcs": [
-      { "role": "carter", "npcName": "车夫", "cell": [30, 34] }
+      {
+        "role": "carter",
+        "npcName": "车夫",
+        "cell": [
+          30,
+          34
+        ]
+      }
     ],
     "desc": "第一章第一张野外图，含精英裂爪狼王。"
   },
   {
     "id": "ash_land",
     "name": "灰烬之地",
-    "size": { "w": 60, "h": 60 },
-    "tierRange": [5, 9],
+    "size": {
+      "w": 60,
+      "h": 60
+    },
+    "tierRange": [
+      5,
+      9
+    ],
     "safeZone": false,
     "recommendedLevel": 6,
     "kind": "spoke",
     "hubId": "camp",
-    "carterFares": { "camp": 70, "wild_trial": 50, "corruption_source": 100 },
+    "carterFares": {
+      "camp": 70,
+      "wild_trial": 50,
+      "corruption_source": 100
+    },
     "requiresUnlock": "",
     "exits": [
-      { "id": "to_wild", "cell": [5, 30], "toMap": "wild_trial", "toEntrance": "from_ash" },
-      { "id": "to_source", "cell": [54, 30], "toMap": "corruption_source", "toEntrance": "from_ash" }
+      {
+        "id": "to_wild",
+        "cell": [
+          5,
+          30
+        ],
+        "toMap": "wild_trial",
+        "toEntrance": "from_ash"
+      },
+      {
+        "id": "to_source",
+        "cell": [
+          54,
+          30
+        ],
+        "toMap": "corruption_source",
+        "toEntrance": "from_ash"
+      }
     ],
-    "entrances": { "from_wild": [8, 30], "from_source": [51, 30] },
-    "carterArrival": [30, 36],
+    "entrances": {
+      "from_wild": [
+        8,
+        30
+      ],
+      "from_source": [
+        51,
+        30
+      ]
+    },
+    "carterArrival": [
+      30,
+      36
+    ],
     "spawnPoints": [
-      { "monsterId": "ash_wraith", "level": 6, "respawnTime": 45, "count": 3 },
-      { "monsterId": "shellback_bug", "level": 7, "respawnTime": 45, "count": 3 }
+      {
+        "monsterId": "ash_wraith",
+        "level": 6,
+        "respawnTime": 45,
+        "count": 3
+      },
+      {
+        "monsterId": "shellback_bug",
+        "level": 7,
+        "respawnTime": 45,
+        "count": 3
+      },
+      {
+        "monsterId": "elite_ash_wraith",
+        "level": 8,
+        "respawnTime": 120,
+        "count": 1,
+        "kind": "elite"
+      },
+      {
+        "monsterId": "elite_shellback_bug",
+        "level": 9,
+        "respawnTime": 120,
+        "count": 1,
+        "kind": "elite"
+      }
     ],
     "bossSpawn": null,
     "npcs": [
-      { "role": "shop", "shopId": "peddler_ash", "cell": [26, 34] },
-      { "role": "carter", "npcName": "车夫", "cell": [30, 34] }
+      {
+        "role": "shop",
+        "shopId": "peddler_ash",
+        "cell": [
+          26,
+          34
+        ]
+      },
+      {
+        "role": "carter",
+        "npcName": "车夫",
+        "cell": [
+          30,
+          34
+        ]
+      }
     ],
-    "desc": "第一章中间图，远程怪登场；裂壳虫按 L7 复用。"
+    "desc": "第一章中间图，6 只普通怪与 2 只精英怪，远程怪登场。"
   },
   {
     "id": "corruption_source",
     "name": "腐化源头",
-    "size": { "w": 50, "h": 50 },
-    "tierRange": [10, 10],
+    "size": {
+      "w": 50,
+      "h": 50
+    },
+    "tierRange": [
+      10,
+      10
+    ],
     "safeZone": false,
     "recommendedLevel": 10,
     "kind": "spoke",
     "hubId": "camp",
-    "carterFares": { "camp": 170, "wild_trial": 150, "ash_land": 100 },
+    "carterFares": {
+      "camp": 170,
+      "wild_trial": 150,
+      "ash_land": 100
+    },
     "requiresUnlock": "",
     "exits": [
-      { "id": "to_ash", "cell": [5, 25], "toMap": "ash_land", "toEntrance": "from_source" }
+      {
+        "id": "to_ash",
+        "cell": [
+          5,
+          25
+        ],
+        "toMap": "ash_land",
+        "toEntrance": "from_source"
+      }
     ],
-    "entrances": { "from_ash": [8, 25] },
-    "carterArrival": [25, 31],
+    "entrances": {
+      "from_ash": [
+        8,
+        25
+      ]
+    },
+    "carterArrival": [
+      25,
+      31
+    ],
     "spawnPoints": [
-      { "monsterId": "shellback_bug", "level": 10, "respawnTime": 60, "count": 4 }
+      {
+        "monsterId": "shellback_bug",
+        "level": 10,
+        "respawnTime": 60,
+        "count": 5
+      },
+      {
+        "monsterId": "ash_wraith",
+        "level": 10,
+        "respawnTime": 60,
+        "count": 3
+      },
+      {
+        "monsterId": "elite_ash_wraith",
+        "level": 10,
+        "respawnTime": 120,
+        "count": 2,
+        "kind": "elite"
+      },
+      {
+        "monsterId": "elite_shellback_bug",
+        "level": 10,
+        "respawnTime": 120,
+        "count": 2,
+        "kind": "elite"
+      }
     ],
-    "bossSpawn": { "monsterId": "boss_corrupted_beast", "level": 10, "respawnTime": 300, "tombstone": true },
+    "bossSpawn": {
+      "monsterId": "boss_corrupted_beast",
+      "level": 10,
+      "respawnTime": 300,
+      "tombstone": true
+    },
     "npcs": [
-      { "role": "carter", "npcName": "车夫", "cell": [25, 29] }
+      {
+        "role": "carter",
+        "npcName": "车夫",
+        "cell": [
+          25,
+          29
+        ]
+      }
     ],
-    "desc": "第一章 Boss 区；Boss 死亡生成墓碑显示刷新倒计时。"
+    "desc": "第一章 Boss 区，8 只普通怪、4 只精英怪及腐化巨兽；Boss 死亡生成墓碑倒计时。"
   }
 ]
