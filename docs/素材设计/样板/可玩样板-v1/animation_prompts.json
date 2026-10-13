@@ -1,0 +1,26 @@
+[
+  {
+    "key": "guardian_hit_sit",
+    "generator": "built-in image_gen",
+    "reference": "art_source/playable_sample/guardian_source_atlas.png",
+    "source": "art_source/playable_sample/guardian_hit_sit_source.png",
+    "output": "assets/sprites/player/guardian/guardian_hit_sit_atlas.png",
+    "prompt": "Use case: stylized-concept. Asset type: supplemental pixel animation sprites for an existing isometric ARPG guardian. The attached image is the REQUIRED identity and rendering-style reference. Produce exactly EIGHT columns by TWO rows, 16 isolated sprites on truly transparent background, regular equal rectangular cells, no grid lines/text/shadows. Column directions left to right screen-facing SOUTH front, SOUTHWEST, WEST profile, NORTHWEST, NORTH back, NORTHEAST, EAST profile, SOUTHEAST. Same guardian in every cell: black hair, tan short cape, worn dark iron/leather armour, short straight sword with tiny cyan marking; consistent proportions, coloring and asymmetry with reference. Row 1: distinct brief HIT RECOIL, upper body flinches backward and free hand guards chest, still standing with feet planted. Row 2: SIT RESTING, visibly seated cross-legged on ground with sword sheathed or resting safely beside them; feet/contact centered. Eight directions remain coherent even while seated. Crisp low-resolution blocky pixel clusters, similar body scale to the source (about 48 logical pixels high when standing); static key poses only. Each pose entirely inside its cell with generous transparent padding. Avoid extra limbs, duplicated weapons, text, scenery, glowing effects, or anti-aliased painterly finish."
+  },
+  {
+    "key": "guardian_walk",
+    "generator": "built-in image_gen",
+    "reference": "art_source/playable_sample/guardian_source_atlas.png",
+    "source": "art_source/playable_sample/guardian_walk_source.png",
+    "output": "assets/sprites/player/guardian/guardian_walk_atlas.png",
+    "prompt": "Use case: stylized-concept. Asset type: animation sprite sheet for existing isometric dark-fantasy pixel ARPG guardian. Input image is the required identity/style reference. Produce exactly EIGHT equal columns by FOUR rows, 32 isolated full-body pixel sprites, transparent background; no grid/text/shadows. Column direction order left to right: screen SOUTH front, SOUTHWEST, WEST side, NORTHWEST, NORTH back, NORTHEAST, EAST side, SOUTHEAST. Keep the same black hair, tan short cape, dark worn armour, and compact short sword with tiny cyan marking in every cell; preserve consistent direction and scale down each column. Rows top-to-bottom are four DISTINCT WALK CYCLE stages: left foot forward/contact, passing stance with legs nearer together, right foot forward/contact, passing stance with opposite arm swing. Change leg positions and cape movement visibly while torso identity and foot anchor remain stable. Low-resolution crisp hand-designed pixel clusters like reference, same approximate body scale. Each pose completely within its cell and centered at the same foot pivot. Avoid duplicate limbs, long sword, mirrored asymmetry errors, smooth gradients, painterly edges, extra objects or lettering."
+  },
+  {
+    "key": "wolf_walk",
+    "generator": "built-in image_gen",
+    "reference": "art_source/playable_sample/wolf_source_atlas.png",
+    "source": "art_source/playable_sample/wolf_walk_source.png",
+    "output": "assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png",
+    "prompt": "Use case: stylized-concept. Asset type: animation sprite sheet for the existing corrupted wolf in an isometric dark-fantasy pixel ARPG. Input is the required wolf identity/style reference. Create exactly EIGHT equal columns by FOUR rows = 32 isolated wolf sprites on transparent background, with no grid/text/scenery/shadows. Column order left-to-right SCREEN SOUTH/front, SOUTHWEST, WEST/profile, NORTHWEST, NORTH/back, NORTHEAST, EAST/profile, SOUTHEAST. Same lean anatomically canine gray-brown wolf, four legs, pointed ears, long tail, tiny violet eye and restrained purple corruption fissures on shoulder/flank, consistent scale and lighting in every cell. Rows top-to-bottom are FOUR DISTINCT TROTTING WALK stages: front-left paw contact, airborne passing/recovery, front-right paw contact, opposite passing/recovery. Visible changes in leg positions, body stretch and tail movement with stable ground contact anchor. Crisp low-resolution blocky pixel art similar to reference, body about 40 logical pixels wide. Each wolf fully inside its cell with transparent padding. Avoid extra legs, detached fragments, mirrored markings errors, painterly anti-aliasing, spikes, text, grid."
+  }
+]

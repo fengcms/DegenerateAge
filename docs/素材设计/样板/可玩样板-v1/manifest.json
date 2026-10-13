@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "created": "2026-10-13",
-  "status": "playable_keypose_prototype",
+  "status": "playable_animation_enhanced_keyposes",
   "generator": "built-in image_gen",
   "prompt_set": "docs/素材设计/样板/可玩样板-v1/prompts.json",
   "source_root": "art_source/playable_sample",
@@ -20,8 +20,13 @@
       "columns": 8,
       "rows": 8,
       "source_unique_pose_rows": 7,
-      "hit_reuses_recoil": true,
-      "display_scale": 1.25
+      "hit_reuses_recoil": false,
+      "display_scale": 1.25,
+      "extra_atlas": "assets/sprites/player/guardian/guardian_hit_sit_atlas.png",
+      "walk_atlas": "assets/sprites/player/guardian/guardian_walk_atlas.png",
+      "walk_unique_frames_per_direction": 4,
+      "hit_unique_frames_per_direction": 1,
+      "sit_unique_frames_per_direction": 1
     },
     {
       "id": "wolf_corrupted",
@@ -37,7 +42,9 @@
       "columns": 8,
       "rows": 8,
       "source_unique_pose_rows": 8,
-      "hit_reuses_recoil": false
+      "hit_reuses_recoil": false,
+      "walk_atlas": "assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png",
+      "walk_unique_frames_per_direction": 4
     }
   ],
   "direction_order": [
@@ -52,43 +59,61 @@
   ],
   "states": {
     "idle": {
-      "rows": [
+      "base_rows": [
         0,
         1
       ],
-      "fps": 3,
+      "unique_frames_per_direction": 2,
+      "visual_phases": 4,
+      "fps": 6,
       "loop": true
     },
     "walk": {
-      "rows": [
+      "atlas_rows": [
+        0,
+        1,
         2,
         3
       ],
+      "unique_frames_per_direction": 4,
+      "visual_phases": 8,
       "fps": 10,
       "loop": true
     },
     "attack": {
-      "rows": [
+      "base_rows": [
         5,
         4
       ],
+      "unique_frames_per_direction": 2,
+      "visual_phases": 6,
       "duration": "clamp(attackInterval * 0.65, 0.12, 0.36)",
       "loop": false,
       "gameplay_callbacks": false
     },
     "hit": {
-      "rows": [
-        6
-      ],
-      "duration": 0.12,
+      "guardian_atlas_row": 0,
+      "wolf_base_row": 6,
+      "unique_frames_per_direction": 1,
+      "visual_phases": 2,
+      "duration": 0.16,
       "loop": false
     },
     "death": {
-      "rows": [
-        7
-      ],
+      "base_row": 7,
+      "unique_frames_per_direction": 1,
+      "visual_phases": 6,
+      "transition_seconds": 0.6,
       "duration": "owner-controlled fade or revival",
-      "loop": false
+      "loop": false,
+      "recoil_source": "guardian_extra_row_0_or_wolf_base_row_6"
+    },
+    "sit": {
+      "guardian_atlas_row": 1,
+      "unique_frames_per_direction": 1,
+      "visual_phases": 4,
+      "fps": 6,
+      "loop": true
     }
   },
   "icons": [
@@ -210,7 +235,7 @@
       "InputFeedbackTest",
       "SmokeTest"
     ],
-    "result": "passed",
+    "result": "animation_tests_passed; shared_checkout_smoke_test_failed_on_safe_zone_auto_battle",
     "screenshots": {
       "resolution": [
         1440,
@@ -220,9 +245,21 @@
         0.8,
         1,
         1.5
+      ],
+      "motion": [
+        "motion_sit.png",
+        "motion_attack.png"
       ]
     },
     "full_animation_frame_counts_met": false,
-    "release_performance_validated": false
-  }
+    "release_performance_validated": false,
+    "animation_v2": {
+      "art_sample_test": "passed",
+      "input_feedback_test": "passed",
+      "smoke_test": "failed in the shared working tree on safe-zone auto-battle target/attack assertions; other concurrent settings and auto-battle edits are present",
+      "foot_anchor": "all 64 new walk cells end at y=64",
+      "render_review": "1440x900 motion_sit.png and motion_attack.png inspected"
+    }
+  },
+  "animation_prompt_set": "docs/素材设计/样板/可玩样板-v1/animation_prompts.json"
 }

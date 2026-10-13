@@ -165,8 +165,8 @@ func _map_direction(delta: float) -> Vector2:
 	return global_position.direction_to(_map_destination)
 
 func _ready() -> void:
-	sample_art = SampleActorArt.attach(self, "res://assets/sprites/player/guardian/guardian_atlas.png", Vector2(32, 64))
-	sample_art.scale = Vector2.ONE * ART_SCALE
+	sample_art = SampleActorArt.attach(self, "res://assets/sprites/player/guardian/guardian_atlas.png", Vector2(32, 64), "res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png", "res://assets/sprites/player/guardian/guardian_walk_atlas.png")
+	sample_art.display_scale = ART_SCALE
 	add_to_group("player")
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
 	var b = DataLoader.get_entry("skills", "basic_slash")

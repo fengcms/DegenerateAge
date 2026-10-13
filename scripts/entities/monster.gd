@@ -98,7 +98,7 @@ func _ready() -> void:
 	_rng.randomize()
 	_load_template()
 	if monster_id == "wolf_corrupted":
-		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64))
+		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64), "", "res://assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png")
 	if spawn_position == Vector2.ZERO:
 		spawn_position = position
 	_state_t = _rng.randf() * IDLE_TIME   # 错开巡逻相位

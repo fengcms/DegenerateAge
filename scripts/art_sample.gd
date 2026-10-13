@@ -74,5 +74,17 @@ func capture_review() -> void:
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path + "world_80.png")
+	GameState.settings.mapScale = 1.0
+	SettingsRuntime.apply_map_scale_to($Main/Game/Entities/Player/Camera2D)
+	var player := $Main/Game/Entities/Player as PlayerCharacter
+	player.set_sitting(true)
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(path + "motion_sit.png")
+	player.set_sitting(false)
+	player.sample_art.attack(Vector2.RIGHT, 0.8)
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(path + "motion_attack.png")
 	print("[ArtSample] review captures saved")
 	get_tree().quit()
