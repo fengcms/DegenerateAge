@@ -326,6 +326,7 @@ func _begin_death() -> void:
 	if is_dead:
 		return
 	set_sitting(false)
+	GameState.clear_buffs()
 	map_move_active = false
 	manual_attack_active = false
 	_pending_skill_id = ""
@@ -380,7 +381,7 @@ func try_auto_attack(target: Node) -> bool:
 		return false
 	if not target is Node2D or global_position.distance_to(target.global_position) > melee_range_px():
 		return false
-	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
+	_attack_cd = effective_attack_interval()
 	perform_attack(target)
 	return true
 
@@ -392,6 +393,13 @@ func melee_range_px() -> float:
 
 func skill_cooldown(skill_id: String) -> float:
 	return float(skill_cooldowns.get(skill_id, 0.0))
+
+func effective_attack_power() -> float:
+	return float(GameState.total_attack()) * (1.0 + GameState.buff_effect_total("attackPct"))
+
+func effective_attack_interval() -> float:
+	var speed := maxf(0.01, 1.0 + GameState.buff_effect_total("attackSpeedPct"))
+	return maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)) / speed)
 
 ## 快捷栏手动指令：选中目标后接近至技能射程，再由同一施放入口结算。
 func request_skill(skill_id: String) -> bool:
@@ -447,7 +455,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	if targets.is_empty() or not GameState.spend_mp(mana_cost):
 		return false
 	skill_cooldowns[skill_id] = float(skill.get("cooldown", 0.0))
-	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
+	_attack_cd = effective_attack_interval()
 	_mark_combat()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
@@ -457,7 +465,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if String(skill.get("shape", "")) == "cone" else Vector2.RIGHT
 	add_child(range_fx)
 	for enemy in targets:
-		var result := Combat.resolve(float(GameState.total_attack()), _target_defense(enemy),
+		var result := Combat.resolve(effective_attack_power(), _target_defense(enemy),
 			float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
 			float(GameState.player.get("criticalMultiplier", 1.5)), _target_dodge(enemy))
 		Fx.damage_number(get_tree(), enemy, result)
@@ -500,7 +508,7 @@ func _try_attack() -> void:
 	var target: Node = locked_target if valid_target(locked_target) else find_nearest_enemy_in_range()
 	if target == null or global_position.distance_to(target.global_position) > melee_range_px():
 		return
-	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)))
+	_attack_cd = effective_attack_interval()
 	perform_attack(target)
 
 ## 对指定目标结算一次普攻（供手动 / 自动化测试调用）。返回结算结果。
@@ -509,14 +517,14 @@ func perform_attack(target: Node) -> Dictionary:
 		return {}
 	_mark_combat()
 	if sample_art != null:
-		sample_art.attack((target as Node2D).global_position - global_position, float(GameState.player.get("attackInterval", 0.8)))
+		sample_art.attack((target as Node2D).global_position - global_position, effective_attack_interval())
 		var slash := preload("res://scripts/systems/sample_slash.gd").new() as Node2D
 		slash.direction = ((target as Node2D).global_position - global_position).angle()
 		slash.position = Vector2(0, -16 * ART_SCALE)
 		add_child(slash)
 
 	var result := Combat.resolve(
-		float(GameState.total_attack()),
+		effective_attack_power(),
 		_target_defense(target),
 		float(_basic.get("coefficient", 1.0)),
 		float(GameState.player.get("criticalChance", 0.0)),
@@ -626,6 +634,7 @@ func set_sitting(value: bool) -> void:
 		return
 	is_sitting = value
 	if value:
+		GameState.clear_buffs()
 		map_move_active = false
 		manual_attack_active = false
 		auto_move = Vector2.ZERO

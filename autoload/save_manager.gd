@@ -385,6 +385,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 	data = _migrate(data)
 	_suppress_autosave = true
 	GameState.skill_cooldowns = {}
+	GameState.clear_buffs()
 
 	if data.get("player", null) is Dictionary:
 		GameState.player = _migrate_player(data["player"] as Dictionary)

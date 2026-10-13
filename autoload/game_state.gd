@@ -40,6 +40,8 @@ var settings: Dictionary = {}
 var hotbar: Array = []             # 12 格模板引用；背包整理、切图后保持绑定（M4-8）
 ## 主动技能冷却是本次会话运行态：跨图保留，读档/新游戏清零，不写存档。
 var skill_cooldowns: Dictionary = {}
+## 自身增益剩余秒数；与技能冷却同为跨图但不落档的运行态。
+var active_buffs: Dictionary = {}
 ## 本次运行的菜单流程状态；不入档。切图与读档重建 Main 时保留 world。
 var menu_mode: String = "menu"
 ## 自动战斗 / 自动拾取开关（M1-9，3.14）。**运行态开关，不写存档**
@@ -97,7 +99,44 @@ func _process(delta: float) -> void:
 	Consumable.tick(delta)
 	for skill_id in skill_cooldowns.keys():
 		skill_cooldowns[skill_id] = maxf(0.0, float(skill_cooldowns[skill_id]) - delta)
+	tick_buffs(delta)
 	world_time += delta    # M4-10：世界时钟（面板打开照常走、暂停时冻结；见字段注释）
+
+func tick_buffs(delta: float) -> void:
+	for skill_id in active_buffs.keys():
+		var remaining := maxf(0.0, float(active_buffs[skill_id]) - delta)
+		if remaining <= 0.0:
+			active_buffs.erase(skill_id)
+			EventBus.buff_changed.emit(String(skill_id), 0.0)
+		else:
+			active_buffs[skill_id] = remaining
+
+func buff_remaining(skill_id: String) -> float:
+	return float(active_buffs.get(skill_id, 0.0))
+
+func buff_effect_total(effect: String) -> float:
+	var total := 0.0
+	for skill_id in active_buffs.keys():
+		var skill = DataLoader.get_entry("skills", String(skill_id))
+		if skill is Dictionary:
+			total += float((skill.get("effects", {}) as Dictionary).get(effect, 0.0))
+	return total
+
+func start_buff(skill_id: String) -> bool:
+	var skill = DataLoader.get_entry("skills", skill_id)
+	if not skill is Dictionary or String(skill.get("kind", "")) != "buff" or buff_remaining(skill_id) > 0.0:
+		return false
+	var duration := float(skill.get("duration", 0.0))
+	if duration <= 0.0:
+		return false
+	active_buffs[skill_id] = duration
+	EventBus.buff_changed.emit(skill_id, duration)
+	return true
+
+func clear_buffs() -> void:
+	for skill_id in active_buffs.keys():
+		EventBus.buff_changed.emit(String(skill_id), 0.0)
+	active_buffs.clear()
 
 ## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 独立成函数：reset_to_defaults 与**读档字段补全**（SaveManager._migrate_player）共用，
@@ -170,6 +209,7 @@ func reset_to_defaults() -> void:
 	auto_pickup_on = false
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
 	skill_cooldowns = {}
+	clear_buffs()
 	world_time = 0.0                # M4-10：世界时钟与刷新状态重置（新游戏 / 初始化）
 	spawn_respawn = {}
 	unclaimed_loot = {}             # M6-0c：未领取战利品（新游戏 / 初始化清空）
