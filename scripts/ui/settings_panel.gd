@@ -214,8 +214,7 @@ func _build_visual(tabs: TabContainer) -> void:
 		GameState.settings["resolution"] = resolution.get_item_metadata(index)
 		_changed())
 	box.add_child(resolution)
-	_checkbox(box, Localization.tr_key("ui.settings_panel.p022"), "screenShake")
-	_checkbox(box, Localization.tr_key("ui.settings_panel.p023"), "strongFlash")
+	# 屏震 / 强闪尚无实际效果；旧档字段保留兼容，界面暂不暴露空开关。
 	var hint := Label.new()
 	hint.text = Localization.tr_key("ui.settings_panel.p024")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -301,21 +300,7 @@ func _build_game(tabs: TabContainer) -> void:
 	_slider(box, Localization.tr_key("ui.settings_panel.p030"), "potionThreshold", 0.1, 0.9, 0.05)
 	_checkbox(box, Localization.tr_key("ui.settings_panel.p031"), "allowBoss")
 	_checkbox(box, Localization.tr_key("ui.settings_panel.p032"), "dropFlyAnim")
-	var filter := OptionButton.new()
-	for entry in [{"id": "all", "label": Localization.tr_key("ui.settings_panel.p033")}, {"id": "rare", "label": Localization.tr_key("ui.settings_panel.p034")},
-		{"id": "epic", "label": Localization.tr_key("ui.settings_panel.p035")}, {"id": "legendary", "label": Localization.tr_key("ui.settings_panel.p036")}]:
-		filter.add_item(String(entry.label))
-		filter.set_item_metadata(filter.item_count - 1, String(entry.id))
-		if String(GameState.settings.get("qualityFilter", "all")) == String(entry.id):
-			filter.select(filter.item_count - 1)
-	filter.item_selected.connect(func(index: int) -> void:
-		GameState.settings["qualityFilter"] = filter.get_item_metadata(index)
-		_changed())
-	box.add_child(filter)
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.settings_panel.p037")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(hint)
+	# 品质自动拾取过滤尚未接线，旧档字段保留兼容，避免展示不会生效的选项。
 
 func _build_controls(tabs: TabContainer) -> void:
 	var root := _tab(tabs, Localization.tr_key("ui.settings_panel.p038"))

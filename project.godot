@@ -30,6 +30,7 @@ DataLoader="*res://autoload/data_loader.gd"
 SaveManager="*res://autoload/save_manager.gd"
 QuestService="*res://autoload/quest_service.gd"
 MapService="*res://autoload/map_service.gd"
+AudioCues="*res://autoload/audio_cues.gd"
 
 [display]
 

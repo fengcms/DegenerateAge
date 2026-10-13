@@ -161,7 +161,7 @@ static func apply_all() -> void:
 		var event := InputEventKey.new()
 		event.physical_keycode = int(bindings[action])
 		InputMap.action_add_event(String(action), event)
-	_apply_audio()
+	apply_audio()
 	_apply_ui_scale()
 	_apply_text_scale()
 	_apply_map_scale()
@@ -186,7 +186,7 @@ static func apply_display_strategy() -> void:
 		return
 	tree.root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 
-static func _apply_audio() -> void:
+static func apply_audio() -> void:
 	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index("Master"), clampf(float(GameState.settings.get("masterVolume", 1.0)), 0.0, 1.0))
 	for name in ["Music", "SFX"]:
 		if AudioServer.get_bus_index(name) < 0:
