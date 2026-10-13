@@ -12,11 +12,6 @@ const NPC_SCENE := preload("res://scenes/entities/Npc.tscn")
 ## ⚠ 原 M1/M2 单图期的 `TEST_SPAWNS` / `TEST_ELITES` / `TEST_NPCS` 硬编码已随 M3 恢复清单移除
 ##   （见工程文档 13 §6 R3 与 04「M5 移除清单」）；营地保留 3 只教学木桩（产品 07 §7.6，`ai:false`）。
 
-## ---- 开发期测试便利（【M5 打包前移除】）----
-## 开局往背包补一把高攻测试武器，省去刷装备环节，便于快速验证战斗 / 掉落 / 交易。
-## 模板在 equipments.json 中标 "debug": true → Loot 抽取时跳过（见 loot.gd），不污染正式掉落池。
-const DEBUG_WEAPON_ID := "debug_blade_overpower"
-
 ## 安全区 / 各图 NPC 由 `maps.json` 的 `npcs` 驱动（M3-1；原 `TEST_NPCS` 已移除）。
 ## `cell` 为等距网格坐标，JSON 里是 `[x, y]` 数组（见 `_cell_of`）。
 
@@ -96,43 +91,6 @@ func _ready() -> void:
 
 	add_to_group("map_world")
 	Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(_player.global_position).round()))
-
-	# 开发期：延迟一帧发放测试武器（此时 UI 已就绪，提示能正常显示）
-	_grant_debug_loadout.call_deferred()
-
-## 开发期：向背包补一把测试武器（已有则不重复给，避免堆积）。
-## 仅 debug 构建生效（导出 release 包时不应带测试武器）。
-func _grant_debug_loadout() -> void:
-	if not OS.is_debug_build():
-		return
-	if _has_item_anywhere(DEBUG_WEAPON_ID):
-		return
-	var item := _make_debug_equip(DEBUG_WEAPON_ID)
-	if item.is_empty():
-		return
-	GameState.add_item(item)
-	EventBus.toast_requested.emit("【测试】已放入背包：%s" % ItemUtil.display_name(item), "drop")
-	print("[Debug] 已发放测试武器：%s（攻击 +%d）" % [
-		ItemUtil.display_name(item), int(item.get("baseAttrs", {}).get("atk", 0))])
-
-## 背包或已穿戴中是否已存在该装备。
-func _has_item_anywhere(item_id: String) -> bool:
-	for it in GameState.inventory:
-		if it is Dictionary and String(it.get("itemId", "")) == item_id:
-			return true
-	for sid in GameState.equipment.keys():
-		var w = GameState.equipment[sid]
-		if w is Dictionary and String(w.get("itemId", "")) == item_id:
-			return true
-	return false
-
-## 依模板构造一件装备实例（结构由公共工厂产出，见 scripts/systems/item_factory.gd）。
-## 开发期测试装备用 "debug" 前缀便于辨识（M2 起统一由 ItemFactory 构造，消除 4 处重复）。
-func _make_debug_equip(item_id: String) -> Dictionary:
-	var item := ItemFactory.make_equip(item_id, 1, "debug")
-	if item.is_empty():
-		push_warning("[Debug] 未找到测试装备模板：%s" % item_id)
-	return item
 
 ## 按当前地图的 NPC 点生成（6.3）。数据源：`maps.json` 的 `npcs`（M3-1 数据化）。
 func _spawn_npcs() -> void:
@@ -229,12 +187,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				_player.request_map_move(_ground.clamp_to_map(world_point))
 			get_viewport().set_input_as_handled()
 			return
-	# 开发期验证键（M5 移除）：H = 自伤 15，用于验证 HUD 血条实时刷新。
-	if OS.is_debug_build() and event.is_action_pressed("debug_hurt"):
-		GameState.damage_player(15)
-		get_viewport().set_input_as_handled()
-		return
-
 	# 自动战斗 / 自动拾取（F / G，3.14 / 9.9）；面板打开时不响应
 	if not GameState.panel_open:
 		if event.is_action_pressed("auto_battle"):

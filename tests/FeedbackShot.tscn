@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://tests/feedback_shot.gd" id="1_feedbackshot"]
-
-[node name="FeedbackShot" type="Node"]
-script = ExtResource("1_feedbackshot")

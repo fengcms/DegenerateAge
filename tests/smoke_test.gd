@@ -1856,26 +1856,28 @@ func _has_item_id(item_id: String) -> bool:
 			return true
 	return false
 
-# ---- 开发期测试便利：测试武器必须与掉落池隔离（防污染回归）----
+# ---- 掉落池卫生：表中不得有 debug 标记模板，且抽取零命中（通用防护）----
+## 原「测试武器模板 + 固定种子 500 次 0 命中」断言（开发期便利）已随测试武器移除
+## （批次③清理，2026-10-13）；保留不依赖具体 id 的通用断言。
 func _test_debug_seed() -> void:
-	var id := "debug_blade_overpower"
-	var tpl = DataLoader.get_entry("equipments", id)
-	_expect(tpl is Dictionary, "缺少开发期测试武器模板 %s" % id)
-	if tpl is Dictionary:
-		_expect(bool(tpl.get("debug", false)), "测试武器模板应带 debug 标记（否则会进掉落池）")
-		_expect(String(tpl.get("slot", "")) == "weapon", "测试武器应为 weapon 槽")
-		_expect(int((tpl.get("baseAttrs", {}) as Dictionary).get("atk", 0)) >= 100,
-			"测试武器攻击应显著高于普通装备")
+	var debug_ids: Array[String] = []
+	for e in DataLoader.get_table("equipments"):
+		if e is Dictionary and bool((e as Dictionary).get("debug", false)):
+			debug_ids.append(String((e as Dictionary).get("id", "")))
+	_expect(debug_ids.is_empty(), "equipments 表不应残留 debug 标记模板：%s" % str(debug_ids))
 
-	# 抽取 500 次野生掉落：测试武器一次都不应出现（Loot 跳过 debug 模板）
+	# 抽取 500 次野生掉落：任何 debug 模板一次都不应出现（Loot 跳过 debug 模板）
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20261011
 	var hits := 0
 	for _i in range(500):
 		for it in Loot.roll("DT_Wild_L1", rng):
-			if it is Dictionary and String(it.get("itemId", "")) == id:
+			if not (it is Dictionary):
+				continue
+			var tpl = DataLoader.get_entry("equipments", String((it as Dictionary).get("itemId", "")))
+			if tpl is Dictionary and bool((tpl as Dictionary).get("debug", false)):
 				hits += 1
-	_expect(hits == 0, "测试武器不应出现在掉落中（命中 %d 次）" % hits)
+	_expect(hits == 0, "掉落中不应出现 debug 标记模板（命中 %d 次）" % hits)
 
 # ============================================================================
 # M2 任务系统（R9；产品文档 08 / 工程文档 11）
@@ -2081,7 +2083,7 @@ func _test_quest_side() -> void:
 
 # ---- M1 世界装配：出生点 / 边界 / 怪物点 / NPC / 掉落容器（M1-5 / M1-6 / M1-8）----
 func _test_world() -> void:
-	GameState.reset_to_defaults()   # 保证发放测试武器时背包有空间
+	GameState.reset_to_defaults()   # 全新档：空背包 / 空装备，断言不受既有物品干扰
 	var game: Node = load("res://scenes/Game.tscn").instantiate()
 	add_child(game)
 	await get_tree().process_frame
@@ -2114,13 +2116,6 @@ func _test_world() -> void:
 			"营地图怪物点应至少 3 个（教学木桩），实际 %d" % spawner.point_count())
 		_expect(spawner.get_child_count() == spawner.point_count(),
 			"每个怪物点都应生成实例：点=%d 实例=%d" % [spawner.point_count(), spawner.get_child_count()])
-
-	# 开发期测试便利：开局应已把测试武器放进背包
-	var debug_found := false
-	for it in GameState.inventory:
-		if it is Dictionary and String(it.get("itemId", "")) == "debug_blade_overpower":
-			debug_found = true
-	_expect(debug_found, "开发期测试武器未发放到背包")
 
 	# M1-6：世界掉落容器
 	var loot_root: Node = game.get_node_or_null("LootRoot")

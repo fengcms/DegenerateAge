@@ -181,7 +181,7 @@ static func _apply_text_scale() -> void:
 static func text_scale_value() -> float:
 	return clampf(float(GameState.settings.get("textScale", 1.0)), TEXT_SCALE_MIN, TEXT_SCALE_MAX) * display_scale_factor()
 
-## 供外部（世界装配 / 开发期探针）对指定 UI 层直接应用文字缩放，不依赖 current_scene 路径
+## 供外部（测试 / 工具）对指定 UI 层直接应用文字缩放，不依赖 current_scene 路径
 ## —— 与 `apply_ui_scale_to` / `apply_map_scale_to` 同一模式。
 static func apply_text_scale_to(ui: Node) -> void:
 	if ui == null:

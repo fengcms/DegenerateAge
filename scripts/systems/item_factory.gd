@@ -2,18 +2,18 @@ class_name ItemFactory
 extends RefCounted
 ## 物品实例工厂（M2；工程文档 11 §4.3 F1 去重）。
 ##
-## 背景：装备实例构造原先散在 4 处（`Loot._roll_equip` / `game.gd._make_debug_equip` /
-## `Shop.make_item` / 任务奖励），重复且容易漂移。本层收敛为**一处**「模板 → 实例」的
+## 背景：装备实例构造原先散在 4 处（`Loot._roll_equip` / `Shop.make_item` /
+## 任务奖励 / 已移除的开发期测试装备），重复且容易漂移。本层收敛为**一处**「模板 → 实例」的
 ## 朴素构造：品质 / 等级 / 属性**原样取自模板**，不做缩放与随机。
 ##
 ## 边界（R-g）：随机品质权重 / 随机词条 / 等级缩放**仍归 `Loot._roll_equip`**，本层不碰。
-## 用途：任务奖励发放（`Quest`）、开发期测试装备（`game.gd`）、货郎构造商品（`Shop`）。
+## 用途：任务奖励发放（`Quest`）、货郎构造商品（`Shop`）。
 
 static var _seq: int = 0
 
 ## 依模板构造一件装备实例（属性原样取自模板，不做缩放与随机）。
 ## level ≤ 0 时取模板的 levelReq。模板不存在返回空字典（不静默凭空造物）。
-## instance_prefix：实例 id 前缀，开发期测试装备传 "debug" 便于辨识。
+## instance_prefix：实例 id 前缀（调用方自定义，便于辨识来源，如任务 / 商店）。
 static func make_equip(item_id: String, level: int = 0, instance_prefix: String = "inst") -> Dictionary:
 	var tpl = DataLoader.get_entry("equipments", item_id)
 	if not (tpl is Dictionary):
