@@ -86,7 +86,10 @@ func is_player_in_range() -> bool:
 ## 屏幕点击命中：覆盖人物与头顶名称；由世界统一决定接近和交互。
 func contains_screen_point(point: Vector2) -> bool:
 	var local := get_global_transform_with_canvas().affine_inverse() * point
-	return Rect2(-38.0, -66.0, 76.0, 82.0).has_point(local)
+	if Rect2(-38.0, -66.0, 76.0, 82.0).has_point(local):
+		return true
+	var label_local := _name_label.get_global_transform_with_canvas().affine_inverse() * point
+	return Rect2(Vector2.ZERO, _name_label.size).has_point(label_local)
 
 func _draw() -> void:
 	var cloak_color := Color("956b4b") if role == "blacksmith" else (Color("547784") if role == "warehouse" else COLOR_CLOAK)

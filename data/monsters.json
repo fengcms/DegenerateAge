@@ -2,6 +2,7 @@
   {
     "id": "training_dummy",
     "name": "木桩怪",
+    "headHpY": -74,
     "tier": 1,
     "level": 1,
     "hpBase": 50,

@@ -7,9 +7,9 @@ script = ExtResource("1_npc")
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -80.0
-offset_top = -48.0
+offset_top = -100.0
 offset_right = 80.0
-offset_bottom = -30.0
+offset_bottom = -82.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.94, 0.88, 0.72, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)

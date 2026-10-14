@@ -765,10 +765,16 @@ func _draw_ground_mark(color: Color, r: float) -> void:
 func _draw_head_hp_bar() -> void:
 	var s := _head_hp_size()
 	var x := -s.x * 0.5
-	var y := -46.0 if sample_art != null or dummy_art != null else -radius * 2.4
+	var y := _head_hp_y()
 	draw_rect(Rect2(x, y, s.x, s.y), COLOR_HP_BG)
 	draw_rect(Rect2(x, y, s.x * hp_ratio(), s.y), COLOR_HP_FG)
 	draw_rect(Rect2(x, y, s.x, s.y), Color(0, 0, 0, 0.5), false, 1.0)
+
+## 贴图怪默认沿用已验收的位置；特殊身高可在怪物模板中单独覆写。
+func _head_hp_y() -> float:
+	if sample_art != null or dummy_art != null:
+		return float(template.get("headHpY", -46.0))
+	return -radius * 2.4
 
 func _head_hp_size() -> Vector2:
 	match _kind():

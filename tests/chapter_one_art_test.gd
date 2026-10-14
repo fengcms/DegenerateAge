@@ -22,7 +22,10 @@ func _ready() -> void:
 		roles[npc.role] = true
 		var art := npc.get_node_or_null("RoleArt") as Sprite2D
 		expect(art != null and art.texture.get_size() == Vector2(512, 80), "Eight-direction NPC art: " + npc.role)
+		var name_label := npc.get_node("NameLabel") as Label
+		expect(name_label.position.y + name_label.size.y <= -64.0, "NPC name clears sprite head: " + npc.role)
 		expect(npc.contains_screen_point(npc.get_global_transform_with_canvas().origin + Vector2(0, -55)), "NPC sprite head remains clickable: " + npc.role)
+		expect(npc.contains_screen_point(name_label.get_global_transform_with_canvas() * (name_label.size * 0.5)), "Moved NPC name remains clickable: " + npc.role)
 	for role in ["quest", "shop", "blacksmith", "warehouse", "carter"]:
 		expect(roles.has(role), "Camp contains role " + role)
 	var dummy_count := 0
@@ -31,6 +34,7 @@ func _ready() -> void:
 		if monster != null and monster.monster_id == "training_dummy":
 			dummy_count += 1
 			expect(monster.dummy_art != null and monster.dummy_art.texture.get_size() == Vector2(192, 80), "Dummy has three visual states")
+			expect(monster._head_hp_y() <= -68.0, "Dummy HP bar clears sprite head")
 			monster.take_hit({"damage": 1, "miss": false}, null)
 			monster._physics_process(0.01)
 			expect(monster.dummy_art.frame == 1, "Dummy should visibly react to a hit")
@@ -54,6 +58,7 @@ func _ready() -> void:
 			found[monster.monster_id] = true
 			expect(monster.sample_art != null, "New enemy art attached: " + monster.monster_id)
 			if monster.sample_art != null:
+				expect(is_equal_approx(monster._head_hp_y(), -46.0), "Existing monster HP bar position stays unchanged: " + monster.monster_id)
 				var expected := Vector2(640, 640) if monster.monster_id == "shellback_bug" else Vector2(512, 640)
 				expect(monster.sample_art.texture.get_size() == expected, "Enemy atlas dimensions: " + monster.monster_id)
 				expect(monster.sample_art.hframes == 8 and monster.sample_art.vframes == 8, "Enemy has eight directions and pose rows")
