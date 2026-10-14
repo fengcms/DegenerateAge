@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1280" height="160" viewBox="0 0 1280 160" fill="none">
+<title>快捷栏与经验条设计稿｜1280×800 游戏视口底部 160 px</title>
+<desc>透明画布；12 个可配置操作格、4 个固定入口；下方为全宽可伸缩经验条。每一格和图标都是独立的可编辑 SVG 分组。</desc>
+<defs>
+  <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8B7857"/><stop offset="0.18" stop-color="#49463F"/><stop offset="0.54" stop-color="#202326"/><stop offset="1" stop-color="#12191D"/></linearGradient>
+  <linearGradient id="socket" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#283137"/><stop offset="0.45" stop-color="#11191C"/><stop offset="1" stop-color="#0B1115"/></linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2DDA2"/><stop offset="0.24" stop-color="#BBA16B"/><stop offset="0.6" stop-color="#735C3C"/><stop offset="1" stop-color="#D2B778"/></linearGradient>
+  <linearGradient id="redPotion" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F5786E"/><stop offset="0.45" stop-color="#BE383F"/><stop offset="1" stop-color="#601C2E"/></linearGradient>
+  <linearGradient id="bluePotion" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#B4F4F4"/><stop offset="0.4" stop-color="#45AFD2"/><stop offset="1" stop-color="#235074"/></linearGradient>
+  <linearGradient id="experience" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE5A4"/><stop offset="0.28" stop-color="#DCC27C"/><stop offset="0.62" stop-color="#9F8148"/><stop offset="1" stop-color="#5D4C30"/></linearGradient>
+  <linearGradient id="darkBar" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#20282C"/><stop offset="1" stop-color="#0A1013"/></linearGradient>
+  <filter id="softShadow" x="-25%" y="-50%" width="150%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<!-- 透明画布：上方游戏画面不受遮挡。该图显示游戏视口最下方 160px。 -->
+<g id="快捷栏-底座">
+  <path d="M269 38H808l8 8h190l12-8h2v66l-13 7H276l-13-7V44Z" fill="#070B0D" fill-opacity=".56" filter="url(#softShadow)"/>
+  <path d="M273 39H810l8 7h184l11-7h2v57l-11 8H276l-11-8V46Z" fill="url(#metal)" stroke="#9D8356" stroke-width="1.4"/>
+  <path d="M277 45H806l9 7h191l3-4v44l-7 6H278l-7-6V49Z" fill="#11181C" stroke="#514A3A"/>
+  <path d="M283 40H802M821 47H997M282 102H1001" stroke="#D9BF83" stroke-opacity=".56" stroke-width=".8"/>
+  <path d="M639 36l8 7-8 8-8-8Z" fill="url(#gold)" stroke="#342E27"/>
+  <path d="M812 42l8 8-8 8-8-8Z" fill="#B89A61" stroke="#2B2B29"/>
+  <path d="M278 40l-9 9v43l9 10M1004 40l9 9v43l-9 10" stroke="#E0C585" stroke-opacity=".65"/>
+</g>
+<g id="可配置-01" transform="translate(282 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-自动红药">
+    <path d="M16 11v-3h8v3l2 2-1 3c3 2 5 5 5 10 0 6-4 9-10 9s-10-3-10-9c0-5 2-8 5-10l-1-3Z" fill="url(#redPotion)" stroke="#FFD2A7" stroke-width="1.5"/>
+    <path d="M16 10h8M14 15h12" stroke="#D6CBAD" stroke-width="1.8"/>
+    <path d="M14 22c1-4 3-5 4-5" stroke="white" stroke-opacity=".65" stroke-width="2" stroke-linecap="round"/>
+    <text x="20" y="30" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#F9F3DB">+</text>
+  </g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">1</text>
+</g>
+<g id="可配置-02" transform="translate(326 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-自动蓝药">
+    <path d="M16 11v-3h8v3l2 2-1 3c3 2 5 5 5 10 0 6-4 9-10 9s-10-3-10-9c0-5 2-8 5-10l-1-3Z" fill="url(#bluePotion)" stroke="#BDF0F0" stroke-width="1.5"/>
+    <path d="M16 10h8M14 15h12" stroke="#D6CBAD" stroke-width="1.8"/>
+    <path d="M14 22c1-4 3-5 4-5" stroke="white" stroke-opacity=".65" stroke-width="2" stroke-linecap="round"/>
+    <text x="20" y="30" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#F9F3DB">◆</text>
+  </g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">2</text>
+</g>
+<g id="可配置-03" transform="translate(370 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-基础斩击">
+    <path d="M10 29 29 9l3-1-1 4-18 19-4 1Z" fill="#DDE7DF" stroke="#88AEB4" stroke-width="1.1"/>
+    <path d="M9 22 18 31M11 25l-4 6m6-3-4 6" stroke="#E2BD7B" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M25 14l5-5" stroke="white" stroke-opacity=".8"/>
+  </g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">3</text>
+</g>
+<g id="可配置-04" transform="translate(414 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">4</text>
+</g>
+<g id="可配置-05" transform="translate(458 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">5</text>
+</g>
+<g id="可配置-06" transform="translate(502 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">6</text>
+</g>
+<g id="可配置-07" transform="translate(546 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">7</text>
+</g>
+<g id="可配置-08" transform="translate(590 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">8</text>
+</g>
+<g id="可配置-09" transform="translate(634 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">9</text>
+</g>
+<g id="可配置-10" transform="translate(678 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">0</text>
+</g>
+<g id="可配置-11" transform="translate(722 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">−</text>
+</g>
+<g id="可配置-12" transform="translate(766 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="空格-内衬"><path d="M12 20h16M20 12v16" stroke="#334043" stroke-width=".8"/><circle cx="20" cy="20" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">=</text>
+</g>
+<g id="固定入口-13" transform="translate(822 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-人物"><circle cx="20" cy="14" r="5" fill="#D9C590"/><path d="M9 31c1-8 6-11 11-11s10 3 11 11Z" fill="#AD925F" stroke="#E3C989"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">C</text>
+</g>
+<g id="固定入口-14" transform="translate(866 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-背包"><path d="M10 16h20v16H10Z" fill="#8C6946" stroke="#DBC185"/><path d="M14 15c0-7 12-7 12 0" stroke="#DDC890" stroke-width="2"/><path d="M18 22h4v5h-4Z" fill="#D5BD83"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">I</text>
+</g>
+<g id="固定入口-15" transform="translate(910 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-技能"><path d="M22 6 9 22h9l-2 12 15-19h-9l2-9Z" fill="#7FCFD1" stroke="#D6F2E8" stroke-width="1.5"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">K</text>
+</g>
+<g id="固定入口-16" transform="translate(954 52)">
+  <rect x="-1" y="-1" width="42" height="42" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="3" fill="url(#gold)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="2" fill="url(#socket)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M4 11V4h7M28 4h7v7M4 29v7h7M28 36h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <g id="图标-坐骑"><path d="M8 29c4-8 6-13 11-14l6-5 2 5 6 2-1 5-5 1-2 7-7 1-3-5-5 4Z" fill="#B8A377" stroke="#E7D7A5" stroke-width="1.4"/><circle cx="27" cy="19" r="1" fill="#171C1B"/></g>
+  <rect x="3" y="3" width="12" height="10" rx="1" fill="#0A1012" fill-opacity=".88"/>
+  <text x="9" y="11.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" font-weight="bold" fill="#F4E4B9">N</text>
+</g>
+<g id="经验条-全宽-可伸缩">
+  <path d="M5 123H1275v17H5Z" fill="#050A0D" fill-opacity=".58" filter="url(#softShadow)"/>
+  <path d="M8 121H1272l-5 16H13Z" fill="url(#metal)" stroke="#B29966" stroke-width="1.1"/>
+  <path d="M16 124H1264l-3 9H19Z" fill="url(#darkBar)"/>
+  <!-- 示意进度 46%；正式实现以游戏经验值驱动，条上不常驻数值。 -->
+  <path id="经验填充-示意46百分比" d="M19 125H590v7H21Z" fill="url(#experience)"/>
+  <path d="M20 126H587" stroke="#FFF0B8" stroke-opacity=".68" stroke-width="1"/>
+  <path d="M590 124l4 4-4 5-4-5Z" fill="#F9E5AC"/>
+  <path d="M16 124h1248M19 134h1242" stroke="#D6BA7F" stroke-opacity=".35" stroke-width=".7"/>
+  <path d="M13 121l-8 8 8 8M1267 121l8 8-8 8" stroke="#E3C988" stroke-width="1.4"/>
+</g>
+</svg>
