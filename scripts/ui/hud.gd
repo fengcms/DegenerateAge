@@ -1,6 +1,6 @@
 extends Control
 ## HUD（M1-3 最小版，依据产品文档 9.1）。
-## 玩家状态区（头像 / 名称 / 等级 / 血蓝槽）+ 金币 + 目标状态区 + 地图信息 + 16 格快捷栏占位。
+## 玩家状态区（头像 / 名称 / 等级 / 细血蓝槽 / 自动状态图标）+ 目标状态区 + 地图信息 + 16 格快捷栏。
 ## 全部数值经 EventBus 广播驱动刷新，不做轮询（内存与事件卫生）。
 
 const HOTBAR_SLOTS := 16
@@ -14,15 +14,18 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 
 @onready var _name_label: Label = %NameLabel
 @onready var _level_label: Label = %LevelLabel
-@onready var _hp_bar: ProgressBar = %HpBar
+@onready var _hp_bar: HudStatusBar = %HpBar
 @onready var _hp_text: Label = %HpText
-@onready var _mp_bar: ProgressBar = %MpBar
+@onready var _mp_bar: HudStatusBar = %MpBar
 @onready var _mp_text: Label = %MpText
 @onready var _exp_bar: ProgressBar = %ExpBar
 @onready var _gold_label: Label = %GoldLabel
 @onready var _bag_label: Label = %BagLabel
 @onready var _auto_label: Label = %AutoLabel
 @onready var _buff_label: Label = %BuffLabel
+@onready var _battle_icon: HudStatusIcon = %AutoBattleIcon
+@onready var _pickup_icon: HudStatusIcon = %AutoPickupIcon
+@onready var _focus_icon: HudStatusIcon = %BattleFocusIcon
 @onready var _toast_box: VBoxContainer = %ToastBox
 @onready var _map_name: Label = %MapName
 @onready var _map_coords: Label = %MapCoords
@@ -75,17 +78,22 @@ func _process(_delta: float) -> void:
 	_update_target()
 	var remaining := GameState.buff_remaining("battle_focus")
 	_buff_label.text = Localization.tr_key("ui.hud.p001") % remaining if remaining > 0.0 else ""
+	_focus_icon.visible = remaining > 0.0
+	if remaining > 0.0:
+		_focus_icon.tooltip_text = _buff_label.text
 
 # ---- 事件回调 ----
 
 func _on_hp(current: int, maximum: int) -> void:
 	_hp_bar.max_value = maxi(1, maximum)
 	_hp_bar.value = current
+	_hp_bar.tooltip_text = "%s  %d / %d" % [Localization.tr_key("ui.hud.hp"), current, maximum]
 	_hp_text.text = "%d / %d" % [current, maximum]
 
 func _on_mp(current: int, maximum: int) -> void:
 	_mp_bar.max_value = maxi(1, maximum)
 	_mp_bar.value = current
+	_mp_bar.tooltip_text = "%s  %d / %d" % [Localization.tr_key("ui.hud.mp"), current, maximum]
 	_mp_text.text = "%d / %d" % [current, maximum]
 
 func _on_xp(current: int, maximum: int) -> void:
@@ -96,7 +104,8 @@ func _on_gold(amount: int) -> void:
 	_gold_label.text = Localization.tr_key("ui.hud.p002") % amount
 
 func _on_level(level: int) -> void:
-	_level_label.text = "Lv%d" % level
+	_level_label.text = "%d" % level
+	_level_label.tooltip_text = "%s %d" % [Localization.tr_key("ui.hud.level"), level]
 
 func _on_target(target: Node) -> void:
 	_target = target
@@ -125,20 +134,27 @@ func _on_sitting_changed(_sitting: bool) -> void:
 
 func _refresh_auto() -> void:
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
-	if player != null and player.is_sitting:
+	var sitting := player != null and player.is_sitting
+	if sitting:
 		_auto_label.text = Localization.tr_key("ui.hud.p004") if not _auto_battle else Localization.tr_key("ui.hud.p005")
 		_auto_label.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
-		return
-	if not _auto_battle:
+	elif not _auto_battle:
 		_auto_label.text = Localization.tr_key("ui.hud.p006")
 		_auto_label.add_theme_color_override("font_color", COL_AUTO_OFF)
-		return
-	var tail := ""
-	if _auto_pickup and not _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")):
-		tail = Localization.tr_key("ui.hud.pickup_on")
-	_auto_label.text = Localization.tr_key("ui.hud.p007") % [_auto_phase if not _auto_phase.is_empty() else Localization.tr_key("ui.hud.p008"), tail]
-	var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) else COL_AUTO_ON
-	_auto_label.add_theme_color_override("font_color", col)
+	else:
+		var tail := ""
+		if _auto_pickup and not _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")):
+			tail = Localization.tr_key("ui.hud.pickup_on")
+		_auto_label.text = Localization.tr_key("ui.hud.p007") % [_auto_phase if not _auto_phase.is_empty() else Localization.tr_key("ui.hud.p008"), tail]
+		var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) else COL_AUTO_ON
+		_auto_label.add_theme_color_override("font_color", col)
+	var paused := sitting or _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) or _auto_phase == Localization.tr_key("ui.auto.paused")
+	_battle_icon.active = _auto_battle
+	_battle_icon.paused = _auto_battle and paused
+	_battle_icon.tooltip_text = "%s · F" % _auto_label.text
+	_pickup_icon.active = _auto_pickup
+	_pickup_icon.paused = _auto_pickup and sitting
+	_pickup_icon.tooltip_text = "%s · G" % Localization.tr_key("ui.hud.pickup_icon_on" if _auto_pickup else "ui.hud.pickup_icon_off")
 
 ## 系统提示 Toast（9.6，最小版；完整样式在 M5-5 完善）。
 ## M6-0e（创意 07 §10）：`legendary` 提示停留更久（合计 3s）并放大字号。

@@ -14,6 +14,10 @@ func _ready() -> void:
 	GameState.menu_mode = "world"
 	GameState.current_map = map_id
 	GameState.visited_maps = ["camp", "wild_trial", "ash_land"]
+	var hud_demo_active := OS.get_cmdline_user_args().has("--hud-demo-active")
+	if hud_demo_active:
+		GameState.auto_battle_on = true
+		GameState.auto_pickup_on = true
 	GameState.save_pos = Iso.grid_to_world(Vector2i(20, 20) if map_id == "camp" else Vector2i(30, 30))
 	GameState.has_save_pos = true
 	SaveManager.active_slot = -1
@@ -21,21 +25,23 @@ func _ready() -> void:
 	var main := preload("res://scenes/Main.tscn").instantiate()
 	main.name = "Main"
 	add_child(main)
-	var label := Label.new()
-	label.text = "第一章角色样板 · 营地 NPC / 木桩 · 野外裂壳虫 · 灰烬游魂 · WASD 移动 · E 交互"
-	label.position = Vector2(20, 180)
-	label.add_theme_font_size_override("font_size", 14)
-	label.add_theme_color_override("font_color", Color("e6ddc6"))
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var layer := CanvasLayer.new()
-	layer.layer = 5
-	add_child(layer)
-	layer.add_child(label)
+	var hud_capture := OS.get_cmdline_user_args().has("--hud-capture")
+	if not hud_capture:
+		var label := Label.new()
+		label.text = "第一章角色样板 · 营地 NPC / 木桩 · 野外裂壳虫 · 灰烬游魂 · WASD 移动 · E 交互"
+		label.position = Vector2(20, 180)
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color("e6ddc6"))
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var layer := CanvasLayer.new()
+		layer.layer = 5
+		add_child(layer)
+		layer.add_child(label)
 	GameState.emit_all()
-	if OS.get_cmdline_user_args().has("--art-capture"):
-		capture_review.call_deferred(map_id)
+	if OS.get_cmdline_user_args().has("--art-capture") or hud_capture:
+		capture_review.call_deferred(map_id, hud_capture, hud_demo_active)
 
-func capture_review(map_id: String) -> void:
+func capture_review(map_id: String, hud_capture := false, hud_demo_active := false) -> void:
 	var player := $Main/Game/Entities/Player as PlayerCharacter
 	GameState.settings.mapScale = 1.0
 	SettingsRuntime.apply_map_scale_to(player.get_node("Camera2D"))
@@ -63,6 +69,7 @@ func capture_review(map_id: String) -> void:
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var file := "camp.png" if map_id == "camp" else "wild.png" if map_id == "wild_trial" else "ash.png"
-	get_viewport().get_texture().get_image().save_png(REVIEW_ROOT + file)
-	print("[ChapterOneArtSample] captured ", file)
+	var output := "res://docs/素材设计/样板/HUD布局-v1/自动开启实机.png" if hud_demo_active else "res://docs/素材设计/样板/HUD布局-v1/营地实机.png" if hud_capture else REVIEW_ROOT + file
+	get_viewport().get_texture().get_image().save_png(output)
+	print("[ChapterOneArtSample] captured ", output)
 	get_tree().quit()

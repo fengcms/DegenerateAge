@@ -72,6 +72,8 @@
   "ui.hud.p007": "自动  %s%s",
   "ui.hud.p008": "启动中",
   "ui.hud.p009": "守护者",
+  "ui.hud.pickup_icon_on": "自动拾取已开启",
+  "ui.hud.pickup_icon_off": "自动拾取已关闭",
   "ui.hud.p010": "…还有 %d 条",
   "ui.hud.p011": "　可交付",
   "ui.hud.p012": "无法导航到目标",
