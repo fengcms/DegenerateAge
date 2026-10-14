@@ -63,6 +63,9 @@ func _process(_delta: float) -> void:
 		Fog.reveal(GameState.current_map, cell)
 
 func request_map_move(point: Vector2) -> bool:
+	if _ground.is_locked_boss_area(point):
+		EventBus.toast_requested.emit("先完成「最后的巡检」，打开主机场地安全锁。", "info")
+		return false
 	if not _player.request_map_move(_ground.clamp_to_map(point)):
 		return false
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game.p001"), "info")

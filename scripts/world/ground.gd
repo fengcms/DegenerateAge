@@ -56,6 +56,9 @@ func _ready() -> void:
 	if not layout_path.is_empty():
 		cave = CaveLayout.new(layout_path)
 		assert(cave.size == grid_size, "Map size/layout mismatch: %s" % map_id)
+		if map_id == "c2_well_core":
+			cave.set_access_gate_open(bool(GameState.unlocks.get("c2_core_access", false)))
+			EventBus.quest_rewarded.connect(_on_quest_rewarded)
 	if map_id == "corruption_source" and layout_path.is_empty():
 		add_child(preload("res://scripts/world/cave_props.gd").new())
 	if map_id == "camp" or sample_camp_theme:
@@ -98,6 +101,20 @@ func clamp_to_map(world: Vector2) -> Vector2:
 func is_walkable_cell(cell: Vector2i) -> bool:
 	return cave == null or cave.is_walkable(cell)
 
+func is_locked_boss_area(world: Vector2) -> bool:
+	return cave != null and cave.is_behind_access_gate(Vector2i(Iso.world_to_grid(world).round()))
+
+func _on_quest_rewarded(_quest_id: String) -> void:
+	if map_id != "c2_well_core" or cave == null or not bool(GameState.unlocks.get("c2_core_access", false)):
+		return
+	cave.set_access_gate_open(true)
+	var walls := get_node_or_null("CaveWalls")
+	if walls != null:
+		walls.name = "RetiredCaveWalls"
+		walls.queue_free()
+	_build_cave_walls()
+	queue_redraw()
+
 func route(from_world: Vector2, to_world: Vector2) -> Array[Vector2]:
 	var result: Array[Vector2] = []
 	if cave == null:
@@ -139,18 +156,22 @@ func _build_boundary() -> void:
 	add_child(body)
 	for i in range(pts.size()):
 		_add_wall(body, pts[i], pts[(i + 1) % pts.size()])
-	if cave != null:
-		var rock := StaticBody2D.new()
-		rock.name = "CaveWalls"
-		add_child(rock)
-		var diamond := PackedVector2Array([Vector2(-31, 0), Vector2(0, -15), Vector2(31, 0), Vector2(0, 15)])
-		for cell in cave.boundary_cells():
-			var shape := ConvexPolygonShape2D.new()
-			shape.points = diamond
-			var hit := CollisionShape2D.new()
-			hit.shape = shape
-			hit.position = Iso.grid_to_world(cell)
-			rock.add_child(hit)
+	_build_cave_walls()
+
+func _build_cave_walls() -> void:
+	if cave == null:
+		return
+	var rock := StaticBody2D.new()
+	rock.name = "CaveWalls"
+	add_child(rock)
+	var diamond := PackedVector2Array([Vector2(-31, 0), Vector2(0, -15), Vector2(31, 0), Vector2(0, 15)])
+	for cell in cave.boundary_cells():
+		var shape := ConvexPolygonShape2D.new()
+		shape.points = diamond
+		var hit := CollisionShape2D.new()
+		hit.shape = shape
+		hit.position = Iso.grid_to_world(cell)
+		rock.add_child(hit)
 
 func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 	var seg := b - a

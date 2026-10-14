@@ -44,5 +44,34 @@ func _ready() -> void:
 	check(ground.map_id == "c2_well_town" and ground.cave != null, "沉井镇世界按新版布局装配")
 	check(main.get_node("Game/Npcs").get_child_count() == 8, "沉井镇装配八名故事 NPC")
 	check(main.get_node("Game/Exits").get_child_count() == 2, "沉井镇装配双向道路")
+	main.queue_free()
+	await get_tree().process_frame
+	GameState.current_map = "c2_well_core"
+	GameState.unlocks["c2_backup_furnace"] = true
+	var core := preload("res://scenes/Game.tscn").instantiate()
+	add_child(core)
+	var core_ground := core.get_node("Ground") as IsoGround
+	var boss_point := Iso.grid_to_world(Vector2i(177, 58))
+	check(core_ground.is_locked_boss_area(boss_point), "Q10 交付前主机场地被锁住")
+	check(core_ground.route(Iso.grid_to_world(Vector2i(143, 58)), boss_point).is_empty(), "门禁与寻路使用同一阻挡网格")
+	check(not core.request_map_move(boss_point), "点击封锁区给出拒绝，不会自动绕行穿门")
+	GameState.unlocks["c2_core_access"] = true
+	EventBus.quest_rewarded.emit("C2Q10")
+	check(not core_ground.is_locked_boss_area(boss_point), "领奖后主机场地即时开放")
+	check(not core_ground.route(Iso.grid_to_world(Vector2i(143, 58)), boss_point).is_empty(), "领奖后寻路可穿过安全锁")
+	var old_pos := Iso.grid_to_world(Vector2i(20, 20))
+	var save := SaveManager._collect()
+	save.erase("mapLayoutVersion")
+	save.currentMap = "camp"
+	save.playerPos = [old_pos.x, old_pos.y]
+	save.spawnRespawn = {"camp#dummy#0": {"readyAt": 25.0, "pos": [old_pos.x, old_pos.y]}}
+	save.unclaimedLoot = {"camp": [{"uid": "layout-test", "batchId": "old",
+		"item": {"kind": "coin", "itemId": "coin", "gold": 5, "count": 1}, "pos": [old_pos.x, old_pos.y]}]}
+	check(SaveManager._is_valid_save(save), "未标布局版本的 schema11 第一章存档仍可读取")
+	var migrated := SaveManager._migrate(save)
+	check(migrated.mapLayoutVersion == "2026-10-14-landscape-v2", "迁移后标记新版布局")
+	check(migrated.playerPos != save.playerPos and migrated.spawnRespawn["camp#dummy#0"].pos == migrated.playerPos
+		and migrated.unclaimedLoot.camp[0].pos == migrated.playerPos, "玩家、墓碑与未领掉落同步迁移")
+	check(SaveManager._migrate(migrated).playerPos == migrated.playerPos, "重复读取不会再次迁移坐标")
 	print("[ChapterTwoRoutesTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)

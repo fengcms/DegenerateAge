@@ -7,6 +7,7 @@ const PATH := "res://data/cave_layout.json"
 var size := Vector2i(50, 50)
 var points: Dictionary = {}
 var _blocked: Dictionary = {}
+var _access_gate_cells: Dictionary = {}
 var _astar := AStarGrid2D.new()
 
 func _init(layout_path: String = PATH) -> void:
@@ -36,14 +37,34 @@ func _init(layout_path: String = PATH) -> void:
 		_astar.set_point_solid(cell)
 
 func is_walkable(cell: Vector2i) -> bool:
-	return cell.x >= 0 and cell.y >= 0 and cell.x < size.x and cell.y < size.y and not _blocked.has(cell)
+	return cell.x >= 0 and cell.y >= 0 and cell.x < size.x and cell.y < size.y \
+		and not _blocked.has(cell) and not _access_gate_cells.has(cell)
 
 func blocked_cells() -> Array:
-	return _blocked.keys()
+	return _blocked.keys() + _access_gate_cells.keys()
+
+## 井心主机场地在 C2Q10 交付前关闭；使用同一网格约束寻路与物理碰撞。
+func set_access_gate_open(open: bool) -> void:
+	if not points.has("gate"):
+		return
+	var gate: Array = points["gate"]
+	var x := int(gate[0])
+	if open == _access_gate_cells.is_empty():
+		return
+	_access_gate_cells.clear()
+	for y in range(size.y):
+		var cell := Vector2i(x, y)
+		if not _blocked.has(cell):
+			if not open:
+				_access_gate_cells[cell] = true
+			_astar.set_point_solid(cell, not open)
+
+func is_behind_access_gate(cell: Vector2i) -> bool:
+	return not _access_gate_cells.is_empty() and cell.x > int((points["gate"] as Array)[0])
 
 func boundary_cells() -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	for raw in _blocked:
+	for raw in blocked_cells():
 		var cell: Vector2i = raw
 		if is_walkable(cell + Vector2i(1, 0)) or is_walkable(cell + Vector2i(-1, 0)) or is_walkable(cell + Vector2i(0, 1)) or is_walkable(cell + Vector2i(0, -1)):
 			result.append(cell)
