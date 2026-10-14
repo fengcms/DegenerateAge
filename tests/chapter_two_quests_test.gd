@@ -60,6 +60,25 @@ func _ready() -> void:
 	check(Quest.deliver("C2Q12", "c2_qi_yan").ok and bool(GameState.unlocks.get("chapter3", false)),
 		"第二章完成，仅写入第三章解锁标记")
 	check(not Quest.deliver("C2Q12", "c2_qi_yan").ok, "不能重复领奖")
+	_run_kill("C2S01", "c2_miao_miao", "c2_miao_miao", "c2_pipe_slope", "c2_copper_worm", 8)
+	_run_collect("C2S02", "c2_qi_yan", "c2_qi_yan", "c2_lower_works", "c2_badge_wraith", 3)
+	_run_kill("C2S03", "c2_xu_zhu", "c2_xu_zhu", "c2_lower_works", "c2_elite_broken_inspector", 1)
+	_run_kill("C2S04", "c2_bai_zhi", "c2_bai_zhi", "c2_ember_furnace", "c2_elite_copper_matriarch", 1)
+	GameState.current_map = "c2_ember_furnace"
+	Quest.on_event("monster_died", "c2_boss_slag_devourer")
+	GameState.first_clear["c2_boss_slag_devourer"] = true
+	GameState.current_map = "c2_well_town"
+	check(Quest.accept("C2S05", "c2_bai_zhi").ok, "可选炉房 Boss 支线可接取")
+	check(Quest.state_of("C2S05") == Quest.STATE_COMPLETED, "任务接取前的 Boss 首杀可回溯")
+	check(Quest.deliver("C2S05", "c2_bai_zhi").ok, "回溯后仍需指定 NPC 交付")
+	_run_kill("C2S06", "c2_lao_zhe", "c2_lao_zhe", "c2_pipe_slope", "c2_elite_broken_inspector", 1)
+	var saved := SaveManager._collect()
+	check(SaveManager._is_valid_save(saved), "两章任务结算后存档结构合法")
+	GameState.reset_to_defaults()
+	SaveManager.apply_to_game_state(saved)
+	check(Quest.state_of("C2Q12") == Quest.STATE_REWARDED and Quest.state_of("C2S06") == Quest.STATE_REWARDED
+		and bool(GameState.unlocks.get("chapter3", false)), "重载后主支线与章节标记不倒退")
+	check(not Quest.deliver("C2S06", "c2_lao_zhe").ok, "重载后不能重复领取支线奖励")
 	print("[ChapterTwoQuestsTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
