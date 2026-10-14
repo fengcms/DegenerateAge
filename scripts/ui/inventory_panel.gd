@@ -168,6 +168,12 @@ func _build() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
+	var help := Button.new()
+	help.text = "❓"
+	help.flat = true
+	help.tooltip_text = Localization.tr_key("ui.inventory_panel.p013")
+	help.custom_minimum_size = Vector2(32, 28)
+	head.add_child(help)
 	var close := Button.new()
 	close.text = "×"
 	close.custom_minimum_size = Vector2(32, 28)
@@ -244,11 +250,6 @@ func _build() -> void:
 	_summary.add_theme_font_size_override("font_size", 14)
 	root.add_child(_summary)
 
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.inventory_panel.p013")
-	hint.add_theme_font_size_override("font_size", 12)
-	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
-	root.add_child(hint)
 
 ## 背包格：使用 ItemSlot（可用物品拖到快捷栏；交易时装备可拖到出售托盘）。
 ## 人物面板的装备槽由 EquipmentSlot 负责，这里只创建背包等物品格。
