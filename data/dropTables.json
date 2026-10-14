@@ -32,7 +32,9 @@
           "common": 70,
           "uncommon": 25,
           "rare": 5
-        }
+        },
+        "requiredLevel": 1,
+        "templatePool": "normal"
       }
     ]
   },
@@ -92,7 +94,8 @@
         "qualityWeight": {
           "common": 70,
           "uncommon": 30
-        }
+        },
+        "requiredLevel": 1
       },
       {
         "kind": "equip",
@@ -110,7 +113,8 @@
           "uncommon": 70,
           "rare": 27,
           "epic": 3
-        }
+        },
+        "requiredLevel": 1
       },
       {
         "kind": "potion",
@@ -158,7 +162,9 @@
           "uncommon": 30,
           "rare": 13,
           "epic": 2
-        }
+        },
+        "requiredLevel": 1,
+        "templatePool": "normal"
       }
     ]
   },
@@ -177,7 +183,7 @@
           9,
           10
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 1,
         "templatePool": "normal",
         "qualityWeight": {
           "common": 70,
@@ -195,7 +201,7 @@
           9,
           10
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 1,
         "templatePool": "normal",
         "qualityWeight": {
           "rare": 75,
@@ -213,7 +219,7 @@
           9,
           10
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 1,
         "templatePool": "legendary",
         "qualityWeight": {
           "legendary": 100
@@ -256,7 +262,7 @@
   },
   {
     "id": "DT_C2_Normal",
-    "desc": "第二章普通怪；三轴 Lv10 档。",
+    "desc": "第二章普通怪；两档制式 Lv11 档。",
     "entries": [
       {
         "kind": "coin",
@@ -283,7 +289,7 @@
           11,
           19
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 55,
@@ -317,7 +323,7 @@
           13,
           19
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 65,
@@ -335,7 +341,7 @@
           13,
           19
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "uncommon": 70,
@@ -378,7 +384,7 @@
           15,
           20
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 70,
@@ -396,7 +402,7 @@
           15,
           20
         ],
-        "requiredLevel": 10,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "rare": 75,
@@ -414,8 +420,8 @@
           15,
           20
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_legendary_iron",
+        "requiredLevel": 11,
+        "templatePool": "c2_legendary",
         "qualityWeight": {
           "legendary": 100
         }
@@ -463,8 +469,8 @@
           20,
           20
         ],
-        "requiredLevel": 20,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 55,
           "uncommon": 30,
@@ -497,8 +503,8 @@
           20,
           20
         ],
-        "requiredLevel": 20,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 65,
           "uncommon": 35
@@ -515,8 +521,8 @@
           20,
           20
         ],
-        "requiredLevel": 20,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "uncommon": 70,
           "rare": 27,
@@ -558,7 +564,7 @@
           20,
           20
         ],
-        "requiredLevel": 20,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 70,
@@ -576,7 +582,7 @@
           20,
           20
         ],
-        "requiredLevel": 20,
+        "requiredLevel": 11,
         "templatePool": "c2_normal",
         "qualityWeight": {
           "rare": 75,
@@ -594,8 +600,8 @@
           20,
           20
         ],
-        "requiredLevel": 20,
-        "templatePool": "c2_legendary_final",
+        "requiredLevel": 11,
+        "templatePool": "c2_legendary",
         "qualityWeight": {
           "legendary": 100
         }
@@ -648,8 +654,8 @@
           11,
           19
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 55,
           "uncommon": 30,
@@ -682,8 +688,8 @@
           13,
           19
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 65,
           "uncommon": 35
@@ -700,8 +706,8 @@
           13,
           19
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "uncommon": 70,
           "rare": 27,
@@ -743,8 +749,8 @@
           15,
           20
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 70,
           "uncommon": 30
@@ -761,8 +767,8 @@
           15,
           20
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_modified",
+        "requiredLevel": 11,
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "rare": 75,
           "epic": 25
@@ -779,8 +785,8 @@
           15,
           20
         ],
-        "requiredLevel": 10,
-        "templatePool": "c2_legendary_slag",
+        "requiredLevel": 11,
+        "templatePool": "c2_legendary",
         "qualityWeight": {
           "legendary": 100
         }

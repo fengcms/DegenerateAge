@@ -20,7 +20,21 @@ const MAX_SLOTS := 3
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
 ## v10（工程文档 22）新增：`inventoryExpansions`，存档校验按扩容次数检查背包长度。
 ## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
-const CURRENT_SCHEMA := 11
+const CURRENT_SCHEMA := 12
+## 旧目录只用于 v11 读档迁移；正式装备表始终只有二十个型号。
+const EQUIPMENT_LEGACY_IDS := {
+	"weapon_starter": "weapon_iron", "armor_starter": "armor_cloth",
+	"weapon_wolfking": "weapon_iron", "weapon_legendary_vein_guard": "weapon_iron",
+	"c2_inspector_armor": "c2_road_armor", "c2_backup_blade": "c2_road_blade",
+	"c2_apprentice_bracer": "c2_road_bracer", "c2_slag_shield": "c2_copper_shield",
+	"c2_road_blade_modified": "c2_road_blade", "c2_copper_shield_modified": "c2_copper_shield",
+	"c2_road_armor_modified": "c2_road_armor", "c2_road_helmet_modified": "c2_road_helmet",
+	"c2_road_shoes_modified": "c2_road_shoes", "c2_road_bracer_modified": "c2_road_bracer",
+	"c2_road_knee_modified": "c2_road_knee", "c2_copper_bracelet_modified": "c2_copper_bracelet",
+	"c2_road_ring_modified": "c2_road_ring", "c2_warm_necklace_modified": "c2_warm_necklace",
+	"c2_foreman_gauntlet": "c2_road_blade", "c2_devourer_heart": "c2_warm_necklace",
+	"c2_extractor_eye": "c2_road_ring",
+}
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -344,8 +358,8 @@ func _emit_resume_toast() -> void:
 func _migrate(source: Dictionary) -> Dictionary:
 	var data := source.duplicate(true)
 	var v := int(data.get("schemaVersion", -1))
-	# schema 11 的第一章存档仍使用旧方形布局；布局版本独立于装备 schema。
-	if not data.has("mapLayoutVersion") and v == CURRENT_SCHEMA:
+	# schema 11—12 的第一章存档若尚无布局版本，仍需完成独立的地图坐标转换。
+	if not data.has("mapLayoutVersion") and v >= 11:
 		_migrate_landscape_positions(data)
 		data.mapLayoutVersion = "2026-10-14-landscape-v2"
 	# 仅明确声明的 v0 支持历史最小角色格式；不能把无版本坏档当旧档补空。
@@ -367,6 +381,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 		data.settings = _migrate_settings(data.settings)
 	if not data.get("questItems") is Dictionary:
 		data.questItems = {}
+	if v == 11:
+		_migrate_equipment_catalog(data)
 	if v >= 0 and v < CURRENT_SCHEMA:
 		if not data.has("unlocks"):
 			data.unlocks = {}
@@ -396,6 +412,73 @@ func _migrate(source: Dictionary) -> Dictionary:
 			data.inventoryExpansions = 0
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
+
+## v11 装备目录归并为每档每部位唯一型号；保留实例 ID、品质、星级和词条。
+## 已穿但不足 Lv11 的旧第二档装备转入背包、仓库或玩家所在位置的未领取战利品，绝不丢件。
+func _migrate_equipment_catalog(data: Dictionary) -> void:
+	for key in ["inventory", "warehouse"]:
+		var items: Variant = data.get(key)
+		if items is Array:
+			for item in items:
+				_migrate_equipment_item(item)
+	var worn: Variant = data.get("equipment")
+	if worn is Dictionary:
+		for slot in worn:
+			var item: Variant = worn[slot]
+			_migrate_equipment_item(item)
+			if item is Dictionary and String(item.get("kind", "")) == "equip" \
+					and int(item.get("requiredLevel", 1)) > int(data.get("player", {}).get("level", 1)):
+				worn[slot] = null
+				_store_migrated_unequipped(data, item)
+	var by_map: Variant = data.get("unclaimedLoot")
+	if by_map is Dictionary:
+		for map_id in by_map:
+			var rows: Variant = by_map[map_id]
+			if rows is Array:
+				for row in rows:
+					if row is Dictionary:
+						_migrate_equipment_item(row.get("item"))
+
+## 将旧装备实例改为新目录的型号与基底；无法识别的 ID 留给严格存档校验拒绝。
+func _migrate_equipment_item(value: Variant) -> void:
+	if not value is Dictionary or String(value.get("kind", "")) != "equip":
+		return
+	var old_id := String(value.get("itemId", ""))
+	var new_id := String(EQUIPMENT_LEGACY_IDS.get(old_id, old_id))
+	var tpl: Variant = DataLoader.get_entry("equipments", new_id)
+	if not tpl is Dictionary or not _whole(value.get("equipmentRuleVersion"), 2, 2):
+		return
+	var bases: Dictionary = tpl.get("tierBases", {})
+	if bases.size() != 1:
+		return
+	var tier := int(bases.keys()[0])
+	value["itemId"] = new_id
+	value["requiredLevel"] = tier
+	value["level"] = tier
+	value["rawBaseAttrs"] = (bases[str(tier)] as Dictionary).duplicate(true)
+	value["equipmentRuleVersion"] = 3
+
+## 将迁移后等级不足的旧穿戴装备放入空格；两个容器都满时落在当前位置并持久化。
+func _store_migrated_unequipped(data: Dictionary, item: Dictionary) -> void:
+	for key in ["inventory", "warehouse"]:
+		var slots: Variant = data.get(key)
+		if slots is Array:
+			for index in range(slots.size()):
+				if slots[index] == null:
+					slots[index] = item
+					return
+	var map_id := String(data.get("currentMap", "camp"))
+	var by_map: Variant = data.get("unclaimedLoot")
+	if not by_map is Dictionary:
+		by_map = {}
+		data["unclaimedLoot"] = by_map
+	if not by_map.get(map_id) is Array:
+		by_map[map_id] = []
+	var pos: Variant = data.get("playerPos", [0.0, 0.0])
+	if not pos is Array or pos.size() != 2:
+		pos = [0.0, 0.0]
+	by_map[map_id].append({"uid": "migration_" + String(item.get("instanceId", "")),
+		"batchId": "equipment_catalog_migration", "item": item, "pos": pos.duplicate()})
 
 func _migrate_landscape_positions(data: Dictionary) -> void:
 	var old_sizes := {
@@ -683,7 +766,7 @@ func _read_file(path: String) -> Variant:
 
 ## 所有读档/备份/应用入口使用同一校验；先识别版本，再迁移再验收，绝不修改输入。
 func _is_valid_save(raw: Variant) -> bool:
-	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), CURRENT_SCHEMA, CURRENT_SCHEMA):
+	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), 11, CURRENT_SCHEMA):
 		return false
 	if not raw.get("player") is Dictionary or not _whole(raw.player.get("level"), 1):
 		return false
@@ -803,13 +886,19 @@ func _valid_item(item: Variant) -> bool:
 	if kind == "equip":
 		if not DataLoader.get_entry("equipments", item.itemId) is Dictionary or not item.get("instanceId") is String or item.instanceId.is_empty():
 			return false
-		if not _whole(item.get("equipmentRuleVersion"), 2, 2) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
+		if not _whole(item.get("equipmentRuleVersion"), 3, 3) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false
 		if item.rawBaseAttrs.is_empty() or not _whole(item.get("count", 1), 1, 1) \
 				or item.affixes.size() + item.pctAttrs.size() > 4 or item.pctAttrs.size() > 1:
 			return false
 		if not _whole(item.get("requiredLevel"), 1) or not _whole(item.get("level"), 1) or int(item.level) != int(item.requiredLevel) \
 				or not _whole(item.get("star"), 0, 12) or not ItemUtil.is_valid_quality(str(item.get("quality", ""))):
+			return false
+		var template: Dictionary = DataLoader.get_entry("equipments", String(item.itemId))
+		var bases: Dictionary = template.get("tierBases", {})
+		var tier_key := str(int(item.requiredLevel))
+		# 实例基底是生成时的数值快照；后续数值平衡不应让合法存档失效。
+		if bases.size() != 1 or not bases.has(tier_key):
 			return false
 		if not _number(item.get("qualityMultiplierSnapshot")) or float(item.qualityMultiplierSnapshot) <= 0.0 \
 				or float(item.qualityMultiplierSnapshot) > 100.0 or not _number(item.get("starMultiplierSnapshot")) \
@@ -831,6 +920,7 @@ func _valid_item(item: Variant) -> bool:
 		return true
 	var table: String = {"potion": "potions", "misc": "miscItems", "quest": "miscItems", "rune": "runes"}.get(kind, "")
 	return not table.is_empty() and DataLoader.get_entry(table, item.itemId) != null and _whole(item.get("count", 1), 1, ItemUtil.stack_max(item))
+
 
 ## M4-10：怪物点刷新状态合法性。整体须为字典；每项须含合法 `readyAt`（有限数）
 ## 与可选 `pos`（长度 2 的数对）。**不认识的 key 不拒档** —— 地图数据变动不应导致读档失败

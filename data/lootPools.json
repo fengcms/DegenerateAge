@@ -1,15 +1,39 @@
 [
   {
     "id": "normal",
-    "desc": "当前档位所有可掉落装备型号；品质由掉落表独立决定。"
+    "desc": "第一档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "weapon_iron",
+      "shield_basic",
+      "armor_cloth",
+      "helmet_cloth",
+      "shoes_cloth",
+      "bracer_basic",
+      "knee_basic",
+      "bracelet_basic",
+      "ring_basic",
+      "necklace_basic"
+    ]
   },
   {
     "id": "legendary",
-    "desc": "Boss 独立传说追加槽；型号池与普通槽相同，品质由掉落表强制为传说。"
+    "desc": "第一档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "weapon_iron",
+      "shield_basic",
+      "armor_cloth",
+      "helmet_cloth",
+      "shoes_cloth",
+      "bracer_basic",
+      "knee_basic",
+      "bracelet_basic",
+      "ring_basic",
+      "necklace_basic"
+    ]
   },
   {
     "id": "c2_normal",
-    "desc": "第二章普通装备型号；品质独立抽取。",
+    "desc": "第二档十种装备型号；品质由掉落表决定。",
     "includeIds": [
       "c2_road_blade",
       "c2_copper_shield",
@@ -25,7 +49,7 @@
   },
   {
     "id": "c2_legendary",
-    "desc": "第二章独立传说追加槽，仍使用本章型号。",
+    "desc": "第二档首领传说追加槽；所有部位均可出现。",
     "includeIds": [
       "c2_road_blade",
       "c2_copper_shield",
@@ -37,43 +61,6 @@
       "c2_copper_bracelet",
       "c2_road_ring",
       "c2_warm_necklace"
-    ]
-  },
-  {
-    "id": "c2_modified",
-    "desc": "工坊、炉房及井心的十种改装型号。",
-    "includeIds": [
-      "c2_road_blade_modified",
-      "c2_copper_shield_modified",
-      "c2_road_armor_modified",
-      "c2_road_helmet_modified",
-      "c2_road_shoes_modified",
-      "c2_road_bracer_modified",
-      "c2_road_knee_modified",
-      "c2_copper_bracelet_modified",
-      "c2_road_ring_modified",
-      "c2_warm_necklace_modified"
-    ]
-  },
-  {
-    "id": "c2_legendary_iron",
-    "desc": "对应首领的独立传说追加槽。",
-    "includeIds": [
-      "c2_foreman_gauntlet"
-    ]
-  },
-  {
-    "id": "c2_legendary_slag",
-    "desc": "对应首领的独立传说追加槽。",
-    "includeIds": [
-      "c2_devourer_heart"
-    ]
-  },
-  {
-    "id": "c2_legendary_final",
-    "desc": "对应首领的独立传说追加槽。",
-    "includeIds": [
-      "c2_extractor_eye"
     ]
   }
 ]

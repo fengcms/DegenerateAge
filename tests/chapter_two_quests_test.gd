@@ -36,9 +36,9 @@ func _ready() -> void:
 	check(not GameState.quest_items.has("c2_pressure_plate"), "交付消耗任务袋物品")
 	var reward_found := false
 	for item in GameState.inventory:
-		if item is Dictionary and String(item.get("itemId", "")) == "c2_inspector_armor":
-			reward_found = int(item.get("requiredLevel", 0)) == 10
-	check(reward_found, "固定装备使用现行三轴 Lv10 档")
+		if item is Dictionary and String(item.get("itemId", "")) == "c2_road_armor":
+			reward_found = int(item.get("requiredLevel", 0)) == 11
+	check(reward_found, "任务装备使用统一 Lv11 档")
 	_run_kill("C2Q04", "c2_lu_heng", "c2_lu_heng", "c2_old_well", "c2_boss_iron_foreman", 1)
 	_run_collect("C2Q05", "c2_qi_yan", "c2_qi_yan", "c2_lower_works", "c2_badge_wraith", 5)
 	_run_collect("C2Q06", "c2_xu_zhu", "c2_xu_zhu", "c2_ember_furnace", "c2_copper_worm", 3)

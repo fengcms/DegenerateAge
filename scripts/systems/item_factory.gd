@@ -2,10 +2,12 @@ class_name ItemFactory
 extends RefCounted
 ## 装备实例唯一生成入口；任务、商店与怪物掉落共用档位/品质/词条规则。
 
+## 返回装备规则；生成、掉落和售价共同读取这一份配置。
 static func rules() -> Dictionary:
 	var raw: Variant = DataLoader.get_table("equipmentRules")
 	return raw if raw is Dictionary else {}
 
+## 将来源等级映射到已开放的穿戴档；当前 1—10 为 Lv1、11—20 为 Lv11。
 static func tier_for_level(source_level: int) -> int:
 	var chosen := 1
 	for value in rules().get("tiers", []):
@@ -14,14 +16,18 @@ static func tier_for_level(source_level: int) -> int:
 			chosen = tier
 	return chosen
 
-## level 参数兼容任务调用；小于 10 的来源等级均映射到 Lv1 装备档。
+## level 参数兼容任务调用；未指定时使用该型号唯一合法穿戴档。
 static func make_equip(item_id: String, level: int = 0, instance_prefix: String = "inst") -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	if not tpl is Dictionary:
 		return {}
-	var required_level := tier_for_level(level) if level > 0 else 1
+	var bases: Variant = tpl.get("tierBases", {})
+	if not bases is Dictionary or bases.size() != 1:
+		return {}
+	var required_level := tier_for_level(level) if level > 0 else int(bases.keys()[0])
 	return make_equip_roll(item_id, required_level, String(tpl.get("defaultQuality", "common")), null, instance_prefix)
 
+## 按型号唯一合法档位生成实例；传入其他档位时显式失败，不借用同名高低档基底。
 static func make_equip_roll(item_id: String, required_level: int, quality: String,
 		rng: RandomNumberGenerator = null, instance_prefix: String = "inst") -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
@@ -69,7 +75,7 @@ static func make_equip_roll(item_id: String, required_level: int, quality: Strin
 	return {
 		"kind": "equip", "itemId": item_id,
 		"instanceId": "%s_%s" % [instance_prefix, Crypto.new().generate_random_bytes(16).hex_encode()],
-		"equipmentRuleVersion": 2, "requiredLevel": required_level, "level": required_level,
+		"equipmentRuleVersion": 3, "requiredLevel": required_level, "level": required_level,
 		"quality": quality, "star": 0,
 		"rawBaseAttrs": (raw_bases[str(required_level)] as Dictionary).duplicate(true),
 		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
@@ -92,6 +98,7 @@ static func make_any(item_id: String, count: int = 1) -> Dictionary:
 		return {"kind": "rune", "itemId": item_id, "count": count}
 	return {}
 
+## 为正常游戏生成随机词条；测试可传入带固定种子的随机数发生器。
 static func _default_rng() -> RandomNumberGenerator:
 	var r := RandomNumberGenerator.new()
 	r.randomize()

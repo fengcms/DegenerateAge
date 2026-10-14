@@ -83,7 +83,7 @@ func _ready() -> void:
 		expect(wolf.hp == before - 1, "Art hit state must not cause duplicate damage")
 	else:
 		expect(false, "Sample wolves must exist")
-	for id in ["weapon_starter", "potion_hp_small", "spirit_shard"]:
+	for id in ["weapon_iron", "potion_hp_small", "spirit_shard"]:
 		var item := ItemFactory.make_any(id)
 		expect(SampleArt.icon_for(item).get_size() == Vector2(48, 48), "48px icon for " + id)
 		expect(SampleArt.ground_for(item).get_size() == Vector2(32, 32), "32px ground item for " + id)

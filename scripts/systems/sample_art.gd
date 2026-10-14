@@ -1,14 +1,10 @@
 class_name SampleArt
 extends RefCounted
-## Runtime icon references are preloaded so JSON-selected equipment also survives export.
-## Unmade assets continue to use the existing text/procedural fallback.
+## 运行时预载正式装备与物品图标，保证 JSON 配置的资源进入导出包。
+## 尚未制作的素材继续走既有文字或程序绘制回退；旧专名图标不再独立入表。
 
 const ICONS := {
-	"weapon_starter": preload("res://assets/sprites/equip/weapon_starter.png"),
-	"weapon_wolfking": preload("res://assets/sprites/equip/weapon_wolfking.png"),
-	"weapon_legendary_vein_guard": preload("res://assets/sprites/equip/weapon_legendary_vein_guard.png"),
 	"weapon_iron": preload("res://assets/sprites/equip/weapon_starter.png"),
-	"armor_starter": preload("res://assets/sprites/equip/armor_starter.png"),
 	"armor_cloth": preload("res://assets/sprites/equip/armor_starter.png"),
 	"helmet_cloth": preload("res://assets/sprites/equip/helmet_cloth.png"),
 	"shoes_cloth": preload("res://assets/sprites/equip/shoes_cloth.png"),
@@ -22,7 +18,7 @@ const ICONS := {
 	"spirit_shard": preload("res://assets/sprites/items/spirit_shard.png"),
 }
 const GROUND := {
-	"weapon_starter": preload("res://assets/sprites/items/weapon_starter_ground.png"),
+	"weapon_iron": preload("res://assets/sprites/items/weapon_starter_ground.png"),
 	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small_ground.png"),
 	"spirit_shard": preload("res://assets/sprites/items/spirit_shard_ground.png"),
 }

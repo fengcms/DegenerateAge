@@ -19,11 +19,11 @@ func _ready() -> void:
 	add_child(player)
 	player.set_physics_process(false)
 	player.global_position = Vector2(1000, 1000)
-	var bag_equip := ItemFactory.make_equip("weapon_starter")
+	var bag_equip := ItemFactory.make_equip("weapon_iron")
 	GameState.inventory[0] = bag_equip.duplicate(true)
 	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
-	GameState.warehouse[0] = ItemFactory.make_equip("weapon_starter")
-	var worn := ItemFactory.make_equip("weapon_starter")
+	GameState.warehouse[0] = ItemFactory.make_equip("weapon_iron")
+	var worn := ItemFactory.make_equip("weapon_iron")
 	GameState.equipment["weapon"] = worn.duplicate(true)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 10

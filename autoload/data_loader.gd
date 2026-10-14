@@ -268,9 +268,9 @@ func _validate_equipment_model() -> Array[String]:
 		if not _is_whole_level(tier) or int(tier) < 1:
 			report.append("[equipmentRules] 穿戴档必须是正整数")
 			continue
-		var expected_tier := 1 if previous_tier == 0 else (10 if previous_tier == 1 else previous_tier + 10)
+		var expected_tier := 1 if previous_tier == 0 else 11
 		if int(tier) != expected_tier:
-			report.append("[equipmentRules] 穿戴档应为 Lv1、10、20… 且升序")
+			report.append("[equipmentRules] 当前穿戴档仅允许 Lv1、Lv11 且升序")
 		previous_tier = int(tier)
 		slot_coverage[str(int(tier))] = {}
 	if not _is_whole_level(cfg.get("maxStar")) or int(cfg.maxStar) != 12 \
@@ -294,6 +294,9 @@ func _validate_equipment_model() -> Array[String]:
 		if not expected_slots.has(slot) or not bases is Dictionary or not pool is Array:
 			report.append("[equipments] %s 的槽型/档位/词条池非法" % item_id)
 			continue
+		if bases.size() != 1 or not slot_coverage.has(String(bases.keys()[0])):
+			report.append("[equipments] %s 必须且只能属于一个合法穿戴档" % item_id)
+			continue
 		if not qualities.has(String(e.get("defaultQuality", "common"))):
 			report.append("[equipments] %s 默认品质非法" % item_id)
 		var fixed_count := 0
@@ -306,16 +309,18 @@ func _validate_equipment_model() -> Array[String]:
 				fixed_count += 1
 		if fixed_count < 4:
 			report.append("[equipments] %s 至少需要四种合法固定词条" % item_id)
-		for tier_key in slot_coverage:
-			var base: Variant = bases.get(tier_key)
-			if not base is Dictionary or base.is_empty():
-				report.append("[equipments] %s 缺少 Lv%s 基底" % [item_id, tier_key])
-				continue
-			for stat in base:
-				if not fixed.has(String(stat)) or not (base[stat] is float or base[stat] is int) or float(base[stat]) <= 0.0:
-					report.append("[equipments] %s 的 Lv%s 基底属性 %s 非法" % [item_id, tier_key, stat])
-			if bool(e.get("lootable", true)) and not bool(e.get("debug", false)):
-				slot_coverage[tier_key][slot] = true
+		var tier_key := String(bases.keys()[0])
+		var base: Variant = bases[tier_key]
+		if not base is Dictionary or base.is_empty():
+			report.append("[equipments] %s 缺少 Lv%s 基底" % [item_id, tier_key])
+			continue
+		for stat in base:
+			if not fixed.has(String(stat)) or not (base[stat] is float or base[stat] is int) or float(base[stat]) <= 0.0:
+				report.append("[equipments] %s 的 Lv%s 基底属性 %s 非法" % [item_id, tier_key, stat])
+		if bool(e.get("lootable", true)) and not bool(e.get("debug", false)):
+			if slot_coverage[tier_key].has(slot):
+				report.append("[equipments] Lv%s 的 %s 出现多个正式型号" % [tier_key, slot])
+			slot_coverage[tier_key][slot] = true
 	for tier_key in slot_coverage:
 		for slot in expected_slots:
 			if not slot_coverage[tier_key].has(slot):

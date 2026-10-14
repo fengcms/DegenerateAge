@@ -80,7 +80,7 @@ static func stack_max(item: Dictionary) -> int:
 			return int(p.get("stackMax", DEFAULT_STACK_MAX))
 	return DEFAULT_STACK_MAX
 
-## 界面显示名：装备带品质前缀与等级（如「稀有 狼王之刃 Lv4」）。
+## 界面显示名：装备带品质前缀与等级（如「稀有 铁制短刃 Lv1」）。
 static func display_name(item: Dictionary) -> String:
 	var kind := String(item.get("kind", ""))
 	var base := _base_name(item)

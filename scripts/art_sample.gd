@@ -8,7 +8,7 @@ func _prepare() -> void:
 	GameState.visited_maps = ["camp", "wild_trial"]
 	GameState.save_pos = Iso.grid_to_world(Vector2i(20, 20))
 	GameState.has_save_pos = true
-	GameState.inventory[0] = ItemFactory.make_any("weapon_starter")
+	GameState.inventory[0] = ItemFactory.make_any("weapon_iron")
 	GameState.inventory[1] = ItemFactory.make_any("potion_hp_small")
 	GameState.inventory[1]["count"] = 8
 	GameState.inventory[2] = ItemFactory.make_any("spirit_shard")

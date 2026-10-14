@@ -14,7 +14,7 @@ func _ready() -> void:
 		await get_tree().process_frame
 		check(slot._quality_frame.size == slot.size + Vector2(4, 4), "quality frame reaches the slot edge")
 		for quality in ["uncommon", "rare", "epic", "legendary"]:
-			var item := ItemFactory.make_equip_roll("weapon_starter", 10, quality)
+			var item := ItemFactory.make_equip_roll("weapon_iron", 1, quality)
 			slot.item = item
 			SampleArt.decorate(slot, SampleArt.icon_for(item))
 			var frame := slot._quality_frame as QualityFrameOverlay
@@ -37,7 +37,7 @@ func _ready() -> void:
 				character_panel.free()
 			check((slot.get_theme_stylebox("normal") as StyleBoxFlat).border_color.a == 0.0,
 				"animated frame replaces static quality border")
-		slot.item = ItemFactory.make_equip_roll("weapon_starter", 10, "common")
+		slot.item = ItemFactory.make_equip_roll("weapon_iron", 1, "common")
 		check(not slot._quality_frame.visible and slot._quality_frame.texture == null, "common equipment has no effect")
 		slot.item = {"kind": "potion", "itemId": "potion_hp_small"}
 		check(not slot._quality_frame.visible, "non-equipment has no effect")

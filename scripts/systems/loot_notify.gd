@@ -15,7 +15,7 @@ extends RefCounted
 ## 摘要括号内列出的品质（稀有以上；§10）。
 const LISTED_QUALITIES := ["rare", "epic", "legendary"]
 
-## 传说提示前缀（§10「传说 · 镇脉之刃」）。
+## 传说提示前缀（§10「传说 · 铁制短刃」）。
 const LEGENDARY_PREFIX_KEY := "msg.loot_notify.legendary_prefix"
 
 ## 批次摘要文本。`rolled` = `Loot.roll` 产出数组；`unclaimed_equip` = 本批未入包的装备件数。

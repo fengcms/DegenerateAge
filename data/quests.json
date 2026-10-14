@@ -12,7 +12,9 @@
     "reward": {
       "gold": 50,
       "xp": 0,
-      "item": "weapon_starter"
+      "item": "weapon_iron",
+      "requiredLevel": 1,
+      "quality": "common"
     },
     "mapScope": [
       "camp"
@@ -59,7 +61,9 @@
     "reward": {
       "gold": 0,
       "xp": 200,
-      "item": "armor_starter"
+      "item": "armor_cloth",
+      "requiredLevel": 1,
+      "quality": "uncommon"
     },
     "mapScope": [
       "wild_trial"
@@ -83,7 +87,9 @@
     "reward": {
       "gold": 200,
       "xp": 400,
-      "item": "weapon_wolfking"
+      "item": "weapon_iron",
+      "requiredLevel": 1,
+      "quality": "rare"
     },
     "mapScope": [
       "wild_trial"
@@ -229,8 +235,8 @@
     "reward": {
       "gold": 0,
       "xp": 900,
-      "item": "c2_inspector_armor",
-      "requiredLevel": 10,
+      "item": "c2_road_armor",
+      "requiredLevel": 11,
       "quality": "rare"
     },
     "mapScope": [
@@ -306,8 +312,8 @@
     "reward": {
       "gold": 0,
       "xp": 1200,
-      "item": "c2_backup_blade",
-      "requiredLevel": 10,
+      "item": "c2_road_blade",
+      "requiredLevel": 11,
       "quality": "rare"
     },
     "mapScope": [
@@ -545,8 +551,8 @@
     "reward": {
       "gold": 0,
       "xp": 800,
-      "item": "c2_apprentice_bracer",
-      "requiredLevel": 10,
+      "item": "c2_road_bracer",
+      "requiredLevel": 11,
       "quality": "uncommon"
     },
     "mapScope": [
@@ -596,8 +602,8 @@
     "reward": {
       "gold": 0,
       "xp": 1800,
-      "item": "c2_slag_shield",
-      "requiredLevel": 10,
+      "item": "c2_copper_shield",
+      "requiredLevel": 11,
       "quality": "rare"
     },
     "mapScope": [

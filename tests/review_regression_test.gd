@@ -40,9 +40,9 @@ func _test_inventory() -> void:
 func _test_equipment() -> void:
 	var inv := Inventory.create()
 	for i in range(inv.size()):
-		inv[i] = ItemFactory.make_equip("weapon_starter")
+		inv[i] = ItemFactory.make_equip("weapon_iron")
 	var slots := Equipment.create()
-	slots.weapon = ItemFactory.make_equip("weapon_starter")
+	slots.weapon = ItemFactory.make_equip("weapon_iron")
 	var old: Dictionary = slots.weapon.duplicate(true)
 	var replacement: Dictionary = inv[17].duplicate(true)
 	check(Equipment.equip_from_inventory(slots, inv, "weapon", 17, 99).ok, "满背包换装应成功")

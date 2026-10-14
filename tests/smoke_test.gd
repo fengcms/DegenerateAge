@@ -92,7 +92,7 @@ func _test_data_validation() -> void:
 
 func _test_blacksmith() -> void:
 	GameState.reset_to_defaults()
-	var item := _equip_instance("weapon_starter", "smith_weapon", {"atk": 10})
+	var item := _equip_instance("weapon_iron", "smith_weapon", {"atk": 10})
 	GameState.inventory[0] = item
 	GameState.add_gold(500)
 	var main := preload("res://scenes/Main.tscn").instantiate()
@@ -144,9 +144,9 @@ func _test_blacksmith() -> void:
 
 func _test_inventory_sort() -> void:
 	GameState.reset_to_defaults()
-	var rare := _equip_instance("weapon_starter", "sort_rare", {"atk": 5})
+	var rare := _equip_instance("weapon_iron", "sort_rare", {"atk": 5})
 	rare.quality = "rare"
-	var common := _equip_instance("weapon_starter", "sort_common", {"atk": 6})
+	var common := _equip_instance("weapon_iron", "sort_common", {"atk": 6})
 	GameState.inventory[3] = common
 	GameState.inventory[7] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
 	GameState.inventory[9] = rare
@@ -170,8 +170,8 @@ func _test_inventory_sort() -> void:
 
 func _test_inventory_manual_move() -> void:
 	GameState.reset_to_defaults()
-	var first := _equip_instance("weapon_starter", "move_first", {"atk": 5})
-	var second := _equip_instance("weapon_starter", "move_second", {"atk": 7})
+	var first := _equip_instance("weapon_iron", "move_first", {"atk": 5})
+	var second := _equip_instance("weapon_iron", "move_second", {"atk": 7})
 	GameState.inventory[0] = first
 	GameState.inventory[1] = second
 	var token := Warehouse.item_token(first)
@@ -229,7 +229,7 @@ func _test_inventory_expansion() -> void:
 	var second := GameState.inventory_expand()
 	_expect(second.ok and GameState.gold == 400 and GameState.inventory.size() == 60,
 		"第二次背包扩容应按独立次数花 1600 金币")
-	GameState.inventory[59] = _equip_instance("weapon_starter", "expanded_slot", {"atk": 3})
+	GameState.inventory[59] = _equip_instance("weapon_iron", "expanded_slot", {"atk": 3})
 	var bag_panel := preload("res://scenes/ui/InventoryPanel.tscn").instantiate()
 	add_child(bag_panel)
 	bag_panel.set_open(true)
@@ -254,7 +254,7 @@ func _test_inventory_expansion() -> void:
 
 func _test_warehouse_sort() -> void:
 	GameState.reset_to_defaults()
-	var equipment := _equip_instance("weapon_starter", "stored_sorted", {"atk": 8})
+	var equipment := _equip_instance("weapon_iron", "stored_sorted", {"atk": 8})
 	GameState.warehouse[6] = equipment
 	GameState.warehouse[12] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
 	GameState.warehouse[15] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
@@ -345,7 +345,7 @@ func _test_warehouse() -> void:
 	GameState.reset_to_defaults()
 	_expect(GameState.warehouse.size() == 40 and Warehouse.next_cost(0) == 1000,
 		"仓库初始应为 40 格、首次扩容 1000 金币")
-	var item := _equip_instance("weapon_starter", "store_once", {"atk": 7})
+	var item := _equip_instance("weapon_iron", "store_once", {"atk": 7})
 	GameState.inventory[0] = item
 	var stored := GameState.warehouse_store(0, "store_once")
 	_expect(stored.ok and GameState.inventory[0] == null and GameState.warehouse[0] == item,
@@ -360,12 +360,12 @@ func _test_warehouse() -> void:
 	GameState.inventory[1] = {"kind": "misc", "itemId": "misc_town_scroll", "count": 1}
 	_expect(GameState.warehouse_store(1, Warehouse.item_token(GameState.inventory[1])).ok,
 		"仓库应支持杂项")
-	GameState.inventory[0] = _equip_instance("weapon_starter", "stale_now", {"atk": 2})
+	GameState.inventory[0] = _equip_instance("weapon_iron", "stale_now", {"atk": 2})
 	_expect(not GameState.warehouse_store(0, "store_once").ok and GameState.warehouse[0] == item,
 		"拖拽载荷过期时不得误存另一件装备")
 	for i in range(GameState.inventory.size()):
 		if GameState.inventory[i] == null:
-			GameState.inventory[i] = _equip_instance("weapon_starter", "full_%d" % i, {"atk": 1})
+			GameState.inventory[i] = _equip_instance("weapon_iron", "full_%d" % i, {"atk": 1})
 	_expect(not GameState.warehouse_take(0, "store_once").ok and GameState.warehouse[0] == item,
 		"背包满时取出应失败且仓库装备不丢失")
 	GameState.inventory[2] = null
@@ -398,7 +398,7 @@ func _test_warehouse() -> void:
 	invalid_save.warehouse[0] = {"kind": "bogus", "itemId": "none", "count": 1}
 	_expect(not SaveManager._is_valid_save(invalid_save), "存档仍应拒绝非法品类")
 	GameState.reset_to_defaults()
-	var ui_item := _equip_instance("weapon_starter", "ui_store", {"atk": 8})
+	var ui_item := _equip_instance("weapon_iron", "ui_store", {"atk": 8})
 	GameState.inventory[0] = ui_item
 	var main := preload("res://scenes/Main.tscn").instantiate()
 	add_child(main)
@@ -455,7 +455,7 @@ func _test_rune_loot() -> void:
 
 func _test_rune_upgrade() -> void:
 	GameState.reset_to_defaults()
-	var weapon := _equip_instance("weapon_starter", "rune_upgrade", {"atk": 10})
+	var weapon := _equip_instance("weapon_iron", "rune_upgrade", {"atk": 10})
 	weapon.star = 8
 	GameState.inventory[0] = weapon
 	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 2}
@@ -501,7 +501,7 @@ func _test_rune_upgrade() -> void:
 
 func _test_upgrade() -> void:
 	GameState.reset_to_defaults()
-	var weapon := _equip_instance("weapon_starter", "upgrade_test", {"atk": 10}, [{"stat": "atk", "value": 3}])
+	var weapon := _equip_instance("weapon_iron", "upgrade_test", {"atk": 10}, [{"stat": "atk", "value": 3}])
 	GameState.equipment["weapon"] = weapon
 	GameState.add_gold(100000)
 	var before_attack := GameState.total_attack()
@@ -512,7 +512,7 @@ func _test_upgrade() -> void:
 		"升星后金币及已穿戴固定属性应即时生效")
 	_expect(weapon.affixes[0].value == 3 and float(weapon.rawBaseAttrs.atk) == 10.0,
 		"升星不能修改原始基础值或词条")
-	_expect(Equipment.score(weapon) > Equipment.score(_equip_instance("weapon_starter", "plain", {"atk": 10}, [{"stat": "atk", "value": 3}])),
+	_expect(Equipment.score(weapon) > Equipment.score(_equip_instance("weapon_iron", "plain", {"atk": 10}, [{"stat": "atk", "value": 3}])),
 		"升星后的装备评分应提高")
 	var stale_gold := GameState.gold
 	var stale := GameState.upgrade_equipment("worn", "weapon", "old_instance")
@@ -530,7 +530,7 @@ func _test_upgrade() -> void:
 	var cap_gold := GameState.gold
 	_expect(not GameState.upgrade_equipment("worn", "weapon", "upgrade_test").ok and GameState.gold == cap_gold,
 		"满星不可继续扣费")
-	var bag_item := _equip_instance("weapon_starter", "bag_upgrade", {"atk": 5})
+	var bag_item := _equip_instance("weapon_iron", "bag_upgrade", {"atk": 5})
 	GameState.inventory[0] = bag_item
 	GameState.gold = 0
 	_expect(not GameState.upgrade_equipment("bag", 0, "bag_upgrade").ok and bag_item.star == 0,
@@ -831,7 +831,7 @@ func _test_loot() -> void:
 			var q := String(it2.get("quality", ""))
 			_expect(ItemUtil.is_valid_quality(q), "Boss 装备品质非法：%s" % q)
 			var lv := int(it2.get("level", 0))
-			_expect(lv == 9 or lv == 10, "Boss 装备等级应为 9/10，实际 %d" % lv)
+			_expect(lv == 1, "第一章 Boss 装备穿戴要求应为 Lv1，实际 %d" % lv)
 			_expect(DataLoader.get_entry("equipments", String(it2.get("itemId", ""))) != null,
 				"掉落的装备模板未定义：%s" % String(it2.get("itemId", "")))
 			if q in ["common", "uncommon"]:
@@ -889,7 +889,7 @@ func _test_grouped_drop() -> void:
 				continue
 			legendary_n += 1
 			_expect(String(it.get("kind", "")) == "equip", "传说应为装备")
-			_expect(int(it.get("requiredLevel", 0)) == 10, "Boss 传说应为 Lv10 穿戴档")
+			_expect(int(it.get("requiredLevel", 0)) == 1, "第一章 Boss 传说应为 Lv1 穿戴档")
 			_expect(it.get("affixes", []).size() + it.get("pctAttrs", []).size() == 4,
 				"传说应有四条合法词条")
 			legendary_slots[Equipment.item_kind(it)] = true
@@ -924,7 +924,7 @@ func _test_grouped_drop() -> void:
 	var empty_pools := original_pools.duplicate(true)
 	for p in empty_pools:
 		if String(p.get("id", "")) == "legendary":
-			p["includeIds"] = ["weapon_legendary_vein_guard"]
+			p["includeIds"] = ["不存在的装备型号"]
 	DataLoader.tables["lootPools"] = empty_pools
 	var report_empty: Array[String] = DataLoader.validate_all()
 	_expect(" ".join(PackedStringArray(report_empty)).contains("legendary 池为空"),
@@ -1038,11 +1038,11 @@ func _test_loot_summary() -> void:
 	# ① 摘要：Boss 掉落（含传说 + 药水 count=2 + 如意），括号只列稀有以上
 	var rolled := [
 		{"kind": "coin", "itemId": "coin", "gold": 802, "count": 1},
-		{"kind": "equip", "quality": "common", "itemId": "weapon_starter"},
-		{"kind": "equip", "quality": "uncommon", "itemId": "weapon_starter"},
-		{"kind": "equip", "quality": "rare", "itemId": "weapon_starter"},
-		{"kind": "equip", "quality": "epic", "itemId": "weapon_starter"},
-		{"kind": "equip", "quality": "legendary", "itemId": "weapon_legendary_vein_guard"},
+		{"kind": "equip", "quality": "common", "itemId": "weapon_iron"},
+		{"kind": "equip", "quality": "uncommon", "itemId": "weapon_iron"},
+		{"kind": "equip", "quality": "rare", "itemId": "weapon_iron"},
+		{"kind": "equip", "quality": "epic", "itemId": "weapon_iron"},
+		{"kind": "equip", "quality": "legendary", "itemId": "weapon_iron"},
 		{"kind": "potion", "itemId": "potion_hp_large", "count": 2},
 		{"kind": "rune", "itemId": "rune_iron", "count": 1},
 	]
@@ -1052,7 +1052,7 @@ func _test_loot_summary() -> void:
 	_expect(text == expected, "批次摘要格式应为「%s」，实际「%s」" % [expected, text])
 
 	# ② 无稀有以上 ⇒ 省略括号；无金币 / 无如意 ⇒ 省略对应项
-	var plain := [{"kind": "equip", "quality": "common", "itemId": "weapon_starter"}]
+	var plain := [{"kind": "equip", "quality": "common", "itemId": "weapon_iron"}]
 	var t2 := LootNotify.summary_text("普通野狼", plain, 0)
 	_expect(t2 == "普通野狼 掉落：装备 1 件", "无稀有以上应省略括号，实际「%s」" % t2)
 
@@ -1061,7 +1061,7 @@ func _test_loot_summary() -> void:
 	_expect(t3.ends_with("· 背包不足，3 件装备已保留"), "未领取应追加保留提示，实际「%s」" % t3)
 
 	# ④ 传说提示文本（§10）
-	_expect(LootNotify.legendary_text(rolled) == "传说 · 镇脉之刃", "传说提示应为「传说 · 镇脉之刃」")
+	_expect(LootNotify.legendary_text(rolled) == "传说 · 铁制短刃", "传说提示应使用同档正式型号")
 	_expect(LootNotify.legendary_text(plain).is_empty(), "无传说时不应播报传说提示")
 
 	# ⑤ 摘要时刻（§10「最后一份出场完成时」）：= 全部落地时刻；关闭动画 ⇒ 0
@@ -1240,7 +1240,7 @@ func _test_inventory() -> void:
 	_expect(int(inv[0].get("count", 0)) == 2, "药水应堆叠为 2，实际 %d" % int(inv[0].get("count", 0)))
 
 	# 装备不可堆叠 → 各占一格
-	var eq := {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "i1", "count": 1}
+	var eq := {"kind": "equip", "itemId": "weapon_iron", "quality": "common", "level": 1, "instanceId": "i1", "count": 1}
 	_expect(Inventory.add(inv, eq), "装备应可入包")
 	_expect(Inventory.add(inv, eq.duplicate(true)), "第二件装备应入新格")
 	_expect(Inventory.used_slots(inv) == 3, "应为 3 格，实际 %d" % Inventory.used_slots(inv))
@@ -1248,10 +1248,10 @@ func _test_inventory() -> void:
 	# 满包：40 件装备 → is_full
 	var full := Inventory.create(40)
 	for i in range(40):
-		Inventory.add(full, {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "f%d" % i, "count": 1})
+		Inventory.add(full, {"kind": "equip", "itemId": "weapon_iron", "quality": "common", "level": 1, "instanceId": "f%d" % i, "count": 1})
 	_expect(Inventory.is_full(full), "40 件装备后背包应满")
-	_expect(not Inventory.add(full, {"kind": "equip", "itemId": "weapon_starter", "count": 1}), "满包不应再入装备")
-	_expect(not Inventory.has_space_for(full, {"kind": "equip", "itemId": "weapon_starter", "count": 1}), "满包对装备应无空间")
+	_expect(not Inventory.add(full, {"kind": "equip", "itemId": "weapon_iron", "count": 1}), "满包不应再入装备")
+	_expect(not Inventory.has_space_for(full, {"kind": "equip", "itemId": "weapon_iron", "count": 1}), "满包对装备应无空间")
 	_expect(not Inventory.has_space_for(full, {"kind": "potion", "itemId": "potion_hp_small", "count": 1}), "满包（无药水堆）不应容纳新药水")
 
 # ---- M1-6：靠近自动拾取 / T10 满包留地（9.9）----
@@ -1292,10 +1292,10 @@ func _test_pickup() -> void:
 	# T10：背包满 → 物品留地
 	GameState.inventory = Inventory.create(40)
 	for i in range(40):
-		Inventory.add(GameState.inventory, {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "z%d" % i, "count": 1})
+		Inventory.add(GameState.inventory, {"kind": "equip", "itemId": "weapon_iron", "quality": "common", "level": 1, "instanceId": "z%d" % i, "count": 1})
 	var gi3: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
 	gi3.hold_time = 0.0
-	gi3.item = {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "ll", "count": 1}
+	gi3.item = {"kind": "equip", "itemId": "weapon_iron", "quality": "common", "level": 1, "instanceId": "ll", "count": 1}
 	loot_root.add_child(gi3)
 	gi3.global_position = Vector2(20.0, 0.0)
 	await get_tree().physics_frame
@@ -1308,7 +1308,7 @@ func _test_pickup() -> void:
 	var manual: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
 	manual.auto_claim = true
 	manual.hold_time = 0.0
-	manual.item = {"kind": "equip", "itemId": "weapon_starter", "quality": "common", "level": 1, "instanceId": "manual_pick", "count": 1}
+	manual.item = {"kind": "equip", "itemId": "weapon_iron", "quality": "common", "level": 1, "instanceId": "manual_pick", "count": 1}
 	loot_root.add_child(manual)
 	manual.global_position = Vector2(20.0, 0.0)
 	await get_tree().physics_frame
@@ -1391,13 +1391,13 @@ func _test_unclaimed_loot() -> void:
 
 	var coin := {"kind": "coin", "itemId": "coin", "gold": 6, "count": 1}
 	var potion := {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
-	var common_e := _equip_instance("weapon_starter", "u_common", {"atk": 3})
-	var rare_e := _equip_instance("weapon_starter", "u_rare", {"atk": 7})
+	var common_e := _equip_instance("weapon_iron", "u_common", {"atk": 3})
+	var rare_e := _equip_instance("weapon_iron", "u_rare", {"atk": 7})
 	rare_e["quality"] = "rare"
-	var leg_e := _equip_instance("weapon_legendary_vein_guard", "u_leg", {"atk": 30})
+	var leg_e := _equip_instance("weapon_iron", "u_leg", {"atk": 30})
 	leg_e["quality"] = "legendary"
-	leg_e["level"] = 10
-	leg_e["requiredLevel"] = 10
+	leg_e["level"] = 1
+	leg_e["requiredLevel"] = 1
 
 	# ① 入包认领序（§8）：传说→史诗→稀有→优秀→普通；之后药水 / 如意；金币最后。
 	var order_ids: Array = []
@@ -1417,7 +1417,7 @@ func _test_unclaimed_loot() -> void:
 	# ② 满包仅 1 空位 + 按认领序投放（传说在前）→ 传说入包、普通登记为未领取（§8/§11.1）
 	GameState.inventory = Inventory.create(40)
 	for i in range(39):
-		Inventory.add(GameState.inventory, _equip_instance("weapon_starter", "fill_%d" % i, {"atk": 1}))
+		Inventory.add(GameState.inventory, _equip_instance("weapon_iron", "fill_%d" % i, {"atk": 1}))
 	var gi_leg: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
 	gi_leg.auto_claim = true
 	gi_leg.item = leg_e
@@ -1451,7 +1451,7 @@ func _test_unclaimed_loot() -> void:
 	_expect(is_instance_valid(gi_common) and gi_common._life >= GroundItem.LIFETIME,
 		"未领取战利品不应参与 60s 淡出")
 	var gi_plain: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
-	gi_plain.item = _equip_instance("weapon_starter", "u_plain", {"atk": 2})
+	gi_plain.item = _equip_instance("weapon_iron", "u_plain", {"atk": 2})
 	gi_plain.auto_claim = false
 	gi_plain.hold_time = 0.0
 	loot_root.add_child(gi_plain)
@@ -1464,7 +1464,7 @@ func _test_unclaimed_loot() -> void:
 	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
-	_expect(SaveManager.CURRENT_SCHEMA == 11, "三轴装备后存档 schema 应为 11，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	_expect(SaveManager.CURRENT_SCHEMA == 12, "两档装备后存档 schema 应为 12，实际 %d" % SaveManager.CURRENT_SCHEMA)
 	GameState.unclaimed_loot = {}
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")
@@ -1490,7 +1490,7 @@ func _test_unclaimed_loot() -> void:
 	loot_root.queue_free()
 	await get_tree().process_frame
 	GameState.unclaimed_loot = {}
-	GameState.add_unclaimed_loot("camp", "b_rebuild", _equip_instance("weapon_starter", "u_rebuild", {"atk": 4}), Vector2(128.0, 128.0))
+	GameState.add_unclaimed_loot("camp", "b_rebuild", _equip_instance("weapon_iron", "u_rebuild", {"atk": 4}), Vector2(128.0, 128.0))
 	var main := preload("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame
@@ -1519,13 +1519,13 @@ func _test_equipment() -> void:
 	_expect(Equipment.slots_for_kind("weapon").size() == 1, "武器应为单槽")
 	_expect(Equipment.create().size() == 14, "Equipment.create 应生成 14 槽")
 	# 武器与盾牌可同时装备（5.1）；类型取自模板（5.7）
-	_expect(Equipment.item_kind({"itemId": "weapon_starter"}) == "weapon", "守护者短刃应为武器")
+	_expect(Equipment.item_kind({"itemId": "weapon_iron"}) == "weapon", "守护者短刃应为武器")
 	_expect(Equipment.item_kind({"itemId": "shield_basic"}) == "shield", "木盾应为盾牌")
 
 	# 穿戴：属性立即生效（T06），且不改基础值（5.1）
 	var base_atk: int = int(GameState.player.attack)
 	var hp_before := GameState.max_hp()
-	var idx := _put_item(_equip_instance("weapon_starter", "e1", {"atk": 5}))
+	var idx := _put_item(_equip_instance("weapon_iron", "e1", {"atk": 5}))
 	var res := GameState.equip_from_inventory(idx)
 	_expect(bool(res.get("ok", false)), "穿戴守护者短刃应成功：%s" % res.get("reason", ""))
 	_expect(int(GameState.player.attack) == base_atk, "装备不应改基础攻击（5.1）")
@@ -1549,7 +1549,7 @@ func _test_equipment() -> void:
 
 	# 同槽替换：旧装备回背包，新装备生效
 	GameState.player.level = 5
-	var idx2 := _put_item(_equip_instance("weapon_wolfking", "e2", {"atk": 12}, [{"stat": "atk", "value": 6}]))
+	var idx2 := _put_item(_equip_instance("weapon_iron", "e2", {"atk": 12}, [{"stat": "atk", "value": 6}]))
 	var rep := GameState.equip_from_inventory(idx2)
 	_expect(bool(rep.get("ok", false)), "替换武器应成功：%s" % rep.get("reason", ""))
 	_expect(String(GameState.equipment["weapon"].get("instanceId", "")) == "e2", "武器槽应换成新武器")
@@ -1561,7 +1561,7 @@ func _test_equipment() -> void:
 
 	# 等级门槛（5.2 / 4.5）：不足不可穿戴，且不改变状态
 	GameState.reset_to_defaults()
-	var gated := _equip_instance("weapon_wolfking", "e3", {"atk": 12})
+	var gated := _equip_instance("weapon_iron", "e3", {"atk": 12})
 	gated["requiredLevel"] = 10
 	gated["level"] = 10
 	var idx3 := _put_item(gated)
@@ -1594,8 +1594,8 @@ func _test_equipment() -> void:
 	_expect(GameState.max_mp() == 35 + 10, "两枚戒指应使最大法力 +10，实际 %d" % GameState.max_mp())
 
 	# 评分（5.9）：高攻装备评分更高
-	_expect(Equipment.score(_equip_instance("weapon_starter", "scored", {"atk": 12}, [{"stat": "atk", "value": 6}]))
-		> Equipment.score(_equip_instance("weapon_starter", "plain", {"atk": 5})), "高攻装备评分应更高")
+	_expect(Equipment.score(_equip_instance("weapon_iron", "scored", {"atk": 12}, [{"stat": "atk", "value": 6}]))
+		> Equipment.score(_equip_instance("weapon_iron", "plain", {"atk": 5})), "高攻装备评分应更高")
 
 	GameState.reset_to_defaults()
 
@@ -1640,23 +1640,23 @@ func _test_shop() -> void:
 	GameState.reset_to_defaults()
 	GameState.gold = 999
 	for i in range(GameState.inventory.size()):
-		GameState.inventory[i] = _equip_instance("weapon_starter", "f%d" % i, {"atk": 1})
+		GameState.inventory[i] = _equip_instance("weapon_iron", "f%d" % i, {"atk": 1})
 	var full := GameState.shop_buy(shop_id, "potion_hp_small")
 	_expect(not bool(full.get("ok", false)), "背包满应购买失败")
 	_expect(GameState.gold == 999, "背包满失败不应扣金币，实际 %d" % GameState.gold)
 
 	# 售价公式（6.2）：round(baseValue × qualityMult × (1 + star×0.08))
-	var common_w := _equip_instance("weapon_starter", "s1", {"atk": 5})
+	var common_w := _equip_instance("weapon_iron", "s1", {"atk": 5})
 	_expect(Shop.sell_price(common_w) == 50,
 		"普通武器（基础价 50 × 1.0）售价应为 50，实际 %d" % Shop.sell_price(common_w))
-	var rare_w := _equip_instance("weapon_wolfking", "s2", {"atk": 12})
+	var rare_w := _equip_instance("weapon_iron", "s2", {"atk": 12})
 	rare_w["quality"] = "rare"
-	_expect(Shop.sell_price(rare_w) == 720,
-		"稀有武器（240 × 3）售价应为 720，实际 %d" % Shop.sell_price(rare_w))
+	_expect(Shop.sell_price(rare_w) == 150,
+		"同型号稀有武器（50 × 3）售价应为 150，实际 %d" % Shop.sell_price(rare_w))
 	var rare_star := rare_w.duplicate(true)
 	rare_star["star"] = 1
-	_expect(Shop.sell_price(rare_star) == 778,
-		"稀有 +1 星（240 × 3 × 1.08）应为 778，实际 %d" % Shop.sell_price(rare_star))
+	_expect(Shop.sell_price(rare_star) == 162,
+		"同型号稀有 +1 星（50 × 3 × 1.08）应为 162，实际 %d" % Shop.sell_price(rare_star))
 	_expect(Shop.can_sell(rare_w), "装备可出售")
 	_expect(not Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
 		"药水不可出售给货郎（6.4）")
@@ -1670,23 +1670,23 @@ func _test_shop() -> void:
 
 	# 卖 · 装备 → 加金币出包
 	GameState.reset_to_defaults()
-	GameState.inventory[0] = _equip_instance("weapon_starter", "v1", {"atk": 5})
+	GameState.inventory[0] = _equip_instance("weapon_iron", "v1", {"atk": 5})
 	var sell := GameState.shop_sell(0)
 	_expect(bool(sell.get("ok", false)), "装备应可出售")
 	_expect(GameState.gold == 50, "出售普通武器应得 50 金币，实际 %d" % GameState.gold)
 	_expect(GameState.inventory[0] == null, "出售后该格应清空")
-	_expect(not GameState.is_upgrade_over_worn(_equip_instance("weapon_starter", "v2", {"atk": 5})),
+	_expect(not GameState.is_upgrade_over_worn(_equip_instance("weapon_iron", "v2", {"atk": 5})),
 		"无同类型已穿戴装备时不应判为升级件")
 
 	# 暂存 → 退回（关闭面板 / 取回）：不结算、不丢失
 	GameState.reset_to_defaults()
 	GameState.player.level = 5
-	GameState.inventory[0] = _equip_instance("weapon_wolfking", "w_strong", {"atk": 12},
+	GameState.inventory[0] = _equip_instance("weapon_iron", "w_strong", {"atk": 12},
 		[{"stat": "atk", "value": 6}])
 	GameState.equip_from_inventory(0)      # 穿上强武器（武器槽占用）
-	GameState.inventory[0] = _equip_instance("weapon_starter", "w_weak", {"atk": 5})
+	GameState.inventory[0] = _equip_instance("weapon_iron", "w_weak", {"atk": 5})
 	GameState.inventory[1] = _equip_instance("helmet_cloth", "h1", {"def": 2})
-	GameState.inventory[2] = _equip_instance("weapon_starter", "w_better", {"atk": 30})
+	GameState.inventory[2] = _equip_instance("weapon_iron", "w_better", {"atk": 30})
 	_expect(GameState.is_upgrade_over_worn(GameState.inventory[2]),
 		"攻击 30 的武器应高于已穿戴（18）而判为升级件")
 
@@ -1720,14 +1720,14 @@ func _test_shop() -> void:
 func _test_low_gear_filter_sale() -> void:
 	GameState.reset_to_defaults()
 	_expect(GameState.set_low_gear_filter(8, "rare"), "低级装备筛选应从 1 级即可配置")
-	var low := _equip_instance("weapon_starter", "low_rare", {"atk": 99})
+	var low := _equip_instance("weapon_iron", "low_rare", {"atk": 99})
 	low.level = 1
 	low.requiredLevel = 1
 	low.quality = "rare"
-	var boundary := _equip_instance("weapon_starter", "level_boundary", {"atk": 1})
-	boundary.level = 10
-	boundary.requiredLevel = 10
-	var high_quality := _equip_instance("weapon_starter", "quality_boundary", {"atk": 1})
+	var boundary := _equip_instance("c2_road_blade", "level_boundary", {"atk": 17})
+	boundary.level = 11
+	boundary.requiredLevel = 11
+	var high_quality := _equip_instance("weapon_iron", "quality_boundary", {"atk": 1})
 	high_quality.level = 1
 	high_quality.requiredLevel = 1
 	high_quality.quality = "epic"
@@ -1790,12 +1790,12 @@ func _test_trade_panel() -> void:
 	_expect(inv._sell_low_button.disabled, "背包直接一键卖出在 15 级前仍不可用")
 
 	# 背包准备：2 件普通装备（可售）+ 1 件优于已穿戴的武器（一键移入应跳过）
-	GameState.inventory[0] = _equip_instance("weapon_wolfking", "p_worn", {"atk": 12},
+	GameState.inventory[0] = _equip_instance("weapon_iron", "p_worn", {"atk": 12},
 		[{"stat": "atk", "value": 6}])
 	GameState.equip_from_inventory(0)     # 穿上强武器
-	GameState.inventory[0] = _equip_instance("weapon_starter", "p_weak", {"atk": 5})
+	GameState.inventory[0] = _equip_instance("weapon_iron", "p_weak", {"atk": 5})
 	GameState.inventory[1] = _equip_instance("helmet_cloth", "p_helm", {"def": 2})
-	GameState.inventory[2] = _equip_instance("weapon_starter", "p_better", {"atk": 30})
+	GameState.inventory[2] = _equip_instance("weapon_iron", "p_better", {"atk": 30})
 	GameState.inventory[2].level = 10
 	GameState.inventory[2].requiredLevel = 10
 	EventBus.inventory_changed.emit()
@@ -1860,7 +1860,7 @@ func _test_trade_panel() -> void:
 	# 关闭时托盘内未确认装备应退回背包（不静默丢失，🔴R3）
 	EventBus.shop_open_requested.emit("peddler_camp")
 	await get_tree().process_frame
-	GameState.inventory[0] = _equip_instance("weapon_starter", "p_lost", {"atk": 5})
+	GameState.inventory[0] = _equip_instance("weapon_iron", "p_lost", {"atk": 5})
 	EventBus.inventory_changed.emit()
 	await get_tree().process_frame
 	shop._on_tray_drop(0, inv._bag_buttons[0]._get_drag_data(Vector2.ZERO))
@@ -1935,7 +1935,7 @@ func _test_equipment_panel_interaction() -> void:
 	await get_tree().process_frame
 	var bag: Control = main.get_node("UI/InventoryPanel")
 	var character: Control = main.get_node("UI/CharacterPanel")
-	var weapon := _equip_instance("weapon_starter", "panel_weapon", {"atk": 5})
+	var weapon := _equip_instance("weapon_iron", "panel_weapon", {"atk": 5})
 	GameState.inventory[0] = weapon
 	EventBus.inventory_changed.emit()
 	bag.set_open(true)
@@ -2166,7 +2166,7 @@ func _test_auto_battle() -> void:
 	_expect(pilot.current_target() != null, "自动战斗应锁定锚点半径内的目标")
 	_expect(seen_combat, "开 F 后应进入「接近目标」或「攻击目标」状态")
 	var priority_loot: GroundItem = load("res://scenes/entities/GroundItem.tscn").instantiate()
-	priority_loot.item = _equip_instance("weapon_starter", "priority_loot", {"atk": 2})
+	priority_loot.item = _equip_instance("weapon_iron", "priority_loot", {"atk": 2})
 	priority_loot.hold_time = 10.0
 	game.get_node("LootRoot").add_child(priority_loot)
 	priority_loot.global_position = player.global_position + Vector2(150, 0)
@@ -2265,13 +2265,13 @@ func _test_save() -> void:
 	Fog.reveal("wild_trial", Vector2i(59, 59))
 	var expected_explored := Fog.encode()
 	GameState.settings["searchRadius"] = 15
-	GameState.inventory[0] = _equip_instance("weapon_starter", "sv_1", {"atk": 5})
+	GameState.inventory[0] = _equip_instance("weapon_iron", "sv_1", {"atk": 5})
 	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
 	GameState.warehouse_expansions = 1
 	GameState.warehouse = Warehouse.create(1)
-	GameState.warehouse[0] = _equip_instance("weapon_starter", "sv_store", {"atk": 9}, [{"stat": "def", "value": 2}])
+	GameState.warehouse[0] = _equip_instance("weapon_iron", "sv_store", {"atk": 5}, [{"stat": "def", "value": 2}])
 	GameState.warehouse[1] = {"kind": "potion", "itemId": "potion_mp_small", "count": 7}
-	GameState.equipment["weapon"] = _equip_instance("weapon_wolfking", "sv_worn", {"atk": 12},
+	GameState.equipment["weapon"] = _equip_instance("weapon_iron", "sv_worn", {"atk": 5},
 		[{"stat": "atk", "value": 6}])
 	GameState.save_pos = Vector2(123.5, -456.25)
 	GameState.has_save_pos = true
@@ -2587,7 +2587,7 @@ func _test_consumable() -> void:
 
 	# ⑧ R-b 回归：use_item 必须按 kind 分流 —— 双击装备仍应穿戴
 	Consumable.reset()
-	var ei := _put_item(_equip_instance("weapon_starter", "cm_equip", {"atk": 3}))
+	var ei := _put_item(_equip_instance("weapon_iron", "cm_equip", {"atk": 3}))
 	var r7 := GameState.use_item(ei)
 	_expect(bool(r7.get("ok", false)), "双击装备应仍可穿戴（R-b）：%s" % r7.get("reason", ""))
 	_expect(GameState.equipment.get("weapon") != null, "装备应已进入武器槽")
@@ -2672,7 +2672,7 @@ func _equip_instance(item_id: String, inst_id: String, base_attrs: Dictionary,
 		affixes: Array = []) -> Dictionary:
 	return {
 		"kind": "equip", "itemId": item_id, "instanceId": inst_id,
-		"equipmentRuleVersion": 2, "quality": "common", "level": 1, "requiredLevel": 1,
+		"equipmentRuleVersion": 3, "quality": "common", "level": 1, "requiredLevel": 1,
 		"rawBaseAttrs": base_attrs, "qualityMultiplierSnapshot": 1.0, "starMultiplierSnapshot": 0.1,
 		"affixes": affixes, "pctAttrs": [],
 		"star": 0, "count": 1,
@@ -2746,12 +2746,12 @@ func _test_quest_chain() -> void:
 	_expect(Quest.state_of("Q001") == Quest.STATE_COMPLETED,
 		"talk 类目标接取即达标，实际 %s" % Quest.state_of("Q001"))
 
-	# ③ 交付 Q001：50 金币 + weapon_starter 入包；Q002 随之解锁
+	# ③ 交付 Q001：50 金币 + weapon_iron 入包；Q002 随之解锁
 	var d1 := Quest.deliver("Q001")
 	_expect(bool(d1.get("ok", false)), "交付 Q001 应成功：%s" % d1.get("reason", ""))
 	_expect(Quest.state_of("Q001") == Quest.STATE_REWARDED, "Q001 交付后应置 rewarded")
 	_expect(GameState.gold == 50, "Q001 奖励应为 50 金币，实际 %d" % GameState.gold)
-	_expect(_has_item_id("weapon_starter"), "背包应含 Q001 奖励武器 weapon_starter")
+	_expect(_has_item_id("weapon_iron"), "背包应含 Q001 奖励武器 weapon_iron")
 	_expect(Quest.state_of("Q002") == Quest.STATE_AVAILABLE, "Q001 交付后 Q002 应解锁")
 
 	# ④ Q002：击杀 5 只腐化野狼（monster_died 推进，逐次计数）
@@ -2779,7 +2779,7 @@ func _test_quest_chain() -> void:
 	GameState.inventory = Inventory.create(40)                  # 腾空背包，确保奖励护甲可入包
 	var d3 := Quest.deliver("Q003")
 	_expect(bool(d3.get("ok", false)), "交付 Q003 应成功：%s" % d3.get("reason", ""))
-	_expect(_has_item_id("armor_starter"), "背包应含 Q003 奖励护甲 armor_starter")
+	_expect(_has_item_id("armor_cloth"), "背包应含 Q003 奖励护甲 armor_cloth")
 
 	# ⑥ Q004：击杀裂爪狼王 1 只
 	_expect(Quest.state_of("Q004") == Quest.STATE_AVAILABLE, "Q003 交付后 Q004 应解锁")
@@ -2788,7 +2788,7 @@ func _test_quest_chain() -> void:
 	_expect(Quest.state_of("Q004") == Quest.STATE_COMPLETED, "击杀狼王后应 completed")
 	GameState.inventory = Inventory.create(40)
 	Quest.deliver("Q004")
-	_expect(_has_item_id("weapon_wolfking"), "背包应含 Q004 奖励 狼王之刃")
+	_expect(_has_item_id("weapon_iron"), "背包应含 Q004 奖励 狼王之刃")
 
 	# ⑦ Q005：击杀腐化巨兽 → 写 unlocks.chapter2（该任务 mapScope = corruption_source）
 	GameState.current_map = "corruption_source"
@@ -3182,8 +3182,8 @@ func _test_rest_zone() -> void:
 ## （真实重载行为 = 销毁旧 Game + `Game._ready` 按 `GameState.current_map` 重建，见 MapService 头注）。
 func _test_map_reload() -> void:
 	GameState.reset_to_defaults()
-	GameState.add_unclaimed_loot("camp", "travel_camp", _equip_instance("weapon_starter", "travel_camp_item", {"atk": 4}), Iso.grid_to_world(Vector2i(20, 18)))
-	GameState.add_unclaimed_loot("wild_trial", "travel_wild", _equip_instance("weapon_starter", "travel_wild_item", {"atk": 4}), Iso.grid_to_world(Vector2i(30, 20)))
+	GameState.add_unclaimed_loot("camp", "travel_camp", _equip_instance("weapon_iron", "travel_camp_item", {"atk": 4}), Iso.grid_to_world(Vector2i(20, 18)))
+	GameState.add_unclaimed_loot("wild_trial", "travel_wild", _equip_instance("weapon_iron", "travel_wild_item", {"atk": 4}), Iso.grid_to_world(Vector2i(30, 20)))
 
 	# ① 营地世界：3 只教学木桩 + 3 个 NPC（货郎 / 长老 / 车夫）
 	var camp_game: Node = load("res://scenes/Game.tscn").instantiate()
