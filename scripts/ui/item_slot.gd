@@ -96,32 +96,15 @@ func _spawn_drag_visual() -> void:
 		return
 	var layer := get_tree().get_first_node_in_group("drag_ghost_layer")
 	if layer != null:
-		DragGhost.spawn(layer, item)
+		DragGhost.spawn_slot(layer, self)
 		return
 	var preview := _make_drag_preview()
 	preview.z_index = DragGhost.Z
 	set_drag_preview(preview)
 
-## 拖拽跟随鼠标的小预览：物品名 + 品质色描边（占位素材，不加载图标）。
+## 无独立幽灵层时仍使用与源格一致的预览。
 func _make_drag_preview() -> Control:
-	var box := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.10, 0.11, 0.14, 0.94)
-	sb.border_color = ItemUtil.quality_color(String(item.get("quality", "common")))
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(4)
-	sb.content_margin_left = 8.0
-	sb.content_margin_right = 8.0
-	sb.content_margin_top = 4.0
-	sb.content_margin_bottom = 4.0
-	box.add_theme_stylebox_override("panel", sb)
-	var l := Label.new()
-	l.text = ItemUtil.display_name(item)
-	l.add_theme_font_size_override("font_size", 13)
-	l.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
-	box.add_child(l)
-	box.modulate = Color(1, 1, 1, 0.92)
-	return box
+	return DragGhost.slot_copy(self)
 
 # ---- 接收（ROLE_TRAY）----
 

@@ -31,6 +31,41 @@ static func spawn(layer: Node, item: Dictionary) -> DragGhost:
 	g._follow()
 	return g
 
+## 复制来源格子的实际外观，避免拖起后变成横向文字标签。
+static func spawn_slot(layer: Node, source: ItemSlot) -> DragGhost:
+	if layer == null:
+		return null
+	var g := DragGhost.new()
+	g.name = "DragGhost"
+	g.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	g.z_index = Z
+	g.custom_minimum_size = source.size
+	g.size = source.size
+	g.add_child(slot_copy(source))
+	layer.add_child(g)
+	g._follow()
+	return g
+
+static func slot_copy(source: ItemSlot) -> ItemSlot:
+	var copy := ItemSlot.new()
+	copy.item = source.item
+	copy.text = source.text
+	copy.icon = source.icon
+	copy.expand_icon = source.expand_icon
+	copy.icon_alignment = source.icon_alignment
+	copy.texture_filter = source.texture_filter
+	copy.custom_minimum_size = source.size
+	copy.size = source.size
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	copy.focus_mode = Control.FOCUS_NONE
+	for name in ["normal", "hover", "pressed", "focus", "disabled"]:
+		copy.add_theme_stylebox_override(name, source.get_theme_stylebox(name).duplicate())
+	for name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		copy.add_theme_color_override(name, source.get_theme_color(name))
+	copy.add_theme_font_size_override("font_size", source.get_theme_font_size("font_size"))
+	copy.add_theme_constant_override("icon_max_width", source.get_theme_constant("icon_max_width"))
+	return copy
+
 static func spawn_text(layer: Node, label: String) -> DragGhost:
 	if layer == null:
 		return null
