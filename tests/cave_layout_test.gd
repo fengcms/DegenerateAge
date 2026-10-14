@@ -1,13 +1,15 @@
 extends Node
-## Gameplay contract: one grid drives cave art, routing, collision and spawns.
+## 洞穴布局回归：同一格掩码约束地形、寻路、整体碰撞与怪物刷新。
 
 var failures: Array[String] = []
 
+## 收集断言失败，继续检查同场景的其它行为后统一报告。
 func check(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
 		print("[CaveLayoutTest] 失败：", message)
 
+## 载入第一章源头，检验绕障路线、单实体碰撞及真实移动可达。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	GameState.current_map = "corruption_source"
@@ -36,7 +38,13 @@ func _ready() -> void:
 				cave.is_walkable(path[i - 1] + Vector2i(0, step.y)), "斜向移动不可穿过墙角")
 	check(ground.clamp_to_map(Iso.grid_to_world(blocked)) != Iso.grid_to_world(blocked), "阻挡格的落点会纠正")
 	var walls := ground.get_node("CaveWalls") as StaticBody2D
-	check(walls.get_child_count() == cave.boundary_cells().size(), "每个洞壁边缘都有物理碰撞")
+	var blocking_entities := 0
+	for entity in ground._chapter_one_art.layout.get("entities", []):
+		if bool(entity.get("blocking", false)):
+			blocking_entities += 1
+	check(walls.get_child_count() == blocking_entities, "每个大型洞壁实体只有一个合并碰撞")
+	for child in walls.get_children():
+		check(child is CollisionPolygon2D, "第一章洞壁使用整体多边形碰撞")
 	var spawner := world.get_node("Spawner") as MonsterSpawner
 	for point in spawner.marker_points():
 		var cell := Vector2i(Iso.world_to_grid(point.position).round())

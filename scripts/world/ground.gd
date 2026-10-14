@@ -1,10 +1,7 @@
 class_name IsoGround
 extends Node2D
-## 等距地面（M1 占位实现：程序化绘制）与边界碰撞。
-##
-## 依据：产品文档 7.1（64×32 等距瓦片）、7.2（禁止 corner cutting）。
-## 说明：M1 用程序化绘制做占位；后续（M3）替换为 TileMapLayer + 正式素材时，
-## 本节点对外接口（get_map_center_world / get_world_bounds）保持不变，上层无需改动。
+## 等距地面、纹理图集合批与静态边界碰撞；第一章从布局文件读取道路和多格实体。
+## 地面仍采用 64×32 网格，通行与绘制共用运行布局掩码；第二章沿用现有地形路径。
 
 @export var map_id: String = "camp"
 @export var sample_camp_theme := false
@@ -25,7 +22,7 @@ const ASH_TILES := [
 	preload("res://assets/tiles/ash/tile_0.png"),
 	preload("res://assets/tiles/ash/tile_1.png"),
 	preload("res://assets/tiles/ash/tile_2.png"),
-	preload("res://assets/tiles/ash/tile_3.png"),
+	preload("res://assets/tiles/chapter1_v2/ash_land/road_soft.png"),
 ]
 const CAVE_TILES := [
 	preload("res://assets/tiles/cave/tile_0.png"),
@@ -46,7 +43,10 @@ var _blocked_mesh: ArrayMesh
 var _tile_mesh: ArrayMesh
 var _tile_atlas: ImageTexture
 var _atlas_tiles: Array = []
+var _chapter_one_art: ChapterOneMapArt = null
+var _chapter_one_road_rows: Array = []
 
+## 进入地图时装配布局、地面、第一章静态实体与碰撞；所有重建都在加载阶段完成。
 func _ready() -> void:
 	z_index = -4096
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -65,17 +65,14 @@ func _ready() -> void:
 		if map_id == "c2_well_core":
 			cave.set_access_gate_open(bool(GameState.unlocks.get("c2_core_access", false)))
 			EventBus.quest_rewarded.connect(_on_quest_rewarded)
-	if map_id == "corruption_source" and layout_path.is_empty():
-		add_child(preload("res://scripts/world/cave_props.gd").new())
-	if map_id == "camp" or sample_camp_theme:
+	if map_id in ["camp", "wild_trial", "ash_land", "corruption_source"] and not sample_camp_theme:
+		_load_chapter_one_art()
+	elif sample_camp_theme:
 		add_child(preload("res://scripts/world/sample_camp_props.gd").new())
-	elif map_id == "wild_trial" or map_id == "ash_land":
-		var props := preload("res://scripts/world/environment_props.gd").new()
-		props.map_id = map_id
-		add_child(props)
 	_build_boundary()
 	queue_redraw()
 
+## 读取当前地图元数据及逻辑尺寸；缺失条目时保留编辑器预览默认值。
 func _load_map() -> void:
 	var m = DataLoader.get_entry("maps", map_id)
 	if m == null:
@@ -86,13 +83,31 @@ func _load_map() -> void:
 	if s is Dictionary:
 		grid_size = Vector2i(int(s.get("w", grid_size.x)), int(s.get("h", grid_size.y)))
 
-## 地图中心的世界坐标（用作玩家出生点）
+## 从当前布局版本读取第一章道路与实体文件，禁止使用旧固定装饰坐标。
+func _load_chapter_one_art() -> void:
+	var path := "res://data/map_art/chapter1_v2/%s.json" % map_id
+	var file := FileAccess.open(path, FileAccess.READ)
+	assert(file != null, "缺少第一章地图美术布局：%s" % path)
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	assert(parsed is Dictionary, "第一章地图美术布局无效：%s" % path)
+	var art_data: Dictionary = parsed
+	assert(String(art_data.get("layoutVersion", "")) == String(map_data.get("layoutVersion", "")),
+		"第一章地图美术布局版本不一致：%s" % map_id)
+	var extent: Array = art_data.get("grid_size", [])
+	assert(extent.size() == 2 and Vector2i(int(extent[0]), int(extent[1])) == grid_size,
+		"第一章地图美术尺寸不一致：%s" % map_id)
+	_chapter_one_road_rows = art_data.get("road_rows", [])
+	assert(_chapter_one_road_rows.size() == grid_size.y, "第一章道路行数不正确：%s" % map_id)
+	_chapter_one_art = ChapterOneMapArt.new()
+	_chapter_one_art.configure(map_id, art_data)
+	add_child(_chapter_one_art)
+
+## 返回离地图中心最近的合法世界坐标，供默认出生点使用。
 func get_map_center_world() -> Vector2:
 	var cell := Vector2i(grid_size.x / 2, grid_size.y / 2)
 	return Iso.grid_to_world(cave.nearest_walkable(cell) if cave != null else cell)
 
-## 把世界坐标夹回地图可用范围（M1-10 读档坐标容错）：
-## 坏档 / 版本变更导致坐标越界时，玩家仍会落在边界内而不是墙外。
+## 将越界或已阻挡的世界位置修正到可走格，供读档和寻路目标容错。
 func clamp_to_map(world: Vector2) -> Vector2:
 	var g := Iso.world_to_grid(world)
 	var margin := 2.0
@@ -104,12 +119,15 @@ func clamp_to_map(world: Vector2) -> Vector2:
 	var cell := Vector2i(Iso.world_to_grid(bounded).round())
 	return bounded if cave.is_walkable(cell) else Iso.grid_to_world(cave.nearest_walkable(cell))
 
+## 查询运行掩码中的格通行状态；无掩码的预览地图按可走处理。
 func is_walkable_cell(cell: Vector2i) -> bool:
 	return cave == null or cave.is_walkable(cell)
 
+## 判断井心动态门禁后方区域，其他地图恒为未锁定。
 func is_locked_boss_area(world: Vector2) -> bool:
 	return cave != null and cave.is_behind_access_gate(Vector2i(Iso.world_to_grid(world).round()))
 
+## 第二章井心通行解锁后更新导航与墙碰撞，第一章无此动态门禁。
 func _on_quest_rewarded(_quest_id: String) -> void:
 	if map_id != "c2_well_core" or cave == null or not bool(GameState.unlocks.get("c2_core_access", false)):
 		return
@@ -121,6 +139,7 @@ func _on_quest_rewarded(_quest_id: String) -> void:
 	_build_cave_walls()
 	queue_redraw()
 
+## 用同一布局掩码规划世界坐标路线；无布局时直接返回目标点。
 func route(from_world: Vector2, to_world: Vector2) -> Array[Vector2]:
 	var result: Array[Vector2] = []
 	if cave == null:
@@ -130,7 +149,7 @@ func route(from_world: Vector2, to_world: Vector2) -> Array[Vector2]:
 	var finish := Vector2i(Iso.world_to_grid(to_world).round())
 	return cave.smooth_path(from_world, cave.path(start, finish))
 
-## 地图（菱形区域）的世界包围盒，用于相机限制
+## 返回投影后地图的世界包围盒，供相机限制使用。
 func get_world_bounds() -> Rect2:
 	var pts := _outer_corners()
 	var min_x: float = pts[0].x
@@ -144,7 +163,7 @@ func get_world_bounds() -> Rect2:
 		max_y = max(max_y, p.y)
 	return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
 
-## 菱形区域的四个外角（按 E→N→W→S 顺序，即顺时针外边界）
+## 按投影顺序求外边界四角，供底图、边框与物理边界共用。
 func _outer_corners() -> PackedVector2Array:
 	var w := grid_size.x
 	var h := grid_size.y
@@ -155,6 +174,7 @@ func _outer_corners() -> PackedVector2Array:
 		Iso.tile_corner(Vector2i(0, 0), Iso.DIR_S),
 	])
 
+## 创建地图外边界和布局阻挡碰撞；第一章阻挡由多格实体提供。
 func _build_boundary() -> void:
 	var pts := _outer_corners()
 	var body := StaticBody2D.new()
@@ -164,12 +184,16 @@ func _build_boundary() -> void:
 		_add_wall(body, pts[i], pts[(i + 1) % pts.size()])
 	_build_cave_walls()
 
+## 建立静态阻挡体；第一章每个大实体一个合并轮廓，其他图复用逐边缘形状。
 func _build_cave_walls() -> void:
 	if cave == null:
 		return
 	var rock := StaticBody2D.new()
 	rock.name = "CaveWalls"
 	add_child(rock)
+	if _chapter_one_art != null:
+		_chapter_one_art.add_collisions_to(rock)
+		return
 	# Every wall uses the same immutable diamond; only node positions differ.
 	var shape := ConvexPolygonShape2D.new()
 	shape.points = PackedVector2Array([Vector2(-31, 0), Vector2(0, -15), Vector2(31, 0), Vector2(0, 15)])
@@ -179,6 +203,7 @@ func _build_cave_walls() -> void:
 		hit.position = Iso.grid_to_world(cell)
 		rock.add_child(hit)
 
+## 将一条外边界线段转为矩形碰撞形状，不影响内部布局掩码。
 func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 	var seg := b - a
 	var shape := RectangleShape2D.new()
@@ -189,6 +214,7 @@ func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 	cs.rotation = seg.angle()
 	body.add_child(cs)
 
+## 绘制纹理地面、阻挡顶面和洞壁外观；只在装载或显式失效时重绘。
 func _draw() -> void:
 	var w := grid_size.x
 	var h := grid_size.y
@@ -218,6 +244,7 @@ func _draw() -> void:
 	if themed:
 		var tiles: Array = CAMP_TILES if camp_style else (WILD_TILES if map_id == "wild_trial" else ASH_TILES)
 		_draw_tile_floor(tiles, false, camp_style)
+		_draw_chapter_one_blocked_floor()
 		var camp_outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 		draw_polyline(camp_outline, Color("a89978") if camp_style else Color("747565"), 2.0)
 		return
@@ -245,8 +272,8 @@ func _draw() -> void:
 	var outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 	draw_polyline(outline, COLOR_BORDER, 2.0)
 
-## One tiny atlas avoids thousands of material/texture switches. Transparent
-## tile rectangles retain their original col/row insertion order in the mesh.
+## 用一次图集网格绘制全部可走格；道路索引来自同版本布局，不按旧中线猜测。
+## 透明瓦片仍保持原来的列、行插入顺序，以免破坏等距遮盖。
 func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool = false) -> void:
 	if _tile_atlas == null or _atlas_tiles != tiles:
 		var atlas := Image.create(64 * tiles.size(), 32, false, Image.FORMAT_RGBA8)
@@ -265,7 +292,10 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 				continue
 			var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
 			var tile := 1 if variation < 4 else 2 if variation == 5 else 0
-			if not cave_style:
+			if not _chapter_one_road_rows.is_empty():
+				if String(_chapter_one_road_rows[row])[col] == "1":
+					tile = 3
+			elif not cave_style:
 				var road_center := 20 if sample_camp_theme else grid_size.y / 2
 				if camp_style and (absi(row - road_center) <= 1 or absi(col - road_center) <= 1):
 					tile = 3
@@ -281,6 +311,29 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 	if _tile_mesh != null:
 		draw_mesh(_tile_mesh, _tile_atlas, Transform2D.IDENTITY, Color("a9aaae") if cave_style else Color.WHITE)
 
+## 合批画出新版布局的阻挡顶面；大型实体再覆盖轮廓细节。
+func _draw_chapter_one_blocked_floor() -> void:
+	if cave == null or _chapter_one_art == null:
+		return
+	var cells := cave.blocked_cells()
+	var builder := FlatTileMesh.new(cells.size(), true)
+	var tile_count := _atlas_tiles.size()
+	for cell: Vector2i in cells:
+		var variation := posmod(cell.x * 17 + cell.y * 23, 7)
+		var tile := 2 if variation == 0 else 1 if variation == 1 else 0
+		var origin := Iso.grid_to_world(cell) - Vector2(32, 16)
+		var u0 := float(tile) / tile_count
+		var u1 := float(tile + 1) / tile_count
+		builder.add_quad(PackedVector2Array([
+			origin, origin + Vector2(64, 0), origin + Vector2(64, 32), origin + Vector2(0, 32),
+		]), PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]))
+	_blocked_mesh = builder.build()
+	if _blocked_mesh == null:
+		return
+	var color := Color("777067") if map_id == "camp" else Color("69745e") if map_id == "wild_trial" else Color("6c6161")
+	draw_mesh(_blocked_mesh, _tile_atlas, Transform2D.IDENTITY, color)
+
+## 收集可走格邻接洞壁的可见边，并统计端点以区分连续面与断头。
 func _collect_cave_edges(cell: Vector2i, center: Vector2, wall_edges: Array, endpoint_counts: Dictionary) -> void:
 	# Rear edges hang down onto the floor, reading as an interior cave wall.
 	if not cave.is_walkable(cell + Vector2i(1, 0)):
@@ -294,17 +347,20 @@ func _collect_cave_edges(cell: Vector2i, center: Vector2, wall_edges: Array, end
 	if not cave.is_walkable(cell + Vector2i(0, -1)):
 		_draw_cave_seam(center + Vector2(0, 16), center + Vector2(32, 0), cell)
 
+## 向本帧洞壁绘制列表增加一条边，同时累加两个端点的连接数。
 func _add_cave_wall_edge(a: Vector2, b: Vector2, cell: Vector2i, wall_edges: Array, endpoint_counts: Dictionary) -> void:
 	wall_edges.append({"a": a, "b": b, "cell": cell})
 	for point in [a, b]:
 		var key := Vector2i(point)
 		endpoint_counts[key] = int(endpoint_counts.get(key, 0)) + 1
 
+## 在屏幕朝向的洞壁边缘画低对比接缝，不生成新的碰撞。
 func _draw_cave_seam(a: Vector2, b: Vector2, cell: Vector2i) -> void:
 	var seed := posmod(cell.x * 17 + cell.y * 29, 5)
 	var mid := a.lerp(b, 0.5) + Vector2(0, float(seed - 2))
 	draw_polyline(PackedVector2Array([a, mid, b]), Color("433b32"), 2.0)
 
+## 依据端点状态绘制连续洞壁立面及断头，保持现有低成本程序纹理。
 func _draw_cliff_face(a: Vector2, b: Vector2, cell: Vector2i, cap_a: bool, cap_b: bool) -> void:
 	var fall := Vector2(0, 21)
 	var top := PackedVector2Array([a, a.lerp(b, 0.25) + Vector2(0, -2), a.lerp(b, 0.5) + Vector2(0, 2), a.lerp(b, 0.75) + Vector2(0, -3), b])

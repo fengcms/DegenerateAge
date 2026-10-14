@@ -1,5 +1,7 @@
 extends Node
+## 四图地面图集回归：保留逐格纹理与透明边，同时核对新版路线选择。
 
+## 逐图检查网格顶点、UV 和源图像素，避免道路与合批发生错位。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	for map_id in ["camp", "wild_trial", "ash_land", "corruption_source"]:
@@ -25,11 +27,9 @@ func _ready() -> void:
 			assert(ground.cave.is_walkable(cell))
 			var variation := posmod(cell.x * 73 + cell.y * 37 + cell.x * cell.y * 11, 19)
 			var tile := 1 if variation < 4 else 2 if variation == 5 else 0
-			if map_id == "camp" and (absi(cell.y - ground.grid_size.y / 2) <= 1 or absi(cell.x - ground.grid_size.y / 2) <= 1):
+			if String(ground._chapter_one_road_rows[cell.y])[cell.x] == "1":
 				tile = 3
-			if map_id in ["wild_trial", "ash_land"] and absi(cell.y - ground.grid_size.y / 2) <= 1:
-				tile = 3
-			assert(is_equal_approx(uvs[offset].x, float(tile) / 4.0), "Tile variation and road selection must stay unchanged")
+			assert(is_equal_approx(uvs[offset].x, float(tile) / 4.0), "Texture atlas must follow approved chapter-one road rows")
 		ground.queue_free()
 		await get_tree().process_frame
 	print("[MapTextureBatchTest] PASS")
