@@ -332,6 +332,14 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		String(tpl.get("name", quest_id)),
 		"（%s）" % "，".join(PackedStringArray(parts)) if not parts.is_empty() else "",
 	], "levelup")
+	if String(tpl.get("type", "")) == "main":
+		var lead := next_main_lead()
+		if not lead.is_empty():
+			EventBus.toast_requested.emit(Localization.tr_key("ui.quest.next_toast") % [
+				MapService.display_name(String(lead.get("giverMap", ""))),
+				MapService.npc_name(String(lead.get("giver", ""))),
+				String(lead.get("name", "")),
+			], "info")
 
 	return {"ok": true, "reason": "", "reward": reward, "item": item}
 
@@ -410,6 +418,44 @@ static func ongoing_list() -> Array[Dictionary]:
 			out.append(e)
 	return out
 
+## 当前主线没有进行中或待交付节点时，返回已解锁但尚未接取的下一节点。
+## 只在前一主线已领奖后显示提示；支线不遮挡主线，章节终点不制造空目标。
+static func next_main_lead() -> Dictionary:
+	var entries := list_states()
+	for entry in entries:
+		if String(entry.get("type", "")) == "main" and String(entry.get("state", "")) in [STATE_ACTIVE, STATE_COMPLETED]:
+			return {}
+	for entry in entries:
+		if String(entry.get("type", "")) != "main" or String(entry.get("state", "")) != STATE_AVAILABLE:
+			continue
+		var tpl := template(String(entry.get("id", "")))
+		var prev := String(tpl.get("prev", ""))
+		if prev.is_empty() or state_of(prev) != STATE_REWARDED:
+			continue
+		var giver := String(entry.get("giver", ""))
+		var map_id := MapService.map_for_npc(giver)
+		if map_id.is_empty():
+			continue
+		entry["leadText"] = String(tpl.get("leadText", Localization.tr_key("ui.quest.next_lead") % [map_id, giver, String(entry.get("name", ""))]))
+		entry["giverMap"] = map_id
+		return entry
+	return {}
+
+## 向任务官说明锁定任务的真实前置节点；已达标但未领奖时明确指出交付对象。
+static func lock_reason(quest_id: String) -> String:
+	var tpl := template(quest_id)
+	var prev := String(tpl.get("prev", ""))
+	if prev.is_empty():
+		return Localization.tr_key("ui.quest_panel.p019")
+	var prev_tpl := template(prev)
+	var prev_name := String(prev_tpl.get("name", prev))
+	if state_of(prev) == STATE_COMPLETED:
+		var turn_in := String(prev_tpl.get("turnIn", prev_tpl.get("giver", "")))
+		var npc_name := MapService.npc_name(turn_in)
+		if not npc_name.is_empty():
+			return Localization.tr_key("ui.quest.lock_collect") % [npc_name, prev_name]
+	return Localization.tr_key("ui.quest.lock_prev") % prev_name
+
 ## 目标进度文本，如「击败 腐化野狼 3/5」；count ≤ 1 时省略进度。
 static func objective_text(entry: Dictionary) -> String:
 	var obj = entry.get("objective", {})
@@ -456,6 +502,15 @@ static func start_link_navigation(quest_id: String, kind: String, target_id: Str
 		if kind == "npc" and String(objective.get("kind", "")) == "talk" \
 				and target_id == String(objective.get("targetId", "")):
 			return MapService.start_quest_link_navigation("npc", target_id, scope)
+	elif state == STATE_AVAILABLE and String(tpl.get("type", "")) == "main":
+		var lead := next_main_lead()
+		var giver := String(tpl.get("giver", ""))
+		var giver_map := MapService.map_for_npc(giver)
+		if String(lead.get("id", "")) == quest_id and not giver_map.is_empty():
+			if kind == "npc" and target_id == giver:
+				return MapService.start_quest_link_navigation("npc", giver, [giver_map])
+			if kind == "map" and target_id == giver_map:
+				return MapService.start_quest_link_navigation("map", giver_map, [giver_map])
 	return {"ok": false, "reason": "当前任务状态不能导航到该目标"}
 
 ## 目标对象显示名（怪物 / 收集物 / NPC）。

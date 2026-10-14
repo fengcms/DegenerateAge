@@ -1,9 +1,13 @@
 class_name QuestInlineText
 extends RefCounted
 ## 任务文案：普通文本原样编辑，少量 {类型:ID} 标记生成行内链接。
+## 追踪栏与任务官面板共用此显示规则；点击后的导航权限由 Quest 校验。
 
+## 依据任务状态选择目标、交付或下一主线文案；未配置时回退到普通描述。
 static func description(entry: Dictionary) -> String:
 	var state := String(entry.get("state", ""))
+	if state == Quest.STATE_AVAILABLE and entry.has("leadText"):
+		return String(entry.get("leadText", ""))
 	if state == Quest.STATE_COMPLETED:
 		return String(entry.get("turnInText", entry.get("desc", "")))
 	if state == Quest.STATE_ACTIVE:

@@ -217,6 +217,7 @@
     "prev": "C2Q01",
     "abandonable": false,
     "desc": "清理断管坡的汲灵幼虫，让维修队通过。",
+    "leadText": "从沉井镇东侧前往 {map:c2_pipe_slope}，找 {npc:c2_shi_cen} 接《修路的人》。",
     "trackerText": "前往 {map:c2_pipe_slope} 击败 12 {monster:c2_spirit_larva}（{current}/{count}）。",
     "turnInText": "回到 {map:c2_pipe_slope} 找 {npc:c2_shi_cen} 交任务吧。"
   },

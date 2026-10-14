@@ -199,6 +199,7 @@ func _panel_style() -> StyleBoxFlat:
 
 # ---- 刷新 ----
 
+## 任务状态变化时重建当前 NPC 列表，并在接续空档显示下一主线去向。
 func _refresh() -> void:
 	if _list == null:
 		return
@@ -206,9 +207,16 @@ func _refresh() -> void:
 		_list.remove_child(c)
 		c.queue_free()
 	var entries: Array[Dictionary] = []
+	var lead := Quest.next_main_lead()
+	if not lead.is_empty() and String(lead.get("giver", "")) != _current_npc_id:
+		_list.add_child(_make_lead_hint(lead))
 	for entry in Quest.list_states():
 		if _current_npc_id.is_empty() or String(entry.get("giver", "")) == _current_npc_id \
 				or String(entry.get("turnIn", "")) == _current_npc_id:
+			if String(entry.get("state", "")) == Quest.STATE_LOCKED:
+				var prev := String(Quest.template(String(entry.get("id", ""))).get("prev", ""))
+				if prev.is_empty() or Quest.state_of(prev) == Quest.STATE_LOCKED:
+					continue
 			entries.append(entry)
 	if entries.is_empty():
 		var l := Label.new()
@@ -219,6 +227,19 @@ func _refresh() -> void:
 	for e in entries:
 		_list.add_child(_make_row(e))
 
+## 当前 NPC 不是下一主线发布人时，在列表顶部保留可点击的跨图去向。
+func _make_lead_hint(lead: Dictionary) -> Control:
+	var hint := RichTextLabel.new()
+	hint.bbcode_enabled = true
+	hint.fit_content = true
+	hint.scroll_active = false
+	hint.custom_minimum_size.x = 200
+	hint.add_theme_font_size_override("normal_font_size", 13)
+	hint.text = Localization.tr_key("ui.quest.next_title") + "  " + QuestInlineText.markup(lead)
+	hint.meta_clicked.connect(_on_inline_link.bind(String(lead.get("id", ""))))
+	return hint
+
+## 为单项任务生成状态、目标说明和操作按钮；锁定项显示明确前置条件。
 func _make_row(e: Dictionary) -> Control:
 	var qid := String(e.get("id", ""))
 	var state := String(e.get("state", ""))
@@ -257,6 +278,8 @@ func _make_row(e: Dictionary) -> Control:
 	sub.add_theme_font_size_override("normal_font_size", 12)
 	sub.add_theme_color_override("default_color", COL_TEXT_DIM if state != Quest.STATE_REWARDED else Color(0.45, 0.60, 0.45))
 	sub.text = QuestInlineText.markup(e)
+	if state == Quest.STATE_LOCKED:
+		sub.text = Quest.lock_reason(qid)
 	sub.meta_clicked.connect(_on_inline_link.bind(qid))
 	info.add_child(sub)
 
@@ -311,7 +334,7 @@ func _make_action_button(qid: String, state: String) -> Button:
 		Quest.STATE_LOCKED:
 			b.text = Localization.tr_key("ui.quest_panel.p018")
 			b.disabled = true
-			b.tooltip_text = Localization.tr_key("ui.quest_panel.p019")
+			b.tooltip_text = Quest.lock_reason(qid)
 		_:
 			b.text = "—"
 			b.disabled = true

@@ -249,6 +249,9 @@ func _refresh_quests() -> void:
 		_quest_list.remove_child(c)
 		c.queue_free()
 	var items: Array[Dictionary] = Quest.ongoing_list()
+	var lead := Quest.next_main_lead()
+	if not lead.is_empty():
+		items.insert(0, lead)
 	_quest_tracker.visible = not items.is_empty()
 	if items.is_empty():
 		return
@@ -270,12 +273,15 @@ func _refresh_quests() -> void:
 func _make_quest_row(e: Dictionary) -> Control:
 	var state := String(e.get("state", ""))
 	var done := state == Quest.STATE_COMPLETED
+	var is_lead := state == Quest.STATE_AVAILABLE and e.has("leadText")
 	var lbl := Label.new()
 	lbl.add_theme_font_size_override("font_size", 12)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var text := "%s%s" % ["⚑ " if done else "· ", String(e.get("name", ""))]
+	var text := "%s%s" % ["⚑ " if done else Localization.tr_key("ui.quest.next_title") + " · " if is_lead else "· ", String(e.get("name", ""))]
 	if done:
 		text += Localization.tr_key("ui.hud.p011")
+		lbl.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
+	elif is_lead:
 		lbl.add_theme_color_override("font_color", COL_AUTO_OVERRIDE)
 	else:
 		var need := int(e.get("need", 0))
