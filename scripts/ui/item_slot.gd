@@ -231,7 +231,7 @@ func _populate_equipment_tooltip(row: GridContainer) -> void:
 				hint.add_theme_color_override("font_color", Color("78d8a4"))
 			text += Localization.tr_key("ui.equip_tip.target", [String(preview.slot_label)])
 			text += "\n" + Localization.tr_key("ui.equip_tip.delta", [float(preview.worn_score), float(preview.score_delta)])
-			if bool(preview.downgrade):
+			if bool(preview.lower_quality):
 				text += "\n" + Localization.tr_key("ui.equip_tip.lower_quality")
 		text += "\n" + Localization.tr_key("ui.equip_tip.score_note")
 		hint.text = text

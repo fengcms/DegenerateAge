@@ -130,7 +130,9 @@ static func replacement_preview(slots: Dictionary, item: Dictionary, slot_id: St
 		"score_delta": candidate_score - worn_score, "empty": worn.is_empty(),
 		"stronger": not worn.is_empty() and candidate_score > worn_score
 			and not is_equal_approx(candidate_score, worn_score),
-		"downgrade": not worn.is_empty() and quality_rank(item) < quality_rank(worn)}
+		"downgrade": not worn.is_empty() and candidate_score < worn_score
+			and not is_equal_approx(candidate_score, worn_score),
+		"lower_quality": not worn.is_empty() and quality_rank(item) < quality_rank(worn)}
 
 # ---- 穿戴门槛 ----
 

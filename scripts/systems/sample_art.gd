@@ -35,8 +35,6 @@ const SKILL_ICONS := {
 	"spirit_storm": preload("res://assets/sprites/skills/spirit_storm.png"),
 }
 
-static var _trimmed_icons: Dictionary = {}
-
 static func skill_icon(skill_id: String) -> Texture2D:
 	return SKILL_ICONS.get(skill_id) as Texture2D
 
@@ -70,34 +68,10 @@ static func decorate(button: Button, texture: Texture2D) -> void:
 		var binding: Dictionary = (button as HotbarSlot).entry
 		if String(binding.get("kind", "")) == "skill":
 			texture = skill_icon(String(binding.get("id", "")))
-	var icon_width := 34
-	if button is ItemSlot and (button as ItemSlot).role in [ItemSlot.ROLE_BAG, ItemSlot.ROLE_EQUIP]:
-		icon_width = roundi(button.custom_minimum_size.x)
-		if texture != null and String((button as ItemSlot).item.get("kind", "")) == "equip":
-			texture = _trimmed_equipment_icon(texture)
 	button.icon = texture
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", icon_width)
+	button.add_theme_constant_override("icon_max_width", 34)
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	if texture != null:
 		button.text = ""
-
-static func _trimmed_equipment_icon(source: Texture2D) -> Texture2D:
-	var key := source.get_instance_id()
-	if _trimmed_icons.has(key):
-		return _trimmed_icons[key] as Texture2D
-	var pixels := source.get_image()
-	if pixels == null:
-		return source
-	var used := pixels.get_used_rect()
-	if used.size == Vector2i.ZERO:
-		return source
-	# Preserve one transparent pixel around the painted shape so it remains clear of the frame.
-	var start := Vector2i(maxi(0, used.position.x - 1), maxi(0, used.position.y - 1))
-	var finish := Vector2i(mini(pixels.get_width(), used.end.x + 1), mini(pixels.get_height(), used.end.y + 1))
-	var cropped := AtlasTexture.new()
-	cropped.atlas = source
-	cropped.region = Rect2(start, finish - start)
-	_trimmed_icons[key] = cropped
-	return cropped
