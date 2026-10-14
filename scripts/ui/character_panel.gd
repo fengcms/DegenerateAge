@@ -154,7 +154,7 @@ func _refresh() -> void:
 		var item: Variant = GameState.equipment.get(sid)
 		button.item = item if item is Dictionary else {}
 		button.draggable = item is Dictionary and _bag_visible()
-		button.text = ""
+		button.text = ItemUtil.template_name(item).substr(0, 2) if item is Dictionary else ""
 		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else Localization.tr_key("ui.character_panel.p004") % String(def.label)
 		SampleArt.decorate(button, SampleArt.icon_for(item))
 		button.queue_redraw()

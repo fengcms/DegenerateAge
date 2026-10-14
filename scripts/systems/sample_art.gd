@@ -17,6 +17,11 @@ const GROUND := {
 static func icon_for(item: Variant) -> Texture2D:
 	if not item is Dictionary:
 		return null
+	if String(item.get("kind", "")) == "equip":
+		var template := Equipment.template_of(item)
+		var path := String(template.get("icon", ""))
+		if path.begins_with("res://") and ResourceLoader.exists(path, "Texture2D"):
+			return load(path) as Texture2D
 	return ICONS.get(String(item.get("itemId", ""))) as Texture2D
 
 static func ground_for(item: Dictionary) -> Texture2D:
