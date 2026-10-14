@@ -378,6 +378,7 @@ func _try_interact() -> bool:
 	if npc == null:
 		return false
 	_pending_npc = null
+	_focus_npc(npc)
 	return _interact_with(npc)
 
 func _activate_exit(exit_node: TravelExit) -> void:
@@ -434,10 +435,16 @@ func _interact_with(npc: Npc) -> bool:
 ## 鼠标点击 NPC：近距离直接对话，远距离先步行到 NPC，进入 2 格范围后自动打开。
 func _request_npc_interaction(npc: Npc) -> void:
 	_pending_npc = null
+	_focus_npc(npc)
 	if npc.is_player_in_range():
 		_interact_with(npc)
 	elif _player.request_map_move(_ground.clamp_to_map(npc.global_position)):
 		_pending_npc = npc
+
+## NPC 只进入界面观察目标；战斗目标仍由 PlayerCharacter 严格筛选怪物。
+func _focus_npc(npc: Npc) -> void:
+	_player.clear_travel_intent()
+	EventBus.target_changed.emit(npc)
 
 func npc_at_screen(point: Vector2) -> Npc:
 	var best: Npc = null

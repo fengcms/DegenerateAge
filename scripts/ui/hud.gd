@@ -36,12 +36,14 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _quest_list: VBoxContainer = %QuestList
 
 var _target: Node = null
+var _target_hint: Label
 var _auto_battle: bool = false
 var _auto_pickup: bool = false
 var _auto_phase: String = ""
 var _hotbar_buttons: Array[HotbarSlot] = []
 
 func _ready() -> void:
+	_build_target_hint()
 	EventBus.player_hp_changed.connect(_on_hp)
 	EventBus.player_mp_changed.connect(_on_mp)
 	EventBus.player_xp_changed.connect(_on_xp)
@@ -109,6 +111,7 @@ func _on_level(level: int) -> void:
 
 func _on_target(target: Node) -> void:
 	_target = target
+	_update_npc_portrait()
 	_update_target()
 
 func _on_map_changed(_map_id: String) -> void:
@@ -277,6 +280,11 @@ func _update_target() -> void:
 	var valid: bool = is_instance_valid(_target) and not _target.is_queued_for_deletion() and _target.get("is_dead") != true
 	# Boss 由顶部专用血条展示，同一目标无需再占用普通目标卡。
 	$TargetPanel.visible = valid and not _target_is_boss(_target)
+	_target_hint.visible = valid and _target is Npc
+	_target_hp.visible = valid and not _target is Npc
+	if valid and _target is Npc:
+		_target_name.text = (_target as Npc).npc_name
+		return
 	if valid:
 		_target_name.text = String(_target.get("display_name"))
 		_target_hp.max_value = maxi(1, int(_target.get("max_hp")))
@@ -284,6 +292,27 @@ func _update_target() -> void:
 	else:
 		_target_name.text = Localization.tr_key("ui.hud.p013")
 		_target_hp.value = 0
+
+func _build_target_hint() -> void:
+	_target_hint = Label.new()
+	_target_hint.position = Vector2(_target_name.position.x, _target_name.position.y + _target_name.size.y + 2.0)
+	_target_hint.size = Vector2(_target_name.size.x, 25.0)
+	_target_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_target_hint.add_theme_font_size_override("font_size", 12)
+	_target_hint.add_theme_color_override("font_color", Color("8fd7c8"))
+	_target_hint.text = Localization.tr_key("ui.hud.npc_interact")
+	_target_hint.visible = false
+	$TargetPanel.add_child(_target_hint)
+
+func _update_npc_portrait() -> void:
+	var portrait := get_node_or_null("TargetPanel/TargetPortrait/TargetPortraitImage") as TextureRect
+	if portrait == null or not _target is Npc:
+		return
+	var npc := _target as Npc
+	var atlas := AtlasTexture.new()
+	atlas.atlas = load("res://assets/sprites/npcs/%s/idle_atlas.png" % npc.role) as Texture2D
+	atlas.region = Rect2(0.0, 0.0, 64.0, 64.0)
+	portrait.texture = atlas
 
 func _target_is_boss(target: Node) -> bool:
 	if target == null or not is_instance_valid(target):

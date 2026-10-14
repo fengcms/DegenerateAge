@@ -2,6 +2,7 @@
   "ui.hud.hp": "生命",
   "ui.hud.mp": "法力",
   "ui.hud.level": "等级",
+  "ui.hud.npc_interact": "友方 · 可交谈",
   "ui.hud.gold": "金币",
   "ui.hud.xp": "经验",
   "ui.menu.new_game": "新游戏",

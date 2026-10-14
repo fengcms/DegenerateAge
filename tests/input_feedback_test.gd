@@ -38,6 +38,21 @@ func _ready() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		enemy.queue_free()
 	await get_tree().process_frame
+	var npc := (load("res://scenes/entities/Npc.tscn") as PackedScene).instantiate() as Npc
+	npc.role = "quest"
+	npc.npc_name = "测试长老"
+	world.get_node("Npcs").add_child(npc)
+	npc.global_position = player.global_position + Vector2(250.0, 0.0)
+	click(npc.get_global_transform_with_canvas().origin + Vector2(0.0, -45.0))
+	check(hud.get_node("TargetPanel").visible and hud._target_name.text == npc.npc_name,
+		"点击 NPC 显示目标名称")
+	check(hud._target_hint.visible and not hud._target_hp.visible, "NPC 目标显示友方交互信息而非血条")
+	check(hud._target_hint.position.y >= hud._target_name.position.y + hud._target_name.size.y,
+		"NPC 交互提示不遮挡目标名称")
+	check(player.locked_target == null and not player.valid_target(npc), "NPC 不进入战斗锁定")
+	player.clear_travel_intent()
+	npc.queue_free()
+	await get_tree().process_frame
 	var enemies: Array[Monster] = []
 	for offset in [Vector2(130, 0), Vector2(260, 0), Vector2(2000, 0)]:
 		var enemy := (load("res://scenes/entities/Monster.tscn") as PackedScene).instantiate() as Monster
