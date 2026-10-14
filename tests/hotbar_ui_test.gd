@@ -124,6 +124,21 @@ func _ready() -> void:
 	_check(GameState.player.hp == GameState.max_hp() and hud._hotbar_buttons[5]._count.text == "2",
 		"拖入的具体药品可使用且库存同步减少")
 	_check(not hud._hotbar_buttons[5]._cooldown.text.is_empty(), "药品格显示冷却")
+	_check(is_equal_approx(hud._hotbar.size.x, hud._exp_bar.size.x), "经验条与快捷栏整体同宽")
+	hud._on_xp(45, 100)
+	var tip := hud._exp_bar.get_node("ProgressTip") as TextureRect
+	_check(tip.visible and absf(tip.position.x - 318.0) < 2.0 and hud._exp_bar.tooltip_text == "45 / 100",
+		"经验填充端点随进度移动，精确数值只在悬停显示")
+	SettingsRuntime.set_binding("panel_character", KEY_F1)
+	SettingsRuntime.set_binding("hotbar_1", KEY_F2)
+	_check((hud._panel_buttons[0].get_node("KeyBadge/KeyText") as Label).text == "F1" and
+		(hud._hotbar_buttons[0].get_node("KeyBadge/KeyText") as Label).text == "F2",
+		"改键后固定入口与操作格角标同步更新")
+	GameState.settings.uiScale = 2.0
+	SettingsRuntime.apply_ui_scale_to(main.get_node("UI"))
+	await get_tree().process_frame
+	_check(hud._hotbar.scale.x < 1.0 and hud._hotbar.scale.is_equal_approx(hud._exp_bar.scale),
+		"窄逻辑画布下快捷栏与经验条同步缩放")
 	print("[HotbarUiTest] ", "全部通过 ✅" if _errors.is_empty() else str(_errors))
 	get_tree().quit(0 if _errors.is_empty() else 1)
 

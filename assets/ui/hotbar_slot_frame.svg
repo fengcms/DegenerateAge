@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42" fill="none">
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2DDA2"/><stop offset=".24" stop-color="#BBA16B"/><stop offset=".6" stop-color="#735C3C"/><stop offset="1" stop-color="#D2B778"/></linearGradient>
+    <linearGradient id="inner" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#283137"/><stop offset=".45" stop-color="#11191C"/><stop offset="1" stop-color="#0B1115"/></linearGradient>
+  </defs>
+  <rect x="1" y="1" width="40" height="40" rx="4" fill="#070C0F" stroke="#2C261D" stroke-width="2"/>
+  <rect x="2.5" y="2.5" width="37" height="37" rx="3" fill="url(#metal)"/>
+  <rect x="4.5" y="4.5" width="33" height="33" rx="2" fill="url(#inner)" stroke="#413C32" stroke-width=".8"/>
+  <path d="M6 13V6h7m16 0h7v7M6 29v7h7m16 0h7v-7" stroke="#AF9868" stroke-opacity=".65" stroke-width=".9"/>
+  <path d="M13 21h16m-8-8v16" stroke="#334043" stroke-width=".8"/>
+  <circle cx="21" cy="21" r="8" stroke="#364043" stroke-opacity=".65" stroke-width=".7"/>
+</svg>

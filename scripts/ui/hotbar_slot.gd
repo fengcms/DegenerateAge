@@ -31,9 +31,9 @@ func _ready() -> void:
 	_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_cooldown)
 	_potion_marker = Label.new()
-	_potion_marker.offset_left = 2
-	_potion_marker.offset_top = 1
-	_potion_marker.add_theme_font_size_override("font_size", 13)
+	_potion_marker.offset_left = 3
+	_potion_marker.offset_top = 24
+	_potion_marker.add_theme_font_size_override("font_size", 10)
 	_potion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_potion_marker)
 	_refresh_potion_marker()

@@ -42,9 +42,11 @@ var _auto_battle: bool = false
 var _auto_pickup: bool = false
 var _auto_phase: String = ""
 var _hotbar_buttons: Array[HotbarSlot] = []
+var _panel_buttons: Array[Button] = []
 
 func _ready() -> void:
 	_build_target_hint()
+	resized.connect(_layout_bottom_hud)
 	EventBus.player_hp_changed.connect(_on_hp)
 	EventBus.player_mp_changed.connect(_on_mp)
 	EventBus.player_xp_changed.connect(_on_xp)
@@ -54,6 +56,7 @@ func _ready() -> void:
 	EventBus.map_changed.connect(_on_map_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.hotbar_changed.connect(_refresh_hotbar)
+	EventBus.settings_changed.connect(_refresh_hotbar_keys)
 	EventBus.toast_requested.connect(_on_toast)
 	EventBus.auto_state_changed.connect(_on_auto_state)
 	EventBus.auto_phase_changed.connect(_on_auto_phase)
@@ -63,6 +66,9 @@ func _ready() -> void:
 	EventBus.quest_rewarded.connect(_on_quest_changed)
 	EventBus.quest_progressed.connect(_on_quest_progressed)
 	_build_hotbar()
+	_battle_icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_battle_icon.gui_input.connect(_on_battle_icon_input)
+	_layout_bottom_hud()
 	$MapPanel/SettingsButton.pressed.connect(func() -> void: get_node("../SettingsPanel").set_open(true))
 	_refresh_all()
 	_auto_battle = GameState.auto_battle_on
@@ -102,6 +108,17 @@ func _on_mp(current: int, maximum: int) -> void:
 func _on_xp(current: int, maximum: int) -> void:
 	_exp_bar.max_value = maxi(1, maximum)
 	_exp_bar.value = current
+	_exp_bar.tooltip_text = "%d / %d" % [current, maximum]
+	HotbarVisual.update_experience_marker(_exp_bar)
+
+func _layout_bottom_hud() -> void:
+	# 1280×800 下使用设计稿的 716px 宽；高 UI 倍率使逻辑画布变窄时，
+	# 两个组件围绕同一个中心等比缩小，避免 16 格被裁掉。
+	var factor := minf(1.0, maxf(0.5, (size.x - 24.0) / 716.0))
+	_hotbar.pivot_offset = Vector2(358, 21)
+	_exp_bar.pivot_offset = Vector2(358, 8.5)
+	_hotbar.scale = Vector2.ONE * factor
+	_exp_bar.scale = Vector2.ONE * factor
 
 func _on_gold(amount: int) -> void:
 	_gold_label.text = Localization.tr_key("ui.hud.p002") % amount
@@ -137,6 +154,15 @@ func _on_auto_phase(phase: String) -> void:
 func _on_sitting_changed(_sitting: bool) -> void:
 	_refresh_auto()
 
+func _on_battle_icon_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if not GameState.auto_battle_on:
+			var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+			if player != null:
+				player.set_sitting(false)
+		GameState.toggle_auto_battle()
+		accept_event()
+
 func _refresh_auto() -> void:
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 	var sitting := player != null and player.is_sitting
@@ -153,7 +179,8 @@ func _refresh_auto() -> void:
 		_auto_label.text = Localization.tr_key("ui.hud.p007") % [_auto_phase if not _auto_phase.is_empty() else Localization.tr_key("ui.hud.p008"), tail]
 		var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) else COL_AUTO_ON
 		_auto_label.add_theme_color_override("font_color", col)
-	var paused := sitting or _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) or _auto_phase == Localization.tr_key("ui.auto.paused")
+	var paused := sitting or _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) \
+		or _auto_phase in [Localization.tr_key("ui.auto.paused"), Localization.tr_key("ui.auto.npc_dialog")]
 	_battle_icon.active = _auto_battle
 	_battle_icon.paused = _auto_battle and paused
 	_battle_icon.tooltip_text = "%s · F" % _auto_label.text
@@ -371,20 +398,27 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 func _build_hotbar() -> void:
+	HotbarVisual.style_experience(_exp_bar)
 	for i in range(HOTBAR_SLOTS):
+		if i == 12:
+			var spacer := Control.new()
+			spacer.name = "GroupGap"
+			spacer.custom_minimum_size = Vector2(12, 42)
+			spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_hotbar.add_child(spacer)
 		if i >= 12:
 			var button := Button.new()
-			button.custom_minimum_size = Vector2(32, 32)
+			HotbarVisual.style_slot(button)
 			var names := [Localization.tr_key("ui.hud.character_short"), Localization.tr_key("ui.hud.inventory_short"), Localization.tr_key("ui.hud.skill_short"), Localization.tr_key("ui.hud.mount_short")]
-			var keys := ["C", "I", "K", "N"]
-			button.text = names[i - 12]
-			button.tooltip_text = Localization.tr_key("ui.hud.p014") % [names[i - 12], keys[i - 12]]
+			button.icon = HotbarVisual.PANEL_ICONS[i - 12]
+			button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			button.pressed.connect(_open_panel.bind(i))
 			_hotbar.add_child(button)
+			_panel_buttons.append(button)
 			continue
 		var slot := HotbarSlot.new()
 		slot.index = i
-		slot.custom_minimum_size = Vector2(32, 32)
+		HotbarVisual.style_slot(slot)
 		slot.pressed.connect(_activate_hotbar.bind(i))
 		slot.binding_dropped.connect(_on_binding_dropped)
 		slot.clear_requested.connect(func(clear_index: int) -> void: GameState.set_hotbar_entry(clear_index, null))
@@ -401,7 +435,27 @@ func _refresh_hotbar() -> void:
 		slot.text = name.substr(0, 1) if binding != null else ""
 		slot.tooltip_text = Localization.tr_key("ui.hud.p015") % [name, i + 1]
 		slot.set_count(_binding_count(binding))
-		SampleArt.decorate(slot, SampleArt.binding_icon(binding))
+		var icon := HotbarVisual.binding_icon(binding)
+		SampleArt.decorate(slot, icon)
+		slot.add_theme_constant_override("icon_max_width", 30)
+		if icon in [HotbarVisual.RED_POTION, HotbarVisual.BLUE_POTION, HotbarVisual.BASIC_SLASH]:
+			slot.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_refresh_hotbar_keys()
+
+func _refresh_hotbar_keys() -> void:
+	for i in range(_hotbar_buttons.size()):
+		var action := "hotbar_%d" % (i + 1)
+		var slot := _hotbar_buttons[i]
+		HotbarVisual.refresh_key(slot, action)
+		var name := _binding_name(GameState.hotbar[i])
+		slot.tooltip_text = "%s（%s）" % [Localization.tr_key("ui.hud.p015") % [name, i + 1], HotbarVisual.key_name(action)]
+	var panel_actions := ["panel_character", "panel_inventory", "panel_skill", "panel_mount"]
+	var panel_names := [Localization.tr_key("ui.hud.character_short"), Localization.tr_key("ui.hud.inventory_short"), Localization.tr_key("ui.hud.skill_short"), Localization.tr_key("ui.hud.mount_short")]
+	for i in range(_panel_buttons.size()):
+		var action: String = panel_actions[i]
+		var button := _panel_buttons[i]
+		HotbarVisual.refresh_key(button, action)
+		button.tooltip_text = Localization.tr_key("ui.hud.p014") % [panel_names[i], HotbarVisual.key_name(action)]
 
 func _binding_name(binding: Variant) -> String:
 	if not binding is Dictionary:

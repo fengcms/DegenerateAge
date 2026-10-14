@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
+  <defs><linearGradient id="liquid" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#B4F4F4"/><stop offset=".4" stop-color="#45AFD2"/><stop offset="1" stop-color="#235074"/></linearGradient></defs>
+  <path d="M11 4V1h8v3l2 2-1 3c3 2 5 5 5 10 0 6-4 9-10 9S5 25 5 19c0-5 2-8 5-10L9 6Z" fill="url(#liquid)" stroke="#BDF0F0" stroke-width="1.5"/>
+  <path d="M11 3h8M9 8h12" stroke="#D6CBAD" stroke-width="1.8"/>
+  <path d="M9 15c1-4 3-5 4-5" stroke="white" stroke-opacity=".65" stroke-width="2" stroke-linecap="round"/>
+  <path d="m15 13 5 6-5 5-5-5Z" fill="#F9F3DB"/>
+</svg>
