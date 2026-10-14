@@ -23,6 +23,11 @@ signal item_dropped(tray_index: int, payload: Dictionary)
 var role: int = ROLE_BAG
 var index: int = -1              # 背包下标（ROLE_BAG）/ 托盘下标（ROLE_TRAY）
 var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交易装备 / 仓库存取）
+var upgrade_badge: bool = false:
+	set(value):
+		upgrade_badge = value
+		if _upgrade_marker != null:
+			_upgrade_marker.visible = value
 
 ## 当前格内物品实例（由面板在刷新时写入）。**赋值即刷新右下角数量角标**（M4-10）。
 var item: Dictionary = {}:
@@ -36,6 +41,7 @@ var item: Dictionary = {}:
 ## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
 var _count: Label
 var _potion_marker: Label
+var _upgrade_marker: Label
 var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
@@ -60,6 +66,21 @@ func _ready() -> void:
 	_potion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_potion_marker)
 	_refresh_potion_marker()
+	_upgrade_marker = Label.new()
+	_upgrade_marker.text = "↑"
+	_upgrade_marker.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_upgrade_marker.offset_left = -21
+	_upgrade_marker.offset_right = -2
+	_upgrade_marker.offset_top = 0
+	_upgrade_marker.offset_bottom = 22
+	_upgrade_marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_upgrade_marker.add_theme_font_size_override("font_size", 19)
+	_upgrade_marker.add_theme_constant_override("outline_size", 3)
+	_upgrade_marker.add_theme_color_override("font_outline_color", Color(0.03, 0.10, 0.06))
+	_upgrade_marker.add_theme_color_override("font_color", Color("78e5a5"))
+	_upgrade_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_upgrade_marker.visible = upgrade_badge
+	add_child(_upgrade_marker)
 	EventBus.settings_changed.connect(_refresh_potion_marker)
 	_drag_cover = PanelContainer.new()
 	_drag_cover.set_anchors_preset(Control.PRESET_FULL_RECT)

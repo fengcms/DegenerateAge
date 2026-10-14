@@ -313,12 +313,18 @@ func _refresh() -> void:
 			b2.add_theme_color_override("font_color", col2)
 			_apply_slot_style(b2, col2, true)
 			b2.tooltip_text = _bag_tooltip(it2)
+			var preview := Equipment.replacement_preview(GameState.equipment, it2) if String(it2.get("kind", "")) == "equip" else {}
+			b2.upgrade_badge = bool(preview.get("ok", false)) \
+				and Equipment.meets_level(it2, int(GameState.player.level)) \
+				and float(preview.get("score_delta", 0.0)) > 0.0 \
+				and not is_zero_approx(float(preview.get("score_delta", 0.0)))
 		else:
 			b2.item = {}
 			b2.draggable = false
 			b2.text = ""
 			_apply_slot_style(b2, COL_BORDER, false)
 			b2.tooltip_text = ""
+			b2.upgrade_badge = false
 		SampleArt.decorate(b2, SampleArt.icon_for(it2))
 	_bag_title.text = Localization.tr_key("ui.inventory_panel.p014") % [GameState.inventory_used(), GameState.inventory.size()]
 	var cost := Warehouse.next_cost(GameState.inventory_expansions)
