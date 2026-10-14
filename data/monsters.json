@@ -747,7 +747,7 @@
     "resistType": "",
     "xpReward": 900,
     "goldReward": 0,
-    "dropTableId": "DT_C2_Boss",
+    "dropTableId": "DT_C2_Boss_Slag",
     "kind": "boss",
     "monsterType": "melee",
     "specialAttack": "",

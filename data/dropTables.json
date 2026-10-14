@@ -415,7 +415,7 @@
           20
         ],
         "requiredLevel": 10,
-        "templatePool": "c2_legendary",
+        "templatePool": "c2_legendary_iron",
         "qualityWeight": {
           "legendary": 100
         }
@@ -464,7 +464,7 @@
           20
         ],
         "requiredLevel": 20,
-        "templatePool": "c2_normal",
+        "templatePool": "c2_modified",
         "qualityWeight": {
           "common": 55,
           "uncommon": 30,
@@ -498,7 +498,7 @@
           20
         ],
         "requiredLevel": 20,
-        "templatePool": "c2_normal",
+        "templatePool": "c2_modified",
         "qualityWeight": {
           "common": 65,
           "uncommon": 35
@@ -516,7 +516,7 @@
           20
         ],
         "requiredLevel": 20,
-        "templatePool": "c2_normal",
+        "templatePool": "c2_modified",
         "qualityWeight": {
           "uncommon": 70,
           "rare": 27,
@@ -595,7 +595,7 @@
           20
         ],
         "requiredLevel": 20,
-        "templatePool": "c2_legendary",
+        "templatePool": "c2_legendary_final",
         "qualityWeight": {
           "legendary": 100
         }
@@ -616,6 +616,186 @@
         "kind": "mount",
         "chance": 0.03,
         "itemId": "mount_furnace_beast"
+      }
+    ]
+  },
+  {
+    "id": "DT_C2_Industrial_Normal",
+    "desc": "第二章工坊及炉房改装型号；其余金币和药品概率沿用同类怪。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          20,
+          36
+        ]
+      },
+      {
+        "kind": "potion",
+        "chance": 0.14,
+        "itemId": "potion_hp_mid"
+      },
+      {
+        "kind": "potion",
+        "chance": 0.12,
+        "itemId": "potion_mp_mid"
+      },
+      {
+        "kind": "equip",
+        "chance": 0.18,
+        "levelRange": [
+          11,
+          19
+        ],
+        "requiredLevel": 10,
+        "templatePool": "c2_modified",
+        "qualityWeight": {
+          "common": 55,
+          "uncommon": 30,
+          "rare": 13,
+          "epic": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "DT_C2_Industrial_Elite",
+    "desc": "第二章工坊及炉房改装型号；其余金币和药品概率沿用同类怪。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          90,
+          150
+        ]
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          2,
+          3
+        ],
+        "levelRange": [
+          13,
+          19
+        ],
+        "requiredLevel": 10,
+        "templatePool": "c2_modified",
+        "qualityWeight": {
+          "common": 65,
+          "uncommon": 35
+        }
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          1,
+          1
+        ],
+        "levelRange": [
+          13,
+          19
+        ],
+        "requiredLevel": 10,
+        "templatePool": "c2_modified",
+        "qualityWeight": {
+          "uncommon": 70,
+          "rare": 27,
+          "epic": 3
+        }
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_hp_mid"
+      },
+      {
+        "kind": "potion",
+        "chance": 0.5,
+        "itemId": "potion_mp_mid"
+      }
+    ]
+  },
+  {
+    "id": "DT_C2_Boss_Slag",
+    "desc": "炉渣吞噬者专属池，传说追加槽只掉吞噬者之心。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          800,
+          1100
+        ]
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          5,
+          8
+        ],
+        "levelRange": [
+          15,
+          20
+        ],
+        "requiredLevel": 10,
+        "templatePool": "c2_modified",
+        "qualityWeight": {
+          "common": 70,
+          "uncommon": 30
+        }
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          2,
+          2
+        ],
+        "levelRange": [
+          15,
+          20
+        ],
+        "requiredLevel": 10,
+        "templatePool": "c2_modified",
+        "qualityWeight": {
+          "rare": 75,
+          "epic": 25
+        }
+      },
+      {
+        "kind": "equip",
+        "chance": 0.05,
+        "countRange": [
+          1,
+          1
+        ],
+        "levelRange": [
+          15,
+          20
+        ],
+        "requiredLevel": 10,
+        "templatePool": "c2_legendary_slag",
+        "qualityWeight": {
+          "legendary": 100
+        }
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_hp_large",
+        "count": 2
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_mp_large",
+        "count": 2
       }
     ]
   }

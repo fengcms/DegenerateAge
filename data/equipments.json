@@ -823,5 +823,384 @@
       "hpPercent",
       "mpPercent"
     ]
+  },
+  {
+    "id": "c2_road_blade_modified",
+    "name": "淬炉长刃",
+    "slot": "weapon",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "atk": 10
+      },
+      "10": {
+        "atk": 20
+      },
+      "20": {
+        "atk": 34
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_copper_shield_modified",
+    "name": "铆铜重盾",
+    "slot": "shield",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "def": 5,
+        "hp": 8
+      },
+      "10": {
+        "def": 12,
+        "hp": 18
+      },
+      "20": {
+        "def": 19,
+        "hp": 30
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_armor_modified",
+    "name": "耐热护甲",
+    "slot": "armor",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "def": 5,
+        "hp": 13
+      },
+      "10": {
+        "def": 11,
+        "hp": 30
+      },
+      "20": {
+        "def": 18,
+        "hp": 49
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_helmet_modified",
+    "name": "巡炉头盔",
+    "slot": "helmet",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 6
+      },
+      "20": {
+        "def": 10
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_shoes_modified",
+    "name": "隔热战靴",
+    "slot": "shoes",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "def": 2,
+        "mp": 5
+      },
+      "10": {
+        "def": 5,
+        "mp": 12
+      },
+      "20": {
+        "def": 8,
+        "mp": 19
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_bracer_modified",
+    "name": "导灵护腕",
+    "slot": "bracer",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 5
+      },
+      "20": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_knee_modified",
+    "name": "锻纹护膝",
+    "slot": "knee",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 5
+      },
+      "20": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_copper_bracelet_modified",
+    "name": "蓄能手镯",
+    "slot": "bracelet",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "atk": 2
+      },
+      "10": {
+        "atk": 5
+      },
+      "20": {
+        "atk": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_ring_modified",
+    "name": "锻铜戒指",
+    "slot": "ring",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "atk": 1,
+        "mp": 5
+      },
+      "10": {
+        "atk": 4,
+        "mp": 10
+      },
+      "20": {
+        "atk": 6,
+        "mp": 16
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_warm_necklace_modified",
+    "name": "余烬项链",
+    "slot": "necklace",
+    "price": 192,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第二章改装型号，等级、品质和星级按统一三轴规则计算。",
+    "tierBases": {
+      "1": {
+        "hp": 13
+      },
+      "10": {
+        "hp": 30
+      },
+      "20": {
+        "hp": 49
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_foreman_gauntlet",
+    "name": "铁臂统领的臂刃",
+    "slot": "weapon",
+    "price": 224,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第二章首领专属传说型号，仅在对应首领追加槽中产出。",
+    "tierBases": {
+      "1": {
+        "atk": 11
+      },
+      "10": {
+        "atk": 24
+      },
+      "20": {
+        "atk": 39
+      }
+    },
+    "defaultQuality": "legendary",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_devourer_heart",
+    "name": "炉渣吞噬者之心",
+    "slot": "necklace",
+    "price": 224,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第二章首领专属传说型号，仅在对应首领追加槽中产出。",
+    "tierBases": {
+      "1": {
+        "hp": 15
+      },
+      "10": {
+        "hp": 35
+      },
+      "20": {
+        "hp": 57
+      }
+    },
+    "defaultQuality": "legendary",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_extractor_eye",
+    "name": "百臂汲灵主机之眼",
+    "slot": "ring",
+    "price": 224,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第二章首领专属传说型号，仅在对应首领追加槽中产出。",
+    "tierBases": {
+      "1": {
+        "atk": 1,
+        "mp": 6
+      },
+      "10": {
+        "atk": 4,
+        "mp": 11
+      },
+      "20": {
+        "atk": 7,
+        "mp": 18
+      }
+    },
+    "defaultQuality": "legendary",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   }
 ]

@@ -38,5 +38,42 @@
       "c2_road_ring",
       "c2_warm_necklace"
     ]
+  },
+  {
+    "id": "c2_modified",
+    "desc": "工坊、炉房及井心的十种改装型号。",
+    "includeIds": [
+      "c2_road_blade_modified",
+      "c2_copper_shield_modified",
+      "c2_road_armor_modified",
+      "c2_road_helmet_modified",
+      "c2_road_shoes_modified",
+      "c2_road_bracer_modified",
+      "c2_road_knee_modified",
+      "c2_copper_bracelet_modified",
+      "c2_road_ring_modified",
+      "c2_warm_necklace_modified"
+    ]
+  },
+  {
+    "id": "c2_legendary_iron",
+    "desc": "对应首领的独立传说追加槽。",
+    "includeIds": [
+      "c2_foreman_gauntlet"
+    ]
+  },
+  {
+    "id": "c2_legendary_slag",
+    "desc": "对应首领的独立传说追加槽。",
+    "includeIds": [
+      "c2_devourer_heart"
+    ]
+  },
+  {
+    "id": "c2_legendary_final",
+    "desc": "对应首领的独立传说追加槽。",
+    "includeIds": [
+      "c2_extractor_eye"
+    ]
   }
 ]
