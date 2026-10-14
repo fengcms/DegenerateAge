@@ -86,9 +86,28 @@ var _stomp_remaining := 0.0
 var _stomp_cooldown := 0.0
 var _stomp_center := Vector2.ZERO
 var _stomp_radius := 0.0
+var suppress_rewards := false
+var _chapter_boss_warn := ""
+var _chapter_boss_warn_left := 0.0
+var _chapter_boss_origin := Vector2.ZERO
+var _chapter_boss_target := Vector2.ZERO
+var _chapter_boss_centers: Array[Vector2] = []
+var _chapter_boss_skill_cd := 3.0
+var _chapter_boss_casts := 0
+var _chapter_boss_summons: Array[Monster] = []
+var _special_warn := ""
+var _special_warn_left := 0.0
+var _special_target := Vector2.ZERO
+var _special_cd := 3.0
+var _charge_left := 0.0
+var _charge_direction := Vector2.ZERO
+var _charge_hit := false
 
 var _rng := RandomNumberGenerator.new()
 var _attack_cd: float = 0.0
+var _ranged_windup := 0.0
+var _ranged_target := Vector2.ZERO
+var _support_heal_cd := 4.0
 var _state_t: float = 0.0
 var _patrol_target: Vector2 = Vector2.ZERO
 var _flash_t: float = 0.0
@@ -191,7 +210,7 @@ func _spawn_death_summons() -> void:
 		if effect.has("summonId"):
 			_spawn_summons(String(effect.summonId), int(effect.get("summonCount", 0)), true)
 
-func _spawn_summons(id: String, count: int, after_death: bool = false) -> void:
+func _spawn_summons(id: String, count: int, after_death: bool = false, no_rewards: bool = false) -> void:
 	if not is_inside_tree() or get_parent() == null or is_queued_for_deletion() or (is_dead and not after_death):
 		return
 	for i in range(count):
@@ -199,6 +218,7 @@ func _spawn_summons(id: String, count: int, after_death: bool = false) -> void:
 		child.monster_id = id
 		child.spawn_level = level
 		child.ai_enabled = true
+		child.suppress_rewards = no_rewards
 		var point := global_position + Vector2.from_angle(TAU * i / count) * 32.0
 		var grid := Iso.world_to_grid(point)
 		var dims := MapService.grid_size(GameState.current_map)
@@ -211,11 +231,15 @@ func _spawn_summons(id: String, count: int, after_death: bool = false) -> void:
 		child.position = get_parent().to_local(point)
 		child.spawn_position = point
 		get_parent().add_child(child)
+		if no_rewards:
+			_chapter_boss_summons.append(child)
 
 ## 返回 true 表示本帧由预警/践踏接管，禁止同帧普通攻击。
 func _update_boss(delta: float) -> bool:
 	if is_dead or template.get("kind", "") != "boss":
 		return false
+	if monster_id.begins_with("c2_boss_"):
+		return _update_chapter_boss(delta)
 	var skill: Dictionary = template.get("bossSkill", {})
 	var phases: Array = skill.get("phases", [])
 	var prev_phase := boss_phase
@@ -262,6 +286,83 @@ func _update_boss(delta: float) -> bool:
 			queue_redraw()
 			return true
 	return false
+
+## 第二章三种 Boss 使用固定预警时序；警示形状在命中前不会追踪玩家。
+func _update_chapter_boss(delta: float) -> bool:
+	var next_phase := 2 if hp_ratio() < 0.3 else 1 if hp_ratio() < 0.6 else 0
+	if next_phase > boss_phase:
+		boss_phase = next_phase
+		_announce_boss_hp()
+		if boss_phase == 2 and not _boss_enraged:
+			_boss_enraged = true
+			attack_interval /= 1.15 if monster_id != "c2_boss_slag_devourer" else 1.10
+			if monster_id == "c2_boss_iron_foreman":
+				_spawn_summons.call_deferred("c2_broken_guard", 2, false, true)
+			elif monster_id == "c2_boss_hundred_arm_extractor":
+				_spawn_summons.call_deferred("c2_spirit_larva", 3, false, true)
+	_chapter_boss_skill_cd = maxf(0.0, _chapter_boss_skill_cd - delta)
+	if not _chapter_boss_warn.is_empty():
+		_chapter_boss_warn_left -= delta
+		queue_redraw()
+		if _chapter_boss_warn_left <= 0.0:
+			_resolve_chapter_boss_warn()
+		return true
+	var player := _get_player()
+	if player == null or global_position.distance_to(spawn_position) > leash_range:
+		return false
+	if state != State.CHASE and state != State.ATTACK:
+		return false
+	if _chapter_boss_skill_cd > 0.0 or global_position.distance_to(player.global_position) > 300.0:
+		return false
+	_chapter_boss_casts += 1
+	_chapter_boss_origin = global_position
+	_chapter_boss_target = player.global_position
+	_chapter_boss_centers.clear()
+	match monster_id:
+		"c2_boss_iron_foreman":
+			_chapter_boss_warn = "sweep" if boss_phase == 0 or _chapter_boss_casts % 2 == 0 else "line"
+			_chapter_boss_warn_left = 1.0 if _chapter_boss_warn == "sweep" else 1.2
+		"c2_boss_slag_devourer":
+			_chapter_boss_warn = "line" if boss_phase == 0 else "blasts"
+			_chapter_boss_warn_left = 1.0 if boss_phase == 0 else 1.4
+			if _chapter_boss_warn == "blasts":
+				var side := (_chapter_boss_target - _chapter_boss_origin).normalized().orthogonal() * 145.0
+				_chapter_boss_centers = [_chapter_boss_target - side, _chapter_boss_target, _chapter_boss_target + side]
+		_:
+			_chapter_boss_warn = "circle" if boss_phase == 0 or _chapter_boss_casts % 2 == 0 else "line"
+			_chapter_boss_warn_left = 1.2 if _chapter_boss_warn == "circle" else 1.5
+	_chapter_boss_skill_cd = _chapter_boss_warn_left + 2.2
+	queue_redraw()
+	return true
+
+func _resolve_chapter_boss_warn() -> void:
+	var shape := _chapter_boss_warn
+	_chapter_boss_warn = ""
+	queue_redraw()
+	if is_dead or not is_inside_tree():
+		return
+	var player := _get_player()
+	if player == null:
+		return
+	var player_pos := player.global_position
+	var hit := false
+	match shape:
+		"sweep":
+			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
+			var toward := player_pos - _chapter_boss_origin
+			hit = toward.length() <= 170.0 and direction.dot(toward.normalized()) >= 0.35
+		"line":
+			var end := _chapter_boss_origin + (_chapter_boss_target - _chapter_boss_origin).normalized() * 340.0
+			hit = Geometry2D.get_closest_point_to_segment(player_pos, _chapter_boss_origin, end).distance_to(player_pos) <= 48.0
+		"circle":
+			hit = player_pos.distance_to(_chapter_boss_target) <= 88.0
+		"blasts":
+			for center in _chapter_boss_centers:
+				if player_pos.distance_to(center) <= 66.0:
+					hit = true
+					break
+	if hit:
+		_do_attack(player, false)
 
 func _settle_first_clear() -> void:
 	if template.get("kind", "") != "boss" or bool(GameState.first_clear.get(monster_id, false)):
@@ -332,8 +433,14 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_attack_cd = maxf(0.0, _attack_cd - delta)
+	if _ranged_windup > 0.0:
+		_ranged_windup -= delta
+		if _ranged_windup <= 0.0 and state == State.ATTACK:
+			_fire_chapter_projectile()
+	if monster_id == "c2_spirit_attendant":
+		_update_support_heal(delta)
 	velocity = Vector2.ZERO
-	if ai_enabled and not _update_boss(delta):
+	if ai_enabled and not _update_boss(delta) and not _update_chapter_special(delta):
 		_update_ai(delta)
 	# M6-0a：交战期间每秒续期顶部血条（脱战即停 ⇒ HUD 3s 后隐藏）。
 	if _kind() == "boss":
@@ -348,6 +455,9 @@ func _enter(s: int) -> void:
 	if state == s:
 		return
 	state = s
+	if s == State.RETURN or s == State.IDLE:
+		_ranged_windup = 0.0
+		_chapter_boss_warn = ""
 	_state_t = 0.0
 	# M6-0a：Boss 进入仇恨即点亮顶部血条（脱战停止心跳后由 HUD 自行隐藏）。
 	if s == State.CHASE:
@@ -379,7 +489,10 @@ func _update_ai(delta: float) -> void:
 			elif dist > attack_range_px * 1.2:
 				_enter(State.CHASE)
 			elif _attack_cd <= 0.0:
-				_do_attack(player)
+				if is_ranged and monster_id.begins_with("c2_"):
+					_begin_chapter_projectile(player)
+				else:
+					_do_attack(player)
 		State.RETURN:
 			if _can_aggro(player, dist):
 				_enter(State.CHASE)
@@ -445,6 +558,46 @@ func _get_player() -> Node2D:
 		return null
 	return p as Node2D
 
+func _update_chapter_special(delta: float) -> bool:
+	if not monster_id in ["c2_ash_beast", "c2_elite_ash_leader", "c2_elite_broken_inspector"]:
+		return false
+	_special_cd = maxf(0.0, _special_cd - delta)
+	var player := _get_player()
+	if player == null or global_position.distance_to(spawn_position) > leash_range:
+		_special_warn = ""
+		_charge_left = 0.0
+		return false
+	if _charge_left > 0.0:
+		_charge_left -= delta
+		velocity = _charge_direction * move_speed_px * 2.5
+		if not _charge_hit and player.global_position.distance_to(global_position) <= 32.0:
+			_do_attack(player)
+			_charge_hit = true
+		return true
+	if not _special_warn.is_empty():
+		_special_warn_left -= delta
+		queue_redraw()
+		if _special_warn_left <= 0.0:
+			var kind := _special_warn
+			_special_warn = ""
+			if kind == "charge":
+				_charge_direction = (_special_target - global_position).normalized()
+				_charge_left = 0.34
+				_charge_hit = false
+			elif player.global_position.distance_to(global_position) <= 135.0:
+				_do_attack(player, false)
+		return true
+	if _special_cd > 0.0 or state not in [State.CHASE, State.ATTACK]:
+		return false
+	if player.global_position.distance_to(global_position) > (220.0 if monster_id != "c2_elite_broken_inspector" else 135.0):
+		return false
+	_special_warn = "sweep" if monster_id == "c2_elite_broken_inspector" else "charge"
+	_special_target = player.global_position
+	_special_warn_left = 0.8 if _special_warn == "sweep" else 0.7
+	_special_cd = 4.5
+	queue_redraw()
+	return true
+
 # ---- 攻击 ----
 
 func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
@@ -464,6 +617,47 @@ func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
 		_apply_hit_effects(player, actual)
+
+func _begin_chapter_projectile(player: Node2D) -> void:
+	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
+	_ranged_windup = 0.28
+	_ranged_target = player.global_position
+	if sample_art != null:
+		sample_art.attack(_ranged_target - global_position, attack_interval)
+
+func _fire_chapter_projectile() -> void:
+	if is_dead or not is_inside_tree() or get_parent() == null:
+		return
+	var facing := (_ranged_target - global_position).normalized()
+	if facing == Vector2.ZERO:
+		return
+	var count := 2 if monster_id == "c2_elite_gray_scribe" else 1
+	for i in range(count):
+		var bolt := MonsterProjectile.new()
+		bolt.source = self
+		bolt.direction = facing.rotated(-0.10 if i == 0 and count == 2 else 0.10 if count == 2 else 0.0)
+		get_parent().add_child(bolt)
+		bolt.global_position = global_position + bolt.direction * 22.0
+
+func _update_support_heal(delta: float) -> void:
+	_support_heal_cd -= delta
+	if _support_heal_cd > 0.0:
+		return
+	_support_heal_cd = 4.0
+	var best: Monster = null
+	var nearest := 180.0 * 180.0
+	for candidate in get_tree().get_nodes_in_group("enemies"):
+		var ally := candidate as Monster
+		if ally == null or ally == self or ally.is_dead or ally._kind() != "normal" \
+				or ally.hp >= ally.max_hp or not ally.monster_id.begins_with("c2_"):
+			continue
+		var distance := global_position.distance_squared_to(ally.global_position)
+		if distance < nearest:
+			nearest = distance
+			best = ally
+	if best != null:
+		best.hp = mini(best.max_hp, best.hp + maxi(1, roundi(best.max_hp * 0.10)))
+		best.queue_redraw()
 
 # ---- 受击 / 死亡 ----
 
@@ -497,12 +691,20 @@ func _die() -> void:
 		if collision != null:
 			collision.set_deferred("disabled", true)
 	_stomp_pending = false
+	_chapter_boss_warn = ""
+	_special_warn = ""
+	_charge_left = 0.0
+	for summon in _chapter_boss_summons:
+		if is_instance_valid(summon):
+			summon.queue_free()
+	_chapter_boss_summons.clear()
 	_announce_boss_hp()   # M6-0a：hp 已归零 ⇒ 触发顶部血条淡出
 	_settle_first_clear()
 	_settle_rewards()
 	_spawn_death_summons.call_deferred()
 	died.emit(monster_id)
-	EventBus.monster_died.emit(monster_id)
+	if not suppress_rewards:
+		EventBus.monster_died.emit(monster_id)
 	queue_redraw()
 	# 淡出后移除；刷新由生成器按 respawnTime 处理（7.9）
 	var tw := create_tween()
@@ -517,6 +719,8 @@ func _die() -> void:
 ## 掉落结果聚合为一条「掉落」提示广播，与地面拾取时的「拾取」提示区分（9.6）。
 ## 任务推进在 M2 接入（订阅 EventBus.monster_died）。
 func _settle_rewards() -> void:
+	if suppress_rewards:
+		return
 	var xp := LevelGap.kill_xp(int(template.get("xpReward", 0)), int(GameState.player.get("level", 1)), level)
 	if xp > 0:
 		GameState.add_xp(xp)
@@ -692,6 +896,15 @@ func _clamp_to_map(pos: Vector2) -> Vector2:
 	return pos
 
 func _draw() -> void:
+	if not _chapter_boss_warn.is_empty() and not is_dead:
+		_draw_chapter_boss_warn()
+	if not _special_warn.is_empty() and not is_dead:
+		if _special_warn == "sweep":
+			draw_circle(Vector2.ZERO, 135.0, Color(1.0, 0.35, 0.08, 0.15))
+			draw_arc(Vector2.ZERO, 135.0, 0.0, TAU, 48, Color("ff9c53"), 2.0, true)
+		else:
+			var end := to_local(global_position + (_special_target - global_position).normalized() * 230.0)
+			draw_line(Vector2.ZERO, end, Color("ff9c53"), 22.0, true)
 	if _stomp_pending and not is_dead:
 		var center := to_local(_stomp_center)
 		draw_circle(center, _stomp_radius, Color(1.0, 0.18, 0.05, 0.18))
@@ -715,6 +928,32 @@ func _draw() -> void:
 		_:
 			_draw_normal()
 	_draw_head_hp_bar()
+
+func _draw_chapter_boss_warn() -> void:
+	var red := Color(1.0, 0.18, 0.08, 0.24)
+	var edge := Color("ff7744")
+	match _chapter_boss_warn:
+		"sweep":
+			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
+			var points := PackedVector2Array([to_local(_chapter_boss_origin)])
+			for i in range(17):
+				points.append(to_local(_chapter_boss_origin + direction.rotated(deg_to_rad(-68.0 + 8.5 * i)) * 170.0))
+			draw_colored_polygon(points, red)
+		"line":
+			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
+			var side := direction.orthogonal() * 48.0
+			var finish := _chapter_boss_origin + direction * 340.0
+			draw_colored_polygon(PackedVector2Array([
+				to_local(_chapter_boss_origin + side), to_local(finish + side),
+				to_local(finish - side), to_local(_chapter_boss_origin - side)]), red)
+			draw_line(to_local(_chapter_boss_origin), to_local(finish), edge, 2.0, true)
+		"circle":
+			draw_circle(to_local(_chapter_boss_target), 88.0, red)
+			draw_arc(to_local(_chapter_boss_target), 88.0, 0.0, TAU, 48, edge, 2.0, true)
+		"blasts":
+			for center in _chapter_boss_centers:
+				draw_circle(to_local(center), 66.0, red)
+				draw_arc(to_local(center), 66.0, 0.0, TAU, 40, edge, 2.0, true)
 
 ## 受击白闪 / 仇恨变色的统一体色。
 func _current_body(base: Color) -> Color:
