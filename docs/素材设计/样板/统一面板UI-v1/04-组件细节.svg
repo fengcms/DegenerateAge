@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" role="img">
+  <defs>
+    <linearGradient id="world" x2="0" y2="1">
+      <stop stop-color="#455045"/>
+      <stop offset=".52" stop-color="#373d37"/>
+      <stop offset="1" stop-color="#222b2c"/>
+    </linearGradient>
+    <pattern id="ground" width="64" height="32" patternUnits="userSpaceOnUse">
+      <path d="M0 16 32 0 64 16 32 32Z" fill="none" stroke="#b6a275" stroke-opacity=".12" stroke-width="1"/>
+      <path d="M9 13h4m18 10h5m10-14h3" stroke="#c5ad7b" stroke-opacity=".08"/>
+    </pattern>
+    <linearGradient id="shell" x2="0" y2="1">
+      <stop stop-color="#3b4040"/>
+      <stop offset=".18" stop-color="#252b2e"/>
+      <stop offset=".55" stop-color="#151c21"/>
+      <stop offset="1" stop-color="#303537"/>
+    </linearGradient>
+    <linearGradient id="rim" x2="0" y2="1">
+      <stop stop-color="#e5d09b"/>
+      <stop offset=".2" stop-color="#aa8d59"/>
+      <stop offset=".54" stop-color="#5c513e"/>
+      <stop offset="1" stop-color="#a88d5c"/>
+    </linearGradient>
+    <linearGradient id="header" x2="0" y2="1">
+      <stop stop-color="#30383b"/>
+      <stop offset=".5" stop-color="#1b252a"/>
+      <stop offset="1" stop-color="#131a1e"/>
+    </linearGradient>
+    <linearGradient id="body" x2="0" y2="1">
+      <stop stop-color="#1b252a"/>
+      <stop offset=".52" stop-color="#121a1f"/>
+      <stop offset="1" stop-color="#10171b"/>
+    </linearGradient>
+    <linearGradient id="tile" x2="0" y2="1">
+      <stop stop-color="#2b3538"/>
+      <stop offset=".42" stop-color="#1a2429"/>
+      <stop offset="1" stop-color="#10171b"/>
+    </linearGradient>
+    <linearGradient id="button" x2="0" y2="1">
+      <stop stop-color="#404440"/>
+      <stop offset=".45" stop-color="#242b2d"/>
+      <stop offset="1" stop-color="#151c20"/>
+    </linearGradient>
+    <linearGradient id="goldButton" x2="0" y2="1">
+      <stop stop-color="#ba9d62"/>
+      <stop offset=".44" stop-color="#74623f"/>
+      <stop offset="1" stop-color="#40392b"/>
+    </linearGradient>
+    <linearGradient id="cyan" x2="0" y2="1">
+      <stop stop-color="#b6e8df"/>
+      <stop offset="1" stop-color="#3c8e91"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feGaussianBlur stdDeviation="13"/>
+    </filter>
+    <clipPath id="portraitClip">
+      <circle cx="338" cy="372" r="54"/>
+    </clipPath>
+  </defs>
+  <g id="&#x80CC;&#x666F;-&#x4EC5;&#x4F9B;&#x5BA1;&#x9605;">
+    <rect x="0" y="0" width="1280" height="800" rx="0" fill="url(#world)" stroke="none" stroke-width="1" opacity="1"/>
+    <rect x="0" y="0" width="1280" height="800" rx="0" fill="url(#ground)" stroke="none" stroke-width="1" opacity="1"/>
+    <path d="M-60 650 530 355 1240 710M-30 720 555 425 1265 780M-80 470 610 800M230 10 1280 540" fill="none" stroke="#b4a576" stroke-opacity=".11" stroke-width="32"/>
+    <rect x="0" y="0" width="1280" height="800" rx="0" fill="#0b1215" stroke="none" stroke-width="1" opacity="0.36"/>
+  </g>
+  <text x="46" y="42" fill="#dfc993" font-size="14" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" letter-spacing="2">04 / &#x7EC4;&#x4EF6;&#x7EC6;&#x8282;</text>
+  <text x="1234" y="42" fill="#bac4bc" font-size="13" font-weight="400" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="end">&#x5171;&#x4EAB;&#x8FB9;&#x6846; &#xB7; &#x5B57;&#x7EA7; &#xB7; &#x63A7;&#x4EF6;&#x72B6;&#x6001;</text>
+  <g id="&#x9762;&#x677F;-&#x5171;&#x7528;&#x7EC4;&#x4EF6;&#x62C6;&#x89E3;">
+    <path d="M79 115 H1201 L1214 128 V670 L1201 683 H79 L66 670 V128Z" transform="translate(0 10)" fill="#000" opacity=".45" filter="url(#shadow)"/>
+    <path d="M79 115 H1201 L1214 128 V670 L1201 683 H79 L66 670 V128Z" fill="url(#shell)" stroke="#b69a63" stroke-width="2.2"/>
+    <path d="M84 120 H1196 L1209 133 V665 L1196 678 H84 L71 665 V133Z" fill="url(#body)" stroke="#394546" stroke-width="1.2"/>
+    <path d="M71 133 L84 120 H1196 L1209 133 V172 H71Z" fill="url(#header)"/>
+    <path d="M87 173H1193" stroke="#b69a63" stroke-opacity=".78" stroke-width="1.2"/>
+    <path d="M92 176H1188" stroke="#101619" stroke-width="2"/>
+    <path d="M78 148 V133L84 127H113M1167 127H1196L1202 133V148" fill="none" stroke="url(#rim)" stroke-width="1.5"/>
+    <path d="M78 650V665L84 671H113M1167 671H1196L1202 665V650" fill="none" stroke="url(#rim)" stroke-width="1.5"/>
+    <path d="M97 140 102 145 97 150 92 145Z" fill="#d6ba7f" stroke="#231f19" stroke-width="1"/>
+    <text x="115" y="154" fill="#e8d7ab" font-size="21" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x5171;&#x7528;&#x7EC4;&#x4EF6;&#x62C6;&#x89E3;</text>
+    <circle cx="1183" cy="145" r="14" fill="url(#button)" stroke="#b69a63" stroke-width="1.3"/>
+    <path d="M1178 140l10 10m0-10-10 10" stroke="#e3d3ad" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M640 672 644 676 640 680 636 676Z" fill="#937951" stroke="#231f19" stroke-width="1"/>
+  </g>
+  <text x="102" y="208" fill="#dfc996" font-size="16" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">A / &#x6846;&#x4F53;&#x4E0E;&#x6807;&#x9898;</text>
+  <rect x="100" y="225" width="470" height="170" rx="3" fill="#11191d" stroke="#4c5858" stroke-width="1" opacity="1"/>
+  <rect x="103" y="228" width="464" height="164" rx="1" fill="#182126" stroke="#1f2c2f" stroke-width="0.6" opacity="1"/>
+  <path d="M120 365V252l13-13h396" fill="none" stroke="url(#rim)" stroke-width="3"/>
+  <path d="M127 364V254l9-9h393" fill="none" stroke="#475558" stroke-width="1"/>
+  <path d="M153 263 163 273 153 283 143 273Z" fill="#d6ba7f" stroke="#231f19" stroke-width="1"/>
+  <text x="183" y="281" fill="#e8d7ae" font-size="19" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x88C5;&#x5907; / &#x80CC;&#x5305; / &#x6280;&#x80FD; / &#x5750;&#x9A91;</text>
+  <text x="128" y="333" fill="#b5c0b7" font-size="14" font-weight="400" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x5916;&#x6CBF;&#x523B;&#x7EB9;&#x96C6;&#x4E2D;&#x5728;&#x89D2;&#x90E8;&#xFF1B;&#x4E2D;&#x6BB5;&#x4E0E;&#x5185;&#x5BB9;&#x533A;&#x4FDD;&#x6301;&#x5B89;&#x9759;&#x3002;</text>
+  <text x="620" y="208" fill="#dfc996" font-size="16" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">B / &#x9009;&#x9879;&#x5361;</text>
+  <rect x="620" y="235" width="126" height="46" rx="3" fill="#1c272b" stroke="#66706b" stroke-width="1.4" opacity="1"/>
+  <text x="683" y="265" fill="#c3c9b7" font-size="15" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x9ED8;&#x8BA4;</text>
+  <rect x="762" y="235" width="126" height="46" rx="3" fill="#2d3636" stroke="#a79668" stroke-width="1.4" opacity="1"/>
+  <text x="825" y="265" fill="#c3c9b7" font-size="15" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x60AC;&#x505C;</text>
+  <rect x="904" y="235" width="126" height="46" rx="3" fill="#323631" stroke="#dec48a" stroke-width="1.4" opacity="1"/>
+  <text x="967" y="265" fill="#e9d9ad" font-size="15" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x5F53;&#x524D;&#x9875;</text>
+  <path d="M916 280H1018" stroke="#e6ce90" stroke-opacity="1" stroke-width="2"/>
+  <path d="M967 276 971 280 967 284 963 280Z" fill="#d6ba7f" stroke="#231f19" stroke-width="1"/>
+  <rect x="1046" y="235" width="126" height="46" rx="3" fill="#192126" stroke="#485453" stroke-width="1.4" opacity="1"/>
+  <text x="1109" y="265" fill="#899996" font-size="15" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x7981;&#x7528;</text>
+  <text x="100" y="449" fill="#dfc996" font-size="16" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">C / &#x6309;&#x94AE;&#x4E0E;&#x7126;&#x70B9;</text>
+  <g id="&#x6309;&#x94AE;-&#x666E;&#x901A;">
+    <rect x="100" y="472" width="130" height="43" rx="3" fill="url(#button)" stroke="#817653" stroke-width="1.3" opacity="1"/>
+    <path d="M104 475H226" stroke="#f2dcaa" stroke-opacity=".25"/>
+    <text x="165.0" y="498.5" fill="#e9d9b0" font-size="14" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x666E;&#x901A;</text>
+  </g>
+  <g id="&#x6309;&#x94AE;-&#x4E3B;&#x8981;&#x52A8;&#x4F5C;">
+    <rect x="244" y="472" width="130" height="43" rx="3" fill="url(#goldButton)" stroke="#d3ba80" stroke-width="1.3" opacity="1"/>
+    <path d="M248 475H370" stroke="#f2dcaa" stroke-opacity=".25"/>
+    <text x="309.0" y="498.5" fill="#e9d9b0" font-size="14" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x4E3B;&#x8981;&#x52A8;&#x4F5C;</text>
+  </g>
+  <g id="&#x6309;&#x94AE;-&#x952E;&#x76D8;&#x7126;&#x70B9;">
+    <rect x="388" y="472" width="130" height="43" rx="3" fill="url(#button)" stroke="#7bd4ce" stroke-width="1.3" opacity="1"/>
+    <path d="M392 475H514" stroke="#f2dcaa" stroke-opacity=".25"/>
+    <text x="453.0" y="498.5" fill="#e9d9b0" font-size="14" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x952E;&#x76D8;&#x7126;&#x70B9;</text>
+  </g>
+  <g id="&#x6309;&#x94AE;-&#x4E0D;&#x53EF;&#x4F7F;&#x7528;">
+    <rect x="532" y="472" width="130" height="43" rx="3" fill="#20272a" stroke="#485052" stroke-width="1.3" opacity="1"/>
+    <path d="M536 475H658" stroke="#f2dcaa" stroke-opacity=".25"/>
+    <text x="597.0" y="498.5" fill="#84908e" font-size="14" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" text-anchor="middle">&#x4E0D;&#x53EF;&#x4F7F;&#x7528;</text>
+  </g>
+  <text x="710" y="449" fill="#dfc996" font-size="16" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">D / &#x6587;&#x5B57;&#x5C42;&#x7EA7;</text>
+  <text x="710" y="490" fill="#e8d7ae" font-size="20" font-weight="700" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x9762;&#x677F;&#x6807;&#x9898; &#xB7; 20 px</text>
+  <text x="710" y="522" fill="#d7c394" font-size="16" font-weight="600" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x9875;&#x7B7E;&#x4E0E;&#x5206;&#x533A;&#x6807;&#x9898; &#xB7; 16 px</text>
+  <text x="710" y="552" fill="#e0dfd1" font-size="16" font-weight="400" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x6B63;&#x6587;&#x4E0E;&#x8868;&#x5355;&#x6807;&#x7B7E; &#xB7; 15&#x2013;16 px</text>
+  <text x="710" y="578" fill="#aab8b2" font-size="13" font-weight="400" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x8BF4;&#x660E; / &#x7981;&#x7528;&#x539F;&#x56E0; &#xB7; 13&#x2013;14 px</text>
+  <path d="M99 610H1181" stroke="#8e7a56" stroke-opacity="0.5" stroke-width="1"/>
+  <text x="100" y="644" fill="#a8b8b0" font-size="14" font-weight="400" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">&#x88C5;&#x9970;&#x8D44;&#x6E90;&#x53EF;&#x4F38;&#x7F29;&#xFF1B;&#x6570;&#x5B57;&#x3001;&#x6807;&#x9898;&#x3001;&#x9875;&#x7B7E;&#x4E0E;&#x63A7;&#x4EF6;&#x72B6;&#x6001;&#x90FD;&#x7531;&#x6E38;&#x620F;&#x8FD0;&#x884C;&#x65F6;&#x7ED8;&#x5236;&#x3002;</text>
+</svg>
