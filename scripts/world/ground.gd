@@ -30,6 +30,30 @@ const CAVE_TILES := [
 	preload("res://assets/tiles/cave/tile_2.png"),
 	preload("res://assets/tiles/cave/tile_3.png"),
 ]
+const CH1_CAMP_EDGES := [
+	preload("res://assets/tiles/chapter1_v2/camp/road_edge_n.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_e.png"),
+	preload("res://assets/tiles/chapter1_v2/camp/road_edge_s.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_w.png"),
+	preload("res://assets/tiles/chapter1_v2/camp/road_edge_ne.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_se.png"),
+	preload("res://assets/tiles/chapter1_v2/camp/road_edge_sw.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_nw.png"),
+]
+const CH1_WILD_EDGES := [
+	preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_n.png"), preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_e.png"),
+	preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_s.png"), preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_w.png"),
+	preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_ne.png"), preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_se.png"),
+	preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_sw.png"), preload("res://assets/tiles/chapter1_v2/wild_trial/road_edge_nw.png"),
+]
+const CH1_ASH_EDGES := [
+	preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_n.png"), preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_e.png"),
+	preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_s.png"), preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_w.png"),
+	preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_ne.png"), preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_se.png"),
+	preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_sw.png"), preload("res://assets/tiles/chapter1_v2/ash_land/road_edge_nw.png"),
+]
+const CH1_CAVE_EDGES := [
+	preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_n.png"), preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_e.png"),
+	preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_s.png"), preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_w.png"),
+	preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_ne.png"), preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_se.png"),
+	preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_sw.png"), preload("res://assets/tiles/chapter1_v2/corruption_source/road_edge_nw.png"),
+]
 
 const WALL_THICKNESS := 10.0
 const COLOR_FILL := Color("36423a")     # 地面底色
@@ -275,15 +299,18 @@ func _draw() -> void:
 ## 用一次图集网格绘制全部可走格；道路索引来自同版本布局，不按旧中线猜测。
 ## 透明瓦片仍保持原来的列、行插入顺序，以免破坏等距遮盖。
 func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool = false) -> void:
-	if _tile_atlas == null or _atlas_tiles != tiles:
-		var atlas := Image.create(64 * tiles.size(), 32, false, Image.FORMAT_RGBA8)
-		for i in range(tiles.size()):
-			var image := (tiles[i] as Texture2D).get_image()
+	var active_tiles: Array = tiles
+	if not _chapter_one_road_rows.is_empty():
+		active_tiles = tiles + _chapter_one_road_edges()
+	if _tile_atlas == null or _atlas_tiles != active_tiles:
+		var atlas := Image.create(64 * active_tiles.size(), 32, false, Image.FORMAT_RGBA8)
+		for i in range(active_tiles.size()):
+			var image := (active_tiles[i] as Texture2D).get_image()
 			assert(image.get_size() == Vector2i(64, 32), "Floor tiles must be 64x32")
 			image.convert(Image.FORMAT_RGBA8)
 			atlas.blit_rect(image, Rect2i(0, 0, 64, 32), Vector2i(i * 64, 0))
 		_tile_atlas = ImageTexture.create_from_image(atlas)
-		_atlas_tiles = tiles
+		_atlas_tiles = active_tiles
 	var builder := FlatTileMesh.new(grid_size.x * grid_size.y, true)
 	for col in range(grid_size.x):
 		for row in range(grid_size.y):
@@ -293,8 +320,9 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 			var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
 			var tile := 1 if variation < 4 else 2 if variation == 5 else 0
 			if not _chapter_one_road_rows.is_empty():
-				if String(_chapter_one_road_rows[row])[col] == "1":
-					tile = 3
+				var road_tile := _chapter_one_road_tile_index(cell)
+				if road_tile >= 0:
+					tile = road_tile
 			elif not cave_style:
 				var road_center := 20 if sample_camp_theme else grid_size.y / 2
 				if camp_style and (absi(row - road_center) <= 1 or absi(col - road_center) <= 1):
@@ -302,14 +330,46 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 				if not camp_style and absi(row - grid_size.y / 2) <= 1:
 					tile = 3
 			var origin := Iso.grid_to_world(cell) - Vector2(32, 16)
-			var u0 := float(tile) / tiles.size()
-			var u1 := float(tile + 1) / tiles.size()
+			var u0 := float(tile) / active_tiles.size()
+			var u1 := float(tile + 1) / active_tiles.size()
 			builder.add_quad(PackedVector2Array([
 				origin, origin + Vector2(64, 0), origin + Vector2(64, 32), origin + Vector2(0, 32),
 			]), PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]))
 	_tile_mesh = builder.build()
 	if _tile_mesh != null:
 		draw_mesh(_tile_mesh, _tile_atlas, Transform2D.IDENTITY, Color("a9aaae") if cave_style else Color.WHITE)
+
+## 返回本图八张 1×1 道路边缘/转角纹理；第二章不调用。
+func _chapter_one_road_edges() -> Array:
+	match map_id:
+		"camp": return CH1_CAMP_EDGES
+		"wild_trial": return CH1_WILD_EDGES
+		"ash_land": return CH1_ASH_EDGES
+		"corruption_source": return CH1_CAVE_EDGES
+	return []
+
+## 根据四邻格路面记录选中心、单边或双边过渡；返回 -1 表示普通地砖。
+func _chapter_one_road_tile_index(cell: Vector2i) -> int:
+	if String(_chapter_one_road_rows[cell.y])[cell.x] == "1":
+		return 3
+	var bits := 0
+	for pair in [[Vector2i(0, -1), 1], [Vector2i(1, 0), 2],
+			[Vector2i(0, 1), 4], [Vector2i(-1, 0), 8]]:
+		var neighbor: Vector2i = cell + pair[0]
+		if neighbor.x >= 0 and neighbor.y >= 0 and neighbor.x < grid_size.x and neighbor.y < grid_size.y:
+			if String(_chapter_one_road_rows[neighbor.y])[neighbor.x] == "1":
+				bits |= int(pair[1])
+	match bits:
+		0: return -1
+		1: return 4
+		2: return 5
+		4: return 6
+		8: return 7
+		3: return 8
+		6: return 9
+		12: return 10
+		9: return 11
+	return 3
 
 ## 合批画出新版布局的阻挡顶面；大型实体再覆盖轮廓细节。
 func _draw_chapter_one_blocked_floor() -> void:
