@@ -23,5 +23,6 @@
   ],
   "source": "quality_frames/rare/svg",
   "generator": "deterministic SVG + ImageMagick",
-  "integrated": false
+  "integrated": true,
+  "runtime_atlas": "assets/sprites/equip/quality_frames/rare_atlas.png"
 }

@@ -23,5 +23,6 @@
   ],
   "source": "quality_frames/epic/svg",
   "generator": "deterministic SVG + ImageMagick",
-  "integrated": false
+  "integrated": true,
+  "runtime_atlas": "assets/sprites/equip/quality_frames/epic_atlas.png"
 }

@@ -35,11 +35,13 @@ var item: Dictionary = {}:
 		item = value
 		_refresh_count()
 		_refresh_potion_marker()
+		_refresh_quality_frame()
 		_apply_sample_icon.call_deferred()
 		queue_redraw()
 
 ## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
 var _count: Label
+var _quality_frame: QualityFrameOverlay
 var _potion_marker: Label
 var _upgrade_marker: Label
 var _drag_cover: PanelContainer
@@ -47,6 +49,10 @@ var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
 
 func _ready() -> void:
+	_quality_frame = QualityFrameOverlay.new()
+	_quality_frame.name = "QualityFrame"
+	add_child(_quality_frame)
+	_refresh_quality_frame()
 	_count = Label.new()
 	_count.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -119,6 +125,11 @@ func _refresh_potion_marker() -> void:
 	var kind := ItemUtil.potion_kind(String(item.get("itemId", ""))) if String(item.get("kind", "")) == "potion" else ""
 	_potion_marker.text = ItemUtil.potion_marker(kind)
 	_potion_marker.add_theme_color_override("font_color", ItemUtil.potion_marker_color(kind))
+
+func _refresh_quality_frame() -> void:
+	if _quality_frame == null:
+		return
+	_quality_frame.set_quality(String(item.get("quality", "common")) if String(item.get("kind", "")) == "equip" else "common")
 
 ## 依据 `item.count` 刷新角标文本。`_ready` 前被赋值时安全跳过（`_count` 为 null）。
 func _refresh_count() -> void:

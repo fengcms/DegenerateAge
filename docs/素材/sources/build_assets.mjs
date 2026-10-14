@@ -79,7 +79,7 @@ for(const [id,name,color,ornaments] of qualities){
 const previousManifestPath=path.join(root,'asset_manifest.json');
 if(fs.existsSync(previousManifestPath)){
  const previous=JSON.parse(fs.readFileSync(previousManifestPath,'utf8'));
- for(const a of output){const old=previous.assets.find(x=>x.id===a.id&&x.type===a.type);if(a.type==='icon'&&old?.runtime_icon){a.integrated=true;a.runtime_icon=old.runtime_icon;}if(a.type==='monster'&&old?.animation_pack){for(const key of ['full_animation','animation_pack','animation_direction_order','animation_frame_count','states','integrated','runtime_root','runtime_controller'])a[key]=old[key];}}
+ for(const a of output){const old=previous.assets.find(x=>x.id===a.id&&x.type===a.type);if(a.type==='icon'&&old?.runtime_icon){a.integrated=true;a.runtime_icon=old.runtime_icon;}if(a.type==='monster'&&old?.animation_pack){for(const key of ['full_animation','animation_pack','animation_direction_order','animation_frame_count','states','integrated','runtime_root','runtime_controller'])a[key]=old[key];}if(a.type==='quality_frame'&&old?.runtime_atlas){a.integrated=true;a.runtime_atlas=old.runtime_atlas;fs.writeFileSync(path.join(root,'quality_frames',a.id,'animation.json'),JSON.stringify(a,null,2));}}
 }
 fs.writeFileSync(path.join(root,'asset_manifest.json'),JSON.stringify({created:'2026-10-13',completed:'2026-10-14',integrated:false,image_generator:'built-in image_gen',assets:output},null,2));
 fs.writeFileSync(path.join(root,'sources/generation_manifest.json'),JSON.stringify(jobs,null,2));

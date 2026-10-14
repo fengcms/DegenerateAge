@@ -821,7 +821,8 @@
       ],
       "source": "quality_frames/uncommon/svg",
       "generator": "deterministic SVG + ImageMagick",
-      "integrated": false
+      "integrated": true,
+      "runtime_atlas": "assets/sprites/equip/quality_frames/uncommon_atlas.png"
     },
     {
       "id": "rare",
@@ -848,7 +849,8 @@
       ],
       "source": "quality_frames/rare/svg",
       "generator": "deterministic SVG + ImageMagick",
-      "integrated": false
+      "integrated": true,
+      "runtime_atlas": "assets/sprites/equip/quality_frames/rare_atlas.png"
     },
     {
       "id": "epic",
@@ -875,7 +877,8 @@
       ],
       "source": "quality_frames/epic/svg",
       "generator": "deterministic SVG + ImageMagick",
-      "integrated": false
+      "integrated": true,
+      "runtime_atlas": "assets/sprites/equip/quality_frames/epic_atlas.png"
     },
     {
       "id": "legendary",
@@ -902,7 +905,8 @@
       ],
       "source": "quality_frames/legendary/svg",
       "generator": "deterministic SVG + ImageMagick",
-      "integrated": false
+      "integrated": true,
+      "runtime_atlas": "assets/sprites/equip/quality_frames/legendary_atlas.png"
     }
   ],
   "completed": "2026-10-14",

@@ -23,5 +23,6 @@
   ],
   "source": "quality_frames/uncommon/svg",
   "generator": "deterministic SVG + ImageMagick",
-  "integrated": false
+  "integrated": true,
+  "runtime_atlas": "assets/sprites/equip/quality_frames/uncommon_atlas.png"
 }

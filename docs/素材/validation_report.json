@@ -14,7 +14,7 @@
     "six 8-frame VFX atlases with blank end frames",
     "four 24-frame square UI animations, 24 distinct frames each",
     "quality overlays have fully transparent central 40x40 pixels",
-    "four monster packs, 12 equipment icons and six skill icons integrated"
+    "four monster packs, 12 equipment icons, six skill icons and four quality animations integrated"
   ],
   "visual_review": [
     "35-icon labeled overview",
@@ -37,5 +37,11 @@
     "weapon_iron_alias": "weapon_starter",
     "armor_cloth_alias": "armor_starter",
     "test": "IconIntegrationTest"
+  },
+  "quality_runtime_integration": {
+    "count": 4,
+    "atlas_frames": 24,
+    "fps": 12,
+    "test": "QualityFrameTest"
   }
 }
