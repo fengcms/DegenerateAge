@@ -13,6 +13,9 @@ extends Node2D
 
 const MONSTER_SCENE := preload("res://scenes/entities/Monster.tscn")
 const MIN_SPAWN_DIST := 220.0   # 与玩家出生点的最小距离（px），避免开局被贴脸
+const ACTIVE_DISTANCE := 760.0
+const RETIRE_DISTANCE := 1100.0
+const CHAPTER_TWO_NORMAL_BUDGET := 10
 ## 无地图的显式测试规格（`spawn_from_specs` 未传 map_id）所用的状态前缀 ——
 ## 保证这类点同样受刷新状态管理（否则会「击杀即重生」，违反 7.9）。
 const LOCAL_MAP_ID := "_local"
@@ -77,10 +80,16 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				"level": spawn_level,
 				"respawn_time": maxf(1.0, float(spec.get("respawnTime", 30.0))),
 				"ai": bool(spec.get("ai", true)),
+				"kind": String(spec.get("kind", "normal")),
 				"entry": null,
 				"tombstone": bool(spec.get("tombstone", false)),
 				"marker": null,
 			}
+			var cells: Variant = spec.get("cells", null)
+			var fixed_cell: Variant = cells[_i] if cells is Array and _i < cells.size() else spec.get("cell", null)
+			if fixed_cell is Array and fixed_cell.size() == 2:
+				point["position"] = Iso.grid_to_world(Vector2i(int(fixed_cell[0]), int(fixed_cell[1])))
+				point["fixed"] = true
 			_points.append(point)
 			_spawn(point)
 
@@ -100,6 +109,10 @@ func _process(_delta: float) -> void:
 	# M4-10：倒计时由 `GameState.world_time` 统一驱动（本节点不再累加 delta）。
 	for p in _points:
 		if p.entry != null and is_instance_valid(p.entry):
+			if bool(p.get("fixed", false)) and _player != null \
+					and (p.entry as Node2D).global_position.distance_to(_player.global_position) > RETIRE_DISTANCE:
+				p.entry.queue_free()
+				p.entry = null
 			continue
 		var remaining := _remaining(p)
 		if remaining > 0.0:
@@ -126,6 +139,12 @@ func marker_points() -> Array[Dictionary]:
 	return out
 
 func _spawn(point: Dictionary) -> void:
+	if bool(point.get("fixed", false)) and _player != null \
+			and (point.position as Vector2).distance_to(_player.global_position) > ACTIVE_DISTANCE:
+		return
+	if _map_id.begins_with("c2_") and String(point.get("kind", "normal")) == "normal" \
+			and _active_normal_count() >= CHAPTER_TWO_NORMAL_BUDGET:
+		return
 	# M4-10：仍在刷新等待期 → 不生成怪物；「墓碑点」显示墓碑，其余静默等待。
 	var remaining := _remaining(point)
 	if remaining > 0.0:
@@ -148,6 +167,13 @@ func _spawn(point: Dictionary) -> void:
 	m.died.connect(func(_id: String) -> void: _on_monster_died(point))
 	add_child(m)
 	point.entry = m
+
+func _active_normal_count() -> int:
+	var count := 0
+	for point in _points:
+		if String(point.get("kind", "normal")) == "normal" and is_instance_valid(point.get("entry")):
+			count += 1
+	return count
 
 func _on_monster_died(point: Dictionary) -> void:
 	var pos := Vector2.ZERO
@@ -192,6 +218,8 @@ func _tombstone_position(point: Dictionary) -> Vector2:
 
 ## 生成位置：墓碑类点沿用固定位置（原位复活），其余随机。
 func _spawn_position(point: Dictionary) -> Vector2:
+	if bool(point.get("fixed", false)):
+		return point.position
 	if _ground != null and _ground.cave != null and String(point.get("monster_id", "")) == "boss_corrupted_beast":
 		var boss_cell: Array = _ground.cave.points.get("beast", _ground.cave.points.get("boss_arena", [40, 26]))
 		return Iso.grid_to_world(Vector2i(int(boss_cell[0]), int(boss_cell[1])))

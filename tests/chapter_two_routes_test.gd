@@ -10,7 +10,8 @@ func check(ok: bool, message: String) -> void:
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
-	check(DataLoader.validate_all().is_empty(), "所有数据表通过引用校验")
+	var issues := DataLoader.validate_all()
+	check(issues.is_empty(), "所有数据表通过引用校验：%s" % str(issues))
 	var ids := ["camp", "wild_trial", "ash_land", "corruption_source",
 		"c2_well_town", "c2_pipe_slope", "c2_old_well", "c2_lower_works",
 		"c2_ember_furnace", "c2_well_core"]

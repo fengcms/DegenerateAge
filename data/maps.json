@@ -632,7 +632,474 @@
       17,
       62
     ],
-    "spawnPoints": [],
+    "spawnPoints": [
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 11,
+        "respawnTime": 15,
+        "count": 11,
+        "cells": [
+          [
+            30,
+            41
+          ],
+          [
+            30,
+            38
+          ],
+          [
+            27,
+            41
+          ],
+          [
+            33,
+            41
+          ],
+          [
+            30,
+            44
+          ],
+          [
+            27,
+            38
+          ],
+          [
+            33,
+            38
+          ],
+          [
+            27,
+            44
+          ],
+          [
+            33,
+            44
+          ],
+          [
+            30,
+            35
+          ],
+          [
+            24,
+            41
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 12,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            36,
+            41
+          ],
+          [
+            30,
+            47
+          ],
+          [
+            27,
+            35
+          ],
+          [
+            33,
+            35
+          ],
+          [
+            24,
+            38
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            36,
+            38
+          ],
+          [
+            24,
+            44
+          ],
+          [
+            36,
+            44
+          ],
+          [
+            27,
+            47
+          ],
+          [
+            33,
+            47
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 11,
+        "respawnTime": 15,
+        "count": 11,
+        "cells": [
+          [
+            92,
+            22
+          ],
+          [
+            92,
+            19
+          ],
+          [
+            89,
+            22
+          ],
+          [
+            95,
+            22
+          ],
+          [
+            92,
+            25
+          ],
+          [
+            89,
+            19
+          ],
+          [
+            95,
+            19
+          ],
+          [
+            89,
+            25
+          ],
+          [
+            95,
+            25
+          ],
+          [
+            92,
+            16
+          ],
+          [
+            86,
+            22
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 12,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            98,
+            22
+          ],
+          [
+            92,
+            28
+          ],
+          [
+            89,
+            16
+          ],
+          [
+            95,
+            16
+          ],
+          [
+            86,
+            19
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            98,
+            19
+          ],
+          [
+            98,
+            25
+          ],
+          [
+            89,
+            28
+          ],
+          [
+            95,
+            28
+          ],
+          [
+            86,
+            16
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 11,
+        "respawnTime": 15,
+        "count": 10,
+        "cells": [
+          [
+            158,
+            32
+          ],
+          [
+            158,
+            29
+          ],
+          [
+            155,
+            32
+          ],
+          [
+            161,
+            32
+          ],
+          [
+            158,
+            35
+          ],
+          [
+            155,
+            29
+          ],
+          [
+            161,
+            29
+          ],
+          [
+            155,
+            35
+          ],
+          [
+            161,
+            35
+          ],
+          [
+            158,
+            26
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 12,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            152,
+            32
+          ],
+          [
+            164,
+            32
+          ],
+          [
+            158,
+            38
+          ],
+          [
+            155,
+            26
+          ],
+          [
+            161,
+            26
+          ],
+          [
+            152,
+            29
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            164,
+            29
+          ],
+          [
+            152,
+            35
+          ],
+          [
+            164,
+            35
+          ],
+          [
+            155,
+            38
+          ],
+          [
+            161,
+            38
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 11,
+        "respawnTime": 15,
+        "count": 10,
+        "cells": [
+          [
+            90,
+            91
+          ],
+          [
+            90,
+            88
+          ],
+          [
+            87,
+            91
+          ],
+          [
+            93,
+            91
+          ],
+          [
+            90,
+            94
+          ],
+          [
+            87,
+            88
+          ],
+          [
+            93,
+            88
+          ],
+          [
+            87,
+            94
+          ],
+          [
+            93,
+            94
+          ],
+          [
+            90,
+            85
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 12,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            84,
+            91
+          ],
+          [
+            96,
+            91
+          ],
+          [
+            90,
+            97
+          ],
+          [
+            87,
+            85
+          ],
+          [
+            93,
+            85
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            84,
+            88
+          ],
+          [
+            96,
+            88
+          ],
+          [
+            84,
+            94
+          ],
+          [
+            96,
+            94
+          ],
+          [
+            87,
+            97
+          ],
+          [
+            93,
+            97
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_elite_copper_matriarch",
+        "level": 13,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          164,
+          88
+        ],
+        "kind": "elite"
+      },
+      {
+        "monsterId": "c2_elite_broken_inspector",
+        "level": 13,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          41,
+          80
+        ],
+        "kind": "elite"
+      }
+    ],
     "bossSpawn": null,
     "npcs": [
       {
@@ -708,8 +1175,521 @@
       21,
       70
     ],
-    "spawnPoints": [],
-    "bossSpawn": null,
+    "spawnPoints": [
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 10,
+        "cells": [
+          [
+            41,
+            34
+          ],
+          [
+            41,
+            31
+          ],
+          [
+            38,
+            34
+          ],
+          [
+            44,
+            34
+          ],
+          [
+            41,
+            37
+          ],
+          [
+            38,
+            31
+          ],
+          [
+            44,
+            31
+          ],
+          [
+            38,
+            37
+          ],
+          [
+            44,
+            37
+          ],
+          [
+            41,
+            28
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            35,
+            34
+          ],
+          [
+            47,
+            34
+          ],
+          [
+            41,
+            40
+          ],
+          [
+            38,
+            28
+          ],
+          [
+            44,
+            28
+          ],
+          [
+            35,
+            31
+          ],
+          [
+            47,
+            31
+          ],
+          [
+            35,
+            37
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            47,
+            37
+          ],
+          [
+            38,
+            40
+          ],
+          [
+            44,
+            40
+          ],
+          [
+            35,
+            28
+          ],
+          [
+            47,
+            28
+          ],
+          [
+            35,
+            40
+          ],
+          [
+            47,
+            40
+          ],
+          [
+            41,
+            25
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 14,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            32,
+            34
+          ],
+          [
+            50,
+            34
+          ],
+          [
+            41,
+            43
+          ],
+          [
+            38,
+            25
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 10,
+        "cells": [
+          [
+            111,
+            95
+          ],
+          [
+            111,
+            92
+          ],
+          [
+            108,
+            95
+          ],
+          [
+            114,
+            95
+          ],
+          [
+            111,
+            98
+          ],
+          [
+            108,
+            92
+          ],
+          [
+            114,
+            92
+          ],
+          [
+            108,
+            98
+          ],
+          [
+            114,
+            98
+          ],
+          [
+            111,
+            89
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            105,
+            95
+          ],
+          [
+            117,
+            95
+          ],
+          [
+            111,
+            101
+          ],
+          [
+            108,
+            89
+          ],
+          [
+            114,
+            89
+          ],
+          [
+            105,
+            92
+          ],
+          [
+            117,
+            92
+          ],
+          [
+            105,
+            98
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            117,
+            98
+          ],
+          [
+            108,
+            101
+          ],
+          [
+            114,
+            101
+          ],
+          [
+            105,
+            89
+          ],
+          [
+            117,
+            89
+          ],
+          [
+            105,
+            101
+          ],
+          [
+            117,
+            101
+          ],
+          [
+            111,
+            86
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 14,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            102,
+            95
+          ],
+          [
+            120,
+            95
+          ],
+          [
+            111,
+            104
+          ],
+          [
+            108,
+            86
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_spirit_larva",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 10,
+        "cells": [
+          [
+            169,
+            27
+          ],
+          [
+            169,
+            24
+          ],
+          [
+            166,
+            27
+          ],
+          [
+            172,
+            27
+          ],
+          [
+            169,
+            30
+          ],
+          [
+            166,
+            24
+          ],
+          [
+            172,
+            24
+          ],
+          [
+            166,
+            30
+          ],
+          [
+            172,
+            30
+          ],
+          [
+            169,
+            21
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            163,
+            27
+          ],
+          [
+            175,
+            27
+          ],
+          [
+            169,
+            33
+          ],
+          [
+            166,
+            21
+          ],
+          [
+            172,
+            21
+          ],
+          [
+            163,
+            24
+          ],
+          [
+            175,
+            24
+          ],
+          [
+            163,
+            30
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 13,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            175,
+            30
+          ],
+          [
+            166,
+            33
+          ],
+          [
+            172,
+            33
+          ],
+          [
+            163,
+            21
+          ],
+          [
+            175,
+            21
+          ],
+          [
+            163,
+            33
+          ],
+          [
+            175,
+            33
+          ],
+          [
+            169,
+            18
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 14,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            160,
+            27
+          ],
+          [
+            178,
+            27
+          ],
+          [
+            169,
+            36
+          ],
+          [
+            166,
+            18
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_elite_copper_matriarch",
+        "level": 13,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          55,
+          102
+        ],
+        "kind": "elite"
+      },
+      {
+        "monsterId": "c2_elite_broken_inspector",
+        "level": 14,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          113,
+          22
+        ],
+        "kind": "elite"
+      },
+      {
+        "monsterId": "c2_elite_spirit_guard",
+        "level": 15,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          167,
+          98
+        ],
+        "kind": "elite"
+      }
+    ],
+    "bossSpawn": {
+      "monsterId": "c2_boss_iron_foreman",
+      "level": 15,
+      "respawnTime": 300,
+      "count": 1,
+      "cell": [
+        192,
+        64
+      ],
+      "kind": "boss",
+      "tombstone": true
+    },
     "npcs": [
       {
         "role": "carter",
@@ -789,7 +1769,823 @@
       22,
       75
     ],
-    "spawnPoints": [],
+    "spawnPoints": [
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 7,
+        "cells": [
+          [
+            40,
+            44
+          ],
+          [
+            40,
+            41
+          ],
+          [
+            37,
+            44
+          ],
+          [
+            43,
+            44
+          ],
+          [
+            40,
+            47
+          ],
+          [
+            37,
+            41
+          ],
+          [
+            43,
+            41
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_badge_wraith",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            37,
+            47
+          ],
+          [
+            43,
+            47
+          ],
+          [
+            40,
+            38
+          ],
+          [
+            34,
+            44
+          ],
+          [
+            46,
+            44
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            40,
+            50
+          ],
+          [
+            37,
+            38
+          ],
+          [
+            43,
+            38
+          ],
+          [
+            34,
+            41
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 3,
+        "cells": [
+          [
+            46,
+            41
+          ],
+          [
+            34,
+            47
+          ],
+          [
+            46,
+            47
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 1,
+        "cells": [
+          [
+            37,
+            50
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 7,
+        "cells": [
+          [
+            111,
+            22
+          ],
+          [
+            111,
+            19
+          ],
+          [
+            108,
+            22
+          ],
+          [
+            114,
+            22
+          ],
+          [
+            111,
+            25
+          ],
+          [
+            108,
+            19
+          ],
+          [
+            114,
+            19
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_badge_wraith",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            108,
+            25
+          ],
+          [
+            114,
+            25
+          ],
+          [
+            111,
+            16
+          ],
+          [
+            105,
+            22
+          ],
+          [
+            117,
+            22
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            111,
+            28
+          ],
+          [
+            108,
+            16
+          ],
+          [
+            114,
+            16
+          ],
+          [
+            105,
+            19
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 3,
+        "cells": [
+          [
+            117,
+            19
+          ],
+          [
+            105,
+            25
+          ],
+          [
+            117,
+            25
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 1,
+        "cells": [
+          [
+            108,
+            28
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 7,
+        "cells": [
+          [
+            202,
+            46
+          ],
+          [
+            202,
+            43
+          ],
+          [
+            199,
+            46
+          ],
+          [
+            205,
+            46
+          ],
+          [
+            202,
+            49
+          ],
+          [
+            199,
+            43
+          ],
+          [
+            205,
+            43
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_badge_wraith",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            199,
+            49
+          ],
+          [
+            205,
+            49
+          ],
+          [
+            202,
+            40
+          ],
+          [
+            196,
+            46
+          ],
+          [
+            208,
+            46
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            202,
+            52
+          ],
+          [
+            199,
+            40
+          ],
+          [
+            205,
+            40
+          ],
+          [
+            196,
+            43
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 3,
+        "cells": [
+          [
+            208,
+            43
+          ],
+          [
+            196,
+            49
+          ],
+          [
+            208,
+            49
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            199,
+            52
+          ],
+          [
+            205,
+            52
+          ],
+          [
+            196,
+            40
+          ],
+          [
+            208,
+            40
+          ],
+          [
+            196,
+            52
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 7,
+        "cells": [
+          [
+            116,
+            66
+          ],
+          [
+            116,
+            63
+          ],
+          [
+            113,
+            66
+          ],
+          [
+            119,
+            66
+          ],
+          [
+            116,
+            69
+          ],
+          [
+            113,
+            63
+          ],
+          [
+            119,
+            63
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_badge_wraith",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 5,
+        "cells": [
+          [
+            113,
+            69
+          ],
+          [
+            119,
+            69
+          ],
+          [
+            116,
+            60
+          ],
+          [
+            110,
+            66
+          ],
+          [
+            122,
+            66
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            116,
+            72
+          ],
+          [
+            113,
+            60
+          ],
+          [
+            119,
+            60
+          ],
+          [
+            110,
+            63
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 3,
+        "cells": [
+          [
+            122,
+            63
+          ],
+          [
+            110,
+            69
+          ],
+          [
+            122,
+            69
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 1,
+        "cells": [
+          [
+            113,
+            72
+          ]
+        ],
+        "zone": "D"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            54,
+            105
+          ],
+          [
+            54,
+            102
+          ],
+          [
+            51,
+            105
+          ],
+          [
+            57,
+            105
+          ],
+          [
+            54,
+            108
+          ],
+          [
+            51,
+            102
+          ]
+        ],
+        "zone": "E"
+      },
+      {
+        "monsterId": "c2_badge_wraith",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            57,
+            102
+          ],
+          [
+            51,
+            108
+          ],
+          [
+            57,
+            108
+          ],
+          [
+            54,
+            99
+          ],
+          [
+            48,
+            105
+          ],
+          [
+            60,
+            105
+          ]
+        ],
+        "zone": "E"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            54,
+            111
+          ],
+          [
+            51,
+            99
+          ],
+          [
+            57,
+            99
+          ],
+          [
+            48,
+            102
+          ]
+        ],
+        "zone": "E"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 2,
+        "cells": [
+          [
+            60,
+            102
+          ],
+          [
+            48,
+            108
+          ]
+        ],
+        "zone": "E"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 2,
+        "cells": [
+          [
+            60,
+            108
+          ],
+          [
+            51,
+            111
+          ]
+        ],
+        "zone": "E"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            156,
+            112
+          ],
+          [
+            156,
+            109
+          ],
+          [
+            153,
+            112
+          ],
+          [
+            159,
+            112
+          ],
+          [
+            156,
+            115
+          ],
+          [
+            153,
+            109
+          ]
+        ],
+        "zone": "F"
+      },
+      {
+        "monsterId": "c2_badge_wraith",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            159,
+            109
+          ],
+          [
+            153,
+            115
+          ],
+          [
+            159,
+            115
+          ],
+          [
+            156,
+            106
+          ],
+          [
+            150,
+            112
+          ],
+          [
+            162,
+            112
+          ]
+        ],
+        "zone": "F"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 15,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            156,
+            118
+          ],
+          [
+            153,
+            106
+          ],
+          [
+            159,
+            106
+          ],
+          [
+            150,
+            109
+          ]
+        ],
+        "zone": "F"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 2,
+        "cells": [
+          [
+            162,
+            109
+          ],
+          [
+            150,
+            115
+          ]
+        ],
+        "zone": "F"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            162,
+            115
+          ],
+          [
+            153,
+            118
+          ],
+          [
+            159,
+            118
+          ],
+          [
+            150,
+            106
+          ],
+          [
+            162,
+            106
+          ],
+          [
+            150,
+            118
+          ]
+        ],
+        "zone": "F"
+      },
+      {
+        "monsterId": "c2_elite_broken_inspector",
+        "level": 15,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          45,
+          87
+        ],
+        "kind": "elite"
+      },
+      {
+        "monsterId": "c2_elite_gray_scribe",
+        "level": 17,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          186,
+          20
+        ],
+        "kind": "elite"
+      },
+      {
+        "monsterId": "c2_elite_ash_leader",
+        "level": 18,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          214,
+          116
+        ],
+        "kind": "elite"
+      }
+    ],
     "bossSpawn": null,
     "npcs": [
       {
@@ -842,8 +2638,328 @@
       82,
       14
     ],
-    "spawnPoints": [],
-    "bossSpawn": null,
+    "spawnPoints": [
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            45,
+            15
+          ],
+          [
+            45,
+            12
+          ],
+          [
+            42,
+            15
+          ],
+          [
+            48,
+            15
+          ],
+          [
+            45,
+            18
+          ],
+          [
+            42,
+            12
+          ],
+          [
+            48,
+            12
+          ],
+          [
+            42,
+            18
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            48,
+            18
+          ],
+          [
+            45,
+            9
+          ],
+          [
+            39,
+            15
+          ],
+          [
+            51,
+            15
+          ],
+          [
+            45,
+            21
+          ],
+          [
+            42,
+            9
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            48,
+            9
+          ],
+          [
+            39,
+            12
+          ],
+          [
+            51,
+            12
+          ],
+          [
+            39,
+            18
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            48,
+            77
+          ],
+          [
+            48,
+            74
+          ],
+          [
+            45,
+            77
+          ],
+          [
+            51,
+            77
+          ],
+          [
+            48,
+            80
+          ],
+          [
+            45,
+            74
+          ],
+          [
+            51,
+            74
+          ],
+          [
+            45,
+            80
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            51,
+            80
+          ],
+          [
+            48,
+            71
+          ],
+          [
+            42,
+            77
+          ],
+          [
+            54,
+            77
+          ],
+          [
+            48,
+            83
+          ],
+          [
+            45,
+            71
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            51,
+            71
+          ],
+          [
+            54,
+            74
+          ],
+          [
+            42,
+            80
+          ],
+          [
+            54,
+            80
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_ash_beast",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 8,
+        "cells": [
+          [
+            103,
+            42
+          ],
+          [
+            103,
+            39
+          ],
+          [
+            100,
+            42
+          ],
+          [
+            106,
+            42
+          ],
+          [
+            103,
+            45
+          ],
+          [
+            100,
+            39
+          ],
+          [
+            106,
+            39
+          ],
+          [
+            100,
+            45
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_copper_worm",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            106,
+            45
+          ],
+          [
+            103,
+            36
+          ],
+          [
+            97,
+            42
+          ],
+          [
+            109,
+            42
+          ],
+          [
+            103,
+            48
+          ],
+          [
+            100,
+            36
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_slag_leech",
+        "level": 17,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            106,
+            36
+          ],
+          [
+            97,
+            39
+          ],
+          [
+            109,
+            39
+          ],
+          [
+            97,
+            45
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_elite_copper_matriarch",
+        "level": 17,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          49,
+          61
+        ],
+        "kind": "elite"
+      }
+    ],
+    "bossSpawn": {
+      "monsterId": "c2_boss_slag_devourer",
+      "level": 18,
+      "respawnTime": 300,
+      "count": 1,
+      "cell": [
+        137,
+        46
+      ],
+      "kind": "boss",
+      "tombstone": true
+    },
     "npcs": [
       {
         "role": "carter",
@@ -895,8 +3011,267 @@
       18,
       68
     ],
-    "spawnPoints": [],
-    "bossSpawn": null,
+    "spawnPoints": [
+      {
+        "monsterId": "c2_purple_parasite",
+        "level": 19,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            36,
+            58
+          ],
+          [
+            36,
+            55
+          ],
+          [
+            33,
+            58
+          ],
+          [
+            39,
+            58
+          ],
+          [
+            36,
+            61
+          ],
+          [
+            33,
+            55
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 18,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            39,
+            55
+          ],
+          [
+            33,
+            61
+          ],
+          [
+            39,
+            61
+          ],
+          [
+            36,
+            52
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 18,
+        "respawnTime": 15,
+        "count": 2,
+        "cells": [
+          [
+            30,
+            58
+          ],
+          [
+            42,
+            58
+          ]
+        ],
+        "zone": "A"
+      },
+      {
+        "monsterId": "c2_purple_parasite",
+        "level": 19,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            90,
+            23
+          ],
+          [
+            90,
+            20
+          ],
+          [
+            87,
+            23
+          ],
+          [
+            93,
+            23
+          ],
+          [
+            90,
+            26
+          ],
+          [
+            87,
+            20
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 18,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            93,
+            20
+          ],
+          [
+            87,
+            26
+          ],
+          [
+            93,
+            26
+          ],
+          [
+            90,
+            17
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 18,
+        "respawnTime": 15,
+        "count": 2,
+        "cells": [
+          [
+            84,
+            23
+          ],
+          [
+            96,
+            23
+          ]
+        ],
+        "zone": "B"
+      },
+      {
+        "monsterId": "c2_purple_parasite",
+        "level": 19,
+        "respawnTime": 15,
+        "count": 6,
+        "cells": [
+          [
+            88,
+            99
+          ],
+          [
+            88,
+            96
+          ],
+          [
+            85,
+            99
+          ],
+          [
+            91,
+            99
+          ],
+          [
+            88,
+            102
+          ],
+          [
+            85,
+            96
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_broken_guard",
+        "level": 18,
+        "respawnTime": 15,
+        "count": 4,
+        "cells": [
+          [
+            91,
+            96
+          ],
+          [
+            85,
+            102
+          ],
+          [
+            91,
+            102
+          ],
+          [
+            88,
+            93
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_spirit_attendant",
+        "level": 18,
+        "respawnTime": 15,
+        "count": 2,
+        "cells": [
+          [
+            82,
+            99
+          ],
+          [
+            94,
+            99
+          ]
+        ],
+        "zone": "C"
+      },
+      {
+        "monsterId": "c2_elite_spirit_guard",
+        "level": 18,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          143,
+          23
+        ],
+        "kind": "elite"
+      },
+      {
+        "monsterId": "c2_elite_ash_leader",
+        "level": 18,
+        "respawnTime": 120,
+        "count": 1,
+        "cell": [
+          143,
+          98
+        ],
+        "kind": "elite"
+      }
+    ],
+    "bossSpawn": {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "level": 20,
+      "respawnTime": 600,
+      "count": 1,
+      "cell": [
+        177,
+        58
+      ],
+      "kind": "boss",
+      "tombstone": true
+    },
     "npcs": [
       {
         "role": "carter",
