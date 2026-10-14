@@ -396,17 +396,6 @@ func _bag_tooltip(item: Dictionary) -> String:
 		lines.append(Localization.tr_key("ui.inventory_panel.p021") % [req, level])
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
-
-	var worn := _worn_same_kind(item)
-	var s_new := Equipment.score(item)
-	if worn.is_empty():
-		lines.append(Localization.tr_key("ui.inventory_panel.p022") % s_new)
-	else:
-		var s_old := Equipment.score(worn)
-		var mark := Localization.tr_key("ui.inventory.score_higher") if s_new > s_old else (Localization.tr_key("ui.inventory.score_lower") if s_new < s_old else Localization.tr_key("ui.inventory.score_equal"))
-		lines.append(Localization.tr_key("ui.inventory_panel.p023") % ItemUtil.display_name(worn))
-		lines.append(Localization.tr_key("ui.inventory_panel.p024") % [s_new, s_old, mark])
-	lines.append("")
 	lines.append((Localization.tr_key("ui.inventory_panel.p025") if _character_visible() else Localization.tr_key("ui.inventory_panel.p026")) if ok else Localization.tr_key("ui.inventory_panel.p027"))
 	return "\n".join(PackedStringArray(lines))
 
@@ -446,17 +435,6 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 		return out
 	out.append(Localization.tr_key("ui.inventory_panel.p036"))
 	return out
-
-## 同类型槽中第一件已穿戴装备（用于 5.9 对比）。
-func _worn_same_kind(item: Dictionary) -> Dictionary:
-	var kind := Equipment.item_kind(item)
-	if kind.is_empty():
-		return {}
-	for sid in Equipment.slots_for_kind(kind):
-		var it = GameState.equipment.get(sid)
-		if it is Dictionary:
-			return it
-	return {}
 
 # ---- 交互 ----
 

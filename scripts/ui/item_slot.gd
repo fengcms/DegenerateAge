@@ -139,3 +139,46 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 
 func _apply_sample_icon() -> void:
 	SampleArt.decorate(self, SampleArt.icon_for(item))
+
+## 背包装备对比：每个穿戴槽各占一张卡，空槽也保留位置。
+func _make_custom_tooltip(_for_text: String) -> Object:
+	if role != ROLE_BAG or String(item.get("kind", "")) != "equip":
+		return null
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.add_child(_equipment_tip_card("背包装备", item))
+	for sid in Equipment.slots_for_kind(Equipment.item_kind(item)):
+		var worn: Variant = GameState.equipment.get(sid)
+		var def := Equipment.slot_def(sid)
+		row.add_child(_equipment_tip_card("已穿着 · %s" % String(def.get("label", sid)), worn if worn is Dictionary else {}))
+	return row
+
+func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("111820")
+	style.border_color = ItemUtil.quality_color(String(shown.get("quality", "common"))) if not shown.is_empty() else Color("6a737b")
+	style.set_border_width_all(1)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size.x = 210
+	var column := VBoxContainer.new()
+	panel.add_child(column)
+	var heading_label := Label.new()
+	heading_label.text = heading
+	heading_label.add_theme_color_override("font_color", Color("9baebc"))
+	column.add_child(heading_label)
+	var detail := Label.new()
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if shown.is_empty():
+		detail.text = "未穿着"
+	else:
+		var lines: Array[String] = [ItemUtil.display_name(shown)]
+		lines.append_array(ItemUtil.attr_lines(shown))
+		detail.text = "\n".join(PackedStringArray(lines))
+		detail.add_theme_color_override("font_color", ItemUtil.quality_color(String(shown.get("quality", "common"))))
+	column.add_child(detail)
+	return panel
