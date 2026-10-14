@@ -1,0 +1,182 @@
+[
+  {
+    "id": "camp",
+    "name": "幸存者营地",
+    "chapter": 1,
+    "size": [
+      64,
+      36
+    ],
+    "normal": 0,
+    "elite": 0,
+    "boss": 0,
+    "walkableRatio": 0.867,
+    "referenceRouteSecondsAt256": [
+      8.4,
+      3.8
+    ]
+  },
+  {
+    "id": "wild_trial",
+    "name": "试炼野外",
+    "chapter": 1,
+    "size": [
+      176,
+      99
+    ],
+    "normal": 72,
+    "elite": 3,
+    "boss": 0,
+    "walkableRatio": 0.9,
+    "referenceRouteSecondsAt256": [
+      26.2,
+      16.4,
+      16.3
+    ]
+  },
+  {
+    "id": "ash_land",
+    "name": "灰烬之地",
+    "chapter": 1,
+    "size": [
+      192,
+      108
+    ],
+    "normal": 96,
+    "elite": 4,
+    "boss": 0,
+    "walkableRatio": 0.875,
+    "referenceRouteSecondsAt256": [
+      25.5,
+      16.2,
+      28.2
+    ]
+  },
+  {
+    "id": "corruption_source",
+    "name": "腐化源头",
+    "chapter": 1,
+    "size": [
+      160,
+      90
+    ],
+    "normal": 48,
+    "elite": 4,
+    "boss": 1,
+    "walkableRatio": 0.881,
+    "referenceRouteSecondsAt256": [
+      17.9,
+      10.8,
+      10.6
+    ]
+  },
+  {
+    "id": "c2_well_town",
+    "name": "沉井镇",
+    "chapter": 2,
+    "size": [
+      96,
+      54
+    ],
+    "normal": 0,
+    "elite": 0,
+    "boss": 0,
+    "walkableRatio": 0.845,
+    "referenceRouteSecondsAt256": [
+      14.3,
+      6.3,
+      4.8
+    ]
+  },
+  {
+    "id": "c2_pipe_slope",
+    "name": "断管坡",
+    "chapter": 2,
+    "size": [
+      192,
+      108
+    ],
+    "normal": 84,
+    "elite": 2,
+    "boss": 0,
+    "walkableRatio": 0.849,
+    "referenceRouteSecondsAt256": [
+      28.8,
+      16.2,
+      13.1
+    ]
+  },
+  {
+    "id": "c2_old_well",
+    "name": "旧汲灵井",
+    "chapter": 2,
+    "size": [
+      224,
+      126
+    ],
+    "normal": 90,
+    "elite": 3,
+    "boss": 1,
+    "walkableRatio": 0.883,
+    "referenceRouteSecondsAt256": [
+      47.1,
+      14.2,
+      18.2
+    ]
+  },
+  {
+    "id": "c2_lower_works",
+    "name": "工坊下层",
+    "chapter": 2,
+    "size": [
+      240,
+      135
+    ],
+    "normal": 128,
+    "elite": 3,
+    "boss": 0,
+    "walkableRatio": 0.879,
+    "referenceRouteSecondsAt256": [
+      30.2,
+      23.6,
+      30.8,
+      0.7
+    ]
+  },
+  {
+    "id": "c2_ember_furnace",
+    "name": "余烬炉房",
+    "chapter": 2,
+    "size": [
+      160,
+      90
+    ],
+    "normal": 54,
+    "elite": 1,
+    "boss": 1,
+    "walkableRatio": 0.862,
+    "referenceRouteSecondsAt256": [
+      31.9,
+      14.3,
+      4.9
+    ]
+  },
+  {
+    "id": "c2_well_core",
+    "name": "井心机室",
+    "chapter": 2,
+    "size": [
+      208,
+      117
+    ],
+    "normal": 36,
+    "elite": 2,
+    "boss": 1,
+    "walkableRatio": 0.897,
+    "referenceRouteSecondsAt256": [
+      23.3,
+      34.2,
+      36.2
+    ]
+  }
+]
