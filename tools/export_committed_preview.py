@@ -15,10 +15,10 @@ GODOT = Path("/Applications/Godot.app/Contents/MacOS/Godot")
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path,
-                        default=ROOT / "build/DegenerateAge-Chapter2-FunctionPreview.app")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    output = args.output.resolve()
+    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    output = (args.output or ROOT / f"build/DegenerateAge-Chapter2-FunctionPreview-{revision[:7]}.app").resolve()
     if not GODOT.is_file():
         raise SystemExit("Godot.app 未安装")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -26,7 +26,7 @@ def main() -> int:
         raise SystemExit(f"目标已存在，请另选路径或手动清理：{output}")
     with tempfile.TemporaryDirectory(prefix="degenerateage-export-") as temporary:
         project = Path(temporary)
-        archive = subprocess.Popen(["git", "archive", "HEAD"], cwd=ROOT, stdout=subprocess.PIPE)
+        archive = subprocess.Popen(["git", "archive", revision], cwd=ROOT, stdout=subprocess.PIPE)
         assert archive.stdout is not None
         with tarfile.open(fileobj=archive.stdout, mode="r|") as tar:
             tar.extractall(project, filter="data")
@@ -42,7 +42,7 @@ def main() -> int:
                 print(line)
             if result.returncode != 0 or diagnostics:
                 raise SystemExit(result.returncode or 1)
-    print(f"导出完成：{output}")
+    print(f"导出完成：{output}，源提交 {revision}")
     return 0
 
 
