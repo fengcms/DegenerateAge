@@ -71,7 +71,12 @@ static func decorate(button: Button, texture: Texture2D) -> void:
 	button.icon = texture
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", 34)
+	var icon_width := 34
+	if button is ItemSlot and (button as ItemSlot).role in [ItemSlot.ROLE_BAG, ItemSlot.ROLE_EQUIP]:
+		# PNG artwork already keeps 12.5% transparent padding on each side.
+		# Fill the slot canvas to make the painted subject occupy about 75%.
+		icon_width = roundi(button.custom_minimum_size.x)
+	button.add_theme_constant_override("icon_max_width", icon_width)
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	if texture != null:
 		button.text = ""
