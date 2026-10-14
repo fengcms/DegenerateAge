@@ -73,5 +73,25 @@ func _ready() -> void:
 	check(migrated.playerPos != save.playerPos and migrated.spawnRespawn["camp#dummy#0"].pos == migrated.playerPos
 		and migrated.unclaimedLoot.camp[0].pos == migrated.playerPos, "玩家、墓碑与未领掉落同步迁移")
 	check(SaveManager._migrate(migrated).playerPos == migrated.playerPos, "重复读取不会再次迁移坐标")
+	core.queue_free()
+	await get_tree().process_frame
+	for map_id in ids.slice(4):
+		GameState.current_map = map_id
+		GameState.save_pos = MapService.entry_point(map_id)
+		GameState.has_save_pos = true
+		var live := preload("res://scenes/Game.tscn").instantiate()
+		add_child(live)
+		await get_tree().process_frame
+		var map_data := MapService.data_for(map_id)
+		var ground_live := live.get_node("Ground") as IsoGround
+		check(ground_live.map_id == map_id and ground_live.cave != null, "%s 可装配运行世界" % map_id)
+		check(live.get_node("Exits").get_child_count() == map_data.exits.size(), "%s 双向道路数量正确" % map_id)
+		check(live.get_node("Npcs").get_child_count() == map_data.npcs.size(), "%s NPC 数量正确" % map_id)
+		for exit_data in map_data.exits:
+			var to_cell := Vector2i(int(exit_data.cell[0]), int(exit_data.cell[1]))
+			var start := Vector2i(Iso.world_to_grid(ground_live.get_map_center_world()).round())
+			check(not ground_live.cave.path(start, to_cell).is_empty(), "%s 的 %s 出口可抵达" % [map_id, exit_data.id])
+		live.queue_free()
+		await get_tree().process_frame
 	print("[ChapterTwoRoutesTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
