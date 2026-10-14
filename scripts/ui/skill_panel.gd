@@ -72,6 +72,9 @@ func _build() -> void:
 	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
+	var help := PanelHelpButton.new()
+	help.tooltip_text = Localization.tr_key("ui.skill_panel.p003")
+	head.add_child(help)
 	var close := Button.new()
 	close.text = Localization.tr_key("ui.skill_panel.p002")
 	close.pressed.connect(func() -> void: set_open(false))
@@ -80,10 +83,6 @@ func _build() -> void:
 	root.add_child(HSeparator.new())
 	_list = VBoxContainer.new()
 	root.add_child(_list)
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.skill_panel.p003")
-	hint.add_theme_font_size_override("font_size", 12)
-	root.add_child(hint)
 
 func _refresh() -> void:
 	if _list == null:

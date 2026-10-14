@@ -168,11 +168,8 @@ func _build() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
-	var help := Button.new()
-	help.text = "❓"
-	help.flat = true
+	var help := PanelHelpButton.new()
 	help.tooltip_text = Localization.tr_key("ui.inventory_panel.p013")
-	help.custom_minimum_size = Vector2(32, 28)
 	head.add_child(help)
 	var close := Button.new()
 	close.text = "×"

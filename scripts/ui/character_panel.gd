@@ -80,6 +80,9 @@ func _build() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.add_theme_font_size_override("font_size", 20)
 	head.add_child(_title)
+	var help := PanelHelpButton.new()
+	help.tooltip_text = Localization.tr_key("ui.character_panel.p002")
+	head.add_child(help)
 	var close := Button.new()
 	close.text = Localization.tr_key("ui.character_panel.p001")
 	close.pressed.connect(func() -> void: set_open(false))
@@ -134,10 +137,6 @@ func _build() -> void:
 			button.item_dropped.connect(_on_equipment_dropped.bind(sid))
 			side.add_child(button)
 			_slots[sid] = button
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.character_panel.p002")
-	hint.add_theme_font_size_override("font_size", 12)
-	equip.add_child(hint)
 	body.add_child(VSeparator.new())
 	_stats = Label.new()
 	_stats.custom_minimum_size.x = 285

@@ -80,6 +80,9 @@ func _build() -> void:
 	_title.add_theme_font_size_override("font_size", 20)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
+	var help := PanelHelpButton.new()
+	help.tooltip_text = Localization.tr_key("ui.mount_panel.p003")
+	head.add_child(help)
 	var close := Button.new()
 	close.text = Localization.tr_key("ui.mount_panel.p002")
 	close.pressed.connect(func() -> void: set_open(false))
@@ -111,11 +114,6 @@ func _build() -> void:
 	_action = Button.new()
 	_action.pressed.connect(_on_action)
 	preview.add_child(_action)
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.mount_panel.p003")
-	hint.add_theme_font_size_override("font_size", 12)
-	hint.modulate = Color(0.7, 0.72, 0.76)
-	root.add_child(hint)
 
 func _refresh() -> void:
 	if not visible:

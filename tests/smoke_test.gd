@@ -1886,6 +1886,21 @@ func _test_floating_panels() -> void:
 	await get_tree().process_frame
 	_expect(inv.visible and character.visible and skill.visible and mount.visible,
 		"背包、人物、技能、坐骑应可同时打开")
+	for panel in [inv, character, skill, mount]:
+		var header_children: Array = panel._center.header.get_children()
+		_expect(header_children.size() >= 2 and header_children[-2] is PanelHelpButton,
+			"四个面板的关闭按钮左侧都应有问号帮助")
+	var help: PanelHelpButton = inv._center.header.get_children()[-2] as PanelHelpButton
+	var old_text_scale := float(GameState.settings.get("textScale", 1.0))
+	GameState.settings["textScale"] = 2.0
+	var help_tip: PanelContainer = help._make_custom_tooltip(help.tooltip_text) as PanelContainer
+	var help_label: Label = help_tip.get_child(0) as Label
+	_expect(help_label.text.contains("\n") and help_label.custom_minimum_size.x <= PanelHelpButton.MAX_TEXT_WIDTH,
+		"背包帮助长文案应限制宽度并换行")
+	_expect(help_label.get_theme_font_size("font_size") == roundi(16.0 * SettingsRuntime.text_scale_value()),
+		"帮助浮层字号应跟随文字设置")
+	help_tip.free()
+	GameState.settings["textScale"] = old_text_scale
 	_expect(character._slots.size() == 14 and character._slots.values().all(func(slot: Variant) -> bool: return slot is EquipmentSlot),
 		"人物面板应有 14 个图标装备槽")
 	_expect(inv._summary.text.begins_with("金币") and not inv._summary.text.contains("攻击"),
@@ -2062,6 +2077,9 @@ func _test_drag_layer() -> void:
 	var payload: Variant = inv2._bag_buttons[0]._get_drag_data(Vector2.ZERO)
 	_expect(payload is Dictionary, "背包格应可拖出（_get_drag_data 返回载荷）")
 	var source_slot: ItemSlot = inv2._bag_buttons[0]
+	source_slot._press_grab_point = Vector2(7, 9)
+	source_slot._press_grab_valid = true
+	_expect(source_slot._grab_point(Vector2(30, 30)) == Vector2(7, 9), "拖动应使用按下时的抓取位置")
 	var ghost := DragGhost.spawn_slot(layer, source_slot, Vector2(12, 18)) if layer != null else null
 	if ghost != null:
 		_expect(ghost._follow_offset == Vector2(-12, -18), "物品预览应贴住鼠标抓取点，不偏到右下")
