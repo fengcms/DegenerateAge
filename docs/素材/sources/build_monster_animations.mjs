@@ -87,7 +87,7 @@ for(const actor of config.actors){
  const desired=actor.id==='boss_corrupted_beast'?[152,134]:actor.id==='elite_ash_wraith'?[84,80]:actor.id==='elite_shellback_bug'?[90,64]:[90,78];
  const scale=Math.min(desired[0]/maxW,desired[1]/maxH);
  const dir=path.join(root,'monsters',actor.id,'animations_v1');mkdir(dir);
- const info={id:actor.id,name:actor.name,frame_size:[actor.size,actor.size],pivot:actor.pivot,directions:config.directions,common_actor_scale:scale,integrated:false,generated_motion:true,procedural_rotation:false,procedural_mirroring:false,procedural_interpolation:false,states:{}};
+ const info={id:actor.id,name:actor.name,frame_size:[actor.size,actor.size],pivot:actor.pivot,directions:config.directions,common_actor_scale:scale,integrated:fs.existsSync(path.resolve(root,"../../assets/sprites/monsters",actor.id,"animations.json")),generated_motion:true,procedural_rotation:false,procedural_mirroring:false,procedural_interpolation:false,states:{}};
  for(const sheet of sheets){
   const sid=sheet.job.state,state=config.states.find(s=>s.id===sid),count=sheet.bands.length;
   const stateDir=path.join(dir,sid);mkdir(stateDir);
@@ -123,6 +123,7 @@ for(const actor of config.actors){
  magick(['montage','-font','/System/Library/Fonts/Supplemental/Arial.ttf',...facePaths,'-tile','8x1','-geometry',actor.size+'x'+actor.size+'+0+0','-background','none',path.join(dir,'directions_atlas.png')]);
  fs.writeFileSync(path.join(dir,'animation.json'),JSON.stringify(info,null,2));pack.actors.push(info);
 }
+pack.integrated=pack.actors.every(a=>a.integrated);
 fs.writeFileSync(path.join(previewRoot,'animation_manifest.json'),JSON.stringify(pack,null,2));
 fs.writeFileSync(provenancePath,JSON.stringify(provenance,null,2));
 fs.rmSync(path.join(root,'sources/monster_animation_v1/.working_frame.rgba'),{force:true});

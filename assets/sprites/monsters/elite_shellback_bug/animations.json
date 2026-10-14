@@ -1,0 +1,58 @@
+{
+  "id": "elite_shellback_bug",
+  "pivot": [
+    56,
+    88
+  ],
+  "frameSize": [
+    112,
+    112
+  ],
+  "directions": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "states": {
+    "idle": {
+      "texture": "res://assets/sprites/monsters/elite_shellback_bug/idle_atlas.png",
+      "frames": 8,
+      "fps": 8,
+      "loop": true,
+      "contact": 0
+    },
+    "walk": {
+      "texture": "res://assets/sprites/monsters/elite_shellback_bug/walk_atlas.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true,
+      "contact": 0
+    },
+    "attack": {
+      "texture": "res://assets/sprites/monsters/elite_shellback_bug/attack_atlas.png",
+      "frames": 8,
+      "fps": 12,
+      "loop": false,
+      "contact": 3
+    },
+    "hit": {
+      "texture": "res://assets/sprites/monsters/elite_shellback_bug/hit_atlas.png",
+      "frames": 8,
+      "fps": 24,
+      "loop": false,
+      "contact": 0
+    },
+    "death": {
+      "texture": "res://assets/sprites/monsters/elite_shellback_bug/death_atlas.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false,
+      "contact": 0
+    }
+  }
+}

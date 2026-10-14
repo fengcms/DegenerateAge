@@ -99,7 +99,9 @@ func _ready() -> void:
 	add_to_group("enemies")
 	_rng.randomize()
 	_load_template()
-	if monster_id == "wolf_corrupted":
+	if monster_id in MonsterActorArt.IDS:
+		sample_art = MonsterActorArt.attach_monster(self, monster_id)
+	elif monster_id == "wolf_corrupted":
 		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64), "", "res://assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png")
 	elif monster_id == "shellback_bug":
 		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/shellback_bug/actor_atlas.png", Vector2(40, 64))
@@ -226,6 +228,8 @@ func _update_boss(delta: float) -> bool:
 				queue_redraw()
 				attack_interval = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval / (1.0 + float(phase.get("addAttackSpeedPct", 0))))
 				_spawn_summons.call_deferred(String(phase.get("summon", "")), int(phase.get("summonCount", 0)))
+				if sample_art is MonsterActorArt:
+					(sample_art as MonsterActorArt).play_enrage()
 				EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p001") % display_name, "danger")
 	if boss_phase != prev_phase:
 		_announce_boss_hp()
@@ -235,9 +239,11 @@ func _update_boss(delta: float) -> bool:
 		queue_redraw()
 		if _stomp_remaining <= 0:
 			_stomp_pending = false
+			if sample_art is MonsterActorArt:
+				(sample_art as MonsterActorArt).finish_stomp()
 			var target := _get_player()
 			if target != null and target.global_position.distance_to(_stomp_center) <= _stomp_radius:
-				_do_attack(target)
+				_do_attack(target, false)
 		return true
 	var player := _get_player()
 	if player == null or boss_phase < 1:
@@ -251,6 +257,8 @@ func _update_boss(delta: float) -> bool:
 			_stomp_remaining = float(phase.get("warnDelay", 0.8))
 			_stomp_cooldown = _stomp_remaining + float(phase.get("cooldown", attack_interval))
 			_stomp_pending = true
+			if sample_art is MonsterActorArt:
+				(sample_art as MonsterActorArt).begin_stomp(player.global_position - global_position, _stomp_remaining)
 			queue_redraw()
 			return true
 	return false
@@ -439,11 +447,11 @@ func _get_player() -> Node2D:
 
 # ---- 攻击 ----
 
-func _do_attack(player: Node2D) -> void:
+func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
-	if sample_art != null:
+	if sample_art != null and play_attack_art:
 		sample_art.attack(player.global_position - global_position, attack_interval)
 	if attack_power <= 0.0:
 		return
@@ -483,6 +491,11 @@ func _die() -> void:
 	is_dead = true
 	state = State.DEAD
 	velocity = Vector2.ZERO
+	if sample_art is MonsterActorArt:
+		(sample_art as MonsterActorArt).begin_death()
+		var collision := get_node_or_null("CollisionShape2D") as CollisionShape2D
+		if collision != null:
+			collision.set_deferred("disabled", true)
 	_stomp_pending = false
 	_announce_boss_hp()   # M6-0a：hp 已归零 ⇒ 触发顶部血条淡出
 	_settle_first_clear()
@@ -493,6 +506,8 @@ func _die() -> void:
 	queue_redraw()
 	# 淡出后移除；刷新由生成器按 respawnTime 处理（7.9）
 	var tw := create_tween()
+	if sample_art is MonsterActorArt:
+		tw.tween_interval((sample_art as MonsterActorArt).death_duration())
 	tw.tween_property(self, "modulate:a", 0.0, 0.35)
 	tw.tween_callback(queue_free)
 
@@ -685,8 +700,10 @@ func _draw() -> void:
 	if selected and not is_dead:
 		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
 	if sample_art != null or dummy_art != null:
+		if sample_art is MonsterActorArt:
+			_draw_sprite_identity()
 		draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.45))
-		draw_circle(Vector2.ZERO, 17, Color(0, 0, 0, 0.28))
+		draw_circle(Vector2.ZERO, radius if sample_art is MonsterActorArt else 17.0, Color(0, 0, 0, 0.28))
 		draw_set_transform(Vector2.ZERO)
 		_draw_head_hp_bar()
 		return
@@ -772,9 +789,23 @@ func _draw_head_hp_bar() -> void:
 
 ## 贴图怪默认沿用已验收的位置；特殊身高可在怪物模板中单独覆写。
 func _head_hp_y() -> float:
+	if sample_art is MonsterActorArt:
+		return float(template.get("headHpY", -(sample_art as MonsterActorArt).pivot.y - 6.0))
 	if sample_art != null or dummy_art != null:
 		return float(template.get("headHpY", -46.0))
 	return -radius * 2.4
+
+func _draw_sprite_identity() -> void:
+	if is_dead:
+		return
+	var boss := _kind() == "boss"
+	if boss:
+		draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 48, COLOR_BOSS_RING, 2.2, true)
+	else:
+		_draw_ground_mark(Color(0.95, 0.78, 0.36, 0.30), radius * 0.75)
+	var width := 300.0 if boss else 220.0
+	draw_string(MONO_FONT, Vector2(-width * 0.5, _head_hp_y() - 8.0), display_name,
+		HORIZONTAL_ALIGNMENT_CENTER, width, 15 if boss else 13, Color("f4c9c9") if boss else COLOR_ELITE_EDGE)
 
 func _head_hp_size() -> Vector2:
 	match _kind():

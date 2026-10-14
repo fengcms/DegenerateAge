@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-14",
+  "integrated_monsters": [
+    "elite_wolf_king",
+    "elite_ash_wraith",
+    "elite_shellback_bug",
+    "boss_corrupted_beast"
+  ],
+  "runtime_atlases": 22,
+  "tests": {
+    "MonsterAnimationTest": "PASS",
+    "BossReviewTest": "PASS",
+    "SkillCombatTest": "PASS",
+    "ChapterOneAcceptance": "PASS",
+    "ChapterOneArtTest": "baseline failure: dummy HP bar position",
+    "ArtSampleTest": "baseline failure: guardian scale"
+  },
+  "baseline_checked_on_committed_tree": true,
+  "graphical_runtime_test": "PASS",
+  "screenshot": "游戏实机.png",
+  "saves": "isolated random project name; autosave disabled"
+}

@@ -1,0 +1,26 @@
+{
+  "snapshot": "b0ad060d7e82a56d0d2bfb78326c462a109d46aa",
+  "overlay": [
+    "scripts/entities/monster.gd",
+    "scripts/entities/monster_actor_art.gd",
+    "scripts/entities/monster_actor_art.gd.uid",
+    "scripts/entities/monster_animation_library.gd",
+    "scripts/entities/monster_animation_library.gd.uid",
+    "scripts/world/game.gd",
+    "tests/MonsterAnimationTest.tscn",
+    "tests/monster_animation_test.gd",
+    "tests/monster_animation_test.gd.uid",
+    "assets/sprites/monsters/elite_wolf_king",
+    "assets/sprites/monsters/elite_ash_wraith",
+    "assets/sprites/monsters/elite_shellback_bug",
+    "assets/sprites/monsters/boss_corrupted_beast"
+  ],
+  "results": [
+    "[MonsterAnimation] PASS: directional states, clicks, warning/impact, roar, death lifecycle",
+    "[BossReview] 全部通过 ✅",
+    "[SkillCombatTest] 全部通过 ✅",
+    "[ChapterOne] 全部通过 ✅",
+    "[MonsterAnimation] PASS: directional states, clicks, warning/impact, roar, death lifecycle"
+  ],
+  "player_saves": "isolated random user directory; autosave disabled"
+}

@@ -20,7 +20,7 @@
     "se"
   ],
   "common_actor_scale": 0.279296875,
-  "integrated": false,
+  "integrated": true,
   "generated_motion": true,
   "procedural_rotation": false,
   "procedural_mirroring": false,

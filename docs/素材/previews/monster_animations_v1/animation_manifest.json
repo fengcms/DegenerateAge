@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created": "2026-10-14",
-  "integrated": false,
+  "integrated": true,
   "generator": "built-in image_gen",
   "direction_order": [
     "s",
@@ -38,7 +38,7 @@
         "se"
       ],
       "common_actor_scale": 0.279296875,
-      "integrated": false,
+      "integrated": true,
       "generated_motion": true,
       "procedural_rotation": false,
       "procedural_mirroring": false,
@@ -298,7 +298,7 @@
         "se"
       ],
       "common_actor_scale": 0.2721354166666667,
-      "integrated": false,
+      "integrated": true,
       "generated_motion": true,
       "procedural_rotation": false,
       "procedural_mirroring": false,
@@ -558,7 +558,7 @@
         "se"
       ],
       "common_actor_scale": 0.2799107142857143,
-      "integrated": false,
+      "integrated": true,
       "generated_motion": true,
       "procedural_rotation": false,
       "procedural_mirroring": false,
@@ -834,7 +834,7 @@
         "se"
       ],
       "common_actor_scale": 0.4630363805970149,
-      "integrated": false,
+      "integrated": true,
       "generated_motion": true,
       "procedural_rotation": false,
       "procedural_mirroring": false,

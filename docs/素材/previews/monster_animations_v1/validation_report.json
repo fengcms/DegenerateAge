@@ -16,7 +16,7 @@
     "all 1272 silhouettes nonempty with transparent safety border",
     "fixed canvas pivot; visible ground edge within two raster pixels",
     "nonlooping attacks/hit/death; death terminal hold",
-    "no damage callbacks; no game integration"
+    "animation frames do not trigger damage; four monster packs integrated"
   ],
   "per_actor": [
     {
@@ -157,7 +157,6 @@
     "interactive animation player"
   ],
   "limitations": [
-    "generated pixel-art motion has not been bound to engine combat timing or tested in the live game",
     "directional character artwork should receive in-game scale and timing review during future integration"
   ],
   "browser_review": {
@@ -170,5 +169,6 @@
       "reviewer_walk.png",
       "reviewer_death.png"
     ]
-  }
+  },
+  "runtime_integration_report": "monsters/接入验收/验证结果.json"
 }

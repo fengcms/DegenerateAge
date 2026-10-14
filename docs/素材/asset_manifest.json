@@ -482,7 +482,7 @@
         "death"
       ],
       "full_animation": true,
-      "integrated": false,
+      "integrated": true,
       "animation_pack": "monsters/elite_wolf_king/animations_v1/animation.json",
       "animation_direction_order": [
         "s",
@@ -494,7 +494,9 @@
         "e",
         "se"
       ],
-      "animation_frame_count": 280
+      "animation_frame_count": 280,
+      "runtime_root": "assets/sprites/monsters/elite_wolf_king",
+      "runtime_controller": "scripts/entities/monster_actor_art.gd"
     },
     {
       "id": "elite_ash_wraith",
@@ -520,7 +522,7 @@
         "death"
       ],
       "full_animation": true,
-      "integrated": false,
+      "integrated": true,
       "animation_pack": "monsters/elite_ash_wraith/animations_v1/animation.json",
       "animation_direction_order": [
         "s",
@@ -532,7 +534,9 @@
         "e",
         "se"
       ],
-      "animation_frame_count": 280
+      "animation_frame_count": 280,
+      "runtime_root": "assets/sprites/monsters/elite_ash_wraith",
+      "runtime_controller": "scripts/entities/monster_actor_art.gd"
     },
     {
       "id": "elite_shellback_bug",
@@ -558,7 +562,7 @@
         "death"
       ],
       "full_animation": true,
-      "integrated": false,
+      "integrated": true,
       "animation_pack": "monsters/elite_shellback_bug/animations_v1/animation.json",
       "animation_direction_order": [
         "s",
@@ -570,7 +574,9 @@
         "e",
         "se"
       ],
-      "animation_frame_count": 312
+      "animation_frame_count": 312,
+      "runtime_root": "assets/sprites/monsters/elite_shellback_bug",
+      "runtime_controller": "scripts/entities/monster_actor_art.gd"
     },
     {
       "id": "boss_corrupted_beast",
@@ -598,7 +604,7 @@
         "enrage_summon"
       ],
       "full_animation": true,
-      "integrated": false,
+      "integrated": true,
       "animation_pack": "monsters/boss_corrupted_beast/animations_v1/animation.json",
       "animation_direction_order": [
         "s",
@@ -610,7 +616,9 @@
         "e",
         "se"
       ],
-      "animation_frame_count": 400
+      "animation_frame_count": 400,
+      "runtime_root": "assets/sprites/monsters/boss_corrupted_beast",
+      "runtime_controller": "scripts/entities/monster_actor_art.gd"
     },
     {
       "id": "basic_slash",
@@ -880,5 +888,6 @@
     }
   ],
   "completed": "2026-10-14",
-  "monster_animation_update": "2026-10-14"
+  "monster_animation_update": "2026-10-14",
+  "monster_runtime_integration": "2026-10-14"
 }
