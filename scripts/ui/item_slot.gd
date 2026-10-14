@@ -36,6 +36,7 @@ var item: Dictionary = {}:
 ## 数量角标（右下角）：仅 `count > 1` 显示 —— 装备 / 单个道具不顶「1」（Q4-A）。
 var _count: Label
 var _potion_marker: Label
+var _drag_cover: PanelContainer
 
 func _ready() -> void:
 	_count = Label.new()
@@ -58,6 +59,32 @@ func _ready() -> void:
 	add_child(_potion_marker)
 	_refresh_potion_marker()
 	EventBus.settings_changed.connect(_refresh_potion_marker)
+	_drag_cover = PanelContainer.new()
+	_drag_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_drag_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_drag_cover.visible = false
+	var cover_style := StyleBoxFlat.new()
+	cover_style.bg_color = Color("1a1c21")
+	cover_style.border_color = Color("626a73")
+	cover_style.set_border_width_all(1)
+	cover_style.set_corner_radius_all(4)
+	_drag_cover.add_theme_stylebox_override("panel", cover_style)
+	if role == ROLE_EQUIP:
+		var empty_label := Label.new()
+		empty_label.text = String(Equipment.slot_def(String(get("slot_id"))).get("label", ""))
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		empty_label.add_theme_font_size_override("font_size", get_theme_font_size("font_size"))
+		empty_label.add_theme_color_override("font_color", Color("8d959d"))
+		empty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_drag_cover.add_child(empty_label)
+	add_child(_drag_cover)
+	set_process(false)
+
+func _process(_delta: float) -> void:
+	if not get_viewport().gui_is_dragging():
+		_drag_cover.visible = false
+		set_process(false)
 
 func _refresh_potion_marker() -> void:
 	if _potion_marker == null:
@@ -77,10 +104,10 @@ func _refresh_count() -> void:
 
 # ---- 拖出（ROLE_BAG）----
 
-func _get_drag_data(_at_position: Vector2) -> Variant:
+func _get_drag_data(at_position: Vector2) -> Variant:
 	if not [ROLE_BAG, ROLE_WAREHOUSE].has(role) or not draggable or item.is_empty():
 		return null
-	_spawn_drag_visual()
+	_spawn_drag_visual(at_position)
 	return {"from": role, "index": index, "item": item, "token": Warehouse.item_token(item)}
 
 ## 拖动时跟随鼠标的视觉反馈（拖拽幽灵）。
@@ -91,16 +118,21 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 ## 兜底：场景中无该图层时（如独立测试场景）仍走引擎预览，并尽量抬高其 z_index。
 ## 引擎契约：`_get_drag_data` 内的拖拽态必为真（官方即推荐在此调用 set_drag_preview，
 ## 其内部同样断言 gui_is_dragging）；无头测试直接取载荷时为假 —— 此时不做任何视觉创建。
-func _spawn_drag_visual() -> void:
+func _spawn_drag_visual(grab_point: Vector2) -> void:
 	if not get_viewport().gui_is_dragging():
 		return
 	var layer := get_tree().get_first_node_in_group("drag_ghost_layer")
 	if layer != null:
-		DragGhost.spawn_slot(layer, self)
-		return
-	var preview := _make_drag_preview()
-	preview.z_index = DragGhost.Z
-	set_drag_preview(preview)
+		DragGhost.spawn_slot(layer, self, grab_point)
+	else:
+		var preview := _make_drag_preview()
+		preview.z_index = DragGhost.Z
+		set_drag_preview(preview)
+	_show_drag_origin()
+
+func _show_drag_origin() -> void:
+	_drag_cover.visible = true
+	set_process(true)
 
 ## 无独立幽灵层时仍使用与源格一致的预览。
 func _make_drag_preview() -> Control:

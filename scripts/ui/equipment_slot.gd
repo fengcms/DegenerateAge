@@ -5,10 +5,10 @@ extends ItemSlot
 var slot_id := ""
 var slot_kind := ""
 
-func _get_drag_data(_at_position: Vector2) -> Variant:
+func _get_drag_data(at_position: Vector2) -> Variant:
 	if not draggable or item.is_empty():
 		return null
-	_spawn_drag_visual()
+	_spawn_drag_visual(at_position)
 	return {"from": ROLE_EQUIP, "slot_id": slot_id, "item": item,
 		"token": Warehouse.item_token(item)}
 

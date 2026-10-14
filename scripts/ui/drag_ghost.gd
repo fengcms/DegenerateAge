@@ -14,7 +14,7 @@ extends Control
 
 ## 图层内的相对层级（同 canvas 内最大 4096，见 RenderingServer.CANVAS_ITEM_Z_MAX）。
 const Z := 4096
-## 相对鼠标的偏移：让光标落在幽灵左上角外侧，不遮住投放目标格。
+## 文字型拖拽提示仍避开光标；物品格则使用抓取点保持相对位置。
 const FOLLOW_OFFSET := Vector2(14, 10)
 ## 启动宽限期（s）：拖拽判定与 `_get_drag_data` 返回之间有一个极短窗口，
 ## 期间 `gui_is_dragging()` 可能尚未置位，宽限期内不因「不在拖拽」而回收。
@@ -32,7 +32,7 @@ static func spawn(layer: Node, item: Dictionary) -> DragGhost:
 	return g
 
 ## 复制来源格子的实际外观，避免拖起后变成横向文字标签。
-static func spawn_slot(layer: Node, source: ItemSlot) -> DragGhost:
+static func spawn_slot(layer: Node, source: ItemSlot, grab_point: Vector2) -> DragGhost:
 	if layer == null:
 		return null
 	var g := DragGhost.new()
@@ -41,6 +41,8 @@ static func spawn_slot(layer: Node, source: ItemSlot) -> DragGhost:
 	g.z_index = Z
 	g.custom_minimum_size = source.size
 	g.size = source.size
+	g._follow_offset = -Vector2(clampf(grab_point.x, 0.0, source.size.x),
+		clampf(grab_point.y, 0.0, source.size.y))
 	g.add_child(slot_copy(source))
 	layer.add_child(g)
 	g._follow()
@@ -78,6 +80,7 @@ static func spawn_text(layer: Node, label: String) -> DragGhost:
 
 var _life: float = 0.0
 var _seen_drag: bool = false
+var _follow_offset := FOLLOW_OFFSET
 
 func _build(item: Dictionary) -> void:
 	_build_label(ItemUtil.display_name(item), ItemUtil.quality_color(String(item.get("quality", "common"))))
@@ -123,4 +126,4 @@ func _process(delta: float) -> void:
 
 ## 跟随鼠标：本节点位于 UI 层（无 canvas 变换），全局坐标即屏幕坐标。
 func _follow() -> void:
-	global_position = get_global_mouse_position() + FOLLOW_OFFSET
+	global_position = get_global_mouse_position() + _follow_offset

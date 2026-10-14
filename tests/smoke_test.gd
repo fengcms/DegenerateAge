@@ -2061,6 +2061,16 @@ func _test_drag_layer() -> void:
 	inv2._bag_buttons[0].draggable = true
 	var payload: Variant = inv2._bag_buttons[0]._get_drag_data(Vector2.ZERO)
 	_expect(payload is Dictionary, "背包格应可拖出（_get_drag_data 返回载荷）")
+	var source_slot: ItemSlot = inv2._bag_buttons[0]
+	var ghost := DragGhost.spawn_slot(layer, source_slot, Vector2(12, 18)) if layer != null else null
+	if ghost != null:
+		_expect(ghost._follow_offset == Vector2(-12, -18), "物品预览应贴住鼠标抓取点，不偏到右下")
+		_expect((ghost.get_child(0) as ItemSlot).item == source_slot.item, "拖起后预览应保留原格物品外观")
+		ghost.free()
+	source_slot._show_drag_origin()
+	_expect(source_slot._drag_cover.visible, "拖起物品时原格应呈现为空格")
+	source_slot._process(0.0)
+	_expect(not source_slot._drag_cover.visible, "放下或取消拖动后原格应恢复显示")
 	if layer != null:
 		_expect(layer.get_node_or_null("DragGhost") == null,
 			"非拖拽态下不应创建拖拽幽灵（避免控件泄漏）")
