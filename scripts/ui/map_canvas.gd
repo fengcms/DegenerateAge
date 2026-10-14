@@ -20,6 +20,7 @@ var _background_map := ""
 var _background_style := false
 var _exploration: Dictionary = {}
 var _exploration_count := -1
+var _terrain_mesh: ArrayMesh
 var _background_revision := -1
 var _background_cave: CaveLayout
 ## Diagnostic counter: moving markers must not rebuild static terrain.
@@ -173,6 +174,7 @@ func _draw() -> void:
 	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
 	var explored: Dictionary = GameState.explored_maps.get(GameState.current_map, _empty_exploration)
 	var block_width := ceili(float(dims.x) / Fog.BLOCK_SIZE)
+	var builder := FlatTileMesh.new(mini(explored.size() * Fog.BLOCK_SIZE * Fog.BLOCK_SIZE, dims.x * dims.y))
 	# Iterate revealed blocks once, then preserve the exact walkable-cell mask.
 	for raw_id in explored:
 		var id := int(raw_id)
@@ -182,9 +184,13 @@ func _draw() -> void:
 			for y in range(cell.y, end.y):
 				for x in range(cell.x, end.x):
 					if ground.cave.is_walkable(Vector2i(x, y)):
-						draw_colored_polygon(_polygon(x - 0.5, y - 0.5, x + 0.5, y + 0.5), Color("b4a382"))
+						builder.add_quad(_polygon(x - 0.5, y - 0.5, x + 0.5, y + 0.5))
 		else:
-			draw_colored_polygon(_polygon(cell.x - 0.5, cell.y - 0.5, end.x - 0.5, end.y - 0.5), Color("66705a") if minimap and ornamental_frame else Color("536959"))
+			builder.add_quad(_polygon(cell.x - 0.5, cell.y - 0.5, end.x - 0.5, end.y - 0.5))
+	_terrain_mesh = builder.build()
+	if _terrain_mesh != null:
+		var terrain_color := Color("b4a382") if ground != null and ground.cave != null else Color("66705a") if minimap and ornamental_frame else Color("536959")
+		draw_mesh(_terrain_mesh, null, Transform2D.IDENTITY, terrain_color)
 	var border := outline.duplicate()
 	border.append(outline[0])
 	if ground == null or ground.cave == null:

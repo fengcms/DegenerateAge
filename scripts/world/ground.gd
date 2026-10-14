@@ -42,6 +42,7 @@ const COLOR_BORDER := Color("5f7563")   # 外边框
 var map_data: Dictionary = {}
 var grid_size: Vector2i = Vector2i(40, 40)
 var cave: CaveLayout = null
+var _blocked_mesh: ArrayMesh
 
 func _ready() -> void:
 	z_index = -4096
@@ -242,15 +243,13 @@ func _draw() -> void:
 		return
 
 	if cave != null:
-		for col in range(w):
-			for row in range(h):
-				var cell := Vector2i(col, row)
-				if not cave.is_walkable(cell):
-					var center := Iso.grid_to_world(cell)
-					draw_colored_polygon(PackedVector2Array([
-						center + Vector2(-32, 0), center + Vector2(0, -16),
-						center + Vector2(32, 0), center + Vector2(0, 16),
-					]), Color("222b2b"))
+		var cells := cave.blocked_cells()
+		var builder := FlatTileMesh.new(cells.size())
+		for cell: Vector2i in cells:
+			builder.add_quad(Iso.tile_points(cell))
+		_blocked_mesh = builder.build()
+		if _blocked_mesh != null:
+			draw_mesh(_blocked_mesh, null, Transform2D.IDENTITY, Color("222b2b"))
 
 	# 网格线：两组共 w+h+2 条（性能友好，避免逐格绘制）
 	var lines := PackedVector2Array()
