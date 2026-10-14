@@ -105,7 +105,7 @@ func _ready() -> void:
 		area.mouse_exited.connect(_on_hover.bind(false))
 	queue_redraw()
 	# 生成即认领（方案 C 核心）：不再依赖玩家走近
-	if auto_claim and GameState.auto_pickup_on:
+	if auto_claim and GameState.auto_pickup_on and not GameState.npc_dialog_open():
 		_try_claim()
 	elif persistent:
 		_register_unclaimed.call_deferred()
@@ -152,7 +152,7 @@ func _physics_process(delta: float) -> void:
 	if _spawn_t < appear_delay + maxf(hold_time, 0.0):
 		return
 	# G 关闭时任何地面物都必须由玩家点击拾取。
-	if not GameState.auto_pickup_on:
+	if not GameState.auto_pickup_on or GameState.npc_dialog_open():
 		return
 	# 靠近自动拾取（9.9）
 	var player := _get_player()

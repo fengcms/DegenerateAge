@@ -361,14 +361,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_player.request_map_move(_ground.clamp_to_map(world_point))
 			get_viewport().set_input_as_handled()
 			return
-	# 自动战斗 / 自动拾取（F / G，3.14 / 9.9）；面板打开时不响应
+	# F 是全局挂机开关，面板打开时也必须能操作；NPC 会话只暂停决策，不禁用开关。
+	if event.is_action_pressed("auto_battle") and not event.is_echo():
+		if not GameState.auto_battle_on:
+			_player.set_sitting(false)
+		GameState.toggle_auto_battle()
+		get_viewport().set_input_as_handled()
+		return
+	# 自动拾取（G）保留面板外快捷操作。
 	if not GameState.panel_open:
-		if event.is_action_pressed("auto_battle"):
-			if not GameState.auto_battle_on:
-				_player.set_sitting(false)
-			GameState.toggle_auto_battle()
-			get_viewport().set_input_as_handled()
-			return
 		if event.is_action_pressed("auto_pickup"):
 			GameState.toggle_auto_pickup()
 			get_viewport().set_input_as_handled()

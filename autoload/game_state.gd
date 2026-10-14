@@ -936,6 +936,13 @@ func set_panel_open(panel_id: String, open: bool) -> void:
 		_open_panels.erase(panel_id)
 	panel_open = not _open_panels.is_empty()
 
+## 仅 NPC 会话暂停挂机；普通可并开的信息面板不影响自动决策。
+func npc_dialog_open() -> bool:
+	for panel_id in ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade"]:
+		if _open_panels.has(panel_id):
+			return true
+	return false
+
 # ---- 货郎交易（6.4；算价与物品构造见 scripts/systems/shop.gd）----
 
 ## 向货郎购买一件商品。返回 {ok, reason, item, price}。
