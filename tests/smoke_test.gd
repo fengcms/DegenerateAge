@@ -34,6 +34,7 @@ func _ready() -> void:
 	_test_inventory()
 	_test_inventory_sort()
 	_test_inventory_manual_move()
+	_test_equipment_tooltip_cards()
 	_test_inventory_expansion()
 	_test_warehouse_sort()
 	_test_mount_core()
@@ -178,6 +179,26 @@ func _test_inventory_manual_move() -> void:
 	_expect(GameState.move_inventory_item(3, 1, token), "装备应能与占用格交换")
 	_expect(GameState.inventory[1].instanceId == "move_first" and GameState.inventory[3].instanceId == "move_second", "交换应保留双方实例")
 	_expect(not GameState.move_inventory_item(1, 5, "stale"), "过期拖动载荷不得移动物品")
+	GameState.reset_to_defaults()
+
+func _test_equipment_tooltip_cards() -> void:
+	GameState.reset_to_defaults()
+	var ring := _equip_instance("ring_basic", "tip_ring", {"atk": 10})
+	ring.star = 2
+	var lines := ItemUtil.attr_lines(ring)
+	_expect(lines.size() > 0 and lines[0] == "攻击 +10  +2", "升星详情应分列原始属性与新增属性")
+	GameState.equipment["ring_1"] = ring
+	var slot := ItemSlot.new()
+	slot.role = ItemSlot.ROLE_BAG
+	slot.item = ring
+	var tip: Control = slot._make_custom_tooltip("") as Control
+	_expect(tip != null and tip.get_child_count() == 3, "双槽装备提示应有背包和两个穿戴槽共三栏")
+	if tip != null and tip.get_child_count() == 3:
+		var second: Label = tip.get_child(2).get_child(0).get_child(1) as Label
+		_expect(second.text == "未穿着", "双槽装备缺第二件时应保留未穿着栏")
+	if tip != null:
+		tip.free()
+	slot.free()
 	GameState.reset_to_defaults()
 
 func _test_inventory_expansion() -> void:
