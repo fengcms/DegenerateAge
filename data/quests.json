@@ -13,8 +13,8 @@
       "gold": 50,
       "xp": 0,
       "item": "weapon_iron",
-      "requiredLevel": 1,
-      "quality": "common"
+      "quality": "common",
+      "tierStart": 1
     },
     "mapScope": [
       "camp"
@@ -62,8 +62,8 @@
       "gold": 0,
       "xp": 200,
       "item": "armor_cloth",
-      "requiredLevel": 1,
-      "quality": "uncommon"
+      "quality": "uncommon",
+      "tierStart": 1
     },
     "mapScope": [
       "wild_trial"
@@ -88,8 +88,8 @@
       "gold": 200,
       "xp": 400,
       "item": "weapon_iron",
-      "requiredLevel": 1,
-      "quality": "rare"
+      "quality": "rare",
+      "tierStart": 1
     },
     "mapScope": [
       "wild_trial"
@@ -237,8 +237,8 @@
       "gold": 0,
       "xp": 900,
       "item": "c2_road_armor",
-      "requiredLevel": 11,
-      "quality": "rare"
+      "quality": "rare",
+      "tierStart": 11
     },
     "mapScope": [
       "c2_pipe_slope"
@@ -314,8 +314,8 @@
       "gold": 0,
       "xp": 1200,
       "item": "c2_road_blade",
-      "requiredLevel": 11,
-      "quality": "rare"
+      "quality": "rare",
+      "tierStart": 11
     },
     "mapScope": [
       "c2_ember_furnace"
@@ -553,8 +553,8 @@
       "gold": 0,
       "xp": 800,
       "item": "c2_road_bracer",
-      "requiredLevel": 11,
-      "quality": "uncommon"
+      "quality": "uncommon",
+      "tierStart": 11
     },
     "mapScope": [
       "c2_lower_works"
@@ -604,8 +604,8 @@
       "gold": 0,
       "xp": 1800,
       "item": "c2_copper_shield",
-      "requiredLevel": 11,
-      "quality": "rare"
+      "quality": "rare",
+      "tierStart": 11
     },
     "mapScope": [
       "c2_ember_furnace"

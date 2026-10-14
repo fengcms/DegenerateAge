@@ -258,21 +258,36 @@ func _validate_equipment_model() -> Array[String]:
 	var qualities: Variant = cfg.get("qualities", {})
 	var fixed: Variant = cfg.get("fixedAffixes", {})
 	var percent: Variant = cfg.get("percentAffixes", {})
+	var slot_order: Variant = cfg.get("slotOrder", [])
 	if not tiers is Array or tiers.is_empty() or not qualities is Dictionary or not fixed is Dictionary or not percent is Dictionary:
 		report.append("[equipmentRules] 档位、品质与词条池非法")
 		return report
 	var expected_slots := ["weapon", "shield", "helmet", "armor", "shoes", "necklace", "bracer", "knee", "bracelet", "ring"]
+	if not slot_order is Array or slot_order.size() != 10:
+		report.append("[equipmentRules] slotOrder 必须包含十种部位")
+		return report
+	for slot in expected_slots:
+		if slot_order.count(slot) != 1:
+			report.append("[equipmentRules] slotOrder 的 %s 必须恰好出现一次" % slot)
+	if int(cfg.get("ruleVersion", 0)) != 4:
+		report.append("[equipmentRules] ruleVersion 应为 4")
 	var slot_coverage := {}
 	var previous_tier := 0
 	for tier in tiers:
 		if not _is_whole_level(tier) or int(tier) < 1:
-			report.append("[equipmentRules] 穿戴档必须是正整数")
+			report.append("[equipmentRules] 套起点必须是正整数")
 			continue
 		var expected_tier := 1 if previous_tier == 0 else 11
 		if int(tier) != expected_tier:
-			report.append("[equipmentRules] 当前穿戴档仅允许 Lv1、Lv11 且升序")
+			report.append("[equipmentRules] 当前套起点仅允许 1、11 且升序")
 		previous_tier = int(tier)
 		slot_coverage[str(int(tier))] = {}
+	for factor_key in ["affixTierScale", "tierValueMultiplier"]:
+		var factors: Variant = cfg.get(factor_key, {})
+		for tier in tiers:
+			if not factors is Dictionary or not (factors.get(str(int(tier))) is int or factors.get(str(int(tier))) is float) \
+					or float(factors.get(str(int(tier)), 0.0)) <= 0.0:
+				report.append("[equipmentRules] %s 缺少套起点 %d 的正数倍率" % [factor_key, int(tier)])
 	if not _is_whole_level(cfg.get("maxStar")) or int(cfg.maxStar) != 12 \
 			or not (cfg.get("starMult") is int or cfg.get("starMult") is float) or float(cfg.starMult) < 0.0:
 		report.append("[equipmentRules] 星级参数非法")
@@ -310,6 +325,9 @@ func _validate_equipment_model() -> Array[String]:
 		if fixed_count < 4:
 			report.append("[equipments] %s 至少需要四种合法固定词条" % item_id)
 		var tier_key := String(bases.keys()[0])
+		var actual_level: int = int(tier_key) + slot_order.find(slot)
+		if not _is_whole_level(e.get("requiredLevel")) or int(e.get("requiredLevel", 0)) != actual_level:
+			report.append("[equipments] %s 穿戴等级应为 Lv%d" % [item_id, actual_level])
 		var base: Variant = bases[tier_key]
 		if not base is Dictionary or base.is_empty():
 			report.append("[equipments] %s 缺少 Lv%s 基底" % [item_id, tier_key])
@@ -400,8 +418,10 @@ func _validate_drop_tables() -> Array[String]:
 							or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \
 							or int(level_range[0]) < 1 or int(level_range[1]) < int(level_range[0]):
 						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
-					if en.has("requiredLevel"):
-						var required: Variant = en.get("requiredLevel")
+					if en.has("requiredLevel") or not en.has("tierStart"):
+						report.append("[dropTables] %s equip 必须使用 tierStart，不能用 requiredLevel" % did)
+					if en.has("tierStart"):
+						var required: Variant = en.get("tierStart")
 						var cfg: Variant = tables.get("equipmentRules")
 						var legal := false
 						if cfg is Dictionary and _is_whole_level(required):
@@ -409,7 +429,7 @@ func _validate_drop_tables() -> Array[String]:
 								if int(configured) == int(required):
 									legal = true
 						if not legal:
-							report.append("[dropTables] %s 的 requiredLevel 未在装备档位表中" % did)
+							report.append("[dropTables] %s 的 tierStart 未在装备套起点表中" % did)
 					# M6-0b：countRange 分组件数（[lo,hi] 整数，≥1，lo≤hi）。
 					if en.has("countRange"):
 						var cr = en.get("countRange")

@@ -269,10 +269,10 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 	var item_id := String(reward.get("item", ""))
 	var item := {}
 	if not item_id.is_empty():
-		if DataLoader.get_entry("equipments", item_id) is Dictionary and reward.has("requiredLevel"):
+		if DataLoader.get_entry("equipments", item_id) is Dictionary and reward.has("tierStart"):
 			var roll := RandomNumberGenerator.new()
 			roll.seed = hash(quest_id)
-			item = ItemFactory.make_equip_roll(item_id, int(reward.requiredLevel),
+			item = ItemFactory.make_equip_roll(item_id, int(reward.tierStart),
 				String(reward.get("quality", "rare")), roll, "quest")
 		else:
 			item = ItemFactory.make_any(item_id, 1)

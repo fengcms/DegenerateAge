@@ -13,6 +13,7 @@ func _ready() -> void:
 	var templates: Array = DataLoader.get_table("equipments")
 	check(templates.size() == 20, "正式型号仅有二十种")
 	var coverage := {1: {}, 11: {}}
+	var expected_order := ["weapon", "shoes", "armor", "helmet", "bracer", "knee", "shield", "bracelet", "ring", "necklace"]
 	for tpl in templates:
 		var bases: Dictionary = tpl.get("tierBases", {})
 		check(bases.size() == 1, "%s 只有一个穿戴档" % tpl.id)
@@ -22,6 +23,7 @@ func _ready() -> void:
 		check(coverage.has(tier), "%s 档位合法" % tpl.id)
 		if not coverage.has(tier):
 			continue
+		check(int(tpl.requiredLevel) == tier + expected_order.find(String(tpl.slot)), "%s 按部位逐级开放" % tpl.id)
 		check(not coverage[tier].has(tpl.slot), "Lv%d %s 只有一个型号" % [tier, tpl.slot])
 		coverage[tier][tpl.slot] = tpl.id
 		for i in range(qualities.size()):
@@ -29,7 +31,7 @@ func _ready() -> void:
 			check(not item.is_empty(), "%s %s 可生成" % [tpl.id, qualities[i]])
 			if item.is_empty():
 				continue
-			check(int(item.requiredLevel) == tier and int(item.level) == tier and item.rawBaseAttrs == bases[str(tier)],
+			check(int(item.requiredLevel) == int(tpl.requiredLevel) and int(item.level) == int(tpl.requiredLevel) and item.rawBaseAttrs == bases[str(tier)],
 				"装备名称、门槛和基础值共用唯一档")
 			check(item.affixes.size() + item.pctAttrs.size() == i and int(item.star) == 0,
 				"品质词条数和初始星级")
@@ -44,7 +46,7 @@ func _ready() -> void:
 		var tier := 11 if String(table.id).begins_with("DT_C2_") else 1
 		for entry in table.entries:
 			if entry.get("kind") == "equip":
-				check(int(entry.get("requiredLevel", 0)) == tier, "%s 来源固定档位" % table.id)
+				check(int(entry.get("tierStart", 0)) == tier, "%s 来源固定档位" % table.id)
 				var expected_pool := "c2_legendary" if tier == 11 else "legendary"
 				var weights: Dictionary = entry.get("qualityWeight", {})
 				if not (weights.size() == 1 and weights.has("legendary")):
@@ -55,7 +57,7 @@ func _ready() -> void:
 			var expected_tier := 11 if table_id.begins_with("DT_C2_") else 1
 			for item in Loot.roll(table_id, rng):
 				if item.get("kind") == "equip":
-					check(int(item.requiredLevel) == expected_tier and coverage[expected_tier].values().has(item.itemId),
+					check(int(item.requiredLevel) == int(DataLoader.get_entry("equipments", item.itemId).requiredLevel) and coverage[expected_tier].values().has(item.itemId),
 						"%s 不跨档混入其他型号" % table_id)
 	var sample := ItemFactory.make_equip_roll("shoes_cloth", 1, "legendary", rng)
 	var white := ItemFactory.make_equip_roll("shoes_cloth", 1, "common", rng)
@@ -70,6 +72,11 @@ func _ready() -> void:
 		and Equipment.meets_level(ItemFactory.make_equip("c2_road_blade"), 11), "Lv11 穿戴门槛")
 	check(Shop.base_value(ItemFactory.make_equip("c2_road_blade")) > Shop.base_value(ItemFactory.make_equip("weapon_iron")),
 		"第二档基础售价较高")
+	var necklace := ItemFactory.make_equip("necklace_basic")
+	check(int(necklace.requiredLevel) == 10 and Shop.base_value(necklace) == int(DataLoader.get_entry("equipments", "necklace_basic").price),
+		"Lv10 项链依然按第一套定价")
+	var road_shoes := ItemFactory.make_equip("c2_road_shoes")
+	check(not Equipment.meets_level(road_shoes, 11) and Equipment.meets_level(road_shoes, 12), "山路靴须达到 Lv12")
 	var save := SaveManager._collect()
 	check(SaveManager._is_valid_save(save), "当前版本可存档")
 	var old := ItemFactory.make_equip("weapon_iron")
@@ -83,10 +90,43 @@ func _ready() -> void:
 	save.schemaVersion = 11
 	check(SaveManager._is_valid_save(save), "v11 存档可迁移")
 	var migrated := SaveManager._migrate(save)
-	check(int(migrated.schemaVersion) == 12 and migrated.inventory[0].itemId == "weapon_iron"
+	check(int(migrated.schemaVersion) == 13 and migrated.inventory[0].itemId == "weapon_iron"
 		and int(migrated.inventory[0].requiredLevel) == 1 and int(migrated.inventory[0].star) == 7
 		and migrated.inventory[0].instanceId == old.instanceId, "旧装备归档且保留实例、星级")
 	check(SaveManager._migrate(migrated) == migrated, "迁移重复执行不改变结果")
+	var previous_save := SaveManager._collect()
+	previous_save.schemaVersion = 12
+	previous_save.player.level = 11
+	var previous_shoes := ItemFactory.make_equip("c2_road_shoes")
+	previous_shoes.equipmentRuleVersion = 3
+	previous_shoes.requiredLevel = 11
+	previous_shoes.level = 11
+	previous_shoes.star = 5
+	previous_save.equipment.shoes = previous_shoes
+	var stored_ring := ItemFactory.make_equip("c2_road_ring")
+	stored_ring.equipmentRuleVersion = 3
+	stored_ring.requiredLevel = 11
+	stored_ring.level = 11
+	previous_save.warehouse[0] = stored_ring
+	var ground_necklace := ItemFactory.make_equip("necklace_basic")
+	ground_necklace.equipmentRuleVersion = 3
+	ground_necklace.requiredLevel = 1
+	ground_necklace.level = 1
+	previous_save.unclaimedLoot = {"camp": [{"uid": "old_necklace", "batchId": "old_batch",
+		"item": ground_necklace, "pos": [0.0, 0.0]}]}
+	var previous_attrs: Dictionary = previous_shoes.rawBaseAttrs.duplicate(true)
+	check(SaveManager._is_valid_save(previous_save), "v12 越级已穿装备可安全迁移")
+	var updated_save := SaveManager._migrate(previous_save)
+	check(updated_save.equipment.shoes == null and updated_save.inventory[0].instanceId == previous_shoes.instanceId,
+		"Lv11 已穿山路靴提高到 Lv12 后返还背包")
+	check(int(updated_save.inventory[0].requiredLevel) == 12 and int(updated_save.inventory[0].star) == 5
+		and updated_save.inventory[0].rawBaseAttrs == previous_attrs and int(updated_save.inventory[0].equipmentRuleVersion) == 4,
+		"迁移保留实例、星级和基础数值快照")
+	check(int(updated_save.warehouse[0].requiredLevel) == 19 and updated_save.warehouse[0].instanceId == stored_ring.instanceId
+		and int(updated_save.unclaimedLoot.camp[0].item.requiredLevel) == 10
+		and updated_save.unclaimedLoot.camp[0].item.instanceId == ground_necklace.instanceId,
+		"仓库与未领取战利品也同步型号穿戴等级")
+	check(SaveManager._migrate(updated_save) == updated_save, "v12 迁移再次读取不重复卸装")
 	var full_save := SaveManager._collect()
 	full_save.schemaVersion = 11
 	full_save.player.level = 1

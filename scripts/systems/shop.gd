@@ -93,7 +93,11 @@ static func base_value(item: Dictionary) -> int:
 		var price := int(tpl.get("price", 0))
 		if String(item.get("kind", "")) == "equip":
 			var multipliers: Dictionary = ItemFactory.rules().get("tierValueMultiplier", {})
-			price = int(round(float(price) * float(multipliers.get(str(Equipment.level_req(item)), 1.0))))
+			var tier_key := str(ItemFactory.tier_start_for_template(id))
+			if not multipliers.has(tier_key):
+				push_error("[Shop] %s 缺少第 %s 套售价倍率" % [id, tier_key])
+				return 0
+			price = int(round(float(price) * float(multipliers[tier_key])))
 		return price
 	return 0
 

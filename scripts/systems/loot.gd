@@ -100,7 +100,7 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_
 			return {"kind": KIND_MOUNT, "itemId": mount_id, "count": 1}
 	return {}
 
-## 掉落只选择品质、穿戴档和型号，实例生成委托统一工厂。
+## 掉落只选择品质、所属套和型号；实际穿戴等级由模板决定。
 static func _roll_equip(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
 	var pool := String(e.get("templatePool", ""))
 	var quality: String = _weighted_quality(e.get("qualityWeight", {}), r)
@@ -108,11 +108,11 @@ static func _roll_equip(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
 	var lo := int(lr[0]) if lr is Array and lr.size() >= 1 else 1
 	var hi := int(lr[1]) if lr is Array and lr.size() >= 2 else lo
 	var source_level := r.randi_range(lo, maxi(lo, hi))
-	var required_level := int(e.get("requiredLevel", ItemFactory.tier_for_level(source_level)))
-	var tpl := _pick_equip_template(required_level, r, pool)
+	var tier_start := int(e.get("tierStart", ItemFactory.tier_for_level(source_level)))
+	var tpl := _pick_equip_template(tier_start, r, pool)
 	if tpl.is_empty():
 		return {}
-	return ItemFactory.make_equip_roll(String(tpl.get("id", "")), required_level, quality, r, "drop")
+	return ItemFactory.make_equip_roll(String(tpl.get("id", "")), tier_start, quality, r, "drop")
 
 ## 按 qualityWeight 权重抽取品质（5.7 / 10.2）。
 static func _weighted_quality(weights, r: RandomNumberGenerator) -> String:
@@ -132,7 +132,7 @@ static func _weighted_quality(weights, r: RandomNumberGenerator) -> String:
 	return String(weights.keys()[weights.size() - 1])
 
 ## 只选真正配置了目标档位的正式型号；缺档不回退。
-static func _pick_equip_template(required_level: int, r: RandomNumberGenerator, pool_id: String = "") -> Dictionary:
+static func _pick_equip_template(tier_start: int, r: RandomNumberGenerator, pool_id: String = "") -> Dictionary:
 	var pool_def: Variant = _pool_def(pool_id)
 	var matched: Array = []
 	var t = DataLoader.get_table("equipments")
@@ -143,10 +143,10 @@ static func _pick_equip_template(required_level: int, r: RandomNumberGenerator, 
 			if not _pool_accepts(pool_def, e):
 				continue
 			var bases: Variant = e.get("tierBases", {})
-			if bases is Dictionary and bases.has(str(required_level)):
+			if bases is Dictionary and bases.has(str(tier_start)):
 				matched.append(e)
 	if matched.is_empty():
-		push_error("[Loot] 装备池 %s 缺少 Lv%d 型号" % [pool_id, required_level])
+		push_error("[Loot] 装备池 %s 缺少套起点 %d 的型号" % [pool_id, tier_start])
 		return {}
 	return matched[r.randi_range(0, matched.size() - 1)]
 

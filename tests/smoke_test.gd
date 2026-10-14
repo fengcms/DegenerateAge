@@ -813,7 +813,7 @@ func _test_loot() -> void:
 			_expect(ItemUtil.is_valid_quality(String(it.get("quality", ""))),
 				"装备品质非法：%s" % String(it.get("quality", "")))
 			var lv := int(it.get("level", 0))
-			_expect(lv >= 1 and lv <= 5, "野生装备等级应在 [1,5]，实际 %d" % lv)
+			_expect(lv == int(DataLoader.get_entry("equipments", String(it.get("itemId", ""))).requiredLevel), "野生装备等级应由型号确定，实际 %d" % lv)
 			_expect(DataLoader.get_entry("equipments", String(it.get("itemId", ""))) != null,
 				"掉落的装备模板未定义：%s" % String(it.get("itemId", "")))
 			_expect(not String(it.get("instanceId", "")).is_empty(), "装备实例需带 instanceId")
@@ -831,7 +831,7 @@ func _test_loot() -> void:
 			var q := String(it2.get("quality", ""))
 			_expect(ItemUtil.is_valid_quality(q), "Boss 装备品质非法：%s" % q)
 			var lv := int(it2.get("level", 0))
-			_expect(lv == 1, "第一章 Boss 装备穿戴要求应为 Lv1，实际 %d" % lv)
+			_expect(lv == int(DataLoader.get_entry("equipments", String(it2.get("itemId", ""))).requiredLevel), "第一章 Boss 装备穿戴要求应按型号确定，实际 %d" % lv)
 			_expect(DataLoader.get_entry("equipments", String(it2.get("itemId", ""))) != null,
 				"掉落的装备模板未定义：%s" % String(it2.get("itemId", "")))
 			if q in ["common", "uncommon"]:
@@ -889,7 +889,7 @@ func _test_grouped_drop() -> void:
 				continue
 			legendary_n += 1
 			_expect(String(it.get("kind", "")) == "equip", "传说应为装备")
-			_expect(int(it.get("requiredLevel", 0)) == 1, "第一章 Boss 传说应为 Lv1 穿戴档")
+			_expect(int(it.get("requiredLevel", 0)) == int(DataLoader.get_entry("equipments", String(it.get("itemId", ""))).requiredLevel), "第一章 Boss 传说应按型号确定穿戴等级")
 			_expect(it.get("affixes", []).size() + it.get("pctAttrs", []).size() == 4,
 				"传说应有四条合法词条")
 			legendary_slots[Equipment.item_kind(it)] = true
@@ -904,7 +904,7 @@ func _test_grouped_drop() -> void:
 		for it in Loot.roll("DT_Elite_L1", r):
 			if String(it.get("kind", "")) == "equip":
 				_expect(String(it.get("quality", "")) != "legendary", "精英不得掉传说")
-				_expect(int(it.get("requiredLevel", 0)) == 1, "精英不得提前掉 Lv10 档")
+				_expect(int(it.get("requiredLevel", 0)) == int(DataLoader.get_entry("equipments", String(it.get("itemId", ""))).requiredLevel), "精英掉落应按型号确定穿戴等级")
 
 	# ④ Boss 药水 count=2（一个物品包两瓶，§6/§12）
 	var potion_seen := false
@@ -1464,7 +1464,7 @@ func _test_unclaimed_loot() -> void:
 	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
-	_expect(SaveManager.CURRENT_SCHEMA == 12, "两档装备后存档 schema 应为 12，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	_expect(SaveManager.CURRENT_SCHEMA == 13, "逐级穿戴后存档 schema 应为 13，实际 %d" % SaveManager.CURRENT_SCHEMA)
 	GameState.unclaimed_loot = {}
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")
@@ -2672,7 +2672,7 @@ func _equip_instance(item_id: String, inst_id: String, base_attrs: Dictionary,
 		affixes: Array = []) -> Dictionary:
 	return {
 		"kind": "equip", "itemId": item_id, "instanceId": inst_id,
-		"equipmentRuleVersion": 3, "quality": "common", "level": 1, "requiredLevel": 1,
+		"equipmentRuleVersion": 4, "quality": "common", "level": 1, "requiredLevel": 1,
 		"rawBaseAttrs": base_attrs, "qualityMultiplierSnapshot": 1.0, "starMultiplierSnapshot": 0.1,
 		"affixes": affixes, "pctAttrs": [],
 		"star": 0, "count": 1,

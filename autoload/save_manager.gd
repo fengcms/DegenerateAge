@@ -20,7 +20,7 @@ const MAX_SLOTS := 3
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
 ## v10（工程文档 22）新增：`inventoryExpansions`，存档校验按扩容次数检查背包长度。
 ## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
-const CURRENT_SCHEMA := 12
+const CURRENT_SCHEMA := 13
 ## 旧目录只用于 v11 读档迁移；正式装备表始终只有二十个型号。
 const EQUIPMENT_LEGACY_IDS := {
 	"weapon_starter": "weapon_iron", "armor_starter": "armor_cloth",
@@ -383,6 +383,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 		data.questItems = {}
 	if v == 11:
 		_migrate_equipment_catalog(data)
+	if v >= 11 and v < 13:
+		_migrate_equipment_requirements(data)
 	if v >= 0 and v < CURRENT_SCHEMA:
 		if not data.has("unlocks"):
 			data.unlocks = {}
@@ -457,6 +459,42 @@ func _migrate_equipment_item(value: Variant) -> void:
 	value["level"] = tier
 	value["rawBaseAttrs"] = (bases[str(tier)] as Dictionary).duplicate(true)
 	value["equipmentRuleVersion"] = 3
+
+## v12→v13：只改装备型号的穿戴等级，不重抽属性；越级已穿装备安全返还。
+func _migrate_equipment_requirements(data: Dictionary) -> void:
+	for key in ["inventory", "warehouse"]:
+		var items: Variant = data.get(key)
+		if items is Array:
+			for item in items:
+				_migrate_equipment_requirement_item(item)
+	var worn: Variant = data.get("equipment")
+	if worn is Dictionary:
+		for slot in worn:
+			var item: Variant = worn[slot]
+			_migrate_equipment_requirement_item(item)
+			if item is Dictionary and String(item.get("kind", "")) == "equip" \
+					and int(item.get("requiredLevel", 1)) > int(data.get("player", {}).get("level", 1)):
+				worn[slot] = null
+				_store_migrated_unequipped(data, item)
+	var by_map: Variant = data.get("unclaimedLoot")
+	if by_map is Dictionary:
+		for map_id in by_map:
+			var rows: Variant = by_map[map_id]
+			if rows is Array:
+				for row in rows:
+					if row is Dictionary:
+						_migrate_equipment_requirement_item(row.get("item"))
+
+## 旧实例的基底与词条是快照；仅同步等级标记及规则版本。
+func _migrate_equipment_requirement_item(value: Variant) -> void:
+	if not value is Dictionary or String(value.get("kind", "")) != "equip" or int(value.get("equipmentRuleVersion", 0)) != 3:
+		return
+	var tpl: Variant = DataLoader.get_entry("equipments", String(value.get("itemId", "")))
+	if not tpl is Dictionary:
+		return
+	value["requiredLevel"] = int(tpl.get("requiredLevel", 0))
+	value["level"] = int(tpl.get("requiredLevel", 0))
+	value["equipmentRuleVersion"] = 4
 
 ## 将迁移后等级不足的旧穿戴装备放入空格；两个容器都满时落在当前位置并持久化。
 func _store_migrated_unequipped(data: Dictionary, item: Dictionary) -> void:
@@ -886,7 +924,7 @@ func _valid_item(item: Variant) -> bool:
 	if kind == "equip":
 		if not DataLoader.get_entry("equipments", item.itemId) is Dictionary or not item.get("instanceId") is String or item.instanceId.is_empty():
 			return false
-		if not _whole(item.get("equipmentRuleVersion"), 3, 3) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
+		if not _whole(item.get("equipmentRuleVersion"), 4, 4) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false
 		if item.rawBaseAttrs.is_empty() or not _whole(item.get("count", 1), 1, 1) \
 				or item.affixes.size() + item.pctAttrs.size() > 4 or item.pctAttrs.size() > 1:
@@ -896,9 +934,9 @@ func _valid_item(item: Variant) -> bool:
 			return false
 		var template: Dictionary = DataLoader.get_entry("equipments", String(item.itemId))
 		var bases: Dictionary = template.get("tierBases", {})
-		var tier_key := str(int(item.requiredLevel))
+		var tier_key := str(ItemFactory.tier_start_for_template(String(item.itemId)))
 		# 实例基底是生成时的数值快照；后续数值平衡不应让合法存档失效。
-		if bases.size() != 1 or not bases.has(tier_key):
+		if bases.size() != 1 or not bases.has(tier_key) or int(item.requiredLevel) != int(template.get("requiredLevel", 0)):
 			return false
 		if not _number(item.get("qualityMultiplierSnapshot")) or float(item.qualityMultiplierSnapshot) <= 0.0 \
 				or float(item.qualityMultiplierSnapshot) > 100.0 or not _number(item.get("starMultiplierSnapshot")) \

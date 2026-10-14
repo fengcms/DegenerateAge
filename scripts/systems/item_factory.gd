@@ -7,7 +7,7 @@ static func rules() -> Dictionary:
 	var raw: Variant = DataLoader.get_table("equipmentRules")
 	return raw if raw is Dictionary else {}
 
-## 将来源等级映射到已开放的穿戴档；当前 1—10 为 Lv1、11—20 为 Lv11。
+## 将来源等级映射到所属套的起点；当前 1—10 为第一套、11—20 为第二套。
 static func tier_for_level(source_level: int) -> int:
 	var chosen := 1
 	for value in rules().get("tiers", []):
@@ -16,7 +16,15 @@ static func tier_for_level(source_level: int) -> int:
 			chosen = tier
 	return chosen
 
-## level 参数兼容任务调用；未指定时使用该型号唯一合法穿戴档。
+## 取得型号所属套的起点；实际穿戴等级由模板单独定义。
+static func tier_start_for_template(item_id: String) -> int:
+	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
+	if not tpl is Dictionary:
+		return 0
+	var bases: Variant = tpl.get("tierBases", {})
+	return int(bases.keys()[0]) if bases is Dictionary and bases.size() == 1 else 0
+
+## level 参数兼容来源等级调用；未指定时使用该型号所属套。
 static func make_equip(item_id: String, level: int = 0, instance_prefix: String = "inst") -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	if not tpl is Dictionary:
@@ -24,11 +32,11 @@ static func make_equip(item_id: String, level: int = 0, instance_prefix: String 
 	var bases: Variant = tpl.get("tierBases", {})
 	if not bases is Dictionary or bases.size() != 1:
 		return {}
-	var required_level := tier_for_level(level) if level > 0 else int(bases.keys()[0])
-	return make_equip_roll(item_id, required_level, String(tpl.get("defaultQuality", "common")), null, instance_prefix)
+	var tier_start := tier_for_level(level) if level > 0 else int(bases.keys()[0])
+	return make_equip_roll(item_id, tier_start, String(tpl.get("defaultQuality", "common")), null, instance_prefix)
 
-## 按型号唯一合法档位生成实例；传入其他档位时显式失败，不借用同名高低档基底。
-static func make_equip_roll(item_id: String, required_level: int, quality: String,
+## 按型号所属套生成实例；传入其他套起点时显式失败。
+static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 		rng: RandomNumberGenerator = null, instance_prefix: String = "inst") -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	var cfg := rules()
@@ -36,8 +44,16 @@ static func make_equip_roll(item_id: String, required_level: int, quality: Strin
 	if not tpl is Dictionary or not qualities is Dictionary or not qualities.has(quality):
 		return {}
 	var raw_bases: Variant = tpl.get("tierBases", {})
-	if not raw_bases is Dictionary or not raw_bases.get(str(required_level)) is Dictionary:
-		push_error("[ItemFactory] %s 缺少 Lv%d 装备基底" % [item_id, required_level])
+	if not raw_bases is Dictionary or not raw_bases.get(str(tier_start)) is Dictionary:
+		push_error("[ItemFactory] %s 缺少第 %d 套装备基底" % [item_id, tier_start])
+		return {}
+	var required_level := int(tpl.get("requiredLevel", 0))
+	if required_level < tier_start or required_level >= tier_start + 10:
+		push_error("[ItemFactory] %s 穿戴等级与所属套不符" % item_id)
+		return {}
+	var scale_values: Variant = cfg.get("affixTierScale", {})
+	if not scale_values is Dictionary or not scale_values.has(str(tier_start)):
+		push_error("[ItemFactory] 缺少第 %d 套词条倍率" % tier_start)
 		return {}
 	var q: Dictionary = qualities[quality]
 	var r := rng if rng != null else _default_rng()
@@ -65,7 +81,7 @@ static func make_equip_roll(item_id: String, required_level: int, quality: Strin
 		var stat: String = available[index]
 		available.remove_at(index)
 		var bounds: Dictionary = fixed_cfg[stat]
-		var scale := float(cfg.get("affixTierScale", {}).get(str(required_level), 1.0))
+		var scale := float(scale_values[str(tier_start)])
 		var lo := maxi(1, int(round(float(bounds.min) * scale)))
 		var hi := maxi(lo, int(round(float(bounds.max) * scale)))
 		fixed.append({"stat": stat, "value": r.randi_range(lo, hi)})
@@ -75,9 +91,9 @@ static func make_equip_roll(item_id: String, required_level: int, quality: Strin
 	return {
 		"kind": "equip", "itemId": item_id,
 		"instanceId": "%s_%s" % [instance_prefix, Crypto.new().generate_random_bytes(16).hex_encode()],
-		"equipmentRuleVersion": 3, "requiredLevel": required_level, "level": required_level,
+		"equipmentRuleVersion": 4, "requiredLevel": required_level, "level": required_level,
 		"quality": quality, "star": 0,
-		"rawBaseAttrs": (raw_bases[str(required_level)] as Dictionary).duplicate(true),
+		"rawBaseAttrs": (raw_bases[str(tier_start)] as Dictionary).duplicate(true),
 		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
 		"starMultiplierSnapshot": float(cfg.get("starMult", 0.1)),
 		"affixes": fixed, "pctAttrs": percent, "count": 1,

@@ -37,7 +37,7 @@ func _ready() -> void:
 	var reward_found := false
 	for item in GameState.inventory:
 		if item is Dictionary and String(item.get("itemId", "")) == "c2_road_armor":
-			reward_found = int(item.get("requiredLevel", 0)) == 11
+			reward_found = int(item.get("requiredLevel", 0)) == 13
 	check(reward_found, "任务装备使用统一 Lv11 档")
 	_run_kill("C2Q04", "c2_lu_heng", "c2_lu_heng", "c2_old_well", "c2_boss_iron_foreman", 1)
 	_run_collect("C2Q05", "c2_qi_yan", "c2_qi_yan", "c2_lower_works", "c2_badge_wraith", 5)

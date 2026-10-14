@@ -6,16 +6,16 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 10
 	var candidate := ItemFactory.make_equip_roll("shoes_cloth", 1, "common", rng)
-	GameState.player.level = 1
+	GameState.player.level = 2
 	GameState.equipment = Equipment.create()
 	GameState.inventory[0] = candidate
 	var panel := preload("res://scripts/ui/inventory_panel.gd").new()
 	add_child(panel)
 	check(panel._bag_buttons[0].upgrade_badge, "空槽可穿且评分增加时显示箭头")
-	GameState.player.level = 0
+	GameState.player.level = 1
 	panel._refresh()
 	check(not panel._bag_buttons[0].upgrade_badge, "等级不足时隐藏箭头")
-	GameState.player.level = 1
+	GameState.player.level = 2
 	GameState.equipment.shoes = candidate.duplicate(true)
 	panel._refresh()
 	check(not panel._bag_buttons[0].upgrade_badge, "同分装备不显示箭头")

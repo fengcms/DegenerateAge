@@ -31,7 +31,7 @@ func _ready() -> void:
 				if item.get("kind") != "equip":
 					continue
 				seen[table_id] = true
-				check(int(item.requiredLevel) == 11 and normal.includeIds.has(item.itemId),
+				check(int(item.requiredLevel) == int(DataLoader.get_entry("equipments", item.itemId).requiredLevel) and normal.includeIds.has(item.itemId),
 					"%s 只生成 Lv11 制式" % table_id)
 	for table_id in ["DT_C2_Normal", "DT_C2_Industrial_Elite", "DT_C2_Core_Normal", "DT_C2_Boss_Final"]:
 		check(seen.has(table_id), "%s 实际产生装备" % table_id)

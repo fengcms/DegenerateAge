@@ -1,5 +1,5 @@
 {
-  "ruleVersion": 3,
+  "ruleVersion": 4,
   "tiers": [
     1,
     11
@@ -68,5 +68,17 @@
   "tierValueMultiplier": {
     "1": 1.0,
     "11": 2.0
-  }
+  },
+  "slotOrder": [
+    "weapon",
+    "shoes",
+    "armor",
+    "helmet",
+    "bracer",
+    "knee",
+    "shield",
+    "bracelet",
+    "ring",
+    "necklace"
+  ]
 }

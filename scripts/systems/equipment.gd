@@ -5,7 +5,7 @@ extends RefCounted
 ## 槽位（5.1）：防御向 [头盔][护甲][鞋子][盾牌][护腕×2][护膝×2]
 ##              攻击向 [武器][手镯×2][戒指×2][项链]  = 14 位
 ## 规则：武器与盾牌可同时装备；**装备即更新派生属性、不改基础值**；卸下需背包有空位。
-## 穿戴门槛直接读取实例 requiredLevel；型号基础档与显示等级一致。
+## 穿戴门槛读取实例 requiredLevel；基础数值按型号所属套读取。
 ## 实例属性永久保存，穿脱不重随（5.7 / 10.1）。
 ## 本层只做装备语义与属性汇总，不依赖 UI（面板见 scripts/ui/inventory_panel.gd）。
 
@@ -141,7 +141,7 @@ static func template_of(item: Dictionary) -> Dictionary:
 	var tpl = DataLoader.get_entry("equipments", String(item.get("itemId", "")))
 	return tpl if tpl is Dictionary else {}
 
-## 穿戴等级门槛直接使用实例 requiredLevel，与显示和基础档保持一致。
+## 穿戴等级门槛直接使用实例 requiredLevel，与显示等级保持一致。
 static func level_req(item: Dictionary) -> int:
 	return int(item.get("requiredLevel", 1))
 
