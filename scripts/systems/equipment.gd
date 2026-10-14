@@ -76,7 +76,7 @@ static func slot_accepts(slot_id: String, item: Dictionary) -> bool:
 		return false
 	return String(d.kind) == item_kind(item)
 
-## 自动选槽：优先同类空槽，全占用则取第一个同类槽（用于替换）。
+## 自动选槽：先空位，再最低品质；同品质选择最低评分，完全相同保留固定槽序。
 ## 无匹配槽返回空串。
 static func auto_slot_for(slots: Dictionary, item: Dictionary) -> String:
 	var kind := item_kind(item)
@@ -86,7 +86,51 @@ static func auto_slot_for(slots: Dictionary, item: Dictionary) -> String:
 	for sid in ids:
 		if slots.get(sid) == null:
 			return sid
-	return ids[0] if not ids.is_empty() else ""
+	var target := ""
+	for sid in ids:
+		if target.is_empty():
+			target = sid
+			continue
+		var current: Dictionary = slots[sid]
+		var chosen: Dictionary = slots[target]
+		var rank := quality_rank(current)
+		var chosen_rank := quality_rank(chosen)
+		if rank < chosen_rank or (rank == chosen_rank and score(current) < score(chosen)
+				and not is_equal_approx(score(current), score(chosen))):
+			target = sid
+	return target
+
+static func quality_rank(item: Dictionary) -> int:
+	return ItemUtil.QUALITIES.find(String(item.get("quality", "")))
+
+## 双槽卡片、确认框与操作结果使用同一个可辨识的槽名。
+static func slot_label(slot_id: String) -> String:
+	var definition := slot_def(slot_id)
+	if definition.is_empty():
+		return slot_id
+	var ids := slots_for_kind(String(definition.kind))
+	var label := String(definition.label)
+	return label + (["①", "②"][ids.find(slot_id)] if ids.size() == 2 else "")
+
+## 纯预览：不修改物品；显式拖放尊重指定槽，双击采用 auto_slot_for。
+static func replacement_preview(slots: Dictionary, item: Dictionary, slot_id: String = "") -> Dictionary:
+	var target := slot_id if not slot_id.is_empty() else auto_slot_for(slots, item)
+	if String(item.get("kind", "")) != "equip" or quality_rank(item) < 0:
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.invalid_quality")}
+	if not slots.has(target) or not slot_accepts(target, item):
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.p004")}
+	var worn: Dictionary = slots[target] if slots[target] is Dictionary else {}
+	if not worn.is_empty() and quality_rank(worn) < 0:
+		return {"ok": false, "reason": Localization.tr_key("msg.equipment.invalid_quality")}
+	var candidate_score := score(item)
+	var worn_score := score(worn)
+	return {"ok": true, "slot_id": target, "slot_label": slot_label(target),
+		"candidate": item.duplicate(true), "worn": worn.duplicate(true),
+		"candidate_score": candidate_score, "worn_score": worn_score,
+		"score_delta": candidate_score - worn_score, "empty": worn.is_empty(),
+		"stronger": not worn.is_empty() and candidate_score > worn_score
+			and not is_equal_approx(candidate_score, worn_score),
+		"downgrade": not worn.is_empty() and quality_rank(item) < quality_rank(worn)}
 
 # ---- 穿戴门槛 ----
 

@@ -21,6 +21,7 @@
 [ext_resource type="Script" path="res://scripts/ui/ui_layer.gd" id="19_ui"]
 [ext_resource type="Script" path="res://scripts/ui/death_panel.gd" id="20_death"]
 [ext_resource type="Script" path="res://scripts/ui/flow_feedback.gd" id="21_flow"]
+[ext_resource type="Script" path="res://scripts/ui/equipment_confirmation.gd" id="22_equip_confirm"]
 
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
@@ -95,3 +96,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="EquipmentConfirmation" type="Control" parent="UI"]
+layout_mode = 3
+script = ExtResource("22_equip_confirm")

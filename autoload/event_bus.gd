@@ -35,6 +35,8 @@ signal inventory_changed()
 signal inventory_organized()
 signal inventory_expanded()
 signal equipment_changed()
+signal equipment_confirmation_requested(preview: Dictionary)
+signal equipment_confirmation_closed()
 signal upgrade_completed()
 
 # ---- NPC / 交易（M1-8）----

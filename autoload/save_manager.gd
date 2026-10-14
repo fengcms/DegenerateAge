@@ -391,6 +391,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 		return
 	data = _migrate(data)
 	_suppress_autosave = true
+	GameState.reset_equipment_prompt_session()
 	GameState.skill_cooldowns = {}
 	GameState.clear_buffs()
 

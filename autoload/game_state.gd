@@ -30,6 +30,10 @@ var warehouse_expansions: int = 0
 var owned_mounts: Array[String] = [] # 独立坐骑收藏，不占背包格（M4-4）
 var active_mount: String = ""
 var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
+## 降品质提醒为会话状态：跨图保留，新游戏/成功读档清零；不进入存档或 settings。
+var skip_equipment_downgrade_prompt := false
+var pending_equipment_change: Dictionary = {}
+var _equipment_request_sequence := 0
 var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
 var quest_states: Dictionary = {}   # quest_id -> {"state": String, "progress": int}（M2 起；见 scripts/systems/quest.gd）
@@ -87,6 +91,7 @@ func clear_save_pos() -> void:
 
 ## 清空面板登记（读档 / 重载世界前调用，避免旧面板状态残留）。
 func close_all_panels() -> void:
+	cancel_equipment_change()
 	_open_panels = {}
 	panel_open = false
 
@@ -191,6 +196,7 @@ func default_settings() -> Dictionary:
 
 ## 重置为初始状态（新建角色 / 初始化时调用）。
 func reset_to_defaults() -> void:
+	reset_equipment_prompt_session()
 	player = default_player()
 	gold = 0
 	current_map = "camp"
@@ -555,12 +561,70 @@ func _use_fail(reason: String) -> Dictionary:
 ## 从背包穿上一件装备（slot_id 为空时自动选槽：优先同类空槽，否则替换）。
 ## 返回 {ok, reason, replaced}；失败广播原因（背包满 / 等级不足 / 槽位不匹配），不静默。
 func equip_from_inventory(inv_index: int, slot_id: String = "") -> Dictionary:
+	if not pending_equipment_change.is_empty():
+		return {"ok": false, "pending": true, "reason": ""}
 	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
 		return {"ok": false, "reason": Localization.tr_key("msg.game_state.p026"), "replaced": {}}
 	var item: Dictionary = inventory[inv_index]
-	var target := slot_id
-	if target.is_empty():
-		target = Equipment.auto_slot_for(equipment, item)
+	if String(item.get("instanceId", "")).is_empty():
+		return _equipment_change_fail(Localization.tr_key("msg.equipment.invalid_instance"))
+	var preview := Equipment.replacement_preview(equipment, item, slot_id)
+	if not bool(preview.get("ok", false)):
+		return _equipment_change_fail(String(preview.reason))
+	if not Equipment.meets_level(item, int(player.level)):
+		return _equipment_change_fail(Localization.tr_key("msg.equipment.p005") % Equipment.level_req(item))
+	if int(player.get("hp", 0)) <= 0 or MapService.loading_active:
+		return _equipment_change_fail(Localization.tr_key("msg.equipment.unavailable"))
+	if bool(preview.downgrade) and not skip_equipment_downgrade_prompt:
+		_equipment_request_sequence += 1
+		preview["request_id"] = _equipment_request_sequence
+		pending_equipment_change = preview.duplicate(true)
+		EventBus.equipment_confirmation_requested.emit(preview.duplicate(true))
+		return {"ok": false, "pending": true, "request_id": _equipment_request_sequence}
+	return _commit_equipment_change(inv_index, String(preview.slot_id))
+
+func confirm_equipment_change(request_id: int, skip_next: bool = false) -> Dictionary:
+	if pending_equipment_change.is_empty() or int(pending_equipment_change.request_id) != request_id:
+		return _equipment_change_fail(Localization.tr_key("msg.equipment.changed"))
+	var preview := pending_equipment_change.duplicate(true)
+	var index := -1
+	var expected: Dictionary = preview.candidate
+	var instance_id := String(expected.get("instanceId", ""))
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary and not instance_id.is_empty() \
+				and String(inventory[i].get("instanceId", "")) == instance_id:
+			index = i
+			break
+	var worn: Variant = equipment.get(String(preview.slot_id))
+	var worn_snapshot: Dictionary = worn if worn is Dictionary else {}
+	if index < 0 or inventory[index] != expected or worn_snapshot != preview.worn \
+			or int(player.get("hp", 0)) <= 0 or MapService.loading_active:
+		cancel_equipment_change()
+		return _equipment_change_fail(Localization.tr_key("msg.equipment.changed"))
+	# 明确保留原确认槽；物品/属性变化后不能将旧许可用于另一件物品。
+	pending_equipment_change = {}
+	var result := _commit_equipment_change(index, String(preview.slot_id))
+	if bool(result.get("ok", false)) and skip_next:
+		skip_equipment_downgrade_prompt = true
+	EventBus.equipment_confirmation_closed.emit()
+	return result
+
+func cancel_equipment_change() -> void:
+	if pending_equipment_change.is_empty():
+		return
+	pending_equipment_change = {}
+	EventBus.equipment_confirmation_closed.emit()
+
+func reset_equipment_prompt_session() -> void:
+	cancel_equipment_change()
+	skip_equipment_downgrade_prompt = false
+
+func _equipment_change_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "reason": reason}
+
+func _commit_equipment_change(inv_index: int, target: String) -> Dictionary:
+	var item: Dictionary = inventory[inv_index]
 	var res := Equipment.equip_from_inventory(
 		equipment, inventory, target, inv_index, int(player.level))
 	if bool(res.get("ok", false)):

@@ -169,15 +169,53 @@ func _apply_sample_icon() -> void:
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if role != ROLE_BAG or String(item.get("kind", "")) != "equip":
 		return null
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	var row := preload("res://scripts/ui/equipment_comparison_tooltip.gd").new()
+	row.source_slot = weakref(self)
+	row.add_theme_constant_override("h_separation", 6)
+	row.add_theme_constant_override("v_separation", 6)
 	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	row.add_child(_equipment_tip_card("背包装备", item))
+	_populate_equipment_tooltip(row)
+	return row
+
+func _populate_equipment_tooltip(row: GridContainer) -> void:
+	var card_count := 1 + Equipment.slots_for_kind(Equipment.item_kind(item)).size()
+	var estimated_width := maxf(250.0, 320.0 * SettingsRuntime.text_scale_value())
+	row.columns = clampi(int((get_viewport_rect().size.x - 32.0) / estimated_width), 1, card_count)
+	var preview := Equipment.replacement_preview(GameState.equipment, item)
+	var candidate_card := _equipment_tip_card(Localization.tr_key("ui.equip_tip.bag"), item)
+	row.add_child(candidate_card)
+	if bool(preview.get("ok", false)):
+		var column: VBoxContainer = candidate_card.get_child(0)
+		var hint := Label.new()
+		# 原生 tooltip 根据最小尺寸放置；固定短行避免自动换行产生错误高度。
+		hint.autowrap_mode = TextServer.AUTOWRAP_OFF
+		hint.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))
+		var text := ""
+		if bool(preview.empty):
+			text = Localization.tr_key("ui.equip_tip.empty", [String(preview.slot_label)])
+		else:
+			if bool(preview.stronger):
+				text = Localization.tr_key("ui.equip_tip.stronger") + "\n"
+				hint.add_theme_color_override("font_color", Color("78d8a4"))
+			text += Localization.tr_key("ui.equip_tip.target", [String(preview.slot_label)])
+			text += "\n" + Localization.tr_key("ui.equip_tip.delta", [float(preview.worn_score), float(preview.score_delta)])
+			if bool(preview.downgrade):
+				text += "\n" + Localization.tr_key("ui.equip_tip.lower_quality")
+		text += "\n" + Localization.tr_key("ui.equip_tip.score_note")
+		hint.text = text
+		column.add_child(hint)
+		if not Equipment.meets_level(item, int(GameState.player.level)):
+			var requirement := Label.new()
+			requirement.text = Localization.tr_key("ui.equip_tip.required", [Equipment.level_req(item)])
+			requirement.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))
+			requirement.add_theme_color_override("font_color", Color("ffad78"))
+			column.add_child(requirement)
 	for sid in Equipment.slots_for_kind(Equipment.item_kind(item)):
 		var worn: Variant = GameState.equipment.get(sid)
-		var def := Equipment.slot_def(sid)
-		row.add_child(_equipment_tip_card("已穿着 · %s" % String(def.get("label", sid)), worn if worn is Dictionary else {}))
-	return row
+		var heading := Localization.tr_key("ui.equip_tip.worn", [Equipment.slot_label(sid)])
+		if bool(preview.get("ok", false)) and sid == String(preview.slot_id):
+			heading += "\n" + Localization.tr_key("ui.equip_tip.default")
+		row.add_child(_equipment_tip_card(heading, worn if worn is Dictionary else {}))
 
 func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
 	var panel := PanelContainer.new()
@@ -207,10 +245,11 @@ func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
 	detail.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	detail.add_theme_font_size_override("font_size", maxi(9, roundi(16.0 * SettingsRuntime.text_scale_value())))
 	if shown.is_empty():
-		detail.text = "未穿着"
+		detail.text = Localization.tr_key("ui.equip_tip.unworn")
 	else:
 		var lines: Array[String] = [ItemUtil.display_name(shown)]
 		lines.append_array(ItemUtil.attr_lines(shown))
+		lines.append(Localization.tr_key("ui.equip_tip.score", [Equipment.score(shown)]))
 		detail.text = "\n".join(PackedStringArray(lines))
 		detail.add_theme_color_override("font_color", ItemUtil.quality_color(String(shown.get("quality", "common"))))
 	column.add_child(detail)
