@@ -30,7 +30,8 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _map_name: Label = %MapName
 @onready var _map_coords: Label = %MapCoords
 @onready var _target_name: Label = %TargetName
-@onready var _target_hp: ProgressBar = %TargetHp
+@onready var _target_hp: HudStatusBar = %TargetHp
+@onready var _target_portrait: TextureRect = %TargetPortraitImage
 @onready var _hotbar: HBoxContainer = %Hotbar
 @onready var _quest_tracker: PanelContainer = %QuestTracker
 @onready var _quest_list: VBoxContainer = %QuestList
@@ -111,6 +112,7 @@ func _on_level(level: int) -> void:
 
 func _on_target(target: Node) -> void:
 	_target = target
+	_update_target_portrait()
 	_update_npc_portrait()
 	_update_target()
 
@@ -287,8 +289,10 @@ func _update_target() -> void:
 		return
 	if valid:
 		_target_name.text = String(_target.get("display_name"))
+		_target_name.tooltip_text = _target_name.text
 		_target_hp.max_value = maxi(1, int(_target.get("max_hp")))
 		_target_hp.value = int(_target.get("hp"))
+		_target_hp.tooltip_text = "%d / %d" % [int(_target.get("hp")), int(_target.get("max_hp"))]
 	else:
 		_target_name.text = Localization.tr_key("ui.hud.p013")
 		_target_hp.value = 0
@@ -313,6 +317,31 @@ func _update_npc_portrait() -> void:
 	atlas.atlas = load("res://assets/sprites/npcs/%s/idle_atlas.png" % npc.role) as Texture2D
 	atlas.region = Rect2(0.0, 0.0, 64.0, 64.0)
 	portrait.texture = atlas
+
+func _update_target_portrait() -> void:
+	_target_portrait.texture = null
+	if not is_instance_valid(_target) or not _target is Monster:
+		return
+	var monster := _target as Monster
+	var path := ""
+	var frame_width := 80
+	match monster.monster_id:
+		"wolf_corrupted", "elite_wolf_king":
+			path = "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png"
+		"shellback_bug", "elite_shellback_bug":
+			path = "res://assets/sprites/monsters/shellback_bug/actor_atlas.png"
+		"ash_wraith", "elite_ash_wraith":
+			path = "res://assets/sprites/monsters/ash_wraith/actor_atlas.png"
+			frame_width = 64
+		"training_dummy":
+			path = "res://assets/sprites/monsters/training_dummy/dummy_atlas.png"
+			frame_width = 64
+	if path.is_empty():
+		return
+	var atlas := AtlasTexture.new()
+	atlas.atlas = load(path) as Texture2D
+	atlas.region = Rect2(frame_width * 0.2, 13.0, frame_width * 0.6, 62.0)
+	_target_portrait.texture = atlas
 
 func _target_is_boss(target: Node) -> bool:
 	if target == null or not is_instance_valid(target):

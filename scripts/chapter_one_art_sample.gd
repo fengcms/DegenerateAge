@@ -25,7 +25,8 @@ func _ready() -> void:
 	var main := preload("res://scenes/Main.tscn").instantiate()
 	main.name = "Main"
 	add_child(main)
-	var hud_capture := OS.get_cmdline_user_args().has("--hud-capture")
+	var target_capture := OS.get_cmdline_user_args().has("--target-capture")
+	var hud_capture := OS.get_cmdline_user_args().has("--hud-capture") or target_capture
 	if not hud_capture:
 		var label := Label.new()
 		label.text = "第一章角色样板 · 营地 NPC / 木桩 · 野外裂壳虫 · 灰烬游魂 · WASD 移动 · E 交互"
@@ -39,9 +40,9 @@ func _ready() -> void:
 		layer.add_child(label)
 	GameState.emit_all()
 	if OS.get_cmdline_user_args().has("--art-capture") or hud_capture:
-		capture_review.call_deferred(map_id, hud_capture, hud_demo_active)
+		capture_review.call_deferred(map_id, hud_capture, hud_demo_active, target_capture)
 
-func capture_review(map_id: String, hud_capture := false, hud_demo_active := false) -> void:
+func capture_review(map_id: String, hud_capture := false, hud_demo_active := false, target_capture := false) -> void:
 	var player := $Main/Game/Entities/Player as PlayerCharacter
 	GameState.settings.mapScale = 1.0
 	SettingsRuntime.apply_map_scale_to(player.get_node("Camera2D"))
@@ -49,6 +50,7 @@ func capture_review(map_id: String, hud_capture := false, hud_demo_active := fal
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		enemy.set_physics_process(false)
 	# Keep the live scene's spawns unchanged; arrange visible examples only for a screenshot.
+	var portrait_target: Monster = null
 	if map_id != "camp":
 		var offsets := [Vector2(160, -75), Vector2(235, 35), Vector2(145, 110), Vector2(-170, 45)]
 		var quotas := {"wolf_corrupted": 2, "shellback_bug": 2} if map_id == "wild_trial" else {"ash_wraith": 2, "shellback_bug": 2}
@@ -63,13 +65,17 @@ func capture_review(map_id: String, hud_capture := false, hud_demo_active := fal
 			counts[id] = int(counts.get(id, 0)) + 1
 			enemy.global_position = player.global_position + offsets[placed % offsets.size()]
 			enemy.sample_art.face(player.global_position - enemy.global_position)
+			if portrait_target == null:
+				portrait_target = enemy
 			placed += 1
 			if placed >= offsets.size():
 				break
+	if target_capture and portrait_target != null:
+		player.select_target(portrait_target)
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var file := "camp.png" if map_id == "camp" else "wild.png" if map_id == "wild_trial" else "ash.png"
-	var output := "res://docs/素材设计/样板/HUD布局-v1/自动开启实机.png" if hud_demo_active else "res://docs/素材设计/样板/HUD布局-v1/营地实机.png" if hud_capture else REVIEW_ROOT + file
+	var output := "res://docs/素材设计/样板/HUD布局-v1/普通目标实机.png" if target_capture else "res://docs/素材设计/样板/HUD布局-v1/自动开启实机.png" if hud_demo_active else "res://docs/素材设计/样板/HUD布局-v1/营地实机.png" if hud_capture else REVIEW_ROOT + file
 	get_viewport().get_texture().get_image().save_png(output)
 	print("[ChapterOneArtSample] captured ", output)
 	get_tree().quit()

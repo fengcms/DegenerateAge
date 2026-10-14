@@ -16,9 +16,11 @@
   <rect x="146" y="85" width="24" height="24" fill="#171a21" stroke="#78d8d0"/>
   <rect x="173" y="85" width="24" height="24" fill="#171a21" stroke="#a89978" stroke-dasharray="3 2"/>
   <text x="209" y="103" fill="#d3c6a5" font-size="13" font-family="sans-serif">自动打怪 / 自动拾取 / 增益</text>
-  <rect x="388" y="54" width="240" height="84" rx="6" fill="#23272f" stroke="#687078" stroke-width="2"/>
-  <text x="508" y="91" text-anchor="middle" fill="#e6ddc6" font-size="18" font-family="sans-serif">普通目标卡</text>
-  <text x="508" y="118" text-anchor="middle" fill="#9da4a8" font-size="13" font-family="sans-serif">有目标时显示</text>
+  <text x="380" y="52" fill="#e6ddc6" font-size="15" font-weight="bold" font-family="sans-serif">腐化野狼</text>
+  <path d="M370 58H544L537 73H370Z" fill="#cf4a4a" stroke="#a89978" stroke-width="1"/>
+  <circle cx="346" cy="54" r="29" fill="#171a21" stroke="#a88b53" stroke-width="3"/>
+  <circle cx="346" cy="54" r="25" fill="none" stroke="#d6bd81" stroke-width="1"/>
+  <text x="346" y="60" text-anchor="middle" fill="#e6ddc6" font-size="13" font-family="sans-serif">怪物</text>
   <rect x="400" y="19" width="480" height="23" rx="3" fill="#63272b" stroke="#cf4a4a" stroke-width="2"/>
   <text x="640" y="36" text-anchor="middle" fill="#e6ddc6" font-size="14" font-family="sans-serif">Boss 名称 / 阶段 / 血量</text>
   <rect x="420" y="158" width="440" height="54" rx="4" fill="#353b46" fill-opacity=".62" stroke="#687078" stroke-dasharray="5 4"/>
