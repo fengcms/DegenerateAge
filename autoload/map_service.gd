@@ -426,7 +426,7 @@ func _finish_loading(token: int) -> void:
 	loading_message = ""
 	EventBus.loading_changed.emit(false, "")
 
-## 目标图的落点世界坐标（地图中心；`IsoGround.clamp_to_map` 会再夹一次兜底）。
+## 目标图的默认落点；中心若是障碍，选择最近的可通行格。
 func entry_point(map_id: String) -> Vector2:
 	var w := 40
 	var h := 40
@@ -436,7 +436,12 @@ func entry_point(map_id: String) -> Vector2:
 		if s is Dictionary:
 			w = maxi(1, int((s as Dictionary).get("w", w)))
 			h = maxi(1, int((s as Dictionary).get("h", h)))
-	return Iso.grid_to_world(Vector2i(w / 2, h / 2))
+	var cell := Vector2i(w / 2, h / 2)
+	if m is Dictionary:
+		var layout_path := String((m as Dictionary).get("layoutPath", ""))
+		if not layout_path.is_empty():
+			cell = CaveLayout.new(layout_path).nearest_walkable(cell)
+	return Iso.grid_to_world(cell)
 
 func _fail(reason: String) -> Dictionary:
 	return {"ok": false, "reason": reason}

@@ -161,5 +161,7 @@ func _unhandled_input(_event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _exit_tree() -> void:
+	if EventBus.player_died.is_connected(GameState.cancel_equipment_change):
+		EventBus.player_died.disconnect(GameState.cancel_equipment_change)
 	if visible:
 		GameState.cancel_equipment_change()

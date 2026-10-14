@@ -3029,7 +3029,7 @@ func _test_map_travel() -> void:
 	GameState.current_map = "camp"
 	_expect(MapService.fee_to("wild_trial") == 0 and MapService.fee_to("ash_land") == 50 and MapService.fee_to("corruption_source") == 150, "营地逐对车费应正确")
 	var dests: Array = MapService.destinations()
-	_expect(dests.size() == 3, "营地应显示三处集群目的地")
+	_expect(dests.size() == 4, "营地应显示三处第一章目的地和沉井镇")
 	_expect(bool(dests[0].unlocked) and not bool(dests[1].unlocked) and not bool(dests[2].unlocked), "教学线可用，未到访地图置灰")
 	_expect(not bool(MapService.travel_to("ash_land").ok), "未到访地图不得乘车")
 	_expect(not bool(MapService.travel_to("no_such_map").ok), "未知地图应拒绝")
@@ -3075,16 +3075,16 @@ func _test_walk_exit() -> void:
 	add_child(world)
 	await get_tree().process_frame
 	var exits: Node = world.get_node("Exits")
-	_expect(exits.get_child_count() == 1, "营地应装配一个免费步行出口")
+	_expect(exits.get_child_count() == 2, "营地应装配第一章和第二章两个步行出口")
 	var player: Node2D = world.get_node("Entities/Player")
-	player.global_position = Iso.grid_to_world(Vector2i(34, 20))
+	player.global_position = Iso.grid_to_world(Vector2i(62, 18))
 	_expect(world.nearest_exit() != null, "站在路牌上应找到出口")
 	world._process(0.0)
 	_expect((exits.get_child(0) as TravelExit).player_near, "靠近路牌应显示交互提示")
 	var road: TravelExit = exits.get_child(0)
 	_expect(world.exit_at_screen(road.get_global_transform_with_canvas().origin + Vector2(0, -24)) == road,
 		"左键应能命中路牌可见区域")
-	player.global_position = Iso.grid_to_world(Vector2i(26, 20))
+	player.global_position = Iso.grid_to_world(Vector2i(54, 18))
 	world._request_exit_interaction(road)
 	_expect(world._pending_exit == road and player.map_move_active,
 		"远处点击路牌应先步行接近")
@@ -3092,14 +3092,14 @@ func _test_walk_exit() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_expect(not bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(20, 20))).ok), "远离路牌不能步行切图")
-	_expect(not bool(MapService.request_walk("missing", Iso.grid_to_world(Vector2i(34, 20))).ok), "不存在的路口不能切图")
+	_expect(not bool(MapService.request_walk("missing", Iso.grid_to_world(Vector2i(62, 18))).ok), "不存在的路口不能切图")
 	var routes := [
-		["camp", "to_wild", Vector2i(34, 20), "wild_trial", Vector2i(8, 30)],
-		["wild_trial", "to_ash", Vector2i(54, 30), "ash_land", Vector2i(8, 30)],
-		["ash_land", "to_source", Vector2i(54, 30), "corruption_source", Vector2i(8, 25)],
-		["corruption_source", "to_ash", Vector2i(5, 25), "ash_land", Vector2i(51, 30)],
-		["ash_land", "to_wild", Vector2i(5, 30), "wild_trial", Vector2i(51, 30)],
-		["wild_trial", "to_camp", Vector2i(5, 30), "camp", Vector2i(31, 20)],
+		["camp", "to_wild", Vector2i(62, 18), "wild_trial", Vector2i(8, 50)],
+		["wild_trial", "to_ash", Vector2i(172, 50), "ash_land", Vector2i(9, 54)],
+		["ash_land", "to_source", Vector2i(187, 54), "corruption_source", Vector2i(8, 45)],
+		["corruption_source", "to_ash", Vector2i(4, 45), "ash_land", Vector2i(183, 54)],
+		["ash_land", "to_wild", Vector2i(5, 54), "wild_trial", Vector2i(168, 50)],
+		["wild_trial", "to_camp", Vector2i(4, 50), "camp", Vector2i(58, 18)],
 	]
 	for route in routes:
 		MapService.walk_key_released = true
@@ -3119,16 +3119,16 @@ func _test_walk_exit() -> void:
 func _test_rest_zone() -> void:
 	GameState.reset_to_defaults()
 	var camp_area := MapService.safe_area_cells("camp")
-	_expect(camp_area.position == Vector2(11, 11) and camp_area.end == Vector2(27, 28), "营地应配置围住 NPC 的矩形安全区")
+	_expect(camp_area.position == Vector2(15, 8) and camp_area.end == Vector2(48, 26), "营地应配置围住 NPC 的矩形安全区")
 	for npc in MapService.data_for("camp").get("npcs", []):
 		var cell: Array = npc.cell
 		_expect(MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(int(cell[0]), int(cell[1])))), "营地 NPC 应在安全区内")
-	_expect(not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(20, 30)))
-		and not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(34, 20))), "营地区外与道路出口应可战斗")
+	_expect(not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(32, 30)))
+		and not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(62, 18))), "营地区外与道路出口应可战斗")
 	for map_id in ["wild_trial", "ash_land", "corruption_source"]:
 		_expect(not MapService.safe_area_cells(map_id).has_area(), "%s 应全图为危险区" % map_id)
 		_expect(not MapService.is_in_safe_area(map_id, MapService.carter_arrival(map_id)), "%s 车夫落点不应免战" % map_id)
-	_expect(MapService.carter_arrival("wild_trial").is_equal_approx(Iso.grid_to_world(Vector2i(30, 36))), "野外车夫应抵达配置的驿站")
+	_expect(MapService.carter_arrival("wild_trial").is_equal_approx(Iso.grid_to_world(Vector2i(15, 55))), "野外车夫应抵达配置的驿站")
 	var invalid_maps: Array = (DataLoader.get_table("maps") as Array).duplicate(true)
 	invalid_maps[1]["carterArrival"] = [999, 36]
 	_expect(not DataLoader._validate_walk_exits(invalid_maps).is_empty(), "越界驿站坐标应在启动校验暴露")
@@ -3137,7 +3137,7 @@ func _test_rest_zone() -> void:
 	_expect(not DataLoader._validate_safe_areas(invalid_maps).is_empty(), "不能漏掉营地 NPC 的安全区配置")
 
 	GameState.current_map = "camp"
-	GameState.save_pos = Iso.grid_to_world(Vector2i(20, 20))
+	GameState.save_pos = Iso.grid_to_world(Vector2i(36, 22))
 	GameState.has_save_pos = true
 	var world: Node2D = load("res://scenes/Game.tscn").instantiate()
 	add_child(world)
@@ -3159,7 +3159,7 @@ func _test_rest_zone() -> void:
 	for child in spawner.get_children():
 		if child is Monster and child != monster:
 			child.queue_free()
-	monster.global_position = Iso.grid_to_world(Vector2i(30, 20))
+	monster.global_position = Iso.grid_to_world(Vector2i(32, 28))
 	GameState.set_auto_battle(true)
 	var pilot := player.get_node("AutoPilot") as AutoBattle
 	pilot._physics_process(0.1)
@@ -3217,8 +3217,8 @@ func _test_map_reload() -> void:
 	if ground != null:
 		_expect(String(ground.map_id) == "wild_trial",
 			"地面应加载到当前地图，实际 %s" % String(ground.map_id))
-		_expect(ground.grid_size == Vector2i(60, 60),
-			"试炼野外尺寸应为 60×60，实际 %s" % str(ground.grid_size))
+		_expect(ground.grid_size == Vector2i(176, 99),
+			"试炼野外尺寸应为 176×99，实际 %s" % str(ground.grid_size))
 
 	var spawner: Node = wild_game.get_node_or_null("Spawner")
 	var npcs: Node = wild_game.get_node_or_null("Npcs")
@@ -3260,7 +3260,7 @@ func _test_map_reload() -> void:
 	await get_tree().process_frame
 	MapService.walk_key_released = true
 	MapService.walk_locked_until_msec = 0
-	_expect(bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(34, 20))).ok), "步行前往野外应成功")
+	_expect(bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(62, 18))).ok), "步行前往野外应成功")
 	var walked: Node = load("res://scenes/Game.tscn").instantiate()
 	add_child(walked)
 	await get_tree().process_frame
@@ -3667,7 +3667,8 @@ func _test_scale_invariance() -> void:
 	mon.monster_id = "training_dummy"
 	mon.ai_enabled = false
 	game.get_node("Entities").add_child(mon)
-	mon.global_position = Iso.grid_to_world(Vector2i(30, 20)) # 营地安全区外，仍在可视范围
+	player.global_position = Iso.grid_to_world(Vector2i(32, 28))
+	mon.global_position = Iso.grid_to_world(Vector2i(34, 29)) # 新营地安全区外，各倍率均在可视范围
 	# 关相机平滑求确定性（平滑速度一帧赶不完位移，留残差；settings_test 同法）
 	var smoothing := cam.position_smoothing_enabled
 	cam.position_smoothing_enabled = false
@@ -3777,12 +3778,12 @@ func _test_fog() -> void:
 	var initial := Fog.encode().duplicate(true)
 	_expect(not Fog.reveal("camp", Vector2i(0, 0)) and _deep_equal(initial, Fog.encode()), "重复揭示不应增长集合")
 	_expect(not Fog.reveal("unknown", Vector2i.ZERO) and not Fog.reveal("camp", Vector2i(-1, 0)), "未知地图/越界不应揭示")
-	Fog.reveal("corruption_source", Vector2i(49, 49))
-	_expect(Fog.is_explored("corruption_source", Vector2i(49, 49)) and Fog.block_grid("corruption_source") == Vector2i(13, 13), "50格地图的不足四格边块丢失")
+	Fog.reveal("corruption_source", Vector2i(159, 89))
+	_expect(Fog.is_explored("corruption_source", Vector2i(159, 89)) and Fog.block_grid("corruption_source") == Vector2i(40, 23), "新版地图的不足四格边块丢失")
 	var snapshot := Fog.encode()
 	GameState.explored_maps = Fog.normalize(JSON.parse_string(JSON.stringify(snapshot)))
 	_expect(_deep_equal(snapshot, Fog.encode()), "探索的JSON往返不一致")
-	GameState.explored_maps = Fog.normalize({"wild_trial": [0.0, 0, 224, 225, -1, 1.5, "2", INF, NAN], "unknown": [0], "camp": 42})
+	GameState.explored_maps = Fog.normalize({"wild_trial": [0.0, 0, 1099, 1100, -1, 1.5, "2", INF, NAN], "unknown": [0], "camp": 42})
 	_expect(GameState.explored_maps.size() == 1 and GameState.explored_maps.wild_trial.size() == 2, "坏探索记录、重复或未知地图未清理")
 	var legacy := SaveManager._collect()
 	legacy.schemaVersion = 1
