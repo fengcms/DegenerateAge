@@ -1,0 +1,24 @@
+{
+  "version": "2026-10-15-content-v1",
+  "maps": 25,
+  "npcs": 41,
+  "normalTemplates": 33,
+  "eliteTemplates": 17,
+  "bosses": 13,
+  "mainTasks": 50,
+  "sideTasks": 25,
+  "equipmentModels": 40,
+  "questItems": 17,
+  "normalSpawnSites": 1544,
+  "eliteSpawnSites": 42,
+  "mainOnlyProgression": "50/50任务和25/25地图可达，不依赖支线",
+  "staticNavigation": "25图关键点及全部刷新位通过四邻接一格余量检查",
+  "runtimeValidation": "未执行；图形与数值不是游戏实测",
+  "baselineSHA256": {
+    "data/equipmentRules.json": "a225a74aca40b5ef816754ea5ae3fc4791ebb20e5778573cbd7c946bcbfeda36",
+    "data/equipments.json": "bfc3a5f728940de3f1d70fcca2bdfdb90c7665a0dd6f179b709d653c6969cd4d",
+    "data/dropTables.json": "b860ad92b168bc626d55a84aa58edbe66e0afc1b9f60d292bc124380aa12d138",
+    "data/quests.json": "353be66261acf38f57f94eba2f55343ced562017be5b66ad965446b3aa938432",
+    "scripts/systems/hotbar_config.gd": "8c3dd9c622f64d2eb83ee912553270f7a4a1ad672373583840c1c66993ebd4ae"
+  }
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1020" viewBox="0 0 1600 1020">
+<rect width="1600" height="1020" fill="white"/>
+<g font-family="PingFang SC,Noto Sans CJK SC,sans-serif"><text x="80" y="38" font-size="24">回流观测台 · 224×126 · 正交布局</text>
+<text x="80" y="66" font-size="15">2026-10-15-content-v1 / 黑色不可走 · 绿色可走 · 红色出口；不是最终贴图</text>
+<rect x="80" y="90" width="1440" height="810" fill="#65ae76"/>
+<polygon points="311.4,327.9 530.0,295.7 645.7,437.1 594.3,630.0 407.9,662.1 279.3,520.7" fill="#15191a"/>
+<polygon points="697.1,180.0 857.9,160.7 941.4,270.0 909.3,366.4 767.9,385.7 677.9,295.7" fill="#15191a"/>
+<polygon points="851.4,527.1 1044.3,507.9 1140.7,585.0 1095.7,745.7 935.0,765.0 825.7,662.1" fill="#15191a"/>
+<circle cx="137.85714285714286" cy="495.0" r="9" fill="#df303b"/>
+<text x="80" y="936" font-size="16">P=出口　N=NPC序号　L=地标　E=精英点　B=首领场　蓝点=普通刷新位；详情见JSON/地图文档</text><text x="80" y="970" font-size="15">布局只校核静态四邻接与一格余量；工程须再验证真实碰撞、角色半径、门禁、巡游和渲染。</text></g></svg>

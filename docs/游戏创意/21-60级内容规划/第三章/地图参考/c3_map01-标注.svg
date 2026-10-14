@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1020" viewBox="0 0 1600 1020">
+<rect width="1600" height="1020" fill="white"/>
+<g font-family="PingFang SC,Noto Sans CJK SC,sans-serif"><text x="80" y="38" font-size="24">断流渠岸 · 192×108 · 正交布局</text>
+<text x="80" y="66" font-size="15">2026-10-15-content-v1 / 黑色不可走 · 绿色可走 · 红色出口；不是最终贴图</text>
+<rect x="80" y="90" width="1440" height="810" fill="#65ae76"/>
+<polygon points="350.0,97.5 477.5,90.0 545.0,195.0 515.0,360.0 402.5,390.0 327.5,262.5" fill="#15191a"/>
+<polygon points="417.5,472.5 627.5,457.5 732.5,540.0 687.5,607.5 507.5,622.5 387.5,555.0" fill="#15191a"/>
+<polygon points="717.5,592.5 875.0,570.0 950.0,660.0 912.5,840.0 785.0,862.5 702.5,750.0" fill="#15191a"/>
+<polygon points="860.0,285.0 1062.5,270.0 1160.0,330.0 1115.0,405.0 942.5,420.0 830.0,360.0" fill="#15191a"/>
+<polyline points="140.0,495.0 395.0,495.0 395.0,472.5 402.5,472.5 402.5,465.0 410.0,465.0 410.0,457.5 462.5,457.5 462.5,450.0 567.5,450.0 567.5,442.5 1460.0,442.5 1460.0,495.0" fill="none" stroke="#e7f0a2" stroke-width="3" opacity=".7"/>
+<polyline points="140.0,495.0 252.5,495.0" fill="none" stroke="#e7f0a2" stroke-width="3" opacity=".7"/>
+<polyline points="140.0,495.0 372.5,495.0 372.5,555.0 380.0,555.0 380.0,562.5 387.5,562.5 387.5,570.0 395.0,570.0" fill="none" stroke="#e7f0a2" stroke-width="3" opacity=".7"/>
+<polyline points="140.0,495.0 395.0,495.0 395.0,472.5 402.5,472.5 402.5,465.0 410.0,465.0 410.0,457.5 462.5,457.5 462.5,450.0 567.5,450.0 567.5,442.5 785.0,442.5 785.0,555.0" fill="none" stroke="#e7f0a2" stroke-width="3" opacity=".7"/>
+<polyline points="140.0,495.0 395.0,495.0 395.0,472.5 402.5,472.5 402.5,465.0 410.0,465.0 410.0,457.5 462.5,457.5 462.5,450.0 567.5,450.0 567.5,442.5 1130.0,442.5 1130.0,667.5" fill="none" stroke="#e7f0a2" stroke-width="3" opacity=".7"/>
+<text x="395.0" y="570.0" font-size="13" fill="#4b3417">L1</text>
+<text x="785.0" y="555.0" font-size="13" fill="#4b3417">L2</text>
+<text x="1130.0" y="667.5" font-size="13" fill="#4b3417">L3</text>
+<circle cx="530.0" cy="660.0" r="3" fill="#20516e"/>
+<circle cx="770.0" cy="360.0" r="3" fill="#20516e"/>
+<circle cx="650.0" cy="840.0" r="3" fill="#20516e"/>
+<circle cx="320.0" cy="360.0" r="3" fill="#20516e"/>
+<circle cx="650.0" cy="720.0" r="3" fill="#20516e"/>
+<circle cx="320.0" cy="720.0" r="3" fill="#20516e"/>
+<circle cx="830.0" cy="240.0" r="3" fill="#20516e"/>
+<circle cx="470.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="1190.0" cy="240.0" r="3" fill="#20516e"/>
+<circle cx="500.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="1130.0" cy="690.0" r="3" fill="#20516e"/>
+<circle cx="920.0" cy="210.0" r="3" fill="#20516e"/>
+<circle cx="830.0" cy="300.0" r="3" fill="#20516e"/>
+<circle cx="380.0" cy="690.0" r="3" fill="#20516e"/>
+<circle cx="590.0" cy="420.0" r="3" fill="#20516e"/>
+<circle cx="530.0" cy="120.0" r="3" fill="#20516e"/>
+<circle cx="560.0" cy="390.0" r="3" fill="#20516e"/>
+<circle cx="350.0" cy="660.0" r="3" fill="#20516e"/>
+<circle cx="890.0" cy="240.0" r="3" fill="#20516e"/>
+<circle cx="380.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="980.0" cy="480.0" r="3" fill="#20516e"/>
+<circle cx="320.0" cy="420.0" r="3" fill="#20516e"/>
+<circle cx="1100.0" cy="630.0" r="3" fill="#20516e"/>
+<circle cx="1130.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="1070.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="1190.0" cy="690.0" r="3" fill="#20516e"/>
+<circle cx="740.0" cy="270.0" r="3" fill="#20516e"/>
+<circle cx="440.0" cy="660.0" r="3" fill="#20516e"/>
+<circle cx="950.0" cy="750.0" r="3" fill="#20516e"/>
+<circle cx="650.0" cy="780.0" r="3" fill="#20516e"/>
+<circle cx="440.0" cy="630.0" r="3" fill="#20516e"/>
+<circle cx="680.0" cy="330.0" r="3" fill="#20516e"/>
+<circle cx="1040.0" cy="750.0" r="3" fill="#20516e"/>
+<circle cx="740.0" cy="240.0" r="3" fill="#20516e"/>
+<circle cx="1040.0" cy="510.0" r="3" fill="#20516e"/>
+<circle cx="1160.0" cy="750.0" r="3" fill="#20516e"/>
+<circle cx="860.0" cy="150.0" r="3" fill="#20516e"/>
+<circle cx="650.0" cy="810.0" r="3" fill="#20516e"/>
+<circle cx="830.0" cy="540.0" r="3" fill="#20516e"/>
+<circle cx="1070.0" cy="840.0" r="3" fill="#20516e"/>
+<circle cx="620.0" cy="420.0" r="3" fill="#20516e"/>
+<circle cx="500.0" cy="810.0" r="3" fill="#20516e"/>
+<circle cx="1070.0" cy="870.0" r="3" fill="#20516e"/>
+<circle cx="980.0" cy="780.0" r="3" fill="#20516e"/>
+<circle cx="350.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="1190.0" cy="630.0" r="3" fill="#20516e"/>
+<circle cx="1040.0" cy="840.0" r="3" fill="#20516e"/>
+<circle cx="1070.0" cy="600.0" r="3" fill="#20516e"/>
+<circle cx="890.0" cy="150.0" r="3" fill="#20516e"/>
+<circle cx="980.0" cy="210.0" r="3" fill="#20516e"/>
+<circle cx="350.0" cy="570.0" r="3" fill="#20516e"/>
+<circle cx="1160.0" cy="180.0" r="3" fill="#20516e"/>
+<circle cx="800.0" cy="450.0" r="3" fill="#20516e"/>
+<circle cx="470.0" cy="420.0" r="3" fill="#20516e"/>
+<circle cx="320.0" cy="150.0" r="3" fill="#20516e"/>
+<circle cx="710.0" cy="840.0" r="3" fill="#20516e"/>
+<circle cx="500.0" cy="420.0" r="3" fill="#20516e"/>
+<circle cx="1070.0" cy="540.0" r="3" fill="#20516e"/>
+<circle cx="920.0" cy="240.0" r="3" fill="#20516e"/>
+<circle cx="590.0" cy="270.0" r="3" fill="#20516e"/>
+<circle cx="500.0" cy="840.0" r="3" fill="#20516e"/>
+<circle cx="950.0" cy="780.0" r="3" fill="#20516e"/>
+<circle cx="890.0" cy="540.0" r="3" fill="#20516e"/>
+<circle cx="680.0" cy="270.0" r="3" fill="#20516e"/>
+<circle cx="567.5" cy="330.0" r="8" fill="#e8ba33"/><text x="576.5" y="320.0" font-size="14">E1</text>
+<circle cx="950.0" cy="682.5" r="8" fill="#e8ba33"/><text x="959.0" y="672.5" font-size="14">E2</text>
+<rect x="247.5" y="490.0" width="10" height="10" fill="#fff" stroke="#304255"/><text x="244.5" y="481.0" font-size="13">N9</text>
+<circle cx="140.0" cy="495.0" r="9" fill="#df303b"/>
+<text x="126.0" y="477.0" font-size="15">P1</text>
+<circle cx="1460.0" cy="495.0" r="9" fill="#df303b"/>
+<text x="1446.0" y="477.0" font-size="15">P2</text>
+<text x="80" y="936" font-size="16">P=出口　N=NPC序号　L=地标　E=精英点　B=首领场　蓝点=普通刷新位；详情见JSON/地图文档</text><text x="80" y="970" font-size="15">布局只校核静态四邻接与一格余量；工程须再验证真实碰撞、角色半径、门禁、巡游和渲染。</text></g></svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1020" viewBox="0 0 1600 1020">
+<rect width="1600" height="1020" fill="white"/>
+<g font-family="PingFang SC,Noto Sans CJK SC,sans-serif"><text x="80" y="38" font-size="24">紫潮桥头 · 224×126 · 正交布局</text>
+<text x="80" y="66" font-size="15">2026-10-15-content-v1 / 黑色不可走 · 绿色可走 · 红色出口；不是最终贴图</text>
+<rect x="80" y="90" width="1440" height="810" fill="#65ae76"/>
+<polygon points="337.1,147.9 562.1,122.1 671.4,231.4 626.4,379.3 433.6,405.0 305.0,295.7" fill="#15191a"/>
+<polygon points="581.4,565.7 825.7,540.0 947.9,668.6 896.4,784.3 690.7,810.0 549.3,707.1" fill="#15191a"/>
+<polygon points="935.0,186.4 1070.0,160.7 1134.3,270.0 1102.1,462.9 992.9,495.0 915.7,360.0" fill="#15191a"/>
+<circle cx="137.85714285714286" cy="495.0" r="9" fill="#df303b"/>
+<text x="80" y="936" font-size="16">P=出口　N=NPC序号　L=地标　E=精英点　B=首领场　蓝点=普通刷新位；详情见JSON/地图文档</text><text x="80" y="970" font-size="15">布局只校核静态四邻接与一格余量；工程须再验证真实碰撞、角色半径、门禁、巡游和渲染。</text></g></svg>

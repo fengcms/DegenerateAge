@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1020" viewBox="0 0 1600 1020">
+<rect width="1600" height="1020" fill="white"/>
+<g font-family="PingFang SC,Noto Sans CJK SC,sans-serif"><text x="80" y="38" font-size="24">断旗关 · 96×54 · 正交布局</text>
+<text x="80" y="66" font-size="15">2026-10-15-content-v1 / 黑色不可走 · 绿色可走 · 红色出口；不是最终贴图</text>
+<rect x="80" y="90" width="1440" height="810" fill="#65ae76"/>
+<polygon points="275.0,180.0 470.0,165.0 560.0,240.0 515.0,330.0 365.0,345.0 260.0,270.0" fill="#15191a"/>
+<polygon points="725.0,165.0 890.0,150.0 965.0,225.0 935.0,285.0 800.0,300.0 710.0,240.0" fill="#15191a"/>
+<polygon points="1040.0,225.0 1160.0,210.0 1220.0,255.0 1205.0,360.0 1100.0,375.0 1025.0,300.0" fill="#15191a"/>
+<polygon points="335.0,660.0 515.0,645.0 605.0,705.0 575.0,795.0 410.0,795.0 320.0,750.0" fill="#15191a"/>
+<polygon points="815.0,660.0 1010.0,645.0 1115.0,720.0 1070.0,780.0 905.0,795.0 785.0,735.0" fill="#15191a"/>
+<circle cx="140.0" cy="495.0" r="9" fill="#df303b"/>
+<circle cx="1460.0" cy="495.0" r="9" fill="#df303b"/>
+<circle cx="890.0" cy="135.0" r="9" fill="#df303b"/>
+<text x="80" y="936" font-size="16">P=出口　N=NPC序号　L=地标　E=精英点　B=首领场　蓝点=普通刷新位；详情见JSON/地图文档</text><text x="80" y="970" font-size="15">布局只校核静态四邻接与一格余量；工程须再验证真实碰撞、角色半径、门禁、巡游和渲染。</text></g></svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1020" viewBox="0 0 1600 1020">
+<rect width="1600" height="1020" fill="white"/>
+<g font-family="PingFang SC,Noto Sans CJK SC,sans-serif"><text x="80" y="38" font-size="24">沉沙库庭 · 176×99 · 正交布局</text>
+<text x="80" y="66" font-size="15">2026-10-15-content-v1 / 黑色不可走 · 绿色可走 · 红色出口；不是最终贴图</text>
+<rect x="80" y="90" width="1440" height="810" fill="#65ae76"/>
+<polygon points="374.5,294.5 603.6,270.0 726.4,376.4 677.3,523.6 472.7,548.2 341.8,441.8" fill="#15191a"/>
+<polygon points="718.2,531.8 955.5,515.5 1070.0,630.0 1020.9,736.4 816.4,752.7 685.5,662.7" fill="#15191a"/>
+<polygon points="980.0,204.5 1110.9,188.2 1176.4,229.1 1151.8,327.3 1037.3,335.5 963.6,278.2" fill="#15191a"/>
+<circle cx="137.27272727272728" cy="499.09090909090907" r="9" fill="#df303b"/>
+<text x="80" y="936" font-size="16">P=出口　N=NPC序号　L=地标　E=精英点　B=首领场　蓝点=普通刷新位；详情见JSON/地图文档</text><text x="80" y="970" font-size="15">布局只校核静态四邻接与一格余量；工程须再验证真实碰撞、角色半径、门禁、巡游和渲染。</text></g></svg>
