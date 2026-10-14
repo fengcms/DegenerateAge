@@ -9,7 +9,9 @@
     "mapScope": ["camp"],
     "prev": "",
     "abandonable": false,
-    "desc": "与长老交谈，获得基础武器与操作引导。"
+    "desc": "与长老交谈，获得基础武器与操作引导。",
+    "trackerText": "到 {map:camp} 找 {npc:elder} 了解营地的情况。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 交任务吧。"
   },
   {
     "id": "Q002",
@@ -21,7 +23,9 @@
     "mapScope": ["wild_trial"],
     "prev": "Q001",
     "abandonable": false,
-    "desc": "沿营地路牌可免费走到试炼野外，也可找车夫乘坐免费教学线路；击败 5 只腐化野狼。"
+    "desc": "沿营地路牌可免费走到试炼野外，也可找车夫乘坐免费教学线路；击败 5 只腐化野狼。",
+    "trackerText": "你需要到 {map:wild_trial} 击杀 {count} 只 {monster:wolf_corrupted}（{current}/{count}）。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 交任务吧。"
   },
   {
     "id": "Q003",
@@ -33,7 +37,9 @@
     "mapScope": ["wild_trial"],
     "prev": "Q002",
     "abandonable": false,
-    "desc": "拾取 3 个灵能碎片。"
+    "desc": "拾取 3 个灵能碎片。",
+    "trackerText": "到 {map:wild_trial} 收集 {count} 个 {item:spirit_shard}（{current}/{count}）。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 交任务吧。"
   },
   {
     "id": "Q004",
@@ -45,7 +51,9 @@
     "mapScope": ["wild_trial"],
     "prev": "Q003",
     "abandonable": false,
-    "desc": "击败精英裂爪狼王，获得 Boss 线索。"
+    "desc": "击败精英裂爪狼王，获得 Boss 线索。",
+    "trackerText": "前往 {map:wild_trial} 击败 {monster:elite_wolf_king}，寻找腐化源头。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 交任务吧。"
   },
   {
     "id": "Q005",
@@ -57,7 +65,9 @@
     "mapScope": ["corruption_source"],
     "prev": "Q004",
     "abandonable": false,
-    "desc": "击败腐化巨兽，完成第一章、解锁第二章入口。"
+    "desc": "击败腐化巨兽，完成第一章、解锁第二章入口。",
+    "trackerText": "深入 {map:corruption_source} 击败 {monster:boss_corrupted_beast}。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 交任务吧。"
   },
   {
     "id": "S001",
@@ -69,7 +79,9 @@
     "mapScope": ["camp", "wild_trial"],
     "prev": "",
     "abandonable": true,
-    "desc": "营地与试炼野外的裂壳虫成了威胁，清理 3 只。（可放弃 / 重接）"
+    "desc": "营地与试炼野外的裂壳虫成了威胁，清理 3 只。（可放弃 / 重接）",
+    "trackerText": "清理 {count} 只 {monster:shellback_bug}（{current}/{count}），它们出没于营地与试炼野外。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 领取奖励吧。"
   },
   {
     "id": "S002",
@@ -81,6 +93,8 @@
     "mapScope": ["camp", "wild_trial"],
     "prev": "",
     "abandonable": true,
-    "desc": "长老需要 1 枚灵能碎片用于研究（碎片来自试炼野外的裂壳虫）。（可放弃 / 重接）"
+    "desc": "长老需要 1 枚灵能碎片用于研究（碎片来自试炼野外的裂壳虫）。（可放弃 / 重接）",
+    "trackerText": "到 {map:wild_trial} 收集 {count} 枚 {item:spirit_shard} 给长老研究。",
+    "turnInText": "快到 {map:camp} 找 {npc:elder} 领取奖励吧。"
   }
 ]

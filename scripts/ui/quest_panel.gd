@@ -229,32 +229,16 @@ func _make_row(e: Dictionary) -> Control:
 	title.add_theme_color_override("font_color", _title_color(state, is_side))
 	info.add_child(title)
 
-	var obj_text := String(e.get("objectiveText", ""))
-	var objective: Dictionary = e.get("objective", {})
-	if state == Quest.STATE_ACTIVE and String(objective.get("kind", "")) == "kill":
-		var goal := HBoxContainer.new()
-		goal.add_theme_constant_override("separation", 3)
-		info.add_child(goal)
-		var prefix := Label.new()
-		prefix.text = Localization.tr_key("ui.quest_panel.p007")
-		prefix.add_theme_font_size_override("font_size", 12)
-		goal.add_child(prefix)
-		var target := QuestTargetLink.new()
-		target.text = Quest._target_name("kill", String(objective.get("targetId", "")))
-		target.add_theme_font_size_override("font_size", 12)
-		target.pressed.connect(_on_target_pressed.bind(qid))
-		goal.add_child(target)
-		var progress := Label.new()
-		progress.text = " %d/%d" % [int(e.get("cur", 0)), int(e.get("need", 0))]
-		progress.add_theme_font_size_override("font_size", 12)
-		goal.add_child(progress)
-	else:
-		var sub := Label.new()
-		sub.text = obj_text if not obj_text.is_empty() else String(e.get("desc", ""))
-		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		sub.add_theme_font_size_override("font_size", 12)
-		sub.add_theme_color_override("font_color", COL_TEXT_DIM if state != Quest.STATE_REWARDED else Color(0.45, 0.60, 0.45))
-		info.add_child(sub)
+	var sub := RichTextLabel.new()
+	sub.bbcode_enabled = true
+	sub.fit_content = true
+	sub.scroll_active = false
+	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sub.add_theme_font_size_override("normal_font_size", 12)
+	sub.add_theme_color_override("default_color", COL_TEXT_DIM if state != Quest.STATE_REWARDED else Color(0.45, 0.60, 0.45))
+	sub.text = QuestInlineText.markup(e)
+	sub.meta_clicked.connect(_on_inline_link.bind(qid))
+	info.add_child(sub)
 
 	# 完整描述放 tooltip（列表保持单行紧凑；08 §8.5 列表只要求「名称 / 目标 / 进度」）
 	var desc := String(e.get("desc", ""))
@@ -273,8 +257,11 @@ func _make_row(e: Dictionary) -> Control:
 	row.add_child(_make_action_button(qid, state))
 	return panel
 
-func _on_target_pressed(quest_id: String) -> void:
-	var result := Quest.start_target_navigation(quest_id)
+func _on_inline_link(meta: Variant, quest_id: String) -> void:
+	var parts := QuestInlineText.link_target(meta)
+	if parts.size() != 2:
+		return
+	var result := Quest.start_link_navigation(quest_id, parts[0], parts[1])
 	if bool(result.get("ok", false)):
 		set_open(false)
 		EventBus.toast_requested.emit(Localization.tr_key("ui.quest_panel.p010"), "info")

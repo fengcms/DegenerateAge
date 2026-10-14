@@ -2006,10 +2006,10 @@ func _test_quest_target_navigation() -> void:
 	panel.set_open(true)
 	var found_link := false
 	for row in panel._list.get_children():
-		for link in row.find_children("*", "Button", true, false):
-			if link is QuestTargetLink and link.text == "腐化野狼":
+		for link in row.find_children("*", "RichTextLabel", true, false):
+			if link is RichTextLabel and link.text.contains("[url=monster:wolf_corrupted]"):
 				found_link = true
-				link.pressed.emit()
+				link.meta_clicked.emit("monster:wolf_corrupted")
 				break
 		if found_link:
 			break

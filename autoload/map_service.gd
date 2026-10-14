@@ -32,19 +32,25 @@ var _loading_token := 0
 ## 任务目标导航只在运行中保留；跨图重载继续，普通存档不保存这条临时指令。
 var quest_nav_target: String = ""
 var quest_nav_map: String = ""
+var quest_nav_kind: String = ""
 
 func clear_quest_navigation() -> void:
 	quest_nav_target = ""
 	quest_nav_map = ""
+	quest_nav_kind = ""
 
 func start_quest_navigation(monster_id: String, allowed_maps: Array) -> Dictionary:
+	return start_quest_link_navigation("monster", monster_id, allowed_maps)
+
+func start_quest_link_navigation(kind: String, target_id: String, allowed_maps: Array) -> Dictionary:
 	var queue: Array[String] = [GameState.current_map]
 	var visited := {GameState.current_map: true}
 	var first_hop := {GameState.current_map: ""}
 	while not queue.is_empty():
 		var map_id: String = queue.pop_front()
-		if allowed_maps.has(map_id) and _map_has_monster(map_id, monster_id):
-			quest_nav_target = monster_id
+		if allowed_maps.has(map_id) and _map_has_quest_target(map_id, kind, target_id):
+			quest_nav_kind = kind
+			quest_nav_target = target_id
 			quest_nav_map = map_id
 			return {"ok": true, "map": map_id, "first_hop": first_hop[map_id]}
 		for exit_data in data_for(map_id).get("exits", []):
@@ -59,7 +65,7 @@ func start_quest_navigation(monster_id: String, allowed_maps: Array) -> Dictiona
 func quest_next_exit() -> Dictionary:
 	if quest_nav_target.is_empty() or quest_nav_map.is_empty():
 		return {}
-	var route := start_quest_navigation(quest_nav_target, [quest_nav_map])
+	var route := start_quest_link_navigation(quest_nav_kind, quest_nav_target, [quest_nav_map])
 	if not bool(route.get("ok", false)):
 		return {}
 	var hop := String(route.get("first_hop", ""))
@@ -75,6 +81,33 @@ func _map_has_monster(map_id: String, monster_id: String) -> bool:
 			return true
 	var boss: Variant = map_data.get("bossSpawn", null)
 	return boss is Dictionary and String(boss.get("monsterId", "")) == monster_id
+
+func _map_has_quest_target(map_id: String, kind: String, target_id: String) -> bool:
+	match kind:
+		"monster":
+			return _map_has_monster(map_id, target_id)
+		"npc":
+			for spec in data_for(map_id).get("npcs", []):
+				if String(spec.get("npcId", "")) == target_id:
+					return true
+		"map":
+			return map_id == target_id
+	return false
+
+func map_for_npc(npc_id: String) -> String:
+	for entry in DataLoader.get_table("maps"):
+		if entry is Dictionary:
+			var map_id := String(entry.get("id", ""))
+			if _map_has_quest_target(map_id, "npc", npc_id):
+				return map_id
+	return ""
+
+func npc_name(npc_id: String) -> String:
+	var map_id := map_for_npc(npc_id)
+	for spec in data_for(map_id).get("npcs", []):
+		if String(spec.get("npcId", "")) == npc_id:
+			return String(spec.get("npcName", npc_id))
+	return npc_id
 
 # ---- 查询 ----
 

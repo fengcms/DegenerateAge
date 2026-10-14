@@ -72,6 +72,23 @@ func _tick_quest_navigation() -> void:
 	if MapService.quest_nav_target.is_empty() or GameState.panel_open or _player.is_dead:
 		return
 	if GameState.current_map == MapService.quest_nav_map:
+		if MapService.quest_nav_kind == "map":
+			MapService.clear_quest_navigation()
+			return
+		if MapService.quest_nav_kind == "npc":
+			var npc_id := MapService.quest_nav_target
+			for spec in MapService.current_npcs():
+				if String(spec.get("npcId", "")) != npc_id:
+					continue
+				for child in _npcs.get_children():
+						var npc := child as Npc
+						if npc != null and npc.npc_name == String(spec.get("npcName", "")):
+							MapService.clear_quest_navigation()
+							_request_npc_interaction(npc)
+							return
+			MapService.clear_quest_navigation()
+			EventBus.toast_requested.emit(Localization.tr_key("msg.game.p002"), "danger")
+			return
 		var best := Vector2.ZERO
 		var best_distance := INF
 		for point in _spawner.marker_points():

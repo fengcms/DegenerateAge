@@ -294,6 +294,9 @@ static func list_states() -> Array[Dictionary]:
 			"id": qid,
 			"name": String((tpl as Dictionary).get("name", qid)),
 			"desc": String((tpl as Dictionary).get("desc", "")),
+			"trackerText": String((tpl as Dictionary).get("trackerText", "")),
+			"turnInText": String((tpl as Dictionary).get("turnInText", "")),
+			"giver": String((tpl as Dictionary).get("giver", "")),
 			"type": String((tpl as Dictionary).get("type", "main")),
 			"state": state_of(qid),
 			"cur": int(p.get("cur", 0)),
@@ -336,6 +339,27 @@ static func start_target_navigation(quest_id: String) -> Dictionary:
 	if String(objective.get("kind", "")) != "kill":
 		return {"ok": false, "reason": Localization.tr_key("msg.quest.p018")}
 	return MapService.start_quest_navigation(String(objective.get("targetId", "")), tpl.get("mapScope", []))
+
+## 行内导航只接受本任务配置的目标、范围和交付人，避免文案标记跨任务跳转。
+static func start_link_navigation(quest_id: String, kind: String, target_id: String) -> Dictionary:
+	var state := state_of(quest_id)
+	var tpl := template(quest_id)
+	var objective: Dictionary = tpl.get("objective", {})
+	if state == STATE_COMPLETED:
+		var giver := String(tpl.get("giver", ""))
+		var giver_map := MapService.map_for_npc(giver)
+		if kind == "npc" and target_id == giver and not giver_map.is_empty():
+			return MapService.start_quest_link_navigation("npc", giver, [giver_map])
+		if kind == "map" and target_id == giver_map and not giver_map.is_empty():
+			return MapService.start_quest_link_navigation("map", giver_map, [giver_map])
+	elif state == STATE_ACTIVE:
+		var scope: Array = tpl.get("mapScope", [])
+		if kind == "map" and scope.has(target_id):
+			return MapService.start_quest_link_navigation("map", target_id, [target_id])
+		if kind == "monster" and String(objective.get("kind", "")) == "kill" \
+				and target_id == String(objective.get("targetId", "")):
+			return MapService.start_quest_link_navigation("monster", target_id, scope)
+	return {"ok": false, "reason": "当前任务状态不能导航到该目标"}
 
 ## 目标对象显示名（怪物 / 收集物 / NPC）。
 static func _target_name(kind: String, target_id: String) -> String:

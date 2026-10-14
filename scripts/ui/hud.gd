@@ -256,20 +256,24 @@ func _make_quest_row(e: Dictionary) -> Control:
 			text += " %d/%d" % [int(e.get("cur", 0)), need]
 		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.91))
 	lbl.text = text
-	var objective: Dictionary = e.get("objective", {})
-	if done or String(objective.get("kind", "")) != "kill":
-		return lbl
 	var row := VBoxContainer.new()
 	row.add_child(lbl)
-	var target := QuestTargetLink.new()
-	target.text = "→ " + Quest._target_name("kill", String(objective.get("targetId", "")))
-	target.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	target.add_theme_font_size_override("font_size", 11)
-	target.pressed.connect(func() -> void:
-		var result := Quest.start_target_navigation(String(e.get("id", "")))
+	var description := RichTextLabel.new()
+	description.bbcode_enabled = true
+	description.fit_content = true
+	description.scroll_active = false
+	description.custom_minimum_size.x = 160
+	description.add_theme_font_size_override("normal_font_size", 11)
+	description.add_theme_color_override("default_color", Color(0.75, 0.79, 0.83))
+	description.text = QuestInlineText.markup(e)
+	description.meta_clicked.connect(func(meta: Variant) -> void:
+		var parts := QuestInlineText.link_target(meta)
+		if parts.size() != 2:
+			return
+		var result := Quest.start_link_navigation(String(e.get("id", "")), parts[0], parts[1])
 		if not bool(result.get("ok", false)):
 			EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("ui.hud.p012"))), "danger"))
-	row.add_child(target)
+	row.add_child(description)
 	return row
 
 func _update_coords() -> void:
