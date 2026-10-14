@@ -56,6 +56,8 @@ func _ready() -> void:
 	if not layout_path.is_empty():
 		cave = CaveLayout.new(layout_path)
 		assert(cave.size == grid_size, "Map size/layout mismatch: %s" % map_id)
+		# Prepare once during loading, never on the first automatic-battle frame.
+		cave.prepare_connectivity()
 		if map_id == "c2_well_core":
 			cave.set_access_gate_open(bool(GameState.unlocks.get("c2_core_access", false)))
 			EventBus.quest_rewarded.connect(_on_quest_rewarded)
@@ -164,10 +166,10 @@ func _build_cave_walls() -> void:
 	var rock := StaticBody2D.new()
 	rock.name = "CaveWalls"
 	add_child(rock)
-	var diamond := PackedVector2Array([Vector2(-31, 0), Vector2(0, -15), Vector2(31, 0), Vector2(0, 15)])
+	# Every wall uses the same immutable diamond; only node positions differ.
+	var shape := ConvexPolygonShape2D.new()
+	shape.points = PackedVector2Array([Vector2(-31, 0), Vector2(0, -15), Vector2(31, 0), Vector2(0, 15)])
 	for cell in cave.boundary_cells():
-		var shape := ConvexPolygonShape2D.new()
-		shape.points = diamond
 		var hit := CollisionShape2D.new()
 		hit.shape = shape
 		hit.position = Iso.grid_to_world(cell)

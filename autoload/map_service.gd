@@ -29,6 +29,11 @@ var pending_travel: Dictionary = {}
 var loading_active := false
 var loading_message := ""
 var _loading_token := 0
+var _entry_cache: Dictionary = {}
+
+func _ready() -> void:
+	EventBus.data_loaded.connect(func() -> void: _entry_cache.clear())
+
 ## 任务目标导航只在运行中保留；跨图重载继续，普通存档不保存这条临时指令。
 var quest_nav_target: String = ""
 var quest_nav_map: String = ""
@@ -436,12 +441,17 @@ func entry_point(map_id: String) -> Vector2:
 		if s is Dictionary:
 			w = maxi(1, int((s as Dictionary).get("w", w)))
 			h = maxi(1, int((s as Dictionary).get("h", h)))
+	var dims := Vector2i(w, h)
+	var layout_path := String(m.get("layoutPath", "")) if m is Dictionary else ""
+	var cached: Dictionary = _entry_cache.get(map_id, {})
+	if cached.get("size") == dims and cached.get("path") == layout_path:
+		return cached.position
 	var cell := Vector2i(w / 2, h / 2)
-	if m is Dictionary:
-		var layout_path := String((m as Dictionary).get("layoutPath", ""))
-		if not layout_path.is_empty():
-			cell = CaveLayout.new(layout_path).nearest_walkable(cell)
-	return Iso.grid_to_world(cell)
+	if not layout_path.is_empty():
+		cell = CaveLayout.nearest_cell_in_layout(layout_path, cell)
+	var position := Iso.grid_to_world(cell)
+	_entry_cache[map_id] = {"size": dims, "path": layout_path, "position": position}
+	return position
 
 func _fail(reason: String) -> Dictionary:
 	return {"ok": false, "reason": reason}

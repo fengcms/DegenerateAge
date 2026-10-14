@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import uuid
 from pathlib import Path
 
@@ -24,12 +25,32 @@ DEFAULT_TESTS = [
 ]
 
 
-def run(project: Path, args: list[str], timeout: int = 180) -> tuple[bool, str]:
-    process = subprocess.run(
-        [str(GODOT), "--headless", "--path", str(project), *args],
-        capture_output=True, text=True, timeout=timeout, check=False,
+def run(project: Path, args: list[str], timeout: int = 180, rendered: bool = False) -> tuple[bool, str]:
+    process = subprocess.Popen(
+        [str(GODOT), *([] if rendered else ["--headless"]), "--path", str(project), *args],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     )
-    output = process.stdout + process.stderr
+    lines: list[str] = []
+
+    def collect() -> None:
+        assert process.stdout is not None
+        for line in process.stdout:
+            lines.append(line)
+            # An aborted GDScript coroutine otherwise leaves the scene running
+            # until the frame cap, with no opportunity to call get_tree().quit().
+            if "SCRIPT ERROR:" in line:
+                process.terminate()
+
+    reader = threading.Thread(target=collect, daemon=True)
+    reader.start()
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+        lines.append("FAIL: Godot test timed out\n")
+    reader.join()
+    output = "".join(lines)
     failed = process.returncode != 0 or "SCRIPT ERROR:" in output or "FAIL" in output
     return not failed, output
 
@@ -38,6 +59,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tests", nargs="*", default=DEFAULT_TESTS)
     parser.add_argument("--committed-tree", action="store_true", help="用已提交的稳定快照隔离并行美术试作")
+    parser.add_argument("--rendered", action="store_true", help="以实际窗口运行指定测试，用于渲染采样")
     args = parser.parse_args()
     if not GODOT.is_file():
         print(f"Godot 未找到：{GODOT}", file=sys.stderr)
@@ -77,7 +99,7 @@ def main() -> int:
                 scene = f"res://tests/{test}.tscn"
                 # Async physics tests must finish, not silently hit a render-frame cap.
                 ok, output = run(project, ["--scene", scene, "--max-fps", "120",
-                                           "--quit-after", "14400"], timeout=240)
+                                           "--quit-after", "14400"], timeout=240, rendered=args.rendered)
                 completed = any(marker in output for marker in ("PASS", "全部通过", "全部断言通过"))
                 ok = ok and completed
                 if not completed:

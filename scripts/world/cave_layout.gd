@@ -14,12 +14,34 @@ var navigation_revision := 0
 var _component_ids := PackedInt32Array()
 var _components_revision := -1
 
-func _init(layout_path: String = PATH) -> void:
+static func _read_layout(layout_path: String) -> Dictionary:
 	var file := FileAccess.open(layout_path, FileAccess.READ)
 	assert(file != null, "Missing map layout: %s" % layout_path)
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	assert(parsed is Dictionary, "Invalid map layout: %s" % layout_path)
-	var data: Dictionary = parsed
+	return parsed
+
+## Default spawns only need the compiled mask, not blocked dictionaries or AStar.
+## Keep the same clamping and radius/row/column search order as nearest_walkable.
+static func nearest_cell_in_layout(layout_path: String, cell: Vector2i) -> Vector2i:
+	var data := _read_layout(layout_path)
+	var dims: Array = data.get("grid_size", [50, 50])
+	var extent := Vector2i(int(dims[0]), int(dims[1]))
+	var rows: Array = data.get("walkable_rows", [])
+	assert(rows.size() == extent.y)
+	var clamped := cell.clamp(Vector2i.ZERO, extent - Vector2i.ONE)
+	if String(rows[clamped.y])[clamped.x] == "1":
+		return clamped
+	for radius in range(1, maxi(extent.x, extent.y) + 1):
+		for y in range(maxi(0, clamped.y - radius), mini(extent.y - 1, clamped.y + radius) + 1):
+			var row := String(rows[y])
+			for x in range(maxi(0, clamped.x - radius), mini(extent.x - 1, clamped.x + radius) + 1):
+				if row[x] == "1":
+					return Vector2i(x, y)
+	return clamped
+
+func _init(layout_path: String = PATH) -> void:
+	var data := _read_layout(layout_path)
 	var dims: Array = data.get("grid_size", [50, 50])
 	size = Vector2i(int(dims[0]), int(dims[1]))
 	points = data.get("points", {})
@@ -120,6 +142,9 @@ func _ensure_components() -> void:
 					queue[tail] = neighbor
 					tail += 1
 	_components_revision = navigation_revision
+
+func prepare_connectivity() -> void:
+	_ensure_components()
 
 func component_at(cell: Vector2i) -> int:
 	_ensure_components()
