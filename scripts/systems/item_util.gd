@@ -128,10 +128,14 @@ const PERCENT_STATS := [
 ## 把一件装备的属性整理成可显示行：基础属性 → 随机词条 → 百分比词条。
 static func attr_lines(item: Dictionary) -> Array[String]:
 	var lines: Array[String] = []
-	var base = Upgrade.base_attrs(item)
+	var base = item.get("baseAttrs", {})
 	if base is Dictionary:
 		for k in base.keys():
-			lines.append(stat_line(String(k), float(base[k])))
+			var line := stat_line(String(k), float(base[k]))
+			var bonus := float(Upgrade.base_attrs(item).get(k, 0.0)) - float(base[k])
+			if not is_zero_approx(bonus):
+				line += "  %s" % stat_value(String(k), bonus)
+			lines.append(line)
 	for key in ["affixes", "pctAttrs"]:
 		var arr = item.get(key, [])
 		if arr is Array:
@@ -143,9 +147,13 @@ static func attr_lines(item: Dictionary) -> Array[String]:
 ## 单条属性文本，如「攻击 +5」「生命 +6.5%」。
 static func stat_line(stat: String, value: float) -> String:
 	var label := String(STAT_LABEL.get(stat, stat))
+	return "%s %s" % [label, stat_value(stat, value)]
+
+## 属性数值片段，升星加成与原始值使用相同单位和精度。
+static func stat_value(stat: String, value: float) -> String:
 	if PERCENT_STATS.has(stat):
-		return "%s +%.1f%%" % [label, value * 100.0]
-	return "%s +%d" % [label, int(round(value))]
+		return "+%.1f%%" % (value * 100.0)
+	return "+%d" % int(round(value))
 
 ## 装备模板名（槽内缩写 / 文本引用用）。
 static func template_name(item: Dictionary) -> String:
