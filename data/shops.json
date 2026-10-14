@@ -22,5 +22,25 @@
       { "itemId": "misc_town_scroll", "price": 80, "tier": 1 },
       { "itemId": "misc_revive_scroll", "price": 120, "tier": 1 }
     ]
+  },
+  {
+    "npcId": "c2_apothecary",
+    "name": "白芷（沉井镇药师）",
+    "sellEnabled": true,
+    "buyItems": [
+      { "itemId": "potion_hp_mid", "price": 60, "tier": 2 },
+      { "itemId": "potion_mp_mid", "price": 60, "tier": 2 }
+    ]
+  },
+  {
+    "npcId": "c2_peddler",
+    "name": "阿絮（沉井镇杂货）",
+    "sellEnabled": true,
+    "buyItems": [
+      { "itemId": "potion_hp_mid", "price": 60, "tier": 2 },
+      { "itemId": "potion_mp_mid", "price": 60, "tier": 2 },
+      { "itemId": "misc_town_scroll", "price": 80, "tier": 1 },
+      { "itemId": "misc_revive_scroll", "price": 120, "tier": 1 }
+    ]
   }
 ]

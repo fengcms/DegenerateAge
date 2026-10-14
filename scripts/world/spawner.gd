@@ -193,7 +193,7 @@ func _tombstone_position(point: Dictionary) -> Vector2:
 ## 生成位置：墓碑类点沿用固定位置（原位复活），其余随机。
 func _spawn_position(point: Dictionary) -> Vector2:
 	if _ground != null and _ground.cave != null and String(point.get("monster_id", "")) == "boss_corrupted_beast":
-		var boss_cell: Array = _ground.cave.points.get("boss_arena", [40, 26])
+		var boss_cell: Array = _ground.cave.points.get("beast", _ground.cave.points.get("boss_arena", [40, 26]))
 		return Iso.grid_to_world(Vector2i(int(boss_cell[0]), int(boss_cell[1])))
 	if bool(point.get("tombstone", false)):
 		var saved := _tombstone_position(point)

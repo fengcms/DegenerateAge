@@ -52,8 +52,11 @@ func _ready() -> void:
 	if not cur.is_empty():
 		map_id = cur
 	_load_map()
-	if map_id == "corruption_source":
-		cave = CaveLayout.new()
+	var layout_path := String(map_data.get("layoutPath", ""))
+	if not layout_path.is_empty():
+		cave = CaveLayout.new(layout_path)
+		assert(cave.size == grid_size, "Map size/layout mismatch: %s" % map_id)
+	if map_id == "corruption_source" and layout_path.is_empty():
 		add_child(preload("res://scripts/world/cave_props.gd").new())
 	if map_id == "camp" or sample_camp_theme:
 		add_child(preload("res://scripts/world/sample_camp_props.gd").new())
@@ -163,7 +166,7 @@ func _draw() -> void:
 	var w := grid_size.x
 	var h := grid_size.y
 	var corners := _outer_corners()
-	if cave != null:
+	if cave != null and map_id == "corruption_source":
 		# Cave void continues beyond the rectangular planning grid; the outer
 		# isometric diamond is a camera extent, not a visible island edge.
 		draw_rect(Rect2(-Vector2.ONE * 10000.0, Vector2.ONE * 20000.0), Color("090806"))
@@ -197,6 +200,8 @@ func _draw() -> void:
 		var tiles: Array = CAMP_TILES if camp_style else (WILD_TILES if map_id == "wild_trial" else ASH_TILES)
 		for col in range(w):
 			for row in range(h):
+				if cave != null and not cave.is_walkable(Vector2i(col, row)):
+					continue
 				var tile := 0
 				var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
 				if variation < 4:
@@ -212,6 +217,17 @@ func _draw() -> void:
 		var camp_outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 		draw_polyline(camp_outline, Color("a89978") if camp_style else Color("747565"), 2.0)
 		return
+
+	if cave != null:
+		for col in range(w):
+			for row in range(h):
+				var cell := Vector2i(col, row)
+				if not cave.is_walkable(cell):
+					var center := Iso.grid_to_world(cell)
+					draw_colored_polygon(PackedVector2Array([
+						center + Vector2(-32, 0), center + Vector2(0, -16),
+						center + Vector2(32, 0), center + Vector2(0, 16),
+					]), Color("222b2b"))
 
 	# 网格线：两组共 w+h+2 条（性能友好，避免逐格绘制）
 	var lines := PackedVector2Array()

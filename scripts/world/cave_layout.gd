@@ -9,10 +9,12 @@ var points: Dictionary = {}
 var _blocked: Dictionary = {}
 var _astar := AStarGrid2D.new()
 
-func _init() -> void:
-	var file := FileAccess.open(PATH, FileAccess.READ)
-	assert(file != null, "Missing cave layout")
-	var data: Dictionary = JSON.parse_string(file.get_as_text())
+func _init(layout_path: String = PATH) -> void:
+	var file := FileAccess.open(layout_path, FileAccess.READ)
+	assert(file != null, "Missing map layout: %s" % layout_path)
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	assert(parsed is Dictionary, "Invalid map layout: %s" % layout_path)
+	var data: Dictionary = parsed
 	var dims: Array = data.get("grid_size", [50, 50])
 	size = Vector2i(int(dims[0]), int(dims[1]))
 	points = data.get("points", {})

@@ -115,6 +115,7 @@ func _collect() -> Dictionary:
 		"player": GameState.player.duplicate(true),
 		"gold": GameState.gold,
 		"currentMap": GameState.current_map,
+		"mapLayoutVersion": "2026-10-14-landscape-v2",
 		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
@@ -342,6 +343,10 @@ func _emit_resume_toast() -> void:
 func _migrate(source: Dictionary) -> Dictionary:
 	var data := source.duplicate(true)
 	var v := int(data.get("schemaVersion", -1))
+	# schema 11 的第一章存档仍使用旧方形布局；布局版本独立于装备 schema。
+	if not data.has("mapLayoutVersion") and v == CURRENT_SCHEMA:
+		_migrate_landscape_positions(data)
+		data.mapLayoutVersion = "2026-10-14-landscape-v2"
 	# 仅明确声明的 v0 支持历史最小角色格式；不能把无版本坏档当旧档补空。
 	if v == 0:
 		var defaults := {"slotId": -1, "savedAt": "", "currentMap": "camp", "playerPos": null,
@@ -388,6 +393,46 @@ func _migrate(source: Dictionary) -> Dictionary:
 			data.inventoryExpansions = 0
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
+
+func _migrate_landscape_positions(data: Dictionary) -> void:
+	var old_sizes := {
+		"camp": Vector2(40, 40), "wild_trial": Vector2(60, 60),
+		"ash_land": Vector2(60, 60), "corruption_source": Vector2(50, 50),
+	}
+	var map_id := String(data.get("currentMap", ""))
+	if old_sizes.has(map_id) and data.get("playerPos") is Array:
+		data.playerPos = _remap_landscape_position(data.playerPos, old_sizes[map_id], map_id)
+	# 旧迷雾区块坐标无可逆映射，重置探索遮罩；到访记录与剧情状态保留。
+	data.exploredMaps = {}
+	var respawn: Variant = data.get("spawnRespawn", {})
+	if respawn is Dictionary:
+		for key in respawn:
+			var source_map := String(key).get_slice("#", 0)
+			if old_sizes.has(source_map) and respawn[key] is Dictionary:
+				var record: Dictionary = respawn[key]
+				if record.get("pos") is Array:
+					record.pos = _remap_landscape_position(record.pos, old_sizes[source_map], source_map)
+	var loot: Variant = data.get("unclaimedLoot", {})
+	if loot is Dictionary:
+		for source_map in loot:
+			if not old_sizes.has(String(source_map)) or not loot[source_map] is Array:
+				continue
+			for record in loot[source_map]:
+				if record is Dictionary and record.get("pos") is Array:
+					record.pos = _remap_landscape_position(record.pos, old_sizes[String(source_map)], String(source_map))
+
+func _remap_landscape_position(raw: Array, old_size: Vector2, map_id: String) -> Array:
+	if raw.size() != 2:
+		return raw
+	var new_size := MapService.grid_size(map_id)
+	if new_size.x <= 0 or new_size.y <= 0:
+		return raw
+	var cell := Iso.world_to_grid(Vector2(float(raw[0]), float(raw[1])))
+	var mapped := Vector2i(
+		clampi(roundi(cell.x * float(new_size.x - 1) / (old_size.x - 1.0)), 0, new_size.x - 1),
+		clampi(roundi(cell.y * float(new_size.y - 1) / (old_size.y - 1.0)), 0, new_size.y - 1))
+	var world := Iso.grid_to_world(mapped)
+	return [world.x, world.y]
 
 ## 应用前完整校验；无效数据不修改运行态。只有明确旧版本允许迁移缺省字段。
 func apply_to_game_state(data: Dictionary) -> void:
