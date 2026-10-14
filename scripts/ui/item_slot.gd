@@ -37,6 +37,8 @@ var item: Dictionary = {}:
 var _count: Label
 var _potion_marker: Label
 var _drag_cover: PanelContainer
+var _press_grab_point := Vector2.ZERO
+var _press_grab_valid := false
 
 func _ready() -> void:
 	_count = Label.new()
@@ -79,11 +81,15 @@ func _ready() -> void:
 		empty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_drag_cover.add_child(empty_label)
 	add_child(_drag_cover)
+	button_down.connect(func() -> void:
+		_press_grab_point = get_local_mouse_position()
+		_press_grab_valid = true)
 	set_process(false)
 
 func _process(_delta: float) -> void:
 	if not get_viewport().gui_is_dragging():
 		_drag_cover.visible = false
+		_press_grab_valid = false
 		set_process(false)
 
 func _refresh_potion_marker() -> void:
@@ -107,8 +113,11 @@ func _refresh_count() -> void:
 func _get_drag_data(at_position: Vector2) -> Variant:
 	if not [ROLE_BAG, ROLE_WAREHOUSE].has(role) or not draggable or item.is_empty():
 		return null
-	_spawn_drag_visual(at_position)
+	_spawn_drag_visual(_grab_point(at_position))
 	return {"from": role, "index": index, "item": item, "token": Warehouse.item_token(item)}
+
+func _grab_point(fallback: Vector2) -> Vector2:
+	return _press_grab_point if _press_grab_valid else fallback
 
 ## 拖动时跟随鼠标的视觉反馈（拖拽幽灵）。
 ## **不用引擎的 set_drag_preview**：预览挂载点由引擎自定（实测 4.7 插到本面板内部），
