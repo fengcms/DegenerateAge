@@ -1,5 +1,5 @@
 extends Node
-## M4-9：可视区搜怪、无怪巡游、百分比恢复与打坐中断。
+## M4-9：可视区搜怪、无怪巡游、未受击定时恢复与打坐中断。
 
 var _failures: Array[String] = []
 
@@ -53,6 +53,15 @@ func _ready() -> void:
 	for _i in range(30):
 		await get_tree().physics_frame
 	_expect(pilot.current_target() == found, "巡游途中发现可见怪物后应立即追击")
+	player.set_physics_process(false)
+	GameState.player.hp = GameState.max_hp() / 2
+	GameState.player.mp = GameState.max_mp() / 2
+	player._regen_elapsed = 2.9
+	var hp_before_attack := int(GameState.player.hp)
+	player.perform_attack(found)
+	player._tick_regen(0.1)
+	_expect(int(GameState.player.hp) > hp_before_attack,
+		"主动攻击不应重置未受击恢复计时")
 	found.queue_free()
 	player.set_sitting(true)
 	await get_tree().physics_frame
@@ -61,41 +70,63 @@ func _ready() -> void:
 	player.set_sitting(false)
 
 	GameState.set_auto_battle(false)
-	player._combat_cooldown = 0.0
-	player._hp_regen_rest = 0.0
-	player._mp_regen_rest = 0.0
+	player._regen_elapsed = 0.0
 	GameState.player.hp = GameState.max_hp() / 2
 	GameState.player.mp = GameState.max_mp() / 2
 	var hp0 := int(GameState.player.hp)
 	var mp0 := int(GameState.player.mp)
-	player._tick_regen(2.0)
-	_expect(int(GameState.player.hp) - hp0 == int(floorf(GameState.max_hp() * 0.02)), "脱战 HP 应按最大值每秒恢复 1%")
-	_expect(int(GameState.player.mp) - mp0 == int(floorf(GameState.max_mp() * 0.04)), "脱战 MP 应按最大值每秒恢复 2%")
-	player._mark_combat()
+	player.auto_move = Vector2.RIGHT
+	player.map_move_active = true
+	player.manual_attack_active = true
+	player._tick_regen(2.9)
+	_expect(int(GameState.player.hp) == hp0 and int(GameState.player.mp) == mp0,
+		"未受击时不足 3 秒不得提前恢复")
+	player._tick_regen(0.1)
+	_expect(int(GameState.player.hp) - hp0 == maxi(1, roundi(GameState.max_hp() * PlayerCharacter.IDLE_HP_RATE)),
+		"走路与攻击中仍应每 3 秒恢复一次 HP")
+	_expect(int(GameState.player.mp) - mp0 == maxi(1, roundi(GameState.max_mp() * PlayerCharacter.IDLE_MP_RATE)),
+		"走路与寻怪中仍应每 3 秒恢复一次 MP")
+	player.auto_move = Vector2.ZERO
+	player.map_move_active = false
+	player.manual_attack_active = false
+	player._regen_elapsed = 2.5
+	player._invuln = 0.0
+	player.apply_damage(1)
 	hp0 = int(GameState.player.hp)
 	mp0 = int(GameState.player.mp)
-	player._tick_regen(5.0)
-	_expect(int(GameState.player.hp) == hp0 and int(GameState.player.mp) == mp0, "战斗结束前 5 秒不应恢复")
-	player._tick_regen(1.0)
-	_expect(int(GameState.player.hp) > hp0, "脱战 5 秒后应恢复")
+	player._tick_regen(2.9)
+	_expect(int(GameState.player.hp) == hp0 and int(GameState.player.mp) == mp0,
+		"实际受击应重置 3 秒恢复计时")
+	player._tick_regen(0.1)
+	_expect(int(GameState.player.hp) > hp0 and int(GameState.player.mp) > mp0,
+		"受击后满 3 秒恢复血蓝")
 
 	player.set_sitting(true)
 	_expect(player.is_sitting and player.auto_move == Vector2.ZERO, "打坐应停止移动")
 	_expect(main.get_node("UI/Hud").get_node("AutoLabel").text.contains("打坐"), "HUD 应显示打坐状态")
-	player._combat_cooldown = 0.0
-	player._hp_regen_rest = 0.0
-	player._mp_regen_rest = 0.0
+	player._regen_elapsed = 0.0
 	hp0 = int(GameState.player.hp)
 	mp0 = int(GameState.player.mp)
-	player._tick_regen(2.0)
-	_expect(int(GameState.player.hp) - hp0 == int(floorf(GameState.max_hp() * 0.06)), "打坐 HP 应按最大值每秒恢复 3%")
-	_expect(int(GameState.player.mp) - mp0 == int(floorf(GameState.max_mp() * 0.10)), "打坐 MP 应按最大值每秒恢复 5%")
+	player._tick_regen(2.9)
+	_expect(int(GameState.player.hp) == hp0 and int(GameState.player.mp) == mp0,
+		"打坐不足 3 秒不得提前恢复")
+	player._tick_regen(0.1)
+	_expect(int(GameState.player.hp) - hp0 == maxi(1, roundi(GameState.max_hp() * PlayerCharacter.SIT_HP_RATE)),
+		"打坐每 3 秒按最大值恢复 3% HP")
+	_expect(int(GameState.player.mp) - mp0 == maxi(1, roundi(GameState.max_mp() * PlayerCharacter.SIT_MP_RATE)),
+		"打坐每 3 秒按最大值恢复 5% MP")
 	get_tree().paused = true
 	hp0 = int(GameState.player.hp)
 	mp0 = int(GameState.player.mp)
-	player._tick_regen(2.0)
+	player._tick_regen(3.0)
 	_expect(int(GameState.player.hp) == hp0 and int(GameState.player.mp) == mp0, "暂停不能产生恢复")
 	get_tree().paused = false
+	player._map_background = true
+	player._tick_regen(3.0)
+	_expect(int(GameState.player.hp) > hp0 and int(GameState.player.mp) > mp0,
+		"窗口失焦但未受击时恢复仍应继续")
+	player._map_background = false
+	player._invuln = 0.0
 	player.apply_damage(1)
 	_expect(not player.is_sitting, "实际受击应立即起身")
 	player.set_sitting(true)

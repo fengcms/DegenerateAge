@@ -19,8 +19,8 @@ const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 const IFRAME := 0.5            # 3.4：受击后无敌帧时长（s）
 const HITSTUN := 0.25          # 3.4：受击硬直时长（s，期间无法主动行动）
 const MANUAL_EPS := 0.05       # 手动输入判定阈值（摇杆量）
-const REGEN_COMBAT_DELAY := 5.0
-const IDLE_HP_RATE := 0.01      # 每秒按最大值恢复；小数余量逐帧累积
+const REGEN_INTERVAL := 3.0      # 未受击时每三秒结算一次；攻击和移动不重置计时
+const IDLE_HP_RATE := 0.01       # 每次结算按最大值恢复，未满时至少恢复 1 点
 const IDLE_MP_RATE := 0.02
 const SIT_HP_RATE := 0.03
 const SIT_MP_RATE := 0.05
@@ -76,9 +76,7 @@ var _cave_path: Array[Vector2] = []
 var _cave_path_index := 0
 var _cave_target_cell := Vector2i(-1, -1)
 var _map_background := false
-var _combat_cooldown := 0.0
-var _hp_regen_rest := 0.0
-var _mp_regen_rest := 0.0
+var _regen_elapsed := 0.0
 
 func valid_target(target: Variant) -> bool:
 	return is_instance_valid(target) and target is Node2D and not target.is_queued_for_deletion() and target.get("is_dead") != true and target.has_method("take_hit") and not MapService.is_in_rest_zone(GameState.current_map, target.global_position)
@@ -312,7 +310,7 @@ func apply_damage(amount: int) -> int:
 		sample_art.hit()
 	_invuln = IFRAME
 	_stun = HITSTUN
-	_mark_combat()
+	_reset_regen_after_hit()
 	var actual := mini(amount, int(GameState.player.hp))
 	if GameState.damage_player(amount):
 		_begin_death()
@@ -332,8 +330,7 @@ func _begin_death() -> void:
 	is_dead = true
 	GameState.set_auto_battle(false)
 	preload("res://scripts/systems/death_penalty.gd").drop_one(self)
-	_hp_regen_rest = 0.0
-	_mp_regen_rest = 0.0
+	_regen_elapsed = 0.0
 	_death_t = 0.0
 	velocity = Vector2.ZERO
 	queue_redraw()
@@ -473,7 +470,6 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 		return false
 	skill_cooldowns[skill_id] = float(skill.get("cooldown", 0.0))
 	_attack_cd = effective_attack_interval()
-	_mark_combat()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
 	var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
@@ -536,7 +532,6 @@ func _try_attack() -> void:
 func perform_attack(target: Node) -> Dictionary:
 	if is_dead or MapService.is_in_safe_area(GameState.current_map, global_position) or not valid_target(target):
 		return {}
-	_mark_combat()
 	if sample_art != null:
 		sample_art.attack((target as Node2D).global_position - global_position, effective_attack_interval())
 		var slash := preload("res://scripts/systems/sample_slash.gd").new() as Node2D
@@ -559,37 +554,25 @@ func perform_attack(target: Node) -> Dictionary:
 	target.take_hit(result, self)
 	return result
 
-func _mark_combat() -> void:
-	_combat_cooldown = REGEN_COMBAT_DELAY
-	_hp_regen_rest = 0.0
-	_mp_regen_rest = 0.0
+func _reset_regen_after_hit() -> void:
+	_regen_elapsed = 0.0
 
 func _tick_regen(delta: float) -> void:
-	if _map_background or get_tree().paused:
+	if is_dead or delta <= 0.0 or get_tree().paused:
 		return
-	var recovery_delta := maxf(0.0, delta - _combat_cooldown)
-	_combat_cooldown = maxf(0.0, _combat_cooldown - delta)
-	var pilot := get_node_or_null("AutoPilot") as AutoBattle
-	if recovery_delta <= 0.0 or manual_attack_active or (pilot != null and pilot.current_target() != null):
+	_regen_elapsed += delta
+	if _regen_elapsed < REGEN_INTERVAL:
 		return
+	var ticks := int(floorf(_regen_elapsed / REGEN_INTERVAL))
+	_regen_elapsed -= float(ticks) * REGEN_INTERVAL
 	var hp_max := GameState.max_hp()
 	var mp_max := GameState.max_mp()
 	if int(GameState.player.hp) < hp_max:
-		_hp_regen_rest += float(hp_max) * (SIT_HP_RATE if is_sitting else IDLE_HP_RATE) * recovery_delta
-		var hp_points := int(floorf(_hp_regen_rest))
-		if hp_points > 0:
-			_hp_regen_rest -= hp_points
-			GameState.heal_player(hp_points)
-	else:
-		_hp_regen_rest = 0.0
+		var hp_points := maxi(1, roundi(float(hp_max) * (SIT_HP_RATE if is_sitting else IDLE_HP_RATE)))
+		GameState.heal_player(hp_points * ticks)
 	if int(GameState.player.mp) < mp_max:
-		_mp_regen_rest += float(mp_max) * (SIT_MP_RATE if is_sitting else IDLE_MP_RATE) * recovery_delta
-		var mp_points := int(floorf(_mp_regen_rest))
-		if mp_points > 0:
-			_mp_regen_rest -= mp_points
-			GameState.restore_mp(mp_points)
-	else:
-		_mp_regen_rest = 0.0
+		var mp_points := maxi(1, roundi(float(mp_max) * (SIT_MP_RATE if is_sitting else IDLE_MP_RATE)))
+		GameState.restore_mp(mp_points * ticks)
 
 ## 攻击范围内的最近敌人（手动普攻的目标搜索；自动战斗为 3.14 的锚点搜索）。
 func find_nearest_enemy_in_range() -> Node:
