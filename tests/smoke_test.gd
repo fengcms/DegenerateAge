@@ -1764,7 +1764,7 @@ func _test_low_gear_filter_sale() -> void:
 ## 独立实例化两个面板（不加载世界），验证拖入 / 取回 / 确认结算 / 一键移入保留升级件 / 关闭退回。
 func _test_trade_panel() -> void:
 	GameState.reset_to_defaults()
-	GameState.player.level = 15
+	GameState.player.level = 1
 
 	var inv: Control = load("res://scenes/ui/InventoryPanel.tscn").instantiate()
 	var shop: Control = load("res://scenes/ui/ShopPanel.tscn").instantiate()
@@ -1783,6 +1783,11 @@ func _test_trade_panel() -> void:
 	_expect(shop.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 		"货郎面板根节点应为 IGNORE，否则会吞掉左侧背包的鼠标事件")
 	_expect(not inv._dim.visible and not shop._dim.visible, "交易会话中双方遮罩都应隐藏")
+	shop._tabs.current_tab = 1
+	await get_tree().process_frame
+	var trade_gap: float = shop._box.global_position.x - (inv._center.panel_box.global_position.x + inv._center.panel_box.size.x)
+	_expect(trade_gap >= -1.0 and trade_gap <= 20.0, "交易双窗应紧邻排列，实际间隙 %.1f" % trade_gap)
+	_expect(inv._sell_low_button.disabled, "背包直接一键卖出在 15 级前仍不可用")
 
 	# 背包准备：2 件普通装备（可售）+ 1 件优于已穿戴的武器（一键移入应跳过）
 	GameState.inventory[0] = _equip_instance("weapon_wolfking", "p_worn", {"atk": 12},
@@ -1795,6 +1800,7 @@ func _test_trade_panel() -> void:
 	GameState.inventory[2].requiredLevel = 10
 	EventBus.inventory_changed.emit()
 	await get_tree().process_frame
+	_expect(not shop._stage_all_btn.disabled, "背包有物品时，货郎一键移入在 1 级即可使用")
 
 	var bag_slot: ItemSlot = inv._bag_buttons[0]
 	var payload: Variant = bag_slot._get_drag_data(Vector2.ZERO)
@@ -1808,15 +1814,20 @@ func _test_trade_panel() -> void:
 	_expect(not tray_slot._can_drop_data(Vector2.ZERO, {"from": 999}), "托盘格不应接受非法来源")
 
 	# 拖入 → 装备从背包移入托盘暂存（未结算）
-	shop._on_tray_drop(0, payload)
+	shop._on_tray_drop(8, payload)
 	await get_tree().process_frame
 	_expect(shop._tray.size() == 1, "拖入后托盘应暂存 1 件，实际 %d" % shop._tray.size())
 	_expect(_index_of_instance("p_weak") < 0, "拖入后该装备应离开背包")
 	_expect(GameState.gold == 0, "暂存阶段不应结算金币")
-	_expect(tray_slot.item.get("instanceId", "") == "p_weak", "托盘格应显示该装备")
+	_expect(shop._tray_slots[8].item.get("instanceId", "") == "p_weak" and tray_slot.item.is_empty(),
+		"托盘装备应留在实际投放的第 8 格，不自动排序")
+	var grid: ShopTrayGrid = shop._tray_slots[8].get_parent()
+	var gap_point: Vector2 = shop._tray_slots[8].position + Vector2(shop._tray_slots[8].size.x + 1.0, shop._tray_slots[8].size.y * 0.5)
+	_expect(grid.slot_at(gap_point) in [8, 9], "格间空隙应归相邻托盘格")
+	_expect(grid._can_drop_data(gap_point, payload), "格间空隙应接受背包装备投放")
 
 	# 点托盘格 → 取回背包
-	shop._on_tray_slot_pressed(0)
+	shop._on_tray_slot_pressed(8)
 	await get_tree().process_frame
 	_expect(shop._tray.is_empty(), "取回后托盘应清空")
 	_expect(_index_of_instance("p_weak") >= 0, "取回的装备应回到背包")

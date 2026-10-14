@@ -5,7 +5,7 @@ extends Control
 ## 两个页签：
 ##   购买 —— 读 shops.json 的 buyItems，逐项显示名称 / 简介 / 已拥有 / 价格 + 购买按钮；
 ##   出售 —— **出售托盘**：从左侧背包面板把装备**拖入**托盘暂存（一格一件），
-##          托盘内点一下取回；Lv15 后「一键移入」按背包里的等级与成色阈值筛选；
+##          托盘内点一下取回；「一键移入」按背包里的等级与成色阈值筛选；
 ##          「全部取回」清空托盘；「确认出售」才真正结算为金币。
 ## 打开方式：靠近货郎按 E（game.gd 派发 EventBus.shop_open_requested）；E / Esc 关闭。
 ## 交易会话：本面板打开时**同时拉起背包面板**并与之并列（本面板居中于右半屏，
@@ -18,8 +18,7 @@ const BUY_ROW_MIN := Vector2(430, 0)
 ## 出售托盘容量（格）：超过则拒绝继续投放并提示（不静默丢弃）。
 const TRAY_COLUMNS := 6
 const TRAY_ROWS := 4
-## 交易会话中本面板占据的屏幕横向区间（右侧），左侧留给背包面板（见 inventory_panel.gd）。
-const TRADE_LEFT_RATIO := 0.58
+const TRADE_GAP := 12.0
 
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
@@ -35,7 +34,8 @@ var _shop_id: String = ""
 ## 交易会话是否进行中（由本面板发起，退出时同步关闭背包面板）。
 var _trade_active: bool = false
 ## 出售托盘：已从背包移出、尚未结算的装备实例（确认出售 / 取回 / 关闭退回见下）。
-var _tray: Array[Dictionary] = []
+## 固定格位：键是 0..23 的格下标，值是装备实例；空格不占键。
+var _tray: Dictionary = {}
 
 var _title: Label
 var _gold_label: Label
@@ -48,6 +48,7 @@ var _confirm_btn: Button
 var _stage_all_btn: Button
 var _return_all_btn: Button
 var _center: CenterContainer
+var _box: PanelContainer
 var _dim: ColorRect
 
 func _ready() -> void:
@@ -64,6 +65,8 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.equipment_changed.connect(_on_inventory_changed)
 	EventBus.player_leveled.connect(func(_level: int) -> void: _on_inventory_changed())
+	resized.connect(func() -> void: _align_trade_windows.call_deferred())
+	EventBus.settings_changed.connect(func() -> void: _align_trade_windows.call_deferred())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -93,6 +96,7 @@ func set_open(open: bool) -> void:
 		EventBus.trade_mode_changed.emit(true)   # 先拉起背包面板
 		EventBus.panel_opened.emit("shop")
 		_refresh()
+		_align_trade_windows.call_deferred()
 	else:
 		_return_tray()
 		_trade_active = false
@@ -112,16 +116,31 @@ func _on_panel_opened(panel_id: String) -> void:
 func _apply_trade_layout(trade: bool) -> void:
 	if _center == null:
 		return
-	if trade:
-		_center.anchor_left = TRADE_LEFT_RATIO
-		_center.anchor_right = 1.0
-	else:
-		_center.anchor_left = 0.0
-		_center.anchor_right = 1.0
+	_center.anchor_left = 0.0
+	_center.anchor_right = 1.0
 	_center.offset_left = 0.0
 	_center.offset_right = 0.0
 	if _dim != null:
 		_dim.visible = not trade
+
+## 用两块面板实际最小宽度排布；宽屏不会因「各自半屏居中」拉出大空隙。
+func _align_trade_windows() -> void:
+	if not _trade_active or not visible or size.x <= 0.0 or _box == null:
+		return
+	var inventory: Variant = get_node_or_null("../InventoryPanel")
+	if inventory == null or inventory._center == null:
+		return
+	var bag_width: float = inventory._center.panel_box.get_combined_minimum_size().x
+	var shop_width: float = _box.get_combined_minimum_size().x
+	var left := maxf(0.0, (size.x - bag_width - shop_width - TRADE_GAP) * 0.5)
+	var bag_left := minf(left, maxf(0.0, size.x - bag_width))
+	# 窄窗口无法并排时允许两窗重叠，优先保证各窗口留在可见区域。
+	var shop_left := minf(bag_left + bag_width + TRADE_GAP, maxf(0.0, size.x - shop_width))
+	inventory._center.set_docked(true, bag_left / size.x, (bag_left + bag_width) / size.x)
+	_center.anchor_left = shop_left / size.x
+	_center.anchor_right = (shop_left + shop_width) / size.x
+	_center.offset_left = 0.0
+	_center.offset_right = 0.0
 
 func _on_gold_changed(_amount: int) -> void:
 	_refresh_gold()
@@ -147,6 +166,7 @@ func _build() -> void:
 	add_child(_center)
 
 	var box := PanelContainer.new()
+	_box = box
 	box.add_theme_stylebox_override("panel", _panel_style())
 	_center.add_child(box)
 
@@ -271,10 +291,12 @@ func _tray_grid_holder(page: VBoxContainer) -> void:
 	pad_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(pad_l)
 
-	var grid := GridContainer.new()
+	var grid := ShopTrayGrid.new()
 	grid.columns = TRAY_COLUMNS
+	grid.mouse_filter = Control.MOUSE_FILTER_STOP
 	grid.add_theme_constant_override("h_separation", 6)
 	grid.add_theme_constant_override("v_separation", 6)
+	grid.item_dropped.connect(_on_tray_drop)
 	row.add_child(grid)
 
 	var pad_r := Control.new()
@@ -406,7 +428,7 @@ func _refresh_tray() -> void:
 		return
 	for i in range(_tray_slots.size()):
 		var b: ItemSlot = _tray_slots[i]
-		if i < _tray.size():
+		if _tray.has(i):
 			var it: Dictionary = _tray[i]
 			b.item = it
 			b.text = _short_name(it)
@@ -421,14 +443,14 @@ func _refresh_tray() -> void:
 
 	var total := 0
 	var upgraded := 0
-	for it2 in _tray:
+	for it2 in _tray.values():
 		total += Shop.sell_price(it2)
 		if GameState.is_upgrade_over_worn(it2):
 			upgraded += 1
 	_tray_summary.text = Localization.tr_key("ui.shop_panel.p016") % [_tray.size(), _tray_slots.size(), total]
 	_tray_warn.text = (Localization.tr_key("ui.shop_panel.p017") % upgraded) if upgraded > 0 else ""
 	_confirm_btn.disabled = _tray.is_empty()
-	_stage_all_btn.disabled = int(GameState.player.get("level", 1)) < 15 or GameState.inventory_used() == 0
+	_stage_all_btn.disabled = GameState.inventory_used() == 0
 	_return_all_btn.disabled = _tray.is_empty()
 
 # ---- 交互 ----
@@ -439,15 +461,20 @@ func _on_buy_pressed(item_id: String) -> void:
 
 ## 托盘收到背包格的拖入（ItemSlot.item_dropped）。载荷携带背包下标与物品实例；
 ## 这里**以实例反查实时下标**取出，避免拖拽期间其他变动导致的下标位移误移（工程文档 05 🔴R1）。
-func _on_tray_drop(_tray_index: int, payload: Dictionary) -> void:
+func _on_tray_drop(tray_index: int, payload: Dictionary) -> void:
 	var item: Dictionary = payload.get("item", {})
 	if item.is_empty():
+		return
+	if tray_index < 0 or tray_index >= _tray_slots.size():
 		return
 	if not Shop.can_sell(item):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p018"), "danger")
 		return
 	if _tray.size() >= _tray_slots.size():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p019") % _tray_slots.size(), "danger")
+		return
+	if _tray.has(tray_index):
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop.tray_occupied"), "danger")
 		return
 	var idx := _index_of_instance(String(item.get("instanceId", "")))
 	if idx < 0:
@@ -458,26 +485,23 @@ func _on_tray_drop(_tray_index: int, payload: Dictionary) -> void:
 	if taken.is_empty():
 		_refresh()
 		return
-	_tray.append(taken)
+	_tray[tray_index] = taken
 	_refresh_tray()
 
 ## 点托盘格：把该件取回背包（背包满则拒绝，不静默丢失）。
 func _on_tray_slot_pressed(tray_index: int) -> void:
-	if tray_index < 0 or tray_index >= _tray.size():
+	if not _tray.has(tray_index):
 		return
 	var one: Array = [_tray[tray_index]]
 	var back := GameState.shop_unstage(one)
 	if back == 0:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p021"), "danger")
 		return
-	_tray.remove_at(tray_index)
+	_tray.erase(tray_index)
 	_refresh_tray()
 
-## 一键移入（6.4）：把背包中所有可售装备批量移入托盘（一格一件）；优于已穿戴的不移入。
+## 一键移入（6.4）：按背包筛选阈值批量移入托盘空格，穿戴评分不参与筛选。
 func _on_stage_all_pressed() -> void:
-	if int(GameState.player.get("level", 1)) < 15:
-		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p022"), "danger")
-		return
 	var moved := 0
 	var full := false
 	var i := GameState.inventory.size() - 1
@@ -486,12 +510,13 @@ func _on_stage_all_pressed() -> void:
 		if not (it is Dictionary) or not GameState.is_low_gear(it):
 			i -= 1
 			continue
-		if _tray.size() >= _tray_slots.size():
+		var free_slot := _first_free_tray_slot()
+		if free_slot < 0:
 			full = true
 			break
 		var taken := GameState.remove_item_at(i)
 		if not taken.is_empty():
-			_tray.append(taken)
+			_tray[free_slot] = taken
 			moved += 1
 		i -= 1
 	var msg := Localization.tr_key("ui.shop.staged_count") % moved
@@ -511,7 +536,7 @@ func _on_confirm_pressed() -> void:
 	if _tray.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p025"), "danger")
 		return
-	var res := GameState.shop_sell_staged(_tray)
+	var res := GameState.shop_sell_staged(_tray.values())
 	var n := int(res.get("count", 0))
 	var gold := int(res.get("gold", 0))
 	_tray.clear()
@@ -523,10 +548,21 @@ func _on_confirm_pressed() -> void:
 func _return_tray() -> int:
 	if _tray.is_empty():
 		return 0
-	var back := GameState.shop_unstage(_tray)
-	if back < _tray.size():
-		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p027") % (_tray.size() - back), "danger")
+	var back := 0
+	for slot_id in _tray.keys():
+		var one: Array = [_tray[slot_id]]
+		if GameState.shop_unstage(one) == 1:
+			_tray.erase(slot_id)
+			back += 1
+	if not _tray.is_empty():
+		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p027") % _tray.size(), "danger")
 	return back
+
+func _first_free_tray_slot() -> int:
+	for i in range(_tray_slots.size()):
+		if not _tray.has(i):
+			return i
+	return -1
 
 # ---- 文本 ----
 
