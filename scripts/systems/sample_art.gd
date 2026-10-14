@@ -1,10 +1,13 @@
 class_name SampleArt
 extends RefCounted
-## Resource lookup is deliberately limited to this approved sample batch.
+## Runtime icon references are preloaded so JSON-selected equipment also survives export.
 ## Unmade assets continue to use the existing text/procedural fallback.
 
 const ICONS := {
 	"weapon_starter": preload("res://assets/sprites/equip/weapon_starter.png"),
+	"weapon_wolfking": preload("res://assets/sprites/equip/weapon_wolfking.png"),
+	"weapon_legendary_vein_guard": preload("res://assets/sprites/equip/weapon_legendary_vein_guard.png"),
+	"weapon_iron": preload("res://assets/sprites/equip/weapon_starter.png"),
 	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small.png"),
 	"spirit_shard": preload("res://assets/sprites/items/spirit_shard.png"),
 }
@@ -18,6 +21,9 @@ static func icon_for(item: Variant) -> Texture2D:
 	if not item is Dictionary:
 		return null
 	if String(item.get("kind", "")) == "equip":
+		var item_id := String(item.get("itemId", ""))
+		if ICONS.has(item_id):
+			return ICONS[item_id] as Texture2D
 		var template := Equipment.template_of(item)
 		var path := String(template.get("icon", ""))
 		if path.begins_with("res://") and ResourceLoader.exists(path, "Texture2D"):
