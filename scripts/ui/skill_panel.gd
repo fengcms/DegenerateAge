@@ -104,6 +104,9 @@ func _refresh() -> void:
 		icon.custom_minimum_size = Vector2(72, 48)
 		icon.text = String(skill.get("name", Localization.tr_key("ui.skill_panel.p001"))).substr(0, 2)
 		icon.skill_id = String(skill.get("id", ""))
+		icon.drag_label = String(skill.get("name", ""))
+		SampleArt.decorate(icon, SampleArt.skill_icon(icon.skill_id))
+		icon.add_theme_constant_override("icon_max_width", 42)
 		icon.disabled = not unlocked or not wired
 		icon.tooltip_text = Localization.tr_key("ui.skill_panel.p004") if not icon.disabled else Localization.tr_key("ui.skill_panel.p005")
 		row.add_child(icon)

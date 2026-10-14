@@ -16,6 +16,17 @@ const GROUND := {
 	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small_ground.png"),
 	"spirit_shard": preload("res://assets/sprites/items/spirit_shard_ground.png"),
 }
+const SKILL_ICONS := {
+	"basic_slash": preload("res://assets/sprites/skills/basic_slash.png"),
+	"earth_cleave": preload("res://assets/sprites/skills/earth_cleave.png"),
+	"whirlwind": preload("res://assets/sprites/skills/whirlwind.png"),
+	"battle_focus": preload("res://assets/sprites/skills/battle_focus.png"),
+	"armor_break": preload("res://assets/sprites/skills/armor_break.png"),
+	"spirit_storm": preload("res://assets/sprites/skills/spirit_storm.png"),
+}
+
+static func skill_icon(skill_id: String) -> Texture2D:
+	return SKILL_ICONS.get(skill_id) as Texture2D
 
 static func icon_for(item: Variant) -> Texture2D:
 	if not item is Dictionary:
@@ -36,11 +47,17 @@ static func ground_for(item: Dictionary) -> Texture2D:
 static func binding_icon(binding: Variant) -> Texture2D:
 	if not binding is Dictionary:
 		return null
+	if binding.get("kind") == "skill":
+		return skill_icon(String(binding.get("id", "")))
 	if binding.get("kind") == "auto_potion" and binding.get("id") == "red":
 		return ICONS.potion_hp_small
 	return ICONS.get(String(binding.get("id", ""))) as Texture2D
 
 static func decorate(button: Button, texture: Texture2D) -> void:
+	if button is HotbarSlot and (button as HotbarSlot).entry is Dictionary:
+		var binding: Dictionary = (button as HotbarSlot).entry
+		if String(binding.get("kind", "")) == "skill":
+			texture = skill_icon(String(binding.get("id", "")))
 	button.icon = texture
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER

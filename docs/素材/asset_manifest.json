@@ -14,7 +14,8 @@
       },
       "source": "sources/icon/skills/basic_slash.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/skills/basic_slash.png"
     },
     {
       "id": "earth_cleave",
@@ -27,7 +28,8 @@
       },
       "source": "sources/icon/skills/earth_cleave.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/skills/earth_cleave.png"
     },
     {
       "id": "whirlwind",
@@ -40,7 +42,8 @@
       },
       "source": "sources/icon/skills/whirlwind.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/skills/whirlwind.png"
     },
     {
       "id": "battle_focus",
@@ -53,7 +56,8 @@
       },
       "source": "sources/icon/skills/battle_focus.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/skills/battle_focus.png"
     },
     {
       "id": "armor_break",
@@ -66,7 +70,8 @@
       },
       "source": "sources/icon/skills/armor_break.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/skills/armor_break.png"
     },
     {
       "id": "spirit_storm",
@@ -79,7 +84,8 @@
       },
       "source": "sources/icon/skills/spirit_storm.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/skills/spirit_storm.png"
     },
     {
       "id": "weapon_starter",
@@ -92,7 +98,8 @@
       },
       "source": "sources/icon/equipment/weapon_starter.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/weapon_starter.png"
     },
     {
       "id": "armor_starter",
@@ -118,7 +125,8 @@
       },
       "source": "sources/icon/equipment/weapon_wolfking.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/weapon_wolfking.png"
     },
     {
       "id": "helmet_cloth",
@@ -235,7 +243,8 @@
       },
       "source": "sources/icon/equipment/weapon_legendary_vein_guard.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/weapon_legendary_vein_guard.png"
     },
     {
       "id": "potion_hp_small",

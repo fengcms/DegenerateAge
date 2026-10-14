@@ -149,4 +149,4 @@ node docs/素材/sources/verify_assets.mjs
 ~~~
 
 
-生成提示词与原图关联保存在 sources/generation_manifest.json；本地原图已复制到 sources/，重新导出无需联网调用生成工具。参考图备份在 sources/references/。四只怪物资源的 integrated 已更新为 true，其他类型仍为 false；其他素材后续接入需要绑定对应事件和数据路径。
+生成提示词与原图关联保存在 sources/generation_manifest.json；本地原图已复制到 sources/，重新导出无需联网调用生成工具。参考图备份在 sources/references/。四只怪物、三张初期武器图标和六张技能图标已接入游戏；铁制短刃沿用守护者短刃图标。技能图标显示在技能图鉴与快捷栏，不改变技能解锁或战斗判定。其余素材仍按元数据标记等待接入。

@@ -7,14 +7,14 @@
   "skill_fx": 6,
   "quality_animations": 4,
   "checks": [
-    "all 34 data IDs covered plus coin",
+    "all current data IDs covered, including icon aliases",
     "all icon exports square: 48/96/256",
     "transparent PNG corners",
     "monster sprite sizes, design exports and eight-direction animation metadata",
     "six 8-frame VFX atlases with blank end frames",
     "four 24-frame square UI animations, 24 distinct frames each",
     "quality overlays have fully transparent central 40x40 pixels",
-    "four monster packs integrated; other asset types remain standalone"
+    "four monster packs and nine weapon/skill icons integrated"
   ],
   "visual_review": [
     "35-icon labeled overview",
@@ -31,5 +31,10 @@
     "snapshot_report": "monsters/接入验收/快照测试记录.json",
     "related_tests": "4 passed",
     "baseline_art_assertions": "2 existing failures confirmed on committed tree"
+  },
+  "runtime_icon_integration": {
+    "count": 9,
+    "weapon_iron_alias": "weapon_starter",
+    "test": "IconIntegrationTest"
   }
 }
