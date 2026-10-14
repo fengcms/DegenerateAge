@@ -284,7 +284,7 @@
           19
         ],
         "requiredLevel": 10,
-        "templatePool": "normal",
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 55,
           "uncommon": 30,
@@ -318,7 +318,7 @@
           19
         ],
         "requiredLevel": 10,
-        "templatePool": "normal",
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 65,
           "uncommon": 35
@@ -336,7 +336,7 @@
           19
         ],
         "requiredLevel": 10,
-        "templatePool": "normal",
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "uncommon": 70,
           "rare": 27,
@@ -379,7 +379,7 @@
           20
         ],
         "requiredLevel": 10,
-        "templatePool": "normal",
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "common": 70,
           "uncommon": 30
@@ -397,7 +397,7 @@
           20
         ],
         "requiredLevel": 10,
-        "templatePool": "normal",
+        "templatePool": "c2_normal",
         "qualityWeight": {
           "rare": 75,
           "epic": 25
@@ -415,7 +415,7 @@
           20
         ],
         "requiredLevel": 10,
-        "templatePool": "legendary",
+        "templatePool": "c2_legendary",
         "qualityWeight": {
           "legendary": 100
         }
@@ -431,6 +431,191 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      }
+    ]
+  },
+  {
+    "id": "DT_C2_Core_Normal",
+    "desc": "第二章井心 Lv20 三轴掉落。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          20,
+          36
+        ]
+      },
+      {
+        "kind": "potion",
+        "chance": 0.14,
+        "itemId": "potion_hp_mid"
+      },
+      {
+        "kind": "potion",
+        "chance": 0.12,
+        "itemId": "potion_mp_mid"
+      },
+      {
+        "kind": "equip",
+        "chance": 0.18,
+        "levelRange": [
+          20,
+          20
+        ],
+        "requiredLevel": 20,
+        "templatePool": "c2_normal",
+        "qualityWeight": {
+          "common": 55,
+          "uncommon": 30,
+          "rare": 13,
+          "epic": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "DT_C2_Core_Elite",
+    "desc": "第二章井心 Lv20 三轴掉落。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          90,
+          150
+        ]
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          2,
+          3
+        ],
+        "levelRange": [
+          20,
+          20
+        ],
+        "requiredLevel": 20,
+        "templatePool": "c2_normal",
+        "qualityWeight": {
+          "common": 65,
+          "uncommon": 35
+        }
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          1,
+          1
+        ],
+        "levelRange": [
+          20,
+          20
+        ],
+        "requiredLevel": 20,
+        "templatePool": "c2_normal",
+        "qualityWeight": {
+          "uncommon": 70,
+          "rare": 27,
+          "epic": 3
+        }
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_hp_mid"
+      },
+      {
+        "kind": "potion",
+        "chance": 0.5,
+        "itemId": "potion_mp_mid"
+      }
+    ]
+  },
+  {
+    "id": "DT_C2_Boss_Final",
+    "desc": "第二章井心 Lv20 三轴掉落。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          800,
+          1100
+        ]
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          5,
+          8
+        ],
+        "levelRange": [
+          20,
+          20
+        ],
+        "requiredLevel": 20,
+        "templatePool": "c2_normal",
+        "qualityWeight": {
+          "common": 70,
+          "uncommon": 30
+        }
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          2,
+          2
+        ],
+        "levelRange": [
+          20,
+          20
+        ],
+        "requiredLevel": 20,
+        "templatePool": "c2_normal",
+        "qualityWeight": {
+          "rare": 75,
+          "epic": 25
+        }
+      },
+      {
+        "kind": "equip",
+        "chance": 0.05,
+        "countRange": [
+          1,
+          1
+        ],
+        "levelRange": [
+          20,
+          20
+        ],
+        "requiredLevel": 20,
+        "templatePool": "c2_legendary",
+        "qualityWeight": {
+          "legendary": 100
+        }
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_hp_large",
+        "count": 2
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_mp_large",
+        "count": 2
+      },
+      {
+        "kind": "mount",
+        "chance": 0.03,
+        "itemId": "mount_furnace_beast"
       }
     ]
   }

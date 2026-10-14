@@ -6,5 +6,37 @@
   {
     "id": "legendary",
     "desc": "Boss 独立传说追加槽；型号池与普通槽相同，品质由掉落表强制为传说。"
+  },
+  {
+    "id": "c2_normal",
+    "desc": "第二章普通装备型号；品质独立抽取。",
+    "includeIds": [
+      "c2_road_blade",
+      "c2_copper_shield",
+      "c2_road_armor",
+      "c2_road_helmet",
+      "c2_road_shoes",
+      "c2_road_bracer",
+      "c2_road_knee",
+      "c2_copper_bracelet",
+      "c2_road_ring",
+      "c2_warm_necklace"
+    ]
+  },
+  {
+    "id": "c2_legendary",
+    "desc": "第二章独立传说追加槽，仍使用本章型号。",
+    "includeIds": [
+      "c2_road_blade",
+      "c2_copper_shield",
+      "c2_road_armor",
+      "c2_road_helmet",
+      "c2_road_shoes",
+      "c2_road_bracer",
+      "c2_road_knee",
+      "c2_copper_bracelet",
+      "c2_road_ring",
+      "c2_warm_necklace"
+    ]
   }
 ]

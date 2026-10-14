@@ -7,5 +7,14 @@
     "icon": "res://assets/sprites/mounts/corrupted_wing.svg",
     "levelReq": 20,
     "desc": "腐化巨兽残留的羽翼。收藏后达到 20 级可骑乘，移动速度提高 30%。"
+  },
+  {
+    "id": "mount_furnace_beast",
+    "name": "驮炉兽",
+    "speedBonus": 0.3,
+    "dropBossId": "c2_boss_hundred_arm_extractor",
+    "levelReq": 20,
+    "icon": "res://assets/sprites/mounts/corrupted_wing.svg",
+    "desc": "井心残留的运炉兽。达到20级可骑乘，移动速度提高30%。"
   }
 ]

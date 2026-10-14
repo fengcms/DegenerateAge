@@ -531,5 +531,297 @@
       "mpPercent"
     ],
     "lootable": false
+  },
+  {
+    "id": "c2_road_blade",
+    "name": "守路长刃",
+    "slot": "weapon",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "atk": 8
+      },
+      "10": {
+        "atk": 17
+      },
+      "20": {
+        "atk": 28
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_copper_shield",
+    "name": "铜面护盾",
+    "slot": "shield",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "def": 4,
+        "hp": 7
+      },
+      "10": {
+        "def": 10,
+        "hp": 15
+      },
+      "20": {
+        "def": 16,
+        "hp": 25
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_armor",
+    "name": "守路夹甲",
+    "slot": "armor",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "def": 4,
+        "hp": 11
+      },
+      "10": {
+        "def": 9,
+        "hp": 25
+      },
+      "20": {
+        "def": 15,
+        "hp": 41
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_helmet",
+    "name": "巡路帽",
+    "slot": "helmet",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 5
+      },
+      "20": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_shoes",
+    "name": "山路靴",
+    "slot": "shoes",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "def": 2,
+        "mp": 4
+      },
+      "10": {
+        "def": 4,
+        "mp": 10
+      },
+      "20": {
+        "def": 7,
+        "mp": 16
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_bracer",
+    "name": "守路腕甲",
+    "slot": "bracer",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 4
+      },
+      "20": {
+        "def": 7
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_knee",
+    "name": "守路护膝",
+    "slot": "knee",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 4
+      },
+      "20": {
+        "def": 7
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_copper_bracelet",
+    "name": "铜环手镯",
+    "slot": "bracelet",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "atk": 2
+      },
+      "10": {
+        "atk": 4
+      },
+      "20": {
+        "atk": 7
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_road_ring",
+    "name": "巡路戒",
+    "slot": "ring",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "atk": 1,
+        "mp": 4
+      },
+      "10": {
+        "atk": 3,
+        "mp": 8
+      },
+      "20": {
+        "atk": 5,
+        "mp": 13
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
+  },
+  {
+    "id": "c2_warm_necklace",
+    "name": "暖石项链",
+    "slot": "necklace",
+    "price": 160,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第二章常见制式，品质与星级由统一三轴规则生成。",
+    "tierBases": {
+      "1": {
+        "hp": 11
+      },
+      "10": {
+        "hp": 25
+      },
+      "20": {
+        "hp": 41
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   }
 ]

@@ -39,6 +39,7 @@ const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 enum State { IDLE, PATROL, CHASE, ATTACK, RETURN, DEAD }
 
 @export var monster_id: String = "wolf_corrupted"
+var drop_table_override := ""
 ## 实际刷新等级；0 = 采用模板等级（地图生成器会按 tierRange 约束）
 @export var spawn_level: int = 0
 ## 是否启用 AI（木桩教学目标为 false）
@@ -725,7 +726,7 @@ func _settle_rewards() -> void:
 	if xp > 0:
 		GameState.add_xp(xp)
 
-	var table_id := String(template.get("dropTableId", ""))
+	var table_id := drop_table_override if not drop_table_override.is_empty() else String(template.get("dropTableId", ""))
 	if table_id.is_empty():
 		var gold := int(template.get("goldReward", 0))
 		if gold > 0:

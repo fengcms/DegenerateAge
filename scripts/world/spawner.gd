@@ -82,6 +82,7 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				"ai": bool(spec.get("ai", true)),
 				"kind": String(spec.get("kind", "normal")),
 				"requires_unlock": String(spec.get("requiresUnlock", "")),
+				"drop_table": String(spec.get("dropTableId", "")),
 				"entry": null,
 				"tombstone": bool(spec.get("tombstone", false)),
 				"marker": null,
@@ -159,6 +160,7 @@ func _spawn(point: Dictionary) -> void:
 
 	var m: Monster = MONSTER_SCENE.instantiate()
 	m.monster_id = String(point.get("monster_id", "wolf_corrupted"))
+	m.drop_table_override = String(point.get("drop_table", ""))
 	m.spawn_level = int(point.get("level", 0))
 	m.ai_enabled = bool(point.get("ai", true))
 	var pos := _spawn_position(point)

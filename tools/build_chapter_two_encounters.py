@@ -1,6 +1,7 @@
 """Generate deterministic chapter-two encounter cells from approved zones."""
 
 import json
+import copy
 from collections import defaultdict
 from pathlib import Path
 
@@ -9,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MAPS = ROOT / "data/maps.json"
 MONSTERS = ROOT / "data/monsters.json"
 TABLES = ROOT / "data/dropTables.json"
+POOLS = ROOT / "data/lootPools.json"
+MOUNTS = ROOT / "data/mounts.json"
 REFS = ROOT / "docs/游戏创意/地图示意图"
 
 NORMALS = {
@@ -73,6 +76,8 @@ def template(monster_id, spec, kind):
     if kind == "elite":
         result["affixPool"] = ["hard", "fast", "frost", "rage"]
         result["affixCount"] = [1, 2]
+    if monster_id == "c2_boss_hundred_arm_extractor":
+        result["dropTableId"] = "DT_C2_Boss_Final"
     return result
 
 
@@ -133,9 +138,13 @@ def build_spawns(entry, ref):
             offset += len(items)
             specs.append({"monsterId": monster_id, "level": max(entry["tierRange"][0], NORMALS[monster_id][1]),
                           "respawnTime": 15, "count": len(cells), "cells": cells, "zone": zone["id"]})
+            if map_id == "c2_well_core":
+                specs[-1]["dropTableId"] = "DT_C2_Core_Normal"
     for point_id, monster_id in ELITE_POINTS[map_id].items():
         specs.append({"monsterId": monster_id, "level": max(entry["tierRange"][0], min(entry["tierRange"][1], ELITES[monster_id][1])),
                       "respawnTime": 120, "count": 1, "cell": points[point_id], "kind": "elite"})
+        if map_id == "c2_well_core":
+            specs[-1]["dropTableId"] = "DT_C2_Core_Elite"
     entry["spawnPoints"] = specs
     if map_id in BOSS_POINTS:
         point_id, monster_id = BOSS_POINTS[map_id]
@@ -144,6 +153,7 @@ def build_spawns(entry, ref):
                               "count": 1, "cell": points[point_id], "kind": "boss", "tombstone": True}
         if map_id == "c2_well_core":
             entry["bossSpawn"]["requiresUnlock"] = "c2_core_access"
+            entry["bossSpawn"]["dropTableId"] = "DT_C2_Boss_Final"
     assert sum(s["count"] for s in specs if s.get("kind") != "elite") == sum(COMPOSITION[map_id].values())
 
 
@@ -153,25 +163,25 @@ def build_tables(existing):
         {"kind": "potion", "chance": 0.14, "itemId": "potion_hp_mid"},
         {"kind": "potion", "chance": 0.12, "itemId": "potion_mp_mid"},
         {"kind": "equip", "chance": 0.18, "levelRange": [11, 19], "requiredLevel": 10,
-         "templatePool": "normal", "qualityWeight": {"common": 55, "uncommon": 30, "rare": 13, "epic": 2}},
+         "templatePool": "c2_normal", "qualityWeight": {"common": 55, "uncommon": 30, "rare": 13, "epic": 2}},
     ]
     elite = [
         {"kind": "coin", "chance": 1.0, "goldRange": [90, 150]},
         {"kind": "equip", "chance": 1.0, "countRange": [2, 3], "levelRange": [13, 19], "requiredLevel": 10,
-         "templatePool": "normal", "qualityWeight": {"common": 65, "uncommon": 35}},
+         "templatePool": "c2_normal", "qualityWeight": {"common": 65, "uncommon": 35}},
         {"kind": "equip", "chance": 1.0, "countRange": [1, 1], "levelRange": [13, 19], "requiredLevel": 10,
-         "templatePool": "normal", "qualityWeight": {"uncommon": 70, "rare": 27, "epic": 3}},
+         "templatePool": "c2_normal", "qualityWeight": {"uncommon": 70, "rare": 27, "epic": 3}},
         {"kind": "potion", "chance": 1.0, "itemId": "potion_hp_mid"},
         {"kind": "potion", "chance": 0.5, "itemId": "potion_mp_mid"},
     ]
     boss = [
         {"kind": "coin", "chance": 1.0, "goldRange": [800, 1100]},
         {"kind": "equip", "chance": 1.0, "countRange": [5, 8], "levelRange": [15, 20], "requiredLevel": 10,
-         "templatePool": "normal", "qualityWeight": {"common": 70, "uncommon": 30}},
+         "templatePool": "c2_normal", "qualityWeight": {"common": 70, "uncommon": 30}},
         {"kind": "equip", "chance": 1.0, "countRange": [2, 2], "levelRange": [15, 20], "requiredLevel": 10,
-         "templatePool": "normal", "qualityWeight": {"rare": 75, "epic": 25}},
+         "templatePool": "c2_normal", "qualityWeight": {"rare": 75, "epic": 25}},
         {"kind": "equip", "chance": 0.05, "countRange": [1, 1], "levelRange": [15, 20], "requiredLevel": 10,
-         "templatePool": "legendary", "qualityWeight": {"legendary": 100}},
+         "templatePool": "c2_legendary", "qualityWeight": {"legendary": 100}},
         {"kind": "potion", "chance": 1.0, "itemId": "potion_hp_large", "count": 2},
         {"kind": "potion", "chance": 1.0, "itemId": "potion_mp_large", "count": 2},
     ]
@@ -180,6 +190,41 @@ def build_tables(existing):
         {"id": "DT_C2_Elite", "desc": "第二章精英，含优秀以上保底。", "entries": elite},
         {"id": "DT_C2_Boss", "desc": "第二章 Boss，传说是独立追加品质槽。", "entries": boss},
     ])
+    for table_id, source in (("DT_C2_Core_Normal", common), ("DT_C2_Core_Elite", elite),
+                             ("DT_C2_Boss_Final", boss)):
+        entries = copy.deepcopy(source)
+        for item in entries:
+            if item["kind"] == "equip":
+                item["requiredLevel"] = 20
+                item["levelRange"] = [20, 20]
+        if table_id == "DT_C2_Boss_Final":
+            entries.append({"kind": "mount", "chance": 0.03, "itemId": "mount_furnace_beast"})
+        existing.append({"id": table_id, "desc": "第二章井心 Lv20 三轴掉落。", "entries": entries})
+
+
+def build_pools(existing):
+    existing = [pool for pool in existing if not pool["id"].startswith("c2_")]
+    ids = [
+        "c2_road_blade", "c2_copper_shield", "c2_road_armor", "c2_road_helmet",
+        "c2_road_shoes", "c2_road_bracer", "c2_road_knee", "c2_copper_bracelet",
+        "c2_road_ring", "c2_warm_necklace",
+    ]
+    existing.extend([
+        {"id": "c2_normal", "desc": "第二章普通装备型号；品质独立抽取。", "includeIds": ids},
+        {"id": "c2_legendary", "desc": "第二章独立传说追加槽，仍使用本章型号。", "includeIds": ids},
+    ])
+    return existing
+
+
+def build_mounts(existing):
+    existing = [mount for mount in existing if mount["id"] != "mount_furnace_beast"]
+    existing.append({
+        "id": "mount_furnace_beast", "name": "驮炉兽", "speedBonus": 0.3,
+        "dropBossId": "c2_boss_hundred_arm_extractor", "levelReq": 20,
+        "icon": "res://assets/sprites/mounts/corrupted_wing.svg",
+        "desc": "井心残留的运炉兽。达到20级可骑乘，移动速度提高30%。",
+    })
+    return existing
 
 
 def main():
@@ -196,6 +241,8 @@ def main():
     MAPS.write_text(json.dumps(maps, ensure_ascii=False, indent=2) + "\n")
     MONSTERS.write_text(json.dumps(monsters, ensure_ascii=False, indent=2) + "\n")
     TABLES.write_text(json.dumps(tables, ensure_ascii=False, indent=2) + "\n")
+    POOLS.write_text(json.dumps(build_pools(json.loads(POOLS.read_text())), ensure_ascii=False, indent=2) + "\n")
+    MOUNTS.write_text(json.dumps(build_mounts(json.loads(MOUNTS.read_text())), ensure_ascii=False, indent=2) + "\n")
 
 
 if __name__ == "__main__":

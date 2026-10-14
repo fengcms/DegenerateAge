@@ -3043,7 +3043,8 @@
             55
           ]
         ],
-        "zone": "A"
+        "zone": "A",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_broken_guard",
@@ -3068,7 +3069,8 @@
             52
           ]
         ],
-        "zone": "A"
+        "zone": "A",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_spirit_attendant",
@@ -3085,7 +3087,8 @@
             58
           ]
         ],
-        "zone": "A"
+        "zone": "A",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_purple_parasite",
@@ -3118,7 +3121,8 @@
             20
           ]
         ],
-        "zone": "B"
+        "zone": "B",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_broken_guard",
@@ -3143,7 +3147,8 @@
             17
           ]
         ],
-        "zone": "B"
+        "zone": "B",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_spirit_attendant",
@@ -3160,7 +3165,8 @@
             23
           ]
         ],
-        "zone": "B"
+        "zone": "B",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_purple_parasite",
@@ -3193,7 +3199,8 @@
             96
           ]
         ],
-        "zone": "C"
+        "zone": "C",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_broken_guard",
@@ -3218,7 +3225,8 @@
             93
           ]
         ],
-        "zone": "C"
+        "zone": "C",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_spirit_attendant",
@@ -3235,7 +3243,8 @@
             99
           ]
         ],
-        "zone": "C"
+        "zone": "C",
+        "dropTableId": "DT_C2_Core_Normal"
       },
       {
         "monsterId": "c2_elite_spirit_guard",
@@ -3246,7 +3255,8 @@
           143,
           23
         ],
-        "kind": "elite"
+        "kind": "elite",
+        "dropTableId": "DT_C2_Core_Elite"
       },
       {
         "monsterId": "c2_elite_ash_leader",
@@ -3257,7 +3267,8 @@
           143,
           98
         ],
-        "kind": "elite"
+        "kind": "elite",
+        "dropTableId": "DT_C2_Core_Elite"
       }
     ],
     "bossSpawn": {
@@ -3271,7 +3282,8 @@
       ],
       "kind": "boss",
       "tombstone": true,
-      "requiresUnlock": "c2_core_access"
+      "requiresUnlock": "c2_core_access",
+      "dropTableId": "DT_C2_Boss_Final"
     },
     "npcs": [
       {
