@@ -30,9 +30,18 @@ func _ready() -> void:
 		"玩家落在营地中心")
 	_check(not GameState.use_item(0).ok and GameState.inventory[0].count == 1,
 		"已在营地时背包使用不耗卷")
-	GameState.current_map = "wild_trial"
+	GameState.unlocks["chapter2"] = true
+	GameState.current_map = "c2_well_town"
+	_check(not TravelItem.use_town_scroll(0, false).ok and GameState.inventory[0].count == 1,
+		"第二章城镇内使用不耗卷")
+	GameState.current_map = "missing_hub_map"
+	_check(not TravelItem.use_town_scroll(0, false).ok and GameState.inventory[0].count == 1,
+		"目的城镇缺失时不耗卷")
+	GameState.current_map = "c2_pipe_slope"
 	_check(TravelItem.use_town_scroll(0, false).ok and GameState.inventory[0] == null,
 		"最后一张卷轴使用后移除背包格")
+	_check(GameState.current_map == "c2_well_town" and GameState.save_pos.distance_to(MapService.entry_point("c2_well_town")) < 1.0,
+		"第二章野外回到沉井镇安全落点")
 	print("[TownScrollTest] ", "全部通过 ✅" if _errors.is_empty() else str(_errors))
 	get_tree().quit(0 if _errors.is_empty() else 1)
 

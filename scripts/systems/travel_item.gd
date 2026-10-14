@@ -1,19 +1,22 @@
 class_name TravelItem
 extends RefCounted
-## 回城卷：背包双击和快捷栏共用的使用入口。
+## 回城卷：背包双击和快捷栏共用的使用入口；按地图所属枢纽返回城镇。
 
+## 使用回城卷返回当前地图所属集群的安全城镇，所有失败条件均在扣卷前验证。
 static func use_town_scroll(inv_index: int, reload_scene: bool = true) -> Dictionary:
 	if inv_index < 0 or inv_index >= GameState.inventory.size() or not GameState.inventory[inv_index] is Dictionary:
 		return _fail(Localization.tr_key("msg.travel_item.p001"))
 	var item: Dictionary = GameState.inventory[inv_index]
 	if item.get("kind") != "misc" or item.get("itemId") != HotbarConfig.TOWN_SCROLL:
 		return _fail(Localization.tr_key("msg.travel_item.p002"))
-	if GameState.current_map == "camp":
+	var town_id := String(MapService.current_data().get("hubId", ""))
+	if town_id == GameState.current_map:
 		return _fail(Localization.tr_key("msg.travel_item.p003"))
 	var player := GameState.get_tree().get_first_node_in_group("player") as PlayerCharacter
 	if int(GameState.player.get("hp", 0)) <= 0 or (player != null and player.is_dead):
 		return _fail(Localization.tr_key("msg.travel_item.p004"))
-	if not MapService.exists("camp"):
+	if town_id.is_empty() or not MapService.exists(town_id) or not MapService.is_safe_zone(town_id) \
+			or not MapService.is_unlocked(town_id):
 		return _fail(Localization.tr_key("msg.travel_item.p005"))
 	if reload_scene:
 		var scene := GameState.get_tree().current_scene
@@ -26,13 +29,13 @@ static func use_town_scroll(inv_index: int, reload_scene: bool = true) -> Dictio
 		EventBus.inventory_changed.emit()
 	else:
 		GameState.remove_item_at(inv_index)
-	GameState.current_map = "camp"
-	GameState.save_pos = MapService.entry_point("camp")
+	GameState.current_map = town_id
+	GameState.save_pos = MapService.entry_point(town_id)
 	GameState.has_save_pos = true
 	GameState.close_all_panels()
-	EventBus.map_traveled.emit(from_map, "camp")
-	EventBus.map_changed.emit("camp")
-	EventBus.toast_requested.emit(Localization.tr_key("msg.travel_item.p007"), "info")
+	EventBus.map_traveled.emit(from_map, town_id)
+	EventBus.map_changed.emit(town_id)
+	EventBus.toast_requested.emit(Localization.tr_key("msg.travel_item.p007") % MapService.display_name(town_id), "info")
 	if reload_scene:
 		MapService.reload_world()
 	return {"ok": true, "reason": "", "itemId": HotbarConfig.TOWN_SCROLL}
