@@ -14,6 +14,8 @@ func _ready() -> void:
 	var camp := preload("res://scenes/Game.tscn").instantiate()
 	add_child(camp)
 	await get_tree().process_frame
+	var player := camp.get_node("Entities/Player") as PlayerCharacter
+	expect(is_equal_approx(player.sample_art.display_scale, 1.5), "Player art uses 150% scale")
 	var roles := {}
 	for node in camp.get_node("Npcs").get_children():
 		var npc := node as Npc
@@ -22,8 +24,9 @@ func _ready() -> void:
 		roles[npc.role] = true
 		var art := npc.get_node_or_null("RoleArt") as Sprite2D
 		expect(art != null and art.texture.get_size() == Vector2(512, 80), "Eight-direction NPC art: " + npc.role)
+		expect(art != null and art.scale == Vector2(1.5, 1.5), "NPC art uses 150% scale: " + npc.role)
 		var name_label := npc.get_node("NameLabel") as Label
-		expect(name_label.position.y + name_label.size.y <= -64.0, "NPC name clears sprite head: " + npc.role)
+		expect(name_label.position.y + name_label.size.y <= -96.0, "NPC name clears enlarged sprite head: " + npc.role)
 		expect(npc.contains_screen_point(npc.get_global_transform_with_canvas().origin + Vector2(0, -55)), "NPC sprite head remains clickable: " + npc.role)
 		expect(npc.contains_screen_point(name_label.get_global_transform_with_canvas() * (name_label.size * 0.5)), "Moved NPC name remains clickable: " + npc.role)
 	for role in ["quest", "shop", "blacksmith", "warehouse", "carter"]:

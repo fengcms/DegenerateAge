@@ -8,7 +8,7 @@ extends CharacterBody2D
 ## 锁定目标超距接近与点击普攻已接入；技能格随后续技能系统接线。
 
 const RADIUS := 12.0
-const ART_SCALE := 1.25  # 玩家外观放大；碰撞和战斗距离仍使用原逻辑尺寸。
+const ART_SCALE := 1.5  # 只放大玩家外观；碰撞和战斗距离仍使用原逻辑尺寸。
 const COLOR_BODY := Color("e8c07d")
 const COLOR_EDGE := Color("6d4c1f")
 const COLOR_DEAD := Color("8a8a8a")
@@ -618,8 +618,8 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 		if is_sitting:
 			draw_arc(Vector2.ZERO, 19, 0, TAU, 24, Color("78d8d0"), 1.0)
-		_draw_overhead_name(-99.0)
-		_draw_overhead_hp(-92.0)
+		_draw_overhead_name(-119.0)
+		_draw_overhead_hp(-112.0)
 		return
 	# 占位角色：圆形身体 + 描边；死亡态转灰（脚底碰撞体见 CollisionShape2D）
 	var body := COLOR_DEAD if is_dead else COLOR_BODY

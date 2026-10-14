@@ -14,6 +14,7 @@ const INTERACT_RANGE := 2.0 * 64.0
 const COLOR_CLOAK := Color("7d6ac8")
 const COLOR_CLOAK_EDGE := Color("3b3268")
 const COLOR_SKIN := Color("e8c9a0")
+const ART_SCALE := 1.5
 
 ## 对应 shops.json 的 npcId；为空表示纯对话 NPC（M2 任务官等）。
 @export var shop_id: String = ""
@@ -42,9 +43,15 @@ func _ready() -> void:
 		_art.hframes = 8
 		_art.centered = false
 		_art.offset = Vector2(-32, -64)
+		_art.scale = Vector2.ONE * ART_SCALE
 		_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		add_child(_art)
 		move_child(_art, 0)
+		# 名称与交互提示不随人物贴图一起放大，避免遮住脸部和脚部。
+		_name_label.offset_top = -128.0
+		_name_label.offset_bottom = -108.0
+		_hint_label.offset_top = 28.0
+		_hint_label.offset_bottom = 48.0
 	if npc_name.is_empty() and not shop_id.is_empty():
 		npc_name = Shop.display_name(shop_id)
 	if npc_name.is_empty():
@@ -86,7 +93,7 @@ func is_player_in_range() -> bool:
 ## 屏幕点击命中：覆盖人物与头顶名称；由世界统一决定接近和交互。
 func contains_screen_point(point: Vector2) -> bool:
 	var local := get_global_transform_with_canvas().affine_inverse() * point
-	if Rect2(-38.0, -66.0, 76.0, 82.0).has_point(local):
+	if Rect2(Vector2(-32.0, -64.0) * ART_SCALE, Vector2(64.0, 80.0) * ART_SCALE).has_point(local):
 		return true
 	var label_local := _name_label.get_global_transform_with_canvas().affine_inverse() * point
 	return Rect2(Vector2.ZERO, _name_label.size).has_point(label_local)
