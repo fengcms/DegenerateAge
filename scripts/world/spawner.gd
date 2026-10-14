@@ -58,6 +58,7 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 			var configured: Variant = (map_data as Dictionary).get("tierRange", [])
 			if configured is Array:
 				tier_range = configured
+	var active_normal := _active_normal_count() if _map_id.begins_with("c2_") else 0
 	for s in specs:
 		if not (s is Dictionary):
 			continue
@@ -93,7 +94,8 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				point["position"] = Iso.grid_to_world(Vector2i(int(fixed_cell[0]), int(fixed_cell[1])))
 				point["fixed"] = true
 			_points.append(point)
-			_spawn(point)
+			if _spawn(point, active_normal) and String(point.kind) == "normal":
+				active_normal += 1
 
 ## 当前存活怪物数（测试 / 调试用）。
 func alive_count() -> int:
@@ -108,6 +110,8 @@ func point_count() -> int:
 	return _points.size()
 
 func _process(_delta: float) -> void:
+	# Each pass owns a budget snapshot; never rescan all sites for each candidate.
+	var active_normal := _active_normal_count() if _map_id.begins_with("c2_") else 0
 	# M4-10：倒计时由 `GameState.world_time` 统一驱动（本节点不再累加 delta）。
 	for p in _points:
 		if p.entry != null and is_instance_valid(p.entry):
@@ -115,13 +119,16 @@ func _process(_delta: float) -> void:
 					and (p.entry as Node2D).global_position.distance_to(_player.global_position) > RETIRE_DISTANCE:
 				p.entry.queue_free()
 				p.entry = null
+				if String(p.kind) == "normal":
+					active_normal -= 1
 			continue
 		var remaining := _remaining(p)
 		if remaining > 0.0:
 			if is_instance_valid(p.marker):
 				p.marker.set_remaining(remaining)
 			continue
-		_spawn(p)
+		if _spawn(p, active_normal) and String(p.kind) == "normal":
+			active_normal += 1
 
 ## 该点距刷新完成的剩余时间（秒）；无状态 → 0（可立即生成）。
 func _remaining(point: Dictionary) -> float:
@@ -140,23 +147,26 @@ func marker_points() -> Array[Dictionary]:
 			out.append({"monster_id": point.monster_id, "position": point.position})
 	return out
 
-func _spawn(point: Dictionary) -> void:
+func _spawn(point: Dictionary, active_normal: int = -1) -> bool:
 	var unlock := String(point.get("requires_unlock", ""))
 	if not unlock.is_empty() and not bool(GameState.unlocks.get(unlock, false)):
-		return
+		return false
 	if bool(point.get("fixed", false)) and _player != null \
 			and (point.position as Vector2).distance_to(_player.global_position) > ACTIVE_DISTANCE:
-		return
+		return false
+	# A standalone call may compute its own snapshot; batch callers supply one.
+	if active_normal < 0:
+		active_normal = _active_normal_count()
 	if _map_id.begins_with("c2_") and String(point.get("kind", "normal")) == "normal" \
-			and _active_normal_count() >= CHAPTER_TWO_NORMAL_BUDGET:
-		return
+			and active_normal >= CHAPTER_TWO_NORMAL_BUDGET:
+		return false
 	# M4-10：仍在刷新等待期 → 不生成怪物；「墓碑点」显示墓碑，其余静默等待。
 	var remaining := _remaining(point)
 	if remaining > 0.0:
 		if bool(point.get("tombstone", false)):
 			_place_tombstone(point, remaining)
 		point.entry = null
-		return
+		return false
 
 	var m: Monster = MONSTER_SCENE.instantiate()
 	m.monster_id = String(point.get("monster_id", "wolf_corrupted"))
@@ -173,6 +183,7 @@ func _spawn(point: Dictionary) -> void:
 	m.died.connect(func(_id: String) -> void: _on_monster_died(point))
 	add_child(m)
 	point.entry = m
+	return true
 
 func _active_normal_count() -> int:
 	var count := 0
