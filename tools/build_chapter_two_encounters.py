@@ -142,6 +142,8 @@ def build_spawns(entry, ref):
         entry["bossSpawn"] = {"monsterId": monster_id, "level": BOSSES[monster_id][1],
                               "respawnTime": 300 if map_id != "c2_well_core" else 600,
                               "count": 1, "cell": points[point_id], "kind": "boss", "tombstone": True}
+        if map_id == "c2_well_core":
+            entry["bossSpawn"]["requiresUnlock"] = "c2_core_access"
     assert sum(s["count"] for s in specs if s.get("kind") != "elite") == sum(COMPOSITION[map_id].values())
 
 

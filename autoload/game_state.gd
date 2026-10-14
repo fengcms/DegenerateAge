@@ -37,6 +37,7 @@ var _equipment_request_sequence := 0
 var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
 var quest_states: Dictionary = {}   # quest_id -> {"state": String, "progress": int}（M2 起；见 scripts/systems/quest.gd）
+var quest_items: Dictionary = {}    # 第二章确定来源的任务物品；独立任务袋，不占背包格
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2：Q005 奖励 → 第二章入口）
 var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
@@ -211,6 +212,7 @@ func reset_to_defaults() -> void:
 	panel_open = false
 	_open_panels = {}
 	quest_states = {}
+	quest_items = {}
 	first_clear = {}
 	unlocks = {}
 	explored_maps = {}

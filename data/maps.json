@@ -2988,7 +2988,7 @@
     "safeZone": false,
     "kind": "spoke",
     "hubId": "c2_well_town",
-    "requiresUnlock": "c2_core_access",
+    "requiresUnlock": "c2_backup_furnace",
     "exits": [
       {
         "id": "to_works",
@@ -3270,7 +3270,8 @@
         58
       ],
       "kind": "boss",
-      "tombstone": true
+      "tombstone": true,
+      "requiresUnlock": "c2_core_access"
     },
     "npcs": [
       {

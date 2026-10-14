@@ -102,7 +102,7 @@ def main():
             "tierRange": [low, high], "recommendedLevel": low,
             "safeZone": town,
             "kind": "hub" if town else "spoke", "hubId": "c2_well_town",
-            "requiresUnlock": "c2_core_access" if map_id == "c2_well_core" else "chapter2",
+            "requiresUnlock": "c2_backup_furnace" if map_id == "c2_well_core" else "chapter2",
             "exits": ref["exits"], "entrances": ref["entrances"],
             "carterArrival": ref["carterArrival"],
             "spawnPoints": [], "bossSpawn": None,

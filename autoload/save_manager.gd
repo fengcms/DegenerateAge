@@ -126,6 +126,7 @@ func _collect() -> Dictionary:
 		"activeMount": GameState.active_mount,
 		"equipment": GameState.equipment.duplicate(true),
 		"questStates": GameState.quest_states.duplicate(true),
+		"questItems": GameState.quest_items.duplicate(true),
 		"firstClear": GameState.first_clear.duplicate(true),
 		"unlocks": GameState.unlocks.duplicate(true),
 		"settings": GameState.settings.duplicate(true),
@@ -364,6 +365,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 	# 语义与运行时读取一致：缺键取默认值；存档已有值优先，未知键保留（见 _migrate_settings）。
 	if data.get("settings") is Dictionary:
 		data.settings = _migrate_settings(data.settings)
+	if not data.get("questItems") is Dictionary:
+		data.questItems = {}
 	if v >= 0 and v < CURRENT_SCHEMA:
 		if not data.has("unlocks"):
 			data.unlocks = {}
@@ -472,6 +475,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.hotbar = data.hotbar.duplicate(true)
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
 	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
+	GameState.quest_items = _deep_int(data.get("questItems", {}))
 	if data.get("firstClear", null) is Dictionary:
 		GameState.first_clear = data["firstClear"] as Dictionary
 	if data.get("unlocks", null) is Dictionary:

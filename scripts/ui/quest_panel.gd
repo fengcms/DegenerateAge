@@ -31,6 +31,9 @@ var _center: CenterContainer
 var _dim: ColorRect
 var _root: VBoxContainer
 var _scroll: ScrollContainer
+var _current_npc_id := ""
+var _current_npc_spec: Dictionary = {}
+var _service_button: Button
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -58,6 +61,14 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---- 开关 ----
 
 func _on_requested(npc_name: String) -> void:
+	_current_npc_id = ""
+	_current_npc_spec = {}
+	for spec in MapService.current_npcs():
+		if String(spec.get("npcName", "")) == npc_name:
+			_current_npc_id = String(spec.get("npcId", ""))
+			_current_npc_spec = spec
+			break
+	_service_button.visible = not _current_npc_spec.is_empty() and String(_current_npc_spec.get("role", "")) != "quest"
 	if not npc_name.is_empty():
 		_title.text = Localization.tr_key("ui.quest_panel.p001") % npc_name
 	set_open(true)
@@ -133,6 +144,11 @@ func _build() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
+	_service_button = Button.new()
+	_service_button.text = "打开服务"
+	_service_button.visible = false
+	_service_button.pressed.connect(_open_npc_service)
+	head.add_child(_service_button)
 	var close := Button.new()
 	close.text = "×"
 	close.custom_minimum_size = Vector2(32, 28)
@@ -189,7 +205,11 @@ func _refresh() -> void:
 	for c in _list.get_children():
 		_list.remove_child(c)
 		c.queue_free()
-	var entries: Array[Dictionary] = Quest.list_states()
+	var entries: Array[Dictionary] = []
+	for entry in Quest.list_states():
+		if _current_npc_id.is_empty() or String(entry.get("giver", "")) == _current_npc_id \
+				or String(entry.get("turnIn", "")) == _current_npc_id:
+			entries.append(entry)
 	if entries.is_empty():
 		var l := Label.new()
 		l.text = Localization.tr_key("ui.quest_panel.p005")
@@ -326,13 +346,27 @@ func _title_color(state: String, is_side: bool) -> Color:
 # ---- 交互 ----
 
 func _on_accept(qid: String) -> void:
-	Quest.accept(qid)          # 失败原因由 Quest 广播 toast（不静默）
+	Quest.accept(qid, _current_npc_id)          # 失败原因由 Quest 广播 toast（不静默）
 	_refresh()
 
 func _on_deliver(qid: String) -> void:
-	Quest.deliver(qid)         # 结算金币 / 经验 / 物品 / 解锁
+	Quest.deliver(qid, _current_npc_id)         # 结算金币 / 经验 / 物品 / 解锁
 	_refresh()
 
 func _on_abandon(qid: String) -> void:
 	Quest.abandon(qid)
 	_refresh()
+
+func _open_npc_service() -> void:
+	var role := String(_current_npc_spec.get("role", ""))
+	var name := String(_current_npc_spec.get("npcName", ""))
+	set_open(false)
+	match role:
+		"shop":
+			EventBus.shop_open_requested.emit(String(_current_npc_spec.get("shopId", "")))
+		"blacksmith":
+			EventBus.blacksmith_panel_requested.emit(name, String(_current_npc_spec.get("greeting", "")))
+		"warehouse":
+			EventBus.warehouse_panel_requested.emit(name)
+		"carter":
+			EventBus.carter_panel_requested.emit(name)

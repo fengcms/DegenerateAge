@@ -435,6 +435,15 @@ func exit_at_screen(point: Vector2) -> TravelExit:
 	return best
 
 func _interact_with(npc: Npc) -> bool:
+	var npc_id := ""
+	for spec in MapService.current_npcs():
+		if String(spec.get("npcName", "")) == npc.npc_name:
+			npc_id = String(spec.get("npcId", ""))
+			break
+	Quest.on_npc_talk(npc_id)
+	if not npc_id.is_empty() and Quest.has_actionable_at_npc(npc_id):
+		EventBus.quest_panel_requested.emit(npc.npc_name)
+		return true
 	if npc.role == "quest":
 		EventBus.quest_panel_requested.emit(npc.npc_name)
 		return true

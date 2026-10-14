@@ -16,6 +16,7 @@ func _ready() -> void:
 ## 3.1 死亡结算 → 击杀类任务计数。
 func _on_monster_died(monster_id: String) -> void:
 	Quest.on_event("monster_died", monster_id)
+	Quest.on_monster_died_for_items(monster_id)
 
 ## 掉落认领 → 收集类任务计数（方案 C 后为「掉落生成当帧入包」即发，见 9.9）。
 func _on_item_picked(item_id: String) -> void:

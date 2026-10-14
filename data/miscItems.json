@@ -33,5 +33,33 @@
     "useType": "quest",
     "animation": "",
     "desc": "荒野遗物任务收集物（Q003）。"
+  },
+  {
+    "id": "c2_pressure_plate",
+    "name": "调压片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第二章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c2_worker_badge",
+    "name": "旧工牌",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第二章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c2_heat_component",
+    "name": "耐热组件",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第二章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c2_named_badge",
+    "name": "具名工牌",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第二章任务袋物品，不占背包格。"
   }
 ]

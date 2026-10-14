@@ -406,5 +406,130 @@
         "hp": 57
       }
     }
+  },
+  {
+    "id": "c2_inspector_armor",
+    "name": "巡检护甲",
+    "slot": "armor",
+    "price": 300,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第二章固定任务奖励。属性由等级、品质和星级三轴计算。",
+    "tierBases": {
+      "1": {
+        "def": 4,
+        "hp": 14
+      },
+      "10": {
+        "def": 10,
+        "hp": 30
+      },
+      "20": {
+        "def": 18,
+        "hp": 54
+      }
+    },
+    "defaultQuality": "rare",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
+  },
+  {
+    "id": "c2_backup_blade",
+    "name": "备用炉之刃",
+    "slot": "weapon",
+    "price": 300,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第二章固定任务奖励。属性由等级、品质和星级三轴计算。",
+    "tierBases": {
+      "1": {
+        "atk": 6
+      },
+      "10": {
+        "atk": 15
+      },
+      "20": {
+        "atk": 25
+      }
+    },
+    "defaultQuality": "rare",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
+  },
+  {
+    "id": "c2_apprentice_bracer",
+    "name": "隔热学徒护腕",
+    "slot": "bracer",
+    "price": 300,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第二章固定任务奖励。属性由等级、品质和星级三轴计算。",
+    "tierBases": {
+      "1": {
+        "def": 2,
+        "hp": 5
+      },
+      "10": {
+        "def": 5,
+        "hp": 12
+      },
+      "20": {
+        "def": 9,
+        "hp": 22
+      }
+    },
+    "defaultQuality": "uncommon",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
+  },
+  {
+    "id": "c2_slag_shield",
+    "name": "炉渣护盾",
+    "slot": "shield",
+    "price": 300,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第二章固定任务奖励。属性由等级、品质和星级三轴计算。",
+    "tierBases": {
+      "1": {
+        "def": 5,
+        "hp": 10
+      },
+      "10": {
+        "def": 12,
+        "hp": 25
+      },
+      "20": {
+        "def": 20,
+        "hp": 45
+      }
+    },
+    "defaultQuality": "rare",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
   }
 ]

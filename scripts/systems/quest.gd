@@ -96,14 +96,30 @@ static func has_state(state: String) -> bool:
 			return true
 	return false
 
+static func has_actionable_at_npc(npc_id: String) -> bool:
+	for tpl in all():
+		if not tpl is Dictionary:
+			continue
+		var qid := String(tpl.get("id", ""))
+		var state := state_of(qid)
+		if state == STATE_AVAILABLE and String(tpl.get("giver", "")) == npc_id:
+			return true
+		if state == STATE_COMPLETED and String(tpl.get("turnIn", tpl.get("giver", ""))) == npc_id:
+			return true
+	return false
+
 # ---- 接取 / 放弃（08 §8.2 / §8.4）----
 
 ## 接取任务。返回 {ok, reason, state}。
 ## `talk` 类目标（D4-A）：接取即达标 → 直接置 completed（"与长老交谈"在接取那刻已发生）。
-static func accept(quest_id: String) -> Dictionary:
+static func accept(quest_id: String, npc_id: String = "") -> Dictionary:
 	var tpl := template(quest_id)
 	if tpl.is_empty():
 		return _fail(Localization.tr_key("msg.quest.p001"))
+	if not npc_id.is_empty() and npc_id != String(tpl.get("giver", "")):
+		return _fail("只能向任务发布人接取")
+	if not npc_id.is_empty() and MapService.map_for_npc(npc_id) != GameState.current_map:
+		return _fail("请到任务发布人所在地图接取")
 	var st := state_of(quest_id)
 	match st:
 		STATE_LOCKED:
@@ -127,9 +143,46 @@ static func accept(quest_id: String) -> Dictionary:
 	_write(quest_id, STATE_ACTIVE, 0)
 	EventBus.quest_accepted.emit(quest_id)
 
-	if kind == "talk":
+	if kind == "talk" and (quest_id == "Q001" or bool(tpl.get("talkOnAccept", false))):
 		_complete(quest_id, need)          # 接取即达标
+	elif kind == "kill" and need == 1:
+		var target := String((obj as Dictionary).get("targetId", ""))
+		var monster: Variant = DataLoader.get_entry("monsters", target)
+		if monster is Dictionary and String(monster.get("kind", "")) == "boss" \
+				and bool(GameState.first_clear.get(target, false)):
+			_complete(quest_id, 1)
 	return {"ok": true, "reason": "", "state": state_of(quest_id)}
+
+## 指定 NPC 交谈；与旧 Q001 的接取即完成规则并存。
+static func on_npc_talk(npc_id: String) -> void:
+	if npc_id.is_empty():
+		return
+	for tpl in all():
+		if not tpl is Dictionary:
+			continue
+		var qid := String(tpl.get("id", ""))
+		if state_of(qid) != STATE_ACTIVE:
+			continue
+		var obj: Dictionary = tpl.get("objective", {})
+		if String(obj.get("kind", "")) == "talk" and String(obj.get("targetId", "")) == npc_id and _in_scope(tpl):
+			_complete(qid, 1)
+
+## 独立任务袋：只有已接取任务的指定怪物击杀才产出，且不占背包格。
+static func on_monster_died_for_items(monster_id: String) -> void:
+	for tpl in all():
+		if not tpl is Dictionary:
+			continue
+		var qid := String(tpl.get("id", ""))
+		if state_of(qid) != STATE_ACTIVE or not _in_scope(tpl):
+			continue
+		var obj: Dictionary = tpl.get("objective", {})
+		if String(obj.get("kind", "")) != "collect" or String(obj.get("sourceMonster", "")) != monster_id:
+			continue
+		var item_id := String(obj.get("targetId", ""))
+		if item_id.is_empty() or int(progress_of(qid).get("cur", 0)) >= int(obj.get("count", 1)):
+			continue
+		GameState.quest_items[item_id] = int(GameState.quest_items.get(item_id, 0)) + 1
+		on_event("item_picked", item_id)
 
 ## 放弃任务（08 §8.2：主线不可放弃）。计数清零，状态置 abandoned（可立即重接）。
 static func abandon(quest_id: String) -> Dictionary:
@@ -141,6 +194,9 @@ static func abandon(quest_id: String) -> Dictionary:
 	if state_of(quest_id) != STATE_ACTIVE:
 		return _fail(Localization.tr_key("msg.quest.p008"))
 	_write(quest_id, STATE_ABANDONED, 0)
+	var obj: Dictionary = tpl.get("objective", {})
+	if not String(obj.get("sourceMonster", "")).is_empty():
+		GameState.quest_items.erase(String(obj.get("targetId", "")))
 	EventBus.toast_requested.emit(Localization.tr_key("msg.quest.p009") % String(tpl.get("name", quest_id)), "info")
 	return {"ok": true, "reason": ""}
 
@@ -188,12 +244,21 @@ static func _in_scope(tpl: Dictionary) -> bool:
 
 ## 交付已完成的任务：结算金币 / 经验 / 物品 / 解锁，状态置 rewarded。
 ## 返回 {ok, reason, reward, item}。**背包满时明确拒绝且不置 rewarded**（R-e，不静默丢奖）。
-static func deliver(quest_id: String) -> Dictionary:
+static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 	var tpl := template(quest_id)
 	if tpl.is_empty():
 		return _fail(Localization.tr_key("msg.quest.p001"))
 	if state_of(quest_id) != STATE_COMPLETED:
 		return _fail(Localization.tr_key("msg.quest.p010"))
+	if not npc_id.is_empty() and npc_id != String(tpl.get("turnIn", tpl.get("giver", ""))):
+		return _fail("请向指定交付人领取奖励")
+	if not npc_id.is_empty() and MapService.map_for_npc(npc_id) != GameState.current_map:
+		return _fail("请到交付人所在地图领取奖励")
+	var objective: Dictionary = tpl.get("objective", {})
+	var quest_item := String(objective.get("targetId", "")) if not String(objective.get("sourceMonster", "")).is_empty() else ""
+	var quest_item_count := int(objective.get("count", 1)) if not quest_item.is_empty() else 0
+	if quest_item_count > int(GameState.quest_items.get(quest_item, 0)):
+		return _fail("任务物品不足，无法交付")
 
 	var reward = tpl.get("reward", {})
 	if not (reward is Dictionary):
@@ -204,10 +269,28 @@ static func deliver(quest_id: String) -> Dictionary:
 	var item_id := String(reward.get("item", ""))
 	var item := {}
 	if not item_id.is_empty():
-		item = ItemFactory.make_any(item_id, 1)
+		if DataLoader.get_entry("equipments", item_id) is Dictionary and reward.has("requiredLevel"):
+			var roll := RandomNumberGenerator.new()
+			roll.seed = hash(quest_id)
+			item = ItemFactory.make_equip_roll(item_id, int(reward.requiredLevel),
+				String(reward.get("quality", "rare")), roll, "quest")
+		else:
+			item = ItemFactory.make_any(item_id, 1)
 		if item.is_empty():
 			return _fail(Localization.tr_key("msg.quest.p011") % item_id)
-		if not Inventory.has_space_for(GameState.inventory, item):
+	var bonus_items: Array[Dictionary] = []
+	for item_spec in reward.get("items", []):
+		if not item_spec is Dictionary:
+			continue
+		var bonus := ItemFactory.make_any(String(item_spec.get("itemId", "")), int(item_spec.get("count", 1)))
+		if bonus.is_empty():
+			return _fail("任务奖励物品配置无效")
+		bonus_items.append(bonus)
+	var pending_inventory := GameState.inventory.duplicate(true)
+	if not item.is_empty() and not Inventory.add(pending_inventory, item):
+		return _fail(Localization.tr_key("msg.quest.p012"))
+	for bonus in bonus_items:
+		if not Inventory.add(pending_inventory, bonus):
 			return _fail(Localization.tr_key("msg.quest.p012"))
 
 	var gold := int(reward.get("gold", 0))
@@ -218,10 +301,20 @@ static func deliver(quest_id: String) -> Dictionary:
 		GameState.add_xp(xp)
 	if not item.is_empty():
 		GameState.add_item(item)
+	for bonus in bonus_items:
+		GameState.add_item(bonus)
+	if quest_item_count > 0:
+		var remaining := int(GameState.quest_items.get(quest_item, 0)) - quest_item_count
+		if remaining > 0:
+			GameState.quest_items[quest_item] = remaining
+		else:
+			GameState.quest_items.erase(quest_item)
 
 	var unlock := String(reward.get("unlock", ""))
 	if not unlock.is_empty():
 		GameState.unlocks[unlock] = true
+	for key in reward.get("unlocks", []):
+		GameState.unlocks[String(key)] = true
 
 	_write(quest_id, STATE_REWARDED, int(progress_of(quest_id).get("cur", 0)))
 	EventBus.quest_rewarded.emit(quest_id)
@@ -297,6 +390,7 @@ static func list_states() -> Array[Dictionary]:
 			"trackerText": String((tpl as Dictionary).get("trackerText", "")),
 			"turnInText": String((tpl as Dictionary).get("turnInText", "")),
 			"giver": String((tpl as Dictionary).get("giver", "")),
+			"turnIn": String((tpl as Dictionary).get("turnIn", (tpl as Dictionary).get("giver", ""))),
 			"type": String((tpl as Dictionary).get("type", "main")),
 			"state": state_of(qid),
 			"cur": int(p.get("cur", 0)),
@@ -346,7 +440,7 @@ static func start_link_navigation(quest_id: String, kind: String, target_id: Str
 	var tpl := template(quest_id)
 	var objective: Dictionary = tpl.get("objective", {})
 	if state == STATE_COMPLETED:
-		var giver := String(tpl.get("giver", ""))
+		var giver := String(tpl.get("turnIn", tpl.get("giver", "")))
 		var giver_map := MapService.map_for_npc(giver)
 		if kind == "npc" and target_id == giver and not giver_map.is_empty():
 			return MapService.start_quest_link_navigation("npc", giver, [giver_map])
@@ -359,6 +453,9 @@ static func start_link_navigation(quest_id: String, kind: String, target_id: Str
 		if kind == "monster" and String(objective.get("kind", "")) == "kill" \
 				and target_id == String(objective.get("targetId", "")):
 			return MapService.start_quest_link_navigation("monster", target_id, scope)
+		if kind == "npc" and String(objective.get("kind", "")) == "talk" \
+				and target_id == String(objective.get("targetId", "")):
+			return MapService.start_quest_link_navigation("npc", target_id, scope)
 	return {"ok": false, "reason": "当前任务状态不能导航到该目标"}
 
 ## 目标对象显示名（怪物 / 收集物 / NPC）。
@@ -370,7 +467,7 @@ static func _target_name(kind: String, target_id: String) -> String:
 		"collect":
 			table = "miscItems"
 		"talk":
-			return "长老"        # M2 仅任务官一位
+			return MapService.npc_name(target_id)
 		_:
 			return target_id
 	var e = DataLoader.get_entry(table, target_id)

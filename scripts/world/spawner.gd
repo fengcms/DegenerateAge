@@ -81,6 +81,7 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				"respawn_time": maxf(1.0, float(spec.get("respawnTime", 30.0))),
 				"ai": bool(spec.get("ai", true)),
 				"kind": String(spec.get("kind", "normal")),
+				"requires_unlock": String(spec.get("requiresUnlock", "")),
 				"entry": null,
 				"tombstone": bool(spec.get("tombstone", false)),
 				"marker": null,
@@ -139,6 +140,9 @@ func marker_points() -> Array[Dictionary]:
 	return out
 
 func _spawn(point: Dictionary) -> void:
+	var unlock := String(point.get("requires_unlock", ""))
+	if not unlock.is_empty() and not bool(GameState.unlocks.get(unlock, false)):
+		return
 	if bool(point.get("fixed", false)) and _player != null \
 			and (point.position as Vector2).distance_to(_player.global_position) > ACTIVE_DISTANCE:
 		return
