@@ -1,0 +1,98 @@
+{
+  "batch": "A1",
+  "chapter": 2,
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "version": "0.1-candidate",
+  "generationMethod": "Codex built-in image_gen; technical PNG export with ImageMagick",
+  "licenseProvenance": "Generated in this task from project-owned style references; no external images",
+  "reviewStatus": "art_candidate",
+  "integrationStatus": "not_integrated",
+  "assets": [
+    {
+      "assetId": "c2_pipe_slope_rocky_road",
+      "dataId": "c2_pipe_slope",
+      "type": "ground_tile_family",
+      "source": "art_source/chapter2/concepts/pipe_slope_road_source.png",
+      "exports": ["assets/tiles/c2_pipe_slope/rocky_road_00.png", "assets/tiles/c2_pipe_slope/rocky_road_01.png", "assets/tiles/c2_pipe_slope/rocky_road_02.png", "assets/tiles/c2_pipe_slope/rocky_road_03.png"],
+      "size": [64, 32],
+      "anchor": [32, 16],
+      "suggestedFootprintTiles": [1, 1],
+      "occlusion": "none",
+      "collisionHint": "walkable",
+      "status": "candidate; not an autotile set"
+    },
+    {
+      "assetId": "c2_pipe_slope_road_gravel_edge",
+      "dataId": "c2_pipe_slope",
+      "type": "ground_transition",
+      "source": "art_source/chapter2/concepts/pipe_slope_road_edge_00_source.png",
+      "exports": ["assets/tiles/c2_pipe_slope/road_gravel_edge_00.png"],
+      "size": [64, 32],
+      "anchor": [32, 16],
+      "suggestedFootprintTiles": [1, 1],
+      "occlusion": "none",
+      "collisionHint": "walkable",
+      "status": "candidate; other edge directions and corners pending"
+    },
+    {
+      "assetId": "c2_pipe_slope_broken_main_pipe",
+      "dataId": "c2_pipe_slope",
+      "type": "landmark_module",
+      "source": "art_source/chapter2/concepts/broken_main_pipe_source.png",
+      "exports": ["assets/tiles/c2_pipe_slope/broken_main_pipe.png"],
+      "size": [160, 112],
+      "anchor": [80, 96],
+      "suggestedFootprintTiles": [2, 1],
+      "occlusion": "front_upper_part",
+      "collisionHint": "blocking candidate; engineering to define",
+      "status": "candidate; front/back split pending"
+    },
+    {
+      "assetId": "c2_pipe_slope_repair_shelter",
+      "dataId": "c2_pipe_slope",
+      "type": "building_module",
+      "source": "art_source/chapter2/concepts/repair_shelter_source.png",
+      "exports": ["assets/tiles/c2_pipe_slope/repair_shelter.png"],
+      "size": [128, 112],
+      "anchor": [64, 100],
+      "suggestedFootprintTiles": [2, 2],
+      "occlusion": "roof_foreground_candidate",
+      "collisionHint": "blocking posts only; engineering to define",
+      "status": "candidate; roof/base split pending"
+    },
+    {
+      "assetId": "c2_pipe_slope_cliff_straight",
+      "dataId": "c2_pipe_slope",
+      "type": "obstacle_module",
+      "source": "art_source/chapter2/concepts/cliff_straight_source.png",
+      "exports": ["assets/tiles/c2_pipe_slope/cliff_straight.png"],
+      "size": [160, 96],
+      "anchor": [80, 87],
+      "suggestedFootprintTiles": [2, 1],
+      "occlusion": "front_face",
+      "collisionHint": "blocking candidate; engineering to define",
+      "status": "candidate; corners and end caps pending"
+    },
+    {
+      "assetId": "c2_spirit_larva_se",
+      "dataId": "c2_spirit_larva",
+      "type": "monster_direction_sample",
+      "source": "art_source/chapter2/concepts/spirit_larva_keypose_source.png",
+      "exports": ["assets/sprites/monsters/c2_spirit_larva/idle_se_atlas.png", "assets/sprites/monsters/c2_spirit_larva/walk_se_atlas.png", "assets/sprites/monsters/c2_spirit_larva/attack_se_atlas.png"],
+      "frameSize": [80, 80],
+      "anchor": [40, 64],
+      "directionOrder": ["se"],
+      "directionAxis": "single_row",
+      "frameAxis": "columns",
+      "states": {
+        "idle": {"frames": 4, "fps": 6, "loop": true},
+        "walk": {"frames": 8, "fps": 10, "loop": true},
+        "attack": {"frames": 6, "fps": 12, "loop": false, "contactFrameZeroBased": 3}
+      },
+      "suggestedFootprintTiles": [1, 1],
+      "occlusion": "none",
+      "collisionHint": "art only; preserve existing gameplay geometry",
+      "status": "candidate; seven directions plus hit/death pending"
+    }
+  ]
+}
