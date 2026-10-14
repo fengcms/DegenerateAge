@@ -56,7 +56,7 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.custom_minimum_size.x = 600
+	root.custom_minimum_size.x = 540
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 	var head := HBoxContainer.new()
@@ -76,12 +76,23 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
-	_center.setup(self, panel, head, Vector2(0.42, 0.26))
+	_center.setup(self, panel, head, Vector2(0.02, 0.18))
 	var divider := HSeparator.new()
 	PanelChrome.style_separator(divider)
 	root.add_child(divider)
+	var section := Label.new()
+	section.text = "可用技能"
+	PanelChrome.style_section(section)
+	root.add_child(section)
 	_list = VBoxContainer.new()
+	_list.add_theme_constant_override("separation", 6)
 	root.add_child(_list)
+
+## 每项技能沿用同一张低对比内容卡，保留原拖动按钮作为交互源。
+func _new_skill_row() -> HBoxContainer:
+	var row := PanelSkillRow.new()
+	_list.add_child(row)
+	return row
 
 func _refresh() -> void:
 	if _list == null:
@@ -97,10 +108,10 @@ func _refresh() -> void:
 		var skill: Dictionary = raw
 		var unlocked := int(GameState.player.level) >= int(skill.get("unlockLevel", 1))
 		var wired := HotbarConfig.ACTIVE_SKILLS.has(String(skill.get("id", "")))
-		var row := HBoxContainer.new()
-		_list.add_child(row)
+		var row := _new_skill_row()
 		var icon := SkillDragButton.new()
-		icon.custom_minimum_size = Vector2(72, 48)
+		icon.custom_minimum_size = Vector2(52, 52)
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		icon.text = String(skill.get("name", Localization.tr_key("ui.skill_panel.p001"))).substr(0, 2)
 		icon.skill_id = String(skill.get("id", ""))
 		icon.drag_label = String(skill.get("name", ""))
@@ -113,18 +124,22 @@ func _refresh() -> void:
 		desc.text = "%s　Lv%d · %s\n%s" % [String(skill.get("name", "")), int(skill.get("unlockLevel", 1)),
 			Localization.tr_key("ui.skill.available") if unlocked and wired else (Localization.tr_key("ui.skill.locked") if not unlocked else Localization.tr_key("ui.skill.unwired")),
 			String(skill.get("desc", ""))]
-		desc.custom_minimum_size.x = 500
+		desc.custom_minimum_size.x = 380
+		desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		desc.add_theme_color_override("font_color", PanelChrome.TEXT)
 		row.add_child(desc)
 	for kind in ["red", "blue"]:
-		var row := HBoxContainer.new()
-		_list.add_child(row)
+		var row := _new_skill_row()
 		var button := SkillDragButton.new()
-		button.custom_minimum_size = Vector2(72, 48)
+		button.custom_minimum_size = Vector2(52, 52)
+		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.text = Localization.tr_key("ui.skill_panel.p006") if kind == "red" else Localization.tr_key("ui.skill_panel.p007")
 		button.binding = {"kind": "auto_potion", "id": kind}
 		button.tooltip_text = Localization.tr_key("ui.skill_panel.p008")
 		row.add_child(button)
 		var desc := Label.new()
 		desc.text = Localization.tr_key("ui.skill_panel.p009") % (Localization.tr_key("ui.skill_panel.p010") if kind == "red" else Localization.tr_key("ui.skill_panel.p011"))
-		desc.custom_minimum_size.x = 500
+		desc.custom_minimum_size.x = 380
+		desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		desc.add_theme_color_override("font_color", PanelChrome.TEXT)
 		row.add_child(desc)

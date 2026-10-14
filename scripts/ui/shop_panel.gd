@@ -273,17 +273,20 @@ func _build_sell_page() -> Control:
 	_return_all_btn.custom_minimum_size = Vector2(96, 32)
 	_return_all_btn.pressed.connect(_on_return_all_pressed)
 	bar.add_child(_return_all_btn)
+	PanelChrome.style_action(_return_all_btn)
 	_stage_all_btn = Button.new()
 	_stage_all_btn.text = Localization.tr_key("ui.shop_panel.p007")
 	_stage_all_btn.tooltip_text = Localization.tr_key("ui.shop_panel.p008")
 	_stage_all_btn.custom_minimum_size = Vector2(96, 32)
 	_stage_all_btn.pressed.connect(_on_stage_all_pressed)
 	bar.add_child(_stage_all_btn)
+	PanelChrome.style_action(_stage_all_btn)
 	_confirm_btn = Button.new()
 	_confirm_btn.text = Localization.tr_key("ui.shop_panel.p009")
 	_confirm_btn.custom_minimum_size = Vector2(96, 32)
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	bar.add_child(_confirm_btn)
+	PanelChrome.style_action(_confirm_btn, true)
 
 	return page
 
@@ -425,6 +428,7 @@ func _make_buy_row(e: Dictionary) -> Control:
 	buy.custom_minimum_size = Vector2(72, 30)
 	buy.pressed.connect(_on_buy_pressed.bind(item_id))
 	row.add_child(buy)
+	PanelChrome.style_action(buy, true)
 
 	return row
 

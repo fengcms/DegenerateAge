@@ -9,6 +9,7 @@ var panel_box: PanelContainer
 var header: Control
 var origin := Vector2(0.5, 0.5)
 var _placed := false
+var _user_moved := false
 var _dragging := false
 var _drag_offset := Vector2.ZERO
 var _docked := false
@@ -29,6 +30,8 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 			(child as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.gui_input.connect(_on_header_input)
 	panel_box.gui_input.connect(_on_box_input)
+	# 动态列表刷新会先排入旧行的 queue_free；待最小尺寸稳定后重新夹紧浮窗。
+	panel_box.minimum_size_changed.connect(func() -> void: _layout.call_deferred())
 	owner_panel.resized.connect(_layout)
 	_layout.call_deferred()
 
@@ -61,6 +64,7 @@ func set_docked(active: bool, left: float = 0.0, right: float = 1.0) -> void:
 	elif not active and _docked:
 		# 离开并列布局时，以玩家实际看到的面板位置继续显示。
 		_floating_position = position + panel_box.position
+		_user_moved = true
 	_docked = active
 	_dock_left = left
 	_dock_right = right
@@ -74,7 +78,7 @@ func _layout() -> void:
 		size = Vector2(owner_panel.size.x * (_dock_right - _dock_left), owner_panel.size.y)
 		return
 	size = panel_box.get_combined_minimum_size()
-	if not _placed:
+	if not _placed or not _user_moved:
 		position = (owner_panel.size - size) * origin
 		_placed = true
 	else:
@@ -97,6 +101,7 @@ func _on_header_input(event: InputEvent) -> void:
 		if event.pressed:
 			bring_forward()
 			_dragging = true
+			_user_moved = true
 			_drag_offset = owner_panel.get_local_mouse_position() - position
 		else:
 			_dragging = false

@@ -9,6 +9,8 @@ var _title: Label
 var _greeting: Label
 var _continue: Button
 var _upgrade: Button
+var _greeting_card: Control
+var _service_card: Control
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -24,7 +26,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _on_requested(npc_name: String, greeting: String) -> void:
-	_title.text = PanelChrome.title_text(Localization.tr_key("ui.blacksmith_panel.p001") % npc_name)
+	_title.text = PanelChrome.title_text(npc_name if not npc_name.is_empty() else Localization.tr_key("ui.blacksmith_panel.p002"))
 	_greeting.text = "「%s」" % greeting
 	set_open(true)
 
@@ -38,6 +40,8 @@ func set_open(open: bool) -> void:
 	if open:
 		_continue.visible = true
 		_upgrade.visible = false
+		_greeting_card.visible = true
+		_service_card.visible = false
 		EventBus.panel_opened.emit(PANEL_ID)
 
 func _build() -> void:
@@ -57,7 +61,7 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.custom_minimum_size = Vector2(430, 0)
+	root.custom_minimum_size = Vector2(500, 350)
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 	var head := HBoxContainer.new()
@@ -76,21 +80,77 @@ func _build() -> void:
 	var divider := HSeparator.new()
 	PanelChrome.style_separator(divider)
 	root.add_child(divider)
+	_greeting_card = PanelContainer.new()
+	PanelChrome.style_card(_greeting_card as PanelContainer)
+	_greeting_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(_greeting_card)
+	var greeting_row := HBoxContainer.new()
+	greeting_row.add_theme_constant_override("separation", 18)
+	_greeting_card.add_child(greeting_row)
+	var portrait := TextureRect.new()
+	var portrait_atlas := AtlasTexture.new()
+	portrait_atlas.atlas = preload("res://assets/sprites/npcs/blacksmith/idle_atlas.png")
+	portrait_atlas.region = Rect2(0, 0, 64, 80)
+	portrait.texture = portrait_atlas
+	portrait.custom_minimum_size = Vector2(118, 150)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	greeting_row.add_child(portrait)
+	var speech := VBoxContainer.new()
+	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	greeting_row.add_child(speech)
+	var speaker := Label.new()
+	speaker.text = "铁匠"
+	PanelChrome.style_section(speaker)
+	speech.add_child(speaker)
 	_greeting = Label.new()
 	_greeting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_greeting)
+	_greeting.add_theme_color_override("font_color", PanelChrome.TEXT)
+	speech.add_child(_greeting)
+	_service_card = PanelContainer.new()
+	PanelChrome.style_card(_service_card as PanelContainer)
+	_service_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_service_card.visible = false
+	root.add_child(_service_card)
+	var service_content := VBoxContainer.new()
+	service_content.add_theme_constant_override("separation", 12)
+	_service_card.add_child(service_content)
+	var service_title := Label.new()
+	service_title.text = "可用服务"
+	PanelChrome.style_section(service_title)
+	service_content.add_child(service_title)
+	var service_description := Label.new()
+	service_description.text = "◆  装备升星\n消耗材料与金币，查看本次成功率"
+	service_description.add_theme_color_override("font_color", PanelChrome.TEXT)
+	service_content.add_child(service_description)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	root.add_child(actions)
+	var leave := Button.new()
+	leave.text = "离开"
+	leave.pressed.connect(func() -> void: set_open(false))
+	actions.add_child(leave)
+	PanelChrome.style_action(leave)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(spacer)
 	_continue = Button.new()
 	_continue.text = Localization.tr_key("ui.blacksmith_panel.p003")
 	_continue.pressed.connect(_show_menu)
-	root.add_child(_continue)
+	actions.add_child(_continue)
+	PanelChrome.style_action(_continue, true)
 	_upgrade = Button.new()
 	_upgrade.text = Localization.tr_key("ui.blacksmith_panel.p004")
 	_upgrade.pressed.connect(_open_upgrade)
-	root.add_child(_upgrade)
+	actions.add_child(_upgrade)
+	PanelChrome.style_action(_upgrade, true)
 
 func _show_menu() -> void:
 	_continue.visible = false
 	_upgrade.visible = true
+	_greeting_card.visible = false
+	_service_card.visible = true
 	_upgrade.grab_focus()
 
 func _open_upgrade() -> void:

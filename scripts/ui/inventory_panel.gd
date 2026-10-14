@@ -14,7 +14,7 @@ extends Control
 ## 占位素材（R5）：格内以模板名前 2 字 + 品质色描边表现，不加载图标。
 ## 背包格随购买容量动态增减，超出首屏的格子可滚动查看。
 
-const SLOT_MIN := Vector2(46, 46)
+const SLOT_MIN := Vector2(52, 52)
 const BAG_COLUMNS := 8
 const DOUBLE_CLICK_MS := 400
 
@@ -23,9 +23,9 @@ const TRADE_LEFT_RATIO := 0.60
 
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
-const COL_SLOT_BG := Color(0.13, 0.14, 0.17, 0.95)
-const COL_SLOT_EMPTY := Color(0.10, 0.11, 0.13, 0.92)
-const COL_SLOT_HOVER := Color(0.20, 0.22, 0.26, 0.98)
+const COL_SLOT_BG := Color("1b282d")
+const COL_SLOT_EMPTY := Color("142025")
+const COL_SLOT_HOVER := Color("2b3a3d")
 const COL_TEXT := Color(0.90, 0.92, 0.95)
 const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 
@@ -178,7 +178,7 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
-	_center.setup(self, box, head, Vector2(0.20, 0.30))
+	_center.setup(self, box, head, Vector2(0.02, 0.18))
 
 	var footer_divider := HSeparator.new()
 	PanelChrome.style_separator(footer_divider)
@@ -194,24 +194,36 @@ func _build() -> void:
 	_bag_title.add_theme_font_size_override("font_size", 14)
 	_bag_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bag_head.add_child(_bag_title)
+	_summary = Label.new()
+	_summary.add_theme_font_size_override("font_size", 14)
+	_summary.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
+	bag_head.add_child(_summary)
+	var bag_divider := HSeparator.new()
+	PanelChrome.style_separator(bag_divider)
+	right.add_child(bag_divider)
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 6)
+	right.add_child(action_row)
 	_organize_button = Button.new()
 	_organize_button.text = Localization.tr_key("ui.inventory_panel.p002")
 	_organize_button.tooltip_text = Localization.tr_key("ui.inventory_panel.p003")
 	_organize_button.pressed.connect(_on_organize_pressed)
-	bag_head.add_child(_organize_button)
+	action_row.add_child(_organize_button)
+	PanelChrome.style_action(_organize_button)
 	_expand_button = Button.new()
 	_expand_button.pressed.connect(_on_expand_pressed)
-	bag_head.add_child(_expand_button)
-	var action_row := HBoxContainer.new()
-	right.add_child(action_row)
+	action_row.add_child(_expand_button)
+	PanelChrome.style_action(_expand_button)
 	_sell_low_button = Button.new()
 	_sell_low_button.text = Localization.tr_key("ui.inventory_panel.p004")
 	_sell_low_button.pressed.connect(_on_sell_low_pressed)
 	action_row.add_child(_sell_low_button)
+	PanelChrome.style_action(_sell_low_button)
 	var filter_toggle := Button.new()
 	filter_toggle.text = Localization.tr_key("ui.inventory_panel.p005")
 	filter_toggle.pressed.connect(func() -> void: _filter_row.visible = not _filter_row.visible)
 	action_row.add_child(filter_toggle)
+	PanelChrome.style_action(filter_toggle)
 	_filter_row = HBoxContainer.new()
 	_filter_row.visible = false
 	right.add_child(_filter_row)
@@ -235,7 +247,7 @@ func _build() -> void:
 	_filter_row.add_child(_filter_quality)
 
 	var bag_scroll := ScrollContainer.new()
-	bag_scroll.custom_minimum_size = Vector2(410, 360)
+	bag_scroll.custom_minimum_size = Vector2(460, 360)
 	bag_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(bag_scroll)
 	_bag_grid = GridContainer.new()
@@ -249,9 +261,11 @@ func _build() -> void:
 	PanelChrome.style_separator(divider)
 	root.add_child(divider)
 
-	_summary = Label.new()
-	_summary.add_theme_font_size_override("font_size", 14)
-	root.add_child(_summary)
+	var hint := Label.new()
+	hint.text = "左键查看 · 与人物面板并开时可拖放装备"
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	root.add_child(hint)
 
 
 ## 背包格：使用 ItemSlot（可用物品拖到快捷栏；交易时装备可拖到出售托盘）。

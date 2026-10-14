@@ -48,6 +48,21 @@ var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
 
+## 空背包格绘制低对比定位纹样，视觉与统一面板样稿一致；不遮挡图标和数量角标。
+func _draw() -> void:
+	if role != ROLE_BAG or not item.is_empty():
+		return
+	var center := size * 0.5
+	var marker := Color("354a50")
+	draw_arc(center, 10.0, 0.0, TAU, 24, marker, 1.0)
+	draw_line(center + Vector2(-15, 0), center + Vector2(15, 0), marker, 1.0)
+	draw_line(center + Vector2(0, -15), center + Vector2(0, 15), marker, 1.0)
+	for x_sign in [-1.0, 1.0]:
+		for y_sign in [-1.0, 1.0]:
+			var corner := center + Vector2(x_sign * 19.0, y_sign * 19.0)
+			draw_line(corner, corner - Vector2(x_sign * 8.0, 0), marker, 1.0)
+			draw_line(corner, corner - Vector2(0, y_sign * 8.0), marker, 1.0)
+
 func _ready() -> void:
 	_quality_frame = QualityFrameOverlay.new()
 	_quality_frame.name = "QualityFrame"

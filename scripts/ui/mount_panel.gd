@@ -64,13 +64,13 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.custom_minimum_size.x = 620
+	root.custom_minimum_size.x = 560
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 	var head := HBoxContainer.new()
 	root.add_child(head)
 	_title = Label.new()
-	_title.text = Localization.tr_key("ui.mount_panel.p001")
+	_title.text = "坐骑"
 	_title.add_theme_font_size_override("font_size", 20)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
@@ -84,29 +84,43 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
-	_center.setup(self, panel, head, Vector2(0.52, 0.34))
+	_center.setup(self, panel, head, Vector2(0.98, 0.18))
 	var divider := HSeparator.new()
 	PanelChrome.style_separator(divider)
 	root.add_child(divider)
+	var section := Label.new()
+	section.text = Localization.tr_key("ui.mount_panel.p001")
+	PanelChrome.style_section(section)
+	root.add_child(section)
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 16)
+	body.add_theme_constant_override("separation", 10)
 	root.add_child(body)
+	var list_card := PanelContainer.new()
+	PanelChrome.style_card(list_card)
+	body.add_child(list_card)
 	_list = VBoxContainer.new()
-	_list.custom_minimum_size.x = 190
-	body.add_child(_list)
+	_list.custom_minimum_size.x = 170
+	_list.add_theme_constant_override("separation", 6)
+	list_card.add_child(_list)
+	var preview_card := PanelContainer.new()
+	PanelChrome.style_card(preview_card)
+	preview_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(preview_card)
 	var preview := VBoxContainer.new()
 	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview.add_theme_constant_override("separation", 8)
-	body.add_child(preview)
+	preview_card.add_child(preview)
 	_image = TextureRect.new()
-	_image.custom_minimum_size = Vector2(240, 230)
+	_image.custom_minimum_size = Vector2(210, 200)
 	_image.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.add_child(_image)
 	_name = Label.new()
 	_name.add_theme_font_size_override("font_size", 18)
+	_name.add_theme_color_override("font_color", PanelChrome.TEXT)
 	preview.add_child(_name)
+	preview.move_child(_name, 0)
 	_details = Label.new()
 	_details.custom_minimum_size.y = 78
 	_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -114,6 +128,7 @@ func _build() -> void:
 	_action = Button.new()
 	_action.pressed.connect(_on_action)
 	preview.add_child(_action)
+	PanelChrome.style_action(_action, true)
 
 func _refresh() -> void:
 	if not visible:
@@ -136,6 +151,7 @@ func _refresh() -> void:
 		button.tooltip_text = Localization.tr_key("ui.mount_panel.p005")
 		button.pressed.connect(_select.bind(mount_id))
 		_list.add_child(button)
+		PanelChrome.style_action(button, mount_id == _selected_mount)
 	var selected = DataLoader.get_entry("mounts", _selected_mount)
 	if not selected is Dictionary:
 		_image.texture = null

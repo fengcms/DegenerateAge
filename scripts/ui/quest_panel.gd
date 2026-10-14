@@ -149,6 +149,7 @@ func _build() -> void:
 	_service_button.visible = false
 	_service_button.pressed.connect(_open_npc_service)
 	head.add_child(_service_button)
+	PanelChrome.style_action(_service_button)
 	var close := Button.new()
 	close.text = "×"
 	close.custom_minimum_size = Vector2(32, 28)
@@ -190,7 +191,7 @@ func _update_layout() -> void:
 		return
 	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
 	_root.custom_minimum_size.x = minf(PANEL_WIDTH, maxf(280.0, logical.x - 48.0))
-	_scroll.custom_minimum_size = Vector2(0, minf(460.0, maxf(100.0, logical.y - 132.0)))
+	_scroll.custom_minimum_size = Vector2(0, minf(460.0, maxf(100.0, logical.y - 170.0)))
 
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -299,6 +300,7 @@ func _make_row(e: Dictionary) -> Control:
 		ab.custom_minimum_size = Vector2(64, 30)
 		ab.pressed.connect(_on_abandon.bind(qid))
 		row.add_child(ab)
+		PanelChrome.style_action(ab)
 
 	row.add_child(_make_action_button(qid, state))
 	return panel
@@ -341,6 +343,7 @@ func _make_action_button(qid: String, state: String) -> Button:
 		_:
 			b.text = "—"
 			b.disabled = true
+	PanelChrome.style_action(b, state == Quest.STATE_COMPLETED)
 	return b
 
 func _row_style(state: String) -> StyleBoxFlat:
@@ -349,17 +352,17 @@ func _row_style(state: String) -> StyleBoxFlat:
 	sb.set_border_width_all(1)
 	match state:
 		Quest.STATE_COMPLETED:
-			sb.bg_color = Color(0.16, 0.20, 0.14, 0.95)
+			sb.bg_color = Color("29382c")
 			sb.border_color = Color(COL_DONE.r, COL_DONE.g, COL_DONE.b, 0.7)
 		Quest.STATE_REWARDED:
-			sb.bg_color = Color(0.10, 0.11, 0.13, 0.92)
+			sb.bg_color = Color("142025")
 			sb.border_color = Color(0.25, 0.28, 0.32, 0.8)
 		Quest.STATE_LOCKED:
-			sb.bg_color = Color(0.09, 0.10, 0.12, 0.9)
+			sb.bg_color = Color("121b20")
 			sb.border_color = Color(0.22, 0.24, 0.28, 0.8)
 		_:
-			sb.bg_color = Color(0.13, 0.14, 0.17, 0.95)
-			sb.border_color = COL_BORDER
+			sb.bg_color = Color("19272b")
+			sb.border_color = Color("485351")
 	return sb
 
 func _title_color(state: String, is_side: bool) -> Color:

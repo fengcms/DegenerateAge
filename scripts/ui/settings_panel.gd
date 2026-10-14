@@ -137,8 +137,8 @@ func _update_layout() -> void:
 	if _layout_root == null:
 		return
 	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
-	_layout_root.custom_minimum_size = Vector2(minf(650.0, maxf(320.0, logical.x - 64.0)),
-		minf(430.0, maxf(260.0, logical.y - 64.0)))
+	_layout_root.custom_minimum_size = Vector2(minf(860.0, maxf(320.0, logical.x - 64.0)),
+		minf(600.0, maxf(260.0, logical.y - 64.0)))
 
 func _slider(box: VBoxContainer, label: String, field: String, minimum: float, maximum: float, step: float) -> void:
 	var row := HBoxContainer.new()
@@ -306,9 +306,11 @@ func _build_controls(tabs: TabContainer) -> void:
 	var root := _tab(tabs, Localization.tr_key("ui.settings_panel.p038"))
 	_capture_label = Label.new()
 	_capture_label.text = Localization.tr_key("ui.settings_panel.p039")
+	_capture_label.add_theme_color_override("font_color", PanelChrome.TEXT)
 	root.add_child(_capture_label)
 	_key_list = VBoxContainer.new()
 	_key_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_key_list.add_theme_constant_override("separation", 4)
 	root.add_child(_key_list)
 	_refresh_keys()
 
@@ -322,6 +324,7 @@ func _build_data(tabs: TabContainer) -> void:
 		save_panel.set_mode("manage")
 		save_panel.set_open(true))
 	box.add_child(button)
+	PanelChrome.style_action(button)
 	var note := Label.new()
 	note.text = Localization.tr_key("ui.settings_panel.p042")
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -334,16 +337,19 @@ func _refresh_keys() -> void:
 		child.queue_free()
 	for action in SettingsRuntime.ACTIONS:
 		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
 		_key_list.add_child(row)
 		var name := Label.new()
 		name.text = _action_name(action)
 		name.custom_minimum_size.x = 300
+		name.add_theme_color_override("font_color", PanelChrome.TEXT)
 		row.add_child(name)
 		var key := Button.new()
 		key.custom_minimum_size.x = 140
 		key.text = OS.get_keycode_string(SettingsRuntime.key_for(action))
 		key.pressed.connect(_start_capture.bind(action))
 		row.add_child(key)
+		PanelChrome.style_action(key)
 
 func _action_name(action: String) -> String:
 	if action.begins_with("hotbar_"):

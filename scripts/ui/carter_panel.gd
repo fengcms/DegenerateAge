@@ -220,6 +220,7 @@ func _make_travel_button(map_id: String, unlocked: bool, afford: bool) -> Button
 		b.tooltip_text = Localization.tr_key("ui.carter_panel.p008") % GameState.gold
 	else:
 		b.pressed.connect(_on_travel.bind(map_id))
+	PanelChrome.style_action(b, unlocked and afford)
 	return b
 
 func _row_style(unlocked: bool, afford: bool) -> StyleBoxFlat:

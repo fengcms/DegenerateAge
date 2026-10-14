@@ -4,6 +4,7 @@ extends Control
 var _slots: Dictionary = {}
 var _stats: Label
 var _title: Label
+var _identity: Label
 var _center: FloatingWindow
 var _last_slot_id := ""
 var _last_slot_click_ms := 0
@@ -84,16 +85,26 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
-	_center.setup(self, panel, head, Vector2(0.34, 0.18))
+	_center.setup(self, panel, head, Vector2(0.98, 0.18))
 	var divider := HSeparator.new()
 	PanelChrome.style_separator(divider)
 	root.add_child(divider)
+	_identity = Label.new()
+	PanelChrome.style_section(_identity)
+	root.add_child(_identity)
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 22)
+	body.add_theme_constant_override("separation", 10)
 	root.add_child(body)
+	var equipment_card := PanelContainer.new()
+	PanelChrome.style_card(equipment_card)
+	body.add_child(equipment_card)
 	var equip := VBoxContainer.new()
-	equip.custom_minimum_size.x = 350
-	body.add_child(equip)
+	equip.custom_minimum_size.x = 315
+	equipment_card.add_child(equip)
+	var equipment_title := Label.new()
+	equipment_title.text = "穿戴装备"
+	PanelChrome.style_section(equipment_title)
+	equip.add_child(equipment_title)
 	var figure := HBoxContainer.new()
 	figure.add_theme_constant_override("separation", 8)
 	equip.add_child(figure)
@@ -104,8 +115,8 @@ func _build() -> void:
 	figure.add_child(left)
 	var portrait_frame := PanelContainer.new()
 	var portrait_style := StyleBoxFlat.new()
-	portrait_style.bg_color = Color("1a2530")
-	portrait_style.border_color = Color("63828f")
+	portrait_style.bg_color = Color("10191e")
+	portrait_style.border_color = Color("485b5f")
 	portrait_style.set_border_width_all(1)
 	portrait_style.set_corner_radius_all(6)
 	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
@@ -136,16 +147,22 @@ func _build() -> void:
 			button.item_dropped.connect(_on_equipment_dropped.bind(sid))
 			side.add_child(button)
 			_slots[sid] = button
-	body.add_child(VSeparator.new())
+	var stats_card := PanelContainer.new()
+	PanelChrome.style_card(stats_card)
+	body.add_child(stats_card)
 	_stats = Label.new()
-	_stats.custom_minimum_size.x = 285
+	_stats.custom_minimum_size.x = 245
 	_stats.add_theme_font_size_override("font_size", 15)
-	body.add_child(_stats)
+	_stats.add_theme_constant_override("line_spacing", 5)
+	_stats.add_theme_color_override("font_color", PanelChrome.TEXT)
+	stats_card.add_child(_stats)
 
 func _refresh() -> void:
 	if _title == null:
 		return
-	_title.text = PanelChrome.title_text("%s · Lv%d" % [GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")), int(GameState.player.get("level", 1))])
+	var player_name := String(GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")))
+	_title.text = PanelChrome.title_text("人物 · %s" % player_name)
+	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
@@ -176,7 +193,7 @@ func _style_equipment_slot(button: EquipmentSlot, item: Variant) -> void:
 	if button._quality_frame != null and button._quality_frame.visible:
 		border = Color.TRANSPARENT
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("171b20")
+	style.bg_color = Color("162329")
 	style.border_color = border
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(4)
