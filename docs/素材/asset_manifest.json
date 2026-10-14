@@ -112,7 +112,8 @@
       },
       "source": "sources/icon/equipment/armor_starter.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/armor_starter.png"
     },
     {
       "id": "weapon_wolfking",
@@ -139,7 +140,8 @@
       },
       "source": "sources/icon/equipment/helmet_cloth.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/helmet_cloth.png"
     },
     {
       "id": "shoes_cloth",
@@ -152,7 +154,8 @@
       },
       "source": "sources/icon/equipment/shoes_cloth.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/shoes_cloth.png"
     },
     {
       "id": "shield_basic",
@@ -165,7 +168,8 @@
       },
       "source": "sources/icon/equipment/shield_basic.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/shield_basic.png"
     },
     {
       "id": "bracer_basic",
@@ -178,7 +182,8 @@
       },
       "source": "sources/icon/equipment/bracer_basic.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/bracer_basic.png"
     },
     {
       "id": "knee_basic",
@@ -191,7 +196,8 @@
       },
       "source": "sources/icon/equipment/knee_basic.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/knee_basic.png"
     },
     {
       "id": "bracelet_basic",
@@ -204,7 +210,8 @@
       },
       "source": "sources/icon/equipment/bracelet_basic.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/bracelet_basic.png"
     },
     {
       "id": "ring_basic",
@@ -217,7 +224,8 @@
       },
       "source": "sources/icon/equipment/ring_basic.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/ring_basic.png"
     },
     {
       "id": "necklace_basic",
@@ -230,7 +238,8 @@
       },
       "source": "sources/icon/equipment/necklace_basic.png",
       "anchor": "center",
-      "integrated": false
+      "integrated": true,
+      "runtime_icon": "assets/sprites/equip/necklace_basic.png"
     },
     {
       "id": "weapon_legendary_vein_guard",

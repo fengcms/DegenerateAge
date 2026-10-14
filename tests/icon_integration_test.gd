@@ -4,11 +4,13 @@ extends Node
 var failures: Array[String] = []
 
 func _ready() -> void:
-	for id in ["weapon_starter", "weapon_iron", "weapon_wolfking", "weapon_legendary_vein_guard"]:
+	for template in DataLoader.get_table("equipments"):
+		var id := String(template.id)
 		for tier in [1, 10]:
 			var item := ItemFactory.make_equip_roll(id, tier, "common")
 			var icon := SampleArt.icon_for(item)
 			check(icon != null and icon.get_size() == Vector2(48, 48), "%s Lv%d equipment icon" % [id, tier])
+			check(icon != null and icon.resource_path == String(template.icon), "%s Lv%d uses configured icon" % [id, tier])
 	var panel: Variant = preload("res://scripts/ui/skill_panel.gd").new()
 	add_child(panel)
 	panel._refresh()
