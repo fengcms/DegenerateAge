@@ -63,6 +63,7 @@ func _ready() -> void:
 	_test_level_up_carry()
 	_test_quest_side()
 	await _test_consumable()
+	_test_auto_potion_thresholds()
 	_test_map_travel()
 	await _test_walk_exit()
 	await _test_rest_zone()
@@ -2480,6 +2481,36 @@ func _write_raw(path: String, text: String) -> void:
 ## 放入一瓶药水，返回其格位。
 func _put_potion(item_id: String, count: int = 1) -> int:
 	return _put_item({"kind": "potion", "itemId": item_id, "count": count})
+
+func _test_auto_potion_thresholds() -> void:
+	GameState.reset_to_defaults()
+	var pilot := AutoBattle.new()
+	GameState.player.hp = GameState.max_hp()
+	GameState.player.mp = 10
+	var blue := _put_potion("potion_mp_small", 2)
+	pilot._tick(0.016)
+	_expect(GameState.player.mp == GameState.max_mp() and _stack_at(blue) == 1,
+		"仅法力低于阈值时应自动喝蓝药，即使生命已满")
+	GameState.reset_to_defaults()
+	GameState.player.hp = 10
+	GameState.player.mp = 10
+	var red := _put_potion("potion_hp_small")
+	blue = _put_potion("potion_mp_small")
+	pilot._tick(0.016)
+	_expect(GameState.player.hp > 10 and GameState.player.mp == 10 and GameState.inventory[red] == null,
+		"血蓝同时不足时应先喝红药")
+	pilot._tick(0.016)
+	_expect(GameState.player.mp == GameState.max_mp() and GameState.inventory[blue] == null,
+		"补红之后下一帧应补蓝药")
+	GameState.reset_to_defaults()
+	GameState.player.hp = 10
+	GameState.player.mp = 10
+	blue = _put_potion("potion_mp_small")
+	pilot._tick(0.016)
+	_expect(GameState.player.hp == 10 and GameState.player.mp == GameState.max_mp(),
+		"缺红药时仍应独立使用蓝药")
+	pilot.free()
+	GameState.reset_to_defaults()
 
 ## 某格堆叠数（格为空 / 越界返回 -1）。
 func _stack_at(index: int) -> int:

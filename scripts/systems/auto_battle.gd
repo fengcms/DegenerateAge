@@ -22,7 +22,7 @@ extends Node
 ##   · 玩家 Lv1 仅解锁普攻 basic_slash，故本阶段实际施放普攻；`choose_skill`
 ##     的 MP / 冷却 / 等级判据已按 3.14 完整实现并纳入回归（T11），
 ##     待 M3 技能系统接线后由 `WIRED_SKILLS` 放开即可直接生效；
-##   · **药水已接线（M2.5）**：危险血量**自动喝药**（先红后蓝，按缺口选"够用的最小档"）；
+##   · **药水已接线（M2.5）**：生命/法力各自达到阈值时自动喝对应药（同时不足时先红后蓝）；
 ##     **药尽仍继续战斗**（Q5 拍板，不再停战）——见工程文档 12；
 ##   · 地图为无障碍开阔地，接近采用「直线趋近 + 节流重算」替代 A*；
 ##     卡住检测与黑名单机制与地图形态无关，M3 换 TileMap 后可直接复用。
@@ -206,17 +206,21 @@ func _tick(delta: float) -> void:
 		_set_state(State.BLOCKED)
 		return
 
-	# 危险血量（3.14）：**先自动喝药**（与手动共用 Consumable 入口，不另写一套）。
-	# Q5 拍板（2026-10-12）：**药尽仍继续战斗至死** —— 喝不到药不再停寻怪。
-	var max_hp := GameState.max_hp()
-	if max_hp > 0 and float(int(GameState.player.hp)) / float(max_hp) <= _potion_threshold():
-		if _try_drink():
-			_danger_t = 0.0
-			return                                    # 已回血：本帧不再决策，下一帧按新血量行动
+	# 生命和法力各自按设置阈值判断；两者都不足时先保命，下一帧再补法力。
+	# 药尽仍继续战斗，不因任一颜色缺药而停寻怪。
+	var hp_low := _needs_potion(Consumable.KIND_RED)
+	if hp_low and _try_drink(Consumable.KIND_RED):
+		_danger_t = 0.0
+		return
+	if _needs_potion(Consumable.KIND_BLUE) and _try_drink(Consumable.KIND_BLUE):
+		return
+	if hp_low:
 		_danger_t = maxf(0.0, _danger_t - delta)       # 无药 / 全在冷却 → 继续战斗（不停战）
 		if _danger_t <= 0.0:
 			_danger_t = DANGER_TOAST_CD
 			_toast(Localization.tr_key("ui.auto.low_hp_no_potion"), "danger")
+	else:
+		_danger_t = 0.0
 
 	# ② 每帧校验目标有效性（死亡 / 释放 / 进黑名单 → 停旧指令）
 	if _target != null and (not is_instance_valid(_target)
@@ -317,18 +321,21 @@ func _best_area_skill(target: Node) -> Dictionary:
 func _potion_threshold() -> float:
 	return float(GameState.settings.get("potionThreshold", DEFAULT_POTION_THRESHOLD))
 
-## 危险血量时尝试喝药（先红后蓝 —— Q2 拍板「自动红蓝一并开」）。返回是否成功喝到。
+func _needs_potion(kind: String) -> bool:
+	var maximum := Consumable.max_of(kind)
+	return maximum > 0 and float(Consumable.current_of(kind)) / float(maximum) <= _potion_threshold()
+
+## 对应资源不足时尝试指定颜色药水。返回是否成功喝到。
 ## 与手动喝药共用 `Consumable.use`，不另写一套实现；`silent` 抑制单次失败提示，由本层统一节流。
-func _try_drink() -> bool:
-	for kind in [Consumable.KIND_RED, Consumable.KIND_BLUE]:
-		var idx := Consumable.pick_index(String(kind))
-		if idx < 0:
-			continue
-		var res := Consumable.use(idx, true)
-		if bool(res.get("ok", false)):
-			_toast(Localization.tr_key("ui.auto.auto_potion") % String(res.get("message", "")), "info")
-			return true
-	return false
+func _try_drink(kind: String) -> bool:
+	var idx := Consumable.pick_index(kind)
+	if idx < 0:
+		return false
+	var res := Consumable.use(idx, true)
+	if not bool(res.get("ok", false)):
+		return false
+	_toast(Localization.tr_key("ui.auto.auto_potion") % String(res.get("message", "")), "info")
+	return true
 
 # ---- 目标搜索 ----
 
