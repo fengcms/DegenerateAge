@@ -143,8 +143,7 @@ func _build() -> void:
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 
-	var box := PanelContainer.new()
-	box.add_theme_stylebox_override("panel", _panel_style())
+	var box := PanelChrome.new()
 	_center.add_child(box)
 
 	var margin := MarginContainer.new()
@@ -165,20 +164,25 @@ func _build() -> void:
 	title.text = Localization.tr_key("ui.inventory_panel.p001")
 	title.add_theme_font_size_override("font_size", 18)
 	head.add_child(title)
+	PanelChrome.style_title(title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
 	var help := PanelHelpButton.new()
 	help.tooltip_text = Localization.tr_key("ui.inventory_panel.p013")
 	head.add_child(help)
+	PanelChrome.style_help(help)
 	var close := Button.new()
 	close.text = "×"
 	close.custom_minimum_size = Vector2(32, 28)
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
 	_center.setup(self, box, head, Vector2(0.20, 0.30))
 
-	root.add_child(HSeparator.new())
+	var footer_divider := HSeparator.new()
+	PanelChrome.style_separator(footer_divider)
+	root.add_child(footer_divider)
 
 	# 背包只管理物品；穿戴槽与战斗属性统一放到人物面板。
 	var right := VBoxContainer.new()
@@ -241,7 +245,9 @@ func _build() -> void:
 	bag_scroll.add_child(_bag_grid)
 	_ensure_bag_slots()
 
-	root.add_child(HSeparator.new())
+	var divider := HSeparator.new()
+	PanelChrome.style_separator(divider)
+	root.add_child(divider)
 
 	_summary = Label.new()
 	_summary.add_theme_font_size_override("font_size", 14)

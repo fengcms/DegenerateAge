@@ -189,6 +189,7 @@ func _build() -> void:
 	_title.text = Localization.tr_key("ui.shop_panel.p001")
 	_title.add_theme_font_size_override("font_size", 18)
 	head.add_child(_title)
+	PanelChrome.style_title(_title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
@@ -201,14 +202,18 @@ func _build() -> void:
 	close.custom_minimum_size = Vector2(32, 28)
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
 
-	root.add_child(HSeparator.new())
+	var divider := HSeparator.new()
+	PanelChrome.style_separator(divider)
+	root.add_child(divider)
 
 	_tabs = TabContainer.new()
 	_tabs.custom_minimum_size = Vector2(BUY_ROW_MIN.x, 400)
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_tabs.add_theme_font_size_override("font_size", 15)
 	root.add_child(_tabs)
+	PanelChrome.style_tabs(_tabs)
 
 	_tabs.add_child(_build_buy_page())
 	_tabs.add_child(_build_sell_page())
@@ -346,7 +351,7 @@ func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 func _refresh() -> void:
 	if not visible:
 		return
-	_title.text = Localization.tr_key("ui.shop_panel.p010") % Shop.display_name(_shop_id)
+	_title.text = PanelChrome.title_text(Localization.tr_key("ui.shop_panel.p010") % Shop.display_name(_shop_id))
 	_refresh_gold()
 	_rebuild_buy()
 	_refresh_tray()

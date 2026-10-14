@@ -58,13 +58,7 @@ func _build() -> void:
 	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("11171d")
-	style.border_color = Color("74818a")
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	panel.add_theme_stylebox_override("panel", style)
+	var panel := PanelChrome.new()
 	_center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -80,15 +74,20 @@ func _build() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.add_theme_font_size_override("font_size", 20)
 	head.add_child(_title)
+	PanelChrome.style_title(_title)
 	var help := PanelHelpButton.new()
 	help.tooltip_text = Localization.tr_key("ui.character_panel.p002")
 	head.add_child(help)
+	PanelChrome.style_help(help)
 	var close := Button.new()
 	close.text = Localization.tr_key("ui.character_panel.p001")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
 	_center.setup(self, panel, head, Vector2(0.34, 0.18))
-	root.add_child(HSeparator.new())
+	var divider := HSeparator.new()
+	PanelChrome.style_separator(divider)
+	root.add_child(divider)
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 22)
 	root.add_child(body)
@@ -146,7 +145,7 @@ func _build() -> void:
 func _refresh() -> void:
 	if _title == null:
 		return
-	_title.text = "%s · Lv%d" % [GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")), int(GameState.player.get("level", 1))]
+	_title.text = PanelChrome.title_text("%s · Lv%d" % [GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")), int(GameState.player.get("level", 1))])
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]

@@ -24,7 +24,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _on_requested(npc_name: String, greeting: String) -> void:
-	_title.text = Localization.tr_key("ui.blacksmith_panel.p001") % npc_name
+	_title.text = PanelChrome.title_text(Localization.tr_key("ui.blacksmith_panel.p001") % npc_name)
 	_greeting.text = "「%s」" % greeting
 	set_open(true)
 
@@ -50,13 +50,7 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = COL_PANEL
-	style.border_color = COL_BORDER
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	panel.add_theme_stylebox_override("panel", style)
+	var panel := PanelChrome.new()
 	center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -73,10 +67,15 @@ func _build() -> void:
 	_title.add_theme_font_size_override("font_size", 18)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
+	PanelChrome.style_title(_title)
 	var close := Button.new()
 	close.text = "×"
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
+	var divider := HSeparator.new()
+	PanelChrome.style_separator(divider)
+	root.add_child(divider)
 	_greeting = Label.new()
 	_greeting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_greeting)

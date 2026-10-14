@@ -70,7 +70,7 @@ func _on_requested(npc_name: String) -> void:
 			break
 	_service_button.visible = not _current_npc_spec.is_empty() and String(_current_npc_spec.get("role", "")) != "quest"
 	if not npc_name.is_empty():
-		_title.text = Localization.tr_key("ui.quest_panel.p001") % npc_name
+		_title.text = PanelChrome.title_text(Localization.tr_key("ui.quest_panel.p001") % npc_name)
 	set_open(true)
 
 ## 其他面板打开时自动关闭（与背包 / 货郎面板互斥，I / E 键）。
@@ -116,8 +116,7 @@ func _build() -> void:
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 
-	var box := PanelContainer.new()
-	box.add_theme_stylebox_override("panel", _panel_style())
+	var box := PanelChrome.new()
 	_center.add_child(box)
 
 	var margin := MarginContainer.new()
@@ -141,6 +140,7 @@ func _build() -> void:
 	_title.text = Localization.tr_key("ui.quest_panel.p002")
 	_title.add_theme_font_size_override("font_size", 18)
 	head.add_child(_title)
+	PanelChrome.style_title(_title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
@@ -154,6 +154,7 @@ func _build() -> void:
 	close.custom_minimum_size = Vector2(32, 28)
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
 
 	# NPC 自我介绍（08 §8.5「自我介绍 + 任务列表」）
 	var greet := Label.new()
@@ -163,7 +164,9 @@ func _build() -> void:
 	greet.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(greet)
 
-	root.add_child(HSeparator.new())
+	var divider := HSeparator.new()
+	PanelChrome.style_separator(divider)
+	root.add_child(divider)
 
 	var scroll := ScrollContainer.new()
 	_scroll = scroll
