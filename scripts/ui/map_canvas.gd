@@ -3,6 +3,7 @@ extends Control
 ## 小/大地图复用等距投影；圆形小地图点击打开大图，大图点击只派发当前图世界坐标。
 signal destination_selected(world_position: Vector2)
 @export var minimap: bool = false
+@export var ornamental_frame: bool = false
 var _map_id := ""
 var _player_position := Vector2.ZERO
 var _markers: Array[Dictionary] = []
@@ -100,13 +101,14 @@ func _draw() -> void:
 	if not MapService.exists(GameState.current_map):
 		return
 	if minimap:
-		draw_circle(size * 0.5, minf(size.x, size.y) * 0.5 - 2, Color("131a1e"))
-		draw_arc(size * 0.5, minf(size.x, size.y) * 0.5 - 2, 0, TAU, 64, Color("778e91"), 2, true)
+		draw_circle(size * 0.5, minf(size.x, size.y) * 0.5 - 2, Color("162321") if ornamental_frame else Color("131a1e"))
+		if not ornamental_frame:
+			draw_arc(size * 0.5, minf(size.x, size.y) * 0.5 - 2, 0, TAU, 64, Color("778e91"), 2, true)
 	else:
 		draw_rect(Rect2(Vector2.ZERO, size), Color("101619"))
 	var dims := MapService.grid_size(GameState.current_map)
 	var outline := _polygon(-0.5, -0.5, dims.x - 0.5, dims.y - 0.5)
-	draw_colored_polygon(outline, Color("100e0b") if GameState.current_map == "corruption_source" else Color("1f282d"))
+	draw_colored_polygon(outline, Color("100e0b") if GameState.current_map == "corruption_source" else Color("334633") if minimap and ornamental_frame else Color("1f282d"))
 	var world := get_tree().get_first_node_in_group("map_world")
 	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
 	if ground != null and ground.cave != null:
@@ -121,7 +123,7 @@ func _draw() -> void:
 			for x in range(blocks.x):
 				var cell := Vector2i(x * Fog.BLOCK_SIZE, y * Fog.BLOCK_SIZE)
 				if Fog.is_explored(GameState.current_map, cell):
-					draw_colored_polygon(_polygon(cell.x - 0.5, cell.y - 0.5, mini(cell.x + Fog.BLOCK_SIZE, dims.x) - 0.5, mini(cell.y + Fog.BLOCK_SIZE, dims.y) - 0.5), Color("536959"))
+					draw_colored_polygon(_polygon(cell.x - 0.5, cell.y - 0.5, mini(cell.x + Fog.BLOCK_SIZE, dims.x) - 0.5, mini(cell.y + Fog.BLOCK_SIZE, dims.y) - 0.5), Color("66705a") if minimap and ornamental_frame else Color("536959"))
 	var border := outline.duplicate()
 	border.append(outline[0])
 	if ground == null or ground.cave == null:

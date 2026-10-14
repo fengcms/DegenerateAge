@@ -276,7 +276,7 @@ func _update_coords() -> void:
 	var p := get_tree().get_first_node_in_group("player")
 	if p is Node2D:
 		var g := Iso.world_to_grid((p as Node2D).global_position)
-		_map_coords.text = "(%d, %d)" % [int(round(g.x)), int(round(g.y))]
+		_map_coords.text = "(%d,%d)" % [int(round(g.x)), int(round(g.y))]
 
 func _update_target() -> void:
 	var valid: bool = is_instance_valid(_target) and not _target.is_queued_for_deletion() and _target.get("is_dead") != true
