@@ -1794,10 +1794,13 @@ func _test_trade_panel() -> void:
 	_expect(GameState.gold > gold_before, "确认出售应加金币，实际 %d→%d" % [gold_before, GameState.gold])
 
 	# 关闭货郎面板 → 背包保留，玩家可继续整理物品。
+	var bag_position_before_close: Vector2 = inv._center.panel_box.global_position
 	shop.set_open(false)
 	await get_tree().process_frame
 	_expect(not shop.visible and inv.visible and not inv._trade_active,
 		"关闭货郎面板后背包应保留且退出交易布局")
+	_expect(inv._center.panel_box.global_position.distance_to(bag_position_before_close) <= 1.0,
+		"关闭货郎后背包应留在交易时的屏幕位置")
 	_expect(GameState.panel_open, "背包仍打开时角色操控应继续屏蔽")
 
 	# 关闭时托盘内未确认装备应退回背包（不静默丢失，🔴R3）

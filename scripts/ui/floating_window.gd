@@ -58,6 +58,9 @@ func is_top_window() -> bool:
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0) -> void:
 	if active and not _docked:
 		_floating_position = position
+	elif not active and _docked:
+		# 离开并列布局时，以玩家实际看到的面板位置继续显示。
+		_floating_position = position + panel_box.position
 	_docked = active
 	_dock_left = left
 	_dock_right = right
