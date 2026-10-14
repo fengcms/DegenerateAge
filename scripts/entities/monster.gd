@@ -121,6 +121,8 @@ func _ready() -> void:
 	_load_template()
 	if monster_id in MonsterActorArt.IDS:
 		sample_art = MonsterActorArt.attach_monster(self, monster_id)
+	elif monster_id.begins_with("c2_"):
+		sample_art = ChapterTwoArt.attach(self, monster_id)
 	elif monster_id == "wolf_corrupted":
 		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64), "", "res://assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png")
 	elif monster_id == "shellback_bug":
