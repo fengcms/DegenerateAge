@@ -43,6 +43,9 @@ var map_data: Dictionary = {}
 var grid_size: Vector2i = Vector2i(40, 40)
 var cave: CaveLayout = null
 var _blocked_mesh: ArrayMesh
+var _tile_mesh: ArrayMesh
+var _tile_atlas: ImageTexture
+var _atlas_tiles: Array = []
 
 func _ready() -> void:
 	z_index = -4096
@@ -194,15 +197,7 @@ func _draw() -> void:
 		# Cave void continues beyond the rectangular planning grid; the outer
 		# isometric diamond is a camera extent, not a visible island edge.
 		draw_rect(Rect2(-Vector2.ONE * 10000.0, Vector2.ONE * 20000.0), Color("090806"))
-		for col in range(w):
-			for row in range(h):
-				var cell := Vector2i(col, row)
-				if not cave.is_walkable(cell):
-					continue
-				var center := Iso.grid_to_world(cell)
-				var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
-				var tile := 1 if variation < 4 else 2 if variation == 5 else 0
-				draw_texture(CAVE_TILES[tile], center - Vector2(32, 16), Color("a9aaae"))
+		_draw_tile_floor(CAVE_TILES, true)
 		# 先铺地，再收集墙段。端点计数用来识别真正的断头，避免每格墙都露出方切面。
 		var wall_edges: Array = []
 		var endpoint_counts: Dictionary = {}
@@ -222,22 +217,7 @@ func _draw() -> void:
 	draw_colored_polygon(corners, fill if themed else COLOR_FILL)
 	if themed:
 		var tiles: Array = CAMP_TILES if camp_style else (WILD_TILES if map_id == "wild_trial" else ASH_TILES)
-		for col in range(w):
-			for row in range(h):
-				if cave != null and not cave.is_walkable(Vector2i(col, row)):
-					continue
-				var tile := 0
-				var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
-				if variation < 4:
-					tile = 1
-				elif variation == 5:
-					tile = 2
-				var road_center := 20 if sample_camp_theme else h / 2
-				if camp_style and (absi(row - road_center) <= 1 or absi(col - road_center) <= 1):
-					tile = 3
-				if not camp_style and absi(row - h / 2) <= 1:
-					tile = 3
-				draw_texture(tiles[tile], Iso.grid_to_world(Vector2i(col, row)) - Vector2(32, 16))
+		_draw_tile_floor(tiles, false, camp_style)
 		var camp_outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 		draw_polyline(camp_outline, Color("a89978") if camp_style else Color("747565"), 2.0)
 		return
@@ -264,6 +244,42 @@ func _draw() -> void:
 	# 外边框
 	var outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 	draw_polyline(outline, COLOR_BORDER, 2.0)
+
+## One tiny atlas avoids thousands of material/texture switches. Transparent
+## tile rectangles retain their original col/row insertion order in the mesh.
+func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool = false) -> void:
+	if _tile_atlas == null or _atlas_tiles != tiles:
+		var atlas := Image.create(64 * tiles.size(), 32, false, Image.FORMAT_RGBA8)
+		for i in range(tiles.size()):
+			var image := (tiles[i] as Texture2D).get_image()
+			assert(image.get_size() == Vector2i(64, 32), "Floor tiles must be 64x32")
+			image.convert(Image.FORMAT_RGBA8)
+			atlas.blit_rect(image, Rect2i(0, 0, 64, 32), Vector2i(i * 64, 0))
+		_tile_atlas = ImageTexture.create_from_image(atlas)
+		_atlas_tiles = tiles
+	var builder := FlatTileMesh.new(grid_size.x * grid_size.y, true)
+	for col in range(grid_size.x):
+		for row in range(grid_size.y):
+			var cell := Vector2i(col, row)
+			if cave != null and not cave.is_walkable(cell):
+				continue
+			var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
+			var tile := 1 if variation < 4 else 2 if variation == 5 else 0
+			if not cave_style:
+				var road_center := 20 if sample_camp_theme else grid_size.y / 2
+				if camp_style and (absi(row - road_center) <= 1 or absi(col - road_center) <= 1):
+					tile = 3
+				if not camp_style and absi(row - grid_size.y / 2) <= 1:
+					tile = 3
+			var origin := Iso.grid_to_world(cell) - Vector2(32, 16)
+			var u0 := float(tile) / tiles.size()
+			var u1 := float(tile + 1) / tiles.size()
+			builder.add_quad(PackedVector2Array([
+				origin, origin + Vector2(64, 0), origin + Vector2(64, 32), origin + Vector2(0, 32),
+			]), PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]))
+	_tile_mesh = builder.build()
+	if _tile_mesh != null:
+		draw_mesh(_tile_mesh, _tile_atlas, Transform2D.IDENTITY, Color("a9aaae") if cave_style else Color.WHITE)
 
 func _collect_cave_edges(cell: Vector2i, center: Vector2, wall_edges: Array, endpoint_counts: Dictionary) -> void:
 	# Rear edges hang down onto the floor, reading as an interior cave wall.

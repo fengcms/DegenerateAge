@@ -105,7 +105,7 @@ def main() -> int:
                 if not completed:
                     output += "\nFAIL: 测试未输出成功完成标记，不能视为通过\n"
                 evidence = [line for line in output.splitlines() if "[PERF]" in line or "PASS" in line or "全部通过" in line or "全部断言通过" in line or "失败" in line or "FAIL" in line]
-                print(f"{test}: {'PASS' if ok else 'FAIL'}" + (" · " + " | ".join(evidence[-16:]) if evidence else ""))
+                print(f"{test}: {'PASS' if ok else 'FAIL'}" + (" · " + " | ".join(evidence[-24:]) if evidence else ""))
                 if not ok:
                     failures.append(test)
                     diagnostics = [line for line in output.splitlines()

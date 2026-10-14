@@ -56,7 +56,7 @@ func _ready() -> void:
 	Engine.max_fps = 0
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	print("[PERF] rendered viewport: ", get_viewport().get_visible_rect().size)
-	for map_id in ["c2_lower_works", "wild_trial"]:
+	for map_id in ["c2_lower_works", "wild_trial", "corruption_source"]:
 		GameState.reset_to_defaults()
 		GameState.current_map = map_id
 		var explored := {}
