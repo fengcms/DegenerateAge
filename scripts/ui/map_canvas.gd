@@ -20,6 +20,7 @@ var _background_map := ""
 var _background_style := false
 var _exploration: Dictionary = {}
 var _exploration_count := -1
+var _background_revision := -1
 var _background_cave: CaveLayout
 ## Diagnostic counter: moving markers must not rebuild static terrain.
 var background_draw_count := 0
@@ -65,17 +66,19 @@ func refresh() -> void:
 	var markers := MapMarkers.for_world(world)
 	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
 	var cave := ground.cave if ground != null else null
+	var revision := cave.navigation_revision if cave != null else -1
 	var exploration: Dictionary = GameState.explored_maps.get(GameState.current_map, _empty_exploration)
 	# Fog only adds blocks in place; loading/resetting can replace the dictionary.
 	if _background_map != GameState.current_map or _background_style != ornamental_frame \
 			or _projection_map != GameState.current_map or _projection_size != size \
-			or _projection_minimap != minimap or cave != _background_cave \
+			or _projection_minimap != minimap or cave != _background_cave or revision != _background_revision \
 			or not is_same(exploration, _exploration) or exploration.size() != _exploration_count:
 		_background_map = GameState.current_map
 		_background_style = ornamental_frame
 		_exploration = exploration
 		_exploration_count = exploration.size()
 		_background_cave = cave
+		_background_revision = revision
 		_ensure_projection()
 		_invalidate_background()
 	if GameState.current_map != _map_id or position_now != _player_position or markers != _markers:

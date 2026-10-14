@@ -2,6 +2,8 @@ class_name CaveNavigator
 extends RefCounted
 ## Cached collision-safe route for moving targets inside the cave.
 
+var _layout: CaveLayout
+var _revision := -1
 var _target_cell := Vector2i(-1, -1)
 var _waypoints: Array[Vector2] = []
 var _index := 0
@@ -14,6 +16,10 @@ func has_route() -> bool:
 func direction(ground: IsoGround, origin: Vector2, target: Vector2) -> Vector2:
 	if ground == null or ground.cave == null:
 		return origin.direction_to(target)
+	if ground.cave != _layout or ground.cave.navigation_revision != _revision:
+		clear()
+		_layout = ground.cave
+		_revision = ground.cave.navigation_revision
 	var cell := Vector2i(Iso.world_to_grid(target).round())
 	var origin_cell := Vector2i(Iso.world_to_grid(origin).round())
 	var deviated := _index < _waypoints.size() and origin.distance_to(
@@ -38,6 +44,8 @@ func direction(ground: IsoGround, origin: Vector2, target: Vector2) -> Vector2:
 	return Vector2.ZERO
 
 func clear() -> void:
+	_layout = null
+	_revision = -1
 	_target_cell = Vector2i(-1, -1)
 	_waypoints.clear()
 	_index = 0

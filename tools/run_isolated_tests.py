@@ -60,7 +60,11 @@ def main() -> int:
                 for item in ROOT.iterdir():
                     if item.name.startswith(".") or item.name in {"project.godot", "build", "docs", "art_source"}:
                         continue
-                    (project / item.name).symlink_to(item, target_is_directory=item.is_dir())
+                    if item.name in {"scripts", "autoload", "data", "scenes", "tests", "addons"}:
+                        # Freeze code/data so concurrent edits cannot invalidate an imported class cache.
+                        shutil.copytree(item, project / item.name)
+                    else:
+                        (project / item.name).symlink_to(item, target_is_directory=item.is_dir())
             config = (project / "project.godot" if args.committed_tree else ROOT / "project.godot").read_text(encoding="utf-8")
             config = config.replace('config/name="末法纪元：最后的守护者"', f'config/name="{name}"', 1)
             (project / "project.godot").write_text(config, encoding="utf-8")
@@ -71,10 +75,14 @@ def main() -> int:
             failures = []
             for test in args.tests:
                 scene = f"res://tests/{test}.tscn"
-                # SmokeTest 包含长链异步场景，360 帧会在断言执行完前误报通过。
-                frame_limit = "3600" if test == "SmokeTest" else "360"
-                ok, output = run(project, ["--scene", scene, "--quit-after", frame_limit], timeout=240)
-                evidence = [line for line in output.splitlines() if "[PERF]" in line or "PASS" in line or "全部通过" in line or "失败" in line or "FAIL" in line]
+                # Async physics tests must finish, not silently hit a render-frame cap.
+                ok, output = run(project, ["--scene", scene, "--max-fps", "120",
+                                           "--quit-after", "14400"], timeout=240)
+                completed = any(marker in output for marker in ("PASS", "全部通过", "全部断言通过"))
+                ok = ok and completed
+                if not completed:
+                    output += "\nFAIL: 测试未输出成功完成标记，不能视为通过\n"
+                evidence = [line for line in output.splitlines() if "[PERF]" in line or "PASS" in line or "全部通过" in line or "全部断言通过" in line or "失败" in line or "FAIL" in line]
                 print(f"{test}: {'PASS' if ok else 'FAIL'}" + (" · " + " | ".join(evidence[-8:]) if evidence else ""))
                 if not ok:
                     failures.append(test)

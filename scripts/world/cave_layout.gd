@@ -9,6 +9,10 @@ var points: Dictionary = {}
 var _blocked: Dictionary = {}
 var _access_gate_cells: Dictionary = {}
 var _astar := AStarGrid2D.new()
+## Changes to the navigation mask invalidate route and connected-region caches.
+var navigation_revision := 0
+var _component_ids := PackedInt32Array()
+var _components_revision := -1
 
 func _init(layout_path: String = PATH) -> void:
 	var file := FileAccess.open(layout_path, FileAccess.READ)
@@ -51,6 +55,7 @@ func set_access_gate_open(open: bool) -> void:
 	var x := int(gate[0])
 	if open == _access_gate_cells.is_empty():
 		return
+	navigation_revision += 1
 	_access_gate_cells.clear()
 	for y in range(size.y):
 		var cell := Vector2i(x, y)
@@ -81,6 +86,49 @@ func nearest_walkable(cell: Vector2i) -> Vector2i:
 				if is_walkable(candidate):
 					return candidate
 	return clamped
+
+## Four-neighbour connectivity is equivalent to the current no-corner-cutting
+## AStar rule: every legal diagonal has a walkable cardinal detour.
+func _ensure_components() -> void:
+	if _components_revision == navigation_revision:
+		return
+	_component_ids.resize(size.x * size.y)
+	_component_ids.fill(0)
+	# -1 = solid, 0 = unvisited. Query the authoritative AStar mask once.
+	for y in range(size.y):
+		for x in range(size.x):
+			if _astar.is_point_solid(Vector2i(x, y)):
+				_component_ids[y * size.x + x] = -1
+	var queue := PackedInt32Array()
+	queue.resize(size.x * size.y)
+	var component := 0
+	for seed in range(_component_ids.size()):
+		if _component_ids[seed] != 0:
+			continue
+		component += 1
+		var head := 0
+		var tail := 1
+		queue[0] = seed
+		_component_ids[seed] = component
+		while head < tail:
+			var id := queue[head]
+			head += 1
+			var x := id % size.x
+			for neighbor in [id - size.x, id + size.x, id - 1 if x > 0 else -1, id + 1 if x < size.x - 1 else -1]:
+				if neighbor >= 0 and neighbor < _component_ids.size() and _component_ids[neighbor] == 0:
+					_component_ids[neighbor] = component
+					queue[tail] = neighbor
+					tail += 1
+	_components_revision = navigation_revision
+
+func component_at(cell: Vector2i) -> int:
+	_ensure_components()
+	var resolved := nearest_walkable(cell)
+	return _component_ids[resolved.y * size.x + resolved.x]
+
+func reachable(from_cell: Vector2i, to_cell: Vector2i) -> bool:
+	var component := component_at(from_cell)
+	return component > 0 and component == component_at(to_cell)
 
 func path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 	return _astar.get_id_path(nearest_walkable(from_cell), nearest_walkable(to_cell))

@@ -83,6 +83,10 @@ var _manual_t: float = 0.0
 var _danger_t: float = 0.0
 var _roam_points: Array[Vector2] = []
 var _roam_index: int = -1
+var _roam_built := false
+var _roam_ground: IsoGround
+var _roam_revision := -1
+var _roam_component := 0
 var _roam_last_dist := INF
 var _roam_stuck_t := 0.0
 var _roam_stuck_count := 0
@@ -125,6 +129,8 @@ func reset_after_travel() -> void:
 	_loot = null
 	_roam_index = -1
 	_roam_points.clear()
+	_roam_built = false
+	_roam_ground = null
 	_cave_nav.clear()
 	_last_position = Vector2.INF
 	_manual_t = 0.0
@@ -255,6 +261,9 @@ func _tick(delta: float) -> void:
 			_target = _find_target()
 			if _target != null:
 				_roam_index = -1
+				# A new target must not inherit the previous roam/target direction.
+				_repath_t = 0.0
+				_player.set_auto_move(Vector2.ZERO)
 				_player.select_target(_target as Node2D, _player.target_is_manual and _player.locked_target == _target)
 				_last_dist = INF
 				_stuck_count = 0
@@ -372,12 +381,12 @@ func _find_target() -> Node:
 			continue
 		if _is_blacklisted(e):
 			continue
-		if not _route_reachable((e as Node2D).global_position):
-			continue
 		if not allow_boss:
 			var tpl = e.get("template")
 			if tpl is Dictionary and String(tpl.get("kind", "normal")) == "boss":
 				continue
+		if not _route_reachable((e as Node2D).global_position):
+			continue
 		var d := _player.global_position.distance_to((e as Node2D).global_position)
 		var hp_v = e.get("hp")           # Node.get 只接受 1 个参数（无默认值重载）
 		var hp := float(hp_v) if hp_v != null else 0.0
@@ -431,7 +440,10 @@ func _tick_loot() -> bool:
 
 ## 无可见怪物时按地图有效格往返巡游；每个物理帧仍走上方的节流搜怪。
 func _tick_roam(delta: float) -> void:
-	if _roam_points.is_empty():
+	var ground := _cave_ground()
+	var revision := ground.cave.navigation_revision if ground != null else -1
+	var component := ground.cave.component_at(Vector2i(Iso.world_to_grid(_player.global_position).round())) if ground != null else 0
+	if not _roam_built or ground != _roam_ground or revision != _roam_revision or component != _roam_component:
 		_build_roam_points()
 	if _roam_points.is_empty():
 		_player.set_auto_move(Vector2.ZERO)
@@ -479,7 +491,8 @@ func _cave_ground() -> IsoGround:
 
 func _route_reachable(point: Vector2) -> bool:
 	var ground := _cave_ground()
-	return ground == null or not ground.route(_player.global_position, point).is_empty()
+	return ground == null or ground.cave.reachable(
+		Vector2i(Iso.world_to_grid(_player.global_position).round()), Vector2i(Iso.world_to_grid(point).round()))
 
 func _build_roam_points() -> void:
 	_roam_points.clear()
@@ -489,6 +502,12 @@ func _build_roam_points() -> void:
 	var ground := world.get_node_or_null("Ground") as IsoGround
 	if ground == null:
 		return
+	_roam_built = true
+	_roam_ground = ground if ground.cave != null else null
+	_roam_revision = ground.cave.navigation_revision if ground.cave != null else -1
+	var origin_cell := Vector2i(Iso.world_to_grid(_player.global_position).round())
+	_roam_component = ground.cave.component_at(origin_cell) if ground.cave != null else 0
+	_roam_index = -1
 	var xs: Array[int] = []
 	var ys: Array[int] = []
 	for x in range(2, maxi(3, ground.grid_size.x - 2), ROAM_GRID_STEP):
@@ -505,7 +524,7 @@ func _build_roam_points() -> void:
 			var cell := Vector2i(x, ys[row])
 			if ground.is_walkable_cell(cell):
 				var point := Iso.grid_to_world(cell)
-				if ground.cave == null or not ground.route(_player.global_position, point).is_empty():
+				if ground.cave == null or ground.cave.reachable(origin_cell, cell):
 					_roam_points.append(point)
 
 func _advance_roam() -> void:
