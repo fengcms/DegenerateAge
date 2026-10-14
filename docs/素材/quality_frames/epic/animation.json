@@ -1,0 +1,27 @@
+{
+  "id": "epic",
+  "name": "史诗",
+  "type": "quality_frame",
+  "color": "#E0C04A",
+  "atlas": "quality_frames/epic/atlas_64.png",
+  "atlas48": "quality_frames/epic/atlas_48.png",
+  "frames": 24,
+  "frame_size": [
+    64,
+    64
+  ],
+  "columns": 6,
+  "rows": 4,
+  "fps": 12,
+  "loop": true,
+  "duration_seconds": 2,
+  "transparent_inner_rect": [
+    12,
+    12,
+    40,
+    40
+  ],
+  "source": "quality_frames/epic/svg",
+  "generator": "deterministic SVG + ImageMagick",
+  "integrated": false
+}

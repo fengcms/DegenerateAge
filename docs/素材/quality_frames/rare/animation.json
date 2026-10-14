@@ -1,0 +1,27 @@
+{
+  "id": "rare",
+  "name": "稀有",
+  "type": "quality_frame",
+  "color": "#46C46A",
+  "atlas": "quality_frames/rare/atlas_64.png",
+  "atlas48": "quality_frames/rare/atlas_48.png",
+  "frames": 24,
+  "frame_size": [
+    64,
+    64
+  ],
+  "columns": 6,
+  "rows": 4,
+  "fps": 12,
+  "loop": true,
+  "duration_seconds": 2,
+  "transparent_inner_rect": [
+    12,
+    12,
+    40,
+    40
+  ],
+  "source": "quality_frames/rare/svg",
+  "generator": "deterministic SVG + ImageMagick",
+  "integrated": false
+}

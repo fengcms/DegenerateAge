@@ -1,0 +1,28 @@
+{
+  "id": "spirit_storm",
+  "type": "fx",
+  "source": "sources/fx/fx/spirit_storm.png",
+  "atlas": "fx/spirit_storm/atlas.png",
+  "frames": 8,
+  "frame_size": [
+    128,
+    128
+  ],
+  "columns": 4,
+  "rows": 2,
+  "fps": 10,
+  "loop": false,
+  "anchor": [
+    64,
+    64
+  ],
+  "hit_frames": [
+    1,
+    3,
+    5
+  ],
+  "transparent_end": true,
+  "preview_loop_only": true,
+  "gameplay_callbacks": false,
+  "integrated": false
+}

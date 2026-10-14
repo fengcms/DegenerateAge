@@ -1,0 +1,26 @@
+{
+  "id": "whirlwind",
+  "type": "fx",
+  "source": "sources/fx/fx/whirlwind.png",
+  "atlas": "fx/whirlwind/atlas.png",
+  "frames": 8,
+  "frame_size": [
+    128,
+    128
+  ],
+  "columns": 4,
+  "rows": 2,
+  "fps": 12,
+  "loop": false,
+  "anchor": [
+    64,
+    64
+  ],
+  "hit_frames": [
+    3
+  ],
+  "transparent_end": true,
+  "preview_loop_only": true,
+  "gameplay_callbacks": false,
+  "integrated": false
+}

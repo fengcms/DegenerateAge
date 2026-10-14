@@ -1,0 +1,817 @@
+{
+  "created": "2026-10-13",
+  "integrated": false,
+  "image_generator": "built-in image_gen",
+  "assets": [
+    {
+      "id": "basic_slash",
+      "type": "icon",
+      "category": "skills",
+      "files": {
+        "48": "icons/skills/basic_slash.png",
+        "96": "icons/skills/basic_slash_96.png",
+        "256": "icons/skills/basic_slash_256.png"
+      },
+      "source": "sources/icon/skills/basic_slash.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "earth_cleave",
+      "type": "icon",
+      "category": "skills",
+      "files": {
+        "48": "icons/skills/earth_cleave.png",
+        "96": "icons/skills/earth_cleave_96.png",
+        "256": "icons/skills/earth_cleave_256.png"
+      },
+      "source": "sources/icon/skills/earth_cleave.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "whirlwind",
+      "type": "icon",
+      "category": "skills",
+      "files": {
+        "48": "icons/skills/whirlwind.png",
+        "96": "icons/skills/whirlwind_96.png",
+        "256": "icons/skills/whirlwind_256.png"
+      },
+      "source": "sources/icon/skills/whirlwind.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "battle_focus",
+      "type": "icon",
+      "category": "skills",
+      "files": {
+        "48": "icons/skills/battle_focus.png",
+        "96": "icons/skills/battle_focus_96.png",
+        "256": "icons/skills/battle_focus_256.png"
+      },
+      "source": "sources/icon/skills/battle_focus.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "armor_break",
+      "type": "icon",
+      "category": "skills",
+      "files": {
+        "48": "icons/skills/armor_break.png",
+        "96": "icons/skills/armor_break_96.png",
+        "256": "icons/skills/armor_break_256.png"
+      },
+      "source": "sources/icon/skills/armor_break.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "spirit_storm",
+      "type": "icon",
+      "category": "skills",
+      "files": {
+        "48": "icons/skills/spirit_storm.png",
+        "96": "icons/skills/spirit_storm_96.png",
+        "256": "icons/skills/spirit_storm_256.png"
+      },
+      "source": "sources/icon/skills/spirit_storm.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "weapon_starter",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/weapon_starter.png",
+        "96": "icons/equipment/weapon_starter_96.png",
+        "256": "icons/equipment/weapon_starter_256.png"
+      },
+      "source": "sources/icon/equipment/weapon_starter.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "armor_starter",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/armor_starter.png",
+        "96": "icons/equipment/armor_starter_96.png",
+        "256": "icons/equipment/armor_starter_256.png"
+      },
+      "source": "sources/icon/equipment/armor_starter.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "weapon_wolfking",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/weapon_wolfking.png",
+        "96": "icons/equipment/weapon_wolfking_96.png",
+        "256": "icons/equipment/weapon_wolfking_256.png"
+      },
+      "source": "sources/icon/equipment/weapon_wolfking.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "helmet_cloth",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/helmet_cloth.png",
+        "96": "icons/equipment/helmet_cloth_96.png",
+        "256": "icons/equipment/helmet_cloth_256.png"
+      },
+      "source": "sources/icon/equipment/helmet_cloth.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "shoes_cloth",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/shoes_cloth.png",
+        "96": "icons/equipment/shoes_cloth_96.png",
+        "256": "icons/equipment/shoes_cloth_256.png"
+      },
+      "source": "sources/icon/equipment/shoes_cloth.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "shield_basic",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/shield_basic.png",
+        "96": "icons/equipment/shield_basic_96.png",
+        "256": "icons/equipment/shield_basic_256.png"
+      },
+      "source": "sources/icon/equipment/shield_basic.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "bracer_basic",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/bracer_basic.png",
+        "96": "icons/equipment/bracer_basic_96.png",
+        "256": "icons/equipment/bracer_basic_256.png"
+      },
+      "source": "sources/icon/equipment/bracer_basic.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "knee_basic",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/knee_basic.png",
+        "96": "icons/equipment/knee_basic_96.png",
+        "256": "icons/equipment/knee_basic_256.png"
+      },
+      "source": "sources/icon/equipment/knee_basic.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "bracelet_basic",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/bracelet_basic.png",
+        "96": "icons/equipment/bracelet_basic_96.png",
+        "256": "icons/equipment/bracelet_basic_256.png"
+      },
+      "source": "sources/icon/equipment/bracelet_basic.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "ring_basic",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/ring_basic.png",
+        "96": "icons/equipment/ring_basic_96.png",
+        "256": "icons/equipment/ring_basic_256.png"
+      },
+      "source": "sources/icon/equipment/ring_basic.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "necklace_basic",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/necklace_basic.png",
+        "96": "icons/equipment/necklace_basic_96.png",
+        "256": "icons/equipment/necklace_basic_256.png"
+      },
+      "source": "sources/icon/equipment/necklace_basic.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "weapon_legendary_vein_guard",
+      "type": "icon",
+      "category": "equipment",
+      "files": {
+        "48": "icons/equipment/weapon_legendary_vein_guard.png",
+        "96": "icons/equipment/weapon_legendary_vein_guard_96.png",
+        "256": "icons/equipment/weapon_legendary_vein_guard_256.png"
+      },
+      "source": "sources/icon/equipment/weapon_legendary_vein_guard.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "potion_hp_small",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/potion_hp_small.png",
+        "96": "icons/items/potion_hp_small_96.png",
+        "256": "icons/items/potion_hp_small_256.png"
+      },
+      "source": "sources/icon/items/potion_hp_small.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "potion_mp_small",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/potion_mp_small.png",
+        "96": "icons/items/potion_mp_small_96.png",
+        "256": "icons/items/potion_mp_small_256.png"
+      },
+      "source": "sources/icon/items/potion_mp_small.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "potion_hp_mid",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/potion_hp_mid.png",
+        "96": "icons/items/potion_hp_mid_96.png",
+        "256": "icons/items/potion_hp_mid_256.png"
+      },
+      "source": "sources/icon/items/potion_hp_mid.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "potion_mp_mid",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/potion_mp_mid.png",
+        "96": "icons/items/potion_mp_mid_96.png",
+        "256": "icons/items/potion_mp_mid_256.png"
+      },
+      "source": "sources/icon/items/potion_mp_mid.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "potion_hp_large",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/potion_hp_large.png",
+        "96": "icons/items/potion_hp_large_96.png",
+        "256": "icons/items/potion_hp_large_256.png"
+      },
+      "source": "sources/icon/items/potion_hp_large.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "potion_mp_large",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/potion_mp_large.png",
+        "96": "icons/items/potion_mp_large_96.png",
+        "256": "icons/items/potion_mp_large_256.png"
+      },
+      "source": "sources/icon/items/potion_mp_large.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "rune_iron",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/rune_iron.png",
+        "96": "icons/items/rune_iron_96.png",
+        "256": "icons/items/rune_iron_256.png"
+      },
+      "source": "sources/icon/items/rune_iron.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "rune_jade",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/rune_jade.png",
+        "96": "icons/items/rune_jade_96.png",
+        "256": "icons/items/rune_jade_256.png"
+      },
+      "source": "sources/icon/items/rune_jade.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "rune_gold",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/rune_gold.png",
+        "96": "icons/items/rune_gold_96.png",
+        "256": "icons/items/rune_gold_256.png"
+      },
+      "source": "sources/icon/items/rune_gold.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "rune_diamond",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/rune_diamond.png",
+        "96": "icons/items/rune_diamond_96.png",
+        "256": "icons/items/rune_diamond_256.png"
+      },
+      "source": "sources/icon/items/rune_diamond.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "misc_firework",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/misc_firework.png",
+        "96": "icons/items/misc_firework_96.png",
+        "256": "icons/items/misc_firework_256.png"
+      },
+      "source": "sources/icon/items/misc_firework.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "misc_random_ticket",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/misc_random_ticket.png",
+        "96": "icons/items/misc_random_ticket_96.png",
+        "256": "icons/items/misc_random_ticket_256.png"
+      },
+      "source": "sources/icon/items/misc_random_ticket.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "misc_town_scroll",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/misc_town_scroll.png",
+        "96": "icons/items/misc_town_scroll_96.png",
+        "256": "icons/items/misc_town_scroll_256.png"
+      },
+      "source": "sources/icon/items/misc_town_scroll.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "misc_revive_scroll",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/misc_revive_scroll.png",
+        "96": "icons/items/misc_revive_scroll_96.png",
+        "256": "icons/items/misc_revive_scroll_256.png"
+      },
+      "source": "sources/icon/items/misc_revive_scroll.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "spirit_shard",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/spirit_shard.png",
+        "96": "icons/items/spirit_shard_96.png",
+        "256": "icons/items/spirit_shard_256.png"
+      },
+      "source": "sources/icon/items/spirit_shard.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "mount_corrupted_wing",
+      "type": "icon",
+      "category": "mounts",
+      "files": {
+        "48": "icons/mounts/mount_corrupted_wing.png",
+        "96": "icons/mounts/mount_corrupted_wing_96.png",
+        "256": "icons/mounts/mount_corrupted_wing_256.png"
+      },
+      "source": "sources/icon/mounts/mount_corrupted_wing.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "coin",
+      "type": "icon",
+      "category": "items",
+      "files": {
+        "48": "icons/items/coin.png",
+        "96": "icons/items/coin_96.png",
+        "256": "icons/items/coin_256.png"
+      },
+      "source": "sources/icon/items/coin.png",
+      "anchor": "center",
+      "integrated": false
+    },
+    {
+      "id": "elite_wolf_king",
+      "name": "裂爪狼王",
+      "type": "monster",
+      "source": "sources/monster/monsters/elite_wolf_king.png",
+      "concept": "monsters/elite_wolf_king/concept_512.png",
+      "sprite": "monsters/elite_wolf_king/keypose_112.png",
+      "size": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        88
+      ],
+      "direction": "sw",
+      "states": [
+        "static_keypose"
+      ],
+      "full_animation": false,
+      "integrated": false
+    },
+    {
+      "id": "elite_ash_wraith",
+      "name": "灰烬怨灵",
+      "type": "monster",
+      "source": "sources/monster/monsters/elite_ash_wraith.png",
+      "concept": "monsters/elite_ash_wraith/concept_512.png",
+      "sprite": "monsters/elite_ash_wraith/keypose_112.png",
+      "size": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        88
+      ],
+      "direction": "sw",
+      "states": [
+        "static_keypose"
+      ],
+      "full_animation": false,
+      "integrated": false
+    },
+    {
+      "id": "elite_shellback_bug",
+      "name": "裂壳虫卫",
+      "type": "monster",
+      "source": "sources/monster/monsters/elite_shellback_bug.png",
+      "concept": "monsters/elite_shellback_bug/concept_512.png",
+      "sprite": "monsters/elite_shellback_bug/keypose_112.png",
+      "size": [
+        112,
+        112
+      ],
+      "anchor": [
+        56,
+        88
+      ],
+      "direction": "sw",
+      "states": [
+        "static_keypose"
+      ],
+      "full_animation": false,
+      "integrated": false
+    },
+    {
+      "id": "boss_corrupted_beast",
+      "name": "腐化巨兽",
+      "type": "monster",
+      "source": "sources/monster/monsters/boss_corrupted_beast.png",
+      "concept": "monsters/boss_corrupted_beast/concept_512.png",
+      "sprite": "monsters/boss_corrupted_beast/keypose_192.png",
+      "size": [
+        192,
+        192
+      ],
+      "anchor": [
+        96,
+        152
+      ],
+      "direction": "sw",
+      "states": [
+        "static_keypose"
+      ],
+      "full_animation": false,
+      "integrated": false
+    },
+    {
+      "id": "basic_slash",
+      "type": "fx",
+      "source": "sources/fx/fx/basic_slash.png",
+      "atlas": "fx/basic_slash/atlas.png",
+      "frames": 8,
+      "frame_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "rows": 2,
+      "fps": 12,
+      "loop": false,
+      "anchor": [
+        64,
+        64
+      ],
+      "hit_frames": [
+        3
+      ],
+      "transparent_end": true,
+      "preview_loop_only": true,
+      "gameplay_callbacks": false,
+      "integrated": false
+    },
+    {
+      "id": "earth_cleave",
+      "type": "fx",
+      "source": "sources/fx/fx/earth_cleave.png",
+      "atlas": "fx/earth_cleave/atlas.png",
+      "frames": 8,
+      "frame_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "rows": 2,
+      "fps": 12,
+      "loop": false,
+      "anchor": [
+        64,
+        64
+      ],
+      "hit_frames": [
+        3
+      ],
+      "transparent_end": true,
+      "preview_loop_only": true,
+      "gameplay_callbacks": false,
+      "integrated": false
+    },
+    {
+      "id": "whirlwind",
+      "type": "fx",
+      "source": "sources/fx/fx/whirlwind.png",
+      "atlas": "fx/whirlwind/atlas.png",
+      "frames": 8,
+      "frame_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "rows": 2,
+      "fps": 12,
+      "loop": false,
+      "anchor": [
+        64,
+        64
+      ],
+      "hit_frames": [
+        3
+      ],
+      "transparent_end": true,
+      "preview_loop_only": true,
+      "gameplay_callbacks": false,
+      "integrated": false
+    },
+    {
+      "id": "battle_focus",
+      "type": "fx",
+      "source": "sources/fx/fx/battle_focus.png",
+      "atlas": "fx/battle_focus/atlas.png",
+      "frames": 8,
+      "frame_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "rows": 2,
+      "fps": 12,
+      "loop": false,
+      "anchor": [
+        64,
+        64
+      ],
+      "hit_frames": [
+        3
+      ],
+      "transparent_end": true,
+      "preview_loop_only": true,
+      "gameplay_callbacks": false,
+      "integrated": false
+    },
+    {
+      "id": "armor_break",
+      "type": "fx",
+      "source": "sources/fx/fx/armor_break.png",
+      "atlas": "fx/armor_break/atlas.png",
+      "frames": 8,
+      "frame_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "rows": 2,
+      "fps": 12,
+      "loop": false,
+      "anchor": [
+        64,
+        64
+      ],
+      "hit_frames": [
+        3
+      ],
+      "transparent_end": true,
+      "preview_loop_only": true,
+      "gameplay_callbacks": false,
+      "integrated": false
+    },
+    {
+      "id": "spirit_storm",
+      "type": "fx",
+      "source": "sources/fx/fx/spirit_storm.png",
+      "atlas": "fx/spirit_storm/atlas.png",
+      "frames": 8,
+      "frame_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "rows": 2,
+      "fps": 10,
+      "loop": false,
+      "anchor": [
+        64,
+        64
+      ],
+      "hit_frames": [
+        1,
+        3,
+        5
+      ],
+      "transparent_end": true,
+      "preview_loop_only": true,
+      "gameplay_callbacks": false,
+      "integrated": false
+    },
+    {
+      "id": "uncommon",
+      "name": "优秀",
+      "type": "quality_frame",
+      "color": "#4AA3E0",
+      "atlas": "quality_frames/uncommon/atlas_64.png",
+      "atlas48": "quality_frames/uncommon/atlas_48.png",
+      "frames": 24,
+      "frame_size": [
+        64,
+        64
+      ],
+      "columns": 6,
+      "rows": 4,
+      "fps": 12,
+      "loop": true,
+      "duration_seconds": 2,
+      "transparent_inner_rect": [
+        12,
+        12,
+        40,
+        40
+      ],
+      "source": "quality_frames/uncommon/svg",
+      "generator": "deterministic SVG + ImageMagick",
+      "integrated": false
+    },
+    {
+      "id": "rare",
+      "name": "稀有",
+      "type": "quality_frame",
+      "color": "#46C46A",
+      "atlas": "quality_frames/rare/atlas_64.png",
+      "atlas48": "quality_frames/rare/atlas_48.png",
+      "frames": 24,
+      "frame_size": [
+        64,
+        64
+      ],
+      "columns": 6,
+      "rows": 4,
+      "fps": 12,
+      "loop": true,
+      "duration_seconds": 2,
+      "transparent_inner_rect": [
+        12,
+        12,
+        40,
+        40
+      ],
+      "source": "quality_frames/rare/svg",
+      "generator": "deterministic SVG + ImageMagick",
+      "integrated": false
+    },
+    {
+      "id": "epic",
+      "name": "史诗",
+      "type": "quality_frame",
+      "color": "#E0C04A",
+      "atlas": "quality_frames/epic/atlas_64.png",
+      "atlas48": "quality_frames/epic/atlas_48.png",
+      "frames": 24,
+      "frame_size": [
+        64,
+        64
+      ],
+      "columns": 6,
+      "rows": 4,
+      "fps": 12,
+      "loop": true,
+      "duration_seconds": 2,
+      "transparent_inner_rect": [
+        12,
+        12,
+        40,
+        40
+      ],
+      "source": "quality_frames/epic/svg",
+      "generator": "deterministic SVG + ImageMagick",
+      "integrated": false
+    },
+    {
+      "id": "legendary",
+      "name": "传说",
+      "type": "quality_frame",
+      "color": "#B46AE0",
+      "atlas": "quality_frames/legendary/atlas_64.png",
+      "atlas48": "quality_frames/legendary/atlas_48.png",
+      "frames": 24,
+      "frame_size": [
+        64,
+        64
+      ],
+      "columns": 6,
+      "rows": 4,
+      "fps": 12,
+      "loop": true,
+      "duration_seconds": 2,
+      "transparent_inner_rect": [
+        12,
+        12,
+        40,
+        40
+      ],
+      "source": "quality_frames/legendary/svg",
+      "generator": "deterministic SVG + ImageMagick",
+      "integrated": false
+    }
+  ],
+  "completed": "2026-10-14"
+}

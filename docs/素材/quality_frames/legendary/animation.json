@@ -1,0 +1,27 @@
+{
+  "id": "legendary",
+  "name": "传说",
+  "type": "quality_frame",
+  "color": "#B46AE0",
+  "atlas": "quality_frames/legendary/atlas_64.png",
+  "atlas48": "quality_frames/legendary/atlas_48.png",
+  "frames": 24,
+  "frame_size": [
+    64,
+    64
+  ],
+  "columns": 6,
+  "rows": 4,
+  "fps": 12,
+  "loop": true,
+  "duration_seconds": 2,
+  "transparent_inner_rect": [
+    12,
+    12,
+    40,
+    40
+  ],
+  "source": "quality_frames/legendary/svg",
+  "generator": "deterministic SVG + ImageMagick",
+  "integrated": false
+}

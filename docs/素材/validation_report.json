@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-10-14",
+  "result": "passed",
+  "asset_entries": 49,
+  "icons": 35,
+  "monsters": 4,
+  "skill_fx": 6,
+  "quality_animations": 4,
+  "checks": [
+    "all 34 data IDs covered plus coin",
+    "all icon exports square: 48/96/256",
+    "transparent PNG corners",
+    "monster sprite sizes and design exports",
+    "six 8-frame VFX atlases with blank end frames",
+    "four 24-frame square UI animations, 24 distinct frames each",
+    "quality overlays have fully transparent central 40x40 pixels",
+    "all assets marked not integrated"
+  ],
+  "visual_review": [
+    "35-icon labeled overview",
+    "four-monster labeled overview",
+    "six FX frame sequences",
+    "quality animation composite preview"
+  ],
+  "limitations": [
+    "monster exports are static designs and one-direction keyposes, not full eight-direction animations",
+    "VFX not engine-tested because this delivery does not integrate assets"
+  ]
+}

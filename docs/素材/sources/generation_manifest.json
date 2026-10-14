@@ -1,0 +1,489 @@
+[
+  {
+    "category": "skills",
+    "id": "basic_slash",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A single worn short sword swinging diagonally, a short crescent cyan-white slash trail, a few impact sparks; emphasize one sharp arc.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-56428a02-33c1-4005-8578-b7c2c049ccb0.png",
+    "type": "icon",
+    "local_source": "sources/icon/skills/basic_slash.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "skills",
+    "id": "earth_cleave",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A heavy descending iron blade striking cracked slate, three broad ground fissures spreading into a forward fan, cyan-white edge with warm ochre stone debris.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-d3ce0497-d9f6-44c0-8dc7-7fc89f6ce3d7.png",
+    "type": "icon",
+    "local_source": "sources/icon/skills/earth_cleave.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "skills",
+    "id": "whirlwind",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A circular cyan-white spiral of sword arcs around a dark central vortex, two clean orbiting blade silhouettes, strong circular motion.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-1cb17ea9-ef87-4cf2-ba8e-4e9c3c3eee51.png",
+    "type": "icon",
+    "local_source": "sources/icon/skills/whirlwind.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "skills",
+    "id": "battle_focus",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A frontal worn iron-and-leather breastplate with an upward cyan-white spirit flame and symmetrical orderly ancient geometric engraving, compact aura suggesting resolve.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-8f80889a-ac5b-4a40-b820-bde61de89ebc.png",
+    "type": "icon",
+    "local_source": "sources/icon/skills/battle_focus.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "skills",
+    "id": "armor_break",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A broad iron blade piercing a broken bronze shield, two separated shield pieces, hard bright cyan impact and sparse golden sparks.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-4a504343-3cea-4020-95ec-6b80d553bc80.png",
+    "type": "icon",
+    "local_source": "sources/icon/skills/armor_break.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "skills",
+    "id": "spirit_storm",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Three spectral cyan-white blades descending in a spiral of wind, three distinct luminous sharp blades, no person.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-9f75e3c1-b5f7-41e1-b465-e869cf59b196.png",
+    "type": "icon",
+    "local_source": "sources/icon/skills/spirit_storm.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "weapon_starter",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Guardian starter short sword, modest iron blade, brown leather wrapped handle, small cyan angular guard engraving. Similar simple scale to reference, blade lower-left to upper-right.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-f63ecf84-67ad-474a-8020-b082644d4848.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/weapon_starter.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "armor_starter",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A worn brown leather torso armor vest with four plain dark iron plates, small cloth straps, simple repaired survival armor, front three-quarter view.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-0ece3aa7-40d8-4f64-a1f6-9c2aa315b4f3.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/armor_starter.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "weapon_wolfking",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Wolf king short sword: serrated bone-white edge and dark iron blade, broken wolf fang shaped guard, small muted violet fissure near hilt, leather handle. A sword not axe.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-c4a1a15b-30ad-47b0-8cd6-08dad621955a.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/weapon_wolfking.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "helmet_cloth",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A simple padded beige cloth helmet hood with stitched dark brown leather brow band and two short side flaps, no face, no horns.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-ff2bbb2a-b719-4393-970c-923fe05da7cf.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/helmet_cloth.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "shoes_cloth",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A pair of simple worn beige cloth ankle shoes tied with brown cord, one ahead of the other, dark stitched soles, clearly footwear.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-88b0d45e-801e-4a4a-8aed-e15177925f1b.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/shoes_cloth.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "shield_basic",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One simple round wooden shield, three worn wood planks with dark iron rim and small iron boss, not ornate.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-cbbae683-2805-45f2-8a2f-e4093b92bccf.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/shield_basic.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "bracer_basic",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One brown leather forearm bracer, two straps and small aged iron rivets, angled diagonally, recognizable cylindrical shape.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-fc045d3b-4fef-4968-b66e-23a153dac744.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/bracer_basic.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "knee_basic",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One sturdy brown leather knee guard with reinforced rounded iron front plate and two cloth straps, shaped for a knee not a wrist.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-b6815647-c9bd-4dff-9bb4-3f05dc689711.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/knee_basic.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "bracelet_basic",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One open aged copper wrist bracelet, thick oval cuff with a simple geometric etched line, warm copper highlights, no gem.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-9857cbac-a54e-4956-8542-8bfb85cfd05e.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/bracelet_basic.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "ring_basic",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One small aged copper finger ring, thick round band and tiny square dark teal inset, clear hole, no large crown.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-42e0d49c-7d7b-4a6d-9599-bfa1a9aa184d.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/ring_basic.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "necklace_basic",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A curved cord necklace with a central carved beast-bone fang pendant and two smaller bone beads, pale bone, brown cord.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-b492bae5-2462-4fea-b906-8a943cc0da09.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/necklace_basic.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "equipment",
+    "id": "weapon_legendary_vein_guard",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A distinguished broad short sword forged from layered dark iron and bone-white steel, precise continuous cyan geometric channels etched into blade, symmetrical ancient sealing guard, small violet amethyst in pommel, premium worn relic, silhouette different from starter sword. No quality border.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-90ca0df8-2ad4-4b41-8ffa-30786410e215.png",
+    "type": "icon",
+    "local_source": "sources/icon/equipment/weapon_legendary_vein_guard.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "potion_hp_small",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Small short round glass flask filled with deep red health potion, cork and one brown cord neck tie, bone-white tiny glass highlights.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-8e00aa7c-9d39-4583-9ac4-2de1ff734c18.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/potion_hp_small.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "potion_mp_small",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Small short round glass flask filled with blue mana potion, cork and one brown cord neck tie, bone-white tiny glass highlights. Match small red flask silhouette.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-725daca5-c1b8-478e-a68e-7edd89ad3c53.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/potion_mp_small.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "potion_hp_mid",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Medium taller shoulder-shaped glass medicine bottle filled with deep red liquid, broad flat shoulders, brown leather neck band and cork, clearly taller than small round flask.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-a19400a5-7169-46d0-987e-ca6b0b18efa9.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/potion_hp_mid.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "potion_mp_mid",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Medium taller shoulder-shaped glass medicine bottle filled with cobalt blue liquid, broad flat shoulders, brown leather neck band and cork, clearly taller than small round flask.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-196688be-6b3a-460d-a1d6-078c9725d3f5.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/potion_mp_mid.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "potion_hp_large",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Large broad-bellied glass medicine bottle filled with red liquid, two crossed leather harness straps and wide cork stopper, large capacity, robust shape distinct from small and medium.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-0bff2c9e-230d-47e4-8cb5-48ec572e4a40.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/potion_hp_large.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "potion_mp_large",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: Large broad-bellied glass medicine bottle filled with blue liquid, two crossed leather harness straps and wide cork stopper, large capacity, robust shape distinct from small and medium.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-83a00189-1803-4c12-afdc-d3b97e2ee974.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/potion_mp_large.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "rune_iron",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A traditional Chinese RUYI scepter, NOT a rune stone: curved slender handle ending in cloud-shaped mushroom head, forged rough dark iron, diagonal lower-left to upper-right, pale iron edges.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-7ea8b33d-c8f5-4136-9e70-aab04f9b523b.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/rune_iron.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "rune_jade",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A traditional Chinese RUYI scepter, NOT a rune stone: curved slender handle ending in cloud-shaped mushroom head, polished muted turquoise green jade with subtle translucency, diagonal lower-left to upper-right.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-a1288f2f-a38c-405b-bee6-dbf2d36a2f69.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/rune_jade.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "rune_gold",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A traditional Chinese RUYI scepter, NOT a rune stone: curved slender handle ending in cloud-shaped mushroom head, aged warm gold with simple angular engraved bands, diagonal lower-left to upper-right.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-d17991a9-d680-431c-b96a-99b9b79c4e90.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/rune_gold.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "rune_diamond",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A traditional Chinese RUYI scepter, NOT a rune stone: curved slender handle ending in cloud-shaped mushroom head, faceted cold white crystal diamond with pale cyan edges, diagonal lower-left to upper-right.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-30a9b788-a0ae-4bc5-9a9e-05242534d5c3.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/rune_diamond.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "misc_firework",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A small bundle of three worn red paper firework cylinders tied with brown cord, one visible curled fuse and a tiny warm spark, not a modern rocket.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-87ace966-62ec-4a1d-9699-45de143c5bb8.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/misc_firework.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "misc_random_ticket",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One worn ochre paper ticket with notched ends, a large dark bifurcating arrow symbol and small cyan spark at each branch, no written text.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-0ed71c8e-853e-4495-9e87-b1e0470bc4b0.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/misc_random_ticket.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "misc_town_scroll",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A rolled pale parchment scroll, partially open center showing a simple dark camp roof and path pictogram, tied with brown strap, small warm camp light.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-e3dce180-8a43-44f2-9610-72fc1cb38fc8.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/misc_town_scroll.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "misc_revive_scroll",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A partly open pale parchment scroll with a clearly visible luminous cyan circular return arrow enclosing a small spirit flame, violet-brown ribbon, distinct from town scroll, no letters.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-6e4bba85-e569-48d9-9e2d-140e76634abe.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/misc_revive_scroll.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "spirit_shard",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One asymmetrical broken cyan-white spirit crystal shard, three strong facets and a few precise angular ancient engraving marks, small loose cyan sparks, not a purple corruption crystal.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-3ea5337f-4d41-4faf-9d05-33326024d0f7.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/spirit_shard.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "mounts",
+    "id": "mount_corrupted_wing",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: One pair of compact folded corrupted feather wings arranged symmetrically, dark slate feathers, bone-colored joints, sparse violet crack highlights, cyan small central sealing ring, no creature and no rider.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-50c572e7-75e8-4c38-84ae-e98530b27f7e.png",
+    "type": "icon",
+    "local_source": "sources/icon/mounts/mount_corrupted_wing.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "items",
+    "id": "coin",
+    "prompt": "Use case: stylized-concept. Asset type: square inventory / hotbar icon for a retro isometric dark fantasy RPG. Match supplied reference's deliberate chunky pixel clusters, iron-gray outlines, worn leather and cloth, bone-white highlights, upper-left lighting. Eastern relic craftsmanship mixed with post-apocalypse survival materials. Clean recognizable silhouette at 48x48. Single centered object, 12% transparent padding all sides, square canvas, real transparent RGBA background. No text, no letters, no numbers, no UI border, no background scene, no watermark. Not smooth vector, not photorealistic, no modern gun, no glossy mobile-game cartoon.\nInput image: style reference only, not an edit target. Subject: A small stack of three worn warm copper-gold coins with one upright coin, a square central hole and simple angular minted lines, no text, no currency numbers.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-3d37dbb1-d155-4965-8fed-dc1c0183f9f4.png",
+    "type": "icon",
+    "local_source": "sources/icon/items/coin.png",
+    "reference_files": [
+      "sources/references/weapon_starter.png"
+    ]
+  },
+  {
+    "category": "monsters",
+    "id": "elite_wolf_king",
+    "prompt": "Use case: stylized-concept. Asset type: game monster concept sprite on a square transparent canvas. Input image is existing ordinary monster style reference, not edit target. Match retro chunky hand-painted pixel art clusters, muted iron gray and old cloth/bone palette, upper-left light, crisp dark outline, consistent 30 degree isometric view. ONE full-body creature centered with 12% transparent margin, feet/virtual feet on horizontal baseline at 80% canvas height. No text, labels, grid, scenery, ground shadow or interface. High silhouette readability when reduced to 112px, Boss to 192px. Actual transparent RGBA background, no checkerboard drawn. Subject: Corrupted wolf king elite. Same gray-tan corrupted wolf family as reference, but noticeably higher shoulders, a broken bone crown growing behind ears, long ivory claws, jagged violet cracks along spine, small restrained aged gold elite accents. Four-legged lupine anatomy, not humanoid, not lion. Front three-quarter facing down-left.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-e20d7608-aeaf-4b12-a657-b55d60ef748a.png",
+    "type": "monster",
+    "name": "裂爪狼王",
+    "local_source": "sources/monster/monsters/elite_wolf_king.png",
+    "reference_files": [
+      "sources/references/wolf_sample.png"
+    ]
+  },
+  {
+    "category": "monsters",
+    "id": "elite_ash_wraith",
+    "prompt": "Use case: stylized-concept. Asset type: game monster concept sprite on a square transparent canvas. Input image is existing ordinary monster style reference, not edit target. Match retro chunky hand-painted pixel art clusters, muted iron gray and old cloth/bone palette, upper-left light, crisp dark outline, consistent 30 degree isometric view. ONE full-body creature centered with 12% transparent margin, feet/virtual feet on horizontal baseline at 80% canvas height. No text, labels, grid, scenery, ground shadow or interface. High silhouette readability when reduced to 112px, Boss to 192px. Actual transparent RGBA background, no checkerboard drawn. Subject: Elite ash wraith based on reference ordinary wraith. Floating narrow ghost in ragged charcoal layered robe, bone-white split mask, tall fractured crown halo made of four aged brass shards behind hood, brighter tiny orange ember core at sternum, two long asymmetrical cloth tails and small violet wrist cracks. No legs visible. Front three-quarter facing down-left.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-b1cd033b-45b6-45ab-a1b8-643c1d86b5af.png",
+    "type": "monster",
+    "name": "灰烬怨灵",
+    "local_source": "sources/monster/monsters/elite_ash_wraith.png",
+    "reference_files": [
+      "sources/references/ash_wraith_source.png"
+    ]
+  },
+  {
+    "category": "monsters",
+    "id": "elite_shellback_bug",
+    "prompt": "Use case: stylized-concept. Asset type: game monster concept sprite on a square transparent canvas. Input image is existing ordinary monster style reference, not edit target. Match retro chunky hand-painted pixel art clusters, muted iron gray and old cloth/bone palette, upper-left light, crisp dark outline, consistent 30 degree isometric view. ONE full-body creature centered with 12% transparent margin, feet/virtual feet on horizontal baseline at 80% canvas height. No text, labels, grid, scenery, ground shadow or interface. High silhouette readability when reduced to 112px, Boss to 192px. Actual transparent RGBA background, no checkerboard drawn. Subject: Elite shellback bug guard based on reference ordinary beetle. Squat wide six-legged insect with much thicker overlapping slate-brown shell plates, raised triangular center ridge, asymmetric chipped ivory spikes at shell shoulder, restrained aged brass edge segments, sparse violet cracks. Compact armored beetle with low head, not crab, not turtle. Front three-quarter facing down-left.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-c117f1d9-f4ee-4048-9c85-ee226cd43147.png",
+    "type": "monster",
+    "name": "裂壳虫卫",
+    "local_source": "sources/monster/monsters/elite_shellback_bug.png",
+    "reference_files": [
+      "sources/references/shellback_bug_source.png"
+    ]
+  },
+  {
+    "category": "monsters",
+    "id": "boss_corrupted_beast",
+    "prompt": "Use case: stylized-concept. Asset type: game monster concept sprite on a square transparent canvas. Input image is existing ordinary monster style reference, not edit target. Match retro chunky hand-painted pixel art clusters, muted iron gray and old cloth/bone palette, upper-left light, crisp dark outline, consistent 30 degree isometric view. ONE full-body creature centered with 12% transparent margin, feet/virtual feet on horizontal baseline at 80% canvas height. No text, labels, grid, scenery, ground shadow or interface. High silhouette readability when reduced to 112px, Boss to 192px. Actual transparent RGBA background, no checkerboard drawn. Subject: Massive corrupted beast boss, original design related to same corruption visual family. Heavy forward-hunched quadrupedal wolf-bear chimera with four muscular limbs, broad huge foreclaws, layered fractured bone armor across shoulders and back, a large violet fissure core visible between chest armor plates, broad jagged hornless skull muzzle, restrained gold ancient binding remnants. Clear weight and stomp threat, NOT a bigger ordinary wolf, not human or gorilla, no weapon held. Front three-quarter facing down-left.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-198bdbe4-624c-4b3b-9366-996a7922cb40.png",
+    "type": "monster",
+    "name": "腐化巨兽",
+    "local_source": "sources/monster/monsters/boss_corrupted_beast.png",
+    "reference_files": [
+      "sources/references/wolf_sample.png"
+    ]
+  },
+  {
+    "category": "fx",
+    "id": "basic_slash",
+    "prompt": "Use case: stylized-concept. Asset type: transparent game VFX spritesheet, not an inventory icon. Retro chunky pixel art matching dark isometric fantasy game, cyan-white spirit energy #78D8D0, crisp luminous pixel clusters and selective alpha falloff. EXACT grid 4 columns by 2 rows, 8 equally sized SQUARE cells, entire sheet 2:1 aspect ratio. Each cell centered within its own invisible grid, all effects entirely confined to inner 75% of each cell, no effect crosses cell boundaries, no visible lines or dividers. Each cell represents ONE sequential animation frame, read left-to-right top row then bottom row. Maintain exact same center across frames. Transparent background, no checkerboard, no text, no labels, no border, no scenery. Subject sequence: 8 sequential frames of a short cyan-white sword crescent slash: tiny leading glint, thin crescent forms, bright sweeping arc extends, peak crisp curved blade arc, trailing 3 tiny sparks, arc shrinks, pale last sparks, completely transparent end frame. Points diagonally toward upper-right. NO sword or character.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-6b49cf5e-86f2-4292-9ee9-fad785b8347d.png",
+    "type": "fx",
+    "local_source": "sources/fx/fx/basic_slash.png",
+    "reference_files": []
+  },
+  {
+    "category": "fx",
+    "id": "earth_cleave",
+    "prompt": "Use case: stylized-concept. Asset type: transparent game VFX spritesheet, not an inventory icon. Retro chunky pixel art matching dark isometric fantasy game, cyan-white spirit energy #78D8D0, crisp luminous pixel clusters and selective alpha falloff. EXACT grid 4 columns by 2 rows, 8 equally sized SQUARE cells, entire sheet 2:1 aspect ratio. Each cell centered within its own invisible grid, all effects entirely confined to inner 75% of each cell, no effect crosses cell boundaries, no visible lines or dividers. Each cell represents ONE sequential animation frame, read left-to-right top row then bottom row. Maintain exact same center across frames. Transparent background, no checkerboard, no text, no labels, no border, no scenery. Subject sequence: 8 sequential frames of ground cleave oriented toward screen up: subtle cyan leading strike, three angular cracks begin, cracks spread into 90-degree fan, three bright fissures with small ochre stone chips at peak, cyan fades, cracks dim, a few chips fade, completely transparent end frame. NO weapon or character.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-eea9e209-cd00-4e64-825a-ba59d3cb16ea.png",
+    "type": "fx",
+    "local_source": "sources/fx/fx/earth_cleave.png",
+    "reference_files": []
+  },
+  {
+    "category": "fx",
+    "id": "whirlwind",
+    "prompt": "Use case: stylized-concept. Asset type: transparent game VFX spritesheet, not an inventory icon. Retro chunky pixel art matching dark isometric fantasy game, cyan-white spirit energy #78D8D0, crisp luminous pixel clusters and selective alpha falloff. EXACT grid 4 columns by 2 rows, 8 equally sized SQUARE cells, entire sheet 2:1 aspect ratio. Each cell centered within its own invisible grid, all effects entirely confined to inner 75% of each cell, no effect crosses cell boundaries, no visible lines or dividers. Each cell represents ONE sequential animation frame, read left-to-right top row then bottom row. Maintain exact same center across frames. Transparent background, no checkerboard, no text, no labels, no border, no scenery. Subject sequence: 8 sequential frames of a round horizontal cyan-white blade vortex around center, circle not perspective ellipse: one short leading arc, two arcs emerge, three rotating blade crescents, full ring at peak, trailing spiral, arcs shrink, last sparks, transparent end. Three broad clear trails rather than smoke. NO character.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-f4b341b4-1f36-42ec-9ec1-5865905ffe24.png",
+    "type": "fx",
+    "local_source": "sources/fx/fx/whirlwind.png",
+    "reference_files": []
+  },
+  {
+    "category": "fx",
+    "id": "battle_focus",
+    "prompt": "Use case: stylized-concept. Asset type: transparent game VFX spritesheet, not an inventory icon. Retro chunky pixel art matching dark isometric fantasy game, cyan-white spirit energy #78D8D0, crisp luminous pixel clusters and selective alpha falloff. EXACT grid 4 columns by 2 rows, 8 equally sized SQUARE cells, entire sheet 2:1 aspect ratio. Each cell centered within its own invisible grid, all effects entirely confined to inner 75% of each cell, no effect crosses cell boundaries, no visible lines or dividers. Each cell represents ONE sequential animation frame, read left-to-right top row then bottom row. Maintain exact same center across frames. Transparent background, no checkerboard, no text, no labels, no border, no scenery. Subject sequence: 8 sequential frames of a compact upward cyan-white aura: tiny central glint, geometric sealing segments form a lower ring, three thin rising spirit lines, bright orderly angular flame at peak, narrowing flame, lines fade upward, last sparks, completely transparent end. NO character, no armor.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-bf3ba3e6-4132-4429-9c52-d0fbc9a9c548.png",
+    "type": "fx",
+    "local_source": "sources/fx/fx/battle_focus.png",
+    "reference_files": []
+  },
+  {
+    "category": "fx",
+    "id": "armor_break",
+    "prompt": "Use case: stylized-concept. Asset type: transparent game VFX spritesheet, not an inventory icon. Retro chunky pixel art matching dark isometric fantasy game, cyan-white spirit energy #78D8D0, crisp luminous pixel clusters and selective alpha falloff. EXACT grid 4 columns by 2 rows, 8 equally sized SQUARE cells, entire sheet 2:1 aspect ratio. Each cell centered within its own invisible grid, all effects entirely confined to inner 75% of each cell, no effect crosses cell boundaries, no visible lines or dividers. Each cell represents ONE sequential animation frame, read left-to-right top row then bottom row. Maintain exact same center across frames. Transparent background, no checkerboard, no text, no labels, no border, no scenery. Subject sequence: 8 sequential frames of an angular cyan-white impact with small ochre metallic fragments: tiny sharp glint, vertical piercing line, four angular burst rays, broken shield-shaped abstract outline fractures at peak, fragments spread, rays fade, last sparks, transparent end. NO literal sword, no creature.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-1f909e01-8770-41cd-a8d0-6d3c00246715.png",
+    "type": "fx",
+    "local_source": "sources/fx/fx/armor_break.png",
+    "reference_files": []
+  },
+  {
+    "category": "fx",
+    "id": "spirit_storm",
+    "prompt": "Use case: stylized-concept. Asset type: transparent game VFX spritesheet, not an inventory icon. Retro chunky pixel art matching dark isometric fantasy game, cyan-white spirit energy #78D8D0, crisp luminous pixel clusters and selective alpha falloff. EXACT grid 4 columns by 2 rows, 8 equally sized SQUARE cells, entire sheet 2:1 aspect ratio. Each cell centered within its own invisible grid, all effects entirely confined to inner 75% of each cell, no effect crosses cell boundaries, no visible lines or dividers. Each cell represents ONE sequential animation frame, read left-to-right top row then bottom row. Maintain exact same center across frames. Transparent background, no checkerboard, no text, no labels, no border, no scenery. Subject sequence: 8 sequential frames of three successive spectral blade strikes around center: first cyan-white blade appears, first blade descends, second blade appears crossing first fading trail, second blade descends, third blade appears, third blade descends with spiral trail, three trails fade, transparent end. Three strike timing peaks at frames 1,3,5 (zero based). NO creature.",
+    "source": "/Users/fungleo/.codex/generated_images/01a135c4-0427-7e53-aaa5-970dc5029f1f/exec-4640eb62-88ef-4532-bc59-657dabc0e5d5.png",
+    "type": "fx",
+    "local_source": "sources/fx/fx/spirit_storm.png",
+    "reference_files": []
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "id": "uncommon",
+  "name": "优秀",
+  "type": "quality_frame",
+  "color": "#4AA3E0",
+  "atlas": "quality_frames/uncommon/atlas_64.png",
+  "atlas48": "quality_frames/uncommon/atlas_48.png",
+  "frames": 24,
+  "frame_size": [
+    64,
+    64
+  ],
+  "columns": 6,
+  "rows": 4,
+  "fps": 12,
+  "loop": true,
+  "duration_seconds": 2,
+  "transparent_inner_rect": [
+    12,
+    12,
+    40,
+    40
+  ],
+  "source": "quality_frames/uncommon/svg",
+  "generator": "deterministic SVG + ImageMagick",
+  "integrated": false
+}
