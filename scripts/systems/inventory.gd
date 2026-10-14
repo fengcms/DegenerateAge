@@ -25,6 +25,16 @@ static func used_slots(inv: Array) -> int:
 			n += 1
 	return n
 
+## 背包手动排布：拖到空格为移动，拖到占用格为交换；保留物品实例。
+static func move_or_swap(inv: Array, source: int, target: int) -> bool:
+	if source < 0 or target < 0 or source >= inv.size() or target >= inv.size() \
+			or source == target or not inv[source] is Dictionary:
+		return false
+	var displaced: Variant = inv[target]
+	inv[target] = inv[source]
+	inv[source] = displaced
+	return true
+
 ## 是否已满（无任何空位）。
 static func is_full(inv: Array) -> bool:
 	return used_slots(inv) >= inv.size()

@@ -131,6 +131,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	var source := int((data as Dictionary).get("from", -1))
 	return (role == ROLE_TRAY and source == ROLE_BAG) \
 		or (role == ROLE_WAREHOUSE and source == ROLE_BAG) \
+		or (role == ROLE_BAG and source == ROLE_BAG) \
 		or (role == ROLE_BAG and source == ROLE_WAREHOUSE) \
 		or (role == ROLE_BAG and source == ROLE_EQUIP)
 

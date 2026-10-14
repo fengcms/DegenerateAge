@@ -126,7 +126,7 @@ func _apply_trade_layout(trade: bool) -> void:
 	if _dim != null:
 		_dim.visible = false
 	for b in _bag_buttons:
-		b.draggable = trade or not HotbarConfig.entry_for_item(b.item).is_empty()
+		b.draggable = not b.item.is_empty()
 
 # ---- 构建 ----
 
@@ -311,8 +311,7 @@ func _refresh() -> void:
 		if it2 is Dictionary:
 			var col2 := _item_color(it2)
 			b2.item = it2          # 供拖拽载荷携带（ItemSlot._get_drag_data）
-			b2.draggable = _trade_active or not HotbarConfig.entry_for_item(it2).is_empty() \
-				or (String(it2.get("kind", "")) == "equip" and _character_visible())
+			b2.draggable = true
 			b2.text = _short_name(it2)
 			b2.add_theme_color_override("font_color", col2)
 			_apply_slot_style(b2, col2, true)
@@ -462,6 +461,11 @@ func _character_visible() -> bool:
 	return character != null and character.visible
 
 func _on_bag_item_dropped(_target_index: int, payload: Dictionary, index: int) -> void:
+	if visible and int(payload.get("from", -1)) == ItemSlot.ROLE_BAG:
+		_last_click_index = -1
+		_last_click_ms = 0
+		GameState.move_inventory_item(int(payload.get("index", -1)), index, String(payload.get("token", "")))
+		return
 	if not visible or not _character_visible() or int(payload.get("from", -1)) != ItemSlot.ROLE_EQUIP:
 		return
 	var sid := String(payload.get("slot_id", ""))

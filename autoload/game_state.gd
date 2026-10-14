@@ -393,6 +393,15 @@ func organize_inventory() -> bool:
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p005"), "info")
 	return changed
 
+func move_inventory_item(source: int, target: int, token: String) -> bool:
+	if source < 0 or source >= inventory.size() or not inventory[source] is Dictionary \
+			or not Warehouse.token_matches(inventory[source], token):
+		return false
+	if not Inventory.move_or_swap(inventory, source, target):
+		return false
+	EventBus.inventory_changed.emit()
+	return true
+
 func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
 	if level_limit < 1 or level_limit > 100 or not Shop.QUALITY_ORDER.has(max_quality):
 		return false

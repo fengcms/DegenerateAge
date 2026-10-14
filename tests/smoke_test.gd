@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_balance_calibration()
 	_test_inventory()
 	_test_inventory_sort()
+	_test_inventory_manual_move()
 	_test_inventory_expansion()
 	_test_warehouse_sort()
 	_test_mount_core()
@@ -163,6 +164,20 @@ func _test_inventory_sort() -> void:
 	_expect(not GameState.organize_inventory(), "重复整理应保持稳定顺序")
 	panel.set_open(false)
 	panel.queue_free()
+	GameState.reset_to_defaults()
+
+func _test_inventory_manual_move() -> void:
+	GameState.reset_to_defaults()
+	var first := _equip_instance("weapon_starter", "move_first", {"atk": 5})
+	var second := _equip_instance("weapon_starter", "move_second", {"atk": 7})
+	GameState.inventory[0] = first
+	GameState.inventory[1] = second
+	var token := Warehouse.item_token(first)
+	_expect(GameState.move_inventory_item(0, 3, token), "装备应能拖到空背包格")
+	_expect(GameState.inventory[0] == null and GameState.inventory[3].instanceId == "move_first", "移入空格后原格应清空")
+	_expect(GameState.move_inventory_item(3, 1, token), "装备应能与占用格交换")
+	_expect(GameState.inventory[1].instanceId == "move_first" and GameState.inventory[3].instanceId == "move_second", "交换应保留双方实例")
+	_expect(not GameState.move_inventory_item(1, 5, "stale"), "过期拖动载荷不得移动物品")
 	GameState.reset_to_defaults()
 
 func _test_inventory_expansion() -> void:
