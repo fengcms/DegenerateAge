@@ -287,11 +287,12 @@ func _slot_style(bg: Color, border: Color) -> StyleBoxFlat:
 ## filled = true 时以品质色描边（5.7），空槽用暗边。
 func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 	var bg := COL_SLOT_BG if filled else COL_SLOT_EMPTY
-	b.add_theme_stylebox_override("normal", _slot_style(bg, border))
-	b.add_theme_stylebox_override("hover", _slot_style(COL_SLOT_HOVER, border))
-	b.add_theme_stylebox_override("pressed", _slot_style(bg, border))
+	var painted_border := Color.TRANSPARENT if b is ItemSlot and (b as ItemSlot)._quality_frame != null and (b as ItemSlot)._quality_frame.visible else border
+	b.add_theme_stylebox_override("normal", _slot_style(bg, painted_border))
+	b.add_theme_stylebox_override("hover", _slot_style(COL_SLOT_HOVER, painted_border))
+	b.add_theme_stylebox_override("pressed", _slot_style(bg, painted_border))
 	b.add_theme_stylebox_override("focus", _slot_style(Color(0, 0, 0, 0), Color(0, 0, 0, 0)))
-	b.add_theme_stylebox_override("disabled", _slot_style(bg, border))
+	b.add_theme_stylebox_override("disabled", _slot_style(bg, painted_border))
 
 # ---- 刷新 ----
 

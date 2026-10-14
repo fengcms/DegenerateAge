@@ -174,6 +174,8 @@ func _refresh() -> void:
 func _style_equipment_slot(button: EquipmentSlot, item: Variant) -> void:
 	var empty := not item is Dictionary
 	var border := Color("737b83") if empty else ItemUtil.quality_color(String(item.get("quality", "common")))
+	if button._quality_frame != null and button._quality_frame.visible:
+		border = Color.TRANSPARENT
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("171b20")
 	style.border_color = border

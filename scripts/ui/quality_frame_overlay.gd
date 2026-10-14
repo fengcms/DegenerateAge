@@ -12,6 +12,7 @@ const FRAME_SIZE := 64
 const COLUMNS := 6
 const FRAME_COUNT := 24
 const FPS := 12.0
+const OUTSET := 2.0
 
 var _region := AtlasTexture.new()
 var _elapsed := 0.0
@@ -19,6 +20,10 @@ var _frame := -1
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	offset_left = -OUTSET
+	offset_top = -OUTSET
+	offset_right = OUTSET
+	offset_bottom = OUTSET
 	expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	stretch_mode = TextureRect.STRETCH_SCALE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST

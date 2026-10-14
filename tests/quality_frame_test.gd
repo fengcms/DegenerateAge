@@ -12,7 +12,7 @@ func _ready() -> void:
 		slot.custom_minimum_size = Vector2(46, 46) if role == ItemSlot.ROLE_BAG else Vector2(52, 52)
 		add_child(slot)
 		await get_tree().process_frame
-		check(slot._quality_frame.size == slot.size, "quality frame fills the item slot")
+		check(slot._quality_frame.size == slot.size + Vector2(4, 4), "quality frame reaches the slot edge")
 		for quality in ["uncommon", "rare", "epic", "legendary"]:
 			var item := ItemFactory.make_equip_roll("weapon_starter", 10, quality)
 			slot.item = item
@@ -25,6 +25,18 @@ func _ready() -> void:
 			frame._process(0.2)
 			check((frame.texture as AtlasTexture).region != Rect2(0, 0, 64, 64), "frame advances for " + quality)
 			check(slot.get_theme_constant("icon_max_width") == int(slot.custom_minimum_size.x), "slot artwork fills canvas")
+			check(slot.icon is AtlasTexture and (slot.icon as AtlasTexture).region.size.x < 48,
+				"equipment icon trims transparent padding")
+			if role == ItemSlot.ROLE_BAG:
+				var bag_panel := preload("res://scripts/ui/inventory_panel.gd").new()
+				bag_panel._apply_slot_style(slot, ItemUtil.quality_color(quality), true)
+				bag_panel.free()
+			else:
+				var character_panel := preload("res://scripts/ui/character_panel.gd").new()
+				character_panel._style_equipment_slot(slot, item)
+				character_panel.free()
+			check((slot.get_theme_stylebox("normal") as StyleBoxFlat).border_color.a == 0.0,
+				"animated frame replaces static quality border")
 		slot.item = ItemFactory.make_equip_roll("weapon_starter", 10, "common")
 		check(not slot._quality_frame.visible and slot._quality_frame.texture == null, "common equipment has no effect")
 		slot.item = {"kind": "potion", "itemId": "potion_hp_small"}
