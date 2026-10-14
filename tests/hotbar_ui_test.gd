@@ -125,7 +125,19 @@ func _ready() -> void:
 		"拖入的具体药品可使用且库存同步减少")
 	_check(not hud._hotbar_buttons[5]._cooldown.text.is_empty(), "药品格显示冷却")
 	_check(is_equal_approx(hud._hotbar.size.x, hud._exp_bar.size.x), "经验条与快捷栏整体同宽")
+	_check(absf(hud._exp_bar.position.y - (hud._hotbar.position.y + hud._hotbar.size.y) - 7.0) < 0.1,
+		"经验槽距快捷栏 7px，与设计稿一致")
+	var separator := hud._hotbar.get_node("GroupGap/DiamondSeparator") as TextureRect
+	_check(separator != null and separator.texture != null, "操作格与固定入口之间保留菱形区隔符")
+	var key_badge := hud._hotbar_buttons[0].get_node("KeyBadge") as Panel
+	_check(key_badge.get_theme_stylebox("panel") is StyleBoxEmpty and
+		(key_badge.get_node("KeyText") as Label).get_theme_constant("outline_size") > 0,
+		"键位文字使用描边而非黑色底牌")
 	hud._on_xp(45, 100)
+	var fill := hud._exp_bar.get_node("ExperienceFill") as TextureRect
+	var frame := hud._exp_bar.get_node("ExperienceFrame") as TextureRect
+	_check(fill.get_index() < frame.get_index() and frame.get_index() < hud._exp_bar.get_node("ProgressTip").get_index()
+		and absf(fill.size.x - 696.0 * 0.45) < 0.1, "经验填充在边框后方并按进度裁切")
 	var tip := hud._exp_bar.get_node("ProgressTip") as TextureRect
 	_check(tip.visible and absf(tip.position.x - 318.0) < 2.0 and hud._exp_bar.tooltip_text == "45 / 100",
 		"经验填充端点随进度移动，精确数值只在悬停显示")

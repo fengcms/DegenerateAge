@@ -103,11 +103,47 @@ func _ready() -> void:
 		and not SettingsRuntime.valid_choice("resolution", "2560x1440"),
 		"1920×1200 窗口档位应被接受、未登记档位应被拒绝")
 	await _check_visual_tab()
+	await _check_controls_tab()
 	await _check_panels_matrix()
 	await _check_embedded_resize()
 	_check_display_preferences()
 	print("[SettingsTest] 全部通过 ✅")
 	get_tree().quit()
+
+func _check_controls_tab() -> void:
+	var panel: Control = (load("res://scenes/ui/SettingsPanel.tscn") as PackedScene).instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	var controls := _find_by_name(panel, "控制") as ScrollContainer
+	_check(controls != null, "设置面板应含「控制」页")
+	if controls == null:
+		panel.queue_free()
+		return
+	var tabs := controls.get_parent() as TabContainer
+	tabs.current_tab = controls.get_index()
+	await get_tree().process_frame
+	var rows := panel._key_list as VBoxContainer
+	var first_row := rows.get_child(0) as HBoxContainer
+	var key_button := first_row.get_child(1) as Button
+	_check(rows.get_parent() == controls.get_child(0) and rows.get_child_count() == SettingsRuntime.ACTIONS.size()
+		and key_button.is_visible_in_tree() and key_button.size.y > 0,
+		"改键列表应在控制页展开且按钮可见")
+	var original := SettingsRuntime.key_for("move_up")
+	var replacement := KEY_F12
+	_check(SettingsRuntime.action_for_key(replacement).is_empty(), "测试改键用键应未被占用")
+	key_button.pressed.emit()
+	_check(panel._capture_action == "move_up", "点击键位按钮应进入等待按键状态")
+	var event := InputEventKey.new()
+	event.physical_keycode = replacement
+	event.pressed = true
+	panel._input(event)
+	await get_tree().process_frame
+	_check(SettingsRuntime.key_for("move_up") == replacement and
+		(rows.get_child(0).get_child(1) as Button).text == "F12", "控制页改键应即时生效并刷新显示")
+	SettingsRuntime.set_binding("move_up", original)
+	panel.set_open(false)
+	panel.queue_free()
+	await get_tree().process_frame
 
 func _check_display_preferences() -> void:
 	var path := SettingsRuntime.DISPLAY_PREFS_PATH

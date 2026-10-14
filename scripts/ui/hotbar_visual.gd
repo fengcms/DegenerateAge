@@ -5,7 +5,9 @@ extends RefCounted
 const SLOT_FRAME := preload("res://assets/ui/hotbar_slot_frame.svg")
 const EXP_BACKGROUND := preload("res://assets/ui/hotbar_exp_bg.svg")
 const EXP_FILL := preload("res://assets/ui/hotbar_exp_fill.svg")
+const EXP_FRAME := preload("res://assets/ui/hotbar_exp_frame.svg")
 const EXP_MARKER := preload("res://assets/ui/hotbar_exp_marker.svg")
+const GROUP_SEPARATOR := preload("res://assets/ui/hotbar_group_separator.svg")
 const RED_POTION := preload("res://assets/ui/hotbar_potion_red.svg")
 const BLUE_POTION := preload("res://assets/ui/hotbar_potion_blue.svg")
 const BASIC_SLASH := preload("res://assets/ui/hotbar_slash.svg")
@@ -38,10 +40,7 @@ static func style_slot(button: Button) -> void:
 	badge.position = Vector2(3, 3)
 	badge.size = Vector2(16, 13)
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var plate := StyleBoxFlat.new()
-	plate.bg_color = Color("0a1012e0")
-	plate.set_corner_radius_all(2)
-	badge.add_theme_stylebox_override("panel", plate)
+	badge.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var label := Label.new()
 	label.name = "KeyText"
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -49,6 +48,8 @@ static func style_slot(button: Button) -> void:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 10)
 	label.add_theme_color_override("font_color", Color("f4e4b9"))
+	label.add_theme_color_override("font_outline_color", Color("080d10e6"))
+	label.add_theme_constant_override("outline_size", 2)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.add_child(label)
 	button.add_child(badge)
@@ -87,11 +88,24 @@ static func refresh_key(button: Button, action: String) -> void:
 static func style_experience(bar: ProgressBar) -> void:
 	var bg := StyleBoxTexture.new()
 	bg.texture = EXP_BACKGROUND
-	var fill := StyleBoxTexture.new()
-	fill.texture = EXP_FILL
 	bar.add_theme_stylebox_override("background", bg)
-	bar.add_theme_stylebox_override("fill", fill)
+	bar.add_theme_stylebox_override("fill", StyleBoxEmpty.new())
 	bar.show_percentage = false
+	var fill := TextureRect.new()
+	fill.name = "ExperienceFill"
+	fill.texture = EXP_FILL
+	fill.position = Vector2(10, 4)
+	fill.size = Vector2(0, 9)
+	fill.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fill.stretch_mode = TextureRect.STRETCH_SCALE
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(fill)
+	var frame := TextureRect.new()
+	frame.name = "ExperienceFrame"
+	frame.texture = EXP_FRAME
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(frame)
 	var marker := TextureRect.new()
 	marker.name = "ProgressTip"
 	marker.texture = EXP_MARKER
@@ -101,6 +115,8 @@ static func style_experience(bar: ProgressBar) -> void:
 	update_experience_marker(bar)
 
 static func update_experience_marker(bar: ProgressBar) -> void:
+	var fill := bar.get_node("ExperienceFill") as TextureRect
+	fill.size.x = maxf(0.0, (bar.size.x - 20.0) * bar.ratio)
 	var marker := bar.get_node("ProgressTip") as TextureRect
 	marker.visible = bar.value > 0
 	marker.position = Vector2(8.0 + (bar.size.x - 16.0) * bar.ratio - 5.0, 3.5)

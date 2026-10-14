@@ -307,11 +307,9 @@ func _build_controls(tabs: TabContainer) -> void:
 	_capture_label = Label.new()
 	_capture_label.text = Localization.tr_key("ui.settings_panel.p039")
 	root.add_child(_capture_label)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(scroll)
 	_key_list = VBoxContainer.new()
-	scroll.add_child(_key_list)
+	_key_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(_key_list)
 	_refresh_keys()
 
 func _build_data(tabs: TabContainer) -> void:

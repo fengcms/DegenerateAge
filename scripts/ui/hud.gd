@@ -406,6 +406,13 @@ func _build_hotbar() -> void:
 			spacer.custom_minimum_size = Vector2(12, 42)
 			spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_hotbar.add_child(spacer)
+			var diamond := TextureRect.new()
+			diamond.name = "DiamondSeparator"
+			diamond.texture = HotbarVisual.GROUP_SEPARATOR
+			diamond.position = Vector2(-2, -7)
+			diamond.size = Vector2(16, 16)
+			diamond.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			spacer.add_child(diamond)
 		if i >= 12:
 			var button := Button.new()
 			HotbarVisual.style_slot(button)
