@@ -154,9 +154,10 @@ func _refresh() -> void:
 		var item: Variant = GameState.equipment.get(sid)
 		button.item = item if item is Dictionary else {}
 		button.draggable = item is Dictionary and _bag_visible()
-		button.text = ItemUtil.template_name(item).substr(0, 2) if item is Dictionary else ""
+		button.text = ItemUtil.template_name(item).substr(0, 2) if item is Dictionary else String(def.label)
 		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else Localization.tr_key("ui.character_panel.p004") % String(def.label)
 		SampleArt.decorate(button, SampleArt.icon_for(item))
+		_style_equipment_slot(button, item)
 		button.queue_redraw()
 	var p := GameState.player
 	var bonus := GameState.equip_bonus()
@@ -170,6 +171,20 @@ func _refresh() -> void:
 		100.0 * (float(p.dodge) + float(bonus.get("dodge", 0.0))),
 		100.0 * (float(p.block) + float(bonus.get("block", 0.0))),
 		100.0 * (float(p.cdr) + float(bonus.get("cdr", 0.0)))]
+
+func _style_equipment_slot(button: EquipmentSlot, item: Variant) -> void:
+	var empty := not item is Dictionary
+	var border := Color("737b83") if empty else ItemUtil.quality_color(String(item.get("quality", "common")))
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("171b20")
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", style)
+	button.add_theme_stylebox_override("pressed", style)
+	button.add_theme_color_override("font_color", Color("8d959d") if empty else Color.WHITE)
+	button.add_theme_font_size_override("font_size", 12)
 
 func _bag_visible() -> bool:
 	var bag := get_node_or_null("../InventoryPanel")
