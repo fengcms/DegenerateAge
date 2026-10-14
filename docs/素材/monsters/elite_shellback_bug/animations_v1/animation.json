@@ -1,0 +1,276 @@
+{
+  "id": "elite_shellback_bug",
+  "name": "裂壳虫卫",
+  "frame_size": [
+    112,
+    112
+  ],
+  "pivot": [
+    56,
+    88
+  ],
+  "directions": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "common_actor_scale": 0.2799107142857143,
+  "integrated": false,
+  "generated_motion": true,
+  "procedural_rotation": false,
+  "procedural_mirroring": false,
+  "procedural_interpolation": false,
+  "states": {
+    "idle": {
+      "name": "待机",
+      "atlas": "monsters/elite_shellback_bug/animations_v1/idle_atlas.png",
+      "frames_per_direction": 8,
+      "total_frames": 64,
+      "columns": 8,
+      "rows": 8,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 1,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_shellback_bug/idle_source.png",
+      "actual_source_rows": [
+        [
+          35,
+          156
+        ],
+        [
+          183,
+          307
+        ],
+        [
+          334,
+          459
+        ],
+        [
+          482,
+          615
+        ],
+        [
+          646,
+          772
+        ],
+        [
+          802,
+          927
+        ],
+        [
+          957,
+          1080
+        ],
+        [
+          1108,
+          1235
+        ]
+      ],
+      "source_columns": 8
+    },
+    "walk": {
+      "name": "行走",
+      "atlas": "monsters/elite_shellback_bug/animations_v1/walk_atlas.png",
+      "frames_per_direction": 8,
+      "total_frames": 64,
+      "columns": 8,
+      "rows": 8,
+      "fps": 10,
+      "loop": true,
+      "duration_seconds": 0.8,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_shellback_bug/walk_source.png",
+      "actual_source_rows": [
+        [
+          35,
+          159
+        ],
+        [
+          187,
+          310
+        ],
+        [
+          343,
+          466
+        ],
+        [
+          497,
+          621
+        ],
+        [
+          654,
+          779
+        ],
+        [
+          811,
+          935
+        ],
+        [
+          961,
+          1086
+        ],
+        [
+          1114,
+          1240
+        ]
+      ],
+      "source_columns": 8
+    },
+    "attack": {
+      "name": "攻击",
+      "atlas": "monsters/elite_shellback_bug/animations_v1/attack_atlas.png",
+      "frames_per_direction": 8,
+      "total_frames": 64,
+      "columns": 8,
+      "rows": 8,
+      "fps": 12,
+      "loop": false,
+      "duration_seconds": 0.6666666666666666,
+      "terminal_hold": false,
+      "visual_contact_frame": 3,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_shellback_bug/attack_source.png",
+      "actual_source_rows": [
+        [
+          37,
+          159
+        ],
+        [
+          186,
+          308
+        ],
+        [
+          334,
+          460
+        ],
+        [
+          483,
+          614
+        ],
+        [
+          646,
+          774
+        ],
+        [
+          804,
+          928
+        ],
+        [
+          955,
+          1082
+        ],
+        [
+          1109,
+          1236
+        ]
+      ],
+      "source_columns": 8
+    },
+    "hit": {
+      "name": "受击",
+      "atlas": "monsters/elite_shellback_bug/animations_v1/hit_atlas.png",
+      "frames_per_direction": 8,
+      "total_frames": 64,
+      "columns": 8,
+      "rows": 8,
+      "fps": 24,
+      "loop": false,
+      "duration_seconds": 0.3333333333333333,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_shellback_bug/hit_source.png",
+      "actual_source_rows": [
+        [
+          37,
+          163
+        ],
+        [
+          187,
+          316
+        ],
+        [
+          343,
+          467
+        ],
+        [
+          495,
+          623
+        ],
+        [
+          653,
+          781
+        ],
+        [
+          814,
+          940
+        ],
+        [
+          968,
+          1093
+        ],
+        [
+          1107,
+          1235
+        ]
+      ],
+      "source_columns": 8
+    },
+    "death": {
+      "name": "死亡",
+      "atlas": "monsters/elite_shellback_bug/animations_v1/death_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": false,
+      "duration_seconds": 0.7,
+      "terminal_hold": true,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_shellback_bug/death_source.png",
+      "actual_source_rows": [
+        [
+          45,
+          169
+        ],
+        [
+          204,
+          331
+        ],
+        [
+          376,
+          503
+        ],
+        [
+          557,
+          682
+        ],
+        [
+          725,
+          850
+        ],
+        [
+          890,
+          1024
+        ],
+        [
+          1088,
+          1214
+        ]
+      ],
+      "source_columns": 8
+    }
+  }
+}

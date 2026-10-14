@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-14",
+  "result": "passed",
+  "actors": 4,
+  "directions": 8,
+  "action_atlases": 22,
+  "individual_animation_frames": 1272,
+  "directional_static_exports": 32,
+  "checks": [
+    "all four actor IDs and five base states",
+    "boss stomp and enrage_summon extra states",
+    "seven or eight real chronological frames per state",
+    "eight different facing views in every state",
+    "at least two different art frames for every directional animation",
+    "exact atlas cell sizes and row/column order",
+    "all 1272 silhouettes nonempty with transparent safety border",
+    "fixed canvas pivot; visible ground edge within two raster pixels",
+    "nonlooping attacks/hit/death; death terminal hold",
+    "no damage callbacks; no game integration"
+  ],
+  "per_actor": [
+    {
+      "id": "elite_wolf_king",
+      "states": [
+        {
+          "state": "idle",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "walk",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "attack",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "hit",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "death",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        }
+      ]
+    },
+    {
+      "id": "elite_ash_wraith",
+      "states": [
+        {
+          "state": "idle",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "walk",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "attack",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "hit",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "death",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        }
+      ]
+    },
+    {
+      "id": "elite_shellback_bug",
+      "states": [
+        {
+          "state": "idle",
+          "frames_per_direction": 8,
+          "distinct_frames": 64
+        },
+        {
+          "state": "walk",
+          "frames_per_direction": 8,
+          "distinct_frames": 64
+        },
+        {
+          "state": "attack",
+          "frames_per_direction": 8,
+          "distinct_frames": 64
+        },
+        {
+          "state": "hit",
+          "frames_per_direction": 8,
+          "distinct_frames": 64
+        },
+        {
+          "state": "death",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        }
+      ]
+    },
+    {
+      "id": "boss_corrupted_beast",
+      "states": [
+        {
+          "state": "idle",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "walk",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "attack",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "hit",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "death",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "stomp",
+          "frames_per_direction": 7,
+          "distinct_frames": 56
+        },
+        {
+          "state": "enrage_summon",
+          "frames_per_direction": 8,
+          "distinct_frames": 64
+        }
+      ]
+    }
+  ],
+  "visual_review": [
+    "four facing turntables",
+    "four chronological action boards",
+    "all eight directions in terminal death poses",
+    "interactive animation player"
+  ],
+  "limitations": [
+    "generated pixel-art motion has not been bound to engine combat timing or tested in the live game",
+    "directional character artwork should receive in-game scale and timing review during future integration"
+  ],
+  "browser_review": {
+    "playback": true,
+    "pause": true,
+    "frame_scrub": true,
+    "death_terminal_hold": true,
+    "console_errors": 0,
+    "screenshots": [
+      "reviewer_walk.png",
+      "reviewer_death.png"
+    ]
+  }
+}

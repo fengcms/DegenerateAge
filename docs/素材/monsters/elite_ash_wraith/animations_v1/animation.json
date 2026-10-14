@@ -1,0 +1,260 @@
+{
+  "id": "elite_ash_wraith",
+  "name": "灰烬怨灵",
+  "frame_size": [
+    112,
+    112
+  ],
+  "pivot": [
+    56,
+    88
+  ],
+  "directions": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "common_actor_scale": 0.2721354166666667,
+  "integrated": false,
+  "generated_motion": true,
+  "procedural_rotation": false,
+  "procedural_mirroring": false,
+  "procedural_interpolation": false,
+  "states": {
+    "idle": {
+      "name": "待机",
+      "atlas": "monsters/elite_ash_wraith/animations_v1/idle_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 0.875,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_ash_wraith/idle_source.png",
+      "actual_source_rows": [
+        [
+          17,
+          176
+        ],
+        [
+          185,
+          341
+        ],
+        [
+          354,
+          513
+        ],
+        [
+          521,
+          679
+        ],
+        [
+          689,
+          845
+        ],
+        [
+          855,
+          1014
+        ],
+        [
+          1026,
+          1185
+        ]
+      ],
+      "source_columns": 8
+    },
+    "walk": {
+      "name": "行走",
+      "atlas": "monsters/elite_ash_wraith/animations_v1/walk_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": true,
+      "duration_seconds": 0.7,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_ash_wraith/walk_source.png",
+      "actual_source_rows": [
+        [
+          17,
+          176
+        ],
+        [
+          185,
+          342
+        ],
+        [
+          353,
+          513
+        ],
+        [
+          522,
+          681
+        ],
+        [
+          692,
+          849
+        ],
+        [
+          860,
+          1019
+        ],
+        [
+          1034,
+          1197
+        ]
+      ],
+      "source_columns": 8
+    },
+    "attack": {
+      "name": "攻击",
+      "atlas": "monsters/elite_ash_wraith/animations_v1/attack_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 12,
+      "loop": false,
+      "duration_seconds": 0.5833333333333334,
+      "terminal_hold": false,
+      "visual_contact_frame": 3,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_ash_wraith/attack_source.png",
+      "actual_source_rows": [
+        [
+          18,
+          177
+        ],
+        [
+          187,
+          342
+        ],
+        [
+          350,
+          505
+        ],
+        [
+          514,
+          667
+        ],
+        [
+          672,
+          830
+        ],
+        [
+          835,
+          995
+        ],
+        [
+          1006,
+          1171
+        ]
+      ],
+      "source_columns": 8
+    },
+    "hit": {
+      "name": "受击",
+      "atlas": "monsters/elite_ash_wraith/animations_v1/hit_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 24,
+      "loop": false,
+      "duration_seconds": 0.2916666666666667,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_ash_wraith/hit_source.png",
+      "actual_source_rows": [
+        [
+          19,
+          180
+        ],
+        [
+          189,
+          342
+        ],
+        [
+          358,
+          508
+        ],
+        [
+          525,
+          679
+        ],
+        [
+          692,
+          850
+        ],
+        [
+          862,
+          1019
+        ],
+        [
+          1033,
+          1191
+        ]
+      ],
+      "source_columns": 8
+    },
+    "death": {
+      "name": "死亡",
+      "atlas": "monsters/elite_ash_wraith/animations_v1/death_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": false,
+      "duration_seconds": 0.7,
+      "terminal_hold": true,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_ash_wraith/death_source.png",
+      "actual_source_rows": [
+        [
+          8,
+          176
+        ],
+        [
+          185,
+          346
+        ],
+        [
+          362,
+          522
+        ],
+        [
+          534,
+          698
+        ],
+        [
+          715,
+          875
+        ],
+        [
+          900,
+          1053
+        ],
+        [
+          1096,
+          1218
+        ]
+      ],
+      "source_columns": 8
+    }
+  }
+}

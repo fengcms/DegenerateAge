@@ -1,0 +1,356 @@
+{
+  "id": "boss_corrupted_beast",
+  "name": "腐化巨兽",
+  "frame_size": [
+    192,
+    192
+  ],
+  "pivot": [
+    96,
+    152
+  ],
+  "directions": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "common_actor_scale": 0.4630363805970149,
+  "integrated": false,
+  "generated_motion": true,
+  "procedural_rotation": false,
+  "procedural_mirroring": false,
+  "procedural_interpolation": false,
+  "states": {
+    "idle": {
+      "name": "待机",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/idle_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 0.875,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/idle_source.png",
+      "actual_source_rows": [
+        [
+          36,
+          182
+        ],
+        [
+          191,
+          343
+        ],
+        [
+          351,
+          504
+        ],
+        [
+          509,
+          660
+        ],
+        [
+          674,
+          820
+        ],
+        [
+          831,
+          980
+        ],
+        [
+          994,
+          1141
+        ]
+      ],
+      "source_columns": 8
+    },
+    "walk": {
+      "name": "行走",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/walk_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": true,
+      "duration_seconds": 0.7,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/walk_source.png",
+      "actual_source_rows": [
+        [
+          26,
+          172
+        ],
+        [
+          185,
+          336
+        ],
+        [
+          342,
+          494
+        ],
+        [
+          501,
+          650
+        ],
+        [
+          657,
+          805
+        ],
+        [
+          816,
+          967
+        ],
+        [
+          978,
+          1127
+        ]
+      ],
+      "source_columns": 8
+    },
+    "attack": {
+      "name": "攻击",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/attack_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 12,
+      "loop": false,
+      "duration_seconds": 0.5833333333333334,
+      "terminal_hold": false,
+      "visual_contact_frame": 3,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/attack_source.png",
+      "actual_source_rows": [
+        [
+          42,
+          177
+        ],
+        [
+          197,
+          338
+        ],
+        [
+          351,
+          498
+        ],
+        [
+          506,
+          649
+        ],
+        [
+          656,
+          809
+        ],
+        [
+          828,
+          963
+        ],
+        [
+          985,
+          1119
+        ]
+      ],
+      "source_columns": 8
+    },
+    "hit": {
+      "name": "受击",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/hit_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 24,
+      "loop": false,
+      "duration_seconds": 0.2916666666666667,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/hit_source.png",
+      "actual_source_rows": [
+        [
+          41,
+          180
+        ],
+        [
+          202,
+          342
+        ],
+        [
+          361,
+          500
+        ],
+        [
+          519,
+          658
+        ],
+        [
+          676,
+          816
+        ],
+        [
+          834,
+          973
+        ],
+        [
+          993,
+          1137
+        ]
+      ],
+      "source_columns": 8
+    },
+    "death": {
+      "name": "死亡",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/death_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": false,
+      "duration_seconds": 0.7,
+      "terminal_hold": true,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/death_source.png",
+      "actual_source_rows": [
+        [
+          36,
+          176
+        ],
+        [
+          197,
+          342
+        ],
+        [
+          363,
+          503
+        ],
+        [
+          532,
+          662
+        ],
+        [
+          699,
+          820
+        ],
+        [
+          858,
+          977
+        ],
+        [
+          1017,
+          1136
+        ]
+      ],
+      "source_columns": 8
+    },
+    "stomp": {
+      "name": "践踏",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/stomp_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 12,
+      "loop": false,
+      "duration_seconds": 0.5833333333333334,
+      "terminal_hold": false,
+      "visual_contact_frame": 4,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/stomp_source.png",
+      "actual_source_rows": [
+        [
+          42,
+          179
+        ],
+        [
+          195,
+          337
+        ],
+        [
+          346,
+          494
+        ],
+        [
+          500,
+          647
+        ],
+        [
+          676,
+          811
+        ],
+        [
+          829,
+          967
+        ],
+        [
+          998,
+          1138
+        ]
+      ],
+      "source_columns": 8
+    },
+    "enrage_summon": {
+      "name": "狂暴召唤",
+      "atlas": "monsters/boss_corrupted_beast/animations_v1/enrage_summon_atlas.png",
+      "frames_per_direction": 8,
+      "total_frames": 64,
+      "columns": 8,
+      "rows": 8,
+      "fps": 12,
+      "loop": false,
+      "duration_seconds": 0.6666666666666666,
+      "terminal_hold": false,
+      "visual_contact_frame": 3,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/boss_corrupted_beast/enrage_summon_source.png",
+      "actual_source_rows": [
+        [
+          32,
+          165
+        ],
+        [
+          179,
+          315
+        ],
+        [
+          327,
+          469
+        ],
+        [
+          476,
+          631
+        ],
+        [
+          640,
+          789
+        ],
+        [
+          802,
+          944
+        ],
+        [
+          959,
+          1097
+        ],
+        [
+          1110,
+          1242
+        ]
+      ],
+      "source_columns": 8
+    }
+  }
+}

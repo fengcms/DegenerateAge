@@ -76,6 +76,11 @@ for(const [id,name,color,ornaments] of qualities){
  const meta={id,name,type:'quality_frame',color,atlas:path.relative(root,atlas),atlas48:path.relative(root,atlas48),frames:24,frame_size:[64,64],columns:6,rows:4,fps:12,loop:true,duration_seconds:2,transparent_inner_rect:[12,12,40,40],source:path.relative(root,path.join(dir,'svg')),generator:'deterministic SVG + ImageMagick',integrated:false};
  fs.writeFileSync(path.join(dir,'animation.json'),JSON.stringify(meta,null,2));output.push(meta);
 }
+const previousManifestPath=path.join(root,'asset_manifest.json');
+if(fs.existsSync(previousManifestPath)){
+ const previous=JSON.parse(fs.readFileSync(previousManifestPath,'utf8'));
+ for(const a of output){const old=previous.assets.find(x=>x.id===a.id&&x.type===a.type);if(a.type==='monster'&&old?.animation_pack){for(const key of ['full_animation','animation_pack','animation_direction_order','animation_frame_count','states'])a[key]=old[key];}}
+}
 fs.writeFileSync(path.join(root,'asset_manifest.json'),JSON.stringify({created:'2026-10-13',completed:'2026-10-14',integrated:false,image_generator:'built-in image_gen',assets:output},null,2));
 fs.writeFileSync(path.join(root,'sources/generation_manifest.json'),JSON.stringify(jobs,null,2));
 console.log('Packaged',output.length,'asset entries: 35 icons, 4 monster designs, 6 VFX, 4 quality animations.');

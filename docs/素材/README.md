@@ -9,6 +9,7 @@
 - [本地浏览预览页](index.html)：打开后可以查看图标、怪物和动画，点击下载原图或导出图。
 - [图标总览](previews/icons_overview.png)：带中文名称的全部 35 个图标。
 - [怪物总览](previews/monsters_overview.png)：裂爪狼王、灰烬怨灵、裂壳虫卫、腐化巨兽。
+- [怪物八向动作审阅](monsters/animation_preview.html)：四只怪物、22 组动作，可暂停逐帧查看。
 - [品质边框动画演示](previews/quality_demo.gif)：同一把短刃分别叠加四种品质框。
 - [技能特效动画演示](previews/skills_fx_demo.gif)：六种特效并排演示。
 - [资源元数据](asset_manifest.json)、[验证报告](validation_report.json)、[提示词和原图记录](sources/generation_manifest.json)。
@@ -91,7 +92,9 @@
 
 每只位于 monsters/<monster_id>/，包含 concept_512.png 和 keypose_112.png（Boss 为 keypose_192.png）。生成原图位于 sources/monster/monsters/。世界姿态均为面向屏幕左下的单方向静态关键姿态，脚底锚点按统一画布登记。
 
-本批交付的是设计与静态姿态，**不包含完整八向待机、行走、攻击、受击、死亡动画**。后续制作角色动作时应参考本批造型，不直接用旋转贴图模拟不同方向。
+2026 年 10 月 14 日已补齐四只怪物的八向待机、行走、攻击、受击和死亡动作；腐化巨兽另外包含践踏与狂暴召唤。共 22 张动作图集、1,272 张独立方向帧，各动作每方向 7 或 8 帧。静态设计图继续保留，新增动作文件位于各怪物的 animations_v1 目录。
+
+[八向动作交付说明](monsters/八向动作交付说明.md) · [交互式动画审阅](monsters/animation_preview.html) · [八向造型总览](previews/monster_animations_v1/directions_overview.png)。所有动作仍未接入游戏。
 
 ## 技能特效
 

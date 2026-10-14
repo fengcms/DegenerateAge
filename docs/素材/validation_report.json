@@ -23,7 +23,14 @@
     "quality animation composite preview"
   ],
   "limitations": [
-    "monster exports are static designs and one-direction keyposes, not full eight-direction animations",
     "VFX not engine-tested because this delivery does not integrate assets"
-  ]
+  ],
+  "monster_animations": {
+    "actors": 4,
+    "directions": 8,
+    "action_atlases": 22,
+    "individual_frames": 1272,
+    "report": "previews/monster_animations_v1/validation_report.json",
+    "result": "passed"
+  }
 }

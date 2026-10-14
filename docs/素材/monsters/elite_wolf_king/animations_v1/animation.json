@@ -1,0 +1,260 @@
+{
+  "id": "elite_wolf_king",
+  "name": "裂爪狼王",
+  "frame_size": [
+    112,
+    112
+  ],
+  "pivot": [
+    56,
+    88
+  ],
+  "directions": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "common_actor_scale": 0.279296875,
+  "integrated": false,
+  "generated_motion": true,
+  "procedural_rotation": false,
+  "procedural_mirroring": false,
+  "procedural_interpolation": false,
+  "states": {
+    "idle": {
+      "name": "待机",
+      "atlas": "monsters/elite_wolf_king/animations_v1/idle_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 8,
+      "loop": true,
+      "duration_seconds": 0.875,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_wolf_king/idle_source.png",
+      "actual_source_rows": [
+        [
+          33,
+          184
+        ],
+        [
+          199,
+          349
+        ],
+        [
+          363,
+          520
+        ],
+        [
+          528,
+          686
+        ],
+        [
+          703,
+          850
+        ],
+        [
+          867,
+          1015
+        ],
+        [
+          1036,
+          1185
+        ]
+      ],
+      "source_columns": 8
+    },
+    "walk": {
+      "name": "行走",
+      "atlas": "monsters/elite_wolf_king/animations_v1/walk_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": true,
+      "duration_seconds": 0.7,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_wolf_king/walk_source.png",
+      "actual_source_rows": [
+        [
+          31,
+          187
+        ],
+        [
+          199,
+          351
+        ],
+        [
+          364,
+          519
+        ],
+        [
+          532,
+          691
+        ],
+        [
+          704,
+          858
+        ],
+        [
+          869,
+          1022
+        ],
+        [
+          1035,
+          1191
+        ]
+      ],
+      "source_columns": 8
+    },
+    "attack": {
+      "name": "攻击",
+      "atlas": "monsters/elite_wolf_king/animations_v1/attack_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 12,
+      "loop": false,
+      "duration_seconds": 0.5833333333333334,
+      "terminal_hold": false,
+      "visual_contact_frame": 3,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_wolf_king/attack_source.png",
+      "actual_source_rows": [
+        [
+          37,
+          180
+        ],
+        [
+          195,
+          336
+        ],
+        [
+          351,
+          506
+        ],
+        [
+          517,
+          661
+        ],
+        [
+          681,
+          826
+        ],
+        [
+          849,
+          996
+        ],
+        [
+          1028,
+          1175
+        ]
+      ],
+      "source_columns": 8
+    },
+    "hit": {
+      "name": "受击",
+      "atlas": "monsters/elite_wolf_king/animations_v1/hit_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 24,
+      "loop": false,
+      "duration_seconds": 0.2916666666666667,
+      "terminal_hold": false,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_wolf_king/hit_source.png",
+      "actual_source_rows": [
+        [
+          33,
+          179
+        ],
+        [
+          192,
+          345
+        ],
+        [
+          352,
+          506
+        ],
+        [
+          521,
+          676
+        ],
+        [
+          683,
+          838
+        ],
+        [
+          849,
+          1010
+        ],
+        [
+          1026,
+          1187
+        ]
+      ],
+      "source_columns": 8
+    },
+    "death": {
+      "name": "死亡",
+      "atlas": "monsters/elite_wolf_king/animations_v1/death_atlas.png",
+      "frames_per_direction": 7,
+      "total_frames": 56,
+      "columns": 7,
+      "rows": 8,
+      "fps": 10,
+      "loop": false,
+      "duration_seconds": 0.7,
+      "terminal_hold": true,
+      "visual_contact_frame": null,
+      "gameplay_callbacks": false,
+      "source": "sources/monster_animation_v1/elite_wolf_king/death_source.png",
+      "actual_source_rows": [
+        [
+          57,
+          206
+        ],
+        [
+          226,
+          369
+        ],
+        [
+          390,
+          540
+        ],
+        [
+          571,
+          718
+        ],
+        [
+          748,
+          889
+        ],
+        [
+          911,
+          1058
+        ],
+        [
+          1094,
+          1220
+        ]
+      ],
+      "source_columns": 8
+    }
+  }
+}

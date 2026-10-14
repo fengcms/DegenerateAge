@@ -475,10 +475,26 @@
       ],
       "direction": "sw",
       "states": [
-        "static_keypose"
+        "idle",
+        "walk",
+        "attack",
+        "hit",
+        "death"
       ],
-      "full_animation": false,
-      "integrated": false
+      "full_animation": true,
+      "integrated": false,
+      "animation_pack": "monsters/elite_wolf_king/animations_v1/animation.json",
+      "animation_direction_order": [
+        "s",
+        "sw",
+        "w",
+        "nw",
+        "n",
+        "ne",
+        "e",
+        "se"
+      ],
+      "animation_frame_count": 280
     },
     {
       "id": "elite_ash_wraith",
@@ -497,10 +513,26 @@
       ],
       "direction": "sw",
       "states": [
-        "static_keypose"
+        "idle",
+        "walk",
+        "attack",
+        "hit",
+        "death"
       ],
-      "full_animation": false,
-      "integrated": false
+      "full_animation": true,
+      "integrated": false,
+      "animation_pack": "monsters/elite_ash_wraith/animations_v1/animation.json",
+      "animation_direction_order": [
+        "s",
+        "sw",
+        "w",
+        "nw",
+        "n",
+        "ne",
+        "e",
+        "se"
+      ],
+      "animation_frame_count": 280
     },
     {
       "id": "elite_shellback_bug",
@@ -519,10 +551,26 @@
       ],
       "direction": "sw",
       "states": [
-        "static_keypose"
+        "idle",
+        "walk",
+        "attack",
+        "hit",
+        "death"
       ],
-      "full_animation": false,
-      "integrated": false
+      "full_animation": true,
+      "integrated": false,
+      "animation_pack": "monsters/elite_shellback_bug/animations_v1/animation.json",
+      "animation_direction_order": [
+        "s",
+        "sw",
+        "w",
+        "nw",
+        "n",
+        "ne",
+        "e",
+        "se"
+      ],
+      "animation_frame_count": 312
     },
     {
       "id": "boss_corrupted_beast",
@@ -541,10 +589,28 @@
       ],
       "direction": "sw",
       "states": [
-        "static_keypose"
+        "idle",
+        "walk",
+        "attack",
+        "hit",
+        "death",
+        "stomp",
+        "enrage_summon"
       ],
-      "full_animation": false,
-      "integrated": false
+      "full_animation": true,
+      "integrated": false,
+      "animation_pack": "monsters/boss_corrupted_beast/animations_v1/animation.json",
+      "animation_direction_order": [
+        "s",
+        "sw",
+        "w",
+        "nw",
+        "n",
+        "ne",
+        "e",
+        "se"
+      ],
+      "animation_frame_count": 400
     },
     {
       "id": "basic_slash",
@@ -813,5 +879,6 @@
       "integrated": false
     }
   ],
-  "completed": "2026-10-14"
+  "completed": "2026-10-14",
+  "monster_animation_update": "2026-10-14"
 }
