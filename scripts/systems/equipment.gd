@@ -5,7 +5,7 @@ extends RefCounted
 ## 槽位（5.1）：防御向 [头盔][护甲][鞋子][盾牌][护腕×2][护膝×2]
 ##              攻击向 [武器][手镯×2][戒指×2][项链]  = 14 位
 ## 规则：武器与盾牌可同时装备；**装备即更新派生属性、不改基础值**；卸下需背包有空位。
-## 穿戴门槛（5.2 / 4.5）：Lv ≥ max(模板 levelReq, (tier−1)×10 + 1)。
+## 穿戴门槛直接读取实例 requiredLevel；型号基础档与显示等级一致。
 ## 实例属性永久保存，穿脱不重随（5.7 / 10.1）。
 ## 本层只做装备语义与属性汇总，不依赖 UI（面板见 scripts/ui/inventory_panel.gd）。
 
@@ -139,13 +139,9 @@ static func template_of(item: Dictionary) -> Dictionary:
 	var tpl = DataLoader.get_entry("equipments", String(item.get("itemId", "")))
 	return tpl if tpl is Dictionary else {}
 
-## 穿戴等级门槛（5.2 / 4.5）：max(模板 levelReq, (tier−1)×10 + 1)。
+## 穿戴等级门槛直接使用实例 requiredLevel，与显示和基础档保持一致。
 static func level_req(item: Dictionary) -> int:
-	var tpl := template_of(item)
-	if tpl.is_empty():
-		return 1
-	var tier := int(tpl.get("tier", 1))
-	return maxi(int(tpl.get("levelReq", 1)), (tier - 1) * 10 + 1)
+	return int(item.get("requiredLevel", 1))
 
 ## 等级是否满足穿戴门槛。
 static func meets_level(item: Dictionary, level: int) -> bool:
@@ -211,13 +207,11 @@ static func bonus(slots: Dictionary) -> Dictionary:
 		var it = slots[sid]
 		if not (it is Dictionary):
 			continue
-		accumulate(b, Upgrade.base_attrs(it))
-		accumulate(b, it.get("affixes", []))
-		accumulate(b, it.get("pctAttrs", []))
+		accumulate(b, EquipmentMath.effective_attrs(it))
 	return b
 
 ## 把一处属性来源累加进目标字典。支持两种形态：
-## 字典（baseAttrs: {atk: 5}）与数组（affixes / pctAttrs: [{stat, value}]）。
+## 字典（有效属性）与数组（词条；其他调用方复用）。
 static func accumulate(target: Dictionary, src) -> void:
 	if src is Dictionary:
 		for k in src.keys():
@@ -238,9 +232,7 @@ static func score(item: Dictionary) -> float:
 	var b := {}
 	for k in BONUS_KEYS:
 		b[k] = 0.0
-	accumulate(b, Upgrade.base_attrs(item))
-	accumulate(b, item.get("affixes", []))
-	accumulate(b, item.get("pctAttrs", []))
+	accumulate(b, EquipmentMath.effective_attrs(item))
 	var s := 0.0
 	for k in SCORE_WEIGHTS.keys():
 		s += float(b[k]) * float(SCORE_WEIGHTS[k])

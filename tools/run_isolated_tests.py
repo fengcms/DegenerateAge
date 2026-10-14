@@ -70,7 +70,9 @@ def main() -> int:
             failures = []
             for test in args.tests:
                 scene = f"res://tests/{test}.tscn"
-                ok, output = run(project, ["--scene", scene, "--quit-after", "360"], timeout=240)
+                # SmokeTest 包含长链异步场景，360 帧会在断言执行完前误报通过。
+                frame_limit = "3600" if test == "SmokeTest" else "360"
+                ok, output = run(project, ["--scene", scene, "--quit-after", frame_limit], timeout=240)
                 evidence = [line for line in output.splitlines() if "PASS" in line or "全部通过" in line or "失败" in line or "FAIL" in line]
                 print(f"{test}: {'PASS' if ok else 'FAIL'}" + (" · " + " | ".join(evidence[-3:]) if evidence else ""))
                 if not ok:

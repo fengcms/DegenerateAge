@@ -29,8 +29,9 @@
 升星金币成本：upgradeCost(star) = round( UP_BASE × UP_R^star )
              UP_BASE=500, UP_R=1.5（0→1 低费，随星陡增）
 
-装备售价：   sellPrice = round( baseValue × qualityMult × (1 + star×0.08) )
+装备售价：   sellPrice = round( baseValue × tierValueMult × qualityMult × (1 + star×0.08) )
              qualityMult：普1 / 优1.5 / 稀3 / 史6 / 传12
+             tierValueMult：Lv1=1 / Lv10=2 / Lv20=3.5（首版配置，可试玩调优）
 
 金币上限：   999,999,999（达上限后不再拾取金币并提示）
 ```

@@ -241,8 +241,8 @@ func _refresh_details() -> void:
 		return
 	var next_item := item.duplicate(true)
 	next_item["star"] = star + 1
-	_preview.text = Localization.tr_key("ui.upgrade_panel.p010") % [", ".join(ItemUtil.attr_lines(item).slice(0, Upgrade.base_attrs(item).size())),
-		", ".join(ItemUtil.attr_lines(next_item).slice(0, Upgrade.base_attrs(item).size()))]
+	_preview.text = Localization.tr_key("ui.upgrade_panel.p010") % [", ".join(ItemUtil.attr_lines(item)),
+		", ".join(ItemUtil.attr_lines(next_item))]
 	var price := Upgrade.cost(star)
 	var plan := Upgrade.rune_plan(GameState.inventory, _rune_choices)
 	var rune_bonus := float(plan.get("bonus", 0.0))

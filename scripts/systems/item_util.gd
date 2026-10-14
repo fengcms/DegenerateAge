@@ -88,7 +88,7 @@ static func display_name(item: Dictionary) -> String:
 		return "金币 ×%d" % int(item.get("gold", 0))
 	if kind == "equip":
 		var q := String(item.get("quality", "common"))
-		var lv := int(item.get("level", 1))
+		var lv := int(item.get("requiredLevel", 1))
 		var star := int(item.get("star", 0))
 		return "%s %s Lv%d%s" % [quality_name(q), base, lv, " +%d" % star if star > 0 else ""]
 	var n := int(item.get("count", 1))
@@ -125,23 +125,34 @@ const PERCENT_STATS := [
 	"hpPercent", "mpPercent", "criticalChance", "dodge", "block", "cdr",
 ]
 
-## 把一件装备的属性整理成可显示行：基础属性 → 随机词条 → 百分比词条。
+## 与战斗共用三轴结算：显示未升星基底、品质增量及各分项升星增量。
 static func attr_lines(item: Dictionary) -> Array[String]:
 	var lines: Array[String] = []
-	var base = item.get("baseAttrs", {})
+	var base = item.get("rawBaseAttrs", {})
+	var quality := float(item.get("qualityMultiplierSnapshot", 1.0))
+	var star_factor := EquipmentMath.star_factor(item)
 	if base is Dictionary:
 		for k in base.keys():
-			var line := stat_line(String(k), float(base[k]))
-			var bonus := float(Upgrade.base_attrs(item).get(k, 0.0)) - float(base[k])
-			if not is_zero_approx(bonus):
-				line += "  %s" % stat_value(String(k), bonus)
+			var raw := float(base[k])
+			var line := stat_line(String(k), raw)
+			var quality_bonus := raw * (quality - 1.0)
+			if not is_zero_approx(quality_bonus):
+				line += "  品质 %s" % stat_value(String(k), quality_bonus)
+			var star_bonus := raw * quality * (star_factor - 1.0)
+			if not is_zero_approx(star_bonus):
+				line += "  升星 %s" % stat_value(String(k), star_bonus)
 			lines.append(line)
 	for key in ["affixes", "pctAttrs"]:
 		var arr = item.get(key, [])
 		if arr is Array:
 			for e in arr:
 				if e is Dictionary:
-					lines.append(stat_line(String(e.get("stat", "")), float(e.get("value", 0.0))))
+					var stat := String(e.get("stat", ""))
+					var value := float(e.get("value", 0.0))
+					var line := "词条 %s" % stat_line(stat, value)
+					if not is_equal_approx(star_factor, 1.0):
+						line += "  升星 %s" % stat_value(stat, value * (star_factor - 1.0))
+					lines.append(line)
 	return lines
 
 ## 单条属性文本，如「攻击 +5」「生命 +6.5%」。
@@ -153,7 +164,7 @@ static func stat_line(stat: String, value: float) -> String:
 static func stat_value(stat: String, value: float) -> String:
 	if PERCENT_STATS.has(stat):
 		return "+%.1f%%" % (value * 100.0)
-	return "+%d" % int(round(value))
+	return "+%d" % int(round(value)) if is_equal_approx(value, round(value)) else "+%.1f" % value
 
 ## 装备模板名（槽内缩写 / 文本引用用）。
 static func template_name(item: Dictionary) -> String:

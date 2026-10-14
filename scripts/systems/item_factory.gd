@@ -1,36 +1,80 @@
 class_name ItemFactory
 extends RefCounted
-## 物品实例工厂（M2；工程文档 11 §4.3 F1 去重）。
-##
-## 背景：装备实例构造原先散在 4 处（`Loot._roll_equip` / `Shop.make_item` /
-## 任务奖励 / 已移除的开发期测试装备），重复且容易漂移。本层收敛为**一处**「模板 → 实例」的
-## 朴素构造：品质 / 等级 / 属性**原样取自模板**，不做缩放与随机。
-##
-## 边界（R-g）：随机品质权重 / 随机词条 / 等级缩放**仍归 `Loot._roll_equip`**，本层不碰。
-## 用途：任务奖励发放（`Quest`）、货郎构造商品（`Shop`）。
+## 装备实例唯一生成入口；任务、商店与怪物掉落共用档位/品质/词条规则。
 
-static var _seq: int = 0
+static func rules() -> Dictionary:
+	var raw: Variant = DataLoader.get_table("equipmentRules")
+	return raw if raw is Dictionary else {}
 
-## 依模板构造一件装备实例（属性原样取自模板，不做缩放与随机）。
-## level ≤ 0 时取模板的 levelReq。模板不存在返回空字典（不静默凭空造物）。
-## instance_prefix：实例 id 前缀（调用方自定义，便于辨识来源，如任务 / 商店）。
+static func tier_for_level(source_level: int) -> int:
+	var chosen := 1
+	for value in rules().get("tiers", []):
+		var tier := int(value)
+		if tier <= source_level and tier > chosen:
+			chosen = tier
+	return chosen
+
+## level 参数兼容任务调用；小于 10 的来源等级均映射到 Lv1 装备档。
 static func make_equip(item_id: String, level: int = 0, instance_prefix: String = "inst") -> Dictionary:
-	var tpl = DataLoader.get_entry("equipments", item_id)
-	if not (tpl is Dictionary):
+	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
+	if not tpl is Dictionary:
 		return {}
-	var lv := level if level > 0 else int(tpl.get("levelReq", 1))
-	_seq += 1
+	var required_level := tier_for_level(level) if level > 0 else 1
+	return make_equip_roll(item_id, required_level, String(tpl.get("defaultQuality", "common")), null, instance_prefix)
+
+static func make_equip_roll(item_id: String, required_level: int, quality: String,
+		rng: RandomNumberGenerator = null, instance_prefix: String = "inst") -> Dictionary:
+	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
+	var cfg := rules()
+	var qualities: Variant = cfg.get("qualities", {})
+	if not tpl is Dictionary or not qualities is Dictionary or not qualities.has(quality):
+		return {}
+	var raw_bases: Variant = tpl.get("tierBases", {})
+	if not raw_bases is Dictionary or not raw_bases.get(str(required_level)) is Dictionary:
+		push_error("[ItemFactory] %s 缺少 Lv%d 装备基底" % [item_id, required_level])
+		return {}
+	var q: Dictionary = qualities[quality]
+	var r := rng if rng != null else _default_rng()
+	var affix_count := int(q.get("affixCount", 0))
+	var pool: Array = tpl.get("affixPool", [])
+	var fixed_cfg: Dictionary = cfg.get("fixedAffixes", {})
+	var pct_cfg: Dictionary = cfg.get("percentAffixes", {})
+	var fixed: Array = []
+	var percent: Array = []
+	var available: Array = []
+	for stat in pool:
+		if fixed_cfg.has(String(stat)):
+			available.append(String(stat))
+	if affix_count > 0 and float(q.get("percentChance", 0.0)) > 0.0 and r.randf() < float(q.percentChance):
+		var pct_available: Array = []
+		for stat in pool:
+			if pct_cfg.has(String(stat)):
+				pct_available.append(String(stat))
+		if not pct_available.is_empty():
+			var stat: String = pct_available[r.randi_range(0, pct_available.size() - 1)]
+			var bounds: Dictionary = pct_cfg[stat]
+			percent.append({"stat": stat, "value": snappedf(r.randf_range(float(bounds.min), float(bounds.max)), 0.001)})
+	while fixed.size() + percent.size() < affix_count and not available.is_empty():
+		var index := r.randi_range(0, available.size() - 1)
+		var stat: String = available[index]
+		available.remove_at(index)
+		var bounds: Dictionary = fixed_cfg[stat]
+		var scale := float(cfg.get("affixTierScale", {}).get(str(required_level), 1.0))
+		var lo := maxi(1, int(round(float(bounds.min) * scale)))
+		var hi := maxi(lo, int(round(float(bounds.max) * scale)))
+		fixed.append({"stat": stat, "value": r.randi_range(lo, hi)})
+	if fixed.size() + percent.size() != affix_count:
+		push_error("[ItemFactory] %s 的 %s 品质词条池不足" % [item_id, quality])
+		return {}
 	return {
-		"kind": "equip",
-		"itemId": item_id,
-		"instanceId": "%s_%d_%d" % [instance_prefix, Time.get_ticks_msec(), _seq],
-		"quality": String(tpl.get("quality", "common")),
-		"level": lv,
-		"baseAttrs": _dup_dict(tpl.get("baseAttrs", {})),
-		"affixes": _dup_arr(tpl.get("affixes", [])),
-		"pctAttrs": _dup_arr(tpl.get("pctAttrs", [])),
-		"star": 0,
-		"count": 1,
+		"kind": "equip", "itemId": item_id,
+		"instanceId": "%s_%s" % [instance_prefix, Crypto.new().generate_random_bytes(16).hex_encode()],
+		"equipmentRuleVersion": 2, "requiredLevel": required_level, "level": required_level,
+		"quality": quality, "star": 0,
+		"rawBaseAttrs": (raw_bases[str(required_level)] as Dictionary).duplicate(true),
+		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
+		"starMultiplierSnapshot": float(cfg.get("starMult", 0.1)),
+		"affixes": fixed, "pctAttrs": percent, "count": 1,
 	}
 
 ## 依 id 自动判类构造（装备 / 药水 / 杂项 / 如意）。找不到返回空字典。
@@ -48,8 +92,7 @@ static func make_any(item_id: String, count: int = 1) -> Dictionary:
 		return {"kind": "rune", "itemId": item_id, "count": count}
 	return {}
 
-static func _dup_dict(v: Variant) -> Dictionary:
-	return (v as Dictionary).duplicate(true) if v is Dictionary else {}
-
-static func _dup_arr(v: Variant) -> Array:
-	return (v as Array).duplicate(true) if v is Array else []
+static func _default_rng() -> RandomNumberGenerator:
+	var r := RandomNumberGenerator.new()
+	r.randomize()
+	return r

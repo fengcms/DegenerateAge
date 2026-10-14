@@ -22,7 +22,7 @@ static func matches_low_gear(item: Dictionary, level_limit: int, max_quality: St
 	var quality_rank := QUALITY_ORDER.find(item_quality(item))
 	var maximum_rank := QUALITY_ORDER.find(max_quality)
 	return quality_rank >= 0 and maximum_rank >= 0 \
-		and int(item.get("level", 1)) < level_limit and quality_rank <= maximum_rank
+		and Equipment.level_req(item) < level_limit and quality_rank <= maximum_rank
 
 ## 6.2 每星加价 +8%。
 const STAR_SELL_BONUS := 0.08
@@ -90,7 +90,11 @@ static func base_value(item: Dictionary) -> int:
 		"rune":
 			tpl = DataLoader.get_entry("runes", id)
 	if tpl is Dictionary:
-		return int(tpl.get("price", 0))
+		var price := int(tpl.get("price", 0))
+		if String(item.get("kind", "")) == "equip":
+			var multipliers: Dictionary = ItemFactory.rules().get("tierValueMultiplier", {})
+			price = int(round(float(price) * float(multipliers.get(str(Equipment.level_req(item)), 1.0))))
+		return price
 	return 0
 
 ## 实例品质：优先实例自带，缺失时回退模板（5.7）。

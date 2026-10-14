@@ -19,7 +19,8 @@ const MAX_SLOTS := 3
 ## v7（M4-10 / 工程文档 14 §3.1 ④）新增：`worldTime`（世界时钟）与 `spawnRespawn`（怪物点刷新状态）。
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
 ## v10（工程文档 22）新增：`inventoryExpansions`，存档校验按扩容次数检查背包长度。
-const CURRENT_SCHEMA := 10
+## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
+const CURRENT_SCHEMA := 11
 
 ## 自动存间隔（10.3：常规每 120 秒）与事件存去抖（合并短时间内的多次变更，避免频繁写盘）。
 const AUTOSAVE_INTERVAL := 120.0
@@ -272,6 +273,10 @@ func read_slot(slot: int) -> Dictionary:
 			"ok": true, "source": "backup", "data": _migrate(bak as Dictionary),
 			"message": (Localization.tr_key("msg.save_manager.p010") if restored else Localization.tr_key("msg.save_manager.p011")) % slot,
 		}
+	if (main is Dictionary and int(main.get("schemaVersion", -1)) < CURRENT_SCHEMA) \
+			or (bak is Dictionary and int(bak.get("schemaVersion", -1)) < CURRENT_SCHEMA):
+		return {"ok": false, "source": "", "data": {},
+			"message": Localization.tr_key("msg.save_manager.equipment_schema_incompatible") % slot}
 	return {
 		"ok": false, "source": "", "data": {},
 		"message": Localization.tr_key("msg.save_manager.p012") % slot,
@@ -629,7 +634,7 @@ func _read_file(path: String) -> Variant:
 
 ## 所有读档/备份/应用入口使用同一校验；先识别版本，再迁移再验收，绝不修改输入。
 func _is_valid_save(raw: Variant) -> bool:
-	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), 0, CURRENT_SCHEMA):
+	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), CURRENT_SCHEMA, CURRENT_SCHEMA):
 		return false
 	if not raw.get("player") is Dictionary or not _whole(raw.player.get("level"), 1):
 		return false
@@ -749,16 +754,31 @@ func _valid_item(item: Variant) -> bool:
 	if kind == "equip":
 		if not DataLoader.get_entry("equipments", item.itemId) is Dictionary or not item.get("instanceId") is String or item.instanceId.is_empty():
 			return false
-		if not item.get("baseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
+		if not _whole(item.get("equipmentRuleVersion"), 2, 2) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false
-		if not _whole(item.get("level"), 1) or not _whole(item.get("star"), 0, 12) or not ItemUtil.is_valid_quality(str(item.get("quality", ""))):
+		if item.rawBaseAttrs.is_empty() or not _whole(item.get("count", 1), 1, 1) \
+				or item.affixes.size() + item.pctAttrs.size() > 4 or item.pctAttrs.size() > 1:
 			return false
-		for value in item.baseAttrs.values():
-			if not _number(value):
+		if not _whole(item.get("requiredLevel"), 1) or not _whole(item.get("level"), 1) or int(item.level) != int(item.requiredLevel) \
+				or not _whole(item.get("star"), 0, 12) or not ItemUtil.is_valid_quality(str(item.get("quality", ""))):
+			return false
+		if not _number(item.get("qualityMultiplierSnapshot")) or float(item.qualityMultiplierSnapshot) <= 0.0 \
+				or float(item.qualityMultiplierSnapshot) > 100.0 or not _number(item.get("starMultiplierSnapshot")) \
+				or float(item.starMultiplierSnapshot) < 0.0 or float(item.starMultiplierSnapshot) > 1.0:
+			return false
+		for stat in item.rawBaseAttrs:
+			var value: Variant = item.rawBaseAttrs[stat]
+			if not ["atk", "def", "hp", "mp"].has(String(stat)) or not _number(value) or float(value) < 0.0:
 				return false
+		var seen_stats := {}
 		for effect in item.affixes + item.pctAttrs:
 			if not effect is Dictionary or not effect.get("stat") is String or not _number(effect.get("value")):
 				return false
+			var stat := String(effect.stat)
+			if not ["atk", "def", "hp", "mp", "hpPercent", "mpPercent"].has(stat) \
+					or seen_stats.has(stat) or float(effect.value) < 0.0:
+				return false
+			seen_stats[stat] = true
 		return true
 	var table: String = {"potion": "potions", "misc": "miscItems", "quest": "miscItems", "rune": "runes"}.get(kind, "")
 	return not table.is_empty() and DataLoader.get_entry(table, item.itemId) != null and _whole(item.get("count", 1), 1, ItemUtil.stack_max(item))

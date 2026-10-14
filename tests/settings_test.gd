@@ -16,7 +16,7 @@ func _ready() -> void:
 	for key in ["musicVolume", "screenShake", "strongFlash", "textScale", "fullscreen", "resolution", "qualityFilter", "keyBindings",
 		"mapScale", "displayScaleMode", "displayScale"]:
 		data.settings.erase(key)
-	_check(SaveManager._is_valid_save(data), "v4 旧档仍可读取")
+	_check(not SaveManager._is_valid_save(data), "装备模型升级后 v4 旧档明确拒绝")
 	var migrated := SaveManager._migrate(data)
 	_check(migrated.schemaVersion == SaveManager.CURRENT_SCHEMA and migrated.settings.has("keyBindings")
 		and HotbarConfig.valid_layout(migrated.hotbar), "v4 设置与快捷栏补齐并迁移到当前版本")
@@ -293,6 +293,9 @@ func _check_panels_matrix() -> void:
 	for panel in panels:
 		if panel == drag:
 			continue   # DragLayer 恒在最上（4096），本就是拖拽幽灵层，不参与「面板 0」断言
+		if panel.name == "EquipmentConfirmation":
+			_check(int(panel.z_index) == 4095, "换装确认层应在普通面板上、拖拽层下")
+			continue
 		_check(int(panel.z_index) == 0, "%s z_index 应为 0（面板不压 Toast / DragLayer）" % panel.name)
 	for viewport_size in [Vector2i(1280, 800), Vector2i(1920, 1200), Vector2i(2280, 1425), Vector2i(1153, 721)]:
 		embedded.size = viewport_size

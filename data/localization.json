@@ -533,6 +533,7 @@
   "msg.monster.p003": "%s 掉落：金币 ×%d",
   "msg.monster.p004": "%s 掉落：%s",
   "msg.monster.p005": "践踏预警",
+  "msg.save_manager.equipment_schema_incompatible": "槽 %d 使用旧装备存档格式，当前版本无法读取；请新建存档。旧文件仍保留。",
   "msg.ground_item.p001": "金币已达上限",
   "msg.ground_item.p002": "拾取：金币 +%d",
   "msg.ground_item.p003": "获得坐骑：%s",

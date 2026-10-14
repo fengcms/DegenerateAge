@@ -3,168 +3,408 @@
     "id": "weapon_starter",
     "name": "守护者短刃",
     "slot": "weapon",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "atk": 5 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 50,
     "icon": "res://assets/sprites/equip/weapon_starter.png",
-    "desc": "苏醒时长老赠予的入门武器。（Q001 奖励）"
+    "desc": "苏醒时长老赠予的入门武器。（Q001 奖励）",
+    "tierBases": {
+      "1": {
+        "atk": 5
+      },
+      "10": {
+        "atk": 11
+      },
+      "20": {
+        "atk": 19
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
   },
   {
     "id": "armor_starter",
     "name": "初级护甲",
     "slot": "armor",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "uncommon",
-    "baseAttrs": { "def": 4, "hp": 15 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 80,
     "icon": "res://assets/sprites/equip/armor_starter.png",
-    "desc": "荒野遗物任务后获得的护甲。（Q003 奖励）"
+    "desc": "荒野遗物任务后获得的护甲。（Q003 奖励）",
+    "tierBases": {
+      "1": {
+        "def": 4,
+        "hp": 15
+      },
+      "10": {
+        "def": 9,
+        "hp": 33
+      },
+      "20": {
+        "def": 15,
+        "hp": 57
+      }
+    },
+    "defaultQuality": "uncommon",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
   },
   {
     "id": "weapon_wolfking",
     "name": "狼王之刃",
     "slot": "weapon",
-    "tier": 1,
-    "levelReq": 4,
-    "quality": "rare",
-    "baseAttrs": { "atk": 12 },
-    "pctAttrs": [],
-    "affixes": [ { "stat": "atk", "value": 6 } ],
     "price": 240,
     "icon": "res://assets/sprites/equip/weapon_wolfking.png",
-    "desc": "击败裂爪狼王后的战利品。（Q004 奖励）"
+    "desc": "击败裂爪狼王后的战利品。（Q004 奖励）",
+    "tierBases": {
+      "1": {
+        "atk": 8
+      },
+      "10": {
+        "atk": 12
+      },
+      "20": {
+        "atk": 20
+      }
+    },
+    "defaultQuality": "rare",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
   },
   {
     "id": "helmet_cloth",
     "name": "布质头盔",
     "slot": "helmet",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "def": 2 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 30,
     "icon": "res://assets/sprites/equip/helmet_cloth.png",
-    "desc": "基础头盔。"
+    "desc": "基础头盔。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 4
+      },
+      "20": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "shoes_cloth",
     "name": "布鞋",
     "slot": "shoes",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "def": 1, "mp": 5 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 30,
     "icon": "res://assets/sprites/equip/shoes_cloth.png",
-    "desc": "基础鞋子。"
+    "desc": "基础鞋子。",
+    "tierBases": {
+      "1": {
+        "def": 1,
+        "mp": 5
+      },
+      "10": {
+        "def": 2,
+        "mp": 11
+      },
+      "20": {
+        "def": 4,
+        "mp": 19
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "shield_basic",
     "name": "木盾",
     "slot": "shield",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "def": 5 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 45,
     "icon": "res://assets/sprites/equip/shield_basic.png",
-    "desc": "基础盾牌，可与武器同时装备。"
+    "desc": "基础盾牌，可与武器同时装备。",
+    "tierBases": {
+      "1": {
+        "def": 5
+      },
+      "10": {
+        "def": 11
+      },
+      "20": {
+        "def": 19
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "bracer_basic",
     "name": "皮质护腕",
     "slot": "bracer",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "def": 2 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 25,
     "icon": "res://assets/sprites/equip/bracer_basic.png",
-    "desc": "护腕，双槽可各戴一件。"
+    "desc": "护腕，双槽可各戴一件。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 4
+      },
+      "20": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "knee_basic",
     "name": "皮质护膝",
     "slot": "knee",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "def": 2 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 25,
     "icon": "res://assets/sprites/equip/knee_basic.png",
-    "desc": "护膝，双槽可各戴一件。"
+    "desc": "护膝，双槽可各戴一件。",
+    "tierBases": {
+      "1": {
+        "def": 2
+      },
+      "10": {
+        "def": 4
+      },
+      "20": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "bracelet_basic",
     "name": "铜手镯",
     "slot": "bracelet",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "atk": 2 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 25,
     "icon": "res://assets/sprites/equip/bracelet_basic.png",
-    "desc": "手镯，双槽可各戴一件。"
+    "desc": "手镯，双槽可各戴一件。",
+    "tierBases": {
+      "1": {
+        "atk": 2
+      },
+      "10": {
+        "atk": 4
+      },
+      "20": {
+        "atk": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "ring_basic",
     "name": "铜戒指",
     "slot": "ring",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "atk": 1, "mp": 5 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 25,
     "icon": "res://assets/sprites/equip/ring_basic.png",
-    "desc": "戒指，双槽可各戴一件。"
+    "desc": "戒指，双槽可各戴一件。",
+    "tierBases": {
+      "1": {
+        "atk": 1,
+        "mp": 5
+      },
+      "10": {
+        "atk": 2,
+        "mp": 11
+      },
+      "20": {
+        "atk": 4,
+        "mp": 19
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "necklace_basic",
     "name": "兽骨项链",
     "slot": "necklace",
-    "tier": 1,
-    "levelReq": 1,
-    "quality": "common",
-    "baseAttrs": { "hp": 10 },
-    "pctAttrs": [],
-    "affixes": [],
     "price": 30,
     "icon": "res://assets/sprites/equip/necklace_basic.png",
-    "desc": "项链，提供生命加成。"
+    "desc": "项链，提供生命加成。",
+    "tierBases": {
+      "1": {
+        "hp": 10
+      },
+      "10": {
+        "hp": 22
+      },
+      "20": {
+        "hp": 38
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ]
   },
   {
     "id": "weapon_legendary_vein_guard",
     "name": "镇脉之刃",
     "slot": "weapon",
-    "tier": 1,
-    "levelReq": 9,
-    "quality": "legendary",
-    "baseAttrs": { "atk": 30 },
-    "pctAttrs": [],
-    "affixes": [ { "stat": "atk", "value": 6 }, { "stat": "hp", "value": 20 } ],
     "price": 300,
     "icon": "res://assets/sprites/equip/weapon_legendary_vein_guard.png",
-    "desc": "封印曾借这柄刃导回灵能。刻纹还亮着，握住它的人却换了一代。"
+    "desc": "封印曾借这柄刃导回灵能。刻纹还亮着，握住它的人却换了一代。",
+    "tierBases": {
+      "1": {
+        "atk": 8
+      },
+      "10": {
+        "atk": 12
+      },
+      "20": {
+        "atk": 20
+      }
+    },
+    "defaultQuality": "legendary",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "lootable": false
+  },
+  {
+    "id": "weapon_iron",
+    "name": "铁制短刃",
+    "slot": "weapon",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "常见的短刃，各档位均有对应制式。",
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "tierBases": {
+      "1": {
+        "atk": 5
+      },
+      "10": {
+        "atk": 11
+      },
+      "20": {
+        "atk": 19
+      }
+    }
+  },
+  {
+    "id": "armor_cloth",
+    "name": "布质护甲",
+    "slot": "armor",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "常见的护甲，各档位均有对应制式。",
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent"
+    ],
+    "tierBases": {
+      "1": {
+        "def": 4,
+        "hp": 15
+      },
+      "10": {
+        "def": 9,
+        "hp": 33
+      },
+      "20": {
+        "def": 15,
+        "hp": 57
+      }
+    }
   }
 ]

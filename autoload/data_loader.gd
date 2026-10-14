@@ -11,6 +11,7 @@ const DATA_DIR := "res://data/"
 ## 逻辑表名 -> 文件名。新增配置表在此登记。
 const TABLES := {
 	"equipments": "equipments.json",
+	"equipmentRules": "equipmentRules.json",
 	"skills": "skills.json",
 	"monsters": "monsters.json",
 	"affixes": "affixes.json",
@@ -236,6 +237,7 @@ func validate_all() -> Array[String]:
 			if not (mount.get("speedBonus") is float or mount.get("speedBonus") is int) or float(mount.get("speedBonus", 0.0)) <= 0.0:
 				report.append("[mounts] %s 的 speedBonus 必须大于 0" % mid)
 	report.append_array(_validate_affixes())
+	report.append_array(_validate_equipment_model())
 	report.append_array(Warehouse.validate_config())
 
 	return report
@@ -243,6 +245,82 @@ func validate_all() -> Array[String]:
 ## Godot 的 JSON 数值可能以 float 返回；等级须仍是正整数形式。
 func _is_whole_level(value: Variant) -> bool:
 	return (typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT) and float(value) == floorf(float(value))
+
+## 装备型号、穿戴档与品质配置须同时完整，不能在掉落时回退到低档。
+func _validate_equipment_model() -> Array[String]:
+	var report: Array[String] = []
+	var cfg: Variant = tables.get("equipmentRules")
+	var equips: Variant = tables.get("equipments")
+	if not cfg is Dictionary or not equips is Array:
+		report.append("[equipmentRules] 需要规则字典与装备型号数组")
+		return report
+	var tiers: Variant = cfg.get("tiers", [])
+	var qualities: Variant = cfg.get("qualities", {})
+	var fixed: Variant = cfg.get("fixedAffixes", {})
+	var percent: Variant = cfg.get("percentAffixes", {})
+	if not tiers is Array or tiers.is_empty() or not qualities is Dictionary or not fixed is Dictionary or not percent is Dictionary:
+		report.append("[equipmentRules] 档位、品质与词条池非法")
+		return report
+	var expected_slots := ["weapon", "shield", "helmet", "armor", "shoes", "necklace", "bracer", "knee", "bracelet", "ring"]
+	var slot_coverage := {}
+	var previous_tier := 0
+	for tier in tiers:
+		if not _is_whole_level(tier) or int(tier) < 1:
+			report.append("[equipmentRules] 穿戴档必须是正整数")
+			continue
+		var expected_tier := 1 if previous_tier == 0 else (10 if previous_tier == 1 else previous_tier + 10)
+		if int(tier) != expected_tier:
+			report.append("[equipmentRules] 穿戴档应为 Lv1、10、20… 且升序")
+		previous_tier = int(tier)
+		slot_coverage[str(int(tier))] = {}
+	if not _is_whole_level(cfg.get("maxStar")) or int(cfg.maxStar) != 12 \
+			or not (cfg.get("starMult") is int or cfg.get("starMult") is float) or float(cfg.starMult) < 0.0:
+		report.append("[equipmentRules] 星级参数非法")
+	for quality in ["common", "uncommon", "rare", "epic", "legendary"]:
+		var q: Variant = qualities.get(quality)
+		if not q is Dictionary or not _is_whole_level(q.get("affixCount")) or int(q.affixCount) < 0 \
+				or int(q.affixCount) > 4 or not (q.get("percentChance") is int or q.get("percentChance") is float) \
+				or float(q.percentChance) < 0.0 or float(q.percentChance) > 1.0 \
+				or not (q.get("baseMultiplier") is float or q.get("baseMultiplier") is int) \
+				or float(q.baseMultiplier) <= 0.0:
+			report.append("[equipmentRules] 品质 %s 参数非法" % quality)
+	for e in equips:
+		if not e is Dictionary:
+			continue
+		var item_id := String(e.get("id", "?"))
+		var slot := String(e.get("slot", ""))
+		var bases: Variant = e.get("tierBases", {})
+		var pool: Variant = e.get("affixPool", [])
+		if not expected_slots.has(slot) or not bases is Dictionary or not pool is Array:
+			report.append("[equipments] %s 的槽型/档位/词条池非法" % item_id)
+			continue
+		if not qualities.has(String(e.get("defaultQuality", "common"))):
+			report.append("[equipments] %s 默认品质非法" % item_id)
+		var fixed_count := 0
+		var seen := {}
+		for stat in pool:
+			if seen.has(String(stat)) or (not fixed.has(String(stat)) and not percent.has(String(stat))):
+				report.append("[equipments] %s 的词条池含重复或未知属性 %s" % [item_id, stat])
+			seen[String(stat)] = true
+			if fixed.has(String(stat)):
+				fixed_count += 1
+		if fixed_count < 4:
+			report.append("[equipments] %s 至少需要四种合法固定词条" % item_id)
+		for tier_key in slot_coverage:
+			var base: Variant = bases.get(tier_key)
+			if not base is Dictionary or base.is_empty():
+				report.append("[equipments] %s 缺少 Lv%s 基底" % [item_id, tier_key])
+				continue
+			for stat in base:
+				if not fixed.has(String(stat)) or not (base[stat] is float or base[stat] is int) or float(base[stat]) <= 0.0:
+					report.append("[equipments] %s 的 Lv%s 基底属性 %s 非法" % [item_id, tier_key, stat])
+			if bool(e.get("lootable", true)) and not bool(e.get("debug", false)):
+				slot_coverage[tier_key][slot] = true
+	for tier_key in slot_coverage:
+		for slot in expected_slots:
+			if not slot_coverage[tier_key].has(slot):
+				report.append("[equipments] Lv%s 缺少可掉落 %s 型号" % [tier_key, slot])
+	return report
 
 ## T07：校验 dropTables 的品类 / 引用 / 品质权重 / 等级范围。
 func _validate_drop_tables() -> Array[String]:
@@ -312,8 +390,21 @@ func _validate_drop_tables() -> Array[String]:
 						if not boss is Dictionary or String(boss.get("kind", "")) != "boss" or String(boss.get("dropTableId", "")) != did:
 							report.append("[mounts] %s 的 dropBossId 必须是使用 %s 的 Boss" % [mount_id, did])
 				"equip":
-					if not (en.get("levelRange", null) is Array):
+					var level_range: Variant = en.get("levelRange", null)
+					if not level_range is Array or level_range.size() != 2 \
+							or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \
+							or int(level_range[0]) < 1 or int(level_range[1]) < int(level_range[0]):
 						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
+					if en.has("requiredLevel"):
+						var required: Variant = en.get("requiredLevel")
+						var cfg: Variant = tables.get("equipmentRules")
+						var legal := false
+						if cfg is Dictionary and _is_whole_level(required):
+							for configured in cfg.get("tiers", []):
+								if int(configured) == int(required):
+									legal = true
+						if not legal:
+							report.append("[dropTables] %s 的 requiredLevel 未在装备档位表中" % did)
 					# M6-0b：countRange 分组件数（[lo,hi] 整数，≥1，lo≤hi）。
 					if en.has("countRange"):
 						var cr = en.get("countRange")
@@ -341,48 +432,32 @@ func _validate_drop_tables() -> Array[String]:
 							report.append("[dropTables] %s equip 条目品质概率合计应为 100（实际 %.1f）" % [did, qsum])
 	return report
 
-## M6-0b：校验装备池（创意 07 §7 —— 池定义合法、传说池非空、模板存在、非 debug）。
+## 型号池只筛装备型号，与品质权重分离。
 func _validate_loot_pools() -> Array[String]:
 	var report: Array[String] = []
 	var pools = tables.get("lootPools")
 	if not (pools is Array) or pools.is_empty():
 		report.append("[lootPools] 需要非空数组")
 		return report
-	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
 	var equips = tables.get("equipments")
 	for p in pools:
 		if typeof(p) != TYPE_DICTIONARY:
 			continue
 		var pid := String(p.get("id", "?"))
-		var only: Array = []
-		var raw_only = p.get("onlyQuality", [])
-		if raw_only is Array:
-			only = raw_only
-		var exclude: Array = []
-		var raw_exclude = p.get("excludeQuality", [])
-		if raw_exclude is Array:
-			exclude = raw_exclude
-		for q in only:
-			if not quality_enum.has(String(q)):
-				report.append("[lootPools] %s 的 onlyQuality 含未知品质 '%s'" % [pid, q])
-		for q in exclude:
-			if not quality_enum.has(String(q)):
-				report.append("[lootPools] %s 的 excludeQuality 含未知品质 '%s'" % [pid, q])
-		if not only.is_empty() and not exclude.is_empty():
-			report.append("[lootPools] %s 不应同时声明 onlyQuality 与 excludeQuality" % pid)
-		# 池必须至少能选出一个非 debug 模板（§7：空池 ⇒ 启动明确报错，不静默少发）。
+		var include_ids: Variant = p.get("includeIds", [])
+		if not include_ids is Array:
+			report.append("[lootPools] %s 的 includeIds 应为数组" % pid)
+			continue
+		for item_id in include_ids:
+			if not get_entry("equipments", String(item_id)) is Dictionary:
+				report.append("[lootPools] %s 引用未知装备型号 %s" % [pid, item_id])
+		# 池必须至少能选出一个非 debug、可掉落的型号。
 		var n := 0
 		if equips is Array:
 			for e in equips:
-				if not (e is Dictionary) or bool(e.get("debug", false)):
+				if not (e is Dictionary) or bool(e.get("debug", false)) or not bool(e.get("lootable", true)):
 					continue
-				var q := String(e.get("quality", "common"))
-				var ok := true
-				if not only.is_empty():
-					ok = only.has(q)
-				elif not exclude.is_empty():
-					ok = not exclude.has(q)
-				if ok:
+				if include_ids.is_empty() or include_ids.has(String(e.get("id", ""))):
 					n += 1
 		if n == 0:
 			report.append("[lootPools] %s 池为空（无任何非 debug 模板匹配）" % pid)

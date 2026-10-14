@@ -22,9 +22,8 @@ func _ready() -> void:
 	var old := data.duplicate(true)
 	old.schemaVersion = 5
 	old.erase("hotbar")
-	_check(SaveManager._is_valid_save(old), "v5 旧档可迁移")
-	SaveManager.apply_to_game_state(old)
-	_check(GameState.hotbar == HotbarConfig.defaults(), "旧档补默认布局")
+	_check(not SaveManager._is_valid_save(old), "装备模型升级后 v5 旧档拒绝")
+	_check(GameState.hotbar[4].id == "misc_town_scroll", "拒绝旧档不改动当前快捷栏")
 	var invalid := data.duplicate(true)
 	invalid.hotbar[4] = {"kind": "item", "id": "misc_revive_scroll"}
 	_check(not SaveManager._is_valid_save(invalid), "非法卷轴引用拒绝读档")

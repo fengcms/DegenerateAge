@@ -44,9 +44,9 @@
     "id": "DT_Boss_L1",
     "desc": "腐化源头 / Boss 掉落表（M6-0b 分组：基础 5~8 件 + 好装备 2 件 + 传说追加 5% + 金币 + 药水×2 + 如意；创意 07 §6）",
     "entries": [
-      { "kind": "equip", "chance": 1.0, "countRange": [5, 8], "levelRange": [9, 10], "templatePool": "normal", "qualityWeight": { "common": 70, "uncommon": 30 } },
-      { "kind": "equip", "chance": 1.0, "countRange": [2, 2], "levelRange": [9, 10], "templatePool": "normal", "qualityWeight": { "rare": 75, "epic": 25 } },
-      { "kind": "equip", "chance": 0.05, "countRange": [1, 1], "levelRange": [9, 10], "templatePool": "legendary", "qualityWeight": { "legendary": 100 } },
+      { "kind": "equip", "chance": 1.0, "countRange": [5, 8], "levelRange": [9, 10], "requiredLevel": 10, "templatePool": "normal", "qualityWeight": { "common": 70, "uncommon": 30 } },
+      { "kind": "equip", "chance": 1.0, "countRange": [2, 2], "levelRange": [9, 10], "requiredLevel": 10, "templatePool": "normal", "qualityWeight": { "rare": 75, "epic": 25 } },
+      { "kind": "equip", "chance": 0.05, "countRange": [1, 1], "levelRange": [9, 10], "requiredLevel": 10, "templatePool": "legendary", "qualityWeight": { "legendary": 100 } },
       { "kind": "coin", "chance": 1.0, "goldRange": [720, 880] },
       { "kind": "potion", "chance": 1.0, "itemId": "potion_hp_large", "count": 2 },
       { "kind": "potion", "chance": 1.0, "itemId": "potion_mp_large", "count": 2 },

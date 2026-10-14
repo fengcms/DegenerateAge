@@ -17,36 +17,7 @@ const KIND_RUNE := "rune"
 const KIND_MISC := "misc"
 const KIND_MOUNT := "mount"
 
-## 5.10 随机词条数：普 0 / 优 1 / 稀 1–2 / 史 2–3 / 传 = 独特被动（不随机词条）。
-const AFFIX_COUNT := {
-	"common": [0, 0],
-	"uncommon": [1, 1],
-	"rare": [1, 2],
-	"epic": [2, 3],
-	"legendary": [0, 0],
-}
-
-## 5.10 词条池（固定值）：属性 → {min,max}。百分比词条（2%~8%）仅稀/史小概率出现。
-const AFFIX_POOL := [
-	{"stat": "atk", "min": 2, "max": 5},
-	{"stat": "def", "min": 2, "max": 5},
-	{"stat": "hp", "min": 8, "max": 20},
-	{"stat": "mp", "min": 5, "max": 12},
-]
-const PCT_AFFIX_POOL := [
-	{"stat": "hpPercent", "min": 0.02, "max": 0.08},
-	{"stat": "mpPercent", "min": 0.02, "max": 0.08},
-]
-const PCT_AFFIX_CHANCE := 0.5      # 稀/史中，出现 1 条百分比词条的概率
-
-## M6-0b（创意 07 §6/§7）：传说追加槽的池 id。该池只含传说模板，
-## 且走「独立判定 + 固定词条」路径 —— 不在好装备里抽传说再追加。
-const POOL_LEGENDARY := "legendary"
-
-## 装备实例属性随等级的缩放（5.2 每 10 级一套；M1 仅 tier-1 模板，按等级线性微调）。
-const EQUIP_LV_SCALE := 0.08
-
-static var _seq: int = 0
+## 装备品质、词条和档位构造均由 ItemFactory 统一处理。
 
 ## 结算一张掉落表，返回物品实例数组（不含随机数状态）。
 ##
@@ -129,48 +100,19 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_
 			return {"kind": KIND_MOUNT, "itemId": mount_id, "count": 1}
 	return {}
 
-## 生成一件装备实例（品质按权重 → 基础属性按等级缩放 → 随机词条）。
-## M6-0b：`templatePool` 指定装备池；传说槽走独立判定（强制传说 + 传说池 + 固定词条）。
+## 掉落只选择品质、穿戴档和型号，实例生成委托统一工厂。
 static func _roll_equip(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
 	var pool := String(e.get("templatePool", ""))
-	var forced_legendary := pool == POOL_LEGENDARY
-	var quality: String = "legendary" if forced_legendary else _weighted_quality(e.get("qualityWeight", {}), r)
+	var quality: String = _weighted_quality(e.get("qualityWeight", {}), r)
 	var lr = e.get("levelRange", [1, 1])
 	var lo := int(lr[0]) if lr is Array and lr.size() >= 1 else 1
 	var hi := int(lr[1]) if lr is Array and lr.size() >= 2 else lo
-	var level := r.randi_range(lo, maxi(lo, hi))
-
-	# 传说品质一律取传说池模板（保证「传说品质 ⇒ 传说模板」，不被普通池抽成白装，创意 07 §7）。
-	var effective_pool: String = POOL_LEGENDARY if quality == "legendary" else pool
-	var tpl := _pick_equip_template(level, r, effective_pool)
+	var source_level := r.randi_range(lo, maxi(lo, hi))
+	var required_level := int(e.get("requiredLevel", ItemFactory.tier_for_level(source_level)))
+	var tpl := _pick_equip_template(required_level, r, pool)
 	if tpl.is_empty():
 		return {}
-	var base := _scale_base_attrs(tpl.get("baseAttrs", {}), level, int(tpl.get("levelReq", 1)))
-	var affixes: Array = []
-	var pct: Array = []
-	if quality == "legendary":
-		# 固定词条：直接取模板 affixes，不再次随机（§7：随机跳过词缀的路径不能吞掉固定词条）。
-		affixes = _dup_affixes(tpl.get("affixes", []))
-	else:
-		var cnt_range: Array = AFFIX_COUNT.get(quality, [0, 0])
-		var n := r.randi_range(int(cnt_range[0]), int(cnt_range[1]))
-		affixes = _roll_affixes(n, r)
-		if quality in ["rare", "epic"] and r.randf() < PCT_AFFIX_CHANCE:
-			var p = PCT_AFFIX_POOL[r.randi_range(0, PCT_AFFIX_POOL.size() - 1)]
-			pct.append({"stat": p.stat, "value": snappedf(r.randf_range(p.min, p.max), 0.001)})
-	_seq += 1
-	return {
-		"kind": KIND_EQUIP,
-		"itemId": String(tpl.get("id", "")),
-		"instanceId": "inst_%d_%d" % [Time.get_ticks_msec(), _seq],
-		"quality": quality,
-		"level": level,
-		"baseAttrs": base,
-		"affixes": affixes,
-		"pctAttrs": pct,
-		"star": 0,
-		"count": 1,
-	}
+	return ItemFactory.make_equip_roll(String(tpl.get("id", "")), required_level, quality, r, "drop")
 
 ## 按 qualityWeight 权重抽取品质（5.7 / 10.2）。
 static func _weighted_quality(weights, r: RandomNumberGenerator) -> String:
@@ -189,85 +131,38 @@ static func _weighted_quality(weights, r: RandomNumberGenerator) -> String:
 			return String(k)
 	return String(weights.keys()[weights.size() - 1])
 
-## 选取等级适配的装备模板：优先 tier 匹配（每 10 级一套，5.2），否则回退全表随机。
-## `pool_id` 指定装备池（`data/lootPools.json`）；空 id / 缺省池排除传说模板。
-## 无可用模板时返回空字典。
-## 带 "debug": true 标记的模板（开发期测试装备）不参与抽取，避免污染正式掉落。
-static func _pick_equip_template(level: int, r: RandomNumberGenerator, pool_id: String = "") -> Dictionary:
-	var tier := int(ceil(float(level) / 10.0))
+## 只选真正配置了目标档位的正式型号；缺档不回退。
+static func _pick_equip_template(required_level: int, r: RandomNumberGenerator, pool_id: String = "") -> Dictionary:
 	var pool_def: Variant = _pool_def(pool_id)
-	var all: Array = []
 	var matched: Array = []
 	var t = DataLoader.get_table("equipments")
 	if t is Array:
 		for e in t:
-			if not (e is Dictionary):
-				continue
-			if bool(e.get("debug", false)):
+			if not (e is Dictionary) or bool(e.get("debug", false)) or not bool(e.get("lootable", true)):
 				continue
 			if not _pool_accepts(pool_def, e):
 				continue
-			all.append(e)
-			if int(e.get("tier", 1)) == tier:
+			var bases: Variant = e.get("tierBases", {})
+			if bases is Dictionary and bases.has(str(required_level)):
 				matched.append(e)
-	var pool: Array = matched if not matched.is_empty() else all
-	if pool.is_empty():
+	if matched.is_empty():
+		push_error("[Loot] 装备池 %s 缺少 Lv%d 型号" % [pool_id, required_level])
 		return {}
-	var pick: Dictionary = pool[r.randi_range(0, pool.size() - 1)]
-	return pick
+	return matched[r.randi_range(0, matched.size() - 1)]
 
-## 取装备池定义（`data/lootPools.json`）。空 id → null（等价缺省池语义）。
 static func _pool_def(pool_id: String) -> Variant:
 	if pool_id.is_empty():
 		return null
 	return DataLoader.get_entry("lootPools", pool_id)
 
-## 池是否接受该模板。缺省池（null）等价 normal —— 排除传说模板，
-## 保证「传说专属模板不会被普通至史诗随机池抽成白装」（创意 07 §7）。
+## 池仅筛型号，与品质分离；传说追加槽也能产出各部位。
 static func _pool_accepts(pool_def: Variant, template: Dictionary) -> bool:
-	var q := String(template.get("quality", "common"))
 	if not (pool_def is Dictionary):
-		return q != "legendary"
-	var only = pool_def.get("onlyQuality", [])
-	if only is Array and not only.is_empty():
-		return only.has(q)
-	var exclude = pool_def.get("excludeQuality", [])
-	if exclude is Array and not exclude.is_empty():
-		return not exclude.has(q)
+		return true
+	var ids: Variant = pool_def.get("includeIds", [])
+	if ids is Array and not ids.is_empty():
+		return ids.has(String(template.get("id", "")))
 	return true
-
-## 复制模板固定词条（传说用）：只保留 stat/value 两字段，不与模板共享引用。
-static func _dup_affixes(v: Variant) -> Array:
-	var out: Array = []
-	if v is Array:
-		for a in v:
-			if a is Dictionary:
-				out.append({"stat": String(a.get("stat", "")), "value": int(a.get("value", 0))})
-	return out
-
-## 基础属性按等级线性缩放（min 1），保持整数属性。
-static func _scale_base_attrs(base_attrs, level: int, level_req: int) -> Dictionary:
-	var out := {}
-	if not (base_attrs is Dictionary):
-		return out
-	var factor := 1.0 + EQUIP_LV_SCALE * float(level - level_req)
-	for k in base_attrs.keys():
-		out[k] = maxi(1, int(round(float(base_attrs[k]) * factor)))
-	return out
-
-## 抽取 n 条不重复词条的固定值。
-static func _roll_affixes(n: int, r: RandomNumberGenerator) -> Array:
-	var out: Array = []
-	var used := {}
-	var guard := 0
-	while out.size() < n and guard < 30:
-		guard += 1
-		var p = AFFIX_POOL[r.randi_range(0, AFFIX_POOL.size() - 1)]
-		if used.has(p.stat):
-			continue
-		used[p.stat] = true
-		out.append({"stat": p.stat, "value": r.randi_range(int(p.min), int(p.max))})
-	return out
 
 static func _default_rng() -> RandomNumberGenerator:
 	var r := RandomNumberGenerator.new()

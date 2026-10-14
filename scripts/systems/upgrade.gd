@@ -55,14 +55,7 @@ static func rune_plan(inv: Array, rune_ids: Array) -> Dictionary:
 	return {"ok": true, "uses": uses, "bonus": bonus, "count": rune_ids.size() - rune_ids.count("")}
 
 static func base_attrs(item: Dictionary) -> Dictionary:
-	var original = item.get("baseAttrs", {})
-	if not original is Dictionary:
-		return {}
-	var factor := 1.0 + float(item.get("star", 0)) * float(config().get("starMult", 0.0))
-	var result := {}
-	for key in original:
-		result[key] = float(original[key]) * factor
-	return result
+	return EquipmentMath.base_attrs(item)
 
 static func roll_success(star: int, rng: RandomNumberGenerator = null, bonus_points: float = 0.0) -> bool:
 	var rate := final_rate(star, bonus_points)

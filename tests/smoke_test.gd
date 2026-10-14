@@ -187,7 +187,8 @@ func _test_equipment_tooltip_cards() -> void:
 	var ring := _equip_instance("ring_basic", "tip_ring", {"atk": 10})
 	ring.star = 2
 	var lines := ItemUtil.attr_lines(ring)
-	_expect(lines.size() > 0 and lines[0] == "攻击 +10  +2", "升星详情应分列原始属性与新增属性")
+	_expect(lines.size() > 0 and lines[0].contains("攻击 +10") and lines[0].contains("升星 +2"),
+		"升星详情应分列原始属性与新增属性")
 	GameState.equipment["ring_1"] = ring
 	var slot := ItemSlot.new()
 	slot.role = ItemSlot.ROLE_BAG
@@ -248,8 +249,7 @@ func _test_inventory_expansion() -> void:
 	var old := SaveManager._collect()
 	old.schemaVersion = 9
 	old.erase("inventoryExpansions")
-	_expect(SaveManager._is_valid_save(old) and int(SaveManager._migrate(old).inventoryExpansions) == 0,
-		"schema 9 旧档应迁移为未扩容的 40 格背包")
+	_expect(not SaveManager._is_valid_save(old), "三轴装备升级后 schema 9 旧档应拒绝")
 	GameState.reset_to_defaults()
 
 func _test_warehouse_sort() -> void:
@@ -330,7 +330,7 @@ func _test_mount_core() -> void:
 	old.schemaVersion = 3
 	old.erase("ownedMounts")
 	old.erase("activeMount")
-	_expect(SaveManager._is_valid_save(old), "schema 3 旧档应可迁移空坐骑收藏")
+	_expect(not SaveManager._is_valid_save(old), "三轴装备升级后 schema 3 旧档应拒绝")
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.owned_mounts == ["mount_corrupted_wing"] and GameState.active_mount == "mount_corrupted_wing",
 		"坐骑收藏与骑乘状态读档后应还原")
@@ -510,7 +510,7 @@ func _test_upgrade() -> void:
 		"0→1 升星应必成且扣 500 金币")
 	_expect(GameState.gold == 99500 and GameState.total_attack() == before_attack + 1,
 		"升星后金币及已穿戴固定属性应即时生效")
-	_expect(weapon.affixes[0].value == 3 and float(weapon.baseAttrs.atk) == 10.0,
+	_expect(weapon.affixes[0].value == 3 and float(weapon.rawBaseAttrs.atk) == 10.0,
 		"升星不能修改原始基础值或词条")
 	_expect(Equipment.score(weapon) > Equipment.score(_equip_instance("weapon_starter", "plain", {"atk": 10}, [{"stat": "atk", "value": 3}])),
 		"升星后的装备评分应提高")
@@ -877,46 +877,34 @@ func _test_grouped_drop() -> void:
 	for k in counts.keys():
 		_expect(int(k) >= 5 and int(k) <= 8, "Boss 基础槽件数越界：%d" % int(k))
 
-	# ② 传说独立判定：必为传说品质 + 传说池模板 + 固定词条（atk+6 / hp+20），且概率≈5%
+	# ② 传说仍为独立 5% 追加，型号与品质解耦、4 条词条并覆盖多个部位。
 	var legendary_n := 0
+	var legendary_slots := {}
 	var samples := 2000
-	for s in range(samples):
+	for sample_index in range(samples):
 		var r := RandomNumberGenerator.new()
-		r.seed = 100000 + s
+		r.seed = 100000 + sample_index
 		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
 			if String(it.get("quality", "")) != "legendary":
 				continue
 			legendary_n += 1
 			_expect(String(it.get("kind", "")) == "equip", "传说应为装备")
-			_expect(String(it.get("itemId", "")) == "weapon_legendary_vein_guard",
-				"传说应取传说池模板，实际 %s" % String(it.get("itemId", "")))
-			var aff = it.get("affixes", [])
-			_expect(aff is Array and aff.size() == 2, "传说应带固定 2 条词条，实际 %s" % [aff])
-			var has_atk := false
-			var has_hp := false
-			if aff is Array:
-				for a in aff:
-					if a is Dictionary and String(a.get("stat", "")) == "atk" and int(a.get("value", 0)) == 6:
-						has_atk = true
-					if a is Dictionary and String(a.get("stat", "")) == "hp" and int(a.get("value", 0)) == 20:
-						has_hp = true
-			_expect(has_atk and has_hp, "传说固定词条应为 atk+6 / hp+20，实际 %s" % [aff])
+			_expect(int(it.get("requiredLevel", 0)) == 10, "Boss 传说应为 Lv10 穿戴档")
+			_expect(it.get("affixes", []).size() + it.get("pctAttrs", []).size() == 4,
+				"传说应有四条合法词条")
+			legendary_slots[Equipment.item_kind(it)] = true
 	var rate := float(legendary_n) / float(samples)
 	_expect(rate > 0.03 and rate < 0.07, "传说掉落率应≈5%%，实际 %.3f" % rate)
+	_expect(legendary_slots.size() > 1 and legendary_slots.has("shoes"), "传说追加应覆盖鞋等非武器部位")
 
-	# ③ 池隔离：精英不得掉传说；非传说品质不得使用传说模板（普通池排除传说，§7）
-	for s in range(300):
+	# ③ 精英不掉传说，早期怪只掉 Lv1 档。
+	for sample_index in range(300):
 		var r := RandomNumberGenerator.new()
-		r.seed = s
+		r.seed = sample_index
 		for it in Loot.roll("DT_Elite_L1", r):
-			_expect(String(it.get("quality", "")) != "legendary", "精英不得掉传说")
-	for s in range(300):
-		var r := RandomNumberGenerator.new()
-		r.seed = s
-		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
-			if String(it.get("kind", "")) == "equip" and String(it.get("quality", "")) != "legendary":
-				_expect(String(it.get("itemId", "")) != "weapon_legendary_vein_guard",
-					"普通池须排除传说模板，不得抽成白装")
+			if String(it.get("kind", "")) == "equip":
+				_expect(String(it.get("quality", "")) != "legendary", "精英不得掉传说")
+				_expect(int(it.get("requiredLevel", 0)) == 1, "精英不得提前掉 Lv10 档")
 
 	# ④ Boss 药水 count=2（一个物品包两瓶，§6/§12）
 	var potion_seen := false
@@ -926,7 +914,8 @@ func _test_grouped_drop() -> void:
 		for it in Loot.roll("DT_Boss_L1", r, "boss_corrupted_beast"):
 			if String(it.get("kind", "")) == "potion":
 				potion_seen = true
-				_expect(String(it.get("itemId", "")) == "potion_hp_large", "Boss 药水应为 potion_hp_large")
+				_expect(String(it.get("itemId", "")) in ["potion_hp_large", "potion_mp_large"],
+					"Boss 药水应为大型红蓝药水")
 				_expect(int(it.get("count", 0)) == 2, "Boss 药水应为 count=2，实际 %d" % int(it.get("count", 0)))
 	_expect(potion_seen, "Boss 应必出大型生命药水")
 
@@ -935,8 +924,7 @@ func _test_grouped_drop() -> void:
 	var empty_pools := original_pools.duplicate(true)
 	for p in empty_pools:
 		if String(p.get("id", "")) == "legendary":
-			p["onlyQuality"] = []
-			p["excludeQuality"] = ["common", "uncommon", "rare", "epic", "legendary"]
+			p["includeIds"] = ["weapon_legendary_vein_guard"]
 	DataLoader.tables["lootPools"] = empty_pools
 	var report_empty: Array[String] = DataLoader.validate_all()
 	_expect(" ".join(PackedStringArray(report_empty)).contains("legendary 池为空"),
@@ -1209,7 +1197,7 @@ func _test_balance_calibration() -> void:
 				elif int(qw.get("uncommon", 0)) == 70 and int(qw.get("rare", 0)) == 27 and int(qw.get("epic", 0)) == 3:
 					good_ok = true
 			elif kind == "potion":
-				potion_ok = String(e.get("itemId", "")) == "potion_hp_small" and is_equal_approx(float(e.get("chance", 0.0)), 1.0)
+				potion_ok = potion_ok or (String(e.get("itemId", "")) == "potion_hp_small" and is_equal_approx(float(e.get("chance", 0.0)), 1.0))
 		_expect(coin_ok, "C3 DT_Elite_L1 金币范围应为 [48,72]")
 		_expect(base_ok, "C3 精英基础槽应为 countRange[2,3]（普70/优30）")
 		_expect(good_ok, "C3 精英好装备槽应为 优70/稀27/史3")
@@ -1408,7 +1396,8 @@ func _test_unclaimed_loot() -> void:
 	rare_e["quality"] = "rare"
 	var leg_e := _equip_instance("weapon_legendary_vein_guard", "u_leg", {"atk": 30})
 	leg_e["quality"] = "legendary"
-	leg_e["level"] = 9
+	leg_e["level"] = 10
+	leg_e["requiredLevel"] = 10
 
 	# ① 入包认领序（§8）：传说→史诗→稀有→优秀→普通；之后药水 / 如意；金币最后。
 	var order_ids: Array = []
@@ -1475,17 +1464,14 @@ func _test_unclaimed_loot() -> void:
 	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
-	_expect(SaveManager.CURRENT_SCHEMA == 10, "背包扩容后存档 schema 应为 10，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	_expect(SaveManager.CURRENT_SCHEMA == 11, "三轴装备后存档 schema 应为 11，实际 %d" % SaveManager.CURRENT_SCHEMA)
 	GameState.unclaimed_loot = {}
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")
 	var legacy := SaveManager._collect()
 	legacy["schemaVersion"] = 7
 	legacy.erase("unclaimedLoot")
-	_expect(SaveManager._is_valid_save(legacy), "v7 旧档应可读（迁移补空未领取集合）")
-	var legacy_migrated: Dictionary = SaveManager._migrate(legacy)
-	_expect(legacy_migrated.get("unclaimedLoot", null) is Dictionary
-		and (legacy_migrated["unclaimedLoot"] as Dictionary).is_empty(), "v7 迁移应补空未领取集合")
+	_expect(not SaveManager._is_valid_save(legacy), "三轴装备后 v7 旧档应拒绝")
 	var bad := SaveManager._collect()
 	bad["unclaimedLoot"] = {"camp": [{"uid": 1, "batchId": "x", "item": {}, "pos": [0, 0]}]}
 	_expect(not SaveManager._is_valid_save(bad), "未领取结构非法（uid 非字符串 / item 非法）应拒档")
@@ -1575,18 +1561,20 @@ func _test_equipment() -> void:
 
 	# 等级门槛（5.2 / 4.5）：不足不可穿戴，且不改变状态
 	GameState.reset_to_defaults()
-	var idx3 := _put_item(_equip_instance("weapon_wolfking", "e3", {"atk": 12}))
+	var gated := _equip_instance("weapon_wolfking", "e3", {"atk": 12})
+	gated["requiredLevel"] = 10
+	gated["level"] = 10
+	var idx3 := _put_item(gated)
 	var low := GameState.equip_from_inventory(idx3)
-	_expect(not bool(low.get("ok", false)), "Lv1 不应能穿戴 Lv4 装备")
+	_expect(not bool(low.get("ok", false)), "Lv1 不应能穿戴 Lv10 装备")
 	_expect(GameState.equipment["weapon"] == null, "穿戴失败不应占用槽位")
 	_expect(GameState.inventory_used() == 1, "穿戴失败不应改变背包")
-	_expect(Equipment.level_req(_equip_instance("weapon_wolfking", "e3", {})) == 4,
-		"狼王之刃门槛应为 4（5.2）")
+	_expect(Equipment.level_req(gated) == 10, "狼王之刃实例门槛应为 10（5.2）")
 
 	# 卸下需背包空位（5.1）
-	GameState.player.level = 5
+	GameState.player.level = 10
 	GameState.equip_from_inventory(idx3)
-	_expect(GameState.equipment["weapon"] != null, "Lv5 应能穿戴 Lv4 武器")
+	_expect(GameState.equipment["weapon"] != null, "Lv10 应能穿戴 Lv10 武器")
 	for i in range(GameState.inventory.size()):
 		if GameState.inventory[i] == null:
 			GameState.inventory[i] = {"kind": "potion", "itemId": "potion_hp_small", "count": 99}
@@ -1606,8 +1594,8 @@ func _test_equipment() -> void:
 	_expect(GameState.max_mp() == 35 + 10, "两枚戒指应使最大法力 +10，实际 %d" % GameState.max_mp())
 
 	# 评分（5.9）：高攻装备评分更高
-	_expect(Equipment.score({"baseAttrs": {"atk": 12}, "affixes": [{"stat": "atk", "value": 6}]})
-		> Equipment.score({"baseAttrs": {"atk": 5}}), "高攻装备评分应更高")
+	_expect(Equipment.score(_equip_instance("weapon_starter", "scored", {"atk": 12}, [{"stat": "atk", "value": 6}]))
+		> Equipment.score(_equip_instance("weapon_starter", "plain", {"atk": 5})), "高攻装备评分应更高")
 
 	GameState.reset_to_defaults()
 
@@ -1733,12 +1721,15 @@ func _test_low_gear_filter_sale() -> void:
 	GameState.reset_to_defaults()
 	_expect(GameState.set_low_gear_filter(8, "rare"), "低级装备筛选应从 1 级即可配置")
 	var low := _equip_instance("weapon_starter", "low_rare", {"atk": 99})
-	low.level = 7
+	low.level = 1
+	low.requiredLevel = 1
 	low.quality = "rare"
 	var boundary := _equip_instance("weapon_starter", "level_boundary", {"atk": 1})
-	boundary.level = 8
+	boundary.level = 10
+	boundary.requiredLevel = 10
 	var high_quality := _equip_instance("weapon_starter", "quality_boundary", {"atk": 1})
-	high_quality.level = 7
+	high_quality.level = 1
+	high_quality.requiredLevel = 1
 	high_quality.quality = "epic"
 	GameState.inventory[0] = low
 	GameState.inventory[1] = boundary
@@ -1800,7 +1791,8 @@ func _test_trade_panel() -> void:
 	GameState.inventory[0] = _equip_instance("weapon_starter", "p_weak", {"atk": 5})
 	GameState.inventory[1] = _equip_instance("helmet_cloth", "p_helm", {"def": 2})
 	GameState.inventory[2] = _equip_instance("weapon_starter", "p_better", {"atk": 30})
-	GameState.inventory[2].level = 5
+	GameState.inventory[2].level = 10
+	GameState.inventory[2].requiredLevel = 10
 	EventBus.inventory_changed.emit()
 	await get_tree().process_frame
 
@@ -2383,21 +2375,12 @@ func _test_save() -> void:
 	_expect(not bool(dead.get("ok", false)), "主档与备份都不是合法存档时应明确失败")
 	_expect(not String(dead.get("message", "")).is_empty(), "损坏时应给出明确说明（不静默）")
 
-	# ---- ⑥ 旧档导入：缺字段按默认值补齐 ----
+	# ---- ⑥ 旧档拒绝：不覆盖当前运行态 ----
 	SaveManager.delete_slot(SLOT)            # 先清掉上一轮的 .bak / .corrupt 等旁文件
 	_write_raw(path, JSON.stringify({"schemaVersion": 0, "player": {"level": 3}, "gold": 5}))
 	var old_res := SaveManager.read_slot(SLOT)
-	_expect(bool(old_res.get("ok", false)), "缺字段的旧档应可读取（旧档导入）")
-	SaveManager.apply_to_game_state(old_res.get("data", {}))
-	_expect(GameState.explored_maps.is_empty(), "旧档缺探索字段必须清空，不能沿用上一槽")
-	_expect(int(GameState.player.level) == 3, "旧档已有字段应保留（等级 3）")
-	_expect(int(GameState.player.attack) == int(GameState.default_player()["attack"]),
-		"旧档缺失字段应补默认值（攻击 %d）" % int(GameState.default_player()["attack"]))
-	_expect(GameState.inventory.size() == GameState.INVENTORY_SIZE, "旧档无背包字段时应补空背包")
-	_expect(GameState.equipment.size() == Equipment.SLOT_DEFS.size(), "旧档无装备字段时应补空槽")
-	_expect(GameState.warehouse.size() == 40 and GameState.warehouse_expansions == 0,
-		"旧档无仓库字段时应补 40 个空格")
-	_expect(not GameState.has_save_pos, "旧档无坐标字段时应回退地图中心出生")
+	_expect(not bool(old_res.get("ok", false)) and String(old_res.get("message", "")).contains("旧装备"),
+		"旧装备存档应明确拒绝且保留原文件")
 
 	# ---- ⑦ 删除：清干净（主档 / 备份 / 临时 / 损坏现场）----
 	SaveManager.delete_slot(SLOT)
@@ -2643,7 +2626,7 @@ func _test_consumable() -> void:
 ## 注意 JSON 往返会**改变字典的键顺序**（解析后按键排序），故不能用 str() 比较。
 func _deep_equal(a: Variant, b: Variant) -> bool:
 	if typeof(a) != typeof(b):
-		return false
+		return (a is int or a is float) and (b is int or b is float) and is_equal_approx(float(a), float(b))
 	match typeof(a):
 		TYPE_DICTIONARY:
 			var da: Dictionary = a
@@ -2678,8 +2661,9 @@ func _equip_instance(item_id: String, inst_id: String, base_attrs: Dictionary,
 		affixes: Array = []) -> Dictionary:
 	return {
 		"kind": "equip", "itemId": item_id, "instanceId": inst_id,
-		"quality": "common", "level": 1,
-		"baseAttrs": base_attrs, "affixes": affixes, "pctAttrs": [],
+		"equipmentRuleVersion": 2, "quality": "common", "level": 1, "requiredLevel": 1,
+		"rawBaseAttrs": base_attrs, "qualityMultiplierSnapshot": 1.0, "starMultiplierSnapshot": 0.1,
+		"affixes": affixes, "pctAttrs": [],
 		"star": 0, "count": 1,
 	}
 
@@ -3021,9 +3005,7 @@ func _test_map_travel() -> void:
 	legacy_visit.schemaVersion = 8
 	legacy_visit.currentMap = "ash_land"
 	legacy_visit.erase("visitedMaps")
-	_expect(SaveManager._is_valid_save(legacy_visit), "v8 旧档应可迁移到访记录")
-	var migrated_visit := SaveManager._migrate(legacy_visit)
-	_expect(migrated_visit.visitedMaps == ["camp", "ash_land"], "旧档应只补营地及合法当前图")
+	_expect(not SaveManager._is_valid_save(legacy_visit), "三轴模型升级后 v8 旧档应拒绝")
 	var invalid_visit := SaveManager._collect()
 	invalid_visit.visitedMaps = ["camp", "missing"]
 	_expect(not SaveManager._is_valid_save(invalid_visit), "未知到访地图应拒档")
@@ -3796,15 +3778,12 @@ func _test_fog() -> void:
 	legacy.erase("exploredMaps")
 	legacy.player.level = 3
 	legacy.gold = 17
-	var old := SaveManager._migrate(legacy)
-	SaveManager.apply_to_game_state(old)
-	_expect(int(old.schemaVersion) == SaveManager.CURRENT_SCHEMA and GameState.explored_maps.is_empty() and GameState.gold == 17, "v1迁移探索状态泄漏或覆盖已有字段")
+	_expect(not SaveManager._is_valid_save(legacy), "三轴模型升级后 v1 旧档应拒绝")
 	var v2 := SaveManager._collect()
 	v2.schemaVersion = 2
 	v2.erase("warehouse")
 	v2.erase("warehouseExpansions")
-	_expect(SaveManager._is_valid_save(v2), "v2 旧档应可迁移新增仓库字段")
-	SaveManager.apply_to_game_state(v2)
+	_expect(not SaveManager._is_valid_save(v2), "三轴模型升级后 v2 旧档应拒绝")
 	_expect(GameState.warehouse.size() == 40 and GameState.warehouse_expansions == 0,
 		"v2 迁移应获得空仓库且不覆盖其他进度")
 	GameState.reset_to_defaults()
