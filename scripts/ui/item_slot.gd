@@ -130,6 +130,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 		return null
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
+	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(_equipment_tip_card("背包装备", item))
 	for sid in Equipment.slots_for_kind(Equipment.item_kind(item)):
 		var worn: Variant = GameState.equipment.get(sid)
@@ -149,14 +150,21 @@ func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
 	style.content_margin_bottom = 10
 	panel.add_theme_stylebox_override("panel", style)
 	panel.custom_minimum_size.x = 210
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var column := VBoxContainer.new()
+	column.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	panel.add_child(column)
 	var heading_label := Label.new()
 	heading_label.text = heading
+	heading_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	heading_label.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))
 	heading_label.add_theme_color_override("font_color", Color("9baebc"))
 	column.add_child(heading_label)
 	var detail := Label.new()
-	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# 自定义 tooltip 在独立弹窗中；无宽度约束时自动换行会把最小高度算成整屏。
+	detail.autowrap_mode = TextServer.AUTOWRAP_OFF
+	detail.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	detail.add_theme_font_size_override("font_size", maxi(9, roundi(16.0 * SettingsRuntime.text_scale_value())))
 	if shown.is_empty():
 		detail.text = "未穿着"
 	else:

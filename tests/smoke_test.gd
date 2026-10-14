@@ -198,6 +198,20 @@ func _test_equipment_tooltip_cards() -> void:
 		_expect(second.text == "未穿着", "双槽装备缺第二件时应保留未穿着栏")
 	if tip != null:
 		tip.free()
+	var original_text_scale := float(GameState.settings.get("textScale", 1.0))
+	for factor in [1.0, 1.5, 2.0]:
+		GameState.settings["textScale"] = factor
+		var scaled_tip: Control = slot._make_custom_tooltip("") as Control
+		var first_card: Control = scaled_tip.get_child(0) as Control
+		var content: VBoxContainer = first_card.get_child(0) as VBoxContainer
+		var text_label: Label = content.get_child(1) as Label
+		_expect(text_label.get_theme_font_size("font_size") == roundi(16.0 * SettingsRuntime.text_scale_value()),
+			"装备对比浮层应遵循文字大小 %.0f%%" % (factor * 100.0))
+		_expect(text_label.autowrap_mode == TextServer.AUTOWRAP_OFF
+			and scaled_tip.get_combined_minimum_size().y < 350.0,
+			"装备对比浮层不应被自动换行撑高：%s" % str(scaled_tip.get_combined_minimum_size()))
+		scaled_tip.free()
+	GameState.settings["textScale"] = original_text_scale
 	slot.free()
 	GameState.reset_to_defaults()
 
