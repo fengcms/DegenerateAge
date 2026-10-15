@@ -6,6 +6,7 @@ extends CharacterBody2D
 ## M1-9：暴露自动移动 / 自动攻击接口（供 AutoBattle 决策机驱动，3.14）。
 ## 普攻设计为「离散事件」——每次成功发动只结算一次，天然满足 T04（不重复结算）。
 ## 锁定目标超距接近与点击普攻已接入；技能格随后续技能系统接线。
+## 形象：按当前武器解析「阶段形象」整体换图（CharacterLook），不做分层叠加。
 
 const RADIUS := 12.0
 const ART_SCALE := 1.5  # 只放大玩家外观；碰撞和战斗距离仍使用原逻辑尺寸。
@@ -57,6 +58,8 @@ var _death_t: float = 0.0
 var is_dead: bool = false
 var is_sitting: bool = false
 var sample_art: SampleActorArt
+## 当前阶段形象 id；换装后由 _refresh_look 重新解析。
+var _look_id := ""
 
 ## 自动战斗的移动意图（3.14）：由 AutoBattle 写入。
 ## **手动输入优先**——玩家一按方向键即完全接管（4.6），无需 AutoBattle 额外干预。
@@ -215,14 +218,26 @@ func _map_direction(delta: float) -> Vector2:
 	return global_position.direction_to(waypoint)
 
 func _ready() -> void:
-	sample_art = SampleActorArt.attach(self, "res://assets/sprites/player/guardian/guardian_atlas.png", Vector2(32, 64), "res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png", "res://assets/sprites/player/guardian/guardian_walk_atlas.png")
+	_look_id = CharacterLook.look_id_for(GameState.equipment)
+	sample_art = SampleActorArt.attach_look(self, CharacterLook.definition(_look_id))
 	sample_art.display_scale = ART_SCALE
+	EventBus.equipment_changed.connect(_refresh_look)
 	add_to_group("player")
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
 	var b = DataLoader.get_entry("skills", "basic_slash")
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
 	skill_cooldowns = GameState.skill_cooldowns
 	EventBus.player_hp_changed.connect(func(_current: int, _maximum: int) -> void: queue_redraw())
+
+## 装备变化后重新解析阶段形象；形象 id 未变化时不换纹理，避免无谓的重载。
+func _refresh_look() -> void:
+	if sample_art == null:
+		return
+	var next := CharacterLook.look_id_for(GameState.equipment)
+	if next == _look_id:
+		return
+	_look_id = next
+	sample_art.apply_look(CharacterLook.definition(next))
 
 func _physics_process(delta: float) -> void:
 	if locked_target != null and not valid_target(locked_target):

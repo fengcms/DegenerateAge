@@ -22,21 +22,47 @@ var _attack_duration := 0.28
 var _hit_left := 0.0
 
 static func attach(actor: Node2D, path: String, pivot: Vector2, extra_path := "", walk_path := "") -> SampleActorArt:
+	var art := _create(actor)
+	var definition := {"main": load(path) as Texture2D, "extra": null, "walk": null, "pivot": pivot}
+	if not extra_path.is_empty():
+		definition["extra"] = load(extra_path) as Texture2D
+	if not walk_path.is_empty():
+		definition["walk"] = load(walk_path) as Texture2D
+	art.apply_look(definition)
+	return art
+
+## 按已登记的角色形象（CharacterLook 表项）装配，直接复用纹理资源。
+static func attach_look(actor: Node2D, definition: Dictionary) -> SampleActorArt:
+	var art := _create(actor)
+	art.apply_look(definition)
+	return art
+
+## 建好空精灵并挂到角色下；图集、帧格与锚点随后由 apply_look 统一设置。
+static func _create(actor: Node2D) -> SampleActorArt:
 	var art := SampleActorArt.new()
 	art.name = "SampleArt"
-	art._main_texture = load(path) as Texture2D
-	art.texture = art._main_texture
-	if not extra_path.is_empty():
-		art.extra_texture = load(extra_path) as Texture2D
-	if not walk_path.is_empty():
-		art.walk_texture = load(walk_path) as Texture2D
 	art.hframes = 8
 	art.vframes = 8
 	art.centered = false
-	art.offset = -pivot
 	art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	actor.add_child(art)
 	return art
+
+## 切换整套形象。阶段形象方案是整体换图，不叠加分层、也不新增渲染层。
+## 保持当前朝向、姿势与显示缩放，只替换纹理并修正脚底锚点；主图集缺失时不改动现状。
+func apply_look(definition: Dictionary) -> void:
+	var main: Texture2D = definition.get("main")
+	if main == null:
+		return
+	var previous := _main_texture
+	_main_texture = main
+	extra_texture = definition.get("extra")
+	walk_texture = definition.get("walk")
+	var pivot: Vector2 = definition.get("pivot", Vector2.ZERO)
+	offset = -pivot
+	# 静止状态正显示主图集时立即换图，避免切换瞬间闪现旧形象。
+	if texture == previous:
+		texture = _main_texture
 
 func face(vector: Vector2) -> void:
 	if vector.length_squared() > 0.01:
