@@ -3,9 +3,6 @@ extends Control
 
 const PANEL_ID := "upgrade"
 const WIDTH := 560.0
-const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
-const COL_BORDER := Color(0.35, 0.33, 0.30)
-const COL_GOLD := Color(0.94, 0.78, 0.38)
 const COL_WARN := Color(0.88, 0.42, 0.36)
 
 var _picker: OptionButton
@@ -68,16 +65,10 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = COL_PANEL
-	style.border_color = COL_BORDER
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	panel.add_theme_stylebox_override("panel", style)
+	var panel := PanelChrome.new()
 	center.add_child(panel)
 	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
+	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
@@ -86,19 +77,24 @@ func _build() -> void:
 	margin.add_child(root)
 	var head := HBoxContainer.new()
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.upgrade_panel.p002")
 	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
+	PanelChrome.style_title(title)
 	var close := Button.new()
 	close.text = "×"
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
+	root.add_child(PanelChrome.make_title_gap())
 	_picker = OptionButton.new()
 	_picker.custom_minimum_size.y = 36
 	_picker.item_selected.connect(_on_selected)
 	root.add_child(_picker)
+	PanelChrome.style_option_button(_picker)
 	var cross := GridContainer.new()
 	cross.columns = 3
 	cross.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -111,16 +107,19 @@ func _build() -> void:
 			_center.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			_center.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			cell = _center
+			PanelChrome.style_section(_center)
 		elif [1, 3, 5, 7].has(index):
 			var rune_cell := VBoxContainer.new()
 			var title_label := Label.new()
 			title_label.text = Localization.tr_key("ui.upgrade_panel.p003") % (_rune_pickers.size() + 1)
 			title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			rune_cell.add_child(title_label)
+			PanelChrome.style_section(title_label)
 			var picker := OptionButton.new()
 			picker.custom_minimum_size.y = 34
 			picker.item_selected.connect(_on_rune_selected.bind(_rune_pickers.size()))
 			rune_cell.add_child(picker)
+			PanelChrome.style_option_button(picker)
 			_rune_pickers.append(picker)
 			cell = rune_cell
 		else:
@@ -130,14 +129,16 @@ func _build() -> void:
 	_preview = Label.new()
 	_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_preview)
+	_preview.add_theme_color_override("font_color", PanelChrome.MUTED)
 	_price = Label.new()
-	_price.add_theme_color_override("font_color", COL_GOLD)
+	_price.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
 	root.add_child(_price)
 	_upgrade_button = Button.new()
 	_upgrade_button.text = Localization.tr_key("ui.upgrade_panel.p004")
 	_upgrade_button.custom_minimum_size.y = 38
 	_upgrade_button.pressed.connect(_on_upgrade)
 	root.add_child(_upgrade_button)
+	PanelChrome.style_action(_upgrade_button, true)
 	_feedback = Label.new()
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_feedback)
@@ -259,5 +260,5 @@ func _on_upgrade() -> void:
 	var choice := _choices[index]
 	var result := GameState.upgrade_equipment(String(choice.source), choice.key, String(choice.id), null, _rune_choices.duplicate())
 	_feedback.text = String(result.get("reason", ""))
-	_feedback.add_theme_color_override("font_color", COL_WARN if not result.get("success", false) else COL_GOLD)
+	_feedback.add_theme_color_override("font_color", COL_WARN if not result.get("success", false) else PanelChrome.GOLD_LIGHT)
 	_refresh_choices()

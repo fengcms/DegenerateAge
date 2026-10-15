@@ -221,6 +221,16 @@ static func style_line_edit(edit: LineEdit) -> void:
 	edit.add_theme_color_override("font_color", TEXT)
 	edit.add_theme_color_override("font_placeholder_color", MUTED)
 
+## 让装备与如意选择框及其弹出列表保持同一金属边框和文本层级。
+static func style_option_button(button: OptionButton) -> void:
+	style_action(button)
+	var popup := button.get_popup()
+	popup.add_theme_stylebox_override("panel", _button_style(SURFACE, GOLD))
+	popup.add_theme_stylebox_override("hover", _button_style(SURFACE_LIGHT, GOLD_LIGHT))
+	popup.add_theme_color_override("font_color", TEXT)
+	popup.add_theme_color_override("font_hover_color", GOLD_LIGHT)
+	popup.add_theme_color_override("font_disabled_color", MUTED)
+
 ## 为页签和内容卡片提供平面底框；操作按钮改用纹理，不再调用本函数。
 static func _button_style(bg: Color, border: Color, radius: int = 3) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
