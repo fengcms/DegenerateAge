@@ -228,6 +228,8 @@ func reset_to_defaults() -> void:
 	explored_maps = {}
 	auto_battle_on = false          # 10.3：重启后自动战斗默认关闭
 	auto_pickup_on = false
+	# C-P3-4：菜单流程态为本次会话运行态（不落档），重置/新游戏后回到主菜单，避免残留 "world"。
+	menu_mode = "menu"
 	Consumable.reset()              # M2.5：药水冷却为运行态，重开 / 读档清零（不落档）
 	skill_cooldowns = {}
 	clear_buffs()

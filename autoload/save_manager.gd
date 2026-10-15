@@ -659,6 +659,9 @@ func apply_to_game_state(data: Dictionary) -> void:
 	# 运行态开关不持久化：10.3 重启后自动战斗默认关闭
 	GameState.auto_battle_on = false
 	GameState.auto_pickup_on = false
+	# C-P3-4：菜单流程态同属会话运行态（不落档）。成功读到存档即代表进入世界，
+	# 与 reset_to_defaults 的 "menu" 成对，避免残留上一会话的菜单态。
+	GameState.menu_mode = "world"
 	GameState.close_all_panels()
 
 	# HP / MP 收敛到（可能变化的）上限：装备加成改变上限时不越界、不补满
@@ -812,21 +815,37 @@ func continue_slot() -> int:
 
 # ---- 底层文件操作 ----
 
-## 原子写入：tmp 写好 → 替换主档（10.3）。
+## 原子写入：tmp 写好 → 校验回读 → 替换主档（10.3）。
 func _write_json_atomic(path: String, data: Dictionary) -> bool:
 	var tmp := path + ".tmp"
+	var text := JSON.stringify(data, "\t")
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		push_error("[SaveManager] 无法写入临时存档：%s" % tmp)
 		return false
-	f.store_string(JSON.stringify(data, "\t"))
+	f.store_string(text)
 	f.close()
+	# C-P3-6：写后读回校验。磁盘写满 / 写入中断会把内容截断；若不校验就 rename 成主档，
+	# 截断档要等下次读档解析失败才回退 .bak —— 本次会话最新进度已在回退中丢失且当时无提示。
+	# 失败时**不 rename**，保留 tmp 供排查。
+	if not _verify_written(tmp, text):
+		push_error("[SaveManager] 写入校验失败（内容不完整），已保留现场：%s" % tmp)
+		return false
 	var err := DirAccess.rename_absolute(tmp, path)
 	if err != OK:
 		push_error("[SaveManager] 替换存档失败（err=%d）：%s" % [err, path])
 		DirAccess.remove_absolute(tmp)
 		return false
 	return true
+
+## 写后读回校验：文件可打开、完整读回且与写入内容逐字一致。
+func _verify_written(path: String, expected: String) -> bool:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return false
+	var text := f.get_as_text()
+	f.close()
+	return text == expected
 
 ## 读文件并解析为 Variant；不存在 / 打不开 / 解析失败一律返回 null（不抛错）。
 func _read_file(path: String) -> Variant:
@@ -1146,6 +1165,8 @@ func _write_last_slot(slot: int) -> void:
 		return
 	var f := FileAccess.open(LAST_SLOT_FILE, FileAccess.WRITE)
 	if f == null:
+		# C-P3-5：写失败不静默 —— last_slot 未更新会让主菜单「继续」落空且无法解释。
+		push_warning("[SaveManager] 无法写入最近槽位记录：%s" % LAST_SLOT_FILE)
 		return
 	f.store_string(JSON.stringify({"slot": slot}))
 	f.close()
