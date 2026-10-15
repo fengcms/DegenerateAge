@@ -33,16 +33,10 @@ func _build() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
-	_panel = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("121c24")
-	style.border_color = Color("b69a65")
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	_panel.add_theme_stylebox_override("panel", style)
+	_panel = PanelChrome.new()
 	center.add_child(_panel)
 	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
+	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 20)
 	_panel.add_child(margin)
 	var column := VBoxContainer.new()
@@ -50,17 +44,21 @@ func _build() -> void:
 	margin.add_child(column)
 	var heading := HBoxContainer.new()
 	column.add_child(heading)
+	PanelChrome.style_header_layout(margin, heading)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.equip_confirm.title")
 	title.add_theme_font_size_override("font_size", 22)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_child(title)
+	PanelChrome.style_title(title)
 	var close := Button.new()
 	close.text = "×"
 	close.tooltip_text = Localization.tr_key("ui.common.cancel")
 	close.pressed.connect(GameState.cancel_equipment_change)
 	heading.add_child(close)
+	PanelChrome.style_close(close)
+	column.add_child(PanelChrome.make_title_gap())
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	column.add_child(_scroll)
@@ -70,6 +68,7 @@ func _build() -> void:
 	_scroll.add_child(body)
 	var warning := _label(body)
 	warning.text = Localization.tr_key("ui.equip_confirm.warning")
+	warning.add_theme_color_override("font_color", Color("ffad8c"))
 	_current = _label(body)
 	_incoming = _label(body)
 	_comparison = _label(body)
@@ -77,6 +76,7 @@ func _build() -> void:
 	_skip.text = Localization.tr_key("ui.equip_confirm.skip")
 	_skip.tooltip_text = Localization.tr_key("ui.equip_confirm.session")
 	column.add_child(_skip)
+	_skip.add_theme_color_override("font_color", PanelChrome.TEXT)
 	var session := _label(column)
 	session.text = Localization.tr_key("ui.equip_confirm.session")
 	session.add_theme_color_override("font_color", Color("a6b3be"))
@@ -89,15 +89,18 @@ func _build() -> void:
 	_cancel.custom_minimum_size = Vector2(100, 38)
 	_cancel.pressed.connect(GameState.cancel_equipment_change)
 	buttons.add_child(_cancel)
+	PanelChrome.style_action(_cancel)
 	var confirm := Button.new()
 	confirm.text = Localization.tr_key("ui.equip_confirm.confirm")
 	confirm.custom_minimum_size = Vector2(130, 38)
 	confirm.pressed.connect(_confirm)
 	buttons.add_child(confirm)
+	PanelChrome.style_action(confirm, true)
 
 func _label(parent: Node) -> Label:
 	var label := Label.new()
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_color", PanelChrome.TEXT)
 	parent.add_child(label)
 	return label
 
