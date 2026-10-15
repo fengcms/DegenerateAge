@@ -221,11 +221,14 @@ func _ready() -> void:
 	_look_id = CharacterLook.look_id_for(GameState.equipment)
 	sample_art = SampleActorArt.attach_look(self, CharacterLook.definition(_look_id))
 	sample_art.display_scale = ART_SCALE
+	# G-P2-2：订阅生命周期约定见 autoload/event_bus.gd 顶部（随场景释放自动断开，不逐个补 _exit_tree）。
 	EventBus.equipment_changed.connect(_refresh_look)
 	add_to_group("player")
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
 	var b = DataLoader.get_entry("skills", "basic_slash")
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
+	# G-P3-3：该字典为 GameState 冷却运行态的唯一实例，**禁止整体替换**（只增删条目）；
+	# 读档 / 新游戏由 GameState 侧置空（`reset_to_defaults`、`apply_to_game_state`）。
 	skill_cooldowns = GameState.skill_cooldowns
 	EventBus.player_hp_changed.connect(func(_current: int, _maximum: int) -> void: queue_redraw())
 

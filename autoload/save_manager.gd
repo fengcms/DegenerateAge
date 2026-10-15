@@ -189,6 +189,9 @@ func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 		var center := Iso.grid_to_world(Vector2i(int(size.get("w", 40)) / 2, int(size.get("h", 40)) / 2))
 		data["playerPos"] = [center.x, center.y]
 	if slot < 1 or slot > MAX_SLOTS or not _is_valid_save(data):
+		# G-P2-1：自校验失败必须留下字段级原因，否则新版本引入非法运行态时无从定位违例字段。
+		var reason := "槽号越界" if slot < 1 or slot > MAX_SLOTS else _last_invalid_reason
+		push_error("[SaveManager] 保存失败：槽 %d，原因「%s」，地图 %s" % [slot, reason, GameState.current_map])
 		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p003"), "danger")
 		return false
 
@@ -197,11 +200,12 @@ func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
 	# 只有主档**有效**时才留备份——否则会把损坏内容覆盖掉可用的 .bak（T16 前提）。
 	if _is_valid_save(_read_file(path)):
 		if not _copy_over(path, backup_path(slot)):
+			push_error("[SaveManager] 备份失败：槽 %d，路径 %s" % [slot, backup_path(slot)])
 			EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p004"), "danger")
 			return false
 
 	if not _write_json_atomic(path, data):
-		push_error("[SaveManager] 保存失败：%s" % path)
+		push_error("[SaveManager] 存档落盘失败：槽 %d，地图 %s，路径 %s" % [slot, GameState.current_map, path])
 		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p006") % slot, "danger")
 		return false
 	if new_game:
@@ -292,7 +296,8 @@ func read_slot(slot: int) -> Dictionary:
 		return {"ok": true, "source": "main", "data": _migrate(main as Dictionary), "message": ""}
 
 	# T16：主档损坏 → 回退备份
-	push_warning("[SaveManager] 槽 %d 主档不可用，尝试从备份恢复" % slot)
+	push_warning("[SaveManager] 槽 %d 主档不可用（原因「%s」，地图 %s），尝试从备份恢复"
+		% [slot, _last_invalid_reason, GameState.current_map])
 	var bak: Variant = _read_file(backup_path(slot))
 	if _is_valid_save(bak):
 		var restored := _restore_backup(slot, bak as Dictionary)
@@ -356,9 +361,9 @@ func resume_last() -> bool:
 	return true
 
 func _emit_resume_toast() -> void:
-	print("[SaveManager] 续档完成：Lv%d 金币 %d 地图 %s 背包 %d 格" % [
-		int(GameState.player.level), GameState.gold, GameState.current_map,
-		GameState.inventory_used()])
+	# G-P3-1：日志不输出可变进度数值（等级 / 金币 / 背包占用），仅留槽位与地图便于定位；
+	# 正式构建下 stdout 可能留在玩家机器上，进度摘要属敏感存档内容。
+	print("[SaveManager] 续档完成（槽 %d，地图 %s）" % [active_slot, GameState.current_map])
 	if _resume_toast.is_empty():
 		return
 	var kind := "danger" if _resume_toast.begins_with(Localization.tr_key("msg.save_manager.p018")) else "info"
@@ -598,6 +603,9 @@ func _remap_landscape_position(raw: Array, old_size: Vector2, map_id: String) ->
 ## 应用前完整校验；无效数据不修改运行态。只有明确旧版本允许迁移缺省字段。
 func apply_to_game_state(data: Dictionary) -> void:
 	if not _is_valid_save(data):
+		# G-P2-1：读档校验失败同样要留字段级原因（运行态保持不变，仅提示玩家）。
+		push_error("[SaveManager] 读档数据校验失败：槽 %d，字段原因「%s」"
+			% [int(data.get("slotId", -1)), _last_invalid_reason])
 		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p019"), "danger")
 		return
 	data = _migrate(data)

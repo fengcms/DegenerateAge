@@ -4,6 +4,13 @@ extends Node
 ## 目的：解耦系统间通信。系统之间通过 signal 订阅 / 发布通信，
 ## 不互相持有强引用，便于 AI 与人均可独立修改各系统。
 ## 枚举的 signal 为脚手架预置，阶段开发时按需补充（保持命名集中在此处）。
+##
+## 【订阅生命周期约定（G-P2-2）】订阅方在 `_ready` 直接 `connect`，**不逐个实现 `_exit_tree` 断开**：
+## 引擎在节点释放时会自动断开其作为 Callable 目标的所有连接（对象释放即失效）。
+## 世界侧节点的生命周期与 main 场景一致（整场景重建时一并释放），故无需显式 disconnect；
+## 若将来出现「生命周期短于场景」的动态节点（如临时 tooltip / 拖拽槽位），
+## 需在该节点内补 `_exit_tree` 显式 `disconnect`，并在连接前用 `is_connected` 卫式。
+## 作为范式参照：`autoload/audio_cues.gd` 已实现显式断连。
 
 # ---- 战斗 ----
 signal damage_dealt(target: Node, amount: int, is_critical: bool)

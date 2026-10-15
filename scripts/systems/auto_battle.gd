@@ -100,7 +100,7 @@ func _ready() -> void:
 	_player = get_parent() as PlayerCharacter
 	if _player == null:
 		push_warning("[AutoBattle] 必须作为 PlayerCharacter 的子节点")
-	EventBus.auto_state_changed.connect(_on_auto_state_changed)
+	EventBus.auto_state_changed.connect(_on_auto_state_changed)  # G-P2-2：生命周期约定见 event_bus.gd 顶部。
 	_on_auto_state_changed(GameState.auto_battle_on, GameState.auto_pickup_on)
 	set_physics_process(true)
 

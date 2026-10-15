@@ -95,7 +95,7 @@ func _ready() -> void:
 		cave.prepare_connectivity()
 		if map_id == "c2_well_core":
 			cave.set_access_gate_open(bool(GameState.unlocks.get("c2_core_access", false)))
-			EventBus.quest_rewarded.connect(_on_quest_rewarded)
+			EventBus.quest_rewarded.connect(_on_quest_rewarded)  # G-P2-2：生命周期约定见 event_bus.gd 顶部。
 	if map_id == "camp" and not sample_camp_theme:
 		_load_camp_whitebox()
 		_load_camp_final_art()
