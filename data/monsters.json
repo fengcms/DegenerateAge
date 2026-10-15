@@ -258,14 +258,12 @@
     "bossSkill": {
       "phases": [
         {
-          "hpAbove": 0.6,
           "behavior": "chase_claw",
           "desc": "普通追击 + 爪击"
         },
         {
           "hpBelow": 0.6,
           "behavior": "aoe_stomp",
-          "warn": true,
           "warnDelay": 0.8,
           "desc": "周期性范围践踏，伤害前显示地面警示圈"
         },
