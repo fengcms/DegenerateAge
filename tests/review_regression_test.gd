@@ -119,6 +119,13 @@ func _test_save() -> void:
 	DirAccess.remove_absolute(SaveManager.slot_path(SLOT))
 	check(SaveManager.read_slot(SLOT).source == "backup", "主档缺失也从备份恢复")
 	check(not SaveManager._is_valid_save({"schemaVersion":0, "player":{"level":3}, "gold":5}), "v0 旧存档明确拒绝")
+	# C-P3-3 验收：schema 11 / 12 的合法档可读并迁移到 CURRENT_SCHEMA（版本号唯一来源，无死常量双来源）。
+	for old_schema in [11, 12]:
+		var older := baseline.duplicate(true)
+		older.schemaVersion = old_schema
+		check(SaveManager._is_valid_save(older), "schema %d 存档应可读" % old_schema)
+		check(int(SaveManager._migrate(older).schemaVersion) == SaveManager.CURRENT_SCHEMA,
+			"schema %d 应迁移到 CURRENT_SCHEMA" % old_schema)
 	# C-P2-4：测试只用 3 号槽且必须还原现场（含 last_slot），不得删除/覆盖玩家真实存档。
 	_restore_saves(SLOT, snap)
 	SaveManager.active_slot = prev_active

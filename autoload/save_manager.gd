@@ -367,6 +367,9 @@ func _emit_resume_toast() -> void:
 
 ## 版本迁移：为旧档补齐新增字段的默认值（10.3 / 04 §4.5 版本化内容 + 旧档导入）。
 func _migrate(source: Dictionary) -> Dictionary:
+	# C-P3-2：本函数中的 v0 与 v<11 分支在真实读档路径**不可达** ——
+	# `_is_valid_save` 只接受 schema 11—13（产品 10.3：0—10 明确拒读），
+	# 故这些分支仅为历史兼容保留（`_migrate` 单测仍会直接调用），勿据此认为旧档可导入。
 	var data := source.duplicate(true)
 	var v := int(data.get("schemaVersion", -1))
 	# schema 11—12 的第一章存档若尚无布局版本，仍需完成独立的地图坐标转换。

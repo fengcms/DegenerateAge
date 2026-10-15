@@ -5,8 +5,6 @@ extends Node
 ## （数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 不持久化运行时节点对象——存档由 SaveManager 负责序列化这里的数据。
 
-const SCHEMA_VERSION := 6
-
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
 const GOLD_CAP := 999999999
