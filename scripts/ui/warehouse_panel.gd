@@ -5,6 +5,8 @@ const PANEL_ID := "warehouse"
 const COLUMNS := 8
 const DOUBLE_CLICK_MS := 400
 const SLOT_MIN := Vector2(46, 46)
+## 双栏标题、计数、详情和底部操作所占的逻辑高度；缩放时优先缩短滚动区。
+const WAREHOUSE_VERTICAL_CHROME_BUDGET := 230.0
 
 var _title: Label
 var _bag_count: Label
@@ -170,7 +172,7 @@ func _update_layout() -> void:
 	var column_width := (available - 14.0) * 0.5
 	var count := clampi(int(floor((column_width - 10.0 + 4.0) / 50.0)), 3, COLUMNS)
 	var width := minf(406.0, float(count * 46 + (count - 1) * 4 + 10))
-	var height := minf(312.0, maxf(100.0, logical.y - 190.0))
+	var height := minf(312.0, maxf(100.0, logical.y - WAREHOUSE_VERTICAL_CHROME_BUDGET))
 	_bag_grid.columns = count
 	_store_grid.columns = count
 	_bag_scroll.custom_minimum_size = Vector2(width, height)

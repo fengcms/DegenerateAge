@@ -1,5 +1,8 @@
 extends Control
 ## M3-3：沿用关闭式面板互斥/屏蔽指令规则，世界继续模拟。
+
+## 标题行与底部图例所需的逻辑高度；缩放时优先收紧地图画布，避免外框越界。
+const MAP_VERTICAL_CHROME_BUDGET := 250.0
 var _title: Label
 var _info: Label
 var _map: MapCanvas
@@ -121,4 +124,4 @@ func _update_layout() -> void:
 	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
 	var width := minf(800.0, maxf(280.0, logical.x - 48.0))
 	_root.custom_minimum_size.x = width
-	_map.custom_minimum_size = Vector2(0, minf(400.0, maxf(96.0, logical.y - 210.0)))
+	_map.custom_minimum_size = Vector2(0, minf(400.0, maxf(96.0, logical.y - MAP_VERTICAL_CHROME_BUDGET)))
