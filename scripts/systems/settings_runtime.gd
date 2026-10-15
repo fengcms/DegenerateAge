@@ -23,6 +23,32 @@ const DISPLAY_PREFS_PATH := "user://display_preferences.json"
 const DISPLAY_PREF_KEYS := ["uiScale", "mapScale", "textScale", "displayScaleMode", "displayScale",
 	"fullscreen", "resolution"]
 
+## String 型设置键的合法值表（**单一来源**，C-P2-1）。
+## 新增默认值为 String 的设置键**必须**在此登记，否则 `valid_choice` 无法判定其值域；
+## `tests/smoke_test.gd` 有一条断言逐键核对「default_settings() 中 String 键均已登记」，漏注册会在冒烟阶段失败。
+## ⚠ 历史事故（M5-9c）：漏登记会让 `_is_valid_save` 把该键的任何合法值判非法 → 全量存量档被判损坏。
+const CHOICE_VALUES := {
+	"colorblindMode": ["off", "friendly"],
+	"qualityFilter": ["all", "rare", "epic", "legendary"],
+	"resolution": ["auto", "1280x800", "1440x900", "1600x900", "1920x1200"],
+	"displayScaleMode": ["auto", "manual"],
+}
+
+## 数值型设置键的合法区间（**单一来源**，C-P2-3）。未登记键仅要求「有限数且非负」。
+## 区间与运行态读取口径一致（`display_scale_factor` / `_apply_map_scale` 等使用同一组常量）。
+const NUMERIC_RANGES := {
+	"potionThreshold": [0.0, 1.0],
+	"masterVolume": [0.0, 1.0],
+	"sfxVolume": [0.0, 1.0],
+	"musicVolume": [0.0, 1.0],
+	"uiScale": [UI_SCALE_MIN, UI_SCALE_MAX],
+	"textScale": [TEXT_SCALE_MIN, TEXT_SCALE_MAX],
+	"mapScale": [MAP_SCALE_MIN, MAP_SCALE_MAX],
+	"displayScale": [DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX],
+	"searchRadius": [1.0, 99.0],
+	"lowGearLevelLimit": [1.0, 100.0],
+}
+
 static func read_display_preferences() -> Dictionary:
 	if not FileAccess.file_exists(DISPLAY_PREFS_PATH):
 		return {}
@@ -105,20 +131,30 @@ static func valid_bindings(value: Dictionary) -> bool:
 		used[int(code)] = true
 	return true
 
-static func valid_choice(key: String, value: String) -> bool:
-	if key == "colorblindMode":
-		return ["off", "friendly"].has(value)
-	if key == "qualityFilter":
-		return ["all", "rare", "epic", "legendary"].has(value)
+## String 型设置键的合法值列表（单一来源，C-P2-1）。未登记的键返回空数组。
+## `lowGearMaxQuality` 的合法值来自品质枚举（`Shop.QUALITY_ORDER`），不在此重复维护。
+static func choice_values(key: String) -> Array:
 	if key == "lowGearMaxQuality":
-		return Shop.QUALITY_ORDER.has(value)
-	if key == "resolution":
-		return ["auto", "1280x800", "1440x900", "1600x900", "1920x1200"].has(value)
-	# M5-9c：显示适配模式。⚠ 漏掉本分支会让 _is_valid_save 对默认值为 String 的键一律判非法
-	# （它只按"默认值类型"分派，不看键名），进而把**所有存档**判为损坏 —— 新增 String 设置键时必须同步此处。
-	if key == "displayScaleMode":
-		return ["auto", "manual"].has(value)
-	return false
+		return Shop.QUALITY_ORDER
+	var values: Variant = CHOICE_VALUES.get(key)
+	return values if values is Array else []
+
+## 该键是否为「已登记的枚举止键」。未登记键不做值域校验（见 `_is_valid_save` 注释）。
+static func is_choice_key(key: String) -> bool:
+	return not choice_values(key).is_empty()
+
+static func valid_choice(key: String, value: String) -> bool:
+	return choice_values(key).has(value)
+
+## 数值型设置键的合法区间校验（单一来源，C-P2-3）。未登记键仅要求有限且非负。
+static func valid_setting_number(key: String, value: float) -> bool:
+	if not is_finite(value):
+		return false
+	var range: Variant = NUMERIC_RANGES.get(key)
+	if range is Array:
+		var bounds := range as Array
+		return value >= float(bounds[0]) and value <= float(bounds[1])
+	return value >= 0.0
 
 static func default_key(action: String) -> int:
 	var raw: Variant = ProjectSettings.get_setting("input/" + action, {})

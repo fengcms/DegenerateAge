@@ -54,6 +54,8 @@ func _test_equipment() -> void:
 
 func _test_save() -> void:
 	const SLOT := 3
+	var prev_active: int = SaveManager.active_slot
+	var snap := _snapshot_saves(SLOT)
 	SaveManager.delete_slot(SLOT)
 	GameState.gold = 123
 	check(SaveManager.save_slot(SLOT, true), "写有效基线")
@@ -73,12 +75,27 @@ func _test_save() -> void:
 		var data := baseline.duplicate(true)
 		data.player.merge(patch, true)
 		invalid.append(data)
+	# C-P2-1 / C-P2-2 / C-P2-3 / C-P3-1：新增校验项的坏档断言（键白名单 / 区间 / 战斗属性上界）。
+	var illegal_unlock := baseline.duplicate(true)
+	illegal_unlock.unlocks = {"chapter_not_exist": true}
+	invalid.append(illegal_unlock)
+	var illegal_boss := baseline.duplicate(true)
+	illegal_boss.firstClear = {"not_a_boss": true}
+	invalid.append(illegal_boss)
+	var illegal_scale := baseline.duplicate(true)
+	illegal_scale.settings.mapScale = 9.0
+	invalid.append(illegal_scale)
+	var illegal_stat := baseline.duplicate(true)
+	illegal_stat.player.criticalChance = 0.99
+	invalid.append(illegal_stat)
 	for data in invalid:
 		check(not SaveManager._is_valid_save(data), "拒绝不完整/类型错误/越界/未来版本")
+		check(not SaveManager._last_invalid_reason.is_empty(), "校验失败应记录字段级原因")
 		SaveManager._write_json_atomic(SaveManager.slot_path(SLOT), data)
 		var result := SaveManager.read_slot(SLOT)
 		check(result.ok and result.source == "backup" and result.data.gold == 123, "非法主档应恢复有效备份")
 		check(FileAccess.get_file_as_string(SaveManager.backup_path(SLOT)) == backup, "恢复不破坏备份")
+	check(SaveManager._last_invalid_reason.is_empty(), "校验通过时应清空失败原因")
 	# 绕过读取直接保存，同样不能把不完整主档复制进备份。
 	SaveManager._write_json_atomic(SaveManager.slot_path(SLOT), {"player":{}})
 	GameState.gold = 456
@@ -102,5 +119,45 @@ func _test_save() -> void:
 	DirAccess.remove_absolute(SaveManager.slot_path(SLOT))
 	check(SaveManager.read_slot(SLOT).source == "backup", "主档缺失也从备份恢复")
 	check(not SaveManager._is_valid_save({"schemaVersion":0, "player":{"level":3}, "gold":5}), "v0 旧存档明确拒绝")
-	SaveManager.delete_slot(SLOT)
+	# C-P2-4：测试只用 3 号槽且必须还原现场（含 last_slot），不得删除/覆盖玩家真实存档。
+	_restore_saves(SLOT, snap)
+	SaveManager.active_slot = prev_active
 	GameState.reset_to_defaults()
+
+# ---- 存档测试辅助：快照 / 还原 3 号槽与 last_slot（避免污染玩家真实存档）----
+
+func _snapshot_saves(slot: int) -> Dictionary:
+	var out := {"__last__": ""}
+	if FileAccess.file_exists(SaveManager.LAST_SLOT_FILE):
+		var lf := FileAccess.open(SaveManager.LAST_SLOT_FILE, FileAccess.READ)
+		if lf != null:
+			out["__last__"] = lf.get_as_text()
+			lf.close()
+	for suffix in ["", ".bak", ".tmp", ".corrupt"]:
+		var p: String = SaveManager.slot_path(slot) + suffix
+		if FileAccess.file_exists(p):
+			var f := FileAccess.open(p, FileAccess.READ)
+			if f != null:
+				out[suffix] = f.get_as_text()
+				f.close()
+	return out
+
+func _restore_saves(slot: int, snap: Dictionary) -> void:
+	SaveManager.delete_slot(slot)
+	for key in snap.keys():
+		var txt := String(snap[key])
+		var path: String = SaveManager.LAST_SLOT_FILE if String(key) == "__last__" \
+			else SaveManager.slot_path(slot) + String(key)
+		if txt.is_empty():
+			if FileAccess.file_exists(path):
+				DirAccess.remove_absolute(path)
+		else:
+			_write_raw(path, txt)
+
+func _write_raw(path: String, text: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		push_error("[ReviewRegression] 无法写入测试文件：%s" % path)
+		return
+	f.store_string(text)
+	f.close()

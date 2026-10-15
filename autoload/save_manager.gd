@@ -59,6 +59,15 @@ var _suppress_autosave: bool = false
 ## 启动续档提示：autoload 就绪时 HUD 尚未创建，故延后一帧广播（10.3）。
 var _resume_toast: String = ""
 
+## 最近一次 `_is_valid_save` 失败的原因（字段级，G-P2-1）；通过时清空。
+var _last_invalid_reason: String = ""
+
+## C-P2-2：合法解锁键 / 合法 Boss 键白名单（来自数据表，惰性构建一次）。
+## 数据表重新加载（`data_loaded`）时失效重建。
+var _known_unlock_ids: Dictionary = {}
+var _known_boss_ids: Dictionary = {}
+var _legal_keys_ready: bool = false
+
 func _ready() -> void:
 	_ensure_dir()
 	_connect_events()
@@ -266,6 +275,8 @@ func _connect_events() -> void:
 	EventBus.mount_changed.connect(func() -> void: request_autosave())
 	EventBus.settings_changed.connect(func() -> void: request_autosave())
 	EventBus.hotbar_changed.connect(func() -> void: request_autosave())
+	# C-P2-2：数据表重载后重建解锁 / Boss 键白名单（惰性，见 _ensure_legal_keys）。
+	EventBus.data_loaded.connect(func() -> void: _invalidate_legal_keys())
 
 # ---- 读取与迁移 ----
 
@@ -830,112 +841,183 @@ func _read_file(path: String) -> Variant:
 
 ## 所有读档/备份/应用入口使用同一校验；先识别版本，再迁移再验收，绝不修改输入。
 func _is_valid_save(raw: Variant) -> bool:
+	_last_invalid_reason = ""
 	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), 11, CURRENT_SCHEMA):
-		return false
+		return _reject("schemaVersion 非法：%s" % str(raw.get("schemaVersion", "缺失") if raw is Dictionary else raw))
 	if not raw.get("player") is Dictionary or not _whole(raw.player.get("level"), 1):
-		return false
+		return _reject("player.level 非法")
 	if not _whole(raw.get("gold"), 0, GameState.GOLD_CAP):
-		return false
+		return _reject("gold 非法")
 	var data := _migrate(raw)
 	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps"]:
 		if not data.get(key) is Dictionary:
-			return false
+			return _reject("%s 应为字典" % key)
 	if not _whole(data.get("inventoryExpansions"), 0, Warehouse.max_expansions()):
-		return false
+		return _reject("inventoryExpansions 非法")
 	if not data.get("inventory") is Array or data.inventory.size() != Warehouse.capacity(int(data.inventoryExpansions)):
-		return false
+		return _reject("inventory 长度与扩容不符")
 	if not _whole(data.get("warehouseExpansions"), 0, Warehouse.max_expansions()):
-		return false
+		return _reject("warehouseExpansions 非法")
 	if not data.get("warehouse") is Array or data.warehouse.size() != Warehouse.capacity(int(data.warehouseExpansions)):
-		return false
+		return _reject("warehouse 长度与扩容不符")
 	if not data.get("ownedMounts") is Array or not data.get("activeMount") is String:
-		return false
+		return _reject("ownedMounts / activeMount 类型非法")
 	if not HotbarConfig.valid_layout(data.get("hotbar")):
-		return false
+		return _reject("hotbar 布局非法")
 	var seen_mounts := {}
 	for mount_id in data.ownedMounts:
 		if not mount_id is String or not DataLoader.get_entry("mounts", mount_id) is Dictionary or seen_mounts.has(mount_id):
-			return false
+			return _reject("ownedMounts 含未知或重复坐骑：%s" % str(mount_id))
 		seen_mounts[mount_id] = true
 	if not data.activeMount.is_empty() and not seen_mounts.has(data.activeMount):
-		return false
+		return _reject("activeMount 未在收藏中：%s" % data.activeMount)
 	if not data.get("currentMap") is String or DataLoader.get_entry("maps", data.currentMap) == null:
-		return false
+		return _reject("currentMap 未知：%s" % str(data.get("currentMap")))
 	if not data.get("visitedMaps") is Array:
-		return false
+		return _reject("visitedMaps 应为数组")
 	for map_id in data.visitedMaps:
 		if not map_id is String or not DataLoader.get_entry("maps", map_id) is Dictionary:
-			return false
+			return _reject("visitedMaps 含未知地图：%s" % str(map_id))
 	# M4-10：世界时钟与怪物点刷新状态（v7 起；旧档由 _migrate 补默认）
 	if not _number(data.get("worldTime")) or float(data.worldTime) < 0.0:
-		return false
+		return _reject("worldTime 非法")
 	if not _valid_spawn_respawn(data.get("spawnRespawn")):
-		return false
+		return _reject("spawnRespawn 结构非法")
 	# M6-0c：未领取战利品结构（v8 起；旧档由 _migrate 补空集合）
 	if not _valid_unclaimed_loot(data.get("unclaimedLoot")):
-		return false
+		return _reject("unclaimedLoot 结构非法")
 	if not data.get("savedAt") is String or not _whole(data.get("slotId"), -1, MAX_SLOTS):
-		return false
+		return _reject("savedAt / slotId 非法")
 	var pos: Variant = data.get("playerPos")
 	if not data.has("playerPos") or (pos != null and (not pos is Array or pos.size() != 2)):
-		return false
+		return _reject("playerPos 结构非法")
 	if pos is Array:
 		for value in pos:
 			if not _number(value):
-				return false
+				return _reject("playerPos 含非数值")
 	for key in GameState.default_player():
 		var value: Variant = data.player.get(key)
 		if key == "name":
 			if not value is String or value.is_empty():
-				return false
+				return _reject("player.name 非法")
 		elif not _number(value) or float(value) < 0:
-			return false
+			return _reject("player.%s 应为非负数" % key)
 	for key in ["level", "xp", "hp", "mp"]:
-		if not _whole(data.player.get(key), 1 if key == "level" else 0):
-			return false
-	if float(data.player.attackInterval) <= 0 or float(data.player.movementSpeed) <= 0:
-		return false
+		var maximum: float = GameState.PLAYER_LEVEL_CAP if key == "level" else 9007199254740991.0
+		if not _whole(data.player.get(key), 1.0 if key == "level" else 0.0, maximum):
+			return _reject("player.%s 非法或越界" % key)
+	# C-P3-1：与战斗侧一致的上界（产品 03 §3.8 / Combat 常量），拦明显异常或被篡改的值。
+	for key in ["attack", "defense", "dodge", "block"]:
+		if not _number(data.player.get(key)) or float(data.player[key]) > GameState.PLAYER_STAT_CAP:
+			return _reject("player.%s 超上界" % key)
+	if not _number(data.player.get("criticalChance")) or float(data.player.criticalChance) > Combat.MAX_CRIT_CHANCE:
+		return _reject("player.criticalChance 超上界")
+	if not _number(data.player.get("criticalMultiplier")) \
+			or float(data.player.criticalMultiplier) < 1.0 or float(data.player.criticalMultiplier) > Combat.MAX_CRIT_MULT:
+		return _reject("player.criticalMultiplier 越界")
+	if not _number(data.player.get("cdr")) or float(data.player.cdr) > GameState.PLAYER_CDR_CAP:
+		return _reject("player.cdr 超上界")
+	if not _number(data.player.get("attackInterval")) or float(data.player.attackInterval) < Combat.MIN_ATTACK_INTERVAL:
+		return _reject("player.attackInterval 低于下限")
+	if not _number(data.player.get("movementSpeed")) or float(data.player.movementSpeed) > GameState.PLAYER_MOVE_SPEED_CAP:
+		return _reject("player.movementSpeed 超上界")
 	for item in data.inventory:
 		if item != null and not _valid_item(item):
-			return false
+			return _reject("inventory 含非法物品")
 	for item in data.warehouse:
 		if item != null and not _valid_item(item):
-			return false
+			return _reject("warehouse 含非法物品")
 	if data.equipment.size() != Equipment.SLOT_DEFS.size():
-		return false
+		return _reject("equipment 槽数量不符")
 	for slot in Equipment.create():
 		if not data.equipment.has(slot):
-			return false
+			return _reject("equipment 缺槽：%s" % slot)
 		var item: Variant = data.equipment[slot]
 		if item != null and (not _valid_item(item) or item.kind != "equip" or not Equipment.slot_accepts(slot, item)):
-			return false
+			return _reject("equipment.%s 非法" % slot)
+	# C-P2-2：解锁 / 首杀键必须来自数据表（合法解锁 id / Boss id），值必须是 bool。
+	_ensure_legal_keys()
 	for key in ["firstClear", "unlocks"]:
-		for value in data[key].values():
-			if not value is bool:
-				return false
+		var legal: Dictionary = _known_unlock_ids if key == "unlocks" else _known_boss_ids
+		# 数据表不可用（缺失 / 解析失败）时跳过白名单，避免把全部存档误判损坏。
+		var strict := not legal.is_empty()
+		for entry_key in data[key].keys():
+			if not data[key][entry_key] is bool:
+				return _reject("%s 值应为 bool" % key)
+			if strict and not legal.has(String(entry_key)):
+				return _reject("%s 含未登记键：%s" % [key, str(entry_key)])
 	for value in data.questStates.values():
 		if value is String:
 			if not Quest._is_known_state(value):
-				return false
+				return _reject("questStates 含未知状态：%s" % value)
 		elif not value is Dictionary or not value.get("state") is String or not Quest._is_known_state(value.state) or not _whole(value.get("progress"), 0):
-			return false
+			return _reject("questStates 条目结构非法")
 	for key in GameState.default_settings():
 		var value: Variant = data.settings.get(key)
 		var default_value: Variant = GameState.default_settings()[key]
 		if default_value is bool:
 			if not value is bool:
-				return false
+				return _reject("settings.%s 应为 bool" % key)
 		elif default_value is Dictionary:
 			if not value is Dictionary or not SettingsRuntime.valid_bindings(value):
-				return false
+				return _reject("settings.%s 键位非法" % key)
 		elif default_value is String:
-			if not value is String or not SettingsRuntime.valid_choice(key, value):
-				return false
-		elif not _number(value) or float(value) < 0:
-			return false
-	if not _whole(data.settings.get("lowGearLevelLimit"), 1, 100):
-		return false
+			if not value is String:
+				return _reject("settings.%s 应为 String" % key)
+			# C-P2-1：只对**已登记枚举止**的 String 键校验值域；未登记键不做值域校验，
+			# 避免「新增 String 设置键漏注册」把全量存量档判为损坏（M5-9c 实测事故）。
+			# 漏注册由 `tests/smoke_test.gd` 的逐键断言在冒烟阶段拦下。
+			if SettingsRuntime.is_choice_key(key) and not SettingsRuntime.valid_choice(key, value):
+				return _reject("settings.%s 值非法：%s" % [key, value])
+		# C-P2-3：数值键按 `SettingsRuntime.NUMERIC_RANGES` 单一来源校验区间。
+		elif not _number(value) or not SettingsRuntime.valid_setting_number(key, float(value)):
+			return _reject("settings.%s 数值越界" % key)
 	return true
+
+## 校验失败：记录字段级原因并返回 false（供 `_is_valid_save` 内部使用）。
+func _reject(reason: String) -> bool:
+	if _last_invalid_reason.is_empty():
+		_last_invalid_reason = reason
+	return false
+
+## C-P2-2：惰性构建合法解锁键 / Boss 键白名单（数据表重新加载时失效重建）。
+func _ensure_legal_keys() -> void:
+	if _legal_keys_ready:
+		return
+	_legal_keys_ready = true
+	_known_unlock_ids = {}
+	_known_boss_ids = {}
+	var quests: Variant = DataLoader.get_table("quests")
+	if quests is Array:
+		for quest in (quests as Array):
+			if not quest is Dictionary:
+				continue
+			var reward: Variant = (quest as Dictionary).get("reward", {})
+			if not reward is Dictionary:
+				continue
+			var unlocks: Variant = (reward as Dictionary).get("unlocks", [])
+			if not unlocks is Array:
+				continue
+			for unlock in (unlocks as Array):
+				_known_unlock_ids[String(unlock)] = true
+	var monsters: Variant = DataLoader.get_table("monsters")
+	if monsters is Array:
+		for monster in (monsters as Array):
+			if not monster is Dictionary:
+				continue
+			var entry := monster as Dictionary
+			if String(entry.get("kind", "")) != "boss":
+				continue
+			_known_boss_ids[String(entry.get("id", ""))] = true
+			var first_clear: Variant = entry.get("firstClearReward", {})
+			if first_clear is Dictionary:
+				var unlock := String((first_clear as Dictionary).get("unlock", ""))
+				if not unlock.is_empty():
+					_known_unlock_ids[unlock] = true
+
+## 数据表重载后使白名单缓存失效（下次校验时重建）。
+func _invalidate_legal_keys() -> void:
+	_legal_keys_ready = false
 
 func _number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value))

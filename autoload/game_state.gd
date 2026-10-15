@@ -14,6 +14,14 @@ const GOLD_CAP := 999999999
 ## 并广播事件令对应地面物销毁，避免长挂机下节点数与存档体积单调增长。
 const UNCLAIMED_LOOT_CAP := 20
 
+## 存档校验上界（C-P3-1）。战斗侧已有明确上界者直接引用 `Combat`（暴击率 / 暴伤 / 攻击间隔），
+## 其余取宽松上限——目的仅为拦「明显异常或被篡改」的值，不作为数值调平口径。
+const PLAYER_LEVEL_CAP := 999
+const PLAYER_STAT_CAP := 999999.0
+const PLAYER_MOVE_SPEED_CAP := 100.0
+## 冷却缩减的结构上界（比例 0—1）。玩法上的实际上限待产品给值（D7），此处只拦越界值。
+const PLAYER_CDR_CAP := 1.0
+
 # 4.3 最大生命 / 法力派生常量（初始参数，试玩校准）
 const BASE_HP := 50.0
 const HP_PER_LV := 8.0

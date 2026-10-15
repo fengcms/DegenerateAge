@@ -2271,7 +2271,7 @@ func _test_save() -> void:
 	GameState.gold = 1234
 	GameState.current_map = "camp"
 	GameState.quest_states = {"Q002": {"state": "active", "progress": 2}, "Q003": {"state": "rewarded", "progress": 3}}
-	GameState.first_clear = {"boss_corrupt_beast": true}
+	GameState.first_clear = {"boss_corrupted_beast": true}
 	GameState.unlocks = {"chapter2": true}
 	Fog.reveal("camp", Vector2i(0, 0))
 	Fog.reveal("wild_trial", Vector2i(59, 59))
@@ -2339,7 +2339,7 @@ func _test_save() -> void:
 	_expect(_deep_equal(GameState.quest_states, expected_quests),
 		"读档后任务状态应逐键一致（含嵌套 state/progress）：\n  存档时：%s\n  读档后：%s"
 		% [str(expected_quests), str(GameState.quest_states)])
-	_expect(bool(GameState.first_clear.get("boss_corrupt_beast", false)), "读档后首杀标记应一致")
+	_expect(bool(GameState.first_clear.get("boss_corrupted_beast", false)), "读档后首杀标记应一致")
 	_expect(bool(GameState.unlocks.get("chapter2", false)), "读档后解锁标记应一致（M2 新增字段）")
 	_expect(int(GameState.settings.get("searchRadius", 0)) == 15, "读档后设置项应一致")
 
@@ -3539,6 +3539,14 @@ func _test_display_scale() -> void:
 	_expect(SettingsRuntime.valid_choice("displayScaleMode", "auto")
 		and SettingsRuntime.valid_choice("displayScaleMode", "manual"), "displayScaleMode 合法取值应被接受")
 	_expect(not SettingsRuntime.valid_choice("displayScaleMode", "never"), "displayScaleMode 非法取值应被拒绝")
+	# C-P2-1 单一来源兜底：default_settings() 中默认值为 String 的键必须已在 CHOICE_VALUES 登记，
+	# 否则该键的任何合法值都会被 _is_valid_save 判非法（历史事故形态：存量档全被判损坏）。
+	var setting_defaults: Dictionary = GameState.default_settings()
+	for default_key in setting_defaults:
+		var default_value: Variant = setting_defaults[default_key]
+		if default_value is String:
+			_expect(SettingsRuntime.is_choice_key(String(default_key)),
+				"String 设置键 %s 必须登记进 CHOICE_VALUES，否则存档校验会误判" % default_key)
 
 	# ② 三轴各乘「一次」：手动 1.25 × 各轴 1.0 ⇒ 三轴同为 1.25
 	GameState.settings["displayScale"] = 1.25
