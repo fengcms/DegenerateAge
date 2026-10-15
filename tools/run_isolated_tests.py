@@ -1,4 +1,8 @@
-"""在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。"""
+"""在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
+
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 22 项），
+不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
+"""
 
 from __future__ import annotations
 
@@ -23,6 +27,14 @@ DEFAULT_TESTS = [
     "BluePotionDropTest", "CaveNavigationTest", "ReviewRegressionTest",
     "BossReviewTest", "ChapterOneAcceptance", "SmokeTest",
 ]
+
+## 仅作夹具、自身不输出成功完成标记的场景，不纳入 `--all`。
+FIXTURE_SCENES = {"CampWhitebox"}
+
+
+def discover_all_tests() -> list[str]:
+    """全量入口：枚举 tests/*.tscn 的测试场景名（排除夹具场景）。"""
+    return sorted(path.stem for path in (ROOT / "tests").glob("*.tscn") if path.stem not in FIXTURE_SCENES)
 
 
 def run(project: Path, args: list[str], timeout: int = 180, rendered: bool = False) -> tuple[bool, str]:
@@ -58,9 +70,12 @@ def run(project: Path, args: list[str], timeout: int = 180, rendered: bool = Fal
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tests", nargs="*", default=DEFAULT_TESTS)
+    parser.add_argument("--all", action="store_true", help="运行 tests/ 下全部测试场景；默认集只是常用子集")
     parser.add_argument("--committed-tree", action="store_true", help="用已提交的稳定快照隔离并行美术试作")
     parser.add_argument("--rendered", action="store_true", help="以实际窗口运行指定测试，用于渲染采样")
     args = parser.parse_args()
+    if args.all:
+        args.tests = discover_all_tests()
     if not GODOT.is_file():
         print(f"Godot 未找到：{GODOT}", file=sys.stderr)
         return 2
