@@ -13,6 +13,11 @@ var _count: Label
 var _cooldown: Label
 var _potion_marker: Label
 
+## 缓存：颜色 -> 背包中现存的该色药水 itemId 列表。inventory_changed 时失效，
+## 使每帧刷新只需遍历「现存药水」而非整个背包（原实现逐帧 O(背包容量) + 逐件查表）。
+var _kind_ids: Dictionary = {}
+var _kind_ids_dirty := true
+
 func _ready() -> void:
 	_count = Label.new()
 	_count.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -38,6 +43,7 @@ func _ready() -> void:
 	add_child(_potion_marker)
 	_refresh_potion_marker()
 	EventBus.settings_changed.connect(_refresh_potion_marker)
+	EventBus.inventory_changed.connect(_mark_kind_ids_dirty)
 
 func _refresh_potion_marker() -> void:
 	if _potion_marker == null:
@@ -50,6 +56,10 @@ func _refresh_potion_marker() -> void:
 			kind = ItemUtil.potion_kind(String(entry.get("id", "")))
 	_potion_marker.text = ItemUtil.potion_marker(kind)
 	_potion_marker.add_theme_color_override("font_color", ItemUtil.potion_marker_color(kind))
+
+## 背包变化即让按色缓存失效（下次刷新时重建）。
+func _mark_kind_ids_dirty() -> void:
+	_kind_ids_dirty = true
 
 func _process(_delta: float) -> void:
 	if entry is Dictionary and ["potion", "auto_potion"].has(String(entry.kind)):
@@ -65,18 +75,35 @@ func _process(_delta: float) -> void:
 func _remaining_cooldown() -> float:
 	if String(entry.kind) == "potion":
 		return Consumable.cd_of(String(entry.id))
+	if _kind_ids_dirty:
+		_rebuild_kind_ids()
 	var minimum := INF
-	for raw in GameState.inventory:
-		if not raw is Dictionary or raw.get("kind") != "potion":
-			continue
-		var template = DataLoader.get_entry("potions", String(raw.get("itemId", "")))
-		if not template is Dictionary or template.get("kind") != entry.id:
-			continue
-		var remaining := Consumable.cd_of(String(raw.itemId))
+	for item_id in _kind_ids.get(String(entry.id), []):
+		var remaining := Consumable.cd_of(String(item_id))
 		if remaining <= 0.0:
 			return 0.0
 		minimum = minf(minimum, remaining)
 	return 0.0 if minimum == INF else minimum
+
+## 重建「颜色 -> 现存 itemId」缓存（仅在背包变化后执行，非逐帧）。
+func _rebuild_kind_ids() -> void:
+	_kind_ids.clear()
+	for raw in GameState.inventory:
+		if not raw is Dictionary or raw.get("kind") != "potion":
+			continue
+		var item_id := String(raw.get("itemId", ""))
+		var template = DataLoader.get_entry("potions", item_id)
+		if not template is Dictionary:
+			continue
+		var kind := String(template.get("kind", ""))
+		if kind.is_empty():
+			continue
+		if not _kind_ids.has(kind):
+			_kind_ids[kind] = []
+		var list: Array = _kind_ids[kind]
+		if not list.has(item_id):
+			list.append(item_id)
+	_kind_ids_dirty = false
 
 func set_count(amount: int) -> void:
 	_count.text = str(amount) if amount > 0 else ""

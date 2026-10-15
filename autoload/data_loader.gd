@@ -40,6 +40,9 @@ const KEY_FIELDS := {
 var tables: Dictionary = {}
 var errors: Array[String] = []
 
+## 表名 -> { 唯一键 -> 条目 }。启动时构建一次，使 get_entry 由线性扫描降为 O(1)。
+var _index: Dictionary = {}
+
 func _ready() -> void:
 	load_all()
 
@@ -49,7 +52,25 @@ func load_all() -> void:
 	errors.clear()
 	for key in TABLES.keys():
 		tables[key] = _load_json(DATA_DIR + TABLES[key])
+	_build_index()
 	EventBus.data_loaded.emit()
+
+## 按各表唯一键构建查表索引（仅数组表）。字典表本身即为键值表，无需另建。
+func _build_index() -> void:
+	_index.clear()
+	for key in TABLES.keys():
+		var t = tables.get(key)
+		if not (t is Array):
+			continue
+		var key_field: String = KEY_FIELDS.get(key, "id")
+		var map := {}
+		for e in t:
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			var k := String(e.get(key_field, ""))
+			if not k.is_empty():
+				map[k] = e
+		_index[key] = map
 
 func _load_json(path: String):
 	if not FileAccess.file_exists(path):
@@ -71,18 +92,34 @@ func _load_json(path: String):
 func get_table(table_name: String) -> Variant:
 	return tables.get(table_name)
 
-## 按 id 取条目（数组表或字典表均可）。
+## 按 id 取条目（数组表或字典表均可）。数组表走启动时构建的索引，命中为 O(1)。
 func get_entry(table_name: String, id: String) -> Variant:
 	var t = tables.get(table_name)
 	if t == null:
 		return null
 	if t is Array:
-		var key_field: String = KEY_FIELDS.get(table_name, "id")
-		for e in t:
-			if typeof(e) == TYPE_DICTIONARY and String(e.get(key_field, "")) == id:
-				return e
+		# 索引已建（load_all 后）时直接查；未建时回退线性扫描，保持旧行为。
+		if _index.has(table_name):
+			var hit: Variant = (_index[table_name] as Dictionary).get(id)
+			if hit != null:
+				return hit
+			# 未命中：表可能在运行时被追加/替换（如测试注入新条目），
+			# 回退线性扫描并把结果补进索引，兼顾正确性与查询成本。
+			var found: Variant = _linear_get(t, table_name, id)
+			if found != null:
+				(_index[table_name] as Dictionary)[id] = found
+			return found
+		return _linear_get(t, table_name, id)
 	elif t is Dictionary:
 		return t.get(id)
+	return null
+
+## 数组表的线性扫描（回退路径 / 运行时新增条目的兜底）。
+func _linear_get(t: Array, table_name: String, id: String) -> Variant:
+	var key_field: String = KEY_FIELDS.get(table_name, "id")
+	for e in t:
+		if typeof(e) == TYPE_DICTIONARY and String(e.get(key_field, "")) == id:
+			return e
 	return null
 
 ## 加载摘要（用于启动日志 / 调试）。

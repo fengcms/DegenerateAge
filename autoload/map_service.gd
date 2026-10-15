@@ -30,9 +30,12 @@ var loading_active := false
 var loading_message := ""
 var _loading_token := 0
 var _entry_cache: Dictionary = {}
+## 安全区矩形缓存（静态数据，`data_loaded` 时失效）：避免每次安全区判定重解析配置。
+var _safe_area_cache: Dictionary = {}
 
 func _ready() -> void:
 	EventBus.data_loaded.connect(func() -> void: _entry_cache.clear())
+	EventBus.data_loaded.connect(func() -> void: _safe_area_cache.clear())
 
 ## 任务目标导航只在运行中保留；跨图重载继续，普通存档不保存这条临时指令。
 var quest_nav_target: String = ""
@@ -222,6 +225,13 @@ func current_exits() -> Array:
 
 ## 只有配置了 safeArea 的城镇拥有局部免战区；min/max 是包含端点的逻辑格。
 func safe_area_cells(map_id: String) -> Rect2:
+	if _safe_area_cache.has(map_id):
+		return _safe_area_cache[map_id]
+	var rect := _compute_safe_area_cells(map_id)
+	_safe_area_cache[map_id] = rect
+	return rect
+
+func _compute_safe_area_cells(map_id: String) -> Rect2:
 	var data := data_for(map_id)
 	var area: Variant = data.get("safeArea", null)
 	if not bool(data.get("safeZone", false)) or not area is Dictionary:

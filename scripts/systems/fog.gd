@@ -23,13 +23,15 @@ static func reveal(map_id: String, cell: Vector2i) -> bool:
 	if not contains(map_id, cell):
 		return false
 	var dims := MapService.grid_size(map_id)
+	# 每块以 BLOCK_SIZE 格划分：列数在循环外算一次，避免内层 289 格重复解析地图尺寸。
+	var grid_x := ceili(float(dims.x) / BLOCK_SIZE)
 	var blocks: Dictionary = GameState.explored_maps.get(map_id, {})
 	var changed := false
 	for y in range(maxi(0, cell.y - REVEAL_RADIUS), mini(dims.y, cell.y + REVEAL_RADIUS + 1)):
 		for x in range(maxi(0, cell.x - REVEAL_RADIUS), mini(dims.x, cell.x + REVEAL_RADIUS + 1)):
 			if Vector2i(x, y).distance_squared_to(cell) > REVEAL_RADIUS * REVEAL_RADIUS:
 				continue
-			var key := block_id(map_id, Vector2i(x, y))
+			var key := str((y / BLOCK_SIZE) * grid_x + x / BLOCK_SIZE)
 			if not blocks.has(key):
 				blocks[key] = true
 				changed = true
