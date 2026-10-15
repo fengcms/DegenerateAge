@@ -1,0 +1,77 @@
+{
+  "source": "art_source/environment/camp_final_v1/clean_plate.png",
+  "layout_id": "camp_whitebox_v1",
+  "canvas": [
+    1672,
+    941
+  ],
+  "ground": "res://assets/maps/camp_final_v1/ground.webp",
+  "foreground": [
+    {
+      "id": "blacksmith",
+      "path": "res://assets/maps/camp_final_v1/blacksmith.png",
+      "rect": [
+        151,
+        87,
+        455,
+        226
+      ],
+      "foot_y": 317
+    },
+    {
+      "id": "warehouse",
+      "path": "res://assets/maps/camp_final_v1/warehouse.png",
+      "rect": [
+        950,
+        67,
+        384,
+        225
+      ],
+      "foot_y": 292
+    },
+    {
+      "id": "merchant",
+      "path": "res://assets/maps/camp_final_v1/merchant.png",
+      "rect": [
+        281,
+        307,
+        356,
+        175
+      ],
+      "foot_y": 482
+    },
+    {
+      "id": "guardian_lamp",
+      "path": "res://assets/maps/camp_final_v1/guardian_lamp.png",
+      "rect": [
+        729,
+        270,
+        107,
+        169
+      ],
+      "foot_y": 446
+    },
+    {
+      "id": "elder_tree",
+      "path": "res://assets/maps/camp_final_v1/elder_tree.png",
+      "rect": [
+        923,
+        259,
+        299,
+        169
+      ],
+      "foot_y": 418
+    },
+    {
+      "id": "caravan",
+      "path": "res://assets/maps/camp_final_v1/caravan.png",
+      "rect": [
+        899,
+        509,
+        500,
+        220
+      ],
+      "foot_y": 710
+    }
+  ]
+}
