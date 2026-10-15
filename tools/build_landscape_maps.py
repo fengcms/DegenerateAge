@@ -1,4 +1,4 @@
-"""Apply landscape-v2 coordinates to gameplay maps without copying reference schemas."""
+"""按历史原画参考重建其余地图；正式营地白盒由 build_camp_whitebox.py 管理。"""
 
 import json
 from pathlib import Path
@@ -13,6 +13,7 @@ REF_DIRS = (
 
 
 def references():
+    """读取历史十张地图的布局参考，供非营地地图重建使用。"""
     return {
         data["id"]: data
         for folder in REF_DIRS
@@ -22,6 +23,7 @@ def references():
 
 
 def npc(role, name, cell, npc_id="", shop_id=""):
+    """把参考点转换为可装配的 NPC 规格。"""
     result = {"role": role, "npcName": name, "cell": cell}
     if role == "blacksmith":
         result["greeting"] = "炉火还亮着，带装备来看看吧。"
@@ -33,9 +35,8 @@ def npc(role, name, cell, npc_id="", shop_id=""):
 
 
 def first_chapter_npcs(map_id, old, points):
-    if map_id == "camp":
-        mapping = {"shop": "shop", "quest": "elder", "blacksmith": "blacksmith", "warehouse": "warehouse", "carter": "carter"}
-    elif map_id == "wild_trial":
+    """更新第一章非营地 NPC 格坐标；营地由白盒生成器负责。"""
+    if map_id == "wild_trial":
         mapping = {"carter": "carter"}
     elif map_id == "ash_land":
         mapping = {"shop": "carter", "carter": "carter"}
@@ -48,6 +49,7 @@ def first_chapter_npcs(map_id, old, points):
 
 
 def chapter_two_npcs(map_id, points):
+    """依据章节二参考点建立 NPC 列表，保留角色与商店 ID。"""
     if map_id == "c2_well_town":
         return [
             npc("quest", "陆衡", points["lu_heng"], "c2_lu_heng"),
@@ -66,12 +68,16 @@ def chapter_two_npcs(map_id, points):
 
 
 def main():
+    """重建营地以外九张地图，保留现有营地白盒配置。"""
     refs = references()
     maps = json.loads(MAPS_PATH.read_text())
     assert len(refs) == 10 and [entry["id"] for entry in maps[:4]] == [
         "camp", "wild_trial", "ash_land", "corruption_source"]
     maps = maps[:4]
     for entry in maps:
+        # 正式营地已迁至矩形白盒事实源，避免旧参考覆盖其入口、尺寸和 NPC。
+        if entry["id"] == "camp":
+            continue
         ref = refs[entry["id"]]
         points = {point["id"]: point["cell"] for point in ref["points"]}
         entry["size"] = {"w": ref["size"][0], "h": ref["size"][1]}
@@ -81,10 +87,6 @@ def main():
         entry["entrances"] = ref["entrances"]
         entry["carterArrival"] = ref["carterArrival"]
         first_chapter_npcs(entry["id"], entry, points)
-        if entry["id"] == "camp":
-            entry["safeArea"] = {"min": [15, 8], "max": [48, 26]}
-            entry["hubLinks"] = ["c2_well_town"]
-            entry["carterFares"]["c2_well_town"] = 200
     ranges = {
         "c2_well_town": [11, 11], "c2_pipe_slope": [11, 13],
         "c2_old_well": [13, 15], "c2_lower_works": [15, 18],

@@ -129,7 +129,7 @@ func _collect() -> Dictionary:
 		"player": GameState.player.duplicate(true),
 		"gold": GameState.gold,
 		"currentMap": GameState.current_map,
-		"mapLayoutVersion": "2026-10-14-landscape-v2",
+		"mapLayoutVersion": "2026-10-15-camp-whitebox-v1",
 		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
@@ -362,6 +362,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 	if not data.has("mapLayoutVersion") and v >= 11:
 		_migrate_landscape_positions(data)
 		data.mapLayoutVersion = "2026-10-14-landscape-v2"
+	if String(data.get("mapLayoutVersion", "")) != "2026-10-15-camp-whitebox-v1":
+		_migrate_camp_whitebox(data)
 	# 仅明确声明的 v0 支持历史最小角色格式；不能把无版本坏档当旧档补空。
 	if v == 0:
 		var defaults := {"slotId": -1, "savedAt": "", "currentMap": "camp", "playerPos": null,
@@ -414,6 +416,27 @@ func _migrate(source: Dictionary) -> Dictionary:
 			data.inventoryExpansions = 0
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
+
+## 将旧营地坐标和遗留地面物迁到白盒出生区，并重置无可逆映射的营地迷雾。
+## 只在布局版本旧于白盒时执行；重复读档不会重复变更物品或其他地图状态。
+func _migrate_camp_whitebox(data: Dictionary) -> void:
+	var spawn := Iso.grid_to_world(Vector2i(53, 53))
+	if String(data.get("currentMap", "")) == "camp":
+		data.playerPos = [spawn.x, spawn.y]
+	var respawn: Variant = data.get("spawnRespawn", {})
+	if respawn is Dictionary:
+		for key in respawn:
+			if String(key).begins_with("camp#") and respawn[key] is Dictionary:
+				respawn[key].pos = [spawn.x, spawn.y]
+	var loot: Variant = data.get("unclaimedLoot", {})
+	if loot is Dictionary and loot.get("camp") is Array:
+		for row in loot["camp"]:
+			if row is Dictionary:
+				row.pos = [spawn.x, spawn.y]
+	var explored: Variant = data.get("exploredMaps", {})
+	if explored is Dictionary:
+		explored.erase("camp")
+	data.mapLayoutVersion = "2026-10-15-camp-whitebox-v1"
 
 ## v11 装备目录归并为每档每部位唯一型号；保留实例 ID、品质、星级和词条。
 ## 已穿但不足 Lv11 的旧第二档装备转入背包、仓库或玩家所在位置的未领取战利品，绝不丢件。

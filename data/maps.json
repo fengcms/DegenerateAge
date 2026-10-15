@@ -3,8 +3,8 @@
     "id": "camp",
     "name": "幸存者营地",
     "size": {
-      "w": 64,
-      "h": 36
+      "w": 110,
+      "h": 110
     },
     "tierRange": [
       1,
@@ -13,12 +13,12 @@
     "safeZone": true,
     "safeArea": {
       "min": [
-        15,
-        8
+        43,
+        33
       ],
       "max": [
-        48,
-        26
+        75,
+        79
       ]
     },
     "recommendedLevel": 1,
@@ -43,8 +43,8 @@
         "id": "to_wild",
         "label": "往试炼野外",
         "cell": [
-          62,
-          18
+          79,
+          31
         ],
         "toMap": "wild_trial",
         "toEntrance": "from_camp"
@@ -53,8 +53,8 @@
         "id": "to_c2",
         "label": "往沉井镇",
         "cell": [
-          32,
-          2
+          81,
+          81
         ],
         "toMap": "c2_well_town",
         "toEntrance": "from_camp"
@@ -62,17 +62,17 @@
     ],
     "entrances": {
       "from_wild": [
-        58,
-        18
+        76,
+        33
       ],
       "from_c2": [
-        32,
-        6
+        76,
+        77
       ]
     },
     "carterArrival": [
-      36,
-      27
+      43,
+      31
     ],
     "spawnPoints": [
       {
@@ -80,7 +80,21 @@
         "level": 1,
         "respawnTime": 20,
         "count": 3,
-        "ai": false
+        "ai": false,
+        "cells": [
+          [
+            36,
+            51
+          ],
+          [
+            38,
+            47
+          ],
+          [
+            41,
+            46
+          ]
+        ]
       }
     ],
     "bossSpawn": null,
@@ -89,8 +103,8 @@
         "role": "shop",
         "shopId": "peddler_camp",
         "cell": [
-          26,
-          18
+          43,
+          63
         ]
       },
       {
@@ -98,8 +112,8 @@
         "npcId": "elder",
         "npcName": "长老",
         "cell": [
-          38,
-          18
+          64,
+          48
         ]
       },
       {
@@ -107,30 +121,36 @@
         "npcName": "铁匠",
         "greeting": "炉火还旺。带上装备和金币，我替你试试升星。",
         "cell": [
-          27,
-          11
+          49,
+          78
         ]
       },
       {
         "role": "warehouse",
         "npcName": "仓库管理员",
         "cell": [
-          37,
-          11
+          72,
+          56
         ]
       },
       {
         "role": "carter",
         "npcName": "车夫",
         "cell": [
-          36,
-          24
+          46,
+          33
         ]
       }
     ],
     "desc": "营地 NPC 周围为矩形安全区；区外可以战斗。",
-    "layoutVersion": "2026-10-14-landscape-v2",
-    "layoutPath": "res://data/layouts/camp.json"
+    "layoutVersion": "2026-10-15-camp-whitebox-v1",
+    "layoutPath": "res://data/layouts/camp.json",
+    "worldRect": [
+      -1600,
+      -2660,
+      3200,
+      1800
+    ]
   },
   {
     "id": "wild_trial",

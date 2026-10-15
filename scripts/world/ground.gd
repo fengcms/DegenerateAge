@@ -1,7 +1,7 @@
 class_name IsoGround
 extends Node2D
-## 等距地面、纹理图集合批与静态边界碰撞；第一章从布局文件读取道路和多格实体。
-## 地面仍采用 64×32 网格，通行与绘制共用运行布局掩码；第二章沿用现有地形路径。
+## 等距地面、纹理图集合批与静态边界碰撞；营地白盒按原画矩形装配。
+## 白盒的绘制与碰撞读取同一实体轮廓，通行使用由该轮廓编译的布局掩码；其他地图沿用原有路径。
 
 @export var map_id: String = "camp"
 @export var sample_camp_theme := false
@@ -56,6 +56,7 @@ const CH1_CAVE_EDGES := [
 ]
 
 const WALL_THICKNESS := 10.0
+const CAMP_WHITEBOX_PATH := "res://data/map_art/camp_whitebox_v1.json"
 const COLOR_FILL := Color("36423a")     # 地面底色
 const COLOR_GRID := Color("44564a")     # 网格线
 const COLOR_BORDER := Color("5f7563")   # 外边框
@@ -69,6 +70,9 @@ var _tile_atlas: ImageTexture
 var _atlas_tiles: Array = []
 var _chapter_one_art: ChapterOneMapArt = null
 var _chapter_one_road_rows: Array = []
+var _camp_whitebox: Dictionary = {}
+var _camp_rect := Rect2()
+var _camp_canvas_size := Vector2.ZERO
 
 ## 进入地图时装配布局、地面、第一章静态实体与碰撞；所有重建都在加载阶段完成。
 func _ready() -> void:
@@ -89,12 +93,42 @@ func _ready() -> void:
 		if map_id == "c2_well_core":
 			cave.set_access_gate_open(bool(GameState.unlocks.get("c2_core_access", false)))
 			EventBus.quest_rewarded.connect(_on_quest_rewarded)
-	if map_id in ["camp", "wild_trial", "ash_land", "corruption_source"] and not sample_camp_theme:
+	if map_id == "camp" and not sample_camp_theme:
+		_load_camp_whitebox()
+	elif map_id in ["wild_trial", "ash_land", "corruption_source"] and not sample_camp_theme:
 		_load_chapter_one_art()
 	elif sample_camp_theme:
 		add_child(preload("res://scripts/world/sample_camp_props.gd").new())
 	_build_boundary()
 	queue_redraw()
+
+## 装入正式营地白盒的原画坐标与世界矩形；只在场景加载时读取一次。
+func _load_camp_whitebox() -> void:
+	var file := FileAccess.open(CAMP_WHITEBOX_PATH, FileAccess.READ)
+	assert(file != null, "营地白盒源缺失：%s" % CAMP_WHITEBOX_PATH)
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	assert(parsed is Dictionary, "营地白盒源无效")
+	_camp_whitebox = parsed
+	var extent: Array = _camp_whitebox["grid_size"]
+	assert(Vector2i(int(extent[0]), int(extent[1])) == grid_size, "营地白盒尺寸与地图不一致")
+	var rect: Array = _camp_whitebox["world_rect"]
+	_camp_rect = Rect2(float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3]))
+	var canvas: Array = _camp_whitebox["reference_canvas"]
+	_camp_canvas_size = Vector2(float(canvas[0]), float(canvas[1]))
+	assert(cave != null and String(map_data.get("layoutVersion", "")) == "2026-10-15-camp-whitebox-v1",
+		"营地白盒与通行掩码版本不一致")
+
+## 将白盒原画像素投影到游戏世界像素；只供营地加载、绘制与碰撞复用。
+func _camp_canvas_to_world(raw: Array) -> Vector2:
+	return _camp_rect.position + Vector2(float(raw[0]) / _camp_canvas_size.x * _camp_rect.size.x,
+		float(raw[1]) / _camp_canvas_size.y * _camp_rect.size.y)
+
+## 将一个完整实体的原画轮廓转为世界多边形；调用者决定绘制或碰撞用途。
+func _camp_world_polygon(raw: Array) -> PackedVector2Array:
+	var polygon := PackedVector2Array()
+	for point: Array in raw:
+		polygon.append(_camp_canvas_to_world(point))
+	return polygon
 
 ## 读取当前地图元数据及逻辑尺寸；缺失条目时保留编辑器预览默认值。
 func _load_map() -> void:
@@ -128,11 +162,16 @@ func _load_chapter_one_art() -> void:
 
 ## 返回离地图中心最近的合法世界坐标，供默认出生点使用。
 func get_map_center_world() -> Vector2:
+	if not _camp_whitebox.is_empty():
+		return clamp_to_map(_camp_canvas_to_world(_camp_whitebox["spawn"]))
 	var cell := Vector2i(grid_size.x / 2, grid_size.y / 2)
 	return Iso.grid_to_world(cave.nearest_walkable(cell) if cave != null else cell)
 
 ## 将越界或已阻挡的世界位置修正到可走格，供读档和寻路目标容错。
 func clamp_to_map(world: Vector2) -> Vector2:
+	if not _camp_whitebox.is_empty() and not _camp_rect.grow(-14.0).has_point(world):
+		return Iso.grid_to_world(cave.nearest_walkable(Vector2i((cave.points["spawn"] as Array)[0],
+			(cave.points["spawn"] as Array)[1])))
 	var g := Iso.world_to_grid(world)
 	var margin := 2.0
 	var hi_x := maxf(margin, float(grid_size.x - 1) - margin)
@@ -175,6 +214,8 @@ func route(from_world: Vector2, to_world: Vector2) -> Array[Vector2]:
 
 ## 返回投影后地图的世界包围盒，供相机限制使用。
 func get_world_bounds() -> Rect2:
+	if not _camp_whitebox.is_empty():
+		return _camp_rect
 	var pts := _outer_corners()
 	var min_x: float = pts[0].x
 	var max_x: float = pts[0].x
@@ -200,6 +241,18 @@ func _outer_corners() -> PackedVector2Array:
 
 ## 创建地图外边界和布局阻挡碰撞；第一章阻挡由多格实体提供。
 func _build_boundary() -> void:
+	if not _camp_whitebox.is_empty():
+		var body := StaticBody2D.new()
+		body.name = "Boundary"
+		add_child(body)
+		var a := _camp_rect.position
+		var b := _camp_rect.end
+		for segment: Array in [[Vector2(a.x, a.y), Vector2(b.x, a.y)],
+			[Vector2(b.x, a.y), Vector2(b.x, b.y)], [Vector2(b.x, b.y), Vector2(a.x, b.y)],
+			[Vector2(a.x, b.y), Vector2(a.x, a.y)]]:
+			_add_wall(body, segment[0], segment[1])
+		_build_cave_walls()
+		return
 	var pts := _outer_corners()
 	var body := StaticBody2D.new()
 	body.name = "Boundary"
@@ -215,6 +268,12 @@ func _build_cave_walls() -> void:
 	var rock := StaticBody2D.new()
 	rock.name = "CaveWalls"
 	add_child(rock)
+	if not _camp_whitebox.is_empty():
+		for entity: Dictionary in _camp_whitebox["entities"]:
+			_add_camp_collision(rock, String(entity["id"]), entity["footprint"])
+		for fence: Dictionary in _camp_whitebox["fences"]:
+			_add_camp_collision(rock, String(fence["id"]), fence["polygon"])
+		return
 	if _chapter_one_art != null:
 		_chapter_one_art.add_collisions_to(rock)
 		return
@@ -226,6 +285,13 @@ func _build_cave_walls() -> void:
 		hit.shape = shape
 		hit.position = Iso.grid_to_world(cell)
 		rock.add_child(hit)
+
+## 为大型营地实体附加单个完整多边形碰撞；不按等距格拆分。
+func _add_camp_collision(body: StaticBody2D, id: String, raw: Array) -> void:
+	var hit := CollisionPolygon2D.new()
+	hit.name = id
+	hit.polygon = _camp_world_polygon(raw)
+	body.add_child(hit)
 
 ## 将一条外边界线段转为矩形碰撞形状，不影响内部布局掩码。
 func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
@@ -240,6 +306,9 @@ func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 
 ## 绘制纹理地面、阻挡顶面和洞壁外观；只在装载或显式失效时重绘。
 func _draw() -> void:
+	if not _camp_whitebox.is_empty():
+		_draw_camp_whitebox()
+		return
 	var w := grid_size.x
 	var h := grid_size.y
 	var corners := _outer_corners()
@@ -295,6 +364,30 @@ func _draw() -> void:
 	# 外边框
 	var outline := PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]])
 	draw_polyline(outline, COLOR_BORDER, 2.0)
+
+## 以少量整体几何绘制矩形白盒、道路和实体，供正式营地通行测试。
+## 仅在载入或显式失效时调用；原画坐标与碰撞轮廓来自同一源。
+func _draw_camp_whitebox() -> void:
+	draw_rect(_camp_rect, Color("81694f"))
+	draw_rect(_camp_rect.grow(-24.0), Color("987854"), false, 16.0)
+	draw_polyline(_camp_world_polygon(_camp_whitebox["main_road"]), Color("c7ac79"), 82.0, true)
+	for branch: Array in _camp_whitebox["branches"]:
+		draw_polyline(_camp_world_polygon(branch), Color("b29b75"), 54.0, true)
+	for entity: Dictionary in _camp_whitebox["entities"]:
+		if entity.has("visual"):
+			var visual := _camp_world_polygon(entity["visual"])
+			draw_colored_polygon(visual, Color("66706b88"))
+			draw_polyline(visual + PackedVector2Array([visual[0]]), Color("aaa9a3"), 4.0, true)
+		var footprint := _camp_world_polygon(entity["footprint"])
+		draw_colored_polygon(footprint, Color("9c6058"))
+		var center := Vector2.ZERO
+		for vertex: Vector2 in footprint:
+			center += vertex
+		center /= float(footprint.size())
+		draw_string(ThemeDB.fallback_font, center + Vector2(-32, -14), String(entity["label"]),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 40, Color("fff4de"))
+	for fence: Dictionary in _camp_whitebox["fences"]:
+		draw_colored_polygon(_camp_world_polygon(fence["polygon"]), Color("4c5145"))
 
 ## 用一次图集网格绘制全部可走格；道路索引来自同版本布局，不按旧中线猜测。
 ## 透明瓦片仍保持原来的列、行插入顺序，以免破坏等距遮盖。

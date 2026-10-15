@@ -2996,7 +2996,7 @@ func _test_world() -> void:
 			_expect(peddler.shop_id == "peddler_camp", "货郎应绑定 peddler_camp 商店")
 			_expect(not peddler.npc_name.is_empty(), "货郎应有显示名")
 			_expect(not peddler.is_player_in_range(), "出生点不应已在货郎交互范围内（避免开局误开面板）")
-			(player as Node2D).global_position = peddler.global_position + Vector2(40.0, 0.0)
+			(player as Node2D).global_position = peddler.global_position
 			await get_tree().process_frame
 			_expect(game.nearest_npc() == peddler, "走进交互半径后应能定位到货郎（6.3）")
 
@@ -3077,14 +3077,15 @@ func _test_walk_exit() -> void:
 	var exits: Node = world.get_node("Exits")
 	_expect(exits.get_child_count() == 2, "营地应装配第一章和第二章两个步行出口")
 	var player: Node2D = world.get_node("Entities/Player")
-	player.global_position = Iso.grid_to_world(Vector2i(62, 18))
+	var camp_exit := Vector2i(79, 31)
+	player.global_position = Iso.grid_to_world(camp_exit)
 	_expect(world.nearest_exit() != null, "站在路牌上应找到出口")
 	world._process(0.0)
 	_expect((exits.get_child(0) as TravelExit).player_near, "靠近路牌应显示交互提示")
 	var road: TravelExit = exits.get_child(0)
 	_expect(world.exit_at_screen(road.get_global_transform_with_canvas().origin + Vector2(0, -24)) == road,
 		"左键应能命中路牌可见区域")
-	player.global_position = Iso.grid_to_world(Vector2i(54, 18))
+	player.global_position = Iso.grid_to_world(Vector2i(53, 53))
 	world._request_exit_interaction(road)
 	_expect(world._pending_exit == road and player.map_move_active,
 		"远处点击路牌应先步行接近")
@@ -3092,14 +3093,14 @@ func _test_walk_exit() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_expect(not bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(20, 20))).ok), "远离路牌不能步行切图")
-	_expect(not bool(MapService.request_walk("missing", Iso.grid_to_world(Vector2i(62, 18))).ok), "不存在的路口不能切图")
+	_expect(not bool(MapService.request_walk("missing", Iso.grid_to_world(camp_exit)).ok), "不存在的路口不能切图")
 	var routes := [
-		["camp", "to_wild", Vector2i(62, 18), "wild_trial", Vector2i(8, 50)],
+		["camp", "to_wild", camp_exit, "wild_trial", Vector2i(8, 50)],
 		["wild_trial", "to_ash", Vector2i(172, 50), "ash_land", Vector2i(9, 54)],
 		["ash_land", "to_source", Vector2i(187, 54), "corruption_source", Vector2i(8, 45)],
 		["corruption_source", "to_ash", Vector2i(4, 45), "ash_land", Vector2i(183, 54)],
 		["ash_land", "to_wild", Vector2i(5, 54), "wild_trial", Vector2i(168, 50)],
-		["wild_trial", "to_camp", Vector2i(4, 50), "camp", Vector2i(58, 18)],
+		["wild_trial", "to_camp", Vector2i(4, 50), "camp", Vector2i(76, 33)],
 	]
 	for route in routes:
 		MapService.walk_key_released = true
@@ -3119,12 +3120,12 @@ func _test_walk_exit() -> void:
 func _test_rest_zone() -> void:
 	GameState.reset_to_defaults()
 	var camp_area := MapService.safe_area_cells("camp")
-	_expect(camp_area.position == Vector2(15, 8) and camp_area.end == Vector2(48, 26), "营地应配置围住 NPC 的矩形安全区")
+	_expect(camp_area.position == Vector2(43, 33) and camp_area.end == Vector2(75, 79), "营地应配置围住 NPC 的矩形安全区")
 	for npc in MapService.data_for("camp").get("npcs", []):
 		var cell: Array = npc.cell
 		_expect(MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(int(cell[0]), int(cell[1])))), "营地 NPC 应在安全区内")
-	_expect(not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(32, 30)))
-		and not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(62, 18))), "营地区外与道路出口应可战斗")
+	_expect(not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(41, 46)))
+		and not MapService.is_in_safe_area("camp", Iso.grid_to_world(Vector2i(79, 31))), "营地区外与道路出口应可战斗")
 	for map_id in ["wild_trial", "ash_land", "corruption_source"]:
 		_expect(not MapService.safe_area_cells(map_id).has_area(), "%s 应全图为危险区" % map_id)
 		_expect(not MapService.is_in_safe_area(map_id, MapService.carter_arrival(map_id)), "%s 车夫落点不应免战" % map_id)
@@ -3137,7 +3138,7 @@ func _test_rest_zone() -> void:
 	_expect(not DataLoader._validate_safe_areas(invalid_maps).is_empty(), "不能漏掉营地 NPC 的安全区配置")
 
 	GameState.current_map = "camp"
-	GameState.save_pos = Iso.grid_to_world(Vector2i(36, 22))
+	GameState.save_pos = Iso.grid_to_world(Vector2i(53, 53))
 	GameState.has_save_pos = true
 	var world: Node2D = load("res://scenes/Game.tscn").instantiate()
 	add_child(world)
@@ -3159,7 +3160,7 @@ func _test_rest_zone() -> void:
 	for child in spawner.get_children():
 		if child is Monster and child != monster:
 			child.queue_free()
-	monster.global_position = Iso.grid_to_world(Vector2i(32, 28))
+	monster.global_position = Iso.grid_to_world(Vector2i(41, 46))
 	GameState.set_auto_battle(true)
 	var pilot := player.get_node("AutoPilot") as AutoBattle
 	pilot._physics_process(0.1)
@@ -3182,7 +3183,7 @@ func _test_rest_zone() -> void:
 ## （真实重载行为 = 销毁旧 Game + `Game._ready` 按 `GameState.current_map` 重建，见 MapService 头注）。
 func _test_map_reload() -> void:
 	GameState.reset_to_defaults()
-	GameState.add_unclaimed_loot("camp", "travel_camp", _equip_instance("weapon_iron", "travel_camp_item", {"atk": 4}), Iso.grid_to_world(Vector2i(20, 18)))
+	GameState.add_unclaimed_loot("camp", "travel_camp", _equip_instance("weapon_iron", "travel_camp_item", {"atk": 4}), Iso.grid_to_world(Vector2i(53, 53)))
 	GameState.add_unclaimed_loot("wild_trial", "travel_wild", _equip_instance("weapon_iron", "travel_wild_item", {"atk": 4}), Iso.grid_to_world(Vector2i(30, 20)))
 
 	# ① 营地世界：3 只教学木桩 + 3 个 NPC（货郎 / 长老 / 车夫）
@@ -3260,7 +3261,7 @@ func _test_map_reload() -> void:
 	await get_tree().process_frame
 	MapService.walk_key_released = true
 	MapService.walk_locked_until_msec = 0
-	_expect(bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(62, 18))).ok), "步行前往野外应成功")
+	_expect(bool(MapService.request_walk("to_wild", Iso.grid_to_world(Vector2i(79, 31))).ok), "步行前往野外应成功")
 	var walked: Node = load("res://scenes/Game.tscn").instantiate()
 	add_child(walked)
 	await get_tree().process_frame

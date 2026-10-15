@@ -1,7 +1,7 @@
 extends Node
-## 四图地面图集回归：保留逐格纹理与透明边，同时核对新版路线选择。
+## 第一章地面回归：营地检查整体白盒绘制，其余三图核对纹理图集合批。
 
-## 逐图检查网格顶点、UV 和源图像素，避免道路与合批发生错位。
+## 逐图检查白盒事实源或网格顶点、UV 与源图像素，避免道路错位。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	for map_id in ["camp", "wild_trial", "ash_land", "corruption_source"]:
@@ -10,6 +10,13 @@ func _ready() -> void:
 		add_child(ground)
 		await get_tree().process_frame
 		await get_tree().process_frame
+		if map_id == "camp":
+			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v1",
+				"营地应使用整体白盒而非旧菱形瓦片网格")
+			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地画幅必须是矩形")
+			ground.queue_free()
+			await get_tree().process_frame
+			continue
 		assert(ground._tile_mesh != null and ground._tile_mesh.get_surface_count() == 1)
 		var cells := ground.grid_size.x * ground.grid_size.y - ground.cave.blocked_cells().size()
 		assert(ground._tile_mesh.surface_get_array_len(0) == cells * 4, "Texture batching retains every walkable tile")

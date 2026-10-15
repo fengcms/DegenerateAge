@@ -69,7 +69,7 @@ func _ready() -> void:
 		"item": {"kind": "coin", "itemId": "coin", "gold": 5, "count": 1}, "pos": [old_pos.x, old_pos.y]}]}
 	check(SaveManager._is_valid_save(save), "未标布局版本的 schema11 第一章存档仍可读取")
 	var migrated := SaveManager._migrate(save)
-	check(migrated.mapLayoutVersion == "2026-10-14-landscape-v2", "迁移后标记新版布局")
+	check(migrated.mapLayoutVersion == "2026-10-15-camp-whitebox-v1", "迁移后标记新版布局")
 	check(migrated.playerPos != save.playerPos and migrated.spawnRespawn["camp#dummy#0"].pos == migrated.playerPos
 		and migrated.unclaimedLoot.camp[0].pos == migrated.playerPos, "玩家、墓碑与未领掉落同步迁移")
 	check(SaveManager._migrate(migrated).playerPos == migrated.playerPos, "重复读取不会再次迁移坐标")

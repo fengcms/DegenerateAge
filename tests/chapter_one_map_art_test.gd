@@ -1,9 +1,9 @@
 extends Node
-## 第一章四图美术实体契约：道路与可走掩码一致，大型障碍一实体一碰撞。
-## 逐图载入 IsoGround，检查资源引用、物理接触和旧版固定装饰已退场。
+## 第一章地图实体契约：正式营地采用矩形白盒，其余三图仍用纹理美术。
+## 逐图载入 IsoGround，核对大型障碍的整体碰撞与通行掩码。
 
 
-## 在隔离项目中核对四张真实运行地图；每图释放后再测试下一图。
+## 在隔离项目中核对四张真实运行地图；营地用独立白盒约束，每图完成后释放。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	for map_id in ["camp", "wild_trial", "ash_land", "corruption_source"]:
@@ -11,6 +11,14 @@ func _ready() -> void:
 		var ground := IsoGround.new()
 		add_child(ground)
 		await get_tree().physics_frame
+		if map_id == "camp":
+			assert(ground._chapter_one_art == null and not ground._camp_whitebox.is_empty(), "正式营地应加载白盒")
+			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地世界必须是屏幕矩形")
+			assert(ground.get_node("CaveWalls").get_child_count() == 16, "营地每个实体/围栏只保留一条碰撞")
+			assert(ground.cave.is_walkable(Vector2i(53, 53)), "营地出生点应可走")
+			ground.queue_free()
+			await get_tree().physics_frame
+			continue
 		var art := ground._chapter_one_art as ChapterOneMapArt
 		assert(art != null and art.map_id == map_id, "四图必须接入新版美术")
 		assert(art.layout.get("layoutVersion", "") == ground.map_data.get("layoutVersion", ""))

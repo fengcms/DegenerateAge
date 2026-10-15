@@ -1,6 +1,7 @@
 class_name MapCanvas
 extends Control
-## 小/大地图复用等距投影；圆形小地图点击打开大图，大图点击只派发当前图世界坐标。
+## 小/大地图复用世界投影；营地白盒显示矩形边界，其余地图保留等距轮廓。
+## 静态底图按探索变化更新，玩家标记移动不重建背景。
 signal destination_selected(world_position: Vector2)
 @export var minimap: bool = false
 @export var ornamental_frame: bool = false
@@ -30,6 +31,7 @@ var background_draw_count := 0
 ## 相同的字体资源，保证数字 / 字母等宽对齐。
 const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 
+## 注册迷雾事件与标记层，首次显示时构建静态背景。
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -41,6 +43,7 @@ func _ready() -> void:
 	resized.connect(_invalidate_background)
 	refresh()
 
+## 可见时每 0.2 秒同步动态标记；不因玩家移动重建底图。
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
@@ -49,17 +52,20 @@ func _process(delta: float) -> void:
 		_refresh_t = 0.0
 		refresh()
 
+## 当前地图探索发生变化时失效静态背景缓存。
 func _on_fog_changed(map_id: String) -> void:
 	if map_id == GameState.current_map:
 		_exploration = GameState.explored_maps.get(map_id, _empty_exploration)
 		_exploration_count = _exploration.size()
 		_invalidate_background()
 
+## 排队重绘背景和标记；只在尺寸、地图或探索变化时调用。
 func _invalidate_background() -> void:
 	queue_redraw()
 	if is_instance_valid(_overlay):
 		_overlay.queue_redraw()
 
+## 读取玩家、导航版本与地图标记，按实际变化更新两层绘制缓存。
 func refresh() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node2D
 	var position_now := player.global_position if player != null else MapService.entry_point(GameState.current_map)
@@ -88,7 +94,7 @@ func refresh() -> void:
 		_markers = markers
 		_overlay.queue_redraw()
 
-## 与 IsoGround 的格中心/边界一致，支持非正方形地图与局部四格区块。
+## 从地图配置重建世界到控件的投影；营地用屏幕矩形，其他图用等距外框。
 func _ensure_projection() -> void:
 	if _projection_map == GameState.current_map and _projection_size == size and _projection_minimap == minimap:
 		return
@@ -96,32 +102,44 @@ func _ensure_projection() -> void:
 	_projection_size = size
 	_projection_minimap = minimap
 	_dims = MapService.grid_size(_projection_map)
-	var corners := [Iso.grid_pt(-0.5, -0.5), Iso.grid_pt(_dims.x - 0.5, -0.5), Iso.grid_pt(_dims.x - 0.5, _dims.y - 0.5), Iso.grid_pt(-0.5, _dims.y - 0.5)]
-	_world_rect = Rect2(corners[0], Vector2.ZERO)
-	for corner: Vector2 in corners:
-		_world_rect = _world_rect.expand(corner)
+	var map_data := MapService.data_for(_projection_map)
+	var screen_rect: Variant = map_data.get("worldRect", [])
+	if screen_rect is Array and screen_rect.size() == 4:
+		_world_rect = Rect2(float(screen_rect[0]), float(screen_rect[1]),
+			float(screen_rect[2]), float(screen_rect[3]))
+	else:
+		var corners := [Iso.grid_pt(-0.5, -0.5), Iso.grid_pt(_dims.x - 0.5, -0.5), Iso.grid_pt(_dims.x - 0.5, _dims.y - 0.5), Iso.grid_pt(-0.5, _dims.y - 0.5)]
+		_world_rect = Rect2(corners[0], Vector2.ZERO)
+		for corner: Vector2 in corners:
+			_world_rect = _world_rect.expand(corner)
 	var available := Vector2.ONE * (minf(size.x, size.y) - 24) if minimap else size - Vector2(40, 40)
 	_scale = maxf(0.001, minf(available.x / maxf(1, _world_rect.size.x), available.y / maxf(1, _world_rect.size.y)))
 
+## 返回当前地图在世界像素中的显示外框，供地图面板与测试查询。
 func world_rect() -> Rect2:
 	_ensure_projection()
 	return _world_rect
 
+## 返回世界像素到控件像素的比例，仅在投影失效时重算。
 func map_scale() -> float:
 	_ensure_projection()
 	return _scale
 
+## 将世界像素映射到当前地图控件坐标，供标记和点击使用。
 func world_to_canvas(world: Vector2) -> Vector2:
 	_ensure_projection()
 	return _project(world)
 
+## 使用已缓存的世界外框和比例投影一个世界像素点。
 func _project(world: Vector2) -> Vector2:
 	return size * 0.5 + (world - _world_rect.get_center()) * _scale
 
+## 将控件坐标转换为等距格浮点坐标，供大地图点击寻路。
 func canvas_to_grid(point: Vector2) -> Vector2:
 	_ensure_projection()
 	return Iso.world_to_grid(_world_rect.get_center() + (point - size * 0.5) / _scale)
 
+## 小地图点击打开大图；大地图只把矩形营地或其他地图内部点击派发为目标。
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		accept_event()
@@ -130,12 +148,17 @@ func _gui_input(event: InputEvent) -> void:
 				EventBus.map_panel_requested.emit()
 			return
 		var grid := canvas_to_grid(event.position)
+		if GameState.current_map == "camp" and not _world_rect.has_point(_world_rect.get_center() +
+				(event.position - size * 0.5) / _scale):
+			EventBus.toast_requested.emit(Localization.tr_key("ui.map_canvas.p001"), "danger")
+			return
 		var dims := MapService.grid_size(GameState.current_map)
 		if grid.x < -0.5 or grid.y < -0.5 or grid.x >= dims.x - 0.5 or grid.y >= dims.y - 0.5:
 			EventBus.toast_requested.emit(Localization.tr_key("ui.map_canvas.p001"), "danger")
 			return
 		destination_selected.emit(Iso.grid_pt(grid.x, grid.y))
 
+## 查询鼠标附近可见地图标记的说明文字。
 func _get_tooltip(at_position: Vector2) -> String:
 	if minimap:
 		return Localization.tr_key("ui.map_canvas.p002")
@@ -144,6 +167,7 @@ func _get_tooltip(at_position: Vector2) -> String:
 			return String(marker.name)
 	return Localization.tr_key("ui.map_canvas.p003")
 
+## 按迷雾、出口与大地图规则判断一个动态标记是否可见。
 func _marker_visible(marker: Dictionary) -> bool:
 	var kind := String(marker.get("kind", ""))
 	if minimap and (kind == "exit" or kind == "carter"):
@@ -153,9 +177,11 @@ func _marker_visible(marker: Dictionary) -> bool:
 	var cell := Vector2i(Iso.world_to_grid(marker.position).round())
 	return bool(marker.get("revealed", false)) or Fog.is_explored(GameState.current_map, cell)
 
+## 把等距格范围投影成控件四边形，供探索区块合批。
 func _polygon(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
 	return PackedVector2Array([_project(Iso.grid_pt(x0, y0)), _project(Iso.grid_pt(x1, y0)), _project(Iso.grid_pt(x1, y1)), _project(Iso.grid_pt(x0, y1))])
 
+## 绘制静态边界与已探索地形；渲染命令由引擎缓存。
 func _draw() -> void:
 	background_draw_count += 1
 	_ensure_projection()
@@ -169,6 +195,10 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color("101619"))
 	var dims := _dims
 	var outline := _polygon(-0.5, -0.5, dims.x - 0.5, dims.y - 0.5)
+	if GameState.current_map == "camp":
+		outline = PackedVector2Array([_project(_world_rect.position),
+			_project(Vector2(_world_rect.end.x, _world_rect.position.y)), _project(_world_rect.end),
+			_project(Vector2(_world_rect.position.x, _world_rect.end.y))])
 	draw_colored_polygon(outline, Color("100e0b") if GameState.current_map == "corruption_source" else Color("334633") if minimap and ornamental_frame else Color("1f282d"))
 	var world := get_tree().get_first_node_in_group("map_world")
 	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
@@ -196,6 +226,7 @@ func _draw() -> void:
 	if ground == null or ground.cave == null:
 		draw_polyline(border, Color("859a8b"), 1, true)
 
+## 绘制 NPC、出口、玩家等动态标记，与底图缓存分开。
 func _draw_markers() -> void:
 	_ensure_projection()
 	if not MapService.exists(GameState.current_map):
