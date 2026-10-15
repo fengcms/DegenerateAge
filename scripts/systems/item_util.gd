@@ -126,22 +126,21 @@ const PERCENT_STATS := [
 ]
 
 ## 与战斗共用三轴结算：显示未升星基底、品质增量及各分项升星增量。
+## 合成公式由 EquipmentMath 唯一提供（B-P3-5），本层只取分项文本。
 static func attr_lines(item: Dictionary) -> Array[String]:
 	var lines: Array[String] = []
-	var base = item.get("rawBaseAttrs", {})
-	var quality := float(item.get("qualityMultiplierSnapshot", 1.0))
 	var star_factor := EquipmentMath.star_factor(item)
-	if base is Dictionary:
-		for k in base.keys():
-			var raw := float(base[k])
-			var line := stat_line(String(k), raw)
-			var quality_bonus := raw * (quality - 1.0)
-			if not is_zero_approx(quality_bonus):
-				line += "  品质 %s" % stat_value(String(k), quality_bonus)
-			var star_bonus := raw * quality * (star_factor - 1.0)
-			if not is_zero_approx(star_bonus):
-				line += "  升星 %s" % stat_value(String(k), star_bonus)
-			lines.append(line)
+	var breakdown := EquipmentMath.base_breakdown(item)
+	for stat in breakdown.keys():
+		var parts: Dictionary = breakdown[stat]
+		var line := stat_line(String(stat), float(parts.get("raw", 0.0)))
+		var quality_bonus := float(parts.get("quality", 0.0))
+		if not is_zero_approx(quality_bonus):
+			line += "  品质 %s" % stat_value(String(stat), quality_bonus)
+		var star_bonus := float(parts.get("star", 0.0))
+		if not is_zero_approx(star_bonus):
+			line += "  升星 %s" % stat_value(String(stat), star_bonus)
+		lines.append(line)
 	for key in ["affixes", "pctAttrs"]:
 		var arr = item.get(key, [])
 		if arr is Array:
