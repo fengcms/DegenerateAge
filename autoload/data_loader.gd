@@ -309,6 +309,12 @@ func _validate_equipment_model() -> Array[String]:
 		if not expected_slots.has(slot) or not bases is Dictionary or not pool is Array:
 			report.append("[equipments] %s 的槽型/档位/词条池非法" % item_id)
 			continue
+		# 15 号方案：阶段形象字段只允许写在武器模板上，取值为 look_ + 整数。
+		# 只校验格式与落点，不要求素材已登记——素材未到时由 CharacterLook 回退默认形象。
+		if e.has("look"):
+			var look_id := String(e.get("look", ""))
+			if slot != "weapon" or not look_id.begins_with("look_") or not look_id.trim_prefix("look_").is_valid_int():
+				report.append("[equipments] %s 的 look 字段非法：%s" % [item_id, look_id])
 		if bases.size() != 1 or not slot_coverage.has(String(bases.keys()[0])):
 			report.append("[equipments] %s 必须且只能属于一个合法穿戴档" % item_id)
 			continue
