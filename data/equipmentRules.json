@@ -1,6 +1,6 @@
 {
   "ruleVersion": 4,
-  "combatAffixesNote": "战斗词条（criticalChance/criticalMultiplier/attackInterval/dodge/block/cdr/movementSpeed）的执行链尚未接线，暂不开放，故 fixedAffixes/percentAffixes 不含这些键；开放前需先统一结算口径与 cdr 上限。",
+  "combatAffixesNote": "战斗词条中仅 cdr（冷却缩减）已接线并开放：基础 + 装备按加法累加、结算时截断到上限 50%（产品 03 §3.8 / D7），故 percentAffixes 含 cdr。其余战斗词条（criticalChance/criticalMultiplier/attackInterval/dodge/block/movementSpeed）执行链尚未接线，暂不开放，故 fixedAffixes/percentAffixes 不含这些键；开放前需先统一结算口径。",
   "tiers": [
     1,
     11
@@ -60,6 +60,10 @@
     "mpPercent": {
       "min": 0.02,
       "max": 0.08
+    },
+    "cdr": {
+      "min": 0.02,
+      "max": 0.05
     }
   },
   "affixTierScale": {

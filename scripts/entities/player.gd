@@ -476,7 +476,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 		if not GameState.start_buff(skill_id):
 			return false
 		GameState.spend_mp(mana_cost)
-		skill_cooldowns[skill_id] = float(skill.get("cooldown", 0.0))
+		skill_cooldowns[skill_id] = GameState.cooldown_after_cdr(float(skill.get("cooldown", 0.0)))
 		return true
 	if _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
@@ -486,7 +486,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	var targets := skill_targets(skill, target)
 	if targets.is_empty() or not GameState.spend_mp(mana_cost):
 		return false
-	skill_cooldowns[skill_id] = float(skill.get("cooldown", 0.0))
+	skill_cooldowns[skill_id] = GameState.cooldown_after_cdr(float(skill.get("cooldown", 0.0)))
 	_attack_cd = effective_attack_interval()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)

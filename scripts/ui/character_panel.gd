@@ -189,8 +189,8 @@ func _refresh() -> void:
 		SampleArt.decorate(button, SampleArt.icon_for(item))
 		_style_equipment_slot(button, item)
 		button.queue_redraw()
-	# 战斗词条（暴击/攻速/闪避/格挡/冷却缩减/移速）的执行链尚未接线，
-	# 装备词条不参与结算，故本面板只显示基础值，与结算口径保持一致。
+	# 冷却缩减（cdr）已接线（D7：基础 + 装备，加法累加后截断上限），显示值取结算口径；
+	# 其余战斗词条（暴击/攻速/闪避/格挡/移速）执行链尚未接线，装备不参与结算，故仍显示基础值。
 	var p := GameState.player
 	_stats.text = Localization.tr_key("ui.character_panel.p005") % [
 		int(p.hp), GameState.max_hp(), int(p.mp), GameState.max_mp(),
@@ -201,7 +201,7 @@ func _refresh() -> void:
 		maxf(0.1, float(p.attackInterval)),
 		100.0 * float(p.dodge),
 		100.0 * float(p.block),
-		100.0 * float(p.cdr)]
+		100.0 * GameState.total_cdr()]
 
 ## 展示形象随当前武器形象更换；形象 id 未变化时不重建纹理。
 func _apply_look() -> void:

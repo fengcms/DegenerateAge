@@ -12,6 +12,7 @@ func _ready() -> void:
 	_test_equipment()
 	_test_save()
 	_test_economy()
+	_test_cdr()
 	print("[ReviewRegression] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
@@ -167,6 +168,23 @@ func _test_economy() -> void:
 	SaveManager.autosave_in_tests = prev_in_tests
 	SaveManager._debounce = -1.0
 	GameState.reset_to_defaults()
+
+## D7：冷却缩减（cdr）按加法累加、超上限截断，并在施放时作用于基础冷却。
+func _test_cdr() -> void:
+	var saved_cdr: float = float(GameState.player.get("cdr", 0.0))
+	var saved_weapon: Variant = GameState.equipment.get("weapon")
+	GameState.player.cdr = 0.0
+	check(is_equal_approx(GameState.total_cdr(), 0.0) and is_equal_approx(GameState.cooldown_after_cdr(4.0), 4.0), "无来源时冷却不变")
+	GameState.player.cdr = 0.15
+	GameState.equipment.weapon = {"kind": "equip", "affixes": [], "pctAttrs": [{"stat": "cdr", "value": 0.15}], "rawBaseAttrs": {}}
+	check(is_equal_approx(GameState.total_cdr(), 0.3), "基础与装备冷却缩减按加法累加")
+	check(is_equal_approx(GameState.cooldown_after_cdr(4.0), 2.8), "冷却按总缩减等比缩短")
+	GameState.player.cdr = 0.4
+	GameState.equipment.weapon.pctAttrs[0].value = 0.3
+	check(is_equal_approx(GameState.total_cdr(), GameState.PLAYER_CDR_CAP), "超上限时加法累加后截断")
+	check(is_equal_approx(GameState.cooldown_after_cdr(4.0), 2.0), "上限处冷却减半")
+	GameState.player.cdr = saved_cdr
+	GameState.equipment["weapon"] = saved_weapon
 
 # ---- 存档测试辅助：快照 / 还原 3 号槽与 last_slot（避免污染玩家真实存档）----
 

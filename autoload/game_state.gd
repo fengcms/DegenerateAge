@@ -17,8 +17,8 @@ const UNCLAIMED_LOOT_CAP := 20
 const PLAYER_LEVEL_CAP := 999
 const PLAYER_STAT_CAP := 999999.0
 const PLAYER_MOVE_SPEED_CAP := 100.0
-## 冷却缩减的结构上界（比例 0—1）。玩法上的实际上限待产品给值（D7），此处只拦越界值。
-const PLAYER_CDR_CAP := 1.0
+## 冷却缩减上限（产品 03 §3.8 / 04 §4.2：≤50%）。结算按加法累加后截断到本上限（D7）。
+const PLAYER_CDR_CAP := 0.5
 
 # 4.3 最大生命 / 法力派生常量（初始参数，试玩校准）
 const BASE_HP := 50.0
@@ -291,6 +291,15 @@ func total_attack() -> int:
 ## 总防御力 = 基础防御 + 装备固定加成。
 func total_defense() -> int:
 	return int(player.defense) + int(round(float(equip_bonus().get("def", 0.0))))
+
+## 总冷却缩减 = 基础 + 装备词条，**按加法累加**后截断到上限（D7 / 产品 03 §3.8「超限部分在结算时截断」）。
+## 唯一口径入口：展示与施放冷却都读这里，避免各调用点各算一遍。
+func total_cdr() -> float:
+	return clampf(float(player.get("cdr", 0.0)) + float(equip_bonus().get("cdr", 0.0)), 0.0, PLAYER_CDR_CAP)
+
+## 施放冷却 = 基础冷却 × (1 − 总冷却缩减)。技能冷却是运行态（切图保留、读档重建）。
+func cooldown_after_cdr(base_cooldown: float) -> float:
+	return maxf(0.0, base_cooldown) * (1.0 - total_cdr())
 
 ## 派生的最大生命（4.3 公式；攻 / 防取**总属性**，装备 hp / hpPercent 进入固定 / 百分比项）。
 func max_hp() -> int:

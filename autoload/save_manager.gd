@@ -1094,7 +1094,8 @@ func _valid_item(item: Variant) -> bool:
 			if not effect is Dictionary or not effect.get("stat") is String or not _number(effect.get("value")):
 				return false
 			var stat := String(effect.stat)
-			if not ["atk", "def", "hp", "mp", "hpPercent", "mpPercent"].has(stat) \
+			# 词条白名单与 equipmentRules 的 fixedAffixes/percentAffixes 键保持一致（战斗词条仅 cdr 已开放）。
+			if not ["atk", "def", "hp", "mp", "hpPercent", "mpPercent", "cdr"].has(stat) \
 					or seen_stats.has(stat) or float(effect.value) < 0.0:
 				return false
 			seen_stats[stat] = true

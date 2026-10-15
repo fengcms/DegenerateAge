@@ -7,8 +7,9 @@ var failures: Array[String] = []
 ## 逐型号验证唯一档位和五品质，再检查来源池及旧实例转换。
 func _ready() -> void:
 	check(DataLoader.validate_all().is_empty(), "装备与掉落配置应通过启动校验")
-	# 战斗词条（暴击/暴伤/攻速/闪避/格挡/CDR/移速）执行链尚未接线，配置层暂不产出；
-	# 一旦在此放开，人物面板（基础值口径）会再次与战斗结算不一致，故设为可失败闸门。
+	# 战斗词条中仅 cdr（冷却缩减）已接线并开放（D7：基础 + 装备按加法累加、截断上限 50%）；
+	# 其余（暴击/暴伤/攻速/闪避/格挡/移速）执行链尚未接线，配置层仍不产出。
+	# cdr 开放后人物面板与战斗结算已同口径（面板 cdr 显示 total_cdr()），故不再构成可失败闸门。
 	var rules: Dictionary = DataLoader.get_table("equipmentRules")
 	var producible := {}
 	var fixed: Dictionary = rules.get("fixedAffixes", {})
@@ -17,7 +18,8 @@ func _ready() -> void:
 		producible[String(key)] = true
 	for key in percent.keys():
 		producible[String(key)] = true
-	for key in ["criticalChance", "criticalMultiplier", "attackInterval", "dodge", "block", "cdr", "movementSpeed"]:
+	check(producible.has("cdr"), "冷却缩减已接线并开放（D7）")
+	for key in ["criticalChance", "criticalMultiplier", "attackInterval", "dodge", "block", "movementSpeed"]:
 		check(not producible.has(key), "战斗词条 %s 暂不开放（执行链未接线）" % key)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 190021
@@ -29,6 +31,7 @@ func _ready() -> void:
 	for tpl in templates:
 		var bases: Dictionary = tpl.get("tierBases", {})
 		check(bases.size() == 1, "%s 只有一个穿戴档" % tpl.id)
+		check((tpl.get("affixPool", []) as Array).has("cdr"), "%s 词条池含冷却缩减（D7）" % tpl.id)
 		if bases.size() != 1:
 			continue
 		var tier := int(bases.keys()[0])
