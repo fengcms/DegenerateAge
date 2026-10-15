@@ -592,6 +592,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 	for mount_id in data.get("ownedMounts", []):
 		GameState.owned_mounts.append(String(mount_id))
 	GameState.active_mount = String(data.get("activeMount", ""))
+	GameState.preferred_mount = GameState.active_mount
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
 	GameState.hotbar = data.hotbar.duplicate(true)
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）

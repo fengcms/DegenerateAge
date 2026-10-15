@@ -29,6 +29,8 @@ var warehouse: Array = []           # 仓库物品，空位为 null（6.8）
 var warehouse_expansions: int = 0
 var owned_mounts: Array[String] = [] # 独立坐骑收藏，不占背包格（M4-4）
 var active_mount: String = ""
+## 本次会话最近骑过的坐骑；下马后快捷键优先重新骑它，不另增存档字段。
+var preferred_mount: String = ""
 var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 槽，见 Equipment / 5.1）
 ## 降品质提醒为会话状态：跨图保留，新游戏/成功读档清零；不进入存档或 settings。
 var skip_equipment_downgrade_prompt := false
@@ -208,6 +210,7 @@ func reset_to_defaults() -> void:
 	warehouse = Warehouse.create()
 	owned_mounts = []
 	active_mount = ""
+	preferred_mount = ""
 	equipment = Equipment.create()
 	panel_open = false
 	_open_panels = {}
@@ -382,6 +385,7 @@ func ride_mount(mount_id: String) -> Dictionary:
 	if int(player.get("level", 1)) < required:
 		return {"ok": false, "reason": Localization.tr_key("msg.game_state.p002") % required}
 	active_mount = mount_id
+	preferred_mount = mount_id
 	EventBus.mount_changed.emit()
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p003") % String(mount.get("name", mount_id)), "pickup")
 	return {"ok": true}
@@ -392,6 +396,30 @@ func dismount() -> void:
 	active_mount = ""
 	EventBus.mount_changed.emit()
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p004"), "info")
+
+## 骑乘/下马快捷入口：优先最近骑过的坐骑，否则选收藏中第一只已解锁坐骑。
+## 不修改收藏与存档结构；失败时沿用骑乘等级提示。
+func toggle_mount() -> bool:
+	if not active_mount.is_empty():
+		dismount()
+		return true
+	if owned_mounts.is_empty():
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.mount_empty"), "danger")
+		return false
+	var candidate := preferred_mount if owned_mounts.has(preferred_mount) else ""
+	if candidate.is_empty():
+		for mount_id in owned_mounts:
+			var template: Variant = DataLoader.get_entry("mounts", mount_id)
+			if template is Dictionary and int(player.get("level", 1)) >= int(template.get("levelReq", 20)):
+				candidate = mount_id
+				break
+	if candidate.is_empty():
+		candidate = owned_mounts[0]
+	var result := ride_mount(candidate)
+	if not bool(result.get("ok", false)):
+		EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("msg.game_state.p001"))), "danger")
+		return false
+	return true
 
 func organize_inventory() -> bool:
 	var changed := Inventory.organize(inventory)

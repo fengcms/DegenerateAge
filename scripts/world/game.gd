@@ -326,6 +326,12 @@ func enemy_at_screen(point: Vector2) -> Node2D:
 	return best
 
 func _unhandled_input(event: InputEvent) -> void:
+	# 坐骑切换沿用 GameState 的骑乘/下马规则，不受普通浮窗打开状态影响。
+	if event.is_action_pressed("mount_toggle") and not event.is_echo():
+		if _player != null and not _player.is_dead:
+			GameState.toggle_mount()
+			get_viewport().set_input_as_handled()
+		return
 	if not GameState.panel_open and not _player.is_dead:
 		if event.is_action_pressed("sit_toggle") and not event.is_echo():
 			_player.set_sitting(not _player.is_sitting)

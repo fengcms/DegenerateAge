@@ -4,7 +4,7 @@ extends RefCounted
 
 const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "target_next", "sit_toggle",
 	"auto_battle", "auto_pickup", "interact", "pause", "panel_inventory", "panel_character",
-	"panel_map", "panel_skill", "panel_mount", "hotbar_1", "hotbar_2", "hotbar_3",
+	"panel_map", "panel_skill", "panel_mount", "mount_toggle", "hotbar_1", "hotbar_2", "hotbar_3",
 	"hotbar_4", "hotbar_5", "hotbar_6", "hotbar_7", "hotbar_8", "hotbar_9",
 	"hotbar_10", "hotbar_11", "hotbar_12"]
 

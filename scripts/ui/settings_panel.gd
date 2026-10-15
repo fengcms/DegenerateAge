@@ -5,7 +5,7 @@ const ACTION_NAMES := {
 	"move_up": "ui.action.move_up", "move_down": "ui.action.move_down", "move_left": "ui.action.move_left", "move_right": "ui.action.move_right",
 	"attack": "ui.action.attack", "target_next": "ui.action.target_next", "sit_toggle": "ui.action.sit_toggle", "auto_battle": "ui.action.auto_battle", "auto_pickup": "ui.action.auto_pickup",
 	"interact": "ui.action.interact", "pause": "ui.action.pause", "panel_inventory": "ui.action.panel_inventory", "panel_character": "ui.action.panel_character",
-	"panel_map": "ui.action.panel_map", "panel_skill": "ui.action.panel_skill", "panel_mount": "ui.action.panel_mount",
+	"panel_map": "ui.action.panel_map", "panel_skill": "ui.action.panel_skill", "panel_mount": "ui.action.panel_mount", "mount_toggle": "ui.action.mount_toggle",
 }
 
 var _key_list: VBoxContainer
