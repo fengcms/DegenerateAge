@@ -47,7 +47,7 @@ def extract_foreground(image, entity, canvas, scratch):
                "-strip", target)
     return {"id": entity["id"], "path": f"res://assets/maps/camp_final_v1/{entity['id']}.png",
             "rect": [left, top, width, height],
-            "foot_y": max(point[1] for point in entity["footprint"])}
+            "foot_y": entity.get("visual_foot_y", max(point[1] for point in entity["footprint"]))}
 
 
 def main():

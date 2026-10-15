@@ -1,20 +1,24 @@
 extends Node
-## Rendered A/B diagnostic, not an FPS assertion or a gameplay stress test.
+## 实际窗口的地图渲染 A/B 诊断，比较地面和地图 UI 的绘制成本。
+## 冻结玩法后显式绘制，不代表完整战斗帧率；营地正式美术与原白盒用同场景比较。
 
 var _rendered_frames := 0
 
+## 递归冻结玩法节点，保持地图、视口和玩家位置样本可比。
 func freeze(node: Node) -> void:
 	node.set_process(false)
 	node.set_physics_process(false)
 	for child in node.get_children():
 		freeze(child)
 
+## 收集大/小地图控件，供按探索缓存规则刷新或隐藏。
 func canvases(node: Node, out: Array[MapCanvas]) -> void:
 	if node is MapCanvas:
 		out.append(node)
 	for child in node.get_children():
 		canvases(child, out)
 
+## 在 140 个真实渲染帧中采样帧间隔和绘制调用；前 20 帧用于预热。
 func sample(label: String, player: PlayerCharacter, maps: Array[MapCanvas]) -> void:
 	var origin := player.position
 	var timings: Array[float] = []
@@ -40,11 +44,13 @@ func sample(label: String, player: PlayerCharacter, maps: Array[MapCanvas]) -> v
 		last = now
 	player.position = origin
 	timings.sort()
-	print("[PERF] %s: frame median %.3f ms, P95 %.3f ms, draws %.1f" % [
-		label, timings[timings.size() / 2], timings[int(timings.size() * 0.95)], draw_calls / timings.size()])
+	print("[PERF] %s: frame median %.3f ms, P95 %.3f ms, P99 %.3f ms, peak %.3f ms, draws %.1f" % [
+		label, timings[timings.size() / 2], timings[int(timings.size() * 0.95)],
+		timings[int(timings.size() * 0.99)], timings[-1], draw_calls / timings.size()])
 	assert(_rendered_frames - drawn_start >= 140, "Each sample must actually render")
 	print("[PERF] rendered frames: ", _rendered_frames - drawn_start)
 
+## 在实际 GL 窗口中逐图测试正常、隐藏地面和隐藏地图 UI 三种绘制情形。
 func _ready() -> void:
 	if DisplayServer.get_name() == "headless":
 		print("FAIL: MapRenderBenchmark requires --rendered")
@@ -56,7 +62,9 @@ func _ready() -> void:
 	Engine.max_fps = 0
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	print("[PERF] rendered viewport: ", get_viewport().get_visible_rect().size)
-	for map_id in ["c2_lower_works", "wild_trial", "corruption_source"]:
+	var map_ids := ["camp"] if OS.get_environment("DEGENERATEAGE_RENDER_ONLY_CAMP") == "1" \
+		else ["camp", "c2_lower_works", "wild_trial", "corruption_source"]
+	for map_id in map_ids:
 		GameState.reset_to_defaults()
 		GameState.current_map = map_id
 		var explored := {}

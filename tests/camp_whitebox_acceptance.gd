@@ -20,8 +20,8 @@ func _ready() -> void:
 	assert((whitebox.player.get_node("CollisionShape2D").shape as CircleShape2D).radius == 12.0,
 		"白盒必须使用正式玩家的 12 像素碰撞体")
 	assert(whitebox.walkable_count > 2000, "白盒通行面积不足")
-	assert(float(whitebox.walkable_count) / float(whitebox.interior_count) > 0.80,
-		"实体占地过密，营地可行动面积低于设计底线")
+	assert(float(whitebox.walkable_count) / float(whitebox.interior_count) > 0.70,
+		"补齐建筑和外围阻挡后，营地内部可行动面积低于设计底线")
 	var origin: Vector2 = whitebox.canvas_to_world(whitebox.layout["spawn"])
 	for id: String in whitebox.layout["targets"]:
 		var target: Vector2 = whitebox.canvas_to_world(whitebox.layout["targets"][id])

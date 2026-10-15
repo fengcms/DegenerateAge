@@ -1,5 +1,5 @@
 extends Node
-## 正式营地白盒集成验收：从 Game.tscn 装配真实地面、玩家、NPC、出口和训练木桩。
+## 正式营地集成验收：从 Game.tscn 装配分层美术、真实地面、玩家、NPC、出口和训练木桩。
 ## 在隔离项目运行，不触碰玩家存档；验证矩形视野、旧坐标容错及全部服务点路线。
 
 
@@ -12,13 +12,32 @@ func _ready() -> void:
 	var started := Time.get_ticks_msec()
 	var world := preload("res://scenes/Game.tscn").instantiate()
 	add_child(world)
+	var load_ms := Time.get_ticks_msec() - started
 	await get_tree().physics_frame
 	var ground := world.get_node("Ground") as IsoGround
 	var player := world.get_node("Entities/Player") as PlayerCharacter
 	var camera := player.get_node("Camera2D") as Camera2D
 	assert(ground.grid_size == Vector2i(110, 110) and ground.get_world_bounds().size == Vector2(3200, 1800),
 		"正常游戏应加载矩形营地")
-	assert(ground.get_node("CaveWalls").get_child_count() == 16, "实体碰撞应为整体轮廓")
+	var source_solids := (ground._camp_whitebox["entities"] as Array).size() + (ground._camp_whitebox["fences"] as Array).size()
+	assert(ground.get_node("CaveWalls").get_child_count() == source_solids, "每个实体与围栏应只有一条整体碰撞")
+	assert(ground._camp_ground_texture != null and ground._camp_foreground_count == 6,
+		"正式营地必须装配一张底图与六个整体前景")
+	var cave_walls := ground.get_node("CaveWalls") as StaticBody2D
+	for raw: Array in [[350, 220], [1100, 200], [450, 450], [700, 820]]:
+		var world_pos := ground._camp_canvas_to_world(raw)
+		var blocked_cell := Vector2i(Iso.world_to_grid(world_pos).round())
+		assert(not ground.cave.is_walkable(blocked_cell), "建筑与外围实体内部应阻挡：%s" % raw)
+		var query := PhysicsPointQueryParameters2D.new()
+		query.position = world_pos
+		var collided := false
+		for hit: Dictionary in world.get_world_2d().direct_space_state.intersect_point(query):
+			if hit.get("collider") == cave_walls:
+				collided = true
+		assert(collided, "建筑与外围实体必须有对应整体物理碰撞：%s" % raw)
+	for raw: Array in [[595, 620], [680, 620], [750, 620]]:
+		var free_cell := Vector2i(Iso.world_to_grid(ground._camp_canvas_to_world(raw)).round())
+		assert(ground.cave.is_walkable(free_cell), "动态木桩原占地不应留下隐形阻挡：%s" % raw)
 	assert(ground.cave.is_walkable(Vector2i(Iso.world_to_grid(player.global_position).round())),
 		"旧存档落点应迁至白盒内可走位置")
 	assert(camera.limit_left == -1600 and camera.limit_right == 1600
@@ -59,5 +78,23 @@ func _ready() -> void:
 		var screenshot := "/tmp/degenerateage_camp_live.png"
 		assert(get_viewport().get_texture().get_image().save_png(screenshot) == OK,
 			"正式营地窗口截图失败")
-	print("[CampLiveIntegrationTest] PASS · 正式营地载入 %d ms · 9 个目标可达" % [Time.get_ticks_msec() - started])
+		player.global_position = ground._camp_canvas_to_world([450, 400])
+		camera.reset_smoothing()
+		for _frame in range(4):
+			await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		assert(get_viewport().get_texture().get_image().save_png("/tmp/degenerateage_camp_merchant_occlusion.png") == OK,
+			"货郎摊前景遮挡截图失败")
+		camera.top_level = true
+		camera.global_position = ground.get_world_bounds().get_center()
+		var viewport_size := get_viewport().get_visible_rect().size
+		camera.zoom = Vector2.ONE * minf((viewport_size.x - 24.0) / 3200.0,
+			(viewport_size.y - 24.0) / 1800.0)
+		camera.make_current()
+		for _frame in range(4):
+			await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		assert(get_viewport().get_texture().get_image().save_png("/tmp/degenerateage_camp_final_overview.png") == OK,
+			"正式营地全图截图失败")
+	print("[CampLiveIntegrationTest] PASS · 正式营地场景装配 %d ms · 9 个目标可达" % [load_ms])
 	get_tree().quit()

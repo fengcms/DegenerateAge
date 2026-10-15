@@ -11,8 +11,9 @@ func _ready() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		if map_id == "camp":
-			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v1",
-				"营地应使用整体白盒而非旧菱形瓦片网格")
+			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v1"
+				and ground._camp_ground_texture != null and ground._camp_foreground_count == 6,
+				"营地应使用矩形整图及六个前景，而非旧菱形瓦片网格")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地画幅必须是矩形")
 			ground.queue_free()
 			await get_tree().process_frame

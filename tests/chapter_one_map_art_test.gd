@@ -12,9 +12,11 @@ func _ready() -> void:
 		add_child(ground)
 		await get_tree().physics_frame
 		if map_id == "camp":
-			assert(ground._chapter_one_art == null and not ground._camp_whitebox.is_empty(), "正式营地应加载白盒")
+			assert(ground._chapter_one_art == null and not ground._camp_whitebox.is_empty()
+				and ground._camp_ground_texture != null, "正式营地应加载独立几何源与完整底图")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地世界必须是屏幕矩形")
-			assert(ground.get_node("CaveWalls").get_child_count() == 16, "营地每个实体/围栏只保留一条碰撞")
+			var source_count := (ground._camp_whitebox["entities"] as Array).size() + (ground._camp_whitebox["fences"] as Array).size()
+			assert(ground.get_node("CaveWalls").get_child_count() == source_count, "营地每个实体/围栏只保留一条碰撞")
 			assert(ground.cave.is_walkable(Vector2i(53, 53)), "营地出生点应可走")
 			ground.queue_free()
 			await get_tree().physics_frame
