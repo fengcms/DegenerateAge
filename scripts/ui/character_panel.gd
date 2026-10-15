@@ -1,8 +1,11 @@
 extends Control
 ## 独立人物面板：装备槽和十二项战斗属性，数值统一读取 GameState。
+## 展示形象随当前武器的阶段形象更换（CharacterLook）；头像固定一张，不由本面板维护。
 
 var _slots: Dictionary = {}
 var _stats: Label
+var _portrait: TextureRect
+var _look_id := ""
 var _title: Label
 var _identity: Label
 var _center: FloatingWindow
@@ -98,7 +101,8 @@ func _build() -> void:
 	PanelChrome.style_card(equipment_card)
 	body.add_child(equipment_card)
 	var equip := VBoxContainer.new()
-	equip.custom_minimum_size.x = 315
+	# 七槽列 52 + 间距 8 + 展示框 258 + 间距 8 + 七槽列 52 = 378，随展示框同步放大。
+	equip.custom_minimum_size.x = 378
 	equipment_card.add_child(equip)
 	var equipment_title := Label.new()
 	equipment_title.text = "穿戴装备"
@@ -119,17 +123,14 @@ func _build() -> void:
 	portrait_style.set_border_width_all(1)
 	portrait_style.set_corner_radius_all(6)
 	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
-	portrait_frame.custom_minimum_size = Vector2(172, 410)
+	# 展示盒内宽 258 - 2（边框）= 256 = 64 × 4，固定 ×4 整数倍放大，避免像素粗细不均。
+	portrait_frame.custom_minimum_size = Vector2(258, 410)
 	figure.add_child(portrait_frame)
-	var portrait := TextureRect.new()
-	var atlas := AtlasTexture.new()
-	atlas.atlas = preload("res://assets/sprites/player/guardian/guardian_atlas.png")
-	atlas.region = Rect2(0, 0, 64, 80)
-	portrait.texture = atlas
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	portrait_frame.add_child(portrait)
+	_portrait = TextureRect.new()
+	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait_frame.add_child(_portrait)
 	figure.add_child(right)
 	var left_ids := ["helmet", "necklace", "armor", "bracer_1", "bracelet_1", "ring_1", "knee_1"]
 	var right_ids := ["weapon", "shield", "shoes", "bracer_2", "bracelet_2", "ring_2", "knee_2"]
@@ -162,6 +163,7 @@ func _refresh() -> void:
 	var player_name := String(GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")))
 	_title.text = PanelChrome.title_text("人物 · %s" % player_name)
 	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
+	_apply_look()
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
@@ -185,6 +187,14 @@ func _refresh() -> void:
 		100.0 * (float(p.dodge) + float(bonus.get("dodge", 0.0))),
 		100.0 * (float(p.block) + float(bonus.get("block", 0.0))),
 		100.0 * (float(p.cdr) + float(bonus.get("cdr", 0.0)))]
+
+## 展示形象随当前武器形象更换；形象 id 未变化时不重建纹理。
+func _apply_look() -> void:
+	var next := CharacterLook.look_id_for(GameState.equipment)
+	if next == _look_id:
+		return
+	_look_id = next
+	_portrait.texture = CharacterLook.panel_texture(next)
 
 func _style_equipment_slot(button: EquipmentSlot, item: Variant) -> void:
 	var empty := not item is Dictionary
