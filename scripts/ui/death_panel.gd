@@ -87,6 +87,8 @@ func revive_here() -> bool:
 			GameState.remove_item_at(i)
 		player._revive()
 		_close()
+		# A-P3-6：此调用是复活后唯一的存档触发点，不可删除——`inventory_changed` 并非
+		# SaveManager 的自动存档订阅源，`player._revive()` 自身也不触发存档。
 		SaveManager.request_autosave()
 		return true
 	_refresh()
@@ -97,6 +99,8 @@ func revive_camp() -> bool:
 	if player == null or not player.is_dead or not MapService.exists("camp"):
 		return false
 	if GameState.current_map != "camp" and (get_tree().current_scene == null or not get_tree().current_scene.has_node("Game")):
+		# A-P2-3：非营地且世界场景未就绪时无法切图，明确反馈而非静默失败。
+		EventBus.toast_requested.emit(Localization.tr_key("ui.death_panel.p005"), "danger")
 		return false
 	if GameState.current_map == "camp":
 		player.global_position = MapService.entry_point("camp")
@@ -106,6 +110,8 @@ func revive_camp() -> bool:
 		return true
 	var result := MapService._prepare_travel("camp", "revive", 0, MapService.entry_point("camp"))
 	if not bool(result.get("ok", false)):
+		# A-P2-3：切图准备失败（目标图不可达等）时明确反馈，避免玩家点了没反应。
+		EventBus.toast_requested.emit(Localization.tr_key("ui.death_panel.p005"), "danger")
 		return false
 	player._revive()
 	_close()

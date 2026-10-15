@@ -58,6 +58,7 @@
   "ui.death_panel.p002": "回安全区复活（免费）",
   "ui.death_panel.p003": "原地复活（消耗复活卷 ×1；持有 %d）",
   "ui.death_panel.p004": "复活后恢复全部生命和法力",
+  "ui.death_panel.p005": "暂时无法返回安全区",
   "ui.flow_feedback.p001": "关闭",
   "ui.flow_feedback.p002": "知道了",
   "ui.flow_feedback.p003": "正在载入",
