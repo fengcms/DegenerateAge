@@ -7,6 +7,18 @@ var failures: Array[String] = []
 ## 逐型号验证唯一档位和五品质，再检查来源池及旧实例转换。
 func _ready() -> void:
 	check(DataLoader.validate_all().is_empty(), "装备与掉落配置应通过启动校验")
+	# 战斗词条（暴击/暴伤/攻速/闪避/格挡/CDR/移速）执行链尚未接线，配置层暂不产出；
+	# 一旦在此放开，人物面板（基础值口径）会再次与战斗结算不一致，故设为可失败闸门。
+	var rules: Dictionary = DataLoader.get_table("equipmentRules")
+	var producible := {}
+	var fixed: Dictionary = rules.get("fixedAffixes", {})
+	var percent: Dictionary = rules.get("percentAffixes", {})
+	for key in fixed.keys():
+		producible[String(key)] = true
+	for key in percent.keys():
+		producible[String(key)] = true
+	for key in ["criticalChance", "criticalMultiplier", "attackInterval", "dodge", "block", "cdr", "movementSpeed"]:
+		check(not producible.has(key), "战斗词条 %s 暂不开放（执行链未接线）" % key)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 190021
 	var qualities := ["common", "uncommon", "rare", "epic", "legendary"]

@@ -28,6 +28,8 @@ const SLOT_DEFS := [
 ]
 
 ## 可参与汇总的词条属性键（5.10 词条池 + 4.2 属性表）。
+## 其中战斗词条（暴击/攻速/闪避/格挡/CDR/移速）执行链尚未接线，配置层暂不产出
+## （见 equipmentRules.json 的 combatAffixesNote），人物面板与战斗结算因此同为「基础值」口径。
 const BONUS_KEYS := [
 	"atk", "def", "hp", "mp",
 	"hpPercent", "mpPercent",

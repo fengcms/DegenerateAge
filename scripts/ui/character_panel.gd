@@ -175,18 +175,19 @@ func _refresh() -> void:
 		SampleArt.decorate(button, SampleArt.icon_for(item))
 		_style_equipment_slot(button, item)
 		button.queue_redraw()
+	# 战斗词条（暴击/攻速/闪避/格挡/冷却缩减/移速）的执行链尚未接线，
+	# 装备词条不参与结算，故本面板只显示基础值，与结算口径保持一致。
 	var p := GameState.player
-	var bonus := GameState.equip_bonus()
 	_stats.text = Localization.tr_key("ui.character_panel.p005") % [
 		int(p.hp), GameState.max_hp(), int(p.mp), GameState.max_mp(),
 		GameState.total_attack(), GameState.total_defense(), int(p.level),
-		float(p.movementSpeed) + float(bonus.get("movementSpeed", 0.0)),
-		100.0 * (float(p.criticalChance) + float(bonus.get("criticalChance", 0.0))),
-		float(p.criticalMultiplier) + float(bonus.get("criticalMultiplier", 0.0)),
-		maxf(0.1, float(p.attackInterval) + float(bonus.get("attackInterval", 0.0))),
-		100.0 * (float(p.dodge) + float(bonus.get("dodge", 0.0))),
-		100.0 * (float(p.block) + float(bonus.get("block", 0.0))),
-		100.0 * (float(p.cdr) + float(bonus.get("cdr", 0.0)))]
+		float(p.movementSpeed),
+		100.0 * float(p.criticalChance),
+		float(p.criticalMultiplier),
+		maxf(0.1, float(p.attackInterval)),
+		100.0 * float(p.dodge),
+		100.0 * float(p.block),
+		100.0 * float(p.cdr)]
 
 ## 展示形象随当前武器形象更换；形象 id 未变化时不重建纹理。
 func _apply_look() -> void:
