@@ -3,7 +3,8 @@ extends Node
 ##
 ## 首版仅中文：`data/localization.json` 是**唯一文案源**（key → 文案）。
 ## 代码中的一切**玩家可见文本**都经 `tr_key("ui.xxx")` 取用，不再硬编码。
-## 缺失 key：回退为 key 本身并 `push_warning`，便于测试期发现遗漏（冒烟有专项断言）。
+## 缺失 key：回退为 key 本身并 `push_warning`，便于测试期发现遗漏；
+## 冒烟测试在收尾断言 `missing_keys()` 为空，使「文案漏 key」成为可失败的闸门。
 ##
 ## 边界（D2-A 拍板）：
 ##   - P0 界面骨架 / P1 交互文案 → 本文件的表；
@@ -45,7 +46,8 @@ func tr_key(key: String, args: Array = []) -> String:
 	if text.is_empty():
 		_missing[key] = true
 		push_warning("[Localization] 缺失文案 key：%s" % key)
-		text = key
+		# 回退值是 key 本身、未必含 `%` 占位符，此时做填充会触发格式化错误。
+		return key
 	if args.is_empty():
 		return text
 	return text % args

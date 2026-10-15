@@ -80,6 +80,7 @@ func _ready() -> void:
 	await _test_world_text_scale()
 	await _test_scale_invariance()
 	await _test_boss_health_bar()
+	_test_localization()
 	_finish()
 
 func _expect(cond: bool, msg: String) -> void:
@@ -3415,6 +3416,15 @@ func _has_tombstone(spawner: Node) -> bool:
 		if child is BossTombstone:
 			return true
 	return false
+
+# ---- 本地化：收尾闸门 + 缺 key 回退（F-P2-2 / H-P2-3）----
+func _test_localization() -> void:
+	# 闸门：整轮冒烟已走完主要玩家可见路径，此时不应再有任何缺失 key。
+	_expect(Localization.missing_keys().is_empty(),
+		"文案表应无缺失 key（缺失：%s）" % [Localization.missing_keys()])
+	# 缺 key 且带参时不得因格式化崩溃，直接回退为 key 本身。
+	_expect(Localization.tr_key("__smoke_missing_key__", [1, 2]) == "__smoke_missing_key__",
+		"缺失 key 带参应回退为 key 本身，不做 % 填充")
 
 # ---- M4-10 / 反馈②：等宽字体（主题默认 + 自绘共用同一资源）----
 func _test_font_mono() -> void:
