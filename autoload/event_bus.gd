@@ -34,6 +34,8 @@ signal gold_changed(amount: int)
 signal inventory_changed()
 signal inventory_organized()
 signal inventory_expanded()
+## 未领取战利品因超上限被系统丢弃（M6-0c 上限）：携带 uid，供在场地面物自行销毁。
+signal unclaimed_loot_evicted(uid: String)
 signal equipment_changed()
 signal equipment_confirmation_requested(preview: Dictionary)
 signal equipment_confirmation_closed()

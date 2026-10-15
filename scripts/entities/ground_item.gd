@@ -186,8 +186,17 @@ func _try_claim() -> void:
 func _register_unclaimed() -> void:
 	if not persistent or _claimed or not claim_uid.is_empty():
 		return
+	if not EventBus.unclaimed_loot_evicted.is_connected(_on_unclaimed_evicted):
+		EventBus.unclaimed_loot_evicted.connect(_on_unclaimed_evicted)
 	claim_uid = GameState.add_unclaimed_loot(GameState.current_map, batch_id, item, global_position)
 	SaveManager.request_autosave()
+
+## 未领取记录被系统按上限丢弃时销毁自身地面物（记录已从 `unclaimed_loot` 移除，不再重建）。
+func _on_unclaimed_evicted(uid: String) -> void:
+	if claim_uid.is_empty() or uid != claim_uid:
+		return
+	claim_uid = ""
+	queue_free()
 
 ## M6-0c（创意 07 §11.3）：领取成功 → 注销未领取记录并请求保存（幂等；未登记时为 no-op）。
 func _clear_unclaimed_record() -> void:

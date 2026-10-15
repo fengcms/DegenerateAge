@@ -10,6 +10,9 @@ const SCHEMA_VERSION := 6
 ## 背包格数（5.8：40 格）与金币上限（6.2：999,999,999）。
 const INVENTORY_SIZE := 40
 const GOLD_CAP := 999999999
+## 未领取战利品件数上限（M6-0c 追加上限）。超限时按登记顺序丢弃最旧记录，
+## 并广播事件令对应地面物销毁，避免长挂机下节点数与存档体积单调增长。
+const UNCLAIMED_LOOT_CAP := 20
 
 # 4.3 最大生命 / 法力派生常量（初始参数，试玩校准）
 const BASE_HP := 50.0
@@ -849,7 +852,45 @@ func add_unclaimed_loot(map_id: String, batch_id: String, item: Dictionary, pos:
 	(unclaimed_loot[map_id] as Array).append({
 		"uid": uid, "batchId": batch_id, "item": item.duplicate(true), "pos": pos,
 	})
+	_evict_unclaimed_overflow()
 	return uid
+
+## 未领取战利品总件数（跨全部地图）。
+func unclaimed_total() -> int:
+	var n := 0
+	for map_id in unclaimed_loot.keys():
+		n += (unclaimed_loot[map_id] as Array).size()
+	return n
+
+## uid 中的登记序号（`u_<ticks>_<seq>`）；无法解析时回退为大值（视为最新，最后才淘汰）。
+func _unclaimed_seq_of(uid: String) -> int:
+	var parts := uid.split("_")
+	if parts.size() >= 3 and parts[2].is_valid_int():
+		return int(parts[2])
+	return 1 << 62
+
+## 超出上限时按 FIFO（登记顺序）丢弃最旧记录，并广播 `unclaimed_loot_evicted`
+## 令仍在场的对应地面物销毁。返回被丢弃的 uid 列表。
+func _evict_unclaimed_overflow() -> Array:
+	var evicted: Array = []
+	while unclaimed_total() > UNCLAIMED_LOOT_CAP:
+		var oldest_uid := ""
+		var oldest_seq := 1 << 62
+		for map_id in unclaimed_loot.keys():
+			for record in (unclaimed_loot[map_id] as Array):
+				var uid := String((record as Dictionary).get("uid", ""))
+				var seq := _unclaimed_seq_of(uid)
+				if seq < oldest_seq:
+					oldest_seq = seq
+					oldest_uid = uid
+		# 无 uid 或注销失败时中断，避免死循环（防御异常数据）。
+		if oldest_uid.is_empty() or not remove_unclaimed_loot(oldest_uid):
+			break
+		evicted.append(oldest_uid)
+	for uid in evicted:
+		push_warning("[GameState] 未领取战利品超上限(%d)，丢弃最旧记录：%s" % [UNCLAIMED_LOOT_CAP, uid])
+		EventBus.unclaimed_loot_evicted.emit(uid)
+	return evicted
 
 ## 注销某条未领取记录（领取成功后，§11.3）。uid 全局唯一，故跨图查找。返回是否命中。
 func remove_unclaimed_loot(uid: String) -> bool:
@@ -921,6 +962,8 @@ func apply_unclaimed_loot(raw: Variant) -> void:
 			})
 		if not clean.is_empty():
 			unclaimed_loot[String(map_id)] = clean
+	# 防御旧档：读入后若超出上限，先裁剪再供场景重建。
+	_evict_unclaimed_overflow()
 
 # ---- 自动战斗 / 自动拾取开关（M1-9，3.14 / 4.6）----
 
