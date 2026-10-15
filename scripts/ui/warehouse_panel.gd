@@ -20,6 +20,8 @@ var _bag_grid: GridContainer
 var _store_grid: GridContainer
 var _bag_scroll: ScrollContainer
 var _store_scroll: ScrollContainer
+var _bag_slots: Array[ItemSlot] = []
+var _store_slots: Array[ItemSlot] = []
 var _last_side := ""
 var _last_index := -1
 var _last_click_ms := 0
@@ -181,30 +183,46 @@ func _update_layout() -> void:
 func _refresh() -> void:
 	if not visible:
 		return
-	_rebuild_grid(_bag_grid, GameState.inventory, "bag")
-	_rebuild_grid(_store_grid, GameState.warehouse, "warehouse")
+	_refresh_grid(_bag_grid, _bag_slots, GameState.inventory, "bag")
+	_refresh_grid(_store_grid, _store_slots, GameState.warehouse, "warehouse")
 	_refresh_summary()
 
-func _rebuild_grid(grid: GridContainer, items: Array, side: String) -> void:
-	for child in grid.get_children():
-		grid.remove_child(child)
-		child.queue_free()
-	for index in range(items.size()):
+## 容量变化时才增减格子；物品变化只刷新已有节点，保留拖放与滚动状态。
+func _refresh_grid(grid: GridContainer, slots: Array[ItemSlot], items: Array, side: String) -> void:
+	while slots.size() < items.size():
+		var index := slots.size()
 		var button := ItemSlot.new()
 		button.role = ItemSlot.ROLE_BAG if side == "bag" else ItemSlot.ROLE_WAREHOUSE
 		button.index = index
-		button.custom_minimum_size = SLOT_MIN
-		var item = items[index]
+		button.apply_grid_base(SLOT_MIN)
+		button.pressed.connect(_on_slot_pressed.bind(side, index))
+		button.item_dropped.connect(_on_drop.bind(side))
+		grid.add_child(button)
+		slots.append(button)
+	while slots.size() > items.size():
+		var removed: ItemSlot = slots.pop_back()
+		grid.remove_child(removed)
+		removed.queue_free()
+	for index in range(slots.size()):
+		var button: ItemSlot = slots[index]
+		var item: Variant = items[index]
 		if item is Dictionary:
 			button.item = item
 			button.draggable = true
 			button.text = ItemUtil.template_name(item).left(2)
+			var color := ItemUtil.quality_color(String(item.get("quality", "common"))) if String(item.get("kind", "")) == "equip" \
+				else ItemUtil.kind_color(String(item.get("kind", "misc")))
+			button.add_theme_color_override("font_color", color)
+			button.apply_grid_style(color, true)
 			button.tooltip_text = "%s\n%s" % [ItemUtil.display_name(item), "\n".join(ItemUtil.attr_lines(item))]
 		else:
-			button.text = "·"
-		button.pressed.connect(_on_slot_pressed.bind(side, index))
-		button.item_dropped.connect(_on_drop.bind(side))
-		grid.add_child(button)
+			button.item = {}
+			button.draggable = false
+			button.text = ""
+			button.add_theme_color_override("font_color", ItemSlot.GRID_TEXT)
+			button.apply_grid_style(ItemSlot.GRID_BORDER, false)
+			button.tooltip_text = ""
+		SampleArt.decorate(button, SampleArt.icon_for(item))
 
 func _refresh_summary() -> void:
 	_bag_count.text = Localization.tr_key("ui.warehouse_panel.p007") % [GameState.inventory_used(), GameState.inventory.size()]

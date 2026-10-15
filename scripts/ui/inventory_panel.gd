@@ -23,10 +23,6 @@ const TRADE_LEFT_RATIO := 0.60
 
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
-const COL_SLOT_BG := Color("1b282d")
-const COL_SLOT_EMPTY := Color("142025")
-const COL_SLOT_HOVER := Color("2b3a3d")
-const COL_TEXT := Color(0.90, 0.92, 0.95)
 const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 
 var _bag_buttons: Array[ItemSlot] = []
@@ -277,14 +273,7 @@ func _make_item_slot(role: int, index: int) -> ItemSlot:
 
 ## 格子通用外观（尺寸 / 字号 / 文字色 / 空槽描边）。
 func _apply_slot_base(b: Button) -> void:
-	b.custom_minimum_size = SLOT_MIN
-	b.clip_text = true
-	b.add_theme_font_size_override("font_size", 13)
-	b.add_theme_color_override("font_color", COL_TEXT)
-	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.add_theme_color_override("font_pressed_color", COL_TEXT)
-	b.add_theme_color_override("font_focus_color", COL_TEXT)
-	_apply_slot_style(b, COL_BORDER, false)
+	(b as ItemSlot).apply_grid_base(SLOT_MIN)
 
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -294,23 +283,9 @@ func _panel_style() -> StyleBoxFlat:
 	sb.set_corner_radius_all(8)
 	return sb
 
-func _slot_style(bg: Color, border: Color) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.border_color = border
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(4)
-	return sb
-
 ## filled = true 时以品质色描边（5.7），空槽用暗边。
 func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
-	var bg := COL_SLOT_BG if filled else COL_SLOT_EMPTY
-	var painted_border := Color.TRANSPARENT if b is ItemSlot and (b as ItemSlot)._quality_frame != null and (b as ItemSlot)._quality_frame.visible else border
-	b.add_theme_stylebox_override("normal", _slot_style(bg, painted_border))
-	b.add_theme_stylebox_override("hover", _slot_style(COL_SLOT_HOVER, painted_border))
-	b.add_theme_stylebox_override("pressed", _slot_style(bg, painted_border))
-	b.add_theme_stylebox_override("focus", _slot_style(Color(0, 0, 0, 0), Color(0, 0, 0, 0)))
-	b.add_theme_stylebox_override("disabled", _slot_style(bg, painted_border))
+	(b as ItemSlot).apply_grid_style(border, filled)
 
 # ---- 刷新 ----
 

@@ -17,6 +17,13 @@ extends Button
 
 enum { ROLE_BAG, ROLE_TRAY, ROLE_WAREHOUSE, ROLE_EQUIP }
 
+## 背包与仓库双栏共用的格子颜色，避免空格、悬停和品质边框出现两套样式。
+const GRID_BORDER := Color(0.30, 0.33, 0.38, 0.95)
+const GRID_FILLED := Color("1b282d")
+const GRID_EMPTY := Color("142025")
+const GRID_HOVER := Color("2b3a3d")
+const GRID_TEXT := Color(0.90, 0.92, 0.95)
+
 ## 目标格收到投放时回传（target_index 为本格下标，payload 见文件头）。
 signal item_dropped(tray_index: int, payload: Dictionary)
 
@@ -48,9 +55,9 @@ var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
 
-## 空背包格绘制低对比定位纹样，视觉与统一面板样稿一致；不遮挡图标和数量角标。
+## 空背包格和空仓库格绘制同一低对比定位纹样；不遮挡图标和数量角标。
 func _draw() -> void:
-	if role != ROLE_BAG or not item.is_empty():
+	if role not in [ROLE_BAG, ROLE_WAREHOUSE] or not item.is_empty():
 		return
 	var center := size * 0.5
 	var marker := Color("354a50")
@@ -62,6 +69,36 @@ func _draw() -> void:
 			var corner := center + Vector2(x_sign * 19.0, y_sign * 19.0)
 			draw_line(corner, corner - Vector2(x_sign * 8.0, 0), marker, 1.0)
 			draw_line(corner, corner - Vector2(0, y_sign * 8.0), marker, 1.0)
+
+## 设置背包类格子的基础字号、尺寸和空槽样式；仓库可传入较小的布局尺寸。
+func apply_grid_base(min_size: Vector2) -> void:
+	custom_minimum_size = min_size
+	clip_text = true
+	add_theme_font_size_override("font_size", 13)
+	add_theme_color_override("font_color", GRID_TEXT)
+	add_theme_color_override("font_hover_color", Color.WHITE)
+	add_theme_color_override("font_pressed_color", GRID_TEXT)
+	add_theme_color_override("font_focus_color", GRID_TEXT)
+	apply_grid_style(GRID_BORDER, false)
+
+## 有品质动画框时隐藏静态描边，避免叠出双框；空格仍保留暗色边框。
+func apply_grid_style(border: Color, filled: bool) -> void:
+	var bg := GRID_FILLED if filled else GRID_EMPTY
+	var painted_border := Color.TRANSPARENT if _quality_frame != null and _quality_frame.visible else border
+	add_theme_stylebox_override("normal", _grid_style(bg, painted_border))
+	add_theme_stylebox_override("hover", _grid_style(GRID_HOVER, painted_border))
+	add_theme_stylebox_override("pressed", _grid_style(bg, painted_border))
+	add_theme_stylebox_override("focus", _grid_style(Color.TRANSPARENT, Color.TRANSPARENT))
+	add_theme_stylebox_override("disabled", _grid_style(bg, painted_border))
+
+## 生成单个格子状态所用的圆角底板。
+func _grid_style(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	return style
 
 func _ready() -> void:
 	_quality_frame = QualityFrameOverlay.new()
