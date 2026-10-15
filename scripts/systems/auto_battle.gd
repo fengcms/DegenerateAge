@@ -480,13 +480,11 @@ func _tick_roam(delta: float) -> void:
 	_set_state(State.ROAM)
 
 func _direction_to(point: Vector2) -> Vector2:
-	var world := get_tree().get_first_node_in_group("map_world")
-	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	return _cave_nav.direction(ground, _player.global_position, point)
 
 func _cave_ground() -> IsoGround:
-	var world := get_tree().get_first_node_in_group("map_world")
-	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	return ground if ground != null and ground.cave != null else null
 
 func _route_reachable(point: Vector2) -> bool:
@@ -496,10 +494,7 @@ func _route_reachable(point: Vector2) -> bool:
 
 func _build_roam_points() -> void:
 	_roam_points.clear()
-	var world := get_tree().get_first_node_in_group("map_world")
-	if world == null:
-		return
-	var ground := world.get_node_or_null("Ground") as IsoGround
+	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	if ground == null:
 		return
 	_roam_built = true

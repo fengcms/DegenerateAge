@@ -275,9 +275,9 @@ static func _text_scale_node(node: Node, factor: float) -> void:
 ## 的预期行为，不视为缺陷（是否给边界外做装饰留 M6）。
 static func _apply_map_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
-	if tree == null or tree.current_scene == null:
+	if tree == null:
 		return
-	var camera := tree.current_scene.get_node_or_null("Game/Entities/Player/Camera2D") as Camera2D
+	var camera := tree.get_first_node_in_group("player_camera") as Camera2D
 	if camera == null:
 		return
 	apply_map_scale_to(camera)

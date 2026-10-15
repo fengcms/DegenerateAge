@@ -540,8 +540,7 @@ func _random_patrol_point() -> Vector2:
 	return spawn_position
 
 func _approach(target_pos: Vector2) -> void:
-	var world := get_tree().get_first_node_in_group("map_world")
-	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	var to := _cave_nav.direction(ground, global_position, target_pos)
 	if to.length() < 0.001:
 		return
@@ -887,16 +886,10 @@ func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = fals
 ## M6-0d（创意 07 §9）：落点至少满足地图边界内；完整可走网格校验待障碍系统落地后复用。
 ## 找不到地面节点（测试 / 无世界上下文）时原样返回。
 func _clamp_to_map(pos: Vector2) -> Vector2:
-	var layer := get_tree().get_first_node_in_group("loot_root")
-	if layer == null:
+	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
+	if ground == null:
 		return pos
-	var world := layer.get_parent()
-	if world == null:
-		return pos
-	var ground := world.get_node_or_null("Ground")
-	if ground is IsoGround:
-		return (ground as IsoGround).clamp_to_map(pos)
-	return pos
+	return ground.clamp_to_map(pos)
 
 func _draw() -> void:
 	if not _chapter_boss_warn.is_empty() and not is_dead:

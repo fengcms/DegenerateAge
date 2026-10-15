@@ -18,10 +18,8 @@ static func use_town_scroll(inv_index: int, reload_scene: bool = true) -> Dictio
 	if town_id.is_empty() or not MapService.exists(town_id) or not MapService.is_safe_zone(town_id) \
 			or not MapService.is_unlocked(town_id):
 		return _fail(Localization.tr_key("msg.travel_item.p005"))
-	if reload_scene:
-		var scene := GameState.get_tree().current_scene
-		if scene == null or not scene.has_node("Game"):
-			return _fail(Localization.tr_key("msg.travel_item.p006"))
+	if reload_scene and GameState.get_tree().get_first_node_in_group("map_world") == null:
+		return _fail(Localization.tr_key("msg.travel_item.p006"))
 	# 所有可能失败的条件先验证；成功后才扣 1 张并安排场景重载。
 	var from_map := GameState.current_map
 	if int(item.get("count", 1)) > 1:
@@ -52,8 +50,7 @@ static func use_random_ticket(inv_index: int, rng: RandomNumberGenerator = null)
 		return _fail(Localization.tr_key("msg.travel_item.p010"))
 	if not MapService.pending_travel.is_empty():
 		return _fail(Localization.tr_key("msg.travel_item.p011"))
-	var world := GameState.get_tree().get_first_node_in_group("map_world")
-	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
+	var ground := GameState.get_tree().get_first_node_in_group("map_ground") as IsoGround
 	if ground == null:
 		return _fail(Localization.tr_key("msg.travel_item.p012"))
 	var destination := _random_destination(ground, player.global_position, rng)
@@ -67,7 +64,7 @@ static func use_random_ticket(inv_index: int, rng: RandomNumberGenerator = null)
 	player.clear_travel_intent()
 	player.begin_manual_command()
 	player.global_position = destination
-	var camera := player.get_node_or_null("Camera2D") as Camera2D
+	var camera := GameState.get_tree().get_first_node_in_group("player_camera") as Camera2D
 	if camera != null:
 		camera.reset_smoothing()
 	EventBus.toast_requested.emit(Localization.tr_key("msg.travel_item.p014"), "info")
