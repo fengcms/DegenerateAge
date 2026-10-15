@@ -149,7 +149,6 @@ func _build() -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
 	margin.add_theme_constant_override("margin_bottom", 12)
 	box.add_child(margin)
 
@@ -160,6 +159,7 @@ func _build() -> void:
 	# 标题行
 	var head := HBoxContainer.new()
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.inventory_panel.p001")
 	title.add_theme_font_size_override("font_size", 18)

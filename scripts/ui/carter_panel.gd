@@ -85,7 +85,6 @@ func _build() -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
 	margin.add_theme_constant_override("margin_bottom", 12)
 	box.add_child(margin)
 
@@ -97,6 +96,7 @@ func _build() -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	_title = Label.new()
 	_title.text = Localization.tr_key("ui.carter_panel.p002")
 	_title.add_theme_font_size_override("font_size", 18)

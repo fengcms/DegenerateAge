@@ -8,6 +8,11 @@ const TEXT := Color("e8d8ae")
 const MUTED := Color("a5adb0")
 const SURFACE := Color("111a1f")
 const SURFACE_LIGHT := Color("1b272c")
+const FRAME_CONTENT_INSET := 7
+const HEADER_BAND_BOTTOM := 57
+const HEADER_DIVIDER_Y := 59
+const HEADER_ROW_HEIGHT := 40
+const HEADER_MARGIN_TOP := HEADER_BAND_BOTTOM - HEADER_ROW_HEIGHT - FRAME_CONTENT_INSET
 const ACTION_NORMAL := preload("res://assets/ui/panel_chrome/action_normal.svg")
 const ACTION_PRIMARY := preload("res://assets/ui/panel_chrome/action_primary.svg")
 const ACTION_HOVER := preload("res://assets/ui/panel_chrome/action_hover.svg")
@@ -24,10 +29,10 @@ const HELP_PRESSED := preload("res://assets/ui/panel_chrome/help_pressed.svg")
 ## 初始化不占内容空间的透明容器，并在窗口改变尺寸时重绘外框。
 func _init() -> void:
 	var empty := StyleBoxEmpty.new()
-	empty.content_margin_left = 7
-	empty.content_margin_right = 7
-	empty.content_margin_top = 7
-	empty.content_margin_bottom = 7
+	empty.content_margin_left = FRAME_CONTENT_INSET
+	empty.content_margin_right = FRAME_CONTENT_INSET
+	empty.content_margin_top = FRAME_CONTENT_INSET
+	empty.content_margin_bottom = FRAME_CONTENT_INSET
 	add_theme_stylebox_override("panel", empty)
 	resized.connect(queue_redraw)
 
@@ -57,11 +62,11 @@ func _draw() -> void:
 		Vector2(w - 7, 33), Vector2(7, 33)]),
 		PackedColorArray([header_turn, header_turn, header_middle, header_middle]))
 	draw_polygon(PackedVector2Array([Vector2(7, 33), Vector2(w - 7, 33),
-		Vector2(w - 7, 57), Vector2(7, 57)]),
+		Vector2(w - 7, HEADER_BAND_BOTTOM), Vector2(7, HEADER_BAND_BOTTOM)]),
 		PackedColorArray([header_middle, header_middle, header_bottom, header_bottom]))
 	draw_polyline(inner, Color("594f3d"), 1.0, true)
 	# 标题分隔仅由外框绘制；内容面板只留同高度的空隙，不再叠加 HSeparator。
-	draw_line(Vector2(25, 59), Vector2(w - 25, 59), Color("776d59"), 1.0, true)
+	draw_line(Vector2(25, HEADER_DIVIDER_Y), Vector2(w - 25, HEADER_DIVIDER_Y), Color("776d59"), 1.0, true)
 	for left in [true, false]:
 		var edge := 12.0 if left else w - 12.0
 		var direction := 1.0 if left else -1.0
@@ -86,13 +91,19 @@ static func style_title(label: Label) -> void:
 static func title_text(value: String) -> String:
 	return "◆  " + value
 
+## 让所有共用外框面板的标题行固定在渐变带内，避免圆钮压住分隔线。
+## 调用方仍可独立设置内容区左右及底部边距。
+static func style_header_layout(margin: MarginContainer, header: HBoxContainer) -> void:
+	margin.add_theme_constant_override("margin_top", HEADER_MARGIN_TOP)
+	header.custom_minimum_size.y = HEADER_ROW_HEIGHT
+
 ## 给右上角关闭动作应用正圆纹理，不依赖字号计算按钮轮廓。
 static func style_close(button: Button) -> void:
 	_style_round_button(button, 40, CLOSE_NORMAL, CLOSE_HOVER, CLOSE_PRESSED)
 
 ## 帮助按钮与关闭按钮使用固定宽高的圆形贴图，避免文字倍率和标题行拉伸椭圆化。
 static func style_help(button: Button) -> void:
-	_style_round_button(button, 36, HELP_NORMAL, HELP_HOVER, HELP_PRESSED)
+	_style_round_button(button, HEADER_ROW_HEIGHT, HELP_NORMAL, HELP_HOVER, HELP_PRESSED)
 
 ## 操作按钮的渐变、高光和端部使用确认稿的局部 SVG，文案仍由 Button 实时绘制。
 static func style_action(button: Button, primary: bool = false) -> void:

@@ -52,7 +52,7 @@ func _build() -> void:
 	var panel := PanelChrome.new()
 	_center.add_child(panel)
 	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
+	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
@@ -61,6 +61,7 @@ func _build() -> void:
 	margin.add_child(root)
 	var head := HBoxContainer.new()
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.skill_panel.p001")
 	title.add_theme_font_size_override("font_size", 20)

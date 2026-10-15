@@ -57,7 +57,7 @@ func _build() -> void:
 	var panel := PanelChrome.new()
 	center.add_child(panel)
 	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
+	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
@@ -66,6 +66,7 @@ func _build() -> void:
 	margin.add_child(root)
 	var head := HBoxContainer.new()
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	_title = Label.new()
 	_title.text = Localization.tr_key("ui.blacksmith_panel.p002")
 	_title.add_theme_font_size_override("font_size", 18)
