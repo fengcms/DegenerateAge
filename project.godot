@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="末法纪元：最后的守护者"
 config/description="2D 等距斜角（isometric）单机实时战斗 ARPG。引擎：Godot 4，语言：GDScript。"
-config/version="0.1.0-scaffold"
+config/version="0.1.0-dev1"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
