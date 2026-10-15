@@ -10,6 +10,11 @@ const MAX_CRIT_CHANCE := 0.75      # 3.8：暴击率上限
 const MAX_CRIT_MULT := 5.0         # 3.8：暴击伤害倍率上限
 const MIN_ATTACK_INTERVAL := 0.2   # 3.8：攻击间隔下限(s)
 
+## 怪物侧暴击参数约定（3.2 / B-P3-1）：怪物不暴击。集中常量避免调用点留白式硬编码，
+## 与玩家侧读 `GameState.player` 的数据驱动策略区分清楚；将来若要给怪物开暴击，只需改这里。
+const ENEMY_CRIT_CHANCE := 0.0
+const ENEMY_CRIT_MULT := 1.0
+
 static var _rng: RandomNumberGenerator = null
 
 ## 默认随机源（延迟初始化并随机化种子）。

@@ -613,7 +613,7 @@ func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 	var res := Combat.resolve(
 		attack_power,
 		float(GameState.total_defense()),
-		1.0, 0.0, 1.5,
+		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
 		float(GameState.player.get("dodge", 0.0)))
 	Fx.damage_number(get_tree(), player, res)
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
