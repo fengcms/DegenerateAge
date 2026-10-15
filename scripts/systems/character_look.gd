@@ -10,7 +10,7 @@ extends RefCounted
 ##   - 单一事实源是武器模板的 look 字段（data/equipments.json），本模块是唯一解析入口。
 ##   - 只决定「当前该显示哪套形象」，不做装备语义、不结算属性、不写存档。
 ##   - 头像不在此处理：头像固定一张，见 HUD。
-## 资源全部用 preload 登记，保证进入导出包；新增 look 只需在此补三条纹理与帧格，
+## 资源全部用 preload 登记，保证进入导出包；新增 look 只需在此补纹理与帧格，
 ## 世界渲染、人物面板与测试都不需要改动代码。
 
 ## 武器未标注 look、空手、或标注了尚未登记的 look 时统一回退到该形象。
@@ -25,6 +25,14 @@ const LOOKS := {
 		"main": preload("res://assets/sprites/player/guardian/guardian_atlas.png"),
 		"extra": preload("res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png"),
 		"walk": preload("res://assets/sprites/player/guardian/guardian_walk_atlas.png"),
+		"frame": Vector2i(64, 80),
+		"pivot": Vector2(32, 64),
+	},
+	# 守路长刃档（Lv11）。来源为 Hormelz 八向骑士（CC0），由 tools/build_look_atlas.gd 重排；
+	# 该源包没有独立的受击/打坐姿势，故不登记 extra，受击与打坐沿用主图集。
+	"look_02": {
+		"main": preload("res://assets/sprites/player/knight/knight_atlas.png"),
+		"walk": preload("res://assets/sprites/player/knight/knight_walk_atlas.png"),
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
 	},

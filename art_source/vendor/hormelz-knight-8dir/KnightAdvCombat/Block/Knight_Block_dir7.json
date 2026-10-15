@@ -1,0 +1,78 @@
+{
+	"frames": [
+		{
+			"frame": {
+				"x": 0,
+				"y": 0,
+				"w": 256,
+				"h": 256
+			},
+			"duration": 83
+		},
+		{
+			"frame": {
+				"x": 256,
+				"y": 0,
+				"w": 256,
+				"h": 256
+			},
+			"duration": 83
+		},
+		{
+			"frame": {
+				"x": 512,
+				"y": 0,
+				"w": 256,
+				"h": 256
+			},
+			"duration": 83
+		},
+		{
+			"frame": {
+				"x": 0,
+				"y": 256,
+				"w": 256,
+				"h": 256
+			},
+			"duration": 83
+		},
+		{
+			"frame": {
+				"x": 256,
+				"y": 256,
+				"w": 256,
+				"h": 256
+			},
+			"duration": 83
+		},
+		{
+			"frame": {
+				"x": 512,
+				"y": 256,
+				"w": 256,
+				"h": 256
+			},
+			"duration": 83
+		}
+	],
+	"meta": {
+		"app": "https://pixelover.io",
+		"version": "0.14.4",
+		"filepath": "C:/Users/joeyi/Desktop/IntroUnreal5/knight/Knight/Block/Knight_Block_dir7.png",
+		"frameAnimations": [
+			{
+				"name": "Block",
+				"fps": 12,
+				"speed_scale": 1,
+				"from": 0,
+				"to": 5
+			}
+		],
+		"size": {
+			"w": 768,
+			"h": 512
+		},
+		"view": "Preview",
+		"direction": 6
+	}
+}
