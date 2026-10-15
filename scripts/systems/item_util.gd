@@ -5,6 +5,7 @@ extends RefCounted
 ## 品质与颜色（5.7）：普通白 / 优秀蓝 / 稀有绿 / 史诗黄 / 传说紫。
 ## 供地面物品绘制、背包（M1-7）与提示复用，避免颜色散落在各处。
 
+## 五品质枚举（B-P3-6：本常量是品质顺序的唯一来源，`Shop.QUALITY_ORDER` 引用此处）。
 const QUALITIES := ["common", "uncommon", "rare", "epic", "legendary"]
 
 const QUALITY_NAME := {

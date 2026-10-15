@@ -14,7 +14,7 @@ const QUALITY_SELL_MULT := {
 	"epic": 6.0,
 	"legendary": 12.0,
 }
-const QUALITY_ORDER := ["common", "uncommon", "rare", "epic", "legendary"]
+const QUALITY_ORDER: Array = ItemUtil.QUALITIES   # B-P3-6：品质枚举唯一来源在 ItemUtil，此处仅引用
 
 static func matches_low_gear(item: Dictionary, level_limit: int, max_quality: String) -> bool:
 	if not can_sell(item) or level_limit < 1:

@@ -42,6 +42,16 @@ const SCORE_WEIGHTS := {"atk": 1.0, "def": 1.0, "hp": 0.3, "mp": 0.3}
 
 # ---- 槽位 ----
 
+## 十种部位（去重、按 SLOT_DEFS 顺序）。B-P3-6：作为部位清单的唯一来源，
+## 校验层与 equipmentRules.slotOrder 对照均引用本函数，避免另起字面量副本。
+static func slot_kinds() -> Array[String]:
+	var out: Array[String] = []
+	for d in SLOT_DEFS:
+		var kind := String(d.kind)
+		if not out.has(kind):
+			out.append(kind)
+	return out
+
 ## 新建 14 个空槽（槽 id → null）。
 static func create() -> Dictionary:
 	var slots := {}

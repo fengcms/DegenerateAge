@@ -305,7 +305,7 @@ func _validate_equipment_model() -> Array[String]:
 	if not tiers is Array or tiers.is_empty() or not qualities is Dictionary or not fixed is Dictionary or not percent is Dictionary:
 		report.append("[equipmentRules] 档位、品质与词条池非法")
 		return report
-	var expected_slots := ["weapon", "shield", "helmet", "armor", "shoes", "necklace", "bracer", "knee", "bracelet", "ring"]
+	var expected_slots: Array[String] = Equipment.slot_kinds()   # B-P3-6：部位清单唯一来源在 Equipment
 	if not slot_order is Array or slot_order.size() != 10:
 		report.append("[equipmentRules] slotOrder 必须包含十种部位")
 		return report
@@ -334,7 +334,7 @@ func _validate_equipment_model() -> Array[String]:
 	if not _is_whole_level(cfg.get("maxStar")) or int(cfg.maxStar) != 12 \
 			or not (cfg.get("starMult") is int or cfg.get("starMult") is float) or float(cfg.starMult) < 0.0:
 		report.append("[equipmentRules] 星级参数非法")
-	for quality in ["common", "uncommon", "rare", "epic", "legendary"]:
+	for quality in ItemUtil.QUALITIES:   # B-P3-6：品质枚举唯一来源在 ItemUtil
 		var q: Variant = qualities.get(quality)
 		if not q is Dictionary or not _is_whole_level(q.get("affixCount")) or int(q.affixCount) < 0 \
 				or int(q.affixCount) > 4 or not (q.get("percentChance") is int or q.get("percentChance") is float) \
@@ -404,7 +404,7 @@ func _validate_drop_tables() -> Array[String]:
 	var rune_ids := _id_set("runes")
 	var misc_ids := _id_set("miscItems")
 	var pool_ids := _id_set("lootPools")
-	var quality_enum := ["common", "uncommon", "rare", "epic", "legendary"]
+	var quality_enum: Array = ItemUtil.QUALITIES   # B-P3-6：品质枚举唯一来源在 ItemUtil
 	var valid_kinds := ["coin", "potion", "equip", "rune", "misc", "mount"]
 
 	for d in dts:
