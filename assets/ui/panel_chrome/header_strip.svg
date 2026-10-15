@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="8" height="52" viewBox="0 0 8 52">
-<defs><linearGradient id="header" x1="0" y1="0" x2="0" y2="1">
-<stop stop-color="#30383B"/><stop offset="0.5" stop-color="#1B252A"/><stop offset="1" stop-color="#131A1E"/>
-</linearGradient></defs>
-<rect width="8" height="52" fill="url(#header)"/>
-</svg>

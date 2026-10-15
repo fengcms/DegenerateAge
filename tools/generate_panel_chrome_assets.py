@@ -9,17 +9,6 @@ from pathlib import Path
 DESTINATION = Path(__file__).resolve().parents[1] / "assets" / "ui" / "panel_chrome"
 
 
-def header_svg() -> str:
-    """制作可横向伸展的标题带，保留确认稿从旧铁灰到深色的三段渐变。"""
-    return '''<svg xmlns="http://www.w3.org/2000/svg" width="8" height="52" viewBox="0 0 8 52">
-<defs><linearGradient id="header" x1="0" y1="0" x2="0" y2="1">
-<stop stop-color="#30383B"/><stop offset="0.5" stop-color="#1B252A"/><stop offset="1" stop-color="#131A1E"/>
-</linearGradient></defs>
-<rect width="8" height="52" fill="url(#header)"/>
-</svg>
-'''
-
-
 def action_svg(top: str, middle: str, bottom: str, border: str, shine: str) -> str:
     """制作宽度可九宫格拉伸的操作按钮；渐变沿用确认稿的三段明暗。"""
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="32" height="34" viewBox="0 0 32 34">
@@ -57,7 +46,6 @@ def circle_svg(symbol: str, top: str, middle: str, bottom: str, border: str, sym
 def main() -> None:
     """写入可直接由 Godot 导入的 SVG；每次运行覆盖同名派生素材。"""
     DESTINATION.mkdir(parents=True, exist_ok=True)
-    (DESTINATION / "header_strip.svg").write_text(header_svg(), encoding="utf-8")
     action_states = {
         "normal": ("#404440", "#242B2D", "#151C20", "#817653", "#F2DCAA"),
         "primary": ("#645B3C", "#38372A", "#1A2020", "#B69A63", "#FFF0C5"),

@@ -8,7 +8,6 @@ const TEXT := Color("e8d8ae")
 const MUTED := Color("a5adb0")
 const SURFACE := Color("111a1f")
 const SURFACE_LIGHT := Color("1b272c")
-const HEADER_STRIP := preload("res://assets/ui/panel_chrome/header_strip.svg")
 const ACTION_NORMAL := preload("res://assets/ui/panel_chrome/action_normal.svg")
 const ACTION_PRIMARY := preload("res://assets/ui/panel_chrome/action_primary.svg")
 const ACTION_HOVER := preload("res://assets/ui/panel_chrome/action_hover.svg")
@@ -46,9 +45,21 @@ func _draw() -> void:
 	var inner := PackedVector2Array([Vector2(17, 6), Vector2(w - 17, 6), Vector2(w - 6, 17),
 		Vector2(w - 6, h - 17), Vector2(w - 17, h - 6), Vector2(17, h - 6),
 		Vector2(6, h - 17), Vector2(6, 17), Vector2(17, 6)])
+	# 标题渐变贴合内层切角，不让矩形纹理填入角落的留白或覆盖折线。
+	var header_top := Color("30383b")
+	var header_middle := Color("1b252a")
+	var header_bottom := Color("131a1e")
+	var header_turn := header_top.lerp(header_middle, 8.0 / 25.0)
+	draw_polygon(PackedVector2Array([Vector2(15, 8), Vector2(w - 15, 8),
+		Vector2(w - 7, 16), Vector2(7, 16)]),
+		PackedColorArray([header_top, header_top, header_turn, header_turn]))
+	draw_polygon(PackedVector2Array([Vector2(7, 16), Vector2(w - 7, 16),
+		Vector2(w - 7, 33), Vector2(7, 33)]),
+		PackedColorArray([header_turn, header_turn, header_middle, header_middle]))
+	draw_polygon(PackedVector2Array([Vector2(7, 33), Vector2(w - 7, 33),
+		Vector2(w - 7, 57), Vector2(7, 57)]),
+		PackedColorArray([header_middle, header_middle, header_bottom, header_bottom]))
 	draw_polyline(inner, Color("594f3d"), 1.0, true)
-	# 标题带沿用确认稿的三段明暗；只横向拉伸，不改变渐变方向。
-	draw_texture_rect(HEADER_STRIP, Rect2(7, 8, w - 14, 49), false)
 	# 标题分隔仅由外框绘制；内容面板只留同高度的空隙，不再叠加 HSeparator。
 	draw_line(Vector2(25, 59), Vector2(w - 25, 59), Color("776d59"), 1.0, true)
 	for left in [true, false]:

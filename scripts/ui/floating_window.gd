@@ -33,6 +33,9 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 	# 动态列表刷新会先排入旧行的 queue_free；待最小尺寸稳定后重新夹紧浮窗。
 	panel_box.minimum_size_changed.connect(func() -> void: _layout.call_deferred())
 	owner_panel.resized.connect(_layout)
+	owner_panel.visibility_changed.connect(func() -> void:
+		if not owner_panel.visible:
+			_dragging = false)
 	_layout.call_deferred()
 
 func show_window() -> void:
@@ -40,15 +43,24 @@ func show_window() -> void:
 	bring_forward()
 
 func bring_forward() -> void:
-	var others: Array[Control] = []
+	var peers: Array[Control] = []
+	var last_peer_index := -1
 	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling != owner_panel and sibling.visible \
+		if sibling is Control and sibling.visible \
 				and String(sibling.name).to_lower().replace("panel", "") in PEERS:
-			others.append(sibling)
-	others.sort_custom(func(a: Control, b: Control) -> bool: return a.z_index < b.z_index)
-	for i in range(others.size()):
-		others[i].z_index = i + 1
-	owner_panel.z_index = others.size() + 1
+			peers.append(sibling)
+			last_peer_index = sibling.get_index()
+	# Godot 的 GUI 命中看兄弟节点顺序，不能只提高 z_index。
+	# 仅移到最后一个常驻浮窗的位置，避免越过后面的设置/模态层。
+	if owner_panel.get_index() != last_peer_index:
+		owner_panel.get_parent().move_child(owner_panel, last_peer_index)
+	peers.clear()
+	for sibling in owner_panel.get_parent().get_children():
+		if sibling is Control and sibling.visible \
+				and String(sibling.name).to_lower().replace("panel", "") in PEERS:
+			peers.append(sibling)
+	for i in range(peers.size()):
+		peers[i].z_index = i + 1
 
 func is_top_window() -> bool:
 	for sibling in owner_panel.get_parent().get_children():
@@ -59,6 +71,8 @@ func is_top_window() -> bool:
 	return true
 
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0) -> void:
+	if active:
+		_dragging = false
 	if active and not _docked:
 		_floating_position = position
 	elif not active and _docked:
@@ -91,8 +105,18 @@ func _clamp() -> void:
 	_floating_position = position
 
 func _on_box_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		bring_forward()
+	if event is InputEventMouseButton:
+		if event.pressed:
+			bring_forward()
+		if _docked or event.button_index != MOUSE_BUTTON_LEFT:
+			return
+		# 标题上沿由外框绘制，但标题 HBox 从内边距之后才开始。
+		# 只接管它上方的可见标题带；按钮所在的标题行仍由自身处理。
+		var header_top := header.global_position.y - panel_box.global_position.y
+		if event.pressed and event.position.y < header_top:
+			_start_drag(event)
+		elif not event.pressed:
+			_dragging = false
 
 func _on_header_input(event: InputEvent) -> void:
 	if _docked:
@@ -100,11 +124,27 @@ func _on_header_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			bring_forward()
-			_dragging = true
-			_user_moved = true
-			_drag_offset = owner_panel.get_local_mouse_position() - position
+			_start_drag(event)
 		else:
 			_dragging = false
-	elif event is InputEventMouseMotion and _dragging:
-		position = owner_panel.get_local_mouse_position() - _drag_offset
-		_clamp()
+
+func _input(event: InputEvent) -> void:
+	if not _dragging:
+		return
+	if event is InputEventMouseMotion:
+		_move_drag(event)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_dragging = false
+
+func _start_drag(event: InputEventMouse) -> void:
+	_dragging = true
+	_user_moved = true
+	_drag_offset = _owner_mouse_position(event) - position
+
+func _move_drag(event: InputEventMouse) -> void:
+	position = _owner_mouse_position(event) - _drag_offset
+	_clamp()
+
+func _owner_mouse_position(event: InputEventMouse) -> Vector2:
+	return owner_panel.get_global_transform_with_canvas().affine_inverse() * event.global_position
