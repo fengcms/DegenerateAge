@@ -39,8 +39,8 @@ const INNER_RANK := {
 	ORDER_MISC: 8,
 }
 
-## 1 格（7.1：tileW=64）。
-const TILE := 64.0
+## 1 格（7.1：tileW=64）；像素换算单一来源见 Iso.TILE_W。
+const TILE := Iso.TILE_W
 ## 时序（§9 表，单位 s；键＝敌人档次；normal 为普通怪取的温和值，§9 只规定精英 / Boss）。
 const BASE_START := {"normal": 0.0, "elite": 0.15, "boss": 0.45}
 const BASE_STEP := 0.05

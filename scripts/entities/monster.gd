@@ -67,7 +67,7 @@ var state: int = State.IDLE
 # ---- 由模板派生的 AI 参数 ----
 var aggro_range: float = AGGRO_RANGE
 var leash_range: float = LEASH_RANGE
-var attack_range_px: float = 64.0
+var attack_range_px: float = Iso.TILE_W   # 1 格默认（7.1：tileW=64，单一来源 Iso.TILE_W）
 var attack_interval: float = 1.2
 var attack_power: float = 0.0
 var move_speed_px: float = 0.0

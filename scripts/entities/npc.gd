@@ -9,7 +9,7 @@ extends Node2D
 ## 碰撞：MVP 不加碰撞体（避免把玩家卡住）；M3 补静态碰撞与逐句对话推进。
 
 ## 交互半径 2 格（6.3 安全区交互距离）
-const INTERACT_RANGE := 2.0 * 64.0
+const INTERACT_RANGE := 2.0 * Iso.TILE_W   # 2 格（7.1：tileW=64，单一来源 Iso.TILE_W）
 
 const COLOR_CLOAK := Color("7d6ac8")
 const COLOR_CLOAK_EDGE := Color("3b3268")

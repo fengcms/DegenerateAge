@@ -22,7 +22,7 @@ extends Node2D
 
 const MONO_FONT := preload("res://assets/themes/mono_font.tres")
 
-const PICKUP_RANGE_PX := 1.5 * 64.0   # 1.5 格（7.1：tileW=64）
+const PICKUP_RANGE_PX := 1.5 * Iso.TILE_W   # 1.5 格（7.1：tileW=64，单一来源 Iso.TILE_W）
 const LIFETIME := 60.0                 # 未认领物的地面存在时长（s）
 const BLOCK_TOAST_CD := 1.5            # 「背包已满」提示节流（s）
 const DROP_ARC_TIME := 0.32            # 出场落地弧线时长（s，默认值；实际由 `land_time` 决定）

@@ -2,7 +2,7 @@ extends Node2D
 ## 主动技能的短暂程序范围提示；与伤害结算解耦，不改变实际命中范围。
 
 var shape := "circle"
-var radius := 64.0
+var radius := Iso.TILE_W   # 默认 1 格（7.1：tileW=64，单一来源 Iso.TILE_W）
 var facing := Vector2.RIGHT
 var age := 0.0
 

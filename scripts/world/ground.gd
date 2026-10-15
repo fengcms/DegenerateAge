@@ -438,12 +438,12 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 	if not _chapter_one_road_rows.is_empty():
 		active_tiles = tiles + _chapter_one_road_edges()
 	if _tile_atlas == null or _atlas_tiles != active_tiles:
-		var atlas := Image.create(64 * active_tiles.size(), 32, false, Image.FORMAT_RGBA8)
+		var atlas := Image.create(int(Iso.TILE_W) * active_tiles.size(), int(Iso.TILE_H), false, Image.FORMAT_RGBA8)
 		for i in range(active_tiles.size()):
 			var image := (active_tiles[i] as Texture2D).get_image()
-			assert(image.get_size() == Vector2i(64, 32), "Floor tiles must be 64x32")
+			assert(image.get_size() == Vector2i(int(Iso.TILE_W), int(Iso.TILE_H)), "Floor tiles must be 64x32")
 			image.convert(Image.FORMAT_RGBA8)
-			atlas.blit_rect(image, Rect2i(0, 0, 64, 32), Vector2i(i * 64, 0))
+			atlas.blit_rect(image, Rect2i(0, 0, int(Iso.TILE_W), int(Iso.TILE_H)), Vector2i(i * int(Iso.TILE_W), 0))
 		_tile_atlas = ImageTexture.create_from_image(atlas)
 		_atlas_tiles = active_tiles
 	var builder := FlatTileMesh.new(grid_size.x * grid_size.y, true)
@@ -464,11 +464,11 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 					tile = 3
 				if not camp_style and absi(row - grid_size.y / 2) <= 1:
 					tile = 3
-			var origin := Iso.grid_to_world(cell) - Vector2(32, 16)
+			var origin := Iso.grid_to_world(cell) - Vector2(Iso.HALF_W, Iso.HALF_H)
 			var u0 := float(tile) / active_tiles.size()
 			var u1 := float(tile + 1) / active_tiles.size()
 			builder.add_quad(PackedVector2Array([
-				origin, origin + Vector2(64, 0), origin + Vector2(64, 32), origin + Vector2(0, 32),
+				origin, origin + Vector2(Iso.TILE_W, 0), origin + Vector2(Iso.TILE_W, Iso.TILE_H), origin + Vector2(0, Iso.TILE_H),
 			]), PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]))
 	_tile_mesh = builder.build()
 	if _tile_mesh != null:
@@ -516,11 +516,11 @@ func _draw_chapter_one_blocked_floor() -> void:
 	for cell: Vector2i in cells:
 		var variation := posmod(cell.x * 17 + cell.y * 23, 7)
 		var tile := 2 if variation == 0 else 1 if variation == 1 else 0
-		var origin := Iso.grid_to_world(cell) - Vector2(32, 16)
+		var origin := Iso.grid_to_world(cell) - Vector2(Iso.HALF_W, Iso.HALF_H)
 		var u0 := float(tile) / tile_count
 		var u1 := float(tile + 1) / tile_count
 		builder.add_quad(PackedVector2Array([
-			origin, origin + Vector2(64, 0), origin + Vector2(64, 32), origin + Vector2(0, 32),
+			origin, origin + Vector2(Iso.TILE_W, 0), origin + Vector2(Iso.TILE_W, Iso.TILE_H), origin + Vector2(0, Iso.TILE_H),
 		]), PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]))
 	_blocked_mesh = builder.build()
 	if _blocked_mesh == null:
@@ -532,15 +532,15 @@ func _draw_chapter_one_blocked_floor() -> void:
 func _collect_cave_edges(cell: Vector2i, center: Vector2, wall_edges: Array, endpoint_counts: Dictionary) -> void:
 	# Rear edges hang down onto the floor, reading as an interior cave wall.
 	if not cave.is_walkable(cell + Vector2i(1, 0)):
-		_add_cave_wall_edge(center + Vector2(0, -16), center + Vector2(32, 0), cell, wall_edges, endpoint_counts)
+		_add_cave_wall_edge(center + Vector2(0, -Iso.HALF_H), center + Vector2(Iso.HALF_W, 0), cell, wall_edges, endpoint_counts)
 	if not cave.is_walkable(cell + Vector2i(0, 1)):
-		_add_cave_wall_edge(center + Vector2(-32, 0), center + Vector2(0, -16), cell, wall_edges, endpoint_counts)
+		_add_cave_wall_edge(center + Vector2(-Iso.HALF_W, 0), center + Vector2(0, -Iso.HALF_H), cell, wall_edges, endpoint_counts)
 	# The screen-facing edges stay flush with the floor. A thin rocky seam
 	# joins stepped wall runs without adding another exposed cliff face.
 	if not cave.is_walkable(cell + Vector2i(-1, 0)):
-		_draw_cave_seam(center + Vector2(-32, 0), center + Vector2(0, 16), cell)
+		_draw_cave_seam(center + Vector2(-Iso.HALF_W, 0), center + Vector2(0, Iso.HALF_H), cell)
 	if not cave.is_walkable(cell + Vector2i(0, -1)):
-		_draw_cave_seam(center + Vector2(0, 16), center + Vector2(32, 0), cell)
+		_draw_cave_seam(center + Vector2(0, Iso.HALF_H), center + Vector2(Iso.HALF_W, 0), cell)
 
 ## 向本帧洞壁绘制列表增加一条边，同时累加两个端点的连接数。
 func _add_cave_wall_edge(a: Vector2, b: Vector2, cell: Vector2i, wall_edges: Array, endpoint_counts: Dictionary) -> void:
