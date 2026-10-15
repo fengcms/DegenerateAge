@@ -2,7 +2,8 @@ extends Node
 ## DataLoader — 数据加载与校验（单例 / Autoload）。
 ##
 ## 职责：
-##   1. 读取 res://data/ 下的 15 个 JSON 配置（见 docs/产品文档/10 数据配置与存档技术）。
+##   1. 读取 res://data/ 下由 TABLES 登记的 JSON 配置表（见 docs/产品文档/10 数据配置与存档技术）。
+##      文案表 `localization.json` 由 `Localization` 独立加载，**不在此列**（B-P3-2：避免双份内存与漂移）。
 ##   2. 在启动时执行校验（ID 唯一 / 引用合法 / 等级范围），非法时明确报错而非静默。
 ## 数据全部文本可编辑——新增物品 / 怪物只需加 JSON 条目，无需改代码。
 
@@ -26,7 +27,6 @@ const TABLES := {
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",
 	"maps": "maps.json",
-	"localization": "localization.json",
 }
 
 ## 需要做「ID 唯一」校验的表（数组型）。
