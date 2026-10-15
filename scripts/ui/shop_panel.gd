@@ -20,7 +20,6 @@ const TRAY_COLUMNS := 6
 const TRAY_ROWS := 4
 const TRADE_GAP := 12.0
 
-const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
 const COL_SLOT_BG := Color(0.13, 0.14, 0.17, 0.95)
 const COL_SLOT_EMPTY := Color(0.10, 0.11, 0.13, 0.92)
@@ -165,9 +164,8 @@ func _build() -> void:
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 
-	var box := PanelContainer.new()
+	var box := PanelChrome.new()
 	_box = box
-	box.add_theme_stylebox_override("panel", _panel_style())
 	_center.add_child(box)
 
 	var margin := MarginContainer.new()
@@ -322,14 +320,6 @@ func _tray_grid_holder(page: VBoxContainer) -> void:
 		b.pressed.connect(_on_tray_slot_pressed.bind(i))
 		grid.add_child(b)
 		_tray_slots.append(b)
-
-func _panel_style() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = COL_PANEL
-	sb.border_color = COL_BORDER
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(8)
-	return sb
 
 func _slot_style(bg: Color, border: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
