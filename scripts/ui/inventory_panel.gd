@@ -180,9 +180,7 @@ func _build() -> void:
 	PanelChrome.style_close(close)
 	_center.setup(self, box, head, Vector2(0.02, 0.18))
 
-	var footer_divider := HSeparator.new()
-	PanelChrome.style_separator(footer_divider)
-	root.add_child(footer_divider)
+	root.add_child(PanelChrome.make_title_gap())
 
 	# 背包只管理物品；穿戴槽与战斗属性统一放到人物面板。
 	var right := VBoxContainer.new()

@@ -77,9 +77,7 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
-	var divider := HSeparator.new()
-	PanelChrome.style_separator(divider)
-	root.add_child(divider)
+	root.add_child(PanelChrome.make_title_gap())
 	_greeting_card = PanelContainer.new()
 	PanelChrome.style_card(_greeting_card as PanelContainer)
 	_greeting_card.size_flags_vertical = Control.SIZE_EXPAND_FILL

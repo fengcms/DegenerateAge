@@ -204,9 +204,7 @@ func _build() -> void:
 	head.add_child(close)
 	PanelChrome.style_close(close)
 
-	var divider := HSeparator.new()
-	PanelChrome.style_separator(divider)
-	root.add_child(divider)
+	root.add_child(PanelChrome.make_title_gap())
 
 	_tabs = TabContainer.new()
 	_tabs.custom_minimum_size = Vector2(BUY_ROW_MIN.x, 400)

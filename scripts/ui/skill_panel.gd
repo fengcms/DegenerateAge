@@ -77,9 +77,7 @@ func _build() -> void:
 	head.add_child(close)
 	PanelChrome.style_close(close)
 	_center.setup(self, panel, head, Vector2(0.02, 0.18))
-	var divider := HSeparator.new()
-	PanelChrome.style_separator(divider)
-	root.add_child(divider)
+	root.add_child(PanelChrome.make_title_gap())
 	var section := Label.new()
 	section.text = "可用技能"
 	PanelChrome.style_section(section)
