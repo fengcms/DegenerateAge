@@ -1,0 +1,75 @@
+{
+  "style": "B",
+  "layout_id": "camp_whitebox_v1",
+  "canvas": [
+    1672,
+    941
+  ],
+  "patch": [
+    0,
+    60,
+    1250,
+    790
+  ],
+  "ground": "res://assets/maps/camp_style_sample/b/ground.png",
+  "objects": [
+    {
+      "id": "blacksmith",
+      "rect": [
+        230,
+        120,
+        310,
+        190
+      ],
+      "foot_y": 310,
+      "back": "res://assets/maps/camp_style_sample/b/blacksmith_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/blacksmith_front.png"
+    },
+    {
+      "id": "merchant",
+      "rect": [
+        305,
+        315,
+        310,
+        165
+      ],
+      "foot_y": 482,
+      "back": "res://assets/maps/camp_style_sample/b/merchant_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/merchant_front.png"
+    },
+    {
+      "id": "elder_tree",
+      "rect": [
+        955,
+        225,
+        260,
+        195
+      ],
+      "foot_y": 418,
+      "back": "res://assets/maps/camp_style_sample/b/elder_tree_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/elder_tree_front.png"
+    },
+    {
+      "id": "northwest_palisade",
+      "rect": [
+        0,
+        51,
+        760,
+        78
+      ],
+      "foot_y": 120,
+      "front": "res://assets/maps/camp_style_sample/b/northwest_palisade_front.png"
+    },
+    {
+      "id": "western_rocks",
+      "rect": [
+        0,
+        450,
+        95,
+        400
+      ],
+      "foot_y": 850,
+      "front": "res://assets/maps/camp_style_sample/b/western_rocks_front.png"
+    }
+  ]
+}

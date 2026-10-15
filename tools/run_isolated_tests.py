@@ -29,7 +29,7 @@ DEFAULT_TESTS = [
 ]
 
 ## 仅作夹具、自身不输出成功完成标记的场景，不纳入 `--all`。
-FIXTURE_SCENES = {"CampWhitebox"}
+FIXTURE_SCENES = {"CampWhitebox", "CampStyleSample"}
 
 
 def discover_all_tests() -> list[str]:
