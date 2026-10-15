@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1672" height="1190" viewBox="0 0 1672 1190">
+  <title>幸存者营地 · 通行与实体覆盖图 v1</title>
+  <desc>在整图视觉设计稿上标出拟保留的主通行廊道、服务支路、大型实体地面碰撞足迹、屋顶树冠的视觉覆盖及交互点。仅作设计审查，未换算为游戏格或经过实机碰撞测试。</desc>
+  <defs>
+    <style>
+      text { font-family: 'STHeiti', 'Heiti SC', sans-serif; fill: #f6f0db; }
+      .small { font-size: 23px; }
+      .body { font-size: 24px; }
+      .title { font-size: 35px; font-weight: bold; }
+      .badge { font-size: 24px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+      .visual { stroke-linejoin: round; }
+      .solid { fill: #ff676f; fill-opacity: .32; stroke: #ff8588; stroke-width: 4; stroke-linejoin: round; }
+      .main { fill: none; stroke: #45e2b0; stroke-width: 72; stroke-opacity: .30; stroke-linejoin: round; stroke-linecap: round; }
+      .branch { fill: none; stroke: #70bfff; stroke-width: 50; stroke-opacity: .31; stroke-linejoin: round; stroke-linecap: round; }
+      .center { fill: none; stroke: #d7fff0; stroke-width: 3; stroke-opacity: .85; stroke-dasharray: 12 10; stroke-linejoin: round; stroke-linecap: round; }
+      .point { fill: #ffe173; stroke: #272922; stroke-width: 3; }
+    </style>
+    <marker id="arrow-main" markerWidth="13" markerHeight="13" refX="9" refY="6.5" orient="auto">
+      <path d="M 0 0 L 12 6.5 L 0 13 Z" fill="#d7fff0"/>
+    </marker>
+  </defs>
+
+  <rect width="1672" height="1190" fill="#191e1b"/>
+  <text fill="#f6f0db" x="45" y="45" class="title">幸存者营地 · 通行与实体覆盖图</text>
+  <text fill="#f6f0db" x="1330" y="45" class="small">设计验证 v1</text>
+  <g transform="translate(0 66)">
+    <image href="幸存者营地-v1.png" width="1672" height="941"/>
+    <rect width="1672" height="941" fill="#111814" fill-opacity=".14"/>
+
+    <!-- 这些宽带表示应为玩家留出的空间，不是已测量的世界像素通道。 -->
+    <path class="main" d="M 8 444 C 142 430 202 460 292 486 C 400 511 541 478 662 484 C 777 486 840 476 959 477 C 1072 480 1192 478 1270 474 C 1398 458 1532 482 1654 478"/>
+    <path class="center" d="M 8 444 C 142 430 202 460 292 486 C 400 511 541 478 662 484 C 777 486 840 476 959 477 C 1072 480 1192 478 1270 474 C 1398 458 1532 482 1654 478" marker-end="url(#arrow-main)"/>
+    <path class="branch" d="M 853 476 C 874 421 897 372 879 322 C 858 245 816 180 826 87 L 834 32"/>
+    <path class="branch" d="M 235 465 C 205 419 194 365 239 346 L 352 335"/>
+    <path class="branch" d="M 915 470 C 929 401 913 348 964 326 L 1088 322"/>
+    <path class="branch" d="M 493 482 L 509 458"/>
+    <path class="branch" d="M 1060 475 L 1108 441"/>
+    <path class="branch" d="M 810 485 C 861 544 846 603 800 648 C 776 672 727 677 685 670"/>
+    <path class="branch" d="M 1000 482 C 957 541 934 615 976 693 L 1046 727"/>
+    <path class="center" d="M 853 476 C 874 421 897 372 879 322 C 858 245 816 180 826 87 L 834 9" marker-end="url(#arrow-main)"/>
+
+    <!-- 虚线只标出上方可见的屋顶、棚面或树冠；碰撞应落在各对象接地的红色区域。 -->
+    <path class="visual" fill="#c68eff" fill-opacity=".17" stroke="#e1a9ff" stroke-width="6" d="M 154 219 L 207 138 L 425 90 L 555 139 L 602 262 L 443 305 L 225 309 Z"/>
+    <path class="visual" fill="#c68eff" fill-opacity=".17" stroke="#e1a9ff" stroke-width="6" d="M 953 194 L 1005 106 L 1216 70 L 1330 146 L 1304 282 L 1005 288 Z"/>
+    <path class="visual" fill="#c68eff" fill-opacity=".17" stroke="#e1a9ff" stroke-width="6" d="M 284 373 L 361 310 L 539 314 L 633 372 L 616 477 L 304 478 Z"/>
+    <path class="visual" fill="#c68eff" fill-opacity=".17" stroke="#e1a9ff" stroke-width="6" d="M 732 304 L 779 273 L 824 305 L 832 426 L 742 435 Z"/>
+    <path class="visual" fill="#c68eff" fill-opacity=".17" stroke="#e1a9ff" stroke-width="6" d="M 926 337 Q 1001 245 1091 262 Q 1188 281 1218 363 L 1140 424 L 965 420 Z"/>
+    <path class="visual" fill="#c68eff" fill-opacity=".17" stroke="#e1a9ff" stroke-width="6" d="M 902 557 L 989 512 L 1226 541 L 1395 590 L 1375 713 L 941 725 Z"/>
+
+    <path class="solid" d="M 242 267 L 506 270 L 513 305 L 267 317 Z"/>
+    <path class="solid" d="M 993 246 L 1282 236 L 1302 281 L 1009 292 Z"/>
+    <path class="solid" d="M 314 437 L 602 439 L 616 471 L 306 482 Z"/>
+    <path class="solid" d="M 757 402 L 819 401 L 826 445 L 750 446 Z"/>
+    <ellipse class="solid" cx="1074" cy="397" rx="27" ry="21"/>
+    <path class="solid" d="M 984 607 L 1124 566 L 1319 595 L 1353 680 L 1228 710 L 1022 680 Z"/>
+    <ellipse class="solid" cx="595" cy="620" rx="19" ry="13"/>
+    <ellipse class="solid" cx="679" cy="620" rx="19" ry="13"/>
+    <ellipse class="solid" cx="751" cy="622" rx="19" ry="13"/>
+    <ellipse class="solid" cx="656" cy="660" rx="25" ry="15"/>
+
+    <circle class="point" cx="351" cy="335" r="11"/>
+    <circle class="point" cx="1102" cy="323" r="11"/>
+    <circle class="point" cx="507" cy="503" r="11"/>
+    <circle class="point" cx="1109" cy="450" r="11"/>
+    <circle class="point" cx="1044" cy="727" r="11"/>
+
+    <!-- 这两处栅栏开口尚未由可运行布局证明，开发前必须落实。 -->
+    <circle cx="828" cy="576" r="20" fill="#eaa546"/>
+    <text fill="#f6f0db" x="819" y="585" class="body">!</text>
+    <circle cx="1380" cy="475" r="20" fill="#eaa546"/>
+    <text fill="#f6f0db" x="1371" y="484" class="body">!</text>
+
+    <g><circle cx="370" cy="227" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="370" y="229" class="badge">1</text></g>
+    <g><circle cx="1170" cy="212" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="1170" y="214" class="badge">2</text></g>
+    <g><circle cx="447" cy="414" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="447" y="416" class="badge">3</text></g>
+    <g><circle cx="790" cy="380" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="790" y="382" class="badge">4</text></g>
+    <g><circle cx="1075" cy="359" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="1075" y="361" class="badge">5</text></g>
+    <g><circle cx="1191" cy="641" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="1191" y="643" class="badge">6</text></g>
+    <g><circle cx="682" cy="563" r="23" fill="#191e1b" stroke="#ff8588" stroke-width="3"/><text fill="#f6f0db" x="682" y="565" class="badge">7</text></g>
+
+    <rect x="756" y="9" width="184" height="40" rx="8" fill="#192723" fill-opacity=".90"/>
+    <text fill="#f6f0db" x="773" y="38" class="small">北 · 沉井镇方向</text>
+    <rect x="1435" y="410" width="211" height="40" rx="8" fill="#192723" fill-opacity=".90"/>
+    <text fill="#f6f0db" x="1450" y="439" class="small">东 · 试炼野外</text>
+  </g>
+
+  <g transform="translate(0 1021)">
+    <circle cx="1360" cy="92" r="15" fill="#eaa546"/>
+    <text fill="#f6f0db" x="1390" y="100" class="body">待确认栅门开口</text>
+    <line x1="45" y1="38" x2="115" y2="38" stroke="#45e2b0" stroke-width="22" stroke-opacity=".65" stroke-linecap="round"/>
+    <text fill="#f6f0db" x="135" y="46" class="body">主通行廊道</text>
+    <line x1="390" y1="38" x2="460" y2="38" stroke="#70bfff" stroke-width="22" stroke-opacity=".7" stroke-linecap="round"/>
+    <text fill="#f6f0db" x="480" y="46" class="body">服务与训练支路</text>
+    <rect x="756" y="22" width="55" height="31" fill="#ff676f" fill-opacity=".45" stroke="#ff8588" stroke-width="3"/>
+    <text fill="#f6f0db" x="830" y="46" class="body">实体接地碰撞</text>
+    <rect x="1131" y="22" width="55" height="31" fill="#c68eff" fill-opacity=".3" stroke="#e1a9ff" stroke-width="4"/>
+    <text fill="#f6f0db" x="1203" y="46" class="body">屋顶 / 树冠视觉范围</text>
+    <circle cx="57" cy="92" r="11" class="point"/>
+    <text fill="#f6f0db" x="82" y="100" class="body">NPC 交互预留点</text>
+    <text fill="#f6f0db" x="390" y="100" class="body">1 铁匠　2 仓库　3 货郎　4 镇灵灯　5 长老树　6 马车　7 木桩 / 营火</text>
+    <text fill="#f6f0db" x="45" y="150" class="small">仅供原画审查：宽带与碰撞轮廓均为概念估计，尚未换算为 64×32 格、实际玩家半径或实机寻路结果。</text>
+  </g>
+</svg>
