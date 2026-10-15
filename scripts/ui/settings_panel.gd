@@ -11,7 +11,7 @@ const ACTION_NAMES := {
 var _key_list: VBoxContainer
 var _capture_action := ""
 var _capture_label: Label
-var _conflict: ConfirmationDialog
+var _conflict: PanelConfirmDialog
 var _pending_action := ""
 var _pending_code := 0
 var _layout_root: VBoxContainer
@@ -65,6 +65,8 @@ func set_open(open: bool) -> void:
 		EventBus.panel_opened.emit("settings")
 	else:
 		_capture_action = ""
+		if _conflict != null:
+			_conflict.hide()
 
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id != "settings" and visible:
@@ -114,7 +116,7 @@ func _build() -> void:
 	_build_game(tabs)
 	_build_controls(tabs)
 	_build_data(tabs)
-	_conflict = ConfirmationDialog.new()
+	_conflict = PanelConfirmDialog.new()
 	_conflict.title = Localization.tr_key("ui.settings_panel.p008")
 	_conflict.confirmed.connect(_confirm_swap)
 	add_child(_conflict)

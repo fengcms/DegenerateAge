@@ -9,17 +9,11 @@ extends Control
 ##   「读取」载入该槽 → 关面板 → 重载世界（销旧怪物 / 掉落 / 面板状态，见工程文档 06 §5）；
 ##   「删除」两段式二次确认（9.4），删除后清空该槽。
 ## 面板互斥：与背包 / 货郎同规则（09.2），同一时刻只开一个关闭式面板。
-## 占位素材（R5）：纯文本 + 描边卡片，不加载图标。
+## 三张存档卡沿用共用面板材质；确认弹层不改变原有存档事务。
 
 const PANEL_ID := "save"
 const CARD_MIN := Vector2(560, 0)
 
-const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
-const COL_CARD := Color(0.11, 0.12, 0.15, 0.95)
-const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
-const COL_TEXT := Color(0.90, 0.92, 0.95)
-const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
-const COL_GOLD := Color(0.94, 0.78, 0.38)
 const COL_WARN := Color(0.92, 0.55, 0.45)
 const COL_OK := Color(0.56, 0.82, 0.48)
 
@@ -30,7 +24,7 @@ var _mode := "manage"
 var _hint: Label
 var _name_row: HBoxContainer
 var _name_input: LineEdit
-var _overwrite_dialog: ConfirmationDialog
+var _overwrite_dialog: PanelConfirmDialog
 var _pending_overwrite := -1
 
 func _ready() -> void:
@@ -61,6 +55,9 @@ func set_open(open: bool) -> void:
 	if open:
 		EventBus.panel_opened.emit(PANEL_ID)
 		_refresh()
+	elif _overwrite_dialog != null:
+		_overwrite_dialog.hide()
+		_pending_overwrite = -1
 
 ## 其他面板打开时自动关闭本面板，保证互斥。
 func _on_panel_opened(panel_id: String) -> void:
@@ -83,14 +80,12 @@ func _build() -> void:
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 
-	var box := PanelContainer.new()
-	box.add_theme_stylebox_override("panel", _panel_style())
+	var box := PanelChrome.new()
 	_center.add_child(box)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
 	margin.add_theme_constant_override("margin_bottom", 12)
 	box.add_child(margin)
 
@@ -100,10 +95,12 @@ func _build() -> void:
 
 	var head := HBoxContainer.new()
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.save_panel.p001")
 	title.add_theme_font_size_override("font_size", 18)
 	head.add_child(title)
+	PanelChrome.style_title(title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
@@ -112,8 +109,9 @@ func _build() -> void:
 	close.custom_minimum_size = Vector2(32, 28)
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
 
-	root.add_child(HSeparator.new())
+	root.add_child(PanelChrome.make_title_gap())
 	_name_row = HBoxContainer.new()
 	var name_label := Label.new()
 	name_label.text = Localization.tr_key("ui.save_panel.p002")
@@ -123,32 +121,37 @@ func _build() -> void:
 	_name_input.max_length = 16
 	_name_input.custom_minimum_size = Vector2(190, 30)
 	_name_row.add_child(_name_input)
+	PanelChrome.style_line_edit(_name_input)
 	var class_label := Label.new()
 	class_label.text = Localization.tr_key("ui.save_panel.p004")
 	_name_row.add_child(class_label)
 	root.add_child(_name_row)
 
-	root.add_child(HSeparator.new())
+	var name_divider := HSeparator.new()
+	root.add_child(name_divider)
+	PanelChrome.style_separator(name_divider)
 
 	for i in range(1, SaveManager.MAX_SLOTS + 1):
 		_build_card(i, root)
 
-	root.add_child(HSeparator.new())
+	var card_divider := HSeparator.new()
+	root.add_child(card_divider)
+	PanelChrome.style_separator(card_divider)
 
 	_hint = Label.new()
 	_hint.add_theme_font_size_override("font_size", 12)
-	_hint.add_theme_color_override("font_color", COL_TEXT_DIM)
+	_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.custom_minimum_size = CARD_MIN
 	root.add_child(_hint)
-	_overwrite_dialog = ConfirmationDialog.new()
+	_overwrite_dialog = PanelConfirmDialog.new()
 	_overwrite_dialog.title = Localization.tr_key("ui.save_panel.p005")
 	_overwrite_dialog.confirmed.connect(_on_overwrite_confirmed)
 	add_child(_overwrite_dialog)
 
 func _build_card(slot: int, parent: Node) -> void:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _card_style())
+	PanelChrome.style_card(card)
 	parent.add_child(card)
 
 	var m := MarginContainer.new()
@@ -171,12 +174,12 @@ func _build_card(slot: int, parent: Node) -> void:
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.save_panel.p006") % slot
 	title.add_theme_font_size_override("font_size", 15)
-	title.add_theme_color_override("font_color", COL_TEXT)
+	title.add_theme_color_override("font_color", PanelChrome.TEXT)
 	col.add_child(title)
 
 	var info := Label.new()
 	info.add_theme_font_size_override("font_size", 13)
-	info.add_theme_color_override("font_color", COL_TEXT_DIM)
+	info.add_theme_color_override("font_color", PanelChrome.MUTED)
 	col.add_child(info)
 
 	var btns := HBoxContainer.new()
@@ -219,23 +222,8 @@ func _make_button(text: String) -> Button:
 	b.add_theme_font_size_override("font_size", 13)
 	# 不可用态明显置灰（空槽的「读取 / 删除」）
 	b.add_theme_color_override("font_disabled_color", Color(0.34, 0.36, 0.40))
+	PanelChrome.style_action(b)
 	return b
-
-func _panel_style() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = COL_PANEL
-	sb.border_color = COL_BORDER
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(8)
-	return sb
-
-func _card_style() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = COL_CARD
-	sb.border_color = COL_BORDER
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(6)
-	return sb
 
 # ---- 刷新 ----
 
@@ -262,7 +250,7 @@ func _refresh() -> void:
 				tag, String(s.get("name", "")), int(s.get("level", 1)), int(s.get("gold", 0)),
 				String(s.get("mapName", "")), String(s.get("savedAt", "")), src,
 			]
-			info.add_theme_color_override("font_color", COL_TEXT if active else COL_TEXT_DIM)
+			info.add_theme_color_override("font_color", PanelChrome.TEXT if active else PanelChrome.MUTED)
 			if not String(s.get("message", "")).is_empty():
 				info.text += "\n⚠ " + String(s.get("message", ""))
 				info.add_theme_color_override("font_color", COL_WARN)
@@ -276,13 +264,13 @@ func _refresh() -> void:
 			c.del.disabled = false
 		else:
 			info.text = Localization.tr_key("ui.save_panel.p015")
-			info.add_theme_color_override("font_color", COL_TEXT_DIM)
+			info.add_theme_color_override("font_color", PanelChrome.MUTED)
 			c.load.disabled = true
 			c.del.disabled = true
 
 		c.save.visible = _mode != "load"
 		c.save.text = (Localization.tr_key("ui.save_panel.p016") if bool(s.get("exists", false)) else Localization.tr_key("ui.save_panel.p017")) if _mode == "new" else Localization.tr_key("ui.save_panel.p007")
-		c.save.add_theme_color_override("font_color", COL_OK if active else COL_TEXT)
+		c.save.add_theme_color_override("font_color", COL_OK if active else PanelChrome.TEXT)
 
 # ---- 操作 ----
 

@@ -213,6 +213,14 @@ static func style_progress(bar: ProgressBar) -> void:
 	bar.add_theme_stylebox_override("background", track)
 	bar.add_theme_stylebox_override("fill", fill)
 
+## 存档命名等单行输入框沿用深色面板与细金边，保留原生文字编辑行为。
+static func style_line_edit(edit: LineEdit) -> void:
+	edit.add_theme_stylebox_override("normal", _button_style(SURFACE_LIGHT, Color("706750")))
+	edit.add_theme_stylebox_override("focus", _focus_style(3))
+	edit.add_theme_stylebox_override("read_only", _button_style(SURFACE, Color("405056")))
+	edit.add_theme_color_override("font_color", TEXT)
+	edit.add_theme_color_override("font_placeholder_color", MUTED)
+
 ## 为页签和内容卡片提供平面底框；操作按钮改用纹理，不再调用本函数。
 static func _button_style(bg: Color, border: Color, radius: int = 3) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
