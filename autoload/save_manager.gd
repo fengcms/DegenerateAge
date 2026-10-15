@@ -591,6 +591,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.reset_equipment_prompt_session()
 	GameState.skill_cooldowns = {}
 	GameState.clear_buffs()
+	# 5.11：药水冷却同为运行态、不落档，读档后须与技能冷却一并清零。
+	Consumable.reset()
 
 	if data.get("player", null) is Dictionary:
 		GameState.player = _migrate_player(data["player"] as Dictionary)

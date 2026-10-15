@@ -2305,11 +2305,16 @@ func _test_save() -> void:
 	# ---- ② 退出（重置）→ 重进（读档）后逐字段一致 ----
 	GameState.reset_to_defaults()
 	_expect(GameState.gold == 0 and int(GameState.player.level) == 1, "重置后应回到初始状态")
+	# 预置运行态药水冷却，验证读档会清零（5.11：冷却不落档）
+	Consumable._cd["potion_hp_small"] = 5.0
 
 	var res := SaveManager.read_slot(SLOT)
 	_expect(bool(res.get("ok", false)), "读档应成功")
 	_expect(String(res.get("source", "")) == "main", "正常读档来源应为主档")
 	SaveManager.apply_to_game_state(res.get("data", {}))
+
+	_expect(Consumable.cd_of("potion_hp_small") == 0.0,
+		"读档后药水冷却应清零（5.11：冷却为运行态、不落档）")
 
 	_expect(int(GameState.player.level) == 7, "读档后等级应为 7，实际 %d" % int(GameState.player.level))
 	_expect(int(GameState.player.xp) == 33, "读档后经验应为 33，实际 %d" % int(GameState.player.xp))
