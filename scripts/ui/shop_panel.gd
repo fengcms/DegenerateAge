@@ -223,10 +223,12 @@ func _build() -> void:
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 	root.add_child(hint)
 
+## 构建购买列表的纵向滚动容器；商品说明须在容器宽度内换行，不启用横向滚动。
 func _build_buy_page() -> Control:
 	var page := ScrollContainer.new()
 	page.name = "Buy"
 	page.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_buy_list = VBoxContainer.new()
 	_buy_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_buy_list.add_theme_constant_override("separation", 10)
@@ -366,39 +368,42 @@ func _rebuild_buy() -> void:
 		if it is Dictionary:
 			_buy_list.add_child(_make_buy_row(it))
 
-## 金币变化时只更新价格颜色（金币不足转灰），不重建整页。
+## 金币变化时遍历商品行内的价格标签并更新颜色，不重建整页。
 func _refresh_buy_prices() -> void:
 	if _buy_list == null:
 		return
 	for row in _buy_list.get_children():
-		for c in row.get_children():
+		for c in row.find_children("*", "Label", true, false):
 			if c is Label and String(c.get_meta("role", "")) == "price":
 				var price := int(c.get_meta("price", 0))
 				c.add_theme_color_override("font_color", COL_GOLD if GameState.gold >= price else COL_TEXT_DIM)
 
+## 商品名称、价格和按钮同排；较长说明单独占下一行，避免把购买按钮挤出滚动视口。
 func _make_buy_row(e: Dictionary) -> Control:
 	var item_id := String(e.get("itemId", ""))
 	var price := int(e.get("price", 0))
 	var proto := Shop.make_item(item_id)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 2)
-	row.add_child(info)
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	var headline := HBoxContainer.new()
+	headline.add_theme_constant_override("separation", 10)
+	row.add_child(headline)
 
 	var nm := Label.new()
 	nm.text = item_id if proto.is_empty() else ItemUtil.display_name(proto)
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nm.add_theme_font_size_override("font_size", 15)
-	info.add_child(nm)
+	headline.add_child(nm)
 
 	var desc := Label.new()
 	desc.text = Localization.tr_key("ui.shop_panel.p013") % [Shop.describe(item_id), _owned_count(item_id)]
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desc.add_theme_font_size_override("font_size", 12)
 	desc.add_theme_color_override("font_color", COL_TEXT_DIM)
-	info.add_child(desc)
+	row.add_child(desc)
 
 	var pr := Label.new()
 	pr.text = Localization.tr_key("ui.shop_panel.p014") % price
@@ -409,13 +414,13 @@ func _make_buy_row(e: Dictionary) -> Control:
 	pr.add_theme_color_override("font_color", COL_GOLD if GameState.gold >= price else COL_TEXT_DIM)
 	pr.set_meta("role", "price")
 	pr.set_meta("price", price)
-	row.add_child(pr)
+	headline.add_child(pr)
 
 	var buy := Button.new()
 	buy.text = Localization.tr_key("ui.shop_panel.p002")
 	buy.custom_minimum_size = Vector2(72, 30)
 	buy.pressed.connect(_on_buy_pressed.bind(item_id))
-	row.add_child(buy)
+	headline.add_child(buy)
 	PanelChrome.style_action(buy, true)
 
 	return row
