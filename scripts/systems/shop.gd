@@ -101,13 +101,13 @@ static func base_value(item: Dictionary) -> int:
 		return price
 	return 0
 
-## 实例品质：优先实例自带，缺失时回退模板（5.7）。
+## 实例品质：优先实例自带，缺失时回退模板（5.7）。模板字段名为 `defaultQuality`（B-P3-3）。
 static func item_quality(item: Dictionary) -> String:
 	var q := String(item.get("quality", ""))
 	if q.is_empty():
 		var tpl = DataLoader.get_entry("equipments", String(item.get("itemId", "")))
 		if tpl is Dictionary:
-			q = String(tpl.get("quality", "common"))
+			q = String(tpl.get("defaultQuality", "common"))
 	return q if not q.is_empty() else "common"
 
 ## 6.2 售价公式：round(baseValue × qualityMult × (1 + star×0.08))。

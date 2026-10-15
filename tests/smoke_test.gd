@@ -1673,6 +1673,24 @@ func _test_shop() -> void:
 	_expect(not Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
 		"药水不可出售给货郎（6.4）")
 
+	# B-P3-3：实例缺 `quality` 时按模板 `defaultQuality` 回退（字段名不得误读为 `quality`）。
+	# 临时注入一个非普通品质的探针模板，验证后还原表与索引，避免污染后续用例。
+	var equips_backup: Array = DataLoader.tables["equipments"]
+	var temp_equips: Array = equips_backup.duplicate(true)
+	temp_equips.append({
+		"id": "__probe_rare_equip__", "name": "探针", "slot": "weapon", "price": 50,
+		"defaultQuality": "rare", "tierBases": {"1": {"atk": 1}},
+		"affixPool": ["atk", "def", "hp", "mp"], "requiredLevel": 1,
+	})
+	DataLoader.tables["equipments"] = temp_equips
+	DataLoader._build_index()
+	var probe := {"kind": "equip", "itemId": "__probe_rare_equip__"}
+	_expect(Shop.item_quality(probe) == "rare",
+		"实例缺 quality 时应按模板 defaultQuality 回退为 rare，实际 %s" % Shop.item_quality(probe))
+	_expect(Shop.sell_price(probe) == 150, "回退品质 rare 时售价应乘 3（50→150），实际 %d" % Shop.sell_price(probe))
+	DataLoader.tables["equipments"] = equips_backup
+	DataLoader._build_index()
+
 	# 卖 · 非装备拦截
 	GameState.reset_to_defaults()
 	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
