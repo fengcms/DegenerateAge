@@ -471,6 +471,7 @@
   "msg.save_manager.p017": "已继续上次存档（槽 %d）",
   "msg.save_manager.p018": "续档失败",
   "msg.save_manager.p019": "存档结构无效，未改变当前进度",
+  "msg.save_manager.pruned_equipment": "已丢弃 %d 件无法识别的旧装备（数值模型已升级）",
   "msg.consumable.p001": "该格没有物品",
   "msg.consumable.p002": "该物品无法使用",
   "msg.consumable.p003": "药水数据缺失：%s",

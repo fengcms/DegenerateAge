@@ -62,6 +62,9 @@ var _resume_toast: String = ""
 ## 最近一次 `_is_valid_save` 失败的原因（字段级，G-P2-1）；通过时清空。
 var _last_invalid_reason: String = ""
 
+## C-P3-7：最近一次 `_migrate` 中因无法识别而**逐件丢弃**的装备实例数（供读档提示）。
+var _last_pruned_equipment: int = 0
+
 ## C-P2-2：合法解锁键 / 合法 Boss 键白名单（来自数据表，惰性构建一次）。
 ## 数据表重新加载（`data_loaded`）时失效重建。
 var _known_unlock_ids: Dictionary = {}
@@ -298,7 +301,8 @@ func read_slot(slot: int) -> Dictionary:
 
 	var main: Variant = _read_file(path)
 	if _is_valid_save(main):
-		return {"ok": true, "source": "main", "data": _migrate(main as Dictionary), "message": ""}
+		var migrated_main := _migrate(main as Dictionary)
+		return {"ok": true, "source": "main", "data": migrated_main, "message": _pruned_notice("")}
 
 	# T16：主档损坏 → 回退备份
 	push_warning("[SaveManager] 槽 %d 主档不可用（原因「%s」，地图 %s），尝试从备份恢复"
@@ -306,10 +310,9 @@ func read_slot(slot: int) -> Dictionary:
 	var bak: Variant = _read_file(backup_path(slot))
 	if _is_valid_save(bak):
 		var restored := _restore_backup(slot, bak as Dictionary)
-		return {
-			"ok": true, "source": "backup", "data": _migrate(bak as Dictionary),
-			"message": (Localization.tr_key("msg.save_manager.p010") if restored else Localization.tr_key("msg.save_manager.p011")) % slot,
-		}
+		var migrated_bak := _migrate(bak as Dictionary)
+		var base := (Localization.tr_key("msg.save_manager.p010") if restored else Localization.tr_key("msg.save_manager.p011")) % slot
+		return {"ok": true, "source": "backup", "data": migrated_bak, "message": _pruned_notice(base)}
 	if (main is Dictionary and int(main.get("schemaVersion", -1)) < CURRENT_SCHEMA) \
 			or (bak is Dictionary and int(bak.get("schemaVersion", -1)) < CURRENT_SCHEMA):
 		return {"ok": false, "source": "", "data": {},
@@ -329,6 +332,13 @@ func _restore_backup(slot: int, data: Dictionary) -> bool:
 		if DirAccess.rename_absolute(path, corrupt) != OK:
 			return false
 	return _write_json_atomic(path, data)
+
+## C-P3-7：读档提示——本次迁移若丢弃了无法识别的旧装备，在基础提示后附加数量说明。
+func _pruned_notice(base: String) -> String:
+	if _last_pruned_equipment <= 0:
+		return base
+	var notice := Localization.tr_key("msg.save_manager.pruned_equipment") % _last_pruned_equipment
+	return notice if base.is_empty() else base + "；" + notice
 
 ## 读档并应用到运行时状态（不重载场景，重载由 UI 层负责）。
 ## 返回同 read_slot 的结构（额外含 applied: bool）。
@@ -407,10 +417,13 @@ func _migrate(source: Dictionary) -> Dictionary:
 		data.settings = _migrate_settings(data.settings)
 	if not data.get("questItems") is Dictionary:
 		data.questItems = {}
-	if v == 11:
-		_migrate_equipment_catalog(data)
-	if v >= 11 and v < 13:
-		_migrate_equipment_requirements(data)
+	# C-P3-7：装备实例升级按**实例自身版本**收敛，不再按整档 schema 判断启停。
+	# 无论档位版本，`equipmentRuleVersion < 4` 的实例都走同一条链（旧 ID 归并 → 等级同步），
+	# 避免「合法旧实例因档位版本被跳过迁移」而被整档拒绝。
+	_migrate_equipment_catalog(data)
+	_migrate_equipment_requirements(data)
+	# 迁移后仍无法识别的装备实例逐件丢弃（不整档拒绝）。
+	_prune_unrecognized_equipment(data)
 	if v >= 0 and v < CURRENT_SCHEMA:
 		if not data.has("unlocks"):
 			data.unlocks = {}
@@ -488,14 +501,16 @@ func _migrate_equipment_catalog(data: Dictionary) -> void:
 					if row is Dictionary:
 						_migrate_equipment_item(row.get("item"))
 
-## 将旧装备实例改为新目录的型号与基底；无法识别的 ID 留给严格存档校验拒绝。
+## 将旧装备实例改为新目录的型号与基底（末版本由 `_migrate_equipment_requirement_item` 补到 4）。
+## C-P3-7：按实例自身版本判定（`< 3` 即需归并），不再依赖整档 schema；
+## 仍无法识别（模板不存在 / 基底缺失）的实例改由 `_prune_unrecognized_equipment` 逐件丢弃。
 func _migrate_equipment_item(value: Variant) -> void:
 	if not value is Dictionary or String(value.get("kind", "")) != "equip":
 		return
 	var old_id := String(value.get("itemId", ""))
 	var new_id := String(EQUIPMENT_LEGACY_IDS.get(old_id, old_id))
 	var tpl: Variant = DataLoader.get_entry("equipments", new_id)
-	if not tpl is Dictionary or not _whole(value.get("equipmentRuleVersion"), 2, 2):
+	if not tpl is Dictionary or not _whole(value.get("equipmentRuleVersion"), 0, 2):
 		return
 	var bases: Dictionary = tpl.get("tierBases", {})
 	if bases.size() != 1:
@@ -564,6 +579,47 @@ func _store_migrated_unequipped(data: Dictionary, item: Dictionary) -> void:
 		pos = [0.0, 0.0]
 	by_map[map_id].append({"uid": "migration_" + String(item.get("instanceId", "")),
 		"batchId": "equipment_catalog_migration", "item": item, "pos": pos.duplicate()})
+
+## C-P3-7：迁移后仍无法识别的装备实例**逐件丢弃**并计数，避免单件坏实例导致整档拒读。
+## 只处理装备实例（`kind == "equip"`）；其他物品（药水 / 任务品等）的非法仍由
+## `_is_valid_save` 整体拒绝——它们通常意味着数据表或结构级损坏，不宜静默吞掉。
+func _prune_unrecognized_equipment(data: Dictionary) -> void:
+	_last_pruned_equipment = 0
+	for key in ["inventory", "warehouse"]:
+		var slots: Variant = data.get(key)
+		if not slots is Array:
+			continue
+		var rows: Array = slots
+		for index in range(rows.size()):
+			if _is_unrecognized_equipment(rows[index]):
+				rows[index] = null
+				_last_pruned_equipment += 1
+	var worn: Variant = data.get("equipment")
+	if worn is Dictionary:
+		var slots: Dictionary = worn
+		for slot in slots.keys():
+			if _is_unrecognized_equipment(slots[slot]):
+				slots[slot] = null
+				_last_pruned_equipment += 1
+	var by_map: Variant = data.get("unclaimedLoot")
+	if by_map is Dictionary:
+		var loot: Dictionary = by_map
+		for map_id in loot.keys():
+			var rows: Variant = loot[map_id]
+			if not rows is Array:
+				continue
+			var kept: Array = []
+			for row in (rows as Array):
+				var item: Variant = (row as Dictionary).get("item") if row is Dictionary else null
+				if _is_unrecognized_equipment(item):
+					_last_pruned_equipment += 1
+					continue
+				kept.append(row)
+			loot[map_id] = kept
+
+## 是否为「无法识别的装备实例」：结构上像装备实例，但迁移后仍过不了 `_valid_item`。
+func _is_unrecognized_equipment(item: Variant) -> bool:
+	return item is Dictionary and String(item.get("kind", "")) == "equip" and not _valid_item(item)
 
 func _migrate_landscape_positions(data: Dictionary) -> void:
 	var old_sizes := {

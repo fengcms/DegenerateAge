@@ -121,6 +121,22 @@ func _test_save() -> void:
 	DirAccess.remove_absolute(SaveManager.slot_path(SLOT))
 	check(SaveManager.read_slot(SLOT).source == "backup", "主档缺失也从备份恢复")
 	check(not SaveManager._is_valid_save({"schemaVersion":0, "player":{"level":3}, "gold":5}), "v0 旧存档明确拒绝")
+	# C-P3-7：单件无法识别的旧装备必须逐件丢弃，而不是让整档被判非法。
+	var with_ghost := baseline.duplicate(true)
+	with_ghost.schemaVersion = 11
+	with_ghost.inventory[0] = {"kind":"equip", "itemId":"weapon_ghost_unknown", "instanceId":"ghost-1",
+		"equipmentRuleVersion":1, "rawBaseAttrs":{"atk":1.0}, "affixes":[], "pctAttrs":[], "count":1,
+		"requiredLevel":1, "level":1, "star":0, "quality":"common",
+		"qualityMultiplierSnapshot":1.0, "starMultiplierSnapshot":1.0}
+	check(SaveManager._is_valid_save(with_ghost), "含无法识别旧装备的存档仍可读，不整档拒绝")
+	var pruned := SaveManager._migrate(with_ghost)
+	check(pruned.inventory[0] == null and SaveManager._last_pruned_equipment == 1,
+		"无法识别的旧装备被逐件丢弃并计数")
+	check(with_ghost.inventory[0] != null, "丢弃不修改输入")
+	# 宽容化只针对装备实例；非装备的未知物品仍整档拒绝（数据表 / 结构级问题不静默吞掉）。
+	var ghost_potion := baseline.duplicate(true)
+	ghost_potion.inventory[0] = {"kind":"potion", "itemId":"potion_ghost", "count":1}
+	check(not SaveManager._is_valid_save(ghost_potion), "非装备的未知物品仍整档拒绝")
 	# C-P3-3 验收：schema 11 / 12 的合法档可读并迁移到 CURRENT_SCHEMA（版本号唯一来源，无死常量双来源）。
 	for old_schema in [11, 12]:
 		var older := baseline.duplicate(true)
