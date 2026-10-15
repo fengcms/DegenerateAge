@@ -66,7 +66,7 @@ func _show(mode: String) -> void:
 	GameState.set_panel_open("menu", true)
 	for child in _root.get_children():
 		child.queue_free()
-	_title.text = Localization.tr_key("ui.menu_panel.p001") if mode == MAIN else Localization.tr_key("ui.menu_panel.p002")
+	_title.text = PanelChrome.title_text(Localization.tr_key("ui.menu_panel.p001") if mode == MAIN else Localization.tr_key("ui.menu_panel.p002"))
 	if mode == MAIN:
 		_continue = _button(Localization.tr_key("ui.menu_panel.p003"), _continue_game)
 		_continue.disabled = SaveManager.continue_slot() < 0
@@ -92,6 +92,7 @@ func _button(text: String, action: Callable) -> Button:
 	button.custom_minimum_size = Vector2(280, 44)
 	button.pressed.connect(action)
 	_root.add_child(button)
+	PanelChrome.style_action(button)
 	return button
 
 func _build() -> void:
@@ -104,26 +105,24 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("121a20")
-	style.border_color = Color("8d7653")
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-	panel.add_theme_stylebox_override("panel", style)
+	var panel := PanelChrome.new()
 	center.add_child(panel)
 	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
+	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 24)
 	panel.add_child(margin)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 14)
 	margin.add_child(content)
+	var head := HBoxContainer.new()
+	content.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	_title = Label.new()
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", 22)
-	content.add_child(_title)
-	content.add_child(HSeparator.new())
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_title)
+	PanelChrome.style_title(_title)
+	content.add_child(PanelChrome.make_title_gap())
 	_root = VBoxContainer.new()
 	_root.add_theme_constant_override("separation", 9)
 	content.add_child(_root)
