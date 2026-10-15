@@ -30,21 +30,35 @@ func _build() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_loading.add_child(center)
+	var chrome := PanelChrome.new()
+	center.add_child(chrome)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	chrome.add_child(margin)
 	var box := VBoxContainer.new()
 	box.custom_minimum_size.x = 420
 	box.add_theme_constant_override("separation", 16)
-	center.add_child(box)
+	margin.add_child(box)
+	var head := HBoxContainer.new()
+	box.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	_loading_title = Label.new()
 	_loading_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_loading_title.add_theme_font_size_override("font_size", 22)
-	box.add_child(_loading_title)
+	_loading_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_loading_title)
+	PanelChrome.style_title(_loading_title)
+	box.add_child(PanelChrome.make_title_gap())
 	var bar := ProgressBar.new()
 	bar.indeterminate = true
 	bar.custom_minimum_size.y = 16
 	box.add_child(bar)
+	PanelChrome.style_progress(bar)
 	_tip = Label.new()
 	_tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip.add_theme_color_override("font_color", PanelChrome.MUTED)
 	box.add_child(_tip)
 	_loading.visible = false
 
@@ -54,6 +68,7 @@ func _build() -> void:
 	_warning.offset_top = 16
 	_warning.offset_right = -20
 	_warning.mouse_filter = Control.MOUSE_FILTER_STOP
+	PanelChrome.style_card(_warning)
 	add_child(_warning)
 	var warning_row := HBoxContainer.new()
 	_warning.add_child(warning_row)
@@ -66,6 +81,7 @@ func _build() -> void:
 	dismiss.text = Localization.tr_key("ui.flow_feedback.p001")
 	dismiss.pressed.connect(func() -> void: _warning.visible = false)
 	warning_row.add_child(dismiss)
+	PanelChrome.style_action(dismiss)
 	_warning.visible = false
 
 	_guide = PanelContainer.new()
@@ -75,6 +91,7 @@ func _build() -> void:
 	_guide.offset_right = 300
 	_guide.offset_bottom = -55
 	_guide.mouse_filter = Control.MOUSE_FILTER_STOP
+	PanelChrome.style_card(_guide)
 	add_child(_guide)
 	var guide_box := VBoxContainer.new()
 	_guide.add_child(guide_box)
@@ -82,16 +99,18 @@ func _build() -> void:
 	_guide_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_guide_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	guide_box.add_child(_guide_text)
+	_guide_text.add_theme_color_override("font_color", PanelChrome.TEXT)
 	var close_guide := Button.new()
 	close_guide.text = Localization.tr_key("ui.flow_feedback.p002")
 	close_guide.pressed.connect(_dismiss_guide)
 	guide_box.add_child(close_guide)
+	PanelChrome.style_action(close_guide)
 	_guide.visible = false
 
 func _on_loading(active: bool, message: String) -> void:
 	_loading.visible = active
 	if active:
-		_loading_title.text = message if not message.is_empty() else Localization.tr_key("ui.flow_feedback.p003")
+		_loading_title.text = PanelChrome.title_text(message if not message.is_empty() else Localization.tr_key("ui.flow_feedback.p003"))
 		_tip.text = Localization.tr_key("loading.tip.%d" % randi_range(1, 3))
 
 func show_config_errors(report: Array[String]) -> void:

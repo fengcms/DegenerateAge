@@ -202,6 +202,17 @@ static func style_section(label: Label) -> void:
 	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", TEXT)
 
+## 将加载进度条的轨道与进度填充纳入面板配色；动画仍由 ProgressBar 管理。
+static func style_progress(bar: ProgressBar) -> void:
+	var track := _button_style(SURFACE, Color("5e644f"))
+	track.content_margin_top = 0
+	track.content_margin_bottom = 0
+	var fill := _button_style(GOLD, GOLD_LIGHT)
+	fill.content_margin_top = 0
+	fill.content_margin_bottom = 0
+	bar.add_theme_stylebox_override("background", track)
+	bar.add_theme_stylebox_override("fill", fill)
+
 ## 为页签和内容卡片提供平面底框；操作按钮改用纹理，不再调用本函数。
 static func _button_style(bg: Color, border: Color, radius: int = 3) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
