@@ -34,7 +34,7 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open("map", open)
 	if open:
 		_update_layout()
-		_title.text = Localization.tr_key("ui.map_big_panel.p001") % MapService.display_name(GameState.current_map)
+		_title.text = PanelChrome.title_text(Localization.tr_key("ui.map_big_panel.p001") % MapService.display_name(GameState.current_map))
 		var cell := Iso.world_to_grid(MapService.entry_point(GameState.current_map))
 		var player := get_tree().get_first_node_in_group("player") as Node2D
 		if player != null:
@@ -63,16 +63,10 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
-	var box := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("171e24")
-	style.border_color = Color("73878c")
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	box.add_theme_stylebox_override("panel", style)
+	var box := PanelChrome.new()
 	center.add_child(box)
 	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
+	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 16)
 	box.add_child(margin)
 	var root := VBoxContainer.new()
@@ -82,16 +76,21 @@ func _build() -> void:
 	margin.add_child(root)
 	var head := HBoxContainer.new()
 	root.add_child(head)
+	PanelChrome.style_header_layout(margin, head)
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", 20)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
+	PanelChrome.style_title(_title)
 	var close := Button.new()
 	close.text = Localization.tr_key("ui.map_big_panel.p005")
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
+	PanelChrome.style_close(close)
+	root.add_child(PanelChrome.make_title_gap())
 	_info = Label.new()
 	root.add_child(_info)
+	PanelChrome.style_section(_info)
 	_map = MapCanvas.new()
 	_map.name = "MapCanvas"
 	_map.custom_minimum_size = Vector2(800, 400)
@@ -103,10 +102,12 @@ func _build() -> void:
 	legend.add_theme_font_size_override("font_size", 13)
 	legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(legend)
+	legend.add_theme_color_override("font_color", PanelChrome.MUTED)
 	_hint = Label.new()
 	_hint.add_theme_font_size_override("font_size", 13)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_hint)
+	_hint.add_theme_color_override("font_color", PanelChrome.TEXT)
 	var targets := Label.new()
 	targets.text = Localization.tr_key("ui.map_big_panel.p007")
 	targets.add_theme_font_size_override("font_size", 12)
