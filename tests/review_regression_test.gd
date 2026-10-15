@@ -11,6 +11,7 @@ func _ready() -> void:
 	_test_inventory()
 	_test_equipment()
 	_test_save()
+	_test_economy()
 	print("[ReviewRegression] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
@@ -129,6 +130,42 @@ func _test_save() -> void:
 	# C-P2-4：测试只用 3 号槽且必须还原现场（含 last_slot），不得删除/覆盖玩家真实存档。
 	_restore_saves(SLOT, snap)
 	SaveManager.active_slot = prev_active
+	GameState.reset_to_defaults()
+
+## E-P3-2 / E-P3-4：售金按实际入账额结算；交易托盘有暂存件时挂起自动存档。
+func _test_economy() -> void:
+	GameState.reset_to_defaults()
+	# E-P3-2：临近金币上限出售，返回值 / 提示同用实际入账额（挂牌 50，实得 10）。
+	GameState.gold = GameState.GOLD_CAP - 10
+	GameState.inventory[0] = ItemFactory.make_equip("weapon_iron")
+	var single := GameState.shop_sell(0)
+	check(bool(single.get("ok", false)), "靠近上限出售也应成功")
+	check(GameState.gold == GameState.GOLD_CAP, "出售后金币封顶于上限")
+	check(int(single.get("price", -1)) == 10, "单件售金应为实际入账额 10，而非挂牌价 50")
+	# 成批结算同口径（gold 字段为实际入账额，非挂牌总额）。
+	GameState.reset_to_defaults()
+	GameState.gold = GameState.GOLD_CAP - 1
+	var batched := GameState.shop_sell_staged([ItemFactory.make_equip("weapon_iron")])
+	check(int(batched.get("count", 0)) == 1, "成批结算应售出 1 件")
+	check(int(batched.get("gold", -1)) == 1, "成批售金应为实际入账额 1，而非挂牌总额 50")
+
+	# E-P3-4：托盘有暂存件时 request_autosave 直接返回，不置去抖（防漏档）。
+	GameState.reset_to_defaults()
+	check(GameState.trade_staged_count == 0, "初始无托盘暂存")
+	var prev_slot: int = SaveManager.active_slot
+	var prev_in_tests: bool = SaveManager.autosave_in_tests
+	SaveManager.active_slot = 0
+	SaveManager.autosave_in_tests = true
+	SaveManager._debounce = -1.0
+	GameState.set_trade_staged_count(1)
+	SaveManager.request_autosave()
+	check(SaveManager._debounce < 0.0, "托盘有暂存件时应挂起自动存档")
+	GameState.set_trade_staged_count(0)
+	SaveManager.request_autosave()
+	check(SaveManager._debounce == SaveManager.AUTOSAVE_DEBOUNCE, "托盘清空后自动存档恢复")
+	SaveManager.active_slot = prev_slot
+	SaveManager.autosave_in_tests = prev_in_tests
+	SaveManager._debounce = -1.0
 	GameState.reset_to_defaults()
 
 # ---- 存档测试辅助：快照 / 还原 3 号槽与 last_slot（避免污染玩家真实存档）----

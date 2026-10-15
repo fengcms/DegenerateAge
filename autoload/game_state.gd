@@ -65,6 +65,11 @@ var menu_mode: String = "menu"
 var auto_battle_on: bool = false
 var auto_pickup_on: bool = false
 
+## 货郎交易托盘内的暂存件数（E-P3-4）。托盘物品已从背包移出却尚未落档，
+## 故 > 0 时 SaveManager 挂起自动存档（否则交易中被触发的自动存档会把它们漏掉）。
+## 由 ShopPanel 在托盘变更 / 退回处同步；面板关闭退回后自然归 0。运行态，不落档。
+var trade_staged_count: int = 0
+
 # ---- 世界时钟与怪物点刷新状态（M4-10：墓碑跨图保持）----
 ## 依据：产品文档 07 §7.9（怪物点刷新）。根因见工程文档 14 §1.1 ——
 ## 刷新倒计时原本存在场景运行态（`MonsterSpawner._points[i].timer`），切图重载场景即清零；
@@ -222,6 +227,7 @@ func reset_to_defaults() -> void:
 	equipment = Equipment.create()
 	panel_open = false
 	_open_panels = {}
+	trade_staged_count = 0          # E-P3-4：新游戏 / 读档清空托盘暂存计数
 	quest_states = {}
 	quest_items = {}
 	first_clear = {}
@@ -1038,6 +1044,10 @@ func npc_dialog_open() -> bool:
 
 # ---- 货郎交易（6.4；算价与物品构造见 scripts/systems/shop.gd）----
 
+## 同步交易托盘暂存件数（E-P3-4）。调用点：ShopPanel 的托盘变更与退回出口。
+func set_trade_staged_count(count: int) -> void:
+	trade_staged_count = maxi(0, count)
+
 ## 向货郎购买一件商品。返回 {ok, reason, item, price}。
 ## 失败原因明确广播提示（金币不足 / 背包满 / 不售此物），不静默。
 func shop_buy(shop_id: String, item_id: String) -> Dictionary:
@@ -1052,13 +1062,18 @@ func shop_buy(shop_id: String, item_id: String) -> Dictionary:
 	if gold < price:
 		return _trade_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
 	add_gold(-price)
-	add_item(item)
+	# E-P3-1：预检与提交同为同步逻辑，单线程下不会失败；一旦将来插入 await（异步入包动画）
+	# 便可能「扣钱不给货」，此处显式校验并退还金币，不静默。
+	if not add_item(item):
+		add_gold(price)
+		return _trade_fail(Localization.tr_key("msg.game_state.p049"))
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p050") % [ItemUtil.display_name(item), price], "pickup")
 	EventBus.trade_done.emit("buy", item_id, price)
 	return {"ok": true, "reason": "", "item": item, "price": price}
 
 ## 出售背包中指定格的装备（6.4：货郎只收购装备）。返回 {ok, reason, item, price}。
 ## silent = true 时不广播单件 toast（供面板批量出售后自行汇总，避免刷屏）。
+## E-P3-2：`price` 为**实际入账额**（`add_gold` 会在金币上限处截断），与提示文案同源。
 func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
 		return _trade_fail(Localization.tr_key("msg.game_state.p026"))
@@ -1068,14 +1083,15 @@ func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	var price := Shop.sell_price(item)
 	var label := ItemUtil.display_name(item)
 	remove_item_at(inv_index)
-	add_gold(price)
+	var gained := add_gold(price)
 	if not silent:
-		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p052") % [label, price], "pickup")
-	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), price)
-	return {"ok": true, "reason": "", "item": item, "price": price}
+		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p052") % [label, gained], "pickup")
+	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), gained)
+	return {"ok": true, "reason": "", "item": item, "price": gained}
 
 ## 结算一批暂存待售的装备（6.4「确认出售」）。托盘内容由出售界面持有，本函数只做算价与入账。
 ## 返回 {count, gold}；无可售项时返回 {count: 0, gold: 0}（不扣物、不广播）。
+## E-P3-2：`gold` 为**实际入账额**（金币上限处会截断），面板提示以此为准。
 func shop_sell_staged(items: Array) -> Dictionary:
 	var total := 0
 	var n := 0
@@ -1085,9 +1101,9 @@ func shop_sell_staged(items: Array) -> Dictionary:
 			n += 1
 	if n == 0:
 		return {"count": 0, "gold": 0}
-	add_gold(total)
-	EventBus.trade_done.emit("sell", "", total)
-	return {"count": n, "gold": total}
+	var gained := add_gold(total)
+	EventBus.trade_done.emit("sell", "", gained)
+	return {"count": n, "gold": gained}
 
 ## 把暂存装备退回背包（关闭面板未确认 / 点托盘格取回）。会就地移除已退回项。
 ## 返回实际退回件数；背包满的件保留在托盘由调用方提示（不静默丢失，6.4）。

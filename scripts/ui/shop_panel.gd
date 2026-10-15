@@ -443,6 +443,7 @@ func _make_buy_row(e: Dictionary) -> Control:
 	return row
 
 func _refresh_tray() -> void:
+	GameState.set_trade_staged_count(_tray.size())   # E-P3-4：供 SaveManager 挂起自动存档
 	if _tray_slots.is_empty():
 		return
 	for i in range(_tray_slots.size()):
@@ -573,6 +574,9 @@ func _return_tray() -> int:
 		if GameState.shop_unstage(one) == 1:
 			_tray.erase(slot_id)
 			back += 1
+	# E-P3-4：关闭面板走的是「退回但不刷新 UI」这条路，必须在此同步暂存件数，
+	# 否则托盘已空而计数滞留 > 0，自动存档会被永久挂起。
+	GameState.set_trade_staged_count(_tray.size())
 	if not _tray.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p027") % _tray.size(), "danger")
 	return back

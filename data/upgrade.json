@@ -3,5 +3,5 @@
   "successRate": [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 10, 5, 0],
   "costParams": { "UP_BASE": 500, "UP_R": 1.5 },
   "starMult": 0.1,
-  "_comment": "successRate 下标 = 当前星级（index0 表示 0→1 的成功率）；index12 为满星占位（0%）。cost = round(UP_BASE × UP_R^star)。starMult：每星加基础值×starMult（仅加固定属性，不增词条）。"
+  "_comment": "successRate 下标 = 当前星级（index0 表示 0→1 的成功率）；index12 为满星占位（0%）。cost = round(UP_BASE × UP_R^star)。starMult：升星系数 S = 1 + star × starMult，放大基底与全部词条贡献（固定与百分比词条同乘，仅增数值、不新增词条）。"
 }

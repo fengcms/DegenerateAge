@@ -239,7 +239,12 @@ func save_on_quit() -> void:
 
 ## 关键事件触发的去抖存（升级 / 穿戴 / 交易 / 任务 / 切图）。
 ## 未开档（active_slot < 0）、正在读档、或不允许自动存时忽略——避免"新游戏 / 测试把旧档写坏"。
+## E-P3-4（与计划原文的偏差）：货郎托盘内有暂存装备时挂起——托盘物品已出背包、尚未结算，
+## 此刻写盘会把它们整批漏掉；待托盘清空（确认出售 / 退回）后由下一次触发恢复。比「暂存时补存一次」
+## 更能防丢失：补存之后仍会有升级 / 整理等事件再次触发自动存，托盘物品照样丢失。
 func request_autosave() -> void:
+	if GameState.trade_staged_count > 0:
+		return
 	if not _autosave_allowed():
 		return
 	_debounce = AUTOSAVE_DEBOUNCE
