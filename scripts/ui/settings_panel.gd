@@ -24,6 +24,7 @@ func _ready() -> void:
 	_update_layout.call_deferred()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("pause"):

@@ -45,6 +45,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.quest_panel_requested.connect(_on_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.quest_accepted.connect(_on_quest_changed)
 	EventBus.quest_completed.connect(_on_quest_changed)
 	EventBus.quest_rewarded.connect(_on_quest_changed)

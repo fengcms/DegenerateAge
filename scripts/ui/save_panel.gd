@@ -33,6 +33,7 @@ func _ready() -> void:
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("pause"):

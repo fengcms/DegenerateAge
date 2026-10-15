@@ -18,6 +18,7 @@ func _ready() -> void:
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.equipment_changed.connect(_refresh)
 	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
 	EventBus.player_hp_changed.connect(func(_hp: int, _max: int) -> void: _refresh())
@@ -45,10 +46,11 @@ func set_open(open: bool) -> void:
 	if bag != null and bag.visible:
 		bag._refresh()
 
+## 并开集合统一由 `GameState.panels_coexist`（F-P3-1）判定，本面板不再自带名单。
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id == "inventory" and visible:
 		_refresh()
-	if panel_id not in ["character", "inventory", "skill", "mount"] and visible:
+	if visible and not GameState.panels_coexist(panel_id, "character"):
 		set_open(false)
 
 func _build() -> void:

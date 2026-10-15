@@ -22,6 +22,7 @@ func _ready() -> void:
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.inventory_changed.connect(_on_items_changed)
 	EventBus.equipment_changed.connect(_on_items_changed)
 	EventBus.gold_changed.connect(_on_gold_changed)

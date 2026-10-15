@@ -30,6 +30,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.carter_panel_requested.connect(_on_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.gold_changed.connect(_on_gold_changed)
 
 func _unhandled_input(event: InputEvent) -> void:

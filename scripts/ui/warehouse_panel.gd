@@ -36,6 +36,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.warehouse_panel_requested.connect(_on_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.inventory_changed.connect(_refresh)
 	EventBus.warehouse_changed.connect(_refresh)
 	EventBus.gold_changed.connect(_on_gold_changed)

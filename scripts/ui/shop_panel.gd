@@ -60,6 +60,7 @@ func _ready() -> void:
 	EventBus.shop_open_requested.connect(_on_shop_requested)
 	EventBus.shop_close_requested.connect(_on_shop_close_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.equipment_changed.connect(_on_inventory_changed)
@@ -102,13 +103,9 @@ func set_open(open: bool) -> void:
 		EventBus.trade_mode_changed.emit(false)  # 背包回到独立窗口，保持打开
 		_apply_trade_layout(false)
 
-## 其他面板打开时自动关闭：交易会话中忽略背包面板（那是会话伙伴，见工程文档 05 §3.2）。
+## 其他面板打开时自动关闭：货郎自身与「交易会话中的背包」是唯一例外（会话伙伴，见 05 §3.2）。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id == "shop":
-		return
-	if _trade_active and panel_id == "inventory":
-		return
-	if visible:
+	if visible and not (panel_id == "shop" or (_trade_active and panel_id == "inventory")):
 		set_open(false)
 
 ## 交易布局：右半屏居中 + 隐藏遮罩（两层黑遮罩叠加会把左侧背包面板压暗）。

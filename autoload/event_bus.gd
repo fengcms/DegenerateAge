@@ -80,6 +80,10 @@ signal mount_panel_requested()
 # ---- 系统 ----
 signal toast_requested(text: String, kind: String)
 signal panel_opened(panel_id: String)
+## 统一关闭全部关闭式面板（F-P3-2）：`GameState.close_all_panels` 广播此事件，
+## 各面板在 `_ready` 订阅后调 `set_open(false)`，使面板中间态（货郎出售托盘、快捷栏拖放
+## 模式、菜单流程态等）与登记清空成对回退，不再依赖「调用点必然伴随场景重载」。
+signal panels_close_requested()
 signal map_changed(map_id: String)
 signal fog_changed(map_id: String)
 signal map_panel_requested()

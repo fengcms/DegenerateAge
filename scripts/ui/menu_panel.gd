@@ -15,6 +15,7 @@ func _ready() -> void:
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(_on_panels_close_requested)
 
 func initialize_if_current() -> void:
 	if get_tree().current_scene != get_parent().get_parent():
@@ -85,6 +86,14 @@ func _on_panel_opened(panel_id: String) -> void:
 	if panel_id != "menu" and visible:
 		visible = false
 		GameState.set_panel_open("menu", false)
+
+## F-P3-2：统一关闭事件。仅收起菜单并清空流程态；暂停状态由发起方（读档 / 重载）自行管理。
+func _on_panels_close_requested() -> void:
+	if not visible:
+		return
+	visible = false
+	_mode = ""
+	GameState.set_panel_open("menu", false)
 
 func _button(text: String, action: Callable) -> Button:
 	var button := Button.new()

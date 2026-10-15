@@ -9,6 +9,7 @@ func _ready() -> void:
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -32,8 +33,9 @@ func set_open(open: bool) -> void:
 		EventBus.panel_opened.emit("skill")
 		_center.show_window()
 
+## 并开集合统一由 `GameState.panels_coexist`（F-P3-1）判定，本面板不再自带名单。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id not in ["skill", "inventory", "character", "mount"] and visible:
+	if visible and not GameState.panels_coexist(panel_id, "skill"):
 		set_open(false)
 
 var _list: VBoxContainer

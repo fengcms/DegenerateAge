@@ -19,6 +19,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.mount_panel_requested.connect(func() -> void: set_open(true))
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.mount_changed.connect(_refresh)
 	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
 
@@ -32,8 +33,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
+## 并开集合统一由 `GameState.panels_coexist`（F-P3-1）判定，本面板不再自带名单。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id not in [PANEL_ID, "inventory", "character", "skill"] and visible:
+	if visible and not GameState.panels_coexist(panel_id, PANEL_ID):
 		set_open(false)
 
 func set_open(open: bool) -> void:

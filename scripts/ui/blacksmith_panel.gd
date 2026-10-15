@@ -19,6 +19,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.blacksmith_panel_requested.connect(_on_requested)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):

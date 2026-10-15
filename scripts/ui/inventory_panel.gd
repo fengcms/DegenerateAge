@@ -52,6 +52,7 @@ func _ready() -> void:
 	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
 	_refresh()
 
@@ -89,14 +90,11 @@ func set_open(open: bool) -> void:
 			character._refresh()
 
 ## 其他面板打开时自动关闭本面板，保证互斥——**例外**：交易会话中的货郎面板（见 05 方案）。
+## 并开集合统一由 `GameState.panels_coexist`（F-P3-1）判定，本面板不再自带名单。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id == "inventory":
-		return
-	if panel_id in ["shop", "character", "skill", "mount"]:
-		if panel_id == "character" and visible:
-			_refresh()
-		return
-	if visible:
+	if panel_id == "character" and visible:
+		_refresh()
+	if visible and not (GameState.panels_coexist(panel_id, "inventory") or panel_id == "shop"):
 		set_open(false)
 
 # ---- 交易会话（M1-8 改造）----

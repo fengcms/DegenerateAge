@@ -102,8 +102,11 @@ func clear_save_pos() -> void:
 	has_save_pos = false
 
 ## 清空面板登记（读档 / 重载世界前调用，避免旧面板状态残留）。
+## F-P3-2：先广播统一关闭事件，各面板回退自身中间态（货郎出售托盘退回、快捷栏拖放模式、
+## 菜单流程态等），再清空登记——两者成对，不再依赖「调用点必然伴随场景重载」。
 func close_all_panels() -> void:
 	cancel_equipment_change()
+	EventBus.panels_close_requested.emit()
 	_open_panels = {}
 	panel_open = false
 
@@ -1004,8 +1007,14 @@ func toggle_auto_pickup() -> bool:
 
 # ---- 面板互斥（M1-7 / M1-8）----
 
+## 常驻浮窗面板（F-P3-1）：四者可彼此并开，其余面板打开时它们统一关闭。
+const FLOATING_PANEL_IDS := ["inventory", "character", "skill", "mount"]
+## NPC 会话面板：打开期间暂停自动战斗挂机（普通可并开的信息面板不影响自动决策）。
+const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade"]
+
 ## 登记 / 注销一个已打开的面板；任一面板打开即置 panel_open（player.gd 据此屏蔽操控）。
-## 多面板互斥由各面板订阅 EventBus.panel_opened 自行关闭实现（I 背包 / E 货郎）。
+## 多面板互斥由各面板订阅 EventBus.panel_opened 自行关闭实现（I 背包 / E 货郎），
+## 但「可并开集合」只在本文件声明（见 panels_coexist），面板侧仅查询、不自带名单（F-P3-1）。
 func set_panel_open(panel_id: String, open: bool) -> void:
 	if open:
 		_open_panels[panel_id] = true
@@ -1013,9 +1022,16 @@ func set_panel_open(panel_id: String, open: bool) -> void:
 		_open_panels.erase(panel_id)
 	panel_open = not _open_panels.is_empty()
 
-## 仅 NPC 会话暂停挂机；普通可并开的信息面板不影响自动决策。
+## 面板互斥查询（F-P3-1）：`opened_id` 打开时，本面板 `self_id` 是否应保持打开。
+## 仅「同一面板」或「同属常驻浮窗组」可并开；货郎交易会话中的背包例外由背包 / 货郎面板自身处理。
+func panels_coexist(opened_id: String, self_id: String) -> bool:
+	if opened_id == self_id:
+		return true
+	return opened_id in FLOATING_PANEL_IDS and self_id in FLOATING_PANEL_IDS
+
+## 仅 NPC 会话暂停挂机。
 func npc_dialog_open() -> bool:
-	for panel_id in ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade"]:
+	for panel_id in NPC_DIALOG_PANEL_IDS:
 		if _open_panels.has(panel_id):
 			return true
 	return false

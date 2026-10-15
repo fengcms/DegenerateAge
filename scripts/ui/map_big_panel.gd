@@ -19,6 +19,7 @@ func _ready() -> void:
 	visible = false
 	EventBus.map_panel_requested.connect(func() -> void: set_open(true))
 	EventBus.panel_opened.connect(_on_panel_opened)
+	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("panel_map") and not event.is_echo():
