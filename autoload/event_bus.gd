@@ -11,14 +11,12 @@ signal monster_died(monster_id: String)
 signal player_died()
 
 # ---- 成长 ----
-signal xp_gained(amount: int)
 signal player_leveled(new_level: int)
 
 # ---- 玩家数值（HUD 实时刷新，M1-3）----
 signal player_hp_changed(current: int, maximum: int)
 signal player_mp_changed(current: int, maximum: int)
 signal player_sitting_changed(sitting: bool)
-signal buff_changed(skill_id: String, remaining: float)
 signal player_xp_changed(current: int, maximum: int)
 signal target_changed(target: Node)
 signal boss_first_clear(monster_id: String)
@@ -27,9 +25,7 @@ signal boss_first_clear(monster_id: String)
 signal boss_hp_changed(boss_name: String, hp: int, max_hp: int, phase: int)
 
 # ---- 物品 / 经济 ----
-signal item_dropped(item_id: String)
 signal item_picked(item_id: String)
-signal loot_spawned(item: Dictionary)
 signal gold_changed(amount: int)
 signal inventory_changed()
 signal inventory_organized()

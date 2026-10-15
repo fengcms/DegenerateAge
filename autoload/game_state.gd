@@ -118,7 +118,6 @@ func tick_buffs(delta: float) -> void:
 		var remaining := maxf(0.0, float(active_buffs[skill_id]) - delta)
 		if remaining <= 0.0:
 			active_buffs.erase(skill_id)
-			EventBus.buff_changed.emit(String(skill_id), 0.0)
 		else:
 			active_buffs[skill_id] = remaining
 
@@ -141,12 +140,9 @@ func start_buff(skill_id: String) -> bool:
 	if duration <= 0.0:
 		return false
 	active_buffs[skill_id] = duration
-	EventBus.buff_changed.emit(skill_id, duration)
 	return true
 
 func clear_buffs() -> void:
-	for skill_id in active_buffs.keys():
-		EventBus.buff_changed.emit(String(skill_id), 0.0)
 	active_buffs.clear()
 
 ## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
@@ -1109,7 +1105,6 @@ func add_xp(amount: int) -> void:
 	if amount <= 0:
 		return
 	player.xp = int(player.xp) + amount
-	EventBus.xp_gained.emit(amount)
 	while int(player.xp) >= xp_to_next(int(player.level)):
 		player.xp = int(player.xp) - xp_to_next(int(player.level))
 		_level_up()

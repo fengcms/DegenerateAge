@@ -879,8 +879,6 @@ func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = fals
 	# 但**未领取物**仍需错开，避免多件叠在同一点而看不见（§10「未领取物仍须有可见地面标记」）。
 	var apply_offset := anim or not gi.is_claimed()
 	gi.global_position = _clamp_to_map(global_position + (offset if apply_offset else Vector2.ZERO))
-	EventBus.item_dropped.emit(String(item.get("itemId", "")))
-	EventBus.loot_spawned.emit(item)
 	return gi
 
 ## M6-0d（创意 07 §9）：落点至少满足地图边界内；完整可走网格校验待障碍系统落地后复用。
