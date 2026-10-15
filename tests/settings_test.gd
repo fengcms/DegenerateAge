@@ -297,6 +297,63 @@ func _option_texts(options: OptionButton) -> Array:
 		out.append(options.get_item_text(i))
 	return out
 
+## 控件是否完整落在逻辑视口内（含 1px 容差；坐标同为逻辑坐标口径）。
+func _fits(control: Control, extent: Vector2) -> bool:
+	if control == null:
+		return false
+	var rect := control.get_global_rect()
+	return rect.position.x >= -1.0 and rect.position.y >= -1.0 \
+		and rect.end.x <= extent.x + 1.0 and rect.end.y <= extent.y + 1.0
+
+## F-P2-3：倍率矩阵补到上限组合（uiScale 200% × 手动显示系数 150% = 3.0）。
+## 断言口径：含关闭键的标题行与面板本体完整落在逻辑视口内；超出的内容由面板内滚动条承载。
+func _check_extreme_scale(ui: CanvasLayer, embedded: SubViewport) -> void:
+	embedded.size = Vector2i(2280, 1425)
+	GameState.settings["uiScale"] = 2.0
+	GameState.settings["textScale"] = 1.5
+	GameState.settings["mapScale"] = 1.0
+	GameState.settings["displayScaleMode"] = "manual"
+	GameState.settings["displayScale"] = 1.5
+	SettingsRuntime.apply_ui_scale_to(ui)
+	SettingsRuntime.apply_text_scale_to(ui)
+	SettingsRuntime.apply_world_text_scale()
+	EventBus.settings_changed.emit()
+	await get_tree().process_frame
+	var value := SettingsRuntime.ui_scale_value()
+	_check(is_equal_approx(value, 3.0), "uiScale 200% × 显示系数 150% 应为 3.0 倍率，实际 %.2f" % value)
+	var extent := Vector2(embedded.size) / value
+	for name in ["InventoryPanel", "CharacterPanel", "SkillPanel", "MountPanel"]:
+		var panel: Variant = ui.get_node_or_null(name)
+		if panel == null:
+			continue
+		panel.set_open(true)
+		await get_tree().process_frame
+		var window: Variant = panel._center
+		_check(_fits(window.panel_box, extent), "%s 面板本体应完整落在可见区域（倍率 3.0）" % name)
+		_check(_fits(window.header, extent), "%s 含关闭键的标题行应完整落在可见区域（倍率 3.0）" % name)
+		panel.set_open(false)
+		await get_tree().process_frame
+	var carter: Variant = ui.get_node_or_null("CarterPanel")
+	if carter != null:
+		carter.set_open(true)
+		await get_tree().process_frame
+		_check(_fits(carter._box, extent), "车夫面板应完整落在可见区域（倍率 3.0）")
+		carter.set_open(false)
+		await get_tree().process_frame
+	var shop: Variant = ui.get_node_or_null("ShopPanel")
+	if shop != null:
+		shop._on_shop_requested("peddler_camp")
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_check(_fits(shop._box, extent), "货郎面板应完整落在可见区域（倍率 3.0）")
+		shop.set_open(false)
+		await get_tree().process_frame
+	# 复位为自动适配：后文仍按「窗口 / uiScale」这一不含显示系数的口径计算逻辑视口。
+	GameState.settings["displayScaleMode"] = "auto"
+	GameState.settings["displayScale"] = 1.0
+	EventBus.settings_changed.emit()
+	await get_tree().process_frame
+
 ## M5-9f（09-A §5）：逐面板复验 —— 在「窗口尺寸 × 界面倍率」矩阵下，UI 下全部控件根
 ## 四边贴合逻辑视口；HUD 四角锚点控件不越界；z_index 层级约定不变（面板 0 ＜ Toast 2048 ＜ 拖拽 4096）。
 func _check_panels_matrix() -> void:
@@ -389,6 +446,7 @@ func _check_panels_matrix() -> void:
 						and largest.global_position.y + largest.size.y <= logical.y + 1,
 						"%s 应完整落在可见区域（%.1f @ %s）" % [name, factor, viewport_size])
 					responsive.visible = false
+	await _check_extreme_scale(ui, embedded)
 	# 新增文字应在入树后自动获得同一倍率，不依赖再次打开设置。
 	GameState.settings["uiScale"] = 1.5
 	GameState.settings["textScale"] = 1.5

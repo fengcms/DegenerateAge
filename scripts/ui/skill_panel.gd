@@ -58,7 +58,6 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.custom_minimum_size.x = 540
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 	var head := HBoxContainer.new()
@@ -81,13 +80,26 @@ func _build() -> void:
 	PanelChrome.style_close(close)
 	_center.setup(self, panel, head, Vector2(0.02, 0.18))
 	root.add_child(PanelChrome.make_title_gap())
+
+	# F-P2-3：标题行留在外框渐变带内，技能列表整体可滚动。
+	var content_scroll := ScrollContainer.new()
+	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(content_scroll)
+	var content := VBoxContainer.new()
+	content.custom_minimum_size.x = 540
+	content.add_theme_constant_override("separation", 10)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_scroll.add_child(content)
+	_center.set_content_scroll(content_scroll)
+
 	var section := Label.new()
 	section.text = "可用技能"
 	PanelChrome.style_section(section)
-	root.add_child(section)
+	content.add_child(section)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 6)
-	root.add_child(_list)
+	content.add_child(_list)
 
 ## 每项技能沿用同一张低对比内容卡，保留原拖动按钮作为交互源。
 func _new_skill_row() -> HBoxContainer:

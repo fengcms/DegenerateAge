@@ -48,6 +48,7 @@ var _stage_all_btn: Button
 var _return_all_btn: Button
 var _center: CenterContainer
 var _box: PanelContainer
+var _scroll: ScrollContainer
 var _dim: ColorRect
 
 func _ready() -> void:
@@ -65,8 +66,8 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.equipment_changed.connect(_on_inventory_changed)
 	EventBus.player_leveled.connect(func(_level: int) -> void: _on_inventory_changed())
-	resized.connect(func() -> void: _align_trade_windows.call_deferred())
-	EventBus.settings_changed.connect(func() -> void: _align_trade_windows.call_deferred())
+	resized.connect(func() -> void: _update_layout.call_deferred())
+	EventBus.settings_changed.connect(func() -> void: _update_layout.call_deferred())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -96,7 +97,7 @@ func set_open(open: bool) -> void:
 		EventBus.trade_mode_changed.emit(true)   # 先拉起背包面板
 		EventBus.panel_opened.emit("shop")
 		_refresh()
-		_align_trade_windows.call_deferred()
+		_update_layout.call_deferred()
 	else:
 		_return_tray()
 		_trade_active = false
@@ -118,6 +119,14 @@ func _apply_trade_layout(trade: bool) -> void:
 	_center.offset_right = 0.0
 	if _dim != null:
 		_dim.visible = not trade
+
+## F-P2-3：先把面板收敛到逻辑视口内（超出的商品页交给滚动条），再按收敛后的
+## 实际宽度并列排布。两者顺序不可交换——`_align_trade_windows` 依赖收敛后的宽度。
+func _update_layout() -> void:
+	if _box == null or _scroll == null:
+		return
+	FloatingWindow.fit_content(size, _box, _scroll)
+	_align_trade_windows()
 
 ## 用两块面板实际最小宽度排布；宽屏不会因「各自半屏居中」拉出大空隙。
 func _align_trade_windows() -> void:
@@ -201,11 +210,22 @@ func _build() -> void:
 
 	root.add_child(PanelChrome.make_title_gap())
 
+	# F-P2-3：标题行留在外框渐变带内，页签与提示整体可滚动。
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(_scroll)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(content)
+	_box.minimum_size_changed.connect(func() -> void: _update_layout.call_deferred())
+
 	_tabs = TabContainer.new()
 	_tabs.custom_minimum_size = Vector2(BUY_ROW_MIN.x, 400)
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_tabs.add_theme_font_size_override("font_size", 15)
-	root.add_child(_tabs)
+	content.add_child(_tabs)
 	PanelChrome.style_tabs(_tabs)
 
 	_tabs.add_child(_build_buy_page())
@@ -218,7 +238,7 @@ func _build() -> void:
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", COL_TEXT_DIM)
-	root.add_child(hint)
+	content.add_child(hint)
 
 ## 构建购买列表的纵向滚动容器；商品说明须在容器宽度内换行，不启用横向滚动。
 func _build_buy_page() -> Control:

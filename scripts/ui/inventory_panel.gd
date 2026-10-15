@@ -176,10 +176,22 @@ func _build() -> void:
 
 	root.add_child(PanelChrome.make_title_gap())
 
+	# F-P2-3：标题行外侧框内不动，标题以下的内容整体可滚动。容器未超出可见区时，
+	# 这里的最小尺寸恰等于内容自然尺寸，布局与不加滚动时逐像素一致。
+	var content_scroll := ScrollContainer.new()
+	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(content_scroll)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_scroll.add_child(content)
+	_center.set_content_scroll(content_scroll)
+
 	# 背包只管理物品；穿戴槽与战斗属性统一放到人物面板。
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 6)
-	root.add_child(right)
+	content.add_child(right)
 	var bag_head := HBoxContainer.new()
 	right.add_child(bag_head)
 	_bag_title = Label.new()
@@ -251,13 +263,13 @@ func _build() -> void:
 
 	var divider := HSeparator.new()
 	PanelChrome.style_separator(divider)
-	root.add_child(divider)
+	content.add_child(divider)
 
 	var hint := Label.new()
 	hint.text = "左键查看 · 与人物面板并开时可拖放装备"
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", PanelChrome.MUTED)
-	root.add_child(hint)
+	content.add_child(hint)
 
 
 ## 背包格：使用 ItemSlot（可用物品拖到快捷栏；交易时装备可拖到出售托盘）。

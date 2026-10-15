@@ -66,7 +66,6 @@ func _build() -> void:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	panel.add_child(margin)
 	var root := VBoxContainer.new()
-	root.custom_minimum_size.x = 560
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 	var head := HBoxContainer.new()
@@ -89,13 +88,26 @@ func _build() -> void:
 	PanelChrome.style_close(close)
 	_center.setup(self, panel, head, Vector2(0.98, 0.18))
 	root.add_child(PanelChrome.make_title_gap())
+
+	# F-P2-3：标题行留在外框渐变带内，收藏列表与预览整体可滚动。
+	var content_scroll := ScrollContainer.new()
+	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(content_scroll)
+	var content := VBoxContainer.new()
+	content.custom_minimum_size.x = 560
+	content.add_theme_constant_override("separation", 10)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_scroll.add_child(content)
+	_center.set_content_scroll(content_scroll)
+
 	var section := Label.new()
 	section.text = Localization.tr_key("ui.mount_panel.p001")
 	PanelChrome.style_section(section)
-	root.add_child(section)
+	content.add_child(section)
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 10)
-	root.add_child(body)
+	content.add_child(body)
 	var list_card := PanelContainer.new()
 	PanelChrome.style_card(list_card)
 	body.add_child(list_card)

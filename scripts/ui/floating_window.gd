@@ -7,6 +7,8 @@ const PEERS := ["inventory", "character", "skill", "mount"]
 var owner_panel: Control
 var panel_box: PanelContainer
 var header: Control
+## 内容区滚动容器（F-P2-3）：由面板在构建后注入；内容超出逻辑视口时由滚动条承载。
+var content_scroll: ScrollContainer = null
 var origin := Vector2(0.5, 0.5)
 var _placed := false
 var _user_moved := false
@@ -41,6 +43,11 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 func show_window() -> void:
 	_layout()
 	bring_forward()
+
+## 注入内容区滚动容器（F-P2-3）并重算布局；未超出可见区时布局与不加滚动完全一致。
+func set_content_scroll(scroll: ScrollContainer) -> void:
+	content_scroll = scroll
+	_layout.call_deferred()
 
 func bring_forward() -> void:
 	var peers: Array[Control] = []
@@ -90,7 +97,9 @@ func _layout() -> void:
 	if _docked:
 		position = Vector2(owner_panel.size.x * _dock_left, 0.0)
 		size = Vector2(owner_panel.size.x * (_dock_right - _dock_left), owner_panel.size.y)
+		fit_content(size, panel_box, content_scroll)
 		return
+	fit_content(owner_panel.size, panel_box, content_scroll)
 	size = panel_box.get_combined_minimum_size()
 	if not _placed or not _user_moved:
 		position = (owner_panel.size - size) * origin
@@ -98,6 +107,33 @@ func _layout() -> void:
 	else:
 		position = _floating_position
 	_clamp()
+
+## F-P2-3：把内容区尺寸收敛到 `available` 之内（CenterContainer 会强制面板本体等于最小尺寸）。
+##   未超出可用区时 `wanted` 恰为内容自然最小尺寸 ⇒ 布局与「不加滚动」逐像素一致；
+##   超出时把最小尺寸压到可用空间，其余交给内容滚动条承载，保证含关闭键的标题行仍留在可见区。
+## 迭代 4 次以收敛：首轮父容器最小尺寸里还含「内容滚动条占位 0」的旧值，一次算不准。
+static func fit_content(available: Vector2, box: Control, scroll: ScrollContainer) -> void:
+	if box == null or scroll == null or scroll.get_child_count() == 0:
+		return
+	if available.x <= 0.0 or available.y <= 0.0:
+		return
+	var inner := scroll.get_child(0) as Control
+	if inner == null:
+		return
+	var natural := inner.get_combined_minimum_size()
+	var bar := scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	for _i in range(4):
+		var overhead := box.get_combined_minimum_size() - scroll.custom_minimum_size
+		var room := Vector2(maxf(0.0, available.x - overhead.x), maxf(0.0, available.y - overhead.y))
+		var height := minf(natural.y, room.y)
+		var width := minf(natural.x, room.x)
+		# 纵向出现滚动条后会扣减内容宽度，预留同宽避免文字被挤到横向滚动。
+		if height < natural.y - 0.5:
+			width = minf(natural.x + bar, room.x)
+		var wanted := Vector2(width, height)
+		if scroll.custom_minimum_size.is_equal_approx(wanted):
+			return
+		scroll.custom_minimum_size = wanted
 
 func _clamp() -> void:
 	position = Vector2(clampf(position.x, 0.0, maxf(0.0, owner_panel.size.x - size.x)),

@@ -21,6 +21,8 @@ var _title: Label
 var _list: VBoxContainer
 var _hint: Label
 var _center: CenterContainer
+var _box: PanelContainer
+var _scroll: ScrollContainer
 var _dim: ColorRect
 
 func _ready() -> void:
@@ -32,6 +34,9 @@ func _ready() -> void:
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.gold_changed.connect(_on_gold_changed)
+	# F-P2-3：窗口 / 倍率 / 线路列表变化都可能改变内容自然高度，重新收敛尺寸。
+	resized.connect(func() -> void: _update_layout.call_deferred())
+	EventBus.settings_changed.connect(func() -> void: _update_layout.call_deferred())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -81,6 +86,7 @@ func _build() -> void:
 	add_child(_center)
 
 	var box := PanelChrome.new()
+	_box = box
 	_center.add_child(box)
 
 	var margin := MarginContainer.new()
@@ -91,7 +97,6 @@ func _build() -> void:
 
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 8)
-	root.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	margin.add_child(root)
 
 	var head := HBoxContainer.new()
@@ -113,26 +118,46 @@ func _build() -> void:
 	head.add_child(close)
 	PanelChrome.style_close(close)
 
+	# F-P2-3：标题行留在外框渐变带内，自我介绍与线路列表整体可滚动。
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(_scroll)
+	var content := VBoxContainer.new()
+	content.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
+	content.add_theme_constant_override("separation", 8)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(content)
+	_box.minimum_size_changed.connect(func() -> void: _update_layout.call_deferred())
+
 	var greet := Label.new()
 	greet.text = Localization.tr_key("ui.carter_panel.p003")
 	greet.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	greet.add_theme_font_size_override("font_size", 13)
 	greet.add_theme_color_override("font_color", COL_TEXT_DIM)
-	root.add_child(greet)
+	content.add_child(greet)
 
 	var divider := HSeparator.new()
 	PanelChrome.style_separator(divider)
-	root.add_child(divider)
+	content.add_child(divider)
 
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 8)
-	root.add_child(_list)
+	content.add_child(_list)
 
 	_hint = Label.new()
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.add_theme_font_size_override("font_size", 12)
-	root.add_child(_hint)
+	content.add_child(_hint)
+
+	_update_layout()
+
+## F-P2-3：把面板收敛到逻辑视口内；未超出时布局不变，超出部分由内容滚动条承载。
+func _update_layout() -> void:
+	if _center == null or _box == null or _scroll == null:
+		return
+	FloatingWindow.fit_content(_center.size, _box, _scroll)
 
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
