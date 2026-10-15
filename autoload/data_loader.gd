@@ -276,6 +276,12 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_affixes())
 	report.append_array(_validate_equipment_model())
 	report.append_array(Warehouse.validate_config())
+	# 5) 五表结构化校验（B 共性-5）：类型 / 数值范围 / 跨表引用存在性。
+	report.append_array(_validate_skills())
+	report.append_array(_validate_quests())
+	report.append_array(_validate_potions())
+	report.append_array(_validate_misc_items())
+	report.append_array(_validate_upgrade())
 
 	return report
 
@@ -755,4 +761,263 @@ func _validate_affixes() -> Array[String]:
 				valid = false
 		if not valid or float(counts[0]) > float(counts[1]):
 			report.append("[monsters] affixCount 超出池范围或顺序错误")
+	return report
+
+## 数值须为有限且非负（int / float 皆可）。
+func _is_nonnegative_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value)) and float(value) >= 0.0
+
+## 数值须为有限且严格为正。
+func _is_positive_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value)) and float(value) > 0.0
+
+## 由 maps.npcs 汇总的全部 npcId（任务 giver / turnIn / talk 目标的合法集合）。
+func _npc_id_set() -> Dictionary:
+	var out := {}
+	var maps = tables.get("maps")
+	if not (maps is Array):
+		return out
+	for entry in maps:
+		if not entry is Dictionary:
+			continue
+		for spec in entry.get("npcs", []):
+			if spec is Dictionary:
+				var nid := String(spec.get("npcId", ""))
+				if not nid.is_empty():
+					out[nid] = true
+	return out
+
+## skills.json：类型 / 范围 / 形状 / 目标（B 共性-5）。
+func _validate_skills() -> Array[String]:
+	var report: Array[String] = []
+	var skills = tables.get("skills")
+	if not (skills is Array):
+		report.append("[skills] 需要数组")
+		return report
+	for entry in skills:
+		if not entry is Dictionary:
+			continue
+		var sid := String(entry.get("id", "?"))
+		if String(entry.get("name", "")).is_empty():
+			report.append("[skills] %s 缺少 name" % sid)
+		if not _is_whole_level(entry.get("unlockLevel")) or int(entry.get("unlockLevel", 0)) < 1:
+			report.append("[skills] %s 的 unlockLevel 应为正整数" % sid)
+		var kind := String(entry.get("kind", ""))
+		if not ["attack", "buff"].has(kind):
+			report.append("[skills] %s 的 kind '%s' 非法" % [sid, kind])
+		if not _is_nonnegative_number(entry.get("coefficient", null)):
+			report.append("[skills] %s 的 coefficient 应为非负数" % sid)
+		if not _is_nonnegative_number(entry.get("cooldown", null)):
+			report.append("[skills] %s 的 cooldown 应为非负数" % sid)
+		if not _is_whole_level(entry.get("manaCost")) or int(entry.get("manaCost", -1)) < 0:
+			report.append("[skills] %s 的 manaCost 应为非负整数" % sid)
+		var shape := String(entry.get("shape", ""))
+		if not ["single", "cone", "circle", "self"].has(shape):
+			report.append("[skills] %s 的 shape '%s' 非法" % [sid, shape])
+		if not _is_nonnegative_number(entry.get("range", null)):
+			if shape != "self":
+				report.append("[skills] %s 的 range 应为非负数" % sid)
+		var target_type := String(entry.get("targetType", ""))
+		if not ["enemy", "self"].has(target_type):
+			report.append("[skills] %s 的 targetType '%s' 非法" % [sid, target_type])
+		if kind == "buff":
+			if not _is_positive_number(entry.get("duration", null)):
+				report.append("[skills] %s 的 buff 需正数 duration" % sid)
+			var effects: Variant = entry.get("effects")
+			if not (effects is Dictionary) or (effects as Dictionary).is_empty():
+				report.append("[skills] %s 的 buff 需非空 effects" % sid)
+			else:
+				for key in (effects as Dictionary):
+					if not _is_positive_number((effects as Dictionary)[key]):
+						report.append("[skills] %s 的 effects.%s 应为正数" % [sid, key])
+		if String(entry.get("icon", "")).is_empty():
+			report.append("[skills] %s 缺少 icon" % sid)
+	return report
+
+## quests.json：类型 / 结构 / 跨表引用（B 共性-5）。
+func _validate_quests() -> Array[String]:
+	var report: Array[String] = []
+	var quests = tables.get("quests")
+	if not (quests is Array):
+		report.append("[quests] 需要数组")
+		return report
+	var monster_ids := _id_set("monsters")
+	var misc_ids := _id_set("miscItems")
+	var equip_ids := _id_set("equipments")
+	var potion_ids := _id_set("potions")
+	var map_ids := _id_set("maps")
+	var quest_ids := _id_set("quests")
+	var npc_ids := _npc_id_set()
+	for entry in quests:
+		if not entry is Dictionary:
+			continue
+		var qid := String(entry.get("id", "?"))
+		if String(entry.get("name", "")).is_empty():
+			report.append("[quests] %s 缺少 name" % qid)
+		var qtype := String(entry.get("type", ""))
+		if not ["main", "side"].has(qtype):
+			report.append("[quests] %s 的 type '%s' 非法" % [qid, qtype])
+		var giver := String(entry.get("giver", ""))
+		if giver.is_empty() or not npc_ids.has(giver):
+			report.append("[quests] %s 的 giver '%s' 未定义" % [qid, giver])
+		if entry.has("turnIn"):
+			var turn_in := String(entry.get("turnIn", ""))
+			if turn_in.is_empty() or not npc_ids.has(turn_in):
+				report.append("[quests] %s 的 turnIn '%s' 未定义" % [qid, turn_in])
+		var prev := String(entry.get("prev", ""))
+		if not prev.is_empty() and not quest_ids.has(prev):
+			report.append("[quests] %s 的 prev '%s' 未定义" % [qid, prev])
+		if not entry.get("abandonable", false) is bool:
+			report.append("[quests] %s 的 abandonable 必须为布尔" % qid)
+		var scope: Variant = entry.get("mapScope", [])
+		if not (scope is Array):
+			report.append("[quests] %s 的 mapScope 应为数组" % qid)
+		else:
+			for map_id in (scope as Array):
+				if not map_ids.has(String(map_id)):
+					report.append("[quests] %s 的 mapScope 引用未定义地图 '%s'" % [qid, map_id])
+		var obj: Variant = entry.get("objective")
+		if not (obj is Dictionary):
+			report.append("[quests] %s 缺少 objective" % qid)
+		else:
+			var objd: Dictionary = obj
+			var okind := String(objd.get("kind", ""))
+			if not ["kill", "collect", "talk"].has(okind):
+				report.append("[quests] %s 的 objective.kind '%s' 非法" % [qid, okind])
+			if not _is_whole_level(objd.get("count")) or int(objd.get("count", 0)) < 1:
+				report.append("[quests] %s 的 objective.count 应为正整数" % qid)
+			var target := String(objd.get("targetId", ""))
+			if target.is_empty():
+				report.append("[quests] %s 的 objective.targetId 为空" % qid)
+			elif okind == "kill" and not monster_ids.has(target):
+				report.append("[quests] %s 的击杀目标 '%s' 未定义" % [qid, target])
+			elif okind == "collect" and not misc_ids.has(target):
+				report.append("[quests] %s 的收集目标 '%s' 未定义" % [qid, target])
+			elif okind == "talk" and not npc_ids.has(target):
+				report.append("[quests] %s 的交谈目标 '%s' 未定义" % [qid, target])
+			if objd.has("sourceMonster") and not monster_ids.has(String(objd.get("sourceMonster", ""))):
+				report.append("[quests] %s 的 sourceMonster '%s' 未定义" % [qid, objd.get("sourceMonster", "")])
+		if entry.has("reward"):
+			report.append_array(_validate_quest_reward(qid, entry.get("reward"), equip_ids, misc_ids, potion_ids))
+	return report
+
+## quests.json 的 reward 结构 / 引用校验。
+func _validate_quest_reward(qid: String, reward: Variant, equip_ids: Dictionary, misc_ids: Dictionary, potion_ids: Dictionary) -> Array[String]:
+	var report: Array[String] = []
+	if not (reward is Dictionary):
+		report.append("[quests] %s 的 reward 应为对象" % qid)
+		return report
+	var rd: Dictionary = reward
+	if not _nonnegative_whole(rd.get("gold", null)):
+		report.append("[quests] %s 的 reward.gold 应为非负整数" % qid)
+	if not _nonnegative_whole(rd.get("xp", null)):
+		report.append("[quests] %s 的 reward.xp 应为非负整数" % qid)
+	if rd.has("item"):
+		var item_id := String(rd.get("item", ""))
+		if not (equip_ids.has(item_id) or misc_ids.has(item_id)):
+			report.append("[quests] %s 的 reward.item '%s' 未定义" % [qid, item_id])
+	if rd.has("tierStart"):
+		var legal := false
+		var cfg: Variant = tables.get("equipmentRules")
+		if cfg is Dictionary and _is_whole_level(rd.get("tierStart")):
+			for configured in (cfg as Dictionary).get("tiers", []):
+				if int(configured) == int(rd.get("tierStart")):
+					legal = true
+		if not legal:
+			report.append("[quests] %s 的 reward.tierStart 未在装备套起点表中" % qid)
+	if rd.has("items"):
+		var items: Variant = rd.get("items")
+		if not (items is Array):
+			report.append("[quests] %s 的 reward.items 应为数组" % qid)
+		else:
+			for spec in (items as Array):
+				if not (spec is Dictionary):
+					report.append("[quests] %s 的 reward.items 含非法条目" % qid)
+					continue
+				var iid := String((spec as Dictionary).get("itemId", ""))
+				if not (equip_ids.has(iid) or misc_ids.has(iid) or potion_ids.has(iid)):
+					report.append("[quests] %s 的 reward.items 引用未定义物品 '%s'" % [qid, iid])
+				if not _is_whole_level((spec as Dictionary).get("count", 0)) or int((spec as Dictionary).get("count", 0)) < 1:
+					report.append("[quests] %s 的 reward.items count 应为正整数" % qid)
+	return report
+
+## potions.json：类型 / 范围（B 共性-5）。
+func _validate_potions() -> Array[String]:
+	var report: Array[String] = []
+	var rows = tables.get("potions")
+	if not (rows is Array):
+		report.append("[potions] 需要数组")
+		return report
+	for entry in rows:
+		if not entry is Dictionary:
+			continue
+		var pid := String(entry.get("id", "?"))
+		if String(entry.get("name", "")).is_empty():
+			report.append("[potions] %s 缺少 name" % pid)
+		var pkind := String(entry.get("kind", ""))
+		if not ["red", "blue"].has(pkind):
+			report.append("[potions] %s 的 kind '%s' 非法" % [pid, pkind])
+		if not _is_whole_level(entry.get("tier")) or int(entry.get("tier", 0)) < 1:
+			report.append("[potions] %s 的 tier 应为正整数" % pid)
+		if not _is_whole_level(entry.get("restoreAmount")) or int(entry.get("restoreAmount", 0)) < 1:
+			report.append("[potions] %s 的 restoreAmount 应为正整数" % pid)
+		if not _is_nonnegative_number(entry.get("cooldown", null)):
+			report.append("[potions] %s 的 cooldown 应为非负数" % pid)
+		if not _is_whole_level(entry.get("price")) or int(entry.get("price", -1)) < 0:
+			report.append("[potions] %s 的 price 应为非负整数" % pid)
+		if not _is_whole_level(entry.get("stackMax")) or int(entry.get("stackMax", 0)) < 1:
+			report.append("[potions] %s 的 stackMax 应为正整数" % pid)
+	return report
+
+## miscItems.json：类型（B 共性-5）。
+func _validate_misc_items() -> Array[String]:
+	var report: Array[String] = []
+	var rows = tables.get("miscItems")
+	if not (rows is Array):
+		report.append("[miscItems] 需要数组")
+		return report
+	for entry in rows:
+		if not entry is Dictionary:
+			continue
+		var mid := String(entry.get("id", "?"))
+		if String(entry.get("name", "")).is_empty():
+			report.append("[miscItems] %s 缺少 name" % mid)
+		var use_type := String(entry.get("useType", ""))
+		if not ["playAnimation", "randomTeleport", "townPortal", "revive", "quest"].has(use_type):
+			report.append("[miscItems] %s 的 useType '%s' 非法" % [mid, use_type])
+		if not entry.get("animation", "") is String:
+			report.append("[miscItems] %s 的 animation 应为字符串" % mid)
+	return report
+
+## upgrade.json：成功表长度 / 取值 / 费用参数（B 共性-5、E-P3-3）。
+func _validate_upgrade() -> Array[String]:
+	var report: Array[String] = []
+	var cfg = tables.get("upgrade")
+	if not (cfg is Dictionary):
+		report.append("[upgrade] 需要对象")
+		return report
+	var max_star := int((cfg as Dictionary).get("maxStar", -1))
+	if not _is_whole_level((cfg as Dictionary).get("maxStar")) or max_star < 1:
+		report.append("[upgrade] maxStar 应为正整数")
+	var rates: Variant = (cfg as Dictionary).get("successRate")
+	if not (rates is Array):
+		report.append("[upgrade] successRate 应为数组")
+	else:
+		var arr: Array = rates
+		if max_star >= 0 and arr.size() != max_star + 1:
+			report.append("[upgrade] successRate 长度应为 maxStar+1（%d）" % (max_star + 1))
+		for i in range(arr.size()):
+			var value: Variant = arr[i]
+			if not _is_whole_level(value) or int(value) < 0 or int(value) > 100:
+				report.append("[upgrade] successRate[%d] 应为 0～100 的整数" % i)
+			elif i < arr.size() - 1 and int(value) < int(arr[i + 1]):
+				report.append("[upgrade] successRate[%d] 不应小于后一项" % i)
+	var params: Variant = (cfg as Dictionary).get("costParams")
+	if not (params is Dictionary):
+		report.append("[upgrade] 缺少 costParams")
+	else:
+		if not _is_positive_number((params as Dictionary).get("UP_BASE", null)):
+			report.append("[upgrade] costParams.UP_BASE 应为正数")
+		if not _is_positive_number((params as Dictionary).get("UP_R", null)):
+			report.append("[upgrade] costParams.UP_R 应为正数")
 	return report

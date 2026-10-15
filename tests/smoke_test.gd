@@ -90,6 +90,17 @@ func _expect(cond: bool, msg: String) -> void:
 func _test_data_validation() -> void:
 	var report: Array[String] = DataLoader.validate_all()
 	_expect(report.is_empty(), "数据校验未通过：%s" % [report])
+	# 五表校验闸门（B 共性-5）：故意写入坏任务目标必须被报告，且恢复后重新通过。
+	var quests = DataLoader.get_table("quests")
+	if quests is Array and not (quests as Array).is_empty():
+		var entry: Dictionary = (quests as Array)[0]
+		var objective_backup: Variant = entry.get("objective")
+		entry["objective"] = {"kind": "kill", "targetId": "__no_such_monster__", "count": 0}
+		_expect(not DataLoader.validate_all().is_empty(), "坏任务目标应被 validate_all 报告")
+		entry["objective"] = objective_backup
+		_expect(DataLoader.validate_all().is_empty(), "恢复任务配置后校验应重新通过")
+	else:
+		_expect(false, "quests 表应为非空数组")
 
 func _test_blacksmith() -> void:
 	GameState.reset_to_defaults()
