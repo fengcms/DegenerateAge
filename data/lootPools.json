@@ -94,5 +94,37 @@
       "c3_equip_ring",
       "c3_equip_necklace"
     ]
+  },
+  {
+    "id": "c4_normal",
+    "desc": "第四档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "c4_equip_weapon",
+      "c4_equip_shoes",
+      "c4_equip_armor",
+      "c4_equip_helmet",
+      "c4_equip_bracer",
+      "c4_equip_knee",
+      "c4_equip_shield",
+      "c4_equip_bracelet",
+      "c4_equip_ring",
+      "c4_equip_necklace"
+    ]
+  },
+  {
+    "id": "c4_legendary",
+    "desc": "第四档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "c4_equip_weapon",
+      "c4_equip_shoes",
+      "c4_equip_armor",
+      "c4_equip_helmet",
+      "c4_equip_bracer",
+      "c4_equip_knee",
+      "c4_equip_shield",
+      "c4_equip_bracelet",
+      "c4_equip_ring",
+      "c4_equip_necklace"
+    ]
   }
 ]

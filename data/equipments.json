@@ -731,5 +731,249 @@
       "cdr"
     ],
     "requiredLevel": 30
+  },
+  {
+    "id": "c4_equip_weapon",
+    "name": "驿林长剑",
+    "slot": "weapon",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第四章常规制式；穿戴要求 Lv31，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "atk": 38
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 31
+  },
+  {
+    "id": "c4_equip_shoes",
+    "name": "踏根靴",
+    "slot": "shoes",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "desc": "第四章常规制式；穿戴要求 Lv32，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "def": 9,
+        "mp": 23
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 32
+  },
+  {
+    "id": "c4_equip_armor",
+    "name": "藤衬护甲",
+    "slot": "armor",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第四章常规制式；穿戴要求 Lv33，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "def": 20,
+        "hp": 56
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 33
+  },
+  {
+    "id": "c4_equip_helmet",
+    "name": "木纹盔",
+    "slot": "helmet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "desc": "第四章常规制式；穿戴要求 Lv34，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "def": 11
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 34
+  },
+  {
+    "id": "c4_equip_bracer",
+    "name": "藤衬护腕",
+    "slot": "bracer",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第四章常规制式；穿戴要求 Lv35，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "def": 9
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 35
+  },
+  {
+    "id": "c4_equip_knee",
+    "name": "踏林护膝",
+    "slot": "knee",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "desc": "第四章常规制式；穿戴要求 Lv36，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "def": 9
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 36
+  },
+  {
+    "id": "c4_equip_shield",
+    "name": "驿纹盾",
+    "slot": "shield",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第四章常规制式；穿戴要求 Lv37，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "def": 23,
+        "hp": 34
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 37
+  },
+  {
+    "id": "c4_equip_bracelet",
+    "name": "青藤手镯",
+    "slot": "bracelet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "desc": "第四章常规制式；穿戴要求 Lv38，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "atk": 9
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 38
+  },
+  {
+    "id": "c4_equip_ring",
+    "name": "回枝戒",
+    "slot": "ring",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第四章常规制式；穿戴要求 Lv39，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "atk": 7,
+        "mp": 18
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 39
+  },
+  {
+    "id": "c4_equip_necklace",
+    "name": "叶脉项链",
+    "slot": "necklace",
+    "price": 70,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第四章常规制式；穿戴要求 Lv40，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "31": {
+        "hp": 56
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 40
   }
 ]
