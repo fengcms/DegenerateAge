@@ -57,7 +57,7 @@ const CH1_CAVE_EDGES := [
 
 const WALL_THICKNESS := 10.0
 const CAMP_WHITEBOX_PATH := "res://data/map_art/camp_whitebox_v1.json"
-const CAMP_FINAL_ART_MANIFEST := "res://assets/maps/camp_final_v1/manifest.json"
+const CAMP_FINAL_ART_MANIFEST := "res://assets/maps/camp_style_full_b/manifest.json"
 const COLOR_FILL := Color("36423a")     # 地面底色
 const COLOR_GRID := Color("44564a")     # 网格线
 const COLOR_BORDER := Color("5f7563")   # 外边框
@@ -75,6 +75,7 @@ var _camp_whitebox: Dictionary = {}
 var _camp_rect := Rect2()
 var _camp_canvas_size := Vector2.ZERO
 var _camp_ground_texture: Texture2D
+var _camp_road_texture: Texture2D
 var _camp_foreground_count := 0
 
 ## 进入地图时装配布局、地面、第一章静态实体与碰撞；所有重建都在加载阶段完成。
@@ -122,8 +123,8 @@ func _load_camp_whitebox() -> void:
 	assert(cave != null and String(map_data.get("layoutVersion", "")) == "2026-10-15-camp-whitebox-v1",
 		"营地白盒与通行掩码版本不一致")
 
-## 读取运行底图和整体前景清单；仅在营地加载时装配六个静态精灵。
-## 前景按实体脚底世界 Y 排序，角色移到建筑前后时不改变碰撞或导航。
+## 读取 B 全图循环地纹、纯道路层和整体实体清单；仅在营地加载时装配。
+## 背层位于角色后，前沿按原实体脚底世界 Y 排序，不改变碰撞或导航。
 func _load_camp_final_art() -> void:
 	var file := FileAccess.open(CAMP_FINAL_ART_MANIFEST, FileAccess.READ)
 	assert(file != null, "营地正式美术清单缺失")
@@ -135,27 +136,42 @@ func _load_camp_final_art() -> void:
 	var canvas: Array = manifest.get("canvas", [])
 	assert(canvas.size() == 2 and Vector2(float(canvas[0]), float(canvas[1])) == _camp_canvas_size,
 		"营地美术画幅与白盒坐标源不一致")
-	_camp_ground_texture = load(String(manifest["ground"])) as Texture2D
-	assert(_camp_ground_texture != null and _camp_ground_texture.get_size() == _camp_canvas_size,
-		"营地正式底图不存在或尺寸错误")
+	_camp_ground_texture = load(String(manifest["ground_tile"])) as Texture2D
+	_camp_road_texture = load(String(manifest["road_overlay"])) as Texture2D
+	assert(_camp_ground_texture != null and _camp_ground_texture.get_size() == Vector2(1024, 1024),
+		"营地循环地纹不存在或尺寸错误")
+	assert(_camp_road_texture != null and _camp_road_texture.get_size() == _camp_canvas_size,
+		"营地纯道路层不存在或尺寸错误")
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	var unit_scale := _camp_rect.size / _camp_canvas_size
-	for entry: Dictionary in manifest.get("foreground", []):
-		var texture := load(String(entry["path"])) as Texture2D
+	var object_ids: Dictionary = {}
+	for entry: Dictionary in manifest.get("objects", []):
+		var id := String(entry["id"])
+		assert(not object_ids.has(id), "营地整体美术实体重复：%s" % id)
+		object_ids[id] = true
 		var rect: Array = entry["rect"]
-		assert(texture != null and texture.get_size() == Vector2(float(rect[2]), float(rect[3])),
-			"营地整体前景缺失或尺寸错误：%s" % entry["id"])
-		var sprite := Sprite2D.new()
-		sprite.name = "CampForeground_%s" % String(entry["id"])
-		sprite.texture = texture
-		sprite.centered = false
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		sprite.scale = unit_scale
-		sprite.position = _camp_canvas_to_world([rect[0], rect[1]])
-		sprite.z_as_relative = false
-		sprite.z_index = clampi(roundi(_camp_rect.position.y + float(entry["foot_y"]) * unit_scale.y), -3500, 3500)
-		add_child(sprite)
-		_camp_foreground_count += 1
+		for layer in ["back", "front"]:
+			if not entry.has(layer):
+				continue
+			var texture := load(String(entry[layer])) as Texture2D
+			assert(texture != null, "营地整体实体层缺失：%s/%s" % [id, layer])
+			var sprite := Sprite2D.new()
+			sprite.name = "Camp_%s_%s" % [id, layer]
+			sprite.texture = texture
+			sprite.centered = false
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			sprite.scale = unit_scale * Vector2(float(rect[2]) / texture.get_width(),
+				float(rect[3]) / texture.get_height())
+			sprite.position = _camp_canvas_to_world([rect[0], rect[1]])
+			sprite.z_as_relative = false
+			sprite.z_index = -3500 if layer == "back" else clampi(roundi(
+			_camp_canvas_to_world([0, entry["foot_y"]]).y), -3499, 3500)
+			add_child(sprite)
+			if layer == "front":
+				_camp_foreground_count += 1
+	assert(object_ids.size() == (_camp_whitebox["entities"] as Array).size()
+		+ (_camp_whitebox["fences"] as Array).size(), "营地整体视觉必须覆盖全部原实体与障碍")
 
 ## 将白盒原画像素投影到游戏世界像素；只供营地加载、绘制与碰撞复用。
 func _camp_canvas_to_world(raw: Array) -> Vector2:
@@ -347,7 +363,9 @@ func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 func _draw() -> void:
 	if not _camp_whitebox.is_empty():
 		if _camp_ground_texture != null:
-			draw_texture_rect(_camp_ground_texture, _camp_rect, false)
+			draw_texture_rect(_camp_ground_texture, _camp_rect, true)
+			if _camp_road_texture != null:
+				draw_texture_rect(_camp_road_texture, _camp_rect, false)
 		else:
 			_draw_camp_whitebox()
 		return

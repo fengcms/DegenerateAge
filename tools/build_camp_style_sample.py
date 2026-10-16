@@ -29,9 +29,11 @@ def magick(*args):
     subprocess.run(["magick", *map(str, args)], check=True)
 
 
-def smooth_path(points, scale):
-    """用二次曲线穿过现有道路点；只平滑画面，不移动布局事实源。"""
-    coordinates = [((x-PATCH[0])*scale, (y-PATCH[1])*scale) for x, y in points]
+def smooth_path(points, scale, origin=None):
+    """用二次曲线穿过现有道路点；origin 是参考画布左上角，不移动布局事实源。"""
+    if origin is None:
+        origin = PATCH[:2]
+    coordinates = [((x-origin[0])*scale, (y-origin[1])*scale) for x, y in points]
     path = [f"M {coordinates[0][0]},{coordinates[0][1]}"]
     for index in range(1, len(coordinates)-1):
         x, y = coordinates[index]

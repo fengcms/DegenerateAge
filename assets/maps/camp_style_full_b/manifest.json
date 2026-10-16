@@ -1,0 +1,261 @@
+{
+  "source": "art_source/environment/camp_style_full_b/",
+  "layout_id": "camp_whitebox_v1",
+  "canvas": [
+    1672,
+    941
+  ],
+  "ground_tile": "res://assets/maps/camp_style_full_b/ground_tile.png",
+  "road_overlay": "res://assets/maps/camp_style_full_b/roads_and_shadows.png",
+  "objects": [
+    {
+      "id": "blacksmith",
+      "rect": [
+        230,
+        120,
+        310,
+        190
+      ],
+      "foot_y": 310,
+      "back": "res://assets/maps/camp_style_sample/b/blacksmith_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/blacksmith_front.png"
+    },
+    {
+      "id": "merchant",
+      "rect": [
+        305,
+        315,
+        310,
+        165
+      ],
+      "foot_y": 482,
+      "back": "res://assets/maps/camp_style_sample/b/merchant_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/merchant_front.png"
+    },
+    {
+      "id": "northwest_palisade",
+      "rect": [
+        0,
+        51,
+        760,
+        78
+      ],
+      "foot_y": 120,
+      "front": "res://assets/maps/camp_style_sample/b/northwest_palisade_front.png"
+    },
+    {
+      "id": "western_rocks",
+      "rect": [
+        0,
+        450,
+        95,
+        400
+      ],
+      "foot_y": 850,
+      "front": "res://assets/maps/camp_style_sample/b/western_rocks_front.png"
+    },
+    {
+      "id": "elder_tree",
+      "rect": [
+        925,
+        225,
+        260,
+        195
+      ],
+      "foot_y": 418,
+      "back": "res://assets/maps/camp_style_full_b/elder_tree_back.png",
+      "front": "res://assets/maps/camp_style_full_b/elder_tree_front.png"
+    },
+    {
+      "id": "warehouse",
+      "rect": [
+        995,
+        100,
+        315,
+        201
+      ],
+      "foot_y": 301,
+      "back": "res://assets/maps/camp_style_full_b/warehouse_back.png",
+      "front": "res://assets/maps/camp_style_full_b/warehouse_front.png"
+    },
+    {
+      "id": "guardian_lamp",
+      "rect": [
+        750,
+        276,
+        76,
+        170
+      ],
+      "foot_y": 446,
+      "back": "res://assets/maps/camp_style_full_b/guardian_lamp_back.png",
+      "front": "res://assets/maps/camp_style_full_b/guardian_lamp_front.png"
+    },
+    {
+      "id": "caravan",
+      "rect": [
+        985,
+        510,
+        365,
+        200
+      ],
+      "foot_y": 710,
+      "back": "res://assets/maps/camp_style_full_b/caravan_back.png",
+      "front": "res://assets/maps/camp_style_full_b/caravan_front.png"
+    },
+    {
+      "id": "training_fire",
+      "rect": [
+        637,
+        636,
+        38,
+        34
+      ],
+      "foot_y": 670,
+      "back": "res://assets/maps/camp_style_full_b/training_fire_back.png",
+      "front": "res://assets/maps/camp_style_full_b/training_fire_front.png"
+    },
+    {
+      "id": "training_north",
+      "rect": [
+        444,
+        483,
+        334,
+        83
+      ],
+      "foot_y": 538,
+      "front": "res://assets/maps/camp_style_full_b/training_north_front.png"
+    },
+    {
+      "id": "training_west",
+      "rect": [
+        432,
+        513,
+        35,
+        225
+      ],
+      "foot_y": 710,
+      "front": "res://assets/maps/camp_style_full_b/training_west_front.png"
+    },
+    {
+      "id": "training_south",
+      "rect": [
+        444,
+        664,
+        376,
+        85
+      ],
+      "foot_y": 721,
+      "front": "res://assets/maps/camp_style_full_b/training_south_front.png"
+    },
+    {
+      "id": "training_east_lower",
+      "rect": [
+        803,
+        593,
+        35,
+        156
+      ],
+      "foot_y": 721,
+      "front": "res://assets/maps/camp_style_full_b/training_east_lower_front.png"
+    },
+    {
+      "id": "east_gate_north",
+      "rect": [
+        1338,
+        299,
+        37,
+        162
+      ],
+      "foot_y": 433,
+      "front": "res://assets/maps/camp_style_full_b/east_gate_north_front.png"
+    },
+    {
+      "id": "east_gate_south",
+      "rect": [
+        1338,
+        498,
+        37,
+        159
+      ],
+      "foot_y": 629,
+      "front": "res://assets/maps/camp_style_full_b/east_gate_south_front.png"
+    },
+    {
+      "id": "northeast_palisade",
+      "rect": [
+        913,
+        31,
+        759,
+        109
+      ],
+      "foot_y": 112,
+      "front": "res://assets/maps/camp_style_full_b/northeast_palisade_front.png"
+    },
+    {
+      "id": "west_palisade",
+      "rect": [
+        -12,
+        85,
+        64,
+        373
+      ],
+      "foot_y": 430,
+      "front": "res://assets/maps/camp_style_full_b/west_palisade_front.png"
+    },
+    {
+      "id": "training_outer_fence",
+      "rect": [
+        420,
+        696,
+        455,
+        93
+      ],
+      "foot_y": 761,
+      "front": "res://assets/maps/camp_style_full_b/training_outer_fence_front.png"
+    },
+    {
+      "id": "caravan_outer_fence",
+      "rect": [
+        905,
+        710,
+        505,
+        92
+      ],
+      "foot_y": 774,
+      "front": "res://assets/maps/camp_style_full_b/caravan_outer_fence_front.png"
+    },
+    {
+      "id": "southern_rocks",
+      "rect": [
+        0,
+        795,
+        1672,
+        60
+      ],
+      "foot_y": 855,
+      "front": "res://assets/maps/camp_style_full_b/southern_rocks_front.png"
+    },
+    {
+      "id": "eastern_rocks_upper",
+      "rect": [
+        1600,
+        110,
+        72,
+        312
+      ],
+      "foot_y": 422,
+      "front": "res://assets/maps/camp_style_full_b/eastern_rocks_upper_front.png"
+    },
+    {
+      "id": "eastern_rocks_lower",
+      "rect": [
+        1600,
+        535,
+        72,
+        315
+      ],
+      "foot_y": 850,
+      "front": "res://assets/maps/camp_style_full_b/eastern_rocks_lower_front.png"
+    }
+  ]
+}

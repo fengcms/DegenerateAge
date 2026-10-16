@@ -21,8 +21,9 @@ func _ready() -> void:
 		"正常游戏应加载矩形营地")
 	var source_solids := (ground._camp_whitebox["entities"] as Array).size() + (ground._camp_whitebox["fences"] as Array).size()
 	assert(ground.get_node("CaveWalls").get_child_count() == source_solids, "每个实体与围栏应只有一条整体碰撞")
-	assert(ground._camp_ground_texture != null and ground._camp_foreground_count == 6,
-		"正式营地必须装配一张底图与六个整体前景")
+	assert(ground._camp_ground_texture != null and ground._camp_road_texture != null
+		and ground._camp_foreground_count == source_solids,
+		"正式营地必须装配循环地纹、透明道路与全部原障碍前沿")
 	var cave_walls := ground.get_node("CaveWalls") as StaticBody2D
 	for raw: Array in [[350, 220], [1100, 200], [450, 450], [700, 820]]:
 		var world_pos := ground._camp_canvas_to_world(raw)

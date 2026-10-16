@@ -1,5 +1,5 @@
 extends Node
-## 第一章地面回归：营地检查整体白盒绘制，其余三图核对纹理图集合批。
+## 第一章地面回归：营地检查 B 全图的分层地面，其余三图核对纹理图集合批。
 
 ## 逐图检查白盒事实源或网格顶点、UV 与源图像素，避免道路错位。
 func _ready() -> void:
@@ -12,8 +12,9 @@ func _ready() -> void:
 		await get_tree().process_frame
 		if map_id == "camp":
 			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v1"
-				and ground._camp_ground_texture != null and ground._camp_foreground_count == 6,
-				"营地应使用矩形整图及六个前景，而非旧菱形瓦片网格")
+				and ground._camp_ground_texture != null and ground._camp_road_texture != null
+				and ground._camp_foreground_count == 22,
+				"营地应使用矩形分层地面及 22 个原实体前沿，而非旧菱形瓦片网格")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地画幅必须是矩形")
 			ground.queue_free()
 			await get_tree().process_frame
