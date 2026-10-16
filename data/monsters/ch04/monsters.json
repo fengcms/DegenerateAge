@@ -1,0 +1,572 @@
+[
+  {
+    "id": "c4_normal01",
+    "name": "根颚兽",
+    "tier": 5,
+    "level": 31,
+    "hpBase": 770,
+    "mpBase": 0,
+    "attack": 184,
+    "defense": 53,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 243,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal02",
+    "name": "孢灯蛾",
+    "tier": 5,
+    "level": 32,
+    "hpBase": 632,
+    "mpBase": 0,
+    "attack": 169,
+    "defense": 55,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "ranged",
+      "range": 6.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 256,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal03",
+    "name": "枯信偶",
+    "tier": 5,
+    "level": 33,
+    "hpBase": 810,
+    "mpBase": 0,
+    "attack": 192,
+    "defense": 56,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 3.1,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 269,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal04",
+    "name": "藤甲巡守",
+    "tier": 5,
+    "level": 34,
+    "hpBase": 954,
+    "mpBase": 0,
+    "attack": 196,
+    "defense": 78,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 282,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "tank",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal05",
+    "name": "折镜游魂",
+    "tier": 5,
+    "level": 35,
+    "hpBase": 680,
+    "mpBase": 0,
+    "attack": 180,
+    "defense": 59,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "ranged",
+      "range": 6.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 295,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal06",
+    "name": "泥苔蜥",
+    "tier": 5,
+    "level": 36,
+    "hpBase": 870,
+    "mpBase": 0,
+    "attack": 204,
+    "defense": 60,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 3.1,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 309,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal07",
+    "name": "节根重兽",
+    "tier": 5,
+    "level": 37,
+    "hpBase": 1246,
+    "mpBase": 0,
+    "attack": 229,
+    "defense": 62,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 323,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_normal08",
+    "name": "哨塔寄藤",
+    "tier": 5,
+    "level": 38,
+    "hpBase": 728,
+    "mpBase": 0,
+    "attack": 191,
+    "defense": 63,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "ranged",
+      "range": 6.0
+    },
+    "moveSpeed": 0.0,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 337,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Normal",
+    "kind": "normal",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c4_elite01",
+    "name": "千结根牙",
+    "tier": 5,
+    "level": 34,
+    "hpBase": 3320,
+    "mpBase": 0,
+    "attack": 225,
+    "defense": 66,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 846,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Elite",
+    "kind": "elite",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c4_elite02",
+    "name": "失声旗卫",
+    "tier": 5,
+    "level": 35,
+    "hpBase": 3400,
+    "mpBase": 0,
+    "attack": 230,
+    "defense": 68,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 886,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Elite",
+    "kind": "elite",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c4_elite03",
+    "name": "折光观测偶",
+    "tier": 5,
+    "level": 36,
+    "hpBase": 3480,
+    "mpBase": 0,
+    "attack": 235,
+    "defense": 69,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 927,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Elite",
+    "kind": "elite",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c4_elite04",
+    "name": "白孢母体",
+    "tier": 5,
+    "level": 37,
+    "hpBase": 3560,
+    "mpBase": 0,
+    "attack": 239,
+    "defense": 71,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 969,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Elite",
+    "kind": "elite",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第四章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c4_boss01",
+    "name": "无声巡林者",
+    "tier": 5,
+    "level": 35,
+    "hpBase": 15300,
+    "mpBase": 0,
+    "attack": 280,
+    "defense": 89,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 5318,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Boss",
+    "kind": "boss",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": {
+      "shape": "fan",
+      "segments": [
+        {
+          "angle": -40,
+          "delay": 0.0
+        },
+        {
+          "angle": 40,
+          "delay": 0.7
+        }
+      ],
+      "radius": 6,
+      "arcDeg": 80,
+      "warn": 1.0,
+      "interval": 8.0,
+      "firstDelay": 4.0,
+      "coeff": 1.15,
+      "recovery": 0.8,
+      "phaseB": {
+        "triggerHp": 0.5,
+        "radius": 5,
+        "inner": 2,
+        "warn": 1.3,
+        "coeff": 1.3,
+        "interval": 12,
+        "window": 2.0
+      }
+    },
+    "spawnWeight": 1.0,
+    "desc": "第四章 boss；数值待实机校准。"
+  },
+  {
+    "id": "c4_boss02",
+    "name": "孢灯育巢",
+    "tier": 5,
+    "level": 38,
+    "hpBase": 16380,
+    "mpBase": 0,
+    "attack": 297,
+    "defense": 95,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 6066,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Boss",
+    "kind": "boss",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": {
+      "shape": "circle",
+      "segments": [
+        {
+          "offset": [
+            0,
+            -4
+          ],
+          "delay": 0.0
+        },
+        {
+          "offset": [
+            -6,
+            3
+          ],
+          "delay": 0.7
+        },
+        {
+          "offset": [
+            6,
+            3
+          ],
+          "delay": 1.4
+        }
+      ],
+      "radius": 2.5,
+      "warn": 1.1,
+      "interval": 8.0,
+      "firstDelay": 4.0,
+      "coeff": 1.15,
+      "recovery": 0.8,
+      "phaseB": {
+        "triggerHp": 0.5,
+        "radius": 5,
+        "inner": 2,
+        "warn": 1.3,
+        "coeff": 1.3,
+        "interval": 12,
+        "window": 2.0
+      }
+    },
+    "spawnWeight": 1.0,
+    "desc": "第四章 boss；数值待实机校准。"
+  },
+  {
+    "id": "c4_boss03",
+    "name": "缠根守门者",
+    "tier": 5,
+    "level": 40,
+    "hpBase": 17100,
+    "mpBase": 0,
+    "attack": 308,
+    "defense": 99,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 6585,
+    "goldReward": 0,
+    "dropTableId": "DT_C4_Boss",
+    "kind": "boss",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": {
+      "shape": "line",
+      "segments": [
+        {
+          "offset": [
+            -2.5,
+            0
+          ],
+          "delay": 0.0
+        },
+        {
+          "offset": [
+            2.5,
+            0
+          ],
+          "delay": 0.7
+        }
+      ],
+      "length": 9,
+      "width": 2,
+      "warn": 1.0,
+      "interval": 8.0,
+      "firstDelay": 4.0,
+      "coeff": 1.15,
+      "recovery": 0.8,
+      "phaseB": {
+        "triggerHp": 0.5,
+        "radius": 5,
+        "inner": 2,
+        "warn": 1.3,
+        "coeff": 1.3,
+        "interval": 12,
+        "window": 2.0
+      }
+    },
+    "spawnWeight": 1.0,
+    "desc": "第四章 boss；数值待实机校准。"
+  }
+]

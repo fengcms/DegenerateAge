@@ -2,20 +2,19 @@ extends Node
 ## DataLoader — 数据加载与校验（单例 / Autoload）。
 ##
 ## 职责：
-##   1. 读取 res://data/ 下由 TABLES 登记的 JSON 配置表；地图按 data/maps/index.json
-##      聚合各目录的 map.json（见 docs/产品文档/10 数据配置与存档技术）。
+##   1. 读取 res://data/ 下由 TABLES 登记的 JSON 配置表；地图与怪物分别按目录索引
+##      聚合配置，保持对外表接口不变（见 docs/产品文档/10 数据配置与存档技术）。
 ##      文案表 `localization.json` 由 `Localization` 独立加载，**不在此列**（B-P3-2：避免双份内存与漂移）。
 ##   2. 在启动时执行校验（ID 唯一 / 引用合法 / 等级范围），非法时明确报错而非静默。
-## 数据全部文本可编辑——新增物品 / 怪物只需加 JSON 条目，无需改代码。
+## 数据全部文本可编辑——新增怪物须写入所属章节并登记章节索引。
 
 const DATA_DIR := "res://data/"
 
-## 逻辑表名 -> 文件名；地图为单独的目录清单加载逻辑。
+## 逻辑表名 -> 文件名；地图与怪物由各自的目录清单加载。
 const TABLES := {
 	"equipments": "equipments.json",
 	"equipmentRules": "equipmentRules.json",
 	"skills": "skills.json",
-	"monsters": "monsters.json",
 	"affixes": "affixes.json",
 	"dropTables": "dropTables.json",
 	"lootPools": "lootPools.json",
@@ -30,6 +29,7 @@ const TABLES := {
 }
 
 const MAP_INDEX := "res://data/maps/index.json"
+const MONSTER_INDEX := "res://data/monsters/index.json"
 
 ## 需要做「ID 唯一」校验的表（数组型）。
 const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
@@ -64,6 +64,7 @@ func load_all() -> void:
 	for key in TABLES.keys():
 		tables[key] = _load_json(DATA_DIR + TABLES[key])
 	tables["maps"] = _load_maps()
+	tables["monsters"] = _load_monsters()
 	_build_index()
 	EventBus.data_loaded.emit()
 
@@ -125,6 +126,35 @@ func _load_maps() -> Array:
 			continue
 		seen[map_id] = true
 		result.append(map_data)
+	return result
+
+## 按章节索引聚合怪物数组，保留旧 monsters 表与 ID 查询接口。
+## 路径只能位于 data/monsters 下；缺失、重复章节或非法条目记录配置错误。
+func _load_monsters() -> Array:
+	var entries: Variant = _load_json(MONSTER_INDEX)
+	var result: Array = []
+	if not (entries is Array):
+		errors.append("怪物索引必须是路径数组：%s" % MONSTER_INDEX)
+		return result
+	var seen_paths := {}
+	for relative in entries:
+		if not (relative is String) or not relative.ends_with("/monsters.json") or relative.begins_with("/") or relative.contains(".."):
+			errors.append("非法怪物索引路径：%s" % str(relative))
+			continue
+		if seen_paths.has(relative):
+			errors.append("重复怪物索引路径：%s" % relative)
+			continue
+		seen_paths[relative] = true
+		var path: String = "res://data/monsters/" + relative
+		var chapter_data: Variant = _load_json(path)
+		if not (chapter_data is Array):
+			errors.append("章节怪物配置必须是数组：%s" % path)
+			continue
+		for row in chapter_data:
+			if not (row is Dictionary):
+				errors.append("怪物条目必须是对象：%s" % path)
+				continue
+			result.append(row)
 	return result
 
 ## 取整表。
