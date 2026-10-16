@@ -44,7 +44,7 @@ func _ready() -> void:
 	_check(String(Quest.next_main_lead().get("id", "")) == "C2Q03", "后续主线可使用同一接续规则")
 	for i in range(3, 13):
 		GameState.quest_states["C2Q%02d" % i] = {"state": Quest.STATE_REWARDED, "progress": 1}
-	_check(Quest.next_main_lead().is_empty(), "章节全部领奖后不显示虚假的下一步")
+	_check(String(Quest.next_main_lead().get("id", "")) == "C3Q01", "第二章全部领奖后接续第三章主线")
 	MapService.clear_quest_navigation()
 	print("[QuestMainLeadTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)

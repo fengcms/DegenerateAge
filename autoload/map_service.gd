@@ -4,7 +4,7 @@ extends Node
 ## 依据：产品文档 07 §7.3（地图加载与释放）/ §7.8（地图清单与车夫拓扑）、06 §6.6（车夫）。
 ##
 ## 职责：
-##   ① 读 `maps.json` 提供地图查询（存在性 / 显示名 / 拓扑 / 费用 / NPC 点 / 目的地列表）；
+##   ① 读 DataLoader 聚合的地图表提供地图查询（存在性 / 显示名 / 拓扑 / 费用 / NPC 点 / 目的地列表）；
 ##   ② 车夫出行校验链：存在 → 非当前图 → 拓扑可达 → 已解锁 → 金币足够 → 扣费；
 ##   ③ 成功后写 `GameState.current_map` + `save_pos`，并**重载当前场景**（拍板 D1-A）。
 ##
@@ -41,6 +41,8 @@ func _ready() -> void:
 var quest_nav_target: String = ""
 var quest_nav_map: String = ""
 var quest_nav_kind: String = ""
+## 每次玩家发起导航都递增；世界节点用它区分新指令与上次已结束的移动。
+var quest_nav_serial := 0
 
 func clear_quest_navigation() -> void:
 	quest_nav_target = ""
@@ -51,15 +53,22 @@ func start_quest_navigation(monster_id: String, allowed_maps: Array) -> Dictiona
 	return start_quest_link_navigation("monster", monster_id, allowed_maps)
 
 func start_quest_link_navigation(kind: String, target_id: String, allowed_maps: Array) -> Dictionary:
+	var route := _find_quest_route(kind, target_id, allowed_maps)
+	if bool(route.get("ok", false)):
+		quest_nav_kind = kind
+		quest_nav_target = target_id
+		quest_nav_map = String(route.get("map", ""))
+		quest_nav_serial += 1
+	return route
+
+## 只计算已解锁道路的下一跳，不修改导航状态；跨图每帧查询可安全复用。
+func _find_quest_route(kind: String, target_id: String, allowed_maps: Array) -> Dictionary:
 	var queue: Array[String] = [GameState.current_map]
 	var visited := {GameState.current_map: true}
 	var first_hop := {GameState.current_map: ""}
 	while not queue.is_empty():
 		var map_id: String = queue.pop_front()
 		if allowed_maps.has(map_id) and _map_has_quest_target(map_id, kind, target_id):
-			quest_nav_kind = kind
-			quest_nav_target = target_id
-			quest_nav_map = map_id
 			return {"ok": true, "map": map_id, "first_hop": first_hop[map_id]}
 		for exit_data in data_for(map_id).get("exits", []):
 			var next_id := String(exit_data.get("toMap", ""))
@@ -76,7 +85,7 @@ func start_quest_link_navigation(kind: String, target_id: String, allowed_maps: 
 func quest_next_exit() -> Dictionary:
 	if quest_nav_target.is_empty() or quest_nav_map.is_empty():
 		return {}
-	var route := start_quest_link_navigation(quest_nav_kind, quest_nav_target, [quest_nav_map])
+	var route := _find_quest_route(quest_nav_kind, quest_nav_target, [quest_nav_map])
 	if not bool(route.get("ok", false)):
 		return {}
 	var hop := String(route.get("first_hop", ""))

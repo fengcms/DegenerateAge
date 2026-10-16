@@ -28,6 +28,7 @@ var _explored_cell := Vector2i(-1, -1)
 var _pending_npc: Npc = null
 var _pending_exit: TravelExit = null
 var _quest_nav_issued := false
+var _quest_nav_serial_seen := -1
 
 func _process(_delta: float) -> void:
 	if not Input.is_action_pressed("interact"):
@@ -72,8 +73,19 @@ func request_map_move(point: Vector2) -> bool:
 	return true
 
 func _tick_quest_navigation() -> void:
-	if MapService.quest_nav_target.is_empty() or GameState.panel_open or _player.is_dead:
+	if MapService.quest_nav_target.is_empty():
+		_quest_nav_issued = false
 		return
+	if GameState.panel_open:
+		# 普通面板会暂停角色的手动移动；关闭后应重新发出任务导航，而非误报道路失败。
+		_quest_nav_issued = false
+		return
+	if _player.is_dead:
+		return
+	# 同图重试或切换任务目标时，旧移动的“已发出”标记不可阻止新指令。
+	if _quest_nav_serial_seen != MapService.quest_nav_serial:
+		_quest_nav_serial_seen = MapService.quest_nav_serial
+		_quest_nav_issued = false
 	if GameState.current_map == MapService.quest_nav_map:
 		if MapService.quest_nav_kind == "map":
 			MapService.clear_quest_navigation()
