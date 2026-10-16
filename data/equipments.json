@@ -737,7 +737,7 @@
     "name": "驿林长剑",
     "slot": "weapon",
     "price": 50,
-    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "icon": "res://assets/sprites/equip/c4_equip_weapon.png",
     "desc": "第四章常规制式；穿戴要求 Lv31，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -761,7 +761,7 @@
     "name": "踏根靴",
     "slot": "shoes",
     "price": 50,
-    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "icon": "res://assets/sprites/equip/c4_equip_shoes.png",
     "desc": "第四章常规制式；穿戴要求 Lv32，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -786,7 +786,7 @@
     "name": "藤衬护甲",
     "slot": "armor",
     "price": 80,
-    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "icon": "res://assets/sprites/equip/c4_equip_armor.png",
     "desc": "第四章常规制式；穿戴要求 Lv33，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -811,7 +811,7 @@
     "name": "木纹盔",
     "slot": "helmet",
     "price": 60,
-    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "icon": "res://assets/sprites/equip/c4_equip_helmet.png",
     "desc": "第四章常规制式；穿戴要求 Lv34，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -835,7 +835,7 @@
     "name": "藤衬护腕",
     "slot": "bracer",
     "price": 60,
-    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "icon": "res://assets/sprites/equip/c4_equip_bracer.png",
     "desc": "第四章常规制式；穿戴要求 Lv35，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -859,7 +859,7 @@
     "name": "踏林护膝",
     "slot": "knee",
     "price": 60,
-    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "icon": "res://assets/sprites/equip/c4_equip_knee.png",
     "desc": "第四章常规制式；穿戴要求 Lv36，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -883,7 +883,7 @@
     "name": "驿纹盾",
     "slot": "shield",
     "price": 80,
-    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "icon": "res://assets/sprites/equip/c4_equip_shield.png",
     "desc": "第四章常规制式；穿戴要求 Lv37，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -908,7 +908,7 @@
     "name": "青藤手镯",
     "slot": "bracelet",
     "price": 60,
-    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "icon": "res://assets/sprites/equip/c4_equip_bracelet.png",
     "desc": "第四章常规制式；穿戴要求 Lv38，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -932,7 +932,7 @@
     "name": "回枝戒",
     "slot": "ring",
     "price": 60,
-    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "icon": "res://assets/sprites/equip/c4_equip_ring.png",
     "desc": "第四章常规制式；穿戴要求 Lv39，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {
@@ -957,7 +957,7 @@
     "name": "叶脉项链",
     "slot": "necklace",
     "price": 70,
-    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "icon": "res://assets/sprites/equip/c4_equip_necklace.png",
     "desc": "第四章常规制式；穿戴要求 Lv40，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "31": {

@@ -103,28 +103,32 @@
     "name": "邮袋封签",
     "useType": "quest",
     "animation": "",
-    "desc": "第四章任务袋物品，不占背包格。"
+    "desc": "第四章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c4_item_q02.png"
   },
   {
     "id": "c4_item_q06",
     "name": "观测标片",
     "useType": "quest",
     "animation": "",
-    "desc": "第四章任务袋物品，不占背包格。"
+    "desc": "第四章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c4_item_q06.png"
   },
   {
     "id": "c4_item_s02",
     "name": "退信木签",
     "useType": "quest",
     "animation": "",
-    "desc": "第四章任务袋物品，不占背包格。"
+    "desc": "第四章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c4_item_s02.png"
   },
   {
     "id": "c4_item_s03",
     "name": "药菌封签",
     "useType": "quest",
     "animation": "",
-    "desc": "第四章任务袋物品，不占背包格。"
+    "desc": "第四章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c4_item_s03.png"
   },
   {
     "id": "c5_item_q03",
