@@ -140,11 +140,9 @@ for s in range(0, 12):
     c = round(500*(1.5**s)); tot += c
     print(f"    {s}→{s+1}: {c:>9,} 金（累计 {tot:>10,}）")
 
-print("\n  装备售价举例（6.2：base×品质倍率×(1+星×0.08)）：")
-QM = {"common":1.0,"uncommon":1.5,"rare":3.0,"epic":6.0,"legendary":12.0}
-for eid in ["weapon_starter","armor_starter","weapon_wolfking","helmet_cloth"]:
-    e = equips[eid]
-    print(f"    {e['name']:<10} price={e['price']:<4} {e['quality']:<9} → 卖价 {round(e['price']*QM[e['quality']])}")
+print("\n  当前装备型号基础价格举例（品质、星级与实际售价另行结算）：")
+for e in list(equips.values())[:4]:
+    print(f"    {e['name']:<10} 型号 ID={e['id']:<18} 基础价格={e['price']}")
 
 print()
 print("="*104)
