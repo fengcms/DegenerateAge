@@ -9,6 +9,7 @@ import math
 import random
 import shutil
 import struct
+import subprocess
 import tempfile
 import zlib
 from pathlib import Path
@@ -33,13 +34,42 @@ LARGE_ENTITIES = {
 
 
 def write_ground_tile(output, scratch):
-    """保留新源图原生像素，从中心裁 1024 方块并镜像成 2048 循环图集。"""
+    """将原图裁片同向铺成循环地纹，只柔和接缝窄带，避免下半区草丛倒置。"""
     source = SOURCE_V2 / "ground_diagonal.png"
     tile = scratch / "tile.png"
-    top = scratch / "top.png"
     magick(source, "-crop", "1024x1024+115+115", "+repage", "-strip", tile)
-    magick(tile, "(", tile, "-flop", ")", "+append", top)
-    magick(top, "(", top, "-flip", ")", "-append", "-strip", output / "ground_tile.png")
+    result = subprocess.run(["magick", str(tile), "-depth", "8", "rgba:-"],
+                            check=True, capture_output=True)
+    pixels = bytearray(result.stdout)
+    side, seam = 1024, 48
+    assert len(pixels) == side * side * 4, "地表源图裁片必须是 1024×1024 RGBA"
+    # 两侧对应像素渐变到相同颜色；内部原生像素不变，草与石块不做任何翻转。
+    for y in range(side):
+        for x in range(seam):
+            left = (y * side + x) * 4
+            right = (y * side + side - 1 - x) * 4
+            strength = 0.5 * (1.0 - x / float(seam))
+            for channel in range(3):
+                a, b = pixels[left + channel], pixels[right + channel]
+                pixels[left + channel] = round(a * (1.0 - strength) + b * strength)
+                pixels[right + channel] = round(b * (1.0 - strength) + a * strength)
+    for y in range(seam):
+        upper_y, lower_y = y, side - 1 - y
+        strength = 0.5 * (1.0 - y / float(seam))
+        for x in range(side):
+            upper = (upper_y * side + x) * 4
+            lower = (lower_y * side + x) * 4
+            for channel in range(3):
+                a, b = pixels[upper + channel], pixels[lower + channel]
+                pixels[upper + channel] = round(a * (1.0 - strength) + b * strength)
+                pixels[lower + channel] = round(b * (1.0 - strength) + a * strength)
+    row_bytes = side * 4
+    repeated = bytearray()
+    for y in range(side):
+        row = pixels[y * row_bytes:(y + 1) * row_bytes]
+        repeated.extend(row)
+        repeated.extend(row)
+    write_rgba_png(output / "ground_tile.png", side * 2, side * 2, repeated * 2)
     return "res://assets/maps/camp_style_full_b_v2/ground_tile.png"
 
 
