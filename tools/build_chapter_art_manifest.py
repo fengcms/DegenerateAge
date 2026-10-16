@@ -8,6 +8,7 @@
 import argparse
 import json
 import re
+import struct
 from pathlib import Path
 
 
@@ -120,6 +121,32 @@ def make_manifest() -> dict:
             "counts": counts, "assets": rows}
 
 
+def check_exported_icons(existing: dict) -> None:
+    """核对已审查图标的源稿、48×48 RGBA 运行图、数据路径及导出预载入口。"""
+    equipment = {row["id"]: row for row in read_json(ROOT / "data/equipments.json")}
+    items = {row["id"]: row for row in read_json(ROOT / "data/miscItems.json")}
+    preloads = (ROOT / "scripts/systems/sample_art.gd").read_text(encoding="utf-8")
+    for row in existing["assets"]:
+        if row["type"] == "monster" or row["status"] == "planned":
+            continue
+        asset_id = row["data_id"]
+        runtime = ROOT / row["runtime_art"]
+        source = ROOT / row["source_art"] / "source.png"
+        if not runtime.is_file() or not source.is_file():
+            raise ValueError(f"源稿或运行图不存在: {asset_id}")
+        with runtime.open("rb") as file:
+            header = file.read(26)
+        if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
+            raise ValueError(f"不是 PNG: {asset_id}")
+        width, height = struct.unpack(">II", header[16:24])
+        if (width, height, header[25]) != (48, 48, 6):
+            raise ValueError(f"不是 48×48 RGBA: {asset_id}: {width}×{height}, type {header[25]}")
+        data_row = equipment[asset_id] if row["type"] == "equipment" else items[asset_id]
+        res_path = "res://" + row["runtime_art"]
+        if data_row.get("icon") != res_path or f'preload("{res_path}")' not in preloads:
+            raise ValueError(f"运行数据或导出预载未指向正式图标: {asset_id}")
+
+
 def main() -> None:
     """写入或只读校验清单；存在人工进度时拒绝覆盖，避免丢失后续状态。"""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -132,6 +159,7 @@ def main() -> None:
         actual_ids = [row["data_id"] for row in existing["assets"]]
         if expected_ids != actual_ids:
             raise ValueError("清单与运行数据 ID/顺序不一致")
+        check_exported_icons(existing)
         print(f"通过：{len(actual_ids)} 个稳定 ID，{existing['counts']}")
         return
     if OUTPUT.exists():
