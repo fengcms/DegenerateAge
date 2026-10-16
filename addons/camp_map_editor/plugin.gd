@@ -18,13 +18,17 @@ func _exit_tree() -> void:
 	if is_instance_valid(panel):
 		panel.queue_free()
 
+## 声明此插件提供主屏幕，否则 Godot 不会创建顶部“营地地图”标签。
+func _has_main_screen() -> bool:
+	return true
+
 ## 主屏幕标签名，供使用者在 2D／3D／脚本旁切换到地图编辑页。
 func _get_plugin_name() -> String:
 	return "营地地图"
 
-## 复用编辑器原生地图图标，不依赖另外制作 SVG 资源。
+## 复用编辑器原生节点图标，确保主屏幕标签有有效图标。
 func _get_plugin_icon() -> Texture2D:
-	return EditorInterface.get_editor_theme().get_icon("TileMapLayer", "EditorIcons")
+	return EditorInterface.get_editor_theme().get_icon("Node", "EditorIcons")
 
 ## 显示或隐藏主屏幕控件；隐藏时不写入草稿或正式地图。
 func _make_visible(visible: bool) -> void:
