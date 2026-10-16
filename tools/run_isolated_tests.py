@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -38,6 +39,15 @@ DEFAULT_TESTS = [
 
 ## 仅作夹具、自身不输出成功完成标记的场景，不纳入 `--all`。
 FIXTURE_SCENES = {"CampWhitebox", "CampStyleSample", "CampStyleBenchmark"}
+
+## 成功完成标记只认**行尾**形态，避免无关文本里裸含 "PASS" 被误命中。
+## 覆盖两种既有打印约定：`[XxxTest] 全部通过 ✅` 与 `XxxTest: PASS` / `[XxxTest] PASS`。
+_COMPLETION_TAIL = re.compile(r"(?:全部通过|全部断言通过|✅)$|(?:^|[\]\[:\s])PASS$")
+
+
+def has_completion_marker(output: str) -> bool:
+    """输出中是否存在位于**行尾**的成功完成标记（行中裸含 PASS 不算通过）。"""
+    return any(_COMPLETION_TAIL.search(line.rstrip()) for line in output.splitlines())
 
 
 def discover_all_tests() -> list[str]:
@@ -123,7 +133,7 @@ def main() -> int:
                 # Async physics tests must finish, not silently hit a render-frame cap.
                 ok, output = run(project, ["--scene", scene, "--max-fps", "120",
                                            "--quit-after", "14400"], timeout=240, rendered=args.rendered)
-                completed = any(marker in output for marker in ("PASS", "全部通过", "全部断言通过"))
+                completed = has_completion_marker(output)
                 ok = ok and completed
                 if not completed:
                     output += "\nFAIL: 测试未输出成功完成标记，不能视为通过\n"
