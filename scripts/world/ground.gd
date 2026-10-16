@@ -56,8 +56,8 @@ const CH1_CAVE_EDGES := [
 ]
 
 const WALL_THICKNESS := 10.0
-const CAMP_WHITEBOX_PATH := "res://data/map_art/camp_whitebox_v1.json"
-const CAMP_FINAL_ART_MANIFEST := "res://assets/maps/camp_style_full_b/manifest.json"
+const CAMP_WHITEBOX_PATH := "res://data/map_art/camp_whitebox_v2.json"
+const CAMP_FINAL_ART_MANIFEST := "res://assets/maps/camp_style_full_b_v2/manifest.json"
 const COLOR_FILL := Color("36423a")     # 地面底色
 const COLOR_GRID := Color("44564a")     # 网格线
 const COLOR_BORDER := Color("5f7563")   # 外边框
@@ -120,7 +120,7 @@ func _load_camp_whitebox() -> void:
 	_camp_rect = Rect2(float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3]))
 	var canvas: Array = _camp_whitebox["reference_canvas"]
 	_camp_canvas_size = Vector2(float(canvas[0]), float(canvas[1]))
-	assert(cave != null and String(map_data.get("layoutVersion", "")) == "2026-10-15-camp-whitebox-v1",
+	assert(cave != null and String(map_data.get("layoutVersion", "")) == "2026-10-16-camp-open-perimeter-v2",
 		"营地白盒与通行掩码版本不一致")
 
 ## 读取 B 全图循环地纹、纯道路层和整体实体清单；仅在营地加载时装配。
@@ -138,11 +138,11 @@ func _load_camp_final_art() -> void:
 		"营地美术画幅与白盒坐标源不一致")
 	_camp_ground_texture = load(String(manifest["ground_tile"])) as Texture2D
 	_camp_road_texture = load(String(manifest["road_overlay"])) as Texture2D
-	assert(_camp_ground_texture != null and _camp_ground_texture.get_size() == Vector2(1024, 1024),
+	assert(_camp_ground_texture != null and _camp_ground_texture.get_size() == Vector2(2048, 2048),
 		"营地循环地纹不存在或尺寸错误")
 	assert(_camp_road_texture != null and _camp_road_texture.get_size() == _camp_canvas_size,
 		"营地纯道路层不存在或尺寸错误")
-	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	var unit_scale := _camp_rect.size / _camp_canvas_size
 	var object_ids: Dictionary = {}
@@ -160,7 +160,7 @@ func _load_camp_final_art() -> void:
 			sprite.name = "Camp_%s_%s" % [id, layer]
 			sprite.texture = texture
 			sprite.centered = false
-			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if entry.get("pixel_art", false) else CanvasItem.TEXTURE_FILTER_LINEAR
 			sprite.scale = unit_scale * Vector2(float(rect[2]) / texture.get_width(),
 				float(rect[3]) / texture.get_height())
 			sprite.position = _camp_canvas_to_world([rect[0], rect[1]])

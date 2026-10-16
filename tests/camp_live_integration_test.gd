@@ -25,17 +25,17 @@ func _ready() -> void:
 		and ground._camp_foreground_count == source_solids,
 		"正式营地必须装配循环地纹、透明道路与全部原障碍前沿")
 	var cave_walls := ground.get_node("CaveWalls") as StaticBody2D
-	for raw: Array in [[350, 220], [1100, 200], [450, 450], [700, 820]]:
+	for raw: Array in [[350, 220], [1100, 200], [450, 450], [1170, 625]]:
 		var world_pos := ground._camp_canvas_to_world(raw)
 		var blocked_cell := Vector2i(Iso.world_to_grid(world_pos).round())
-		assert(not ground.cave.is_walkable(blocked_cell), "建筑与外围实体内部应阻挡：%s" % raw)
+		assert(not ground.cave.is_walkable(blocked_cell), "保留建筑与马车内部应阻挡：%s" % raw)
 		var query := PhysicsPointQueryParameters2D.new()
 		query.position = world_pos
 		var collided := false
 		for hit: Dictionary in world.get_world_2d().direct_space_state.intersect_point(query):
 			if hit.get("collider") == cave_walls:
 				collided = true
-		assert(collided, "建筑与外围实体必须有对应整体物理碰撞：%s" % raw)
+		assert(collided, "建筑与马车必须有对应整体物理碰撞：%s" % raw)
 	for raw: Array in [[595, 620], [680, 620], [750, 620]]:
 		var free_cell := Vector2i(Iso.world_to_grid(ground._camp_canvas_to_world(raw)).round())
 		assert(ground.cave.is_walkable(free_cell), "动态木桩原占地不应留下隐形阻挡：%s" % raw)
@@ -72,6 +72,17 @@ func _ready() -> void:
 	assert(not migrated.exploredMaps.has("camp") and migrated.exploredMaps.has("wild_trial"),
 		"仅营地旧迷雾需重置")
 	assert(SaveManager._migrate(migrated) == migrated, "营地迁移应幂等")
+	var previous_camp_save := migrated.duplicate(true)
+	previous_camp_save.mapLayoutVersion = SaveManager.PREVIOUS_CAMP_LAYOUT_VERSION
+	previous_camp_save.playerPos = [100.0, -1700.0]
+	previous_camp_save.unclaimedLoot.camp[0].pos = [110.0, -1710.0]
+	previous_camp_save.exploredMaps = {"camp": [1, 2, 3]}
+	var open_perimeter_migrated: Dictionary = SaveManager._migrate(previous_camp_save)
+	assert(open_perimeter_migrated.mapLayoutVersion == SaveManager.CURRENT_CAMP_LAYOUT_VERSION
+		and open_perimeter_migrated.playerPos == previous_camp_save.playerPos
+		and open_perimeter_migrated.unclaimedLoot == previous_camp_save.unclaimedLoot
+		and open_perimeter_migrated.exploredMaps == previous_camp_save.exploredMaps,
+		"从旧白盒升级开放外围时必须保留玩家、地面物和迷雾")
 	if DisplayServer.get_name() != "headless":
 		for _frame in range(4):
 			await get_tree().process_frame

@@ -1,9 +1,15 @@
 extends Node
-## 幸存者营地 B 全图美术验收：核对全部原实体、透明层、固定 NPC 和实走路线。
+## 幸存者营地 B 第二版全图验收：核对开放外围、透明层、固定 NPC 和实走路线。
 ## 使用正式 Game 场景与布局，不写存档；窗口模式保存全图与局部截图。
 
 const GAME := preload("res://scenes/Game.tscn")
-const MANIFEST := "res://assets/maps/camp_style_full_b/manifest.json"
+const MANIFEST := "res://assets/maps/camp_style_full_b_v2/manifest.json"
+const OPEN_PERIMETER := [Vector2i(63, 91), Vector2i(89, 65), Vector2i(42, 90),
+	Vector2i(77, 46), Vector2i(65, 34), Vector2i(33, 34), Vector2i(18, 67),
+	Vector2i(90, 42), Vector2i(66, 18), Vector2i(33, 44), Vector2i(46, 28)]
+const NPC_CELLS := {"shop": Vector2i(43, 63), "quest": Vector2i(64, 48),
+	"blacksmith": Vector2i(49, 78), "warehouse": Vector2i(72, 56),
+	"carter": Vector2i(46, 33)}
 const ROUTES := [
 	{"id": "warehouse", "start": [930, 330], "end": [1350, 325]},
 	{"id": "guardian_lamp", "start": [710, 430], "end": [870, 430]},
@@ -31,8 +37,8 @@ func _ready() -> void:
 		entity_ids[String(entry["id"])] = true
 	for entry: Dictionary in layout["fences"]:
 		expected_ids[String(entry["id"])] = true
-	assert(expected_ids.size() == 22 and ground.get_node("CaveWalls").get_child_count() == 22,
-		"原有 7 个实体与 15 段障碍必须保持")
+	assert(expected_ids.size() == 11 and ground.get_node("CaveWalls").get_child_count() == 11,
+		"开放外围后应保持 7 个实体与 4 段训练场围栏")
 	var file := FileAccess.open(MANIFEST, FileAccess.READ)
 	assert(file != null, "全图清单缺失")
 	var manifest: Dictionary = JSON.parse_string(file.get_as_text())
@@ -41,31 +47,49 @@ func _ready() -> void:
 	var roads := Image.new()
 	assert(atlas.load(String(manifest["ground_tile"])) == OK)
 	assert(roads.load(String(manifest["road_overlay"])) == OK)
-	assert(atlas.get_size() == Vector2i(1024, 1024) and atlas.get_pixel(0, 0).a > 0.99,
+	assert(atlas.get_size() == Vector2i(2048, 2048) and atlas.get_pixel(0, 0).a > 0.99,
 		"重复地纹应是不含物件的实体地表")
 	assert(roads.get_size() == Vector2i(1672, 941) and roads.get_pixel(1600, 850).a < 0.01,
 		"独立道路层空白区须真正透明")
 	var actual_ids: Dictionary = {}
+	var art_rects: Dictionary = {}
 	for entry: Dictionary in manifest["objects"]:
 		var id := String(entry["id"])
 		assert(expected_ids.has(id) and not actual_ids.has(id), "新美术实体与原障碍不一致：%s" % id)
 		actual_ids[id] = true
+		art_rects[id] = entry["rect"]
 		assert(ground.has_node("Camp_%s_front" % id), "实体前沿缺失：%s" % id)
 		if entity_ids.has(id):
 			assert(ground.has_node("Camp_%s_back" % id), "可绕行实体背层缺失：%s" % id)
 			_check_split_alpha(entry)
-	assert(actual_ids.size() == expected_ids.size() and ground._camp_foreground_count == 22,
-		"全部原实体与障碍必须有整体视觉前沿")
+	assert(actual_ids.size() == expected_ids.size() and ground._camp_foreground_count == 11,
+		"保留的实体与障碍必须有整体视觉前沿")
+	assert(float(art_rects["caravan"][2]) < float(art_rects["warehouse"][2]) * 0.75,
+		"马车应明显小于仓库")
+	assert(absf(float(art_rects["guardian_lamp"][2]) / float(art_rects["guardian_lamp"][3])
+		- 0.56) < 0.02, "中央灯应保留源图宽高比")
 	var blocked := _scan_original_footprints(ground, layout)
 	assert(blocked > 150, "逐格障碍扫描覆盖不足")
+	_check_open_perimeter(world, ground)
 	_check_npc_positions(world)
 	print("[PERF] 营地 B 全图原障碍逐格扫描不可走格心：", blocked)
 	for route: Dictionary in ROUTES:
 		await _walk(world, ground, player, camera, route)
 	if DisplayServer.get_name() != "headless":
 		await _save_overview(world, ground, camera)
-	print("[CampFullArtAcceptanceTest] PASS · 全图 22 个整体实体、固定 NPC 与四条实走路线通过")
+	print("[CampFullArtAcceptanceTest] PASS · 全图 11 个整体实体、开放外围、固定 NPC 与四条实走路线通过")
 	get_tree().quit()
+
+## 检查原十一处外围障碍的位置已可走且没有遗留物理碰撞。
+func _check_open_perimeter(world: Node2D, ground: IsoGround) -> void:
+	var cave_walls := ground.get_node("CaveWalls") as StaticBody2D
+	for cell: Vector2i in OPEN_PERIMETER:
+		assert(ground.cave.is_walkable(cell), "已撤外围仍不可走：%s" % cell)
+		var query := PhysicsPointQueryParameters2D.new()
+		query.position = Iso.grid_to_world(cell)
+		for hit: Dictionary in world.get_world_2d().direct_space_state.intersect_point(query):
+			assert(hit.get("collider") != cave_walls, "已撤外围残留碰撞：%s" % cell)
+	print("[PERF] 营地 B 第二版开放外围抽查点：", OPEN_PERIMETER.size())
 
 ## 核对一个可绕行整体精灵的前沿与背层 alpha 互斥，避免屋顶重复贴进地面。
 func _check_split_alpha(entry: Dictionary) -> void:
@@ -102,11 +126,16 @@ func _scan_original_footprints(ground: IsoGround, layout: Dictionary) -> int:
 ## NPC 位置逐一与原 maps.json 配置比较，防止贴图替换时服务点意外移动。
 func _check_npc_positions(world: Node2D) -> void:
 	var specs: Array = MapService.current_npcs()
+	var arrival: Array = MapService.data_for("camp")["carterArrival"]
+	assert(arrival.size() == 2 and int(arrival[0]) == 42 and int(arrival[1]) == 30,
+		"马车旅行落点不应随美术与外围开放偏移")
 	var npcs := world.get_node("Npcs")
 	assert(npcs.get_child_count() == specs.size() and specs.size() == 5, "营地 NPC 数量变更")
 	for spec: Dictionary in specs:
 		var cell: Array = spec["cell"]
-		var target := Iso.grid_to_world(Vector2i(int(cell[0]), int(cell[1])))
+		var configured := Vector2i(int(cell[0]), int(cell[1]))
+		assert(configured == NPC_CELLS[String(spec["role"])], "NPC 配置坐标不应随美术变化")
+		var target := Iso.grid_to_world(configured)
 		var found := false
 		for npc: Npc in npcs.get_children():
 			if npc.role == String(spec["role"]):
@@ -142,7 +171,7 @@ func _walk(world: Node2D, ground: IsoGround, player: PlayerCharacter,
 		"玩家没有绕原障碍到达目的地：%s" % id)
 	print("[PERF] 营地 B 全图实走 ", id, " 世界像素：", roundi(traveled))
 
-## 在固定矩形镜头保存正式全图画面，便于检查地面、围栏和整体实体。
+## 在固定矩形镜头保存全图与 200% 地表画面，检查纹理、围栏和整体实体。
 func _save_overview(world: Node2D, ground: IsoGround, camera: Camera2D) -> void:
 	camera.top_level = true
 	camera.global_position = ground.get_world_bounds().get_center()
@@ -154,3 +183,10 @@ func _save_overview(world: Node2D, ground: IsoGround, camera: Camera2D) -> void:
 	await RenderingServer.frame_post_draw
 	assert(get_viewport().get_texture().get_image().save_png("/tmp/camp_full_b_overview.png") == OK,
 		"B 全图概览截图失败")
+	camera.global_position = ground._camp_canvas_to_world([830, 475])
+	camera.zoom = Vector2.ONE * 2.0
+	for _frame in range(4):
+		await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	assert(get_viewport().get_texture().get_image().save_png("/tmp/camp_full_b_ground_200.png") == OK,
+		"B 二版地表 200% 实际窗口截图失败")

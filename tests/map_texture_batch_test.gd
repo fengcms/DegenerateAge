@@ -11,10 +11,10 @@ func _ready() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		if map_id == "camp":
-			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v1"
+			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v2"
 				and ground._camp_ground_texture != null and ground._camp_road_texture != null
-				and ground._camp_foreground_count == 22,
-				"营地应使用矩形分层地面及 22 个原实体前沿，而非旧菱形瓦片网格")
+				and ground._camp_foreground_count == 11,
+				"营地应使用矩形分层地面及 11 个实体前沿，而非旧菱形瓦片网格")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地画幅必须是矩形")
 			ground.queue_free()
 			await get_tree().process_frame

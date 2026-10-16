@@ -2,7 +2,7 @@ extends Node2D
 ## 幸存者营地独立可玩白盒：将整图原画坐标映射为世界矩形，复用真实玩家和等距格导航。
 ## 供独立设计验收；读取正式营地的同一源文件，实体轮廓同时生成阻挡掩码和物理碰撞。
 
-const LAYOUT_PATH := "res://data/map_art/camp_whitebox_v1.json"
+const LAYOUT_PATH := "res://data/map_art/camp_whitebox_v2.json"
 const PLAYER_SCENE := preload("res://scenes/entities/Player.tscn")
 const PLAYER_CLEARANCE := 14.0
 const TARGET_LABELS := {

@@ -1,0 +1,144 @@
+{
+  "source": "art_source/environment/camp_style_full_b_v2/",
+  "layout_id": "camp_whitebox_v2",
+  "canvas": [
+    1672,
+    941
+  ],
+  "ground_tile": "res://assets/maps/camp_style_full_b_v2/ground_tile.png",
+  "road_overlay": "res://assets/maps/camp_style_full_b_v2/roads_and_shadows.png",
+  "objects": [
+    {
+      "id": "blacksmith",
+      "rect": [
+        230,
+        120,
+        310,
+        190
+      ],
+      "foot_y": 310,
+      "back": "res://assets/maps/camp_style_sample/b/blacksmith_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/blacksmith_front.png"
+    },
+    {
+      "id": "merchant",
+      "rect": [
+        305,
+        315,
+        310,
+        165
+      ],
+      "foot_y": 482,
+      "back": "res://assets/maps/camp_style_sample/b/merchant_back.png",
+      "front": "res://assets/maps/camp_style_sample/b/merchant_front.png"
+    },
+    {
+      "id": "elder_tree",
+      "rect": [
+        925,
+        225,
+        260,
+        195
+      ],
+      "foot_y": 418,
+      "back": "res://assets/maps/camp_style_full_b_v2/elder_tree_back.png",
+      "front": "res://assets/maps/camp_style_full_b_v2/elder_tree_front.png"
+    },
+    {
+      "id": "warehouse",
+      "rect": [
+        995,
+        100,
+        315,
+        201
+      ],
+      "foot_y": 301,
+      "back": "res://assets/maps/camp_style_full_b_v2/warehouse_back.png",
+      "front": "res://assets/maps/camp_style_full_b_v2/warehouse_front.png"
+    },
+    {
+      "id": "guardian_lamp",
+      "rect": [
+        747,
+        296,
+        84,
+        150
+      ],
+      "foot_y": 446,
+      "back": "res://assets/maps/camp_style_full_b_v2/guardian_lamp_back.png",
+      "front": "res://assets/maps/camp_style_full_b_v2/guardian_lamp_front.png"
+    },
+    {
+      "id": "caravan",
+      "rect": [
+        1040,
+        545,
+        220,
+        125
+      ],
+      "foot_y": 670,
+      "back": "res://assets/maps/camp_style_full_b_v2/caravan_back.png",
+      "front": "res://assets/maps/camp_style_full_b_v2/caravan_front.png"
+    },
+    {
+      "id": "training_fire",
+      "rect": [
+        637,
+        636,
+        38,
+        34
+      ],
+      "foot_y": 670,
+      "back": "res://assets/maps/camp_style_full_b_v2/training_fire_back.png",
+      "front": "res://assets/maps/camp_style_full_b_v2/training_fire_front.png"
+    },
+    {
+      "id": "training_north",
+      "rect": [
+        444,
+        504,
+        334,
+        45
+      ],
+      "foot_y": 538,
+      "pixel_art": true,
+      "front": "res://assets/maps/camp_style_full_b_v2/training_north_front.png"
+    },
+    {
+      "id": "training_west",
+      "rect": [
+        433,
+        509,
+        33,
+        208
+      ],
+      "foot_y": 710,
+      "pixel_art": true,
+      "front": "res://assets/maps/camp_style_full_b_v2/training_west_front.png"
+    },
+    {
+      "id": "training_south",
+      "rect": [
+        444,
+        685,
+        376,
+        47
+      ],
+      "foot_y": 721,
+      "pixel_art": true,
+      "front": "res://assets/maps/camp_style_full_b_v2/training_south_front.png"
+    },
+    {
+      "id": "training_east_lower",
+      "rect": [
+        804,
+        589,
+        33,
+        139
+      ],
+      "foot_y": 721,
+      "pixel_art": true,
+      "front": "res://assets/maps/camp_style_full_b_v2/training_east_lower_front.png"
+    }
+  ]
+}

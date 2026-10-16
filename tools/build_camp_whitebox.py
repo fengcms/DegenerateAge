@@ -1,6 +1,6 @@
 """将营地白盒原画布局编译为正式地图配置和等距通行掩码。
 
-输入为 data/map_art/camp_whitebox_v1.json；输出仅覆盖 maps.json 的 camp 条目
+输入为 data/map_art/camp_whitebox_v2.json；输出仅覆盖 maps.json 的 camp 条目
 及 data/layouts/camp.json。供布局调整后重建，不修改其他地图。
 """
 
@@ -9,11 +9,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "data/map_art/camp_whitebox_v1.json"
+SOURCE = ROOT / "data/map_art/camp_whitebox_v2.json"
 MAPS = ROOT / "data/maps.json"
 LAYOUT = ROOT / "data/layouts/camp.json"
 CLEARANCE = 14.0
-VERSION = "2026-10-15-camp-whitebox-v1"
+VERSION = "2026-10-16-camp-open-perimeter-v2"
 
 
 def canvas_to_world(point, source):
@@ -104,7 +104,14 @@ def main():
         exit_data["cell"] = targets["east_exit" if exit_data["id"] == "to_wild" else "north_exit"]
     camp["entrances"] = {"from_wild": nearest_open([1540, 478], rows, source),
                          "from_c2": nearest_open([834, 110], rows, source)}
-    camp["carterArrival"] = nearest_open([1044, 775], rows, source)
+    # 外围开放只扩展可走区；原马车旅行落点仍可走时保留该格，避免重建时无意偏移。
+    arrival = camp.get("carterArrival", [])
+    if (isinstance(arrival, list) and len(arrival) == 2 and
+            0 <= arrival[0] < width and 0 <= arrival[1] < height and
+            rows[arrival[1]][arrival[0]] == "1"):
+        camp["carterArrival"] = arrival
+    else:
+        camp["carterArrival"] = nearest_open([1044, 775], rows, source)
     MAPS.write_text(json.dumps(maps, ensure_ascii=False, indent=2) + "\n")
     print(f"营地白盒已编译：{width}×{height}，可走格 {sum(row.count('1') for row in rows)}")
 

@@ -143,7 +143,7 @@
       }
     ],
     "desc": "营地 NPC 周围为矩形安全区；区外可以战斗。",
-    "layoutVersion": "2026-10-15-camp-whitebox-v1",
+    "layoutVersion": "2026-10-16-camp-open-perimeter-v2",
     "layoutPath": "res://data/layouts/camp.json",
     "worldRect": [
       -1600,

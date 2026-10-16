@@ -58,6 +58,8 @@ func _travel_to(id: String, origin: Vector2, frame_limit: int) -> void:
 
 ## 等待真实渲染提交后保存当前窗口，供人工检查矩形边界和实际玩家尺度。
 func _capture(label: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	for _frame in range(4):
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
