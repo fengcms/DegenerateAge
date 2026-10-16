@@ -175,27 +175,31 @@
     "name": "守护誓条",
     "useType": "quest",
     "animation": "",
-    "desc": "第六章任务袋物品，不占背包格。"
+    "desc": "第六章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c6_item_q03.png"
   },
   {
     "id": "c6_item_q06",
     "name": "旁路校验片",
     "useType": "quest",
     "animation": "",
-    "desc": "第六章任务袋物品，不占背包格。"
+    "desc": "第六章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c6_item_q06.png"
   },
   {
     "id": "c6_item_s01",
     "name": "药架扣",
     "useType": "quest",
     "animation": "",
-    "desc": "第六章任务袋物品，不占背包格。"
+    "desc": "第六章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c6_item_s01.png"
   },
   {
     "id": "c6_item_s03",
     "name": "旧名签",
     "useType": "quest",
     "animation": "",
-    "desc": "第六章任务袋物品，不占背包格。"
+    "desc": "第六章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c6_item_s03.png"
   }
 ]

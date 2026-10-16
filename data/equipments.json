@@ -1225,7 +1225,7 @@
     "name": "镇脉长剑",
     "slot": "weapon",
     "price": 50,
-    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "icon": "res://assets/sprites/equip/c6_equip_weapon.png",
     "desc": "第六章常规制式；穿戴要求 Lv51，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1249,7 +1249,7 @@
     "name": "归光战靴",
     "slot": "shoes",
     "price": 50,
-    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "icon": "res://assets/sprites/equip/c6_equip_shoes.png",
     "desc": "第六章常规制式；穿戴要求 Lv52，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1274,7 +1274,7 @@
     "name": "镇脉护甲",
     "slot": "armor",
     "price": 80,
-    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "icon": "res://assets/sprites/equip/c6_equip_armor.png",
     "desc": "第六章常规制式；穿戴要求 Lv53，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1299,7 +1299,7 @@
     "name": "守誓盔",
     "slot": "helmet",
     "price": 60,
-    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "icon": "res://assets/sprites/equip/c6_equip_helmet.png",
     "desc": "第六章常规制式；穿戴要求 Lv54，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1323,7 +1323,7 @@
     "name": "镇脉护腕",
     "slot": "bracer",
     "price": 60,
-    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "icon": "res://assets/sprites/equip/c6_equip_bracer.png",
     "desc": "第六章常规制式；穿戴要求 Lv55，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1347,7 +1347,7 @@
     "name": "镇脉护膝",
     "slot": "knee",
     "price": 60,
-    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "icon": "res://assets/sprites/equip/c6_equip_knee.png",
     "desc": "第六章常规制式；穿戴要求 Lv56，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1371,7 +1371,7 @@
     "name": "回流盾",
     "slot": "shield",
     "price": 80,
-    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "icon": "res://assets/sprites/equip/c6_equip_shield.png",
     "desc": "第六章常规制式；穿戴要求 Lv57，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1396,7 +1396,7 @@
     "name": "守誓手镯",
     "slot": "bracelet",
     "price": 60,
-    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "icon": "res://assets/sprites/equip/c6_equip_bracelet.png",
     "desc": "第六章常规制式；穿戴要求 Lv58，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1420,7 +1420,7 @@
     "name": "定脉戒",
     "slot": "ring",
     "price": 60,
-    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "icon": "res://assets/sprites/equip/c6_equip_ring.png",
     "desc": "第六章常规制式；穿戴要求 Lv59，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
@@ -1445,7 +1445,7 @@
     "name": "长明项链",
     "slot": "necklace",
     "price": 70,
-    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "icon": "res://assets/sprites/equip/c6_equip_necklace.png",
     "desc": "第六章常规制式；穿戴要求 Lv60，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "51": {
