@@ -1,9 +1,17 @@
-"""Compile the approved chapter-four references into runtime walkable masks.
+"""把已核准的第四章地图参考编译为运行时可行走掩码（写入 data/layouts/）。
 
-Reference polygons live in docs; the game reads only data/layouts/*.json.
-Run this script after a layout revision and review both the reference and result.
-The NPC / Boss cell coordinates come from the content source
-`docs/游戏创意/21-60级内容规划/第四章/02-地图与布局.md`.
+职责：读取仓库内设计参考 `docs/游戏创意/21-60级内容规划/第四章/地图参考/c4_map0*.json`
+的障碍多边形与出口格，栅格化为 `1/0` 可行走行，逐图断言「出口 / 入口等定点格可走、
+全部可走格四邻接连通」后写出 `data/layouts/c4_map*.json`。产物只进 `data/layouts/`，
+不写 `assets/`；运行时只读 `data/layouts/*.json`，不读参考目录。
+
+适用场景：地图参考修订后重跑本脚本重建掩码，并同时复核参考与产物。
+脚本幂等：输入不变时重复运行产物字节一致，可作为漂移校验。
+
+数据口径与依赖：
+  · 障碍多边形、出口格、`layoutVersion`、画布宽高取自上述设计参考 JSON；
+  · NPC / Boss 圆心坐标取自创意事实源
+    `docs/游戏创意/21-60级内容规划/第四章/02-地图与布局.md`（创意 JSON 只给 id、不给格坐标）。
 """
 
 import json
