@@ -108,9 +108,11 @@ func _ready() -> void:
 	check(not bool(MapService.travel_to("c4_map05").get("ok", false)), "未访问的野外不能车夫跳关")
 	GameState.mark_visited("c4_map05")
 	GameState.gold = 1000
+	var expected_fare := MapService.fee_to("c4_map05")
 	var fare := MapService.travel_to("c4_map05")
 	check(bool(fare.get("ok", false)), "已访问且门开后可车夫直达：%s" % fare.get("reason", ""))
-	check(GameState.gold == 1000 - MapService.fee_to("c4_map05"), "车费按枢纽报价扣除")
+	check(GameState.gold == 1000 - expected_fare, "车费按枢纽报价扣除")
+	check(MapService.fee_to("c4_map00") == expected_fare, "枢纽↔首领图双向报价一致")
 	MapService.commit_arrival()
 
 	# ⑥ 运行世界装配：每图按布局装配地面、出口与 NPC。

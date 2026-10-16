@@ -248,11 +248,16 @@ func _locked_by(flag: String, map_id: String) -> String:
 			return Localization.tr_key("msg.map_service.p023") % [display_name(map_id), npc_label, String(quest.get("name", flag))]
 	return Localization.tr_key("msg.map_service.p008") % display_name(map_id)
 
-## 显式逐对价格优先；否则使用所属枢纽对目标类型的缺省价。
+## 显式逐对价格优先；其次取目标图对本图的反向显式报价（保证枢纽↔首领图双向同价）；
+## 否则使用所属枢纽对目标类型的缺省价。
 func fee_to(map_id: String) -> int:
 	var fees: Variant = current_data().get("carterFares", {})
 	if fees is Dictionary and fees.has(map_id):
 		return int(fees[map_id])
+	var target_fees: Variant = data_for(map_id).get("carterFares", {})
+	var here := String(current_data().get("id", ""))
+	if target_fees is Dictionary and target_fees.has(here):
+		return int(target_fees[here])
 	var hub := data_for(String(current_data().get("hubId", "")))
 	var defaults: Variant = hub.get("carterFare", {})
 	var kind := String(data_for(map_id).get("kind", ""))
