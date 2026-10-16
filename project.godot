@@ -201,6 +201,10 @@ mouse_context={
 ]
 }
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/camp_map_editor/plugin.cfg")
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
