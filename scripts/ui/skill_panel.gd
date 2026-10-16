@@ -111,6 +111,7 @@ func _refresh() -> void:
 	if _list == null:
 		return
 	for child in _list.get_children():
+		_list.remove_child(child)
 		child.queue_free()
 	var skills: Variant = DataLoader.get_table("skills")
 	if not skills is Array:
