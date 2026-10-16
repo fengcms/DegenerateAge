@@ -8816,6 +8816,7 @@
     "safeZone": false,
     "kind": "spoke",
     "hubId": "c5_map00",
+    "requiresUnlock": "",
     "exits": [
       {
         "id": "c5_map01_exit01",
@@ -11610,6 +11611,7 @@
     "safeZone": false,
     "kind": "spoke",
     "hubId": "c6_map00",
+    "requiresUnlock": "",
     "exits": [
       {
         "id": "c6_map01_exit01",
