@@ -16,6 +16,10 @@ const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
 
+## E1（工程文档 30 §4，创意 第三章/03）：首领场参考半径 18 格 / 脱战 5 秒归位回满。
+const BOSS_ARENA_TILES := 18.0
+const BOSS_RESET_DELAY := 5.0
+
 ## M6-0a（创意 07 §4）：三档敌人外观。普通沿用既有半径；精英 / Boss 放大并加轮廓与地面标识。
 const RADIUS := 13.0          # 普通（兼容既有引用）
 const RADIUS_ELITE := 19.0
@@ -87,6 +91,10 @@ var _stomp_remaining := 0.0
 var _stomp_cooldown := 0.0
 var _stomp_center := Vector2.ZERO
 var _stomp_radius := 0.0
+## E1：共享线 / 扇 / 圈预警动作组件（新结构 `bossSkill` 才装配；c1/c2 沿用既有实现）。
+var boss_action: BossAction = null
+var _boss_retreating := false
+var _boss_retreat_t := 0.0
 var suppress_rewards := false
 var _chapter_boss_warn := ""
 var _chapter_boss_warn_left := 0.0
@@ -164,6 +172,19 @@ func _load_template() -> void:
 	if ar is Dictionary:
 		is_ranged = String(ar.get("kind", "melee")) == "ranged"
 		attack_range_px = float(ar.get("range", 1.0)) * Iso.TILE_W
+	_setup_boss_action()
+
+## E1：仅**新结构** `bossSkill`（带 `shape`）装配共享动作组件；c1（phases）/ c2 沿用既有实现。
+## 首领场参考半径 18 格，追击边界同步放宽到该半径。
+func _setup_boss_action() -> void:
+	boss_action = null
+	if _kind() != "boss":
+		return
+	var skill: Variant = template.get("bossSkill", null)
+	if not (skill is Dictionary) or not (skill as Dictionary).has("shape"):
+		return
+	boss_action = BossAction.new(skill)
+	leash_range = BOSS_ARENA_TILES * Iso.TILE_W
 
 ## 每次出生独立抽取，不修改共享模板，不重复抽取同一词缀。
 func _roll_affixes() -> void:
@@ -243,6 +264,8 @@ func _update_boss(delta: float) -> bool:
 		return false
 	if monster_id.begins_with("c2_boss_"):
 		return _update_chapter_boss(delta)
+	if boss_action != null:
+		return _update_boss_action(delta)
 	var skill: Dictionary = template.get("bossSkill", {})
 	var phases: Array = skill.get("phases", [])
 	var prev_phase := boss_phase
@@ -367,6 +390,65 @@ func _resolve_chapter_boss_warn() -> void:
 	if hit:
 		_do_attack(player, false)
 
+## E1（创意 第三章/03）：共享动作组件驱动的新章首领。
+## 脱战判据：玩家离场 / 死亡，或首领离场心超过 18 格 → 锁存脱战态，5 秒后归位回满。
+## 归位期间不开新招式，也不重新仇恨（避免刚脱战又被拉回）。
+func _update_boss_action(delta: float) -> bool:
+	var player := _get_player()
+	var away := player == null or global_position.distance_to(spawn_position) > leash_range
+	if away and not _boss_retreating:
+		_boss_retreating = true
+		_boss_retreat_t = 0.0
+		boss_action.cancel()
+		_enter(State.RETURN)
+	if _boss_retreating:
+		_boss_retreat_t += delta
+		if global_position.distance_to(spawn_position) > REACH:
+			_approach(spawn_position)
+		if _boss_retreat_t >= BOSS_RESET_DELAY:
+			_reset_boss_to_arena()
+		return true
+	if player == null:
+		return false
+	var facing := player.global_position - global_position
+	return boss_action.update(delta, global_position, facing, true, hp_ratio(),
+		func(c: float) -> void: _skill_hit(c))
+
+## 招式命中：以 `attack × coeff` 沿现有 Combat 公式结算，同段只由动作组件调用一次。
+## 命中由**锁定几何**判定（预警结束后到点才算命中），不使用实时追踪位置。
+func _skill_hit(coeff: float) -> void:
+	var player := _get_player()
+	if player == null or is_dead:
+		return
+	if not boss_action.hits(player.global_position):
+		return
+	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) \
+			or MapService.is_in_rest_zone(GameState.current_map, global_position):
+		return
+	var res := Combat.resolve(
+		attack_power * coeff,
+		float(GameState.total_defense()),
+		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
+		float(GameState.player.get("dodge", 0.0)))
+	Fx.damage_number(get_tree(), player, res)
+	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
+		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
+		_apply_hit_effects(player, actual)
+
+## 脱战归位：回场心、回满血、清二阶段与动作状态（已结算战利品不回退）。
+func _reset_boss_to_arena() -> void:
+	global_position = spawn_position
+	velocity = Vector2.ZERO
+	hp = max_hp
+	boss_phase = 0
+	_boss_enraged = false
+	_boss_retreating = false
+	_boss_retreat_t = 0.0
+	boss_action.reset_for_engage()
+	_enter(State.IDLE)
+	_announce_boss_hp()
+	queue_redraw()
+
 func _settle_first_clear() -> void:
 	if template.get("kind", "") != "boss" or bool(GameState.first_clear.get(monster_id, false)):
 		return
@@ -457,10 +539,16 @@ func _physics_process(delta: float) -> void:
 func _enter(s: int) -> void:
 	if state == s:
 		return
+	var prev := state
 	state = s
 	if s == State.RETURN or s == State.IDLE:
 		_ranged_windup = 0.0
 		_chapter_boss_warn = ""
+		if boss_action != null:
+			boss_action.cancel()
+	# E1：首次仇恨（非从普攻/追击折返）时重置首领动作计时（首放 4 秒）。
+	if s == State.CHASE and boss_action != null and prev != State.CHASE and prev != State.ATTACK:
+		boss_action.reset_for_engage()
 	_state_t = 0.0
 	# M6-0a：Boss 进入仇恨即点亮顶部血条（脱战停止心跳后由 HUD 自行隐藏）。
 	if s == State.CHASE:
@@ -696,6 +784,9 @@ func _die() -> void:
 	_chapter_boss_warn = ""
 	_special_warn = ""
 	_charge_left = 0.0
+	if boss_action != null:
+		boss_action.cancel()
+	_boss_retreating = false
 	for summon in _chapter_boss_summons:
 		if is_instance_valid(summon):
 			summon.queue_free()
@@ -904,6 +995,8 @@ func _draw() -> void:
 		draw_circle(center, _stomp_radius, Color(1.0, 0.18, 0.05, 0.18))
 		draw_arc(center, _stomp_radius, 0, TAU, 64, Color("ff623a"), 3.0, true)
 		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), Localization.tr_key("msg.monster.p005"), HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
+	if boss_action != null and boss_action.is_warning() and not is_dead:
+		boss_action.draw(self)
 	if selected and not is_dead:
 		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
 	if sample_art != null or dummy_art != null:
