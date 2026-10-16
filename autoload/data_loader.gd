@@ -40,11 +40,11 @@ const KEY_FIELDS := {
 ## 历史遗留图（第一、二章）：入口落点与反向出口存在既有错位，未按第三至六章的
 ## 「同格」口径对齐（属审阅明确范围外的遗留）。仅用于豁免 `_validate_walk_exits`
 ## 的**同格断言**，待后续统一口径时逐图归正并移出白名单。
-const LEGACY_MAPS := {
+const LEGACY_MAPS := [
 	"camp", "wild_trial", "ash_land", "corruption_source",
 	"c2_well_town", "c2_pipe_slope", "c2_old_well", "c2_lower_works",
 	"c2_ember_furnace", "c2_well_core",
-}
+]
 
 var tables: Dictionary = {}
 var errors: Array[String] = []
