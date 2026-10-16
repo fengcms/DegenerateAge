@@ -95,12 +95,12 @@
     {
       "id": "training_north",
       "rect": [
-        444,
-        504,
+        450,
+        494,
         334,
         45
       ],
-      "foot_y": 538,
+      "foot_y": 528,
       "pixel_art": true,
       "front": "res://assets/maps/camp_style_full_b_v2/training_north_front.png"
     },
