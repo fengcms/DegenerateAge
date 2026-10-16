@@ -89,5 +89,96 @@
     "useType": "quest",
     "animation": "",
     "desc": "第三章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c4_item_q02",
+    "name": "邮袋封签",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第四章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c4_item_q06",
+    "name": "观测标片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第四章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c4_item_s02",
+    "name": "退信木签",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第四章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c4_item_s03",
+    "name": "药菌封签",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第四章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_q03",
+    "name": "号台残签",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_q06",
+    "name": "营道标片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_s02",
+    "name": "原始军报",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_s03",
+    "name": "担架带扣",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_s06",
+    "name": "值守门牌",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c6_item_q03",
+    "name": "守护誓条",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第六章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c6_item_q06",
+    "name": "旁路校验片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第六章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c6_item_s01",
+    "name": "药架扣",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第六章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c6_item_s03",
+    "name": "旧名签",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第六章任务袋物品，不占背包格。"
   }
 ]

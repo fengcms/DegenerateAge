@@ -94,5 +94,101 @@
       "c3_equip_ring",
       "c3_equip_necklace"
     ]
+  },
+  {
+    "id": "c4_normal",
+    "desc": "第四档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "c4_equip_weapon",
+      "c4_equip_shoes",
+      "c4_equip_armor",
+      "c4_equip_helmet",
+      "c4_equip_bracer",
+      "c4_equip_knee",
+      "c4_equip_shield",
+      "c4_equip_bracelet",
+      "c4_equip_ring",
+      "c4_equip_necklace"
+    ]
+  },
+  {
+    "id": "c4_legendary",
+    "desc": "第四档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "c4_equip_weapon",
+      "c4_equip_shoes",
+      "c4_equip_armor",
+      "c4_equip_helmet",
+      "c4_equip_bracer",
+      "c4_equip_knee",
+      "c4_equip_shield",
+      "c4_equip_bracelet",
+      "c4_equip_ring",
+      "c4_equip_necklace"
+    ]
+  },
+  {
+    "id": "c5_normal",
+    "desc": "第五档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "c5_equip_weapon",
+      "c5_equip_shoes",
+      "c5_equip_armor",
+      "c5_equip_helmet",
+      "c5_equip_bracer",
+      "c5_equip_knee",
+      "c5_equip_shield",
+      "c5_equip_bracelet",
+      "c5_equip_ring",
+      "c5_equip_necklace"
+    ]
+  },
+  {
+    "id": "c5_legendary",
+    "desc": "第五档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "c5_equip_weapon",
+      "c5_equip_shoes",
+      "c5_equip_armor",
+      "c5_equip_helmet",
+      "c5_equip_bracer",
+      "c5_equip_knee",
+      "c5_equip_shield",
+      "c5_equip_bracelet",
+      "c5_equip_ring",
+      "c5_equip_necklace"
+    ]
+  },
+  {
+    "id": "c6_normal",
+    "desc": "第六档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "c6_equip_weapon",
+      "c6_equip_shoes",
+      "c6_equip_armor",
+      "c6_equip_helmet",
+      "c6_equip_bracer",
+      "c6_equip_knee",
+      "c6_equip_shield",
+      "c6_equip_bracelet",
+      "c6_equip_ring",
+      "c6_equip_necklace"
+    ]
+  },
+  {
+    "id": "c6_legendary",
+    "desc": "第六档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "c6_equip_weapon",
+      "c6_equip_shoes",
+      "c6_equip_armor",
+      "c6_equip_helmet",
+      "c6_equip_bracer",
+      "c6_equip_knee",
+      "c6_equip_shield",
+      "c6_equip_bracelet",
+      "c6_equip_ring",
+      "c6_equip_necklace"
+    ]
   }
 ]

@@ -40,6 +40,10 @@ var recovery := 0.8      # A 招结束硬直（秒）
 ## B 招（phaseB）；无配置时 `has_b == false`，组件退化为纯 A 招。
 var phase_b: Dictionary = {}
 var has_b := false
+## C 招（phaseC / 终章第三阶段）：仅空天之眼登记；血量降到 `hpBelow` 后只缩短 A 招重复间隔，
+## 预警时长与安全通路不变、不召唤新实体（34 §5 批次 6.2）。
+var phase_c: Dictionary = {}
+var has_c := false
 
 var stage: int = Stage.IDLE
 var move: int = Move.NONE
@@ -71,7 +75,17 @@ func _init(skill: Dictionary) -> void:
 	if b is Dictionary and not (b as Dictionary).is_empty():
 		phase_b = b
 		has_b = true
+	var c: Variant = skill.get("phaseC", {})
+	if c is Dictionary and not (c as Dictionary).is_empty():
+		phase_c = c
+		has_c = true
 	_a_countdown = first_delay
+
+## 当前血量比例下的 A 招重复间隔：第三阶段（phaseC）在 `hpBelow` 阈值内缩短到 `interval`。
+func a_interval_at(hp_ratio: float) -> float:
+	if has_c and hp_ratio <= float(phase_c.get("hpBelow", 0.25)):
+		return float(phase_c.get("interval", interval))
+	return interval
 
 ## 是否存在可执行的 A 招（形态与分段齐备）。
 func has_a() -> bool:
@@ -111,6 +125,8 @@ func update(delta: float, origin: Vector2, facing: Vector2, target_valid: bool,
 		hp_ratio: float, on_hit: Callable) -> bool:
 	_lock = maxf(0.0, _lock - delta)
 	_a_countdown -= delta
+	# 第三阶段（phaseC）：跨过阈值后把待发 A 招倒计时一并压到缩短后的间隔。
+	_a_countdown = minf(_a_countdown, a_interval_at(hp_ratio))
 	_b_countdown -= delta
 	if stage == Stage.IDLE:
 		if _lock > 0.0 or not target_valid:

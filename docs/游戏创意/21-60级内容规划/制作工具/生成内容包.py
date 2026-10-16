@@ -138,7 +138,7 @@ def prepare():
         c['maps']=[dict(id=f'c{n}_map{i:02}',name=r[0],w=int(r[1]),h=int(r[2]),level=int(r[3]),description=r[4],style=r[5],index=i,exits=[],npcs=[],normalSlots=0 if i==0 else [0,64,72,96,64,72,72][i],elites=[],bosses=[]) for i,r in enumerate(c['maps'])]
         c['npcs']=[dict(id=f'c{n}_npc{i+1:02}',name=r[0],role=r[1],motive=r[2],before=r[3],after=r[4],look=r[5],index=i,map=c['maps'][0 if i<8 else 1 if i==8 else 4 if i==9 else 5]['id']) for i,r in enumerate(c['npcs'])]
         c['normal']=[dict(id=f'c{n}_normal{i+1:02}',name=r[0],role=r[1],look=r[2],behavior=r[3],level=min(s+8,s+i),kind='normal',**stats(min(s+8,s+i),'normal',r[1])) for i,r in enumerate(c['normal'])]
-        c['elites']=[dict(id=f'c{n}_elite{i+1:02}',name=r[0],look=r[1],behavior=r[2],level=s+3+i,kind='elite',**stats(s+3+i,'elite')) for i,r in enumerate(c['elites'])]
+        c['elites']=[dict(id=f'c{n}_elite{i+1:02}',name=r[0],look=r[1],behavior=r[2],atktype=r[3],level=s+3+i,kind='elite',**stats(s+3+i,'elite')) for i,r in enumerate(c['elites'])]
         c['bosses']=[dict(id=f'c{n}_boss{i+1:02}',name=r[0],level=int(r[1]),main=r[2]=='主线',look=r[3],behavior=r[4],meaning=r[5],kind='boss',**stats(int(r[1]),'boss')) for i,r in enumerate(c['bosses'])]
         for i,b in enumerate(c['bosses']):
             mi=2 if i==0 else 4 if i==1 else 5 if i==2 else 6
@@ -338,8 +338,11 @@ def write_monsters(c):
     """导出全敌方模板、固定候选数值和每只首领可交接的时间与场地规格。"""
     s=header('怪物、精英与Boss');s+='基础值只在内容制作时由等级公式推导，进游戏后是固定配置，不随玩家配装动态缩放。HP=20L+150，攻=4L+60，防=1.4L+10；职责/精英/首领倍率与取整见制作工具。攻击/防御和技能伤害均沿现有Combat公式。\n\n'
     s+=table(['ID／普通怪','等级','职责/外观','行为与弱点','HP／攻／防','间隔秒／经验'],[(b['id']+'／'+b['name'],b['level'],b['role']+'；'+b['look'],b['behavior'],f'{b["hp"]}／{b["atk"]}／{b["def"]}',f'{b["interval"]}／{b["xp"]}') for b in c['normal']])
-    s+=table(['ID／精英','等级','外观与招式','HP／攻／防','间隔秒／经验'],[(b['id']+'／'+b['name'],b['level'],b['look']+'；'+b['behavior'],f'{b["hp"]}／{b["atk"]}／{b["def"]}',f'{b["interval"]}／{b["xp"]}') for b in c['elites']])
-    s+='所有距离按逻辑格×现有Iso单位换算；普通近战射程1格、远程6格；移动速度近战2.4、快速3.1、重型1.8、定点0，精英2.2、Boss1.8。无硬元素免疫、致盲或未实现控制。普通近战体量100%；精英130%并有独立金色徽记、加粗名字与双层血条；Boss180—220%、专属轮廓和独立首领血条。区分不只靠颜色。精英招式共享其首领动作组件的低频单招：每8秒一次、0.9秒预警、基础伤害系数1.1；其余时间普通攻击。\n\n'
+    s+=table(['ID／精英','等级','职责/攻击类型','外观与招式','HP／攻／防','间隔秒／经验'],[(b['id']+'／'+b['name'],b['level'],b['atktype'],b['look']+'；'+b['behavior'],f'{b["hp"]}／{b["atk"]}／{b["def"]}',f'{b["interval"]}／{b["xp"]}') for b in c['elites']])
+    s+='所有距离按逻辑格×现有Iso单位换算。**普通怪「职责 → 移速／`attackRange.kind`／射程」映射**跨章同值；职责措辞不同不等于数值不同：\n\n'
+    s+=table(['职责','移速（格／秒）','attackRange.kind','射程（格）'],[('近战／近战高防','2.4','melee','1'),('快速近战／伏击／近战伏击','3.1','melee','1'),('重型／重型近战／盾卫／高防','1.8','melee','1'),('远程','2.4','ranged','6'),('定点远程','0','ranged','6')])
+    s+='「近战高防」为近战本体加高防数值后缀，取近战 2.4，与「高防」「盾卫」的重装 1.8 属有意区分而非数据回退；同一职责跨章取同值。精英统一移速 2.2，攻击类型按同一口径由招式形态登记（线技／定点投射类为 `ranged` 6 格，近身挥击／冲撞／拍地／盾压类为 `melee` 1 格），逐条见精英表「职责/攻击类型」列；同一风格招式在不同章若登记值不同，以本章 `monsters.json` 为准，并登记为待实机校准项，统一时只改对应章数据、不动本文结构。Boss 统一移速 1.8，攻击类型见各首领条目。\n'
+    s+='无硬元素免疫、致盲或未实现控制。普通近战体量100%；精英130%并有独立金色徽记、加粗名字与双层血条；Boss180—220%、专属轮廓和独立首领血条。区分不只靠颜色。精英招式共享其首领动作组件的低频单招：每8秒一次、0.9秒预警、基础伤害系数1.1；其余时间普通攻击。\n\n'
     for i,b in enumerate(c['bosses']):
         s+=f'## {b["name"]}／{b["id"]}\n\n- 等级{b["level"]}，{"主线必打" if b["main"] else "完全可选"}；{b["map"]}，圆心{b["cell"]}、参考半径12格。外观：{b["look"]}。故事职责：{b["meaning"]}。\n- HP{b["hp"]}，攻{b["atk"]}，防{b["def"]}；普通攻击间隔1.8秒，奖励经验{b["xp"]}。无闪避堆叠或元素硬免疫。\n- 专属表现：{b["behavior"]}。\n'
         shape=['宽线','两处错位圆圈','左右扇形','轮转扇区'][i%4]

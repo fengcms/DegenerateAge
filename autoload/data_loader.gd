@@ -37,6 +37,15 @@ const KEY_FIELDS := {
 	"shops": "npcId",
 }
 
+## 历史遗留图（第一、二章）：入口落点与反向出口存在既有错位，未按第三至六章的
+## 「同格」口径对齐（属审阅明确范围外的遗留）。仅用于豁免 `_validate_walk_exits`
+## 的**同格断言**，待后续统一口径时逐图归正并移出白名单。
+const LEGACY_MAPS := [
+	"camp", "wild_trial", "ash_land", "corruption_source",
+	"c2_well_town", "c2_pipe_slope", "c2_old_well", "c2_lower_works",
+	"c2_ember_furnace", "c2_well_core",
+]
+
 var tables: Dictionary = {}
 var errors: Array[String] = []
 
@@ -693,17 +702,27 @@ func _validate_walk_exits(maps: Variant) -> Array[String]:
 			if not target_entrances is Dictionary or not target_entrances.has(target_entrance):
 				report.append("[maps] %s 的出口 %s 找不到 %s 的入口 %s" % [map_id, exit_id, to_id, target_entrance])
 				continue
-			var reverse_found := false
+			var reverse_edge: Dictionary = {}
 			var reverse_exits: Variant = target.get("exits", [])
 			if reverse_exits is Array:
 				for reverse in reverse_exits:
 					if reverse is Dictionary and String(reverse.get("toMap", "")) == map_id:
 						var own_entrances: Dictionary = entrances
 						if own_entrances.has(String(reverse.get("toEntrance", ""))):
-							reverse_found = true
+							reverse_edge = reverse
 							break
-			if not reverse_found:
+			if reverse_edge.is_empty():
 				report.append("[maps] %s 的出口 %s 缺少 %s 的双向返回出口" % [map_id, exit_id, to_id])
+			elif not LEGACY_MAPS.has(to_id):
+				## 同格契约（工程文档 19 §5.1 现行口径）：目标图入口落点须与其反向出口**同格**，
+				## 否则玩家往返同一门户会落到不同位置。防「直接弹回」由 MapService 的到达锁承担。
+				var landing: Array = target_entrances[target_entrance]
+				var back_cell: Variant = reverse_edge.get("cell", null)
+				if landing.size() == 2 and back_cell is Array and back_cell.size() == 2 \
+						and (landing[0] != back_cell[0] or landing[1] != back_cell[1]):
+					report.append("[maps] %s 的出口 %s → %s/%s 落点 %s 与反向出口 %s 落点 %s 不同格" % [
+						map_id, exit_id, to_id, target_entrance, str(landing),
+						String(reverse_edge.get("id", "")), str(back_cell)])
 	return report
 
 ## E1（工程文档 30 §4）：门禁/交通——每个 `requiresUnlock` 都必须由某个任务奖励产出，

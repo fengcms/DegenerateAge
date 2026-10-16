@@ -49,8 +49,20 @@ func _ready() -> void:
 	assert(roads.load(String(manifest["road_overlay"])) == OK)
 	assert(atlas.get_size() == Vector2i(2048, 2048) and atlas.get_pixel(0, 0).a > 0.99,
 		"重复地纹应是不含物件的实体地表")
+	for point: Vector2i in [Vector2i(100, 110), Vector2i(320, 480), Vector2i(800, 850)]:
+		var color := atlas.get_pixelv(point)
+		assert(color == atlas.get_pixelv(point + Vector2i(0, 1024))
+			and color == atlas.get_pixelv(point + Vector2i(1024, 0)),
+			"地表循环单元不得翻转草丛或石纹：%s" % point)
 	assert(roads.get_size() == Vector2i(1672, 941) and roads.get_pixel(1600, 850).a < 0.01,
 		"独立道路层空白区须真正透明")
+	if manifest.has("ground_overlay"):
+		var ground_patches := Image.new()
+		assert(ground_patches.load(String(manifest["ground_overlay"])) == OK
+			and ground_patches.get_size() == Vector2i(1672, 941)
+			and ground._camp_ground_overlay != null, "已绘制地面必须以独立画布贴图加载")
+	else:
+		assert(ground._camp_ground_overlay == null, "未绘制地面时不应占用额外纹理")
 	var actual_ids: Dictionary = {}
 	var art_rects: Dictionary = {}
 	for entry: Dictionary in manifest["objects"]:

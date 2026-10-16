@@ -1,0 +1,9 @@
+{
+  "cell_size": 128,
+  "tiles": [
+    {"id": "grass", "label": "草簇", "source_rect": [470, 344, 128, 128], "path": "res://assets/maps/camp_style_full_b_v2/ground_stamp_grass.png"},
+    {"id": "pebbles", "label": "碎石", "source_rect": [268, 625, 128, 128], "path": "res://assets/maps/camp_style_full_b_v2/ground_stamp_pebbles.png"},
+    {"id": "cobble", "label": "石板", "source_rect": [102, 319, 128, 128], "path": "res://assets/maps/camp_style_full_b_v2/ground_stamp_cobble.png"},
+    {"id": "earth", "label": "土纹", "source_rect": [319, 500, 128, 128], "path": "res://assets/maps/camp_style_full_b_v2/ground_stamp_earth.png"}
+  ]
+}

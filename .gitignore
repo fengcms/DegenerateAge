@@ -17,3 +17,7 @@ docs/history/
 
 # Godot project artifacts (future)
 .godot/
+
+# Python 缓存（工具/构建脚本的中间产物，不入库；见 AGENT.md §10）
+__pycache__/
+*.pyc

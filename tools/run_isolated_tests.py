@@ -1,12 +1,17 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 25 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 28 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
+
+默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
+使裸跑默认回归即可触达 31—60 级交付的核心契约（登记/预算/首领/出口/跨章门户）；
+其余 12 个章内场景（Routes/Combat/Quests/Loot）仍由定向复跑或 `--all` 触达。
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -26,11 +31,23 @@ DEFAULT_TESTS = [
     "SkillCombatTest", "AutoControlAcceptance", "AutoExplorationSurvival",
     "BluePotionDropTest", "CaveNavigationTest", "ReviewRegressionTest",
     "BossReviewTest", "BossActionTest", "QuestRewardPlanTest", "MapGateTest",
-    "ChapterOneAcceptance", "SmokeTest",
+    "ChapterOneAcceptance",
+    # 第四/五/六章各 1 个地图契约场景，令默认回归覆盖 31—60 级交付核心契约。
+    "ChapterFourMapTest", "ChapterFiveMapTest", "ChapterSixMapTest",
+    "SmokeTest",
 ]
 
 ## 仅作夹具、自身不输出成功完成标记的场景，不纳入 `--all`。
 FIXTURE_SCENES = {"CampWhitebox", "CampStyleSample", "CampStyleBenchmark"}
+
+## 成功完成标记只认**行尾**形态，避免无关文本里裸含 "PASS" 被误命中。
+## 覆盖两种既有打印约定：`[XxxTest] 全部通过 ✅` 与 `XxxTest: PASS` / `[XxxTest] PASS`。
+_COMPLETION_TAIL = re.compile(r"(?:全部通过|全部断言通过|✅)$|(?:^|[\]\[:\s])PASS$")
+
+
+def has_completion_marker(output: str) -> bool:
+    """输出中是否存在位于**行尾**的成功完成标记（行中裸含 PASS 不算通过）。"""
+    return any(_COMPLETION_TAIL.search(line.rstrip()) for line in output.splitlines())
 
 
 def discover_all_tests() -> list[str]:
@@ -116,7 +133,7 @@ def main() -> int:
                 # Async physics tests must finish, not silently hit a render-frame cap.
                 ok, output = run(project, ["--scene", scene, "--max-fps", "120",
                                            "--quit-after", "14400"], timeout=240, rendered=args.rendered)
-                completed = any(marker in output for marker in ("PASS", "全部通过", "全部断言通过"))
+                completed = has_completion_marker(output)
                 ok = ok and completed
                 if not completed:
                     output += "\nFAIL: 测试未输出成功完成标记，不能视为通过\n"

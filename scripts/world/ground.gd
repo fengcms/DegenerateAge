@@ -75,6 +75,7 @@ var _camp_whitebox: Dictionary = {}
 var _camp_rect := Rect2()
 var _camp_canvas_size := Vector2.ZERO
 var _camp_ground_texture: Texture2D
+var _camp_ground_overlay: Texture2D
 var _camp_road_texture: Texture2D
 var _camp_foreground_count := 0
 
@@ -123,7 +124,7 @@ func _load_camp_whitebox() -> void:
 	assert(cave != null and String(map_data.get("layoutVersion", "")) == "2026-10-16-camp-open-perimeter-v2",
 		"营地白盒与通行掩码版本不一致")
 
-## 读取 B 全图循环地纹、纯道路层和整体实体清单；仅在营地加载时装配。
+## 读取 B 全图循环地纹、可编辑地面层、纯道路层和整体实体清单；仅在营地加载时装配。
 ## 背层位于角色后，前沿按原实体脚底世界 Y 排序，不改变碰撞或导航。
 func _load_camp_final_art() -> void:
 	var file := FileAccess.open(CAMP_FINAL_ART_MANIFEST, FileAccess.READ)
@@ -137,11 +138,14 @@ func _load_camp_final_art() -> void:
 	assert(canvas.size() == 2 and Vector2(float(canvas[0]), float(canvas[1])) == _camp_canvas_size,
 		"营地美术画幅与白盒坐标源不一致")
 	_camp_ground_texture = load(String(manifest["ground_tile"])) as Texture2D
+	_camp_ground_overlay = load(String(manifest["ground_overlay"])) as Texture2D if manifest.has("ground_overlay") else null
 	_camp_road_texture = load(String(manifest["road_overlay"])) as Texture2D
 	assert(_camp_ground_texture != null and _camp_ground_texture.get_size() == Vector2(2048, 2048),
 		"营地循环地纹不存在或尺寸错误")
 	assert(_camp_road_texture != null and _camp_road_texture.get_size() == _camp_canvas_size,
 		"营地纯道路层不存在或尺寸错误")
+	assert(_camp_ground_overlay == null or _camp_ground_overlay.get_size() == _camp_canvas_size,
+		"营地可编辑地面层尺寸错误")
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	var unit_scale := _camp_rect.size / _camp_canvas_size
@@ -364,6 +368,8 @@ func _draw() -> void:
 	if not _camp_whitebox.is_empty():
 		if _camp_ground_texture != null:
 			draw_texture_rect(_camp_ground_texture, _camp_rect, true)
+			if _camp_ground_overlay != null:
+				draw_texture_rect(_camp_ground_overlay, _camp_rect, false)
 			if _camp_road_texture != null:
 				draw_texture_rect(_camp_road_texture, _camp_rect, false)
 		else:
