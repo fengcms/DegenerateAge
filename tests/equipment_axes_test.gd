@@ -111,7 +111,7 @@ func _ready() -> void:
 	save.schemaVersion = 11
 	check(SaveManager._is_valid_save(save), "v11 存档可迁移")
 	var migrated := SaveManager._migrate(save)
-	check(int(migrated.schemaVersion) == 13 and migrated.inventory[0].itemId == "weapon_iron"
+	check(int(migrated.schemaVersion) == SaveManager.CURRENT_SCHEMA and migrated.inventory[0].itemId == "weapon_iron"
 		and int(migrated.inventory[0].requiredLevel) == 1 and int(migrated.inventory[0].star) == 7
 		and migrated.inventory[0].instanceId == old.instanceId, "旧装备归档且保留实例、星级")
 	check(SaveManager._migrate(migrated) == migrated, "迁移重复执行不改变结果")

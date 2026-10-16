@@ -20,7 +20,11 @@ const MAX_SLOTS := 3
 ## v8（M6-0c / 工程文档 18 §5）新增：`unclaimedLoot`（精英 / Boss 未领取战利品，创意 07 §11）。
 ## v10（工程文档 22）新增：`inventoryExpansions`，存档校验按扩容次数检查背包长度。
 ## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
-const CURRENT_SCHEMA := 13
+## v14（E1 / 工程文档 30 §4）新增：`questRewardPlans`（持久任务发奖计划，失败重试复用同一实例与词条）。
+const CURRENT_SCHEMA := 14
+## 营地开放外围只增加可走区域；旧白盒档位保留坐标、迷雾和地面战利品。
+const CURRENT_CAMP_LAYOUT_VERSION := "2026-10-16-camp-open-perimeter-v2"
+const PREVIOUS_CAMP_LAYOUT_VERSION := "2026-10-15-camp-whitebox-v1"
 ## 旧目录只用于 v11 读档迁移；正式装备表始终只有二十个型号。
 const EQUIPMENT_LEGACY_IDS := {
 	"weapon_starter": "weapon_iron", "armor_starter": "armor_cloth",
@@ -141,7 +145,7 @@ func _collect() -> Dictionary:
 		"player": GameState.player.duplicate(true),
 		"gold": GameState.gold,
 		"currentMap": GameState.current_map,
-		"mapLayoutVersion": "2026-10-15-camp-whitebox-v1",
+		"mapLayoutVersion": CURRENT_CAMP_LAYOUT_VERSION,
 		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
@@ -153,6 +157,8 @@ func _collect() -> Dictionary:
 		"equipment": GameState.equipment.duplicate(true),
 		"questStates": GameState.quest_states.duplicate(true),
 		"questItems": GameState.quest_items.duplicate(true),
+		# E1：持久任务发奖计划（尚未领取的随机奖励实例，失败重试不重抽；工程文档 30 §4）
+		"questRewardPlans": GameState.quest_reward_plans.duplicate(true),
 		"firstClear": GameState.first_clear.duplicate(true),
 		"unlocks": GameState.unlocks.duplicate(true),
 		"settings": GameState.settings.duplicate(true),
@@ -396,7 +402,11 @@ func _migrate(source: Dictionary) -> Dictionary:
 	if not data.has("mapLayoutVersion") and v >= 11:
 		_migrate_landscape_positions(data)
 		data.mapLayoutVersion = "2026-10-14-landscape-v2"
-	if String(data.get("mapLayoutVersion", "")) != "2026-10-15-camp-whitebox-v1":
+	var layout_version := String(data.get("mapLayoutVersion", ""))
+	if layout_version == PREVIOUS_CAMP_LAYOUT_VERSION:
+		# 旧白盒坐标仍有效；外围障碍撤除及马车碰撞缩小只扩大可走区。
+		data.mapLayoutVersion = CURRENT_CAMP_LAYOUT_VERSION
+	elif layout_version != CURRENT_CAMP_LAYOUT_VERSION:
 		_migrate_camp_whitebox(data)
 	# 仅明确声明的 v0 支持历史最小角色格式；不能把无版本坏档当旧档补空。
 	if v == 0:
@@ -417,6 +427,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 		data.settings = _migrate_settings(data.settings)
 	if not data.get("questItems") is Dictionary:
 		data.questItems = {}
+	# E1：持久任务发奖计划对**所有版本**生效（旧档无此键 → 空字典，不因缺键判坏档）。
+	data.questRewardPlans = _migrate_quest_reward_plans(data.get("questRewardPlans"))
 	# C-P3-7：装备实例升级按**实例自身版本**收敛，不再按整档 schema 判断启停。
 	# 无论档位版本，`equipmentRuleVersion < 4` 的实例都走同一条链（旧 ID 归并 → 等级同步），
 	# 避免「合法旧实例因档位版本被跳过迁移」而被整档拒绝。
@@ -454,6 +466,37 @@ func _migrate(source: Dictionary) -> Dictionary:
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
+## E1：持久任务发奖计划读档归一化 —— 只保留任务 ID 可解析、且每个待发实例都过 `_valid_item` 的记录。
+## 单条非法**逐条丢弃**（不整档拒绝），与装备实例「按实例版本收敛」同一取向：坏数据只损失待发奖励，
+## 不允许单个任务把整份存档判为损坏。空计划（无 item 也无 bonus）一并丢弃。
+func _migrate_quest_reward_plans(raw: Variant) -> Dictionary:
+	var out: Dictionary = {}
+	if not raw is Dictionary:
+		return out
+	for quest_id in (raw as Dictionary).keys():
+		var entry: Variant = (raw as Dictionary)[quest_id]
+		if not entry is Dictionary or not DataLoader.get_entry("quests", String(quest_id)) is Dictionary:
+			continue
+		var item: Variant = (entry as Dictionary).get("item", {})
+		if not item is Dictionary or (not (item as Dictionary).is_empty() and not _valid_item(item)):
+			continue
+		var bonus_raw: Variant = (entry as Dictionary).get("bonus", [])
+		if not bonus_raw is Array:
+			continue
+		var bonus: Array = []
+		var legal := true
+		for made in (bonus_raw as Array):
+			if not made is Dictionary or (made as Dictionary).is_empty() or not _valid_item(made):
+				legal = false
+				break
+			bonus.append((made as Dictionary).duplicate(true))
+		if not legal:
+			continue
+		if (item as Dictionary).is_empty() and bonus.is_empty():
+			continue
+		out[String(quest_id)] = {"item": (item as Dictionary).duplicate(true), "bonus": bonus}
+	return out
+
 ## 将旧营地坐标和遗留地面物迁到白盒出生区，并重置无可逆映射的营地迷雾。
 ## 只在布局版本旧于白盒时执行；重复读档不会重复变更物品或其他地图状态。
 func _migrate_camp_whitebox(data: Dictionary) -> void:
@@ -473,7 +516,7 @@ func _migrate_camp_whitebox(data: Dictionary) -> void:
 	var explored: Variant = data.get("exploredMaps", {})
 	if explored is Dictionary:
 		explored.erase("camp")
-	data.mapLayoutVersion = "2026-10-15-camp-whitebox-v1"
+	data.mapLayoutVersion = CURRENT_CAMP_LAYOUT_VERSION
 
 ## v11 装备目录归并为每档每部位唯一型号；保留实例 ID、品质、星级和词条。
 ## 已穿但不足 Lv11 的旧第二档装备转入背包、仓库或玩家所在位置的未领取战利品，绝不丢件。
@@ -706,6 +749,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
 	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
 	GameState.quest_items = _deep_int(data.get("questItems", {}))
+	# E1：待发奖励计划须在场景重载前恢复 —— 交付时 `Quest._reward_plan` 会直接复用该实例。
+	GameState.quest_reward_plans = _migrate_quest_reward_plans(data.get("questRewardPlans"))
 	if data.get("firstClear", null) is Dictionary:
 		GameState.first_clear = data["firstClear"] as Dictionary
 	if data.get("unlocks", null) is Dictionary:
@@ -940,7 +985,7 @@ func _is_valid_save(raw: Variant) -> bool:
 	if not _whole(raw.get("gold"), 0, GameState.GOLD_CAP):
 		return _reject("gold 非法")
 	var data := _migrate(raw)
-	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps"]:
+	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps", "questRewardPlans"]:
 		if not data.get(key) is Dictionary:
 			return _reject("%s 应为字典" % key)
 	if not _whole(data.get("inventoryExpansions"), 0, Warehouse.max_expansions()):
@@ -977,6 +1022,10 @@ func _is_valid_save(raw: Variant) -> bool:
 	# M6-0c：未领取战利品结构（v8 起；旧档由 _migrate 补空集合）
 	if not _valid_unclaimed_loot(data.get("unclaimedLoot")):
 		return _reject("unclaimedLoot 结构非法")
+	# E1：待发奖励计划已由 `_migrate_quest_reward_plans` 逐条收敛，这里只拦「任务 ID 不可解析」级别。
+	for plan_id in data.questRewardPlans:
+		if not plan_id is String or not DataLoader.get_entry("quests", String(plan_id)) is Dictionary:
+			return _reject("questRewardPlans 含未知任务：%s" % str(plan_id))
 	if not data.get("savedAt") is String or not _whole(data.get("slotId"), -1, MAX_SLOTS):
 		return _reject("savedAt / slotId 非法")
 	var pos: Variant = data.get("playerPos")

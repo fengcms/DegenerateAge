@@ -265,27 +265,16 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		reward = {}
 	reward = reward as Dictionary
 
-	# 先校验奖励物品可入包（避免"发了金币却丢了装备"的半完成态）
-	var item_id := String(reward.get("item", ""))
-	var item := {}
-	if not item_id.is_empty():
-		if DataLoader.get_entry("equipments", item_id) is Dictionary and reward.has("tierStart"):
-			var roll := RandomNumberGenerator.new()
-			roll.seed = hash(quest_id)
-			item = ItemFactory.make_equip_roll(item_id, int(reward.tierStart),
-				String(reward.get("quality", "rare")), roll, "quest")
-		else:
-			item = ItemFactory.make_any(item_id, 1)
-		if item.is_empty():
-			return _fail(Localization.tr_key("msg.quest.p011") % item_id)
+	# 先校验奖励物品可入包（避免"发了金币却丢了装备"的半完成态）。
+	# 随机实例由**持久发奖计划**一次抽定：满包等失败重试复用同一实例与词条（工程文档 30 §4 E1）。
+	var plan := _reward_plan(quest_id, reward)
+	if not bool(plan.get("valid", false)):
+		return _fail(String(plan.get("msg", "")))
+	var item: Dictionary = plan.get("item", {})
 	var bonus_items: Array[Dictionary] = []
-	for item_spec in reward.get("items", []):
-		if not item_spec is Dictionary:
-			continue
-		var bonus := ItemFactory.make_any(String(item_spec.get("itemId", "")), int(item_spec.get("count", 1)))
-		if bonus.is_empty():
-			return _fail("任务奖励物品配置无效")
-		bonus_items.append(bonus)
+	for row in (plan.get("bonus", []) as Array):
+		if row is Dictionary:
+			bonus_items.append(row as Dictionary)
 	var pending_inventory := GameState.inventory.duplicate(true)
 	if not item.is_empty() and not Inventory.add(pending_inventory, item):
 		return _fail(Localization.tr_key("msg.quest.p012"))
@@ -317,6 +306,8 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		GameState.unlocks[String(key)] = true
 
 	_write(quest_id, STATE_REWARDED, int(progress_of(quest_id).get("cur", 0)))
+	# 发奖成功即清除待发计划：该任务不再可领奖，残留计划只占存档体积。
+	GameState.quest_reward_plans.erase(quest_id)
 	EventBus.quest_rewarded.emit(quest_id)
 
 	var parts: Array[String] = []
@@ -342,6 +333,50 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 			], "info")
 
 	return {"ok": true, "reason": "", "reward": reward, "item": item}
+
+# ---- 持久发奖计划（E1；工程文档 30 §4，创意 第五章/04）----
+
+## 取用或一次抽定该任务的待发奖励实例。
+## 已存在计划时**原样复用**（同一 instanceId 与词条，不重抽）；不存在时按奖励配置生成一次并写入存档态。
+## 返回 {valid, msg, item, bonus}：`valid=false` 表示奖励配置无效，交付须整体失败且不落任何奖励。
+static func _reward_plan(quest_id: String, reward: Dictionary) -> Dictionary:
+	var cached: Variant = GameState.quest_reward_plans.get(quest_id, null)
+	if cached is Dictionary and (cached as Dictionary).has("item"):
+		var row := cached as Dictionary
+		var kept: Variant = row.get("item", {})
+		var kept_bonus: Variant = row.get("bonus", [])
+		return {"valid": true, "msg": "",
+			"item": (kept as Dictionary).duplicate(true) if kept is Dictionary else {},
+			"bonus": (kept_bonus as Array).duplicate(true) if kept_bonus is Array else []}
+
+	var item_id := String(reward.get("item", ""))
+	var item := {}
+	if not item_id.is_empty():
+		if DataLoader.get_entry("equipments", item_id) is Dictionary and reward.has("tierStart"):
+			var roll := RandomNumberGenerator.new()
+			roll.seed = hash(quest_id)
+			item = ItemFactory.make_equip_roll(item_id, int(reward.get("tierStart")),
+				String(reward.get("quality", "rare")), roll, "quest")
+		else:
+			item = ItemFactory.make_any(item_id, 1)
+		if item.is_empty():
+			return {"valid": false, "msg": Localization.tr_key("msg.quest.p011") % item_id, "item": {}, "bonus": []}
+
+	var bonus: Array = []
+	for spec in (reward.get("items", []) as Array):
+		if not spec is Dictionary:
+			continue
+		var made := ItemFactory.make_any(String((spec as Dictionary).get("itemId", "")),
+			int((spec as Dictionary).get("count", 1)))
+		if made.is_empty():
+			return {"valid": false, "msg": "任务奖励物品配置无效", "item": {}, "bonus": []}
+		bonus.append(made)
+
+	# 无随机奖励项（纯金币 / 经验 / 解锁）不建计划，避免无意义地增长存档。
+	if item.is_empty() and bonus.is_empty():
+		return {"valid": true, "msg": "", "item": {}, "bonus": []}
+	GameState.quest_reward_plans[quest_id] = {"item": item, "bonus": bonus}
+	return {"valid": true, "msg": "", "item": item, "bonus": bonus}
 
 # ---- 读档归一化（R8；11 §4.1）----
 

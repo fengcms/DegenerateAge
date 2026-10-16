@@ -49,6 +49,10 @@ var panel_open: bool = false        # 是否有关闭式面板打开中（面板
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
 var quest_states: Dictionary = {}   # quest_id -> {"state": String, "progress": int}（M2 起；见 scripts/systems/quest.gd）
 var quest_items: Dictionary = {}    # 第二章确定来源的任务物品；独立任务袋，不占背包格
+## E1（工程文档 30 §4）：持久任务发奖计划 —— quest_id -> {item, bonus}。
+## 带随机成分的奖励实例在首次有效交付尝试时一次抽定并存入此处，满包等失败重试复用同一
+## 实例与词条，领奖成功后才清除；失败重试不得成为洗词条入口。
+var quest_reward_plans: Dictionary = {}
 var first_clear: Dictionary = {}    # boss_id -> bool（首通标记）
 var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2：Q005 奖励 → 第二章入口）
 var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
@@ -230,6 +234,7 @@ func reset_to_defaults() -> void:
 	trade_staged_count = 0          # E-P3-4：新游戏 / 读档清空托盘暂存计数
 	quest_states = {}
 	quest_items = {}
+	quest_reward_plans = {}
 	first_clear = {}
 	unlocks = {}
 	explored_maps = {}
