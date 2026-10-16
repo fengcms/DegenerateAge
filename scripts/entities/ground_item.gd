@@ -91,6 +91,7 @@ var _claimed: bool = false
 var _pickup_msg: String = ""           # 待播的「拾取」提示（飞行结束时弹，Q2）
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_to_group("ground_items")
 	# M6-0d（创意 07 §9）：名称等世界文字 —— 入组供改地图倍率时重绘（_draw 按当时倍率取字号）。
 	add_to_group("world_text")
@@ -405,12 +406,12 @@ func _draw() -> void:
 	if guard > 0.0:
 		var rr := 20.0 + 18.0 * (1.0 - guard)
 		draw_arc(Vector2(0, 4), rr, 0.0, TAU, 30, Color(1.0, 0.94, 0.70, 0.6 * guard * guard), 2.0, true)
-	# 物品图形（上下浮动 + 出场弧线）：金币为圆片，其余为菱形（占位素材，R5）
+	# 物品图形（上下浮动 + 出场弧线）：已接入图标等比显示为 32 像素，缺图继续回退图形。
 	var lift := sin(_phase) * 2.0 + _drop_offset()
 	var c := Vector2(0, -16 + lift)
 	var sample_texture := SampleArt.ground_for(item)
 	if sample_texture != null:
-		draw_texture(sample_texture, c + Vector2(-16, -24))
+		draw_texture_rect(sample_texture, Rect2(c + Vector2(-16, -24), Vector2(32, 32)), false)
 		_draw_label(kind, quality, col, c)
 		return
 	if kind == "coin":

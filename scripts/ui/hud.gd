@@ -451,7 +451,7 @@ func _refresh_hotbar() -> void:
 		var icon := HotbarVisual.binding_icon(binding)
 		SampleArt.decorate(slot, icon)
 		slot.add_theme_constant_override("icon_max_width", 30)
-		if icon in [HotbarVisual.RED_POTION, HotbarVisual.BLUE_POTION, HotbarVisual.BASIC_SLASH]:
+		if icon == HotbarVisual.BASIC_SLASH:
 			slot.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_refresh_hotbar_keys()
 

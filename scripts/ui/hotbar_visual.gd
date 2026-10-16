@@ -8,8 +8,6 @@ const EXP_FILL := preload("res://assets/ui/hotbar_exp_fill.svg")
 const EXP_FRAME := preload("res://assets/ui/hotbar_exp_frame.svg")
 const EXP_MARKER := preload("res://assets/ui/hotbar_exp_marker.svg")
 const GROUP_SEPARATOR := preload("res://assets/ui/hotbar_group_separator.svg")
-const RED_POTION := preload("res://assets/ui/hotbar_potion_red.svg")
-const BLUE_POTION := preload("res://assets/ui/hotbar_potion_blue.svg")
 const BASIC_SLASH := preload("res://assets/ui/hotbar_slash.svg")
 const PANEL_ICONS := [
 	preload("res://assets/ui/hotbar_character.svg"),
@@ -56,8 +54,6 @@ static func style_slot(button: Button) -> void:
 
 static func binding_icon(binding: Variant) -> Texture2D:
 	if binding is Dictionary:
-		if binding.get("kind") == "auto_potion":
-			return RED_POTION if binding.get("id") == "red" else BLUE_POTION
 		if binding.get("kind") == "skill" and binding.get("id") == "basic_slash":
 			return BASIC_SLASH
 	return SampleArt.binding_icon(binding)

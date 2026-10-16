@@ -15,12 +15,24 @@ const ICONS := {
 	"ring_basic": preload("res://assets/sprites/equip/ring_basic.png"),
 	"necklace_basic": preload("res://assets/sprites/equip/necklace_basic.png"),
 	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small.png"),
+	"potion_mp_small": preload("res://assets/sprites/items/potion_mp_small.png"),
+	"potion_hp_mid": preload("res://assets/sprites/items/potion_hp_mid.png"),
+	"potion_mp_mid": preload("res://assets/sprites/items/potion_mp_mid.png"),
+	"potion_hp_large": preload("res://assets/sprites/items/potion_hp_large.png"),
+	"potion_mp_large": preload("res://assets/sprites/items/potion_mp_large.png"),
+	"rune_iron": preload("res://assets/sprites/items/rune_iron.png"),
+	"rune_jade": preload("res://assets/sprites/items/rune_jade.png"),
+	"rune_gold": preload("res://assets/sprites/items/rune_gold.png"),
+	"rune_diamond": preload("res://assets/sprites/items/rune_diamond.png"),
+	"misc_firework": preload("res://assets/sprites/items/misc_firework.png"),
+	"misc_random_ticket": preload("res://assets/sprites/items/misc_random_ticket.png"),
+	"misc_town_scroll": preload("res://assets/sprites/items/misc_town_scroll.png"),
+	"misc_revive_scroll": preload("res://assets/sprites/items/misc_revive_scroll.png"),
 	"spirit_shard": preload("res://assets/sprites/items/spirit_shard.png"),
+	"coin": preload("res://assets/sprites/items/coin.png"),
 }
 const GROUND := {
 	"weapon_iron": preload("res://assets/sprites/items/weapon_starter_ground.png"),
-	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small_ground.png"),
-	"spirit_shard": preload("res://assets/sprites/items/spirit_shard_ground.png"),
 }
 const SKILL_ICONS := {
 	"basic_slash": preload("res://assets/sprites/skills/basic_slash.png"),
@@ -48,15 +60,18 @@ static func icon_for(item: Variant) -> Texture2D:
 	return ICONS.get(String(item.get("itemId", ""))) as Texture2D
 
 static func ground_for(item: Dictionary) -> Texture2D:
-	return GROUND.get(String(item.get("itemId", ""))) as Texture2D
+	var item_id := String(item.get("itemId", ""))
+	if GROUND.has(item_id):
+		return GROUND[item_id] as Texture2D
+	return icon_for(item)
 
 static func binding_icon(binding: Variant) -> Texture2D:
 	if not binding is Dictionary:
 		return null
 	if binding.get("kind") == "skill":
 		return skill_icon(String(binding.get("id", "")))
-	if binding.get("kind") == "auto_potion" and binding.get("id") == "red":
-		return ICONS.potion_hp_small
+	if binding.get("kind") == "auto_potion":
+		return ICONS.potion_hp_small if binding.get("id") == "red" else ICONS.potion_mp_small if binding.get("id") == "blue" else null
 	return ICONS.get(String(binding.get("id", ""))) as Texture2D
 
 static func decorate(button: Button, texture: Texture2D) -> void:

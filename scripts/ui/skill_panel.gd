@@ -148,6 +148,8 @@ func _refresh() -> void:
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.text = Localization.tr_key("ui.skill_panel.p006") if kind == "red" else Localization.tr_key("ui.skill_panel.p007")
 		button.binding = {"kind": "auto_potion", "id": kind}
+		SampleArt.decorate(button, SampleArt.binding_icon(button.binding))
+		button.add_theme_constant_override("icon_max_width", 42)
 		button.tooltip_text = Localization.tr_key("ui.skill_panel.p008")
 		row.add_child(button)
 		var desc := Label.new()
