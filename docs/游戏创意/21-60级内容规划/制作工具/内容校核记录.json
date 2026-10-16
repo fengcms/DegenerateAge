@@ -15,10 +15,10 @@
   "staticNavigation": "25图关键点及全部刷新位通过四邻接一格余量检查",
   "runtimeValidation": "未执行；图形与数值不是游戏实测",
   "baselineSHA256": {
-    "data/equipmentRules.json": "a225a74aca40b5ef816754ea5ae3fc4791ebb20e5778573cbd7c946bcbfeda36",
-    "data/equipments.json": "bfc3a5f728940de3f1d70fcca2bdfdb90c7665a0dd6f179b709d653c6969cd4d",
-    "data/dropTables.json": "b860ad92b168bc626d55a84aa58edbe66e0afc1b9f60d292bc124380aa12d138",
-    "data/quests.json": "353be66261acf38f57f94eba2f55343ced562017be5b66ad965446b3aa938432",
+    "data/equipmentRules.json": "4feca915390a6aad2b9645076e169a92de6681a88c83b48210384d02741fc5a8",
+    "data/equipments.json": "07108da13d2a0ff325c2dadd56644aa977e71c25d94d63a7f75d6cfefde744cd",
+    "data/dropTables.json": "9b05568d996a209539915227afb9f1b7fe6a65338908e9c8c694570bb1c64874",
+    "data/quests.json": "034c133234847e0f3440076de296e3504bb61c13e589e04c57e2efff36d1dd2b",
     "scripts/systems/hotbar_config.gd": "8c3dd9c622f64d2eb83ee912553270f7a4a1ad672373583840c1c66993ebd4ae"
   }
 }
