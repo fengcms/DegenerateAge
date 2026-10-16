@@ -93,7 +93,7 @@ func _ready() -> void:
 	selected_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sidebar.add_child(selected_label)
 	var hint := Label.new()
-	hint.text = "左键拖动；滚轮缩放；中键平移。\n碰撞模式：拖顶点，Shift 点边加顶点，右键顶点删除。\n保存草稿不会修改游戏；应用前检查 NPC 与通路。"
+	hint.text = "左键编辑；滚轮缩放；空格＋左键拖动画布（中键也可）。\n碰撞模式：拖橙色顶点，Shift 点橙色边加顶点，右键顶点删除。\n保存草稿不会修改游戏；应用前检查 NPC 与通路。"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sidebar.add_child(hint)
 	status_label = Label.new()
@@ -120,7 +120,7 @@ func _set_collision_mode() -> void:
 	canvas.mode = "collision"
 	palette_panel.visible = false
 	canvas.queue_redraw()
-	_set_status("碰撞模式：先选房屋等整体物件，再拖动橙色顶点；Shift 点边加点，右键点删点。")
+	_set_status("碰撞模式：点击橙色碰撞线可选物件，拖顶点调整；Shift 点线加点，右键点删点。")
 
 ## 切到地面模式；按当前笔刷在画布格上点涂或连续拖涂。
 func _set_ground_mode() -> void:

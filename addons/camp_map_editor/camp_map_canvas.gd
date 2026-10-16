@@ -30,6 +30,8 @@ var _ground_stamps: Dictionary = {}
 var _npc_cells: Array = []
 var _dragging := false
 var _panning := false
+var _pan_button := MOUSE_BUTTON_NONE
+var _space_held := false
 var _drag_start := Vector2.ZERO
 var _last_delta := Vector2i.ZERO
 var _last_ground_cell := Vector2i(-1, -1)
@@ -37,6 +39,7 @@ var _last_ground_cell := Vector2i(-1, -1)
 ## 进入编辑器时加载已导入的运行贴图，所有对象复用相同纹理实例。
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	clip_contents = true
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	_ground = load(GROUND) as Texture2D
@@ -92,7 +95,7 @@ func _draw() -> void:
 			var polygon: PackedVector2Array = document.footprint(String(item["id"]))
 			if polygon.size() > 2:
 				var tint := Color(1.0, 0.35, 0.2, 0.8) if String(item["id"]) == selected_id else Color(1.0, 0.28, 0.2, 0.38)
-				_draw_closed_polyline(polygon, tint, 2.0)
+				_draw_closed_polyline(polygon, tint, (3.0 if String(item["id"]) == selected_id else 1.5) / _scale_value())
 	if mode == "collision" and not selected_id.is_empty():
 		_draw_collision_handles()
 	if show_targets:
@@ -101,7 +104,7 @@ func _draw() -> void:
 		_draw_road_guides()
 	if mode == "ground":
 		_draw_ground_grid()
-	if not selected_id.is_empty():
+	if mode == "object" and not selected_id.is_empty():
 		var rect: Rect2 = document.art_rect(selected_id)
 		draw_rect(rect, Color("66e6ff"), false, 2.0)
 	draw_rect(Rect2(Vector2.ZERO, SIZE), Color("d8c8a5"), false, 2.0)
@@ -226,19 +229,29 @@ func _pick_collision_vertex(point: Vector2) -> int:
 			best = index
 	return best
 
-## Shift 点击所选对象的边时，找到最近边供插入新顶点。
-func _pick_collision_edge(point: Vector2) -> int:
-	var points: PackedVector2Array = document.footprint(selected_id)
-	var limit := 10.0 / _scale_value()
-	var best := -1
-	for index in range(points.size()):
-		var closest := Geometry2D.get_closest_point_to_segment(point, points[index],
-			points[(index + 1) % points.size()])
-		var distance := closest.distance_to(point)
-		if distance < limit:
-			limit = distance
-			best = index
+## 在全部整体碰撞中寻找最近的线段，碰撞线优先于美术矩形命中。
+## 距离按屏幕像素计算，避免缩放后细线难以选中。
+func _pick_collision_edge(point: Vector2) -> Dictionary:
+	var limit := 16.0 / _scale_value()
+	var best := {"id": "", "edge": -1, "point": Vector2.ZERO}
+	for item: Dictionary in document.manifest.get("objects", []):
+		var object_id := String(item["id"])
+		var points: PackedVector2Array = document.footprint(object_id)
+		for index in range(points.size()):
+			var closest := Geometry2D.get_closest_point_to_segment(point, points[index],
+				points[(index + 1) % points.size()])
+			var distance := closest.distance_to(point)
+			if distance < limit:
+				limit = distance
+				best = {"id": object_id, "edge": index, "point": closest}
 	return best
+
+## 空格作为画布平移修饰键，不抢占编辑器其他键盘输入。
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.keycode == KEY_SPACE or key.physical_keycode == KEY_SPACE:
+			_space_held = key.pressed
 
 ## 将笔刷放入鼠标路径经过的所有格；快速拖动也不留空洞。
 ## 撤销记录由鼠标按放管理，而不是每个格子各记一次。
@@ -265,6 +278,20 @@ func _gui_input(event: InputEvent) -> void:
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_MIDDLE:
 			_panning = button.pressed
+			_pan_button = MOUSE_BUTTON_MIDDLE if button.pressed else MOUSE_BUTTON_NONE
+			accept_event()
+			return
+		if button.button_index == MOUSE_BUTTON_LEFT and button.pressed \
+				and (_space_held or Input.is_key_pressed(KEY_SPACE)):
+			_panning = true
+			_pan_button = MOUSE_BUTTON_LEFT
+			_dragging = false
+			accept_event()
+			return
+		if button.button_index == MOUSE_BUTTON_LEFT and not button.pressed \
+				and _pan_button == MOUSE_BUTTON_LEFT:
+			_panning = false
+			_pan_button = MOUSE_BUTTON_NONE
 			accept_event()
 			return
 		if button.pressed and button.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
@@ -308,19 +335,30 @@ func _gui_input(event: InputEvent) -> void:
 				"ground":
 					_dragging = _ground_cell_at(_drag_start).x >= 0
 				"collision":
-					selected_vertex = _pick_collision_vertex(_drag_start) if not selected_id.is_empty() else -1
-					if selected_vertex < 0 and button.shift_pressed and not selected_id.is_empty():
-						var edge := _pick_collision_edge(_drag_start)
-						if edge >= 0:
+					var hit := _pick_collision_edge(_drag_start)
+					if button.shift_pressed and int(hit["edge"]) >= 0:
+						selected_id = String(hit["id"])
+						selection_changed.emit(selected_id)
+						var points: PackedVector2Array = document.footprint(selected_id)
+						var edge := int(hit["edge"])
+						var insert_at: Vector2 = hit["point"]
+						var next := points[(edge + 1) % points.size()]
+						if insert_at.distance_to(points[edge]) < 4.0 / _scale_value() \
+								or insert_at.distance_to(next) < 4.0 / _scale_value():
+							insert_at = (points[edge] + next) * 0.5
+						if points[edge].distance_to(next) > 8.0 / _scale_value():
 							document.begin_change()
 							selected_vertex = document.insert_collision_vertex(selected_id, edge,
-								Vector2i(_drag_start.round()))
+								Vector2i(insert_at.round()))
 							_dragging = selected_vertex >= 0
+							if not _dragging:
+								document.finish_change()
 							queue_redraw()
 							accept_event()
 							return
+					selected_vertex = _pick_collision_vertex(_drag_start) if not selected_id.is_empty() else -1
 					if selected_vertex < 0:
-						selected_id = _pick_object(_drag_start)
+						selected_id = String(hit["id"]) if int(hit["edge"]) >= 0 else _pick_object(_drag_start)
 						selection_changed.emit(selected_id)
 						_dragging = false
 					else:

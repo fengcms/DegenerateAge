@@ -12,6 +12,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	editor._set_ground_mode()
 	var edit_canvas: Control = editor.canvas
+	assert(edit_canvas.clip_contents, "画布绘制未裁切，平移后会覆盖顶部工具栏")
 	var paint_screen: Vector2 = edit_canvas._origin() + Vector2(1 * 128 + 64, 5 * 128 + 64) * edit_canvas._scale_value()
 	_send_mouse_button(edit_canvas, paint_screen, true)
 	_send_mouse_button(edit_canvas, paint_screen, false)
@@ -29,6 +30,44 @@ func _ready() -> void:
 	_send_mouse_button(edit_canvas, move_event.position, false)
 	assert(editor.document.footprint("blacksmith")[0] == before_canvas_vertex + Vector2(8, 4),
 		"画布碰撞顶点拖拽没有更新真实轮廓")
+	# 点击贴近蓝色美术边框的碰撞线时，应先命中碰撞，再允许直接加点。
+	edit_canvas.selected_id = ""
+	var house_points: PackedVector2Array = editor.document.footprint("blacksmith")
+	var edge_midpoint := (house_points[1] + house_points[2]) * 0.5
+	var edge_screen: Vector2 = edit_canvas._origin() + edge_midpoint * edit_canvas._scale_value()
+	_send_mouse_button(edit_canvas, edge_screen, true, true)
+	_send_mouse_button(edit_canvas, edge_screen, false, true)
+	assert(edit_canvas.selected_id == "blacksmith"
+		and editor.document.footprint("blacksmith").size() == house_points.size() + 1,
+		"未选中物件时，Shift 点击贴近美术边框的碰撞线没有添加顶点")
+	# 靠近旧顶点的 Shift 点击也要优先落在线段上，不被普通顶点拖拽抢走。
+	var point_count: int = editor.document.footprint("blacksmith").size()
+	var near_vertex := house_points[0].lerp(house_points[1], 0.03)
+	var near_screen: Vector2 = edit_canvas._origin() + near_vertex * edit_canvas._scale_value()
+	_send_mouse_button(edit_canvas, near_screen, true, true)
+	_send_mouse_button(edit_canvas, near_screen, false, true)
+	assert(editor.document.footprint("blacksmith").size() == point_count + 1,
+		"Shift 点击顶点附近线段时仍被顶点命中抢占")
+	# 空格加左键平移应只改变画布位移，不能改动当前碰撞文档。
+	var before_pan: Vector2 = edit_canvas.pan
+	var before_pan_polygon: PackedVector2Array = editor.document.footprint("blacksmith")
+	var space_down := InputEventKey.new()
+	space_down.keycode = KEY_SPACE
+	space_down.pressed = true
+	edit_canvas._input(space_down)
+	_send_mouse_button(edit_canvas, edge_screen, true)
+	var pan_motion := InputEventMouseMotion.new()
+	pan_motion.position = edge_screen + Vector2(70, 35)
+	pan_motion.relative = Vector2(70, 35)
+	edit_canvas._gui_input(pan_motion)
+	_send_mouse_button(edit_canvas, pan_motion.position, false)
+	var space_up := InputEventKey.new()
+	space_up.keycode = KEY_SPACE
+	space_up.pressed = false
+	edit_canvas._input(space_up)
+	assert(edit_canvas.pan == before_pan + Vector2(70, 35), "空格＋左键拖动没有平移画布")
+	assert(editor.document.footprint("blacksmith") == before_pan_polygon,
+		"平移画布时错误修改了碰撞顶点")
 	var doc := DOCUMENT.new()
 	var issue: String = doc.open()
 	assert(issue.is_empty(), "营地正式数据不能在编辑器打开：%s" % issue)
@@ -128,13 +167,21 @@ func _ready() -> void:
 		await RenderingServer.frame_post_draw
 		assert(get_viewport().get_texture().get_image().save_png("/tmp/camp_map_editor_collision_ui.png") == OK,
 			"碰撞顶点界面截图失败")
+		edit_canvas.pan = Vector2(0, -500)
+		edit_canvas.queue_redraw()
+		for _frame in range(2):
+			await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		assert(get_viewport().get_texture().get_image().save_png("/tmp/camp_map_editor_pan_ui.png") == OK,
+			"大幅平移后界面截图失败")
 	print("[CampMapEditorTest] PASS · 营地整体物件、道路、地面笔刷和碰撞顶点编辑及撤销重做")
 	get_tree().quit()
 
 ## 向画布投递本地鼠标按放事件，验证实际 `_gui_input` 模式分发。
-func _send_mouse_button(target: Control, position: Vector2, pressed: bool) -> void:
+func _send_mouse_button(target: Control, position: Vector2, pressed: bool, shift_pressed: bool = false) -> void:
 	var event := InputEventMouseButton.new()
 	event.position = position
 	event.button_index = MOUSE_BUTTON_LEFT
 	event.pressed = pressed
+	event.shift_pressed = shift_pressed
 	target._gui_input(event)
