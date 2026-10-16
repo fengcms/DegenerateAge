@@ -3,13 +3,14 @@
 """末法纪元数值校准分析（依据 03/04/06/07 文档公式 + data/*.json 实配）。"""
 import json, math, os
 from map_catalog import load_maps
+from monster_catalog import load_monsters
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def j(p):
     with open(os.path.join(ROOT, p), encoding="utf-8") as f:
         return json.load(f)
 
-monsters = {m["id"]: m for m in j("data/monsters.json")}
+monsters = {m["id"]: m for m in load_monsters()}
 equips   = {e["id"]: e for e in j("data/equipments.json")}
 maps     = {m["id"]: m for m in load_maps()}
 drops    = {d["id"]: d for d in j("data/dropTables.json")}

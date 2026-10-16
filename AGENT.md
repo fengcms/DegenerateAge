@@ -48,6 +48,12 @@ Godot 的 `_draw()` 命令缓存只避免反复执行绘制脚本，不等于减
 - **每次编辑地图必须同步更新同目录 README，并与地图配置一起提交。** 更新名称、设计意图、等级、尺寸、安全区、NPC、刷新、Boss、出入口、马车、解锁或布局时，检查 README 的用途说明与参数是否仍准确。JSON 不能写注释；设计原因、坐标口径和注意事项写在 README。不要把 README 当成运行数据的第二事实源。
 - README 的 `MAP PARAMETERS` 标记区由 `tools/check_map_catalog.py --update` 或调用 `tools/map_catalog.py::save_maps` 的生成器刷新；标记外的用途和人工说明由编辑者维护。新增地图须建目录、配置、README，登记索引并更新章节 README，保证目录名与稳定 ID 一致，检查跨图引用、入口出口和通行掩码。提交前运行 `python3 tools/check_map_catalog.py` 以及相关地图测试；生成脚本改图也遵循同一规则。
 
+### 怪物章节目录与说明同步
+
+- 具体怪物模板位于 `data/monsters/chNN/monsters.json`；`data/monsters/index.json` 登记章节读取顺序。`DataLoader` 聚合为原 `monsters` 表，地图、任务和存档继续按稳定怪物 ID 引用。章节归属按设计归属，不因其他地图的刷新等级覆盖而复制或移动模板。
+- **每次编辑章节怪物必须同步该章 `README.md`。** 名称、等级、类型、掉落和增删怪物由 `tools/monster_catalog.py::save_chapter` 同步清单标记区；人工维护的用途、行为、数值设计理由在标记外更新。不要把说明文件当作运行数据源，JSON 不写注释。
+- 新增章节应建立配置与 README 并登记索引；跨章节 ID 不得重复。构建工具应使用 `tools/monster_catalog.py` 读写，不直接读旧 `data/monsters.json`。提交前运行 `python3 tools/check_monster_catalog.py` 及受影响的战斗、地图刷新、任务与掉落测试。
+
 - 地形显示、可通行掩码、寻路和碰撞使用同一布局事实源。地图尺寸、入口、出口、刷新格、Boss 场地和门禁必须一致。
 - 地图面积增加不应直接放大每帧的全图脚本扫描、节点更新和绘制调用。静态数据在加载阶段准备；局部变化更新对应缓存。
 - 不为每个地面格创建独立场景节点、刚体或活动脚本。优先使用现有网格与图集；只有测量证明有必要时，再引入视口分块、按需加载或空间索引。
@@ -200,7 +206,7 @@ func world_to_canvas(world: Vector2, world_center: Vector2, canvas_center: Vecto
 - 尚未完成或验证失败的工作不冒充关键成果；确需保存未完成进度时，在中文标题与正文明确说明未完成范围及失败项。
 - 已有工作区修改、其他任务的素材和暂存文件不得混入本任务提交。提交仅保存本地成果，不自动授权 push、合并或发布。
 - 提交前检查 diff 与暂存范围；共享工作区使用明确路径的提交范围，不能依赖“暂存区里只有我的文件”这一假设。
-- **共享文件的影响面标注**：改动被多章共用的测试或数据文件（如 `tests/equipment_axes_test.gd`、`tests/map_gate_test.gd`、`data/monsters.json`）时，提交说明须写明受影响范围，并说明是「扩展覆盖」还是「放宽既有断言」，便于审阅判断闸门是否被改松。
+- **共享文件的影响面标注**：改动被多章共用的测试或数据文件（如 `tests/equipment_axes_test.gd`、`tests/map_gate_test.gd`、`data/monsters/index.json`）时，提交说明须写明受影响范围，并说明是「扩展覆盖」还是「放宽既有断言」，便于审阅判断闸门是否被改松。
 - 本轮经验与历史基准见 `docs/审阅报告/大地图运行卡顿性能改进报告.md` 和 `docs/审阅报告/大地图性能优化实施记录.md`。引擎、地图、素材或玩法发生显著变化后，重新建立基准并更新记录。
 
 

@@ -8,6 +8,7 @@ import copy
 import json
 from pathlib import Path
 from map_catalog import load_maps, save_maps
+from monster_catalog import load_chapter, save_chapter
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,11 +107,11 @@ def main():
     upsert(drops, slag)
     write("dropTables.json", drops)
 
-    monsters = read("monsters.json")
+    monsters = load_chapter("ch02")
     for monster in monsters:
         if monster["id"] == "c2_boss_slag_devourer":
             monster["dropTableId"] = "DT_C2_Boss_Slag"
-    write("monsters.json", monsters)
+    save_chapter("ch02", monsters)
 
     maps = load_maps(ROOT)
     for map_data in maps:

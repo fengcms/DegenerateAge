@@ -3,6 +3,7 @@
 import json
 import struct
 from pathlib import Path
+from monster_catalog import load_chapter
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,8 +21,7 @@ def png_size(path):
 def main():
     data = json.loads((ROOT / "data/chapter2_art_manifest.json").read_text())
     actors = data.get("actors", {})
-    expected = [monster["id"] for monster in json.loads((ROOT / "data/monsters.json").read_text())
-                if monster["id"].startswith("c2_")]
+    expected = [monster["id"] for monster in load_chapter("ch02")]
     issues = []
     for actor_id in expected:
         spec = actors.get(actor_id)
