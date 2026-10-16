@@ -37,6 +37,6 @@ func _ready() -> void:
 	add_child(main)
 	var spawner := main.get_node("Game/Spawner") as MonsterSpawner
 	check(spawner.point_count() == 86, "断管坡全部刷新位登记")
-	check(spawner._active_normal_count() <= MonsterSpawner.CHAPTER_TWO_NORMAL_BUDGET, "近处只激活有限怪群")
+	check(int(spawner._active_counts().get("normal", 0)) <= MonsterSpawner.LEGACY_NORMAL_CAP, "近处只激活有限怪群")
 	print("[ChapterTwoEncountersTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)

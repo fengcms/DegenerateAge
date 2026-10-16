@@ -62,5 +62,37 @@
       "c2_road_ring",
       "c2_warm_necklace"
     ]
+  },
+  {
+    "id": "c3_normal",
+    "desc": "第三档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "c3_equip_weapon",
+      "c3_equip_shoes",
+      "c3_equip_armor",
+      "c3_equip_helmet",
+      "c3_equip_bracer",
+      "c3_equip_knee",
+      "c3_equip_shield",
+      "c3_equip_bracelet",
+      "c3_equip_ring",
+      "c3_equip_necklace"
+    ]
+  },
+  {
+    "id": "c3_legendary",
+    "desc": "第三档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "c3_equip_weapon",
+      "c3_equip_shoes",
+      "c3_equip_armor",
+      "c3_equip_helmet",
+      "c3_equip_bracer",
+      "c3_equip_knee",
+      "c3_equip_shield",
+      "c3_equip_bracelet",
+      "c3_equip_ring",
+      "c3_equip_necklace"
+    ]
   }
 ]

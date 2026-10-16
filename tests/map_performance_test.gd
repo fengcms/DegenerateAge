@@ -36,6 +36,6 @@ func _ready() -> void:
 		spawner._process(0.0)
 	print("[PERF] spawner 200 ticks: %.3f ms, %d sites" % [
 		(Time.get_ticks_usec() - start) / 1000.0, spawner.point_count()])
-	assert(spawner._active_normal_count() <= MonsterSpawner.CHAPTER_TWO_NORMAL_BUDGET)
+	assert(int(spawner._active_counts().get("normal", 0)) <= MonsterSpawner.LEGACY_NORMAL_CAP)
 	print("[MapPerformanceTest] PASS")
 	get_tree().quit()
