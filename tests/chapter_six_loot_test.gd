@@ -103,7 +103,8 @@ func _test_quest_reward_persistence() -> void:
 	var qid := "C6Q12"
 	var tpl := Quest.template(qid)
 	var reward: Dictionary = tpl.get("reward", {})
-	check(reward.has("item") and reward.has("tierStart"), "章末任务配置随机装备奖励")
+	check(reward.has("tierStart") and _c6_models().has(String(reward.get("item", ""))),
+		"章末任务奖励装备指向本章型号：%s" % String(reward.get("item", "")))
 	GameState.quest_states[qid] = {"state": Quest.STATE_COMPLETED, "progress": 1}
 	_fill_bag(4)
 	var gold_before := int(GameState.gold)

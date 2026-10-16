@@ -52,7 +52,19 @@ func _ready() -> void:
 
 ## 18 模板都能实例化并读到正确档次；只有 Boss 装配共享动作组件。
 func _test_templates_generate() -> void:
-	check(NORMALS.size() == 9 and ELITES.size() == 5 and BOSSES.size() == 4, "本章模板共 18 个")
+	# 从 monsters.json 实读本章模板按档次计数（替代原只比对本文件 const 长度的恒真断言）。
+	var counts := {"normal": 0, "elite": 0, "boss": 0}
+	for entry in DataLoader.get_table("monsters"):
+		if not entry is Dictionary:
+			continue
+		var entry_id := String((entry as Dictionary).get("id", ""))
+		if not entry_id.begins_with("c5_"):
+			continue
+		var entry_kind := String((entry as Dictionary).get("kind", ""))
+		if counts.has(entry_kind):
+			counts[entry_kind] += 1
+	check(int(counts["normal"]) == NORMALS.size() and int(counts["elite"]) == ELITES.size() and int(counts["boss"]) == BOSSES.size(),
+		"monsters.json 本章模板按档次计数与清单一致：%s" % [counts])
 	for id in NORMALS + ELITES + BOSSES:
 		GameState.current_map = String(BOSS_MAP.get(id, "c5_map01"))
 		var m := _spawn_monster(id)
