@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 24 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 25 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 """
 
@@ -25,7 +25,7 @@ DEFAULT_TESTS = [
     "HotbarConfigTest", "HotbarUiTest", "InputFeedbackTest", "MenuFlowTest",
     "SkillCombatTest", "AutoControlAcceptance", "AutoExplorationSurvival",
     "BluePotionDropTest", "CaveNavigationTest", "ReviewRegressionTest",
-    "BossReviewTest", "BossActionTest", "QuestRewardPlanTest",
+    "BossReviewTest", "BossActionTest", "QuestRewardPlanTest", "MapGateTest",
     "ChapterOneAcceptance", "SmokeTest",
 ]
 

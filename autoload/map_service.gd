@@ -65,6 +65,9 @@ func start_quest_link_navigation(kind: String, target_id: String, allowed_maps: 
 			var next_id := String(exit_data.get("toMap", ""))
 			if next_id.is_empty() or visited.has(next_id) or not is_unlocked(next_id):
 				continue
+			# 正向锁未开的边不进导航路径：否则会指一条走到跟前打不开的路。
+			if not _exit_open(exit_data):
+				continue
 			visited[next_id] = true
 			first_hop[next_id] = next_id if map_id == GameState.current_map else first_hop[map_id]
 			queue.append(next_id)
@@ -197,6 +200,54 @@ func is_unlocked(map_id: String) -> bool:
 		return true
 	return bool(GameState.unlocks.get(need, false))
 
+# ---- 门禁（E1；工程文档 30 §4，31 §4）----
+
+## 出口自带的正向锁（`exits[].requiresUnlock`；缺省/空 → 这一边无条件）。
+## 返回边一律不配置该字段，因此返回永远不锁；正向只在对应任务 `rewarded` 后解除。
+func exit_requirement(exit_data: Dictionary) -> String:
+	return String(exit_data.get("requiresUnlock", ""))
+
+## 解锁键的产出任务（`reward.unlock` / `reward.unlocks`）；空 = 无人产出。
+## 启动校验会拦下无人产出的键（`DataLoader._validate_gate_flags`），避免内容永久死锁。
+func unlock_source(flag: String) -> Dictionary:
+	if flag.is_empty():
+		return {}
+	var quests = DataLoader.get_table("quests")
+	if not (quests is Array):
+		return {}
+	for entry in (quests as Array):
+		if not entry is Dictionary:
+			continue
+		var reward: Variant = (entry as Dictionary).get("reward", null)
+		if not reward is Dictionary:
+			continue
+		var single := String((reward as Dictionary).get("unlock", ""))
+		if single == flag:
+			return entry
+		var list: Variant = (reward as Dictionary).get("unlocks", [])
+		if list is Array and (list as Array).has(flag):
+			return entry
+	return {}
+
+## 目标图未解锁的原因：能定位到产出该键的任务时，指明交付人与任务名（31 §6）。
+func locked_reason(map_id: String) -> String:
+	return _locked_by(unlock_requirement(map_id), map_id)
+
+## 出口边是否已开放（返回边没有 `requiresUnlock` → 恒开）。
+func _exit_open(exit_data: Dictionary) -> bool:
+	var need := exit_requirement(exit_data)
+	return need.is_empty() or bool(GameState.unlocks.get(need, false))
+
+## 以解锁键为口径给出封锁说明；定位不到产出任务时退回简短文案。
+func _locked_by(flag: String, map_id: String) -> String:
+	var quest := unlock_source(flag)
+	if not quest.is_empty():
+		var turn_in := String(quest.get("turnIn", quest.get("giver", "")))
+		var npc_label := npc_name(turn_in)
+		if not npc_label.is_empty():
+			return Localization.tr_key("msg.map_service.p023") % [display_name(map_id), npc_label, String(quest.get("name", flag))]
+	return Localization.tr_key("msg.map_service.p008") % display_name(map_id)
+
 ## 显式逐对价格优先；否则使用所属枢纽对目标类型的缺省价。
 func fee_to(map_id: String) -> int:
 	var fees: Variant = current_data().get("carterFares", {})
@@ -290,8 +341,10 @@ func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
 	var player_cell := Iso.world_to_grid(player_world)
 	if player_cell.distance_to(Vector2(float(cell[0]), float(cell[1]))) > WALK_RANGE_CELLS:
 		return _fail(Localization.tr_key("msg.map_service.p007"))
+	if not _exit_open(exit_data):
+		return _fail(_locked_by(exit_requirement(exit_data), to_id))
 	if not is_unlocked(to_id):
-		return _fail(Localization.tr_key("msg.map_service.p008") % display_name(to_id))
+		return _fail(locked_reason(to_id))
 	var entrance_id := String(exit_data.get("toEntrance", ""))
 	var entrances: Variant = data_for(to_id).get("entrances", null)
 	if not entrances is Dictionary or not entrances.has(entrance_id):

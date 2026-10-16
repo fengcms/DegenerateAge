@@ -455,6 +455,7 @@
   "msg.map_service.p020": "已到访%s，车夫直达已开放",
   "msg.map_service.p021": "前往失败，未收取车费",
   "msg.map_service.p022": "正在载入%s",
+  "msg.map_service.p023": "道路封锁：%s · 先找%s领取《%s》的奖励",
   "msg.save_manager.p001": "地图切换中，请稍后存档",
   "msg.save_manager.p002": "请先选择复活方式，再保存进度",
   "msg.save_manager.p003": "当前状态不符合存档格式，未覆盖已有存档",

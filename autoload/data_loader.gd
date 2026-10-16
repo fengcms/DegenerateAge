@@ -247,6 +247,7 @@ func validate_all() -> Array[String]:
 					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])
 	report.append_array(_validate_carter_clusters(maps))
 	report.append_array(_validate_walk_exits(maps))
+	report.append_array(_validate_gate_flags(maps))
 	report.append_array(_validate_safe_areas(maps))
 
 	# 4) 掉落表合法性（T07：掉落项必在合法表内）
@@ -704,6 +705,66 @@ func _validate_walk_exits(maps: Variant) -> Array[String]:
 			if not reverse_found:
 				report.append("[maps] %s 的出口 %s 缺少 %s 的双向返回出口" % [map_id, exit_id, to_id])
 	return report
+
+## E1（工程文档 30 §4）：门禁/交通——每个 `requiresUnlock` 都必须由某个任务奖励产出，
+## 否则该条道路或刷新区会永久锁死（「免费步行永远能完成主线」的底线）。
+## 字段形态同时校验：不锁就省略，写了就必须是非空字符串。
+func _validate_gate_flags(maps: Variant) -> Array[String]:
+	var report: Array[String] = []
+	if not maps is Array:
+		return report
+	var produced := {}
+	var quests = tables.get("quests")
+	if quests is Array:
+		for entry in quests:
+			if not entry is Dictionary:
+				continue
+			var reward: Variant = entry.get("reward", null)
+			if not reward is Dictionary:
+				continue
+			var single := String((reward as Dictionary).get("unlock", ""))
+			if not single.is_empty():
+				produced[single] = true
+			var unlocks: Variant = (reward as Dictionary).get("unlocks", [])
+			if unlocks is Array:
+				for flag in unlocks:
+					if not String(flag).is_empty():
+						produced[String(flag)] = true
+	for entry in maps:
+		if not entry is Dictionary:
+			continue
+		var map_id := String(entry.get("id", "?"))
+		report.append_array(_check_gate_flag("[maps] %s 的 requiresUnlock" % map_id, entry.get("requiresUnlock", null), produced))
+		var raw_exits: Variant = entry.get("exits", null)
+		if raw_exits is Array:
+			for exit_data in (raw_exits as Array):
+				if exit_data is Dictionary:
+					report.append_array(_check_gate_flag("[maps] %s 的出口 %s requiresUnlock" % [map_id, exit_data.get("id", "?")],
+						exit_data.get("requiresUnlock", null), produced))
+		var spawn_specs: Array = []
+		var raw_spawns: Variant = entry.get("spawnPoints", null)
+		if raw_spawns is Array:
+			spawn_specs.assign(raw_spawns)
+		if entry.get("bossSpawn", null) is Dictionary:
+			spawn_specs.append(entry.bossSpawn)
+		for spec in spawn_specs:
+			if spec is Dictionary:
+				report.append_array(_check_gate_flag("[maps] %s 的刷新区 %s requiresUnlock" % [map_id, spec.get("monsterId", "?")],
+					spec.get("requiresUnlock", null), produced))
+	return report
+
+## 已有数据以空串表示「不锁」，因此空串合法；一旦写了键名就必须有人产出该键。
+func _check_gate_flag(label: String, raw: Variant, produced: Dictionary) -> Array[String]:
+	if raw == null:
+		return []
+	if not raw is String:
+		return ["%s 必须是字符串（不锁写空串）" % label] as Array[String]
+	var flag: String = raw
+	if flag.is_empty():
+		return []
+	if not produced.has(flag):
+		return ["%s 引用无人产出的解锁键 '%s'（需由某任务 reward.unlock/unlocks 产出）" % [label, flag]] as Array[String]
+	return []
 
 func _valid_walk_cell(value: Variant, map_data: Dictionary) -> bool:
 	if not value is Array or value.size() != 2:
