@@ -61,5 +61,33 @@
     "useType": "quest",
     "animation": "",
     "desc": "第二章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c3_item_q03",
+    "name": "配水封片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第三章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c3_item_q06",
+    "name": "警报索引",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第三章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c3_item_s02",
+    "name": "原字拓片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第三章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c3_item_s03",
+    "name": "净水布封",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第三章任务袋物品，不占背包格。"
   }
 ]

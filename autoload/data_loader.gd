@@ -320,9 +320,12 @@ func _validate_equipment_model() -> Array[String]:
 		if not _is_whole_level(tier) or int(tier) < 1:
 			report.append("[equipmentRules] 套起点必须是正整数")
 			continue
-		var expected_tier := 1 if previous_tier == 0 else 11
-		if int(tier) != expected_tier:
-			report.append("[equipmentRules] 当前套起点仅允许 1、11 且升序")
+		# 套起点为「1 起、每十级一档」的升序前缀（1、11、21、31、41、51…），
+		# 允许只登记已投入的档位，后续章节再逐档补齐。
+		if int(tier) <= previous_tier:
+			report.append("[equipmentRules] 套起点必须严格升序")
+		elif int(tier) != 1 and (int(tier) - 1) % 10 != 0:
+			report.append("[equipmentRules] 套起点需为 1 起的每十级一档（1、11、21…）")
 		previous_tier = int(tier)
 		slot_coverage[str(int(tier))] = {}
 	for factor_key in ["affixTierScale", "tierValueMultiplier"]:
@@ -389,6 +392,10 @@ func _validate_equipment_model() -> Array[String]:
 				report.append("[equipments] Lv%s 的 %s 出现多个正式型号" % [tier_key, slot])
 			slot_coverage[tier_key][slot] = true
 	for tier_key in slot_coverage:
+		# 尚未登记任何型号的档位（如后续章节才投入的 31/41/51）不要求十部位齐全；
+		# 一旦该档开始登记型号，就必须十部位各有一件可掉落型号。
+		if slot_coverage[tier_key].is_empty():
+			continue
 		for slot in expected_slots:
 			if not slot_coverage[tier_key].has(slot):
 				report.append("[equipments] Lv%s 缺少可掉落 %s 型号" % [tier_key, slot])

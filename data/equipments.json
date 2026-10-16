@@ -487,5 +487,249 @@
       "cdr"
     ],
     "requiredLevel": 20
+  },
+  {
+    "id": "c3_equip_weapon",
+    "name": "渠卫长剑",
+    "slot": "weapon",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第三章常规制式；穿戴要求 Lv21，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "atk": 26
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 21
+  },
+  {
+    "id": "c3_equip_shoes",
+    "name": "渠石靴",
+    "slot": "shoes",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "desc": "第三章常规制式；穿戴要求 Lv22，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "def": 6,
+        "mp": 15
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 22
+  },
+  {
+    "id": "c3_equip_armor",
+    "name": "渠卫护甲",
+    "slot": "armor",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第三章常规制式；穿戴要求 Lv23，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "def": 14,
+        "hp": 38
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 23
+  },
+  {
+    "id": "c3_equip_helmet",
+    "name": "铜檐盔",
+    "slot": "helmet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "desc": "第三章常规制式；穿戴要求 Lv24，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "def": 8
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 24
+  },
+  {
+    "id": "c3_equip_bracer",
+    "name": "渠卫护腕",
+    "slot": "bracer",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第三章常规制式；穿戴要求 Lv25，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "def": 6
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 25
+  },
+  {
+    "id": "c3_equip_knee",
+    "name": "渠卫护膝",
+    "slot": "knee",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "desc": "第三章常规制式；穿戴要求 Lv26，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "def": 6
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 26
+  },
+  {
+    "id": "c3_equip_shield",
+    "name": "刻渠盾",
+    "slot": "shield",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第三章常规制式；穿戴要求 Lv27，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "def": 15,
+        "hp": 23
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 27
+  },
+  {
+    "id": "c3_equip_bracelet",
+    "name": "铜尺手镯",
+    "slot": "bracelet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "desc": "第三章常规制式；穿戴要求 Lv28，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "atk": 6
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 28
+  },
+  {
+    "id": "c3_equip_ring",
+    "name": "量水戒",
+    "slot": "ring",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第三章常规制式；穿戴要求 Lv29，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "atk": 5,
+        "mp": 12
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 29
+  },
+  {
+    "id": "c3_equip_necklace",
+    "name": "清渠项链",
+    "slot": "necklace",
+    "price": 70,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第三章常规制式；穿戴要求 Lv30，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "21": {
+        "hp": 38
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 30
   }
 ]

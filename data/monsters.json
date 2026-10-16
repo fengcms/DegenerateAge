@@ -780,5 +780,579 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 boss；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal01",
+    "name": "砂背螯虫",
+    "tier": 4,
+    "level": 21,
+    "hpBase": 656,
+    "mpBase": 0,
+    "attack": 144,
+    "defense": 53,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 130,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal02",
+    "name": "窃水獾",
+    "tier": 4,
+    "level": 22,
+    "hpBase": 590,
+    "mpBase": 0,
+    "attack": 148,
+    "defense": 41,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 3.1,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 141,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal03",
+    "name": "枯渠游魂",
+    "tier": 4,
+    "level": 23,
+    "hpBase": 488,
+    "mpBase": 0,
+    "attack": 137,
+    "defense": 42,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "ranged",
+      "range": 6.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 151,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal04",
+    "name": "铆钉巡卫",
+    "tier": 4,
+    "level": 24,
+    "hpBase": 725,
+    "mpBase": 0,
+    "attack": 156,
+    "defense": 59,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 162,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "tank",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal05",
+    "name": "盐晶蚀蛾",
+    "tier": 4,
+    "level": 25,
+    "hpBase": 520,
+    "mpBase": 0,
+    "attack": 144,
+    "defense": 45,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "ranged",
+      "range": 6.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 172,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal06",
+    "name": "干井潜蜥",
+    "tier": 4,
+    "level": 26,
+    "hpBase": 670,
+    "mpBase": 0,
+    "attack": 164,
+    "defense": 46,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 3.1,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 184,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal07",
+    "name": "抄令傀儡",
+    "tier": 4,
+    "level": 27,
+    "hpBase": 690,
+    "mpBase": 0,
+    "attack": 168,
+    "defense": 48,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.4,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 195,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_normal08",
+    "name": "铜渠寄生体",
+    "tier": 4,
+    "level": 28,
+    "hpBase": 994,
+    "mpBase": 0,
+    "attack": 189,
+    "defense": 49,
+    "attackInterval": 1.5,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 207,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Normal",
+    "kind": "normal",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 normal；数值待实机校准。"
+  },
+  {
+    "id": "c3_elite01",
+    "name": "背闸虫王",
+    "tier": 4,
+    "level": 24,
+    "hpBase": 2520,
+    "mpBase": 0,
+    "attack": 179,
+    "defense": 50,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 485,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Elite",
+    "kind": "elite",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c3_elite02",
+    "name": "巡渠铜卫",
+    "tier": 4,
+    "level": 25,
+    "hpBase": 2600,
+    "mpBase": 0,
+    "attack": 184,
+    "defense": 52,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 517,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Elite",
+    "kind": "elite",
+    "monsterType": "tank",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c3_elite03",
+    "name": "缄默执笔者",
+    "tier": 4,
+    "level": 26,
+    "hpBase": 2680,
+    "mpBase": 0,
+    "attack": 189,
+    "defense": 53,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 551,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Elite",
+    "kind": "elite",
+    "monsterType": "ranged",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c3_elite04",
+    "name": "旱井吞砂兽",
+    "tier": 4,
+    "level": 27,
+    "hpBase": 2760,
+    "mpBase": 0,
+    "attack": 193,
+    "defense": 55,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 2.2,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 585,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Elite",
+    "kind": "elite",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": null,
+    "spawnWeight": 1.0,
+    "desc": "第三章 elite；数值待实机校准。",
+    "affixPool": [
+      "rage",
+      "frost",
+      "hard",
+      "fast",
+      "summon",
+      "vampire"
+    ],
+    "affixCount": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "c3_boss01",
+    "name": "闸印守卫",
+    "tier": 4,
+    "level": 25,
+    "hpBase": 11700,
+    "mpBase": 0,
+    "attack": 224,
+    "defense": 68,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 3104,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Boss",
+    "kind": "boss",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": {
+      "shape": "line",
+      "segments": [
+        {
+          "offset": [
+            -2.5,
+            0
+          ],
+          "delay": 0.0
+        },
+        {
+          "offset": [
+            2.5,
+            0
+          ],
+          "delay": 0.7
+        }
+      ],
+      "length": 10,
+      "width": 2,
+      "warn": 1.0,
+      "interval": 8.0,
+      "firstDelay": 4.0,
+      "coeff": 1.15,
+      "recovery": 0.8,
+      "phaseB": {
+        "triggerHp": 0.5,
+        "radius": 5,
+        "inner": 2,
+        "warn": 1.3,
+        "coeff": 1.3,
+        "interval": 12,
+        "window": 2.0
+      }
+    },
+    "spawnWeight": 1.0,
+    "desc": "第三章 boss；数值待实机校准。"
+  },
+  {
+    "id": "c3_boss02",
+    "name": "沉沙母螯",
+    "tier": 4,
+    "level": 28,
+    "hpBase": 12780,
+    "mpBase": 0,
+    "attack": 241,
+    "defense": 74,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 3722,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Boss",
+    "kind": "boss",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": {
+      "shape": "circle",
+      "segments": [
+        {
+          "offset": [
+            0,
+            -4
+          ],
+          "delay": 0.0
+        },
+        {
+          "offset": [
+            -6,
+            3
+          ],
+          "delay": 0.7
+        },
+        {
+          "offset": [
+            6,
+            3
+          ],
+          "delay": 1.4
+        }
+      ],
+      "radius": 2.5,
+      "warn": 1.0,
+      "interval": 8.0,
+      "firstDelay": 4.0,
+      "coeff": 1.15,
+      "recovery": 0.8,
+      "phaseB": {
+        "triggerHp": 0.5,
+        "radius": 5,
+        "inner": 2,
+        "warn": 1.3,
+        "coeff": 1.3,
+        "interval": 12,
+        "window": 2.0
+      }
+    },
+    "spawnWeight": 1.0,
+    "desc": "第三章 boss；数值待实机校准。"
+  },
+  {
+    "id": "c3_boss03",
+    "name": "空壳总督",
+    "tier": 4,
+    "level": 30,
+    "hpBase": 13500,
+    "mpBase": 0,
+    "attack": 252,
+    "defense": 78,
+    "attackInterval": 1.8,
+    "attackRange": {
+      "kind": "melee",
+      "range": 1.0
+    },
+    "moveSpeed": 1.8,
+    "accuracy": 0,
+    "dodge": 4,
+    "resistType": "",
+    "xpReward": 4156,
+    "goldReward": 0,
+    "dropTableId": "DT_C3_Boss",
+    "kind": "boss",
+    "monsterType": "melee",
+    "specialAttack": "",
+    "bossSkill": {
+      "shape": "fan",
+      "segments": [
+        {
+          "angle": 0,
+          "delay": 0.0
+        },
+        {
+          "angle": 120,
+          "delay": 0.8
+        },
+        {
+          "angle": 240,
+          "delay": 1.6
+        }
+      ],
+      "radius": 6,
+      "arcDeg": 70,
+      "warn": 1.0,
+      "interval": 8.0,
+      "firstDelay": 4.0,
+      "coeff": 1.15,
+      "recovery": 0.8,
+      "phaseB": {
+        "triggerHp": 0.5,
+        "radius": 5,
+        "inner": 2,
+        "warn": 1.3,
+        "coeff": 1.3,
+        "interval": 12,
+        "window": 2.0
+      }
+    },
+    "spawnWeight": 1.0,
+    "desc": "第三章 boss；数值待实机校准。"
   }
 ]

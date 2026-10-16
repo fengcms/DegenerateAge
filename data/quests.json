@@ -639,5 +639,478 @@
     "desc": "替老辙打通重新运煤的路。",
     "trackerText": "前往 {map:c2_pipe_slope} 击败  {monster:c2_elite_broken_inspector}（{current}/{count}）。",
     "turnInText": "回到 {map:c2_well_town} 找 {npc:c2_lao_zhe} 交任务吧。"
+  },
+  {
+    "id": "C3Q01",
+    "name": "账簿没有水",
+    "type": "main",
+    "giver": "c3_npc01",
+    "turnIn": "c3_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 453,
+      "xp": 3330
+    },
+    "mapScope": [
+      "c3_map00"
+    ],
+    "prev": "C2Q12",
+    "abandonable": false,
+    "desc": "把账放下，先看看排在最后的人。",
+    "trackerText": "到 {map:c3_map00} 交谈 {npc:c3_npc01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc01} 交付“账簿没有水”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C3Q02",
+    "name": "沿渠找刻度",
+    "type": "main",
+    "giver": "c3_npc01",
+    "turnIn": "c3_npc09",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_normal01",
+      "count": 12
+    },
+    "reward": {
+      "gold": 755,
+      "xp": 5550
+    },
+    "mapScope": [
+      "c3_map01"
+    ],
+    "prev": "C3Q01",
+    "abandonable": false,
+    "desc": "陶汀出不去，刻度就永远是官署报的数。",
+    "trackerText": "到 {map:c3_map01} 击杀 {monster:c3_normal01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc09} 交付“沿渠找刻度”；不自动交付。"
+  },
+  {
+    "id": "C3Q03",
+    "name": "被改道的水",
+    "type": "main",
+    "giver": "c3_npc09",
+    "turnIn": "c3_npc09",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c3_item_q03",
+      "count": 4,
+      "sourceMonster": "c3_normal02"
+    },
+    "reward": {
+      "gold": 830,
+      "xp": 6105,
+      "item": "c3_equip_armor",
+      "quality": "rare",
+      "tierStart": 21,
+      "unlocks": [
+        "c3_access_02"
+      ]
+    },
+    "mapScope": [
+      "c3_map01"
+    ],
+    "prev": "C3Q02",
+    "abandonable": false,
+    "desc": "从窃水獾背囊取回配水封片，看看水从哪来。",
+    "trackerText": "到 {map:c3_map01} 收集 {item:c3_item_q03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc09} 交付“被改道的水”；不自动交付。"
+  },
+  {
+    "id": "C3Q04",
+    "name": "请他说实数",
+    "type": "main",
+    "giver": "c3_npc09",
+    "turnIn": "c3_npc09",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc09",
+      "count": 1
+    },
+    "reward": {
+      "gold": 453,
+      "xp": 3330
+    },
+    "mapScope": [
+      "c3_map01"
+    ],
+    "prev": "C3Q03",
+    "abandonable": false,
+    "desc": "当面听我报一次水位。",
+    "trackerText": "到 {map:c3_map01} 交谈 {npc:c3_npc09}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc09} 交付“请他说实数”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C3Q05",
+    "name": "闸印不认人",
+    "type": "main",
+    "giver": "c3_npc09",
+    "turnIn": "c3_npc01",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_boss01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1057,
+      "xp": 7770,
+      "unlocks": [
+        "c3_access_03"
+      ]
+    },
+    "mapScope": [
+      "c3_map02"
+    ],
+    "prev": "C3Q04",
+    "abandonable": false,
+    "desc": "拆掉守卫，别让一枚死官印继续管活人的水。",
+    "trackerText": "到 {map:c3_map02} 击败首领 {monster:c3_boss01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc01} 交付“闸印不认人”；不自动交付。"
+  },
+  {
+    "id": "C3Q06",
+    "name": "没有寄出的警报",
+    "type": "main",
+    "giver": "c3_npc08",
+    "turnIn": "c3_npc08",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c3_item_q06",
+      "count": 6,
+      "sourceMonster": "c3_normal07"
+    },
+    "reward": {
+      "gold": 830,
+      "xp": 6105,
+      "item": "c3_equip_bracer",
+      "quality": "rare",
+      "tierStart": 21,
+      "unlocks": [
+        "c3_access_04"
+      ]
+    },
+    "mapScope": [
+      "c3_map03"
+    ],
+    "prev": "C3Q05",
+    "abandonable": false,
+    "desc": "抄令傀儡携着旧警报的索引，把它们带回来。",
+    "trackerText": "到 {map:c3_map03} 收集 {item:c3_item_q06}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc08} 交付“没有寄出的警报”；不自动交付。"
+  },
+  {
+    "id": "C3Q07",
+    "name": "原本与副本",
+    "type": "main",
+    "giver": "c3_npc08",
+    "turnIn": "c3_npc08",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc08",
+      "count": 1
+    },
+    "reward": {
+      "gold": 453,
+      "xp": 3330
+    },
+    "mapScope": [
+      "c3_map00"
+    ],
+    "prev": "C3Q06",
+    "abandonable": false,
+    "desc": "听完原本再决定该公开什么。",
+    "trackerText": "到 {map:c3_map00} 交谈 {npc:c3_npc08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc08} 交付“原本与副本”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C3Q08",
+    "name": "给证人一条路",
+    "type": "main",
+    "giver": "c3_npc08",
+    "turnIn": "c3_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_normal04",
+      "count": 14
+    },
+    "reward": {
+      "gold": 755,
+      "xp": 5550,
+      "item": "c3_equip_shield",
+      "quality": "rare",
+      "tierStart": 21
+    },
+    "mapScope": [
+      "c3_map03"
+    ],
+    "prev": "C3Q07",
+    "abandonable": false,
+    "desc": "陈榆肯出来，前提是旧坊别再向他索印。",
+    "trackerText": "到 {map:c3_map03} 击杀 {monster:c3_normal04}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc10} 交付“给证人一条路”；不自动交付。"
+  },
+  {
+    "id": "C3Q09",
+    "name": "库庭的钥匙",
+    "type": "main",
+    "giver": "c3_npc10",
+    "turnIn": "c3_npc10",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc10",
+      "count": 1
+    },
+    "reward": {
+      "gold": 453,
+      "xp": 3330,
+      "unlocks": [
+        "c3_access_05"
+      ]
+    },
+    "mapScope": [
+      "c3_map04"
+    ],
+    "prev": "C3Q08",
+    "abandonable": false,
+    "desc": "我把警报交给活人，不交给另一台机器。",
+    "trackerText": "到 {map:c3_map04} 交谈 {npc:c3_npc10}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc10} 交付“库庭的钥匙”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C3Q10",
+    "name": "没有总督的庭院",
+    "type": "main",
+    "giver": "c3_npc10",
+    "turnIn": "c3_npc01",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_boss03",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1057,
+      "xp": 7770
+    },
+    "mapScope": [
+      "c3_map05"
+    ],
+    "prev": "C3Q09",
+    "abandonable": false,
+    "desc": "空庭还在发令，必须让命令停下来。",
+    "trackerText": "到 {map:c3_map05} 击败首领 {monster:c3_boss03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc01} 交付“没有总督的庭院”；不自动交付。"
+  },
+  {
+    "id": "C3Q11",
+    "name": "第一桶给谁",
+    "type": "main",
+    "giver": "c3_npc07",
+    "turnIn": "c3_npc07",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc07",
+      "count": 1
+    },
+    "reward": {
+      "gold": 453,
+      "xp": 3330
+    },
+    "mapScope": [
+      "c3_map00"
+    ],
+    "prev": "C3Q10",
+    "abandonable": false,
+    "desc": "这桶先去病房，下一桶给没进户册的人。",
+    "trackerText": "到 {map:c3_map00} 交谈 {npc:c3_npc07}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc07} 交付“第一桶给谁”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C3Q12",
+    "name": "送往林海的副本",
+    "type": "main",
+    "giver": "c3_npc08",
+    "turnIn": "c3_npc08",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc08",
+      "count": 1
+    },
+    "reward": {
+      "gold": 451,
+      "xp": 3329,
+      "item": "c3_equip_weapon",
+      "quality": "epic",
+      "tierStart": 21,
+      "unlocks": [
+        "chapter4"
+      ]
+    },
+    "mapScope": [
+      "c3_map00"
+    ],
+    "prev": "C3Q11",
+    "abandonable": false,
+    "desc": "请把观测站附件带到根驿。",
+    "trackerText": "到 {map:c3_map00} 交谈 {npc:c3_npc08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc08} 交付“送往林海的副本”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C3S01",
+    "name": "最后一只桶",
+    "type": "side",
+    "giver": "c3_npc07",
+    "turnIn": "c3_npc07",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_normal02",
+      "count": 8
+    },
+    "reward": {
+      "gold": 484,
+      "xp": 2711
+    },
+    "mapScope": [
+      "c3_map01"
+    ],
+    "prev": "C3Q01",
+    "abandonable": true,
+    "desc": "把窃水獾从排队人的旧路赶开。",
+    "trackerText": "到 {map:c3_map01} 击杀 {monster:c3_normal02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc07} 交付“最后一只桶”；不自动交付。"
+  },
+  {
+    "id": "C3S02",
+    "name": "墨迹不是污物",
+    "type": "side",
+    "giver": "c3_npc08",
+    "turnIn": "c3_npc08",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c3_item_s02",
+      "count": 3,
+      "sourceMonster": "c3_normal07"
+    },
+    "reward": {
+      "gold": 532,
+      "xp": 2982
+    },
+    "mapScope": [
+      "c3_map03"
+    ],
+    "prev": "C3Q05",
+    "abandonable": true,
+    "desc": "旧抄令匣里有没刮掉的原字。",
+    "trackerText": "到 {map:c3_map03} 收集 {item:c3_item_s02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc08} 交付“墨迹不是污物”；不自动交付。"
+  },
+  {
+    "id": "C3S03",
+    "name": "药房的一壶水",
+    "type": "side",
+    "giver": "c3_npc05",
+    "turnIn": "c3_npc05",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c3_item_s03",
+      "count": 3,
+      "sourceMonster": "c3_normal01"
+    },
+    "reward": {
+      "gold": 532,
+      "xp": 2982
+    },
+    "mapScope": [
+      "c3_map01"
+    ],
+    "prev": "C3Q03",
+    "abandonable": true,
+    "desc": "螯虫带走了净水布封，取回来我才能煮药。",
+    "trackerText": "到 {map:c3_map01} 收集 {item:c3_item_s03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc05} 交付“药房的一壶水”；不自动交付。"
+  },
+  {
+    "id": "C3S04",
+    "name": "库庭南院",
+    "type": "side",
+    "giver": "c3_npc10",
+    "turnIn": "c3_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_normal08",
+      "count": 10
+    },
+    "reward": {
+      "gold": 484,
+      "xp": 2711
+    },
+    "mapScope": [
+      "c3_map04"
+    ],
+    "prev": "C3Q06",
+    "abandonable": true,
+    "desc": "清到南院外，别为了纸张闯进母螯巢。",
+    "trackerText": "到 {map:c3_map04} 击杀 {monster:c3_normal08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc10} 交付“库庭南院”；不自动交付。"
+  },
+  {
+    "id": "C3S05",
+    "name": "沉沙之下",
+    "type": "side",
+    "giver": "c3_npc10",
+    "turnIn": "c3_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c3_boss02",
+      "count": 1
+    },
+    "reward": {
+      "gold": 677,
+      "xp": 3795,
+      "item": "c3_equip_ring",
+      "quality": "epic",
+      "tierStart": 21
+    },
+    "mapScope": [
+      "c3_map04"
+    ],
+    "prev": "C3S04",
+    "abandonable": true,
+    "desc": "母螯独占的泊水坑，能拿回就留给居民。",
+    "trackerText": "到 {map:c3_map04} 击败首领 {monster:c3_boss02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc10} 交付“沉沙之下”；不自动交付。"
+  },
+  {
+    "id": "C3S06",
+    "name": "门口的旧名字",
+    "type": "side",
+    "giver": "c3_npc07",
+    "turnIn": "c3_npc07",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c3_npc07",
+      "count": 1
+    },
+    "reward": {
+      "gold": 291,
+      "xp": 1627
+    },
+    "mapScope": [
+      "c3_map00"
+    ],
+    "prev": "C3Q12",
+    "abandonable": true,
+    "desc": "听我念一次新户册，里面有你带回来的人。",
+    "trackerText": "到 {map:c3_map00} 交谈 {npc:c3_npc07}（{current}/{count}）。",
+    "turnInText": "到 {npc:c3_npc07} 交付“门口的旧名字”；不自动交付。",
+    "talkOnAccept": true
   }
 ]

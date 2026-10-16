@@ -25,8 +25,8 @@ func _ready() -> void:
 	rng.seed = 190021
 	var qualities := ["common", "uncommon", "rare", "epic", "legendary"]
 	var templates: Array = DataLoader.get_table("equipments")
-	check(templates.size() == 20, "正式型号仅有二十种")
-	var coverage := {1: {}, 11: {}}
+	check(templates.size() == 30, "正式型号为三档共三十种")
+	var coverage := {1: {}, 11: {}, 21: {}}
 	var expected_order := ["weapon", "shoes", "armor", "helmet", "bracer", "knee", "shield", "bracelet", "ring", "necklace"]
 	for tpl in templates:
 		var bases: Dictionary = tpl.get("tierBases", {})
@@ -51,25 +51,31 @@ func _ready() -> void:
 			check(item.affixes.size() + item.pctAttrs.size() == i and int(item.star) == 0,
 				"品质词条数和初始星级")
 			check(SaveManager._valid_item(item), "生成实例可存档")
-		check(not bases.has("11" if tier == 1 else "1"), "错档型号没有可借用的基底")
+		for other in [1, 11, 21]:
+			if other != tier:
+				check(not bases.has(str(other)), "错档型号没有可借用的基底")
 	for tier in coverage:
 		check(coverage[tier].size() == 10, "Lv%d 覆盖十类部位" % tier)
-	for pool_id in ["normal", "legendary", "c2_normal", "c2_legendary"]:
+	for pool_id in ["normal", "legendary", "c2_normal", "c2_legendary", "c3_normal", "c3_legendary"]:
 		var pool: Dictionary = DataLoader.get_entry("lootPools", pool_id)
 		check(pool.get("includeIds", []).size() == 10, "%s 显式限定十种型号" % pool_id)
+	var pool_of := {
+		1: {"legendary": "legendary", "normal": "normal"},
+		11: {"legendary": "c2_legendary", "normal": "c2_normal"},
+		21: {"legendary": "c3_legendary", "normal": "c3_normal"},
+	}
 	for table in DataLoader.get_table("dropTables"):
-		var tier := 11 if String(table.id).begins_with("DT_C2_") else 1
+		var tier := _tier_of(String(table.id))
 		for entry in table.entries:
 			if entry.get("kind") == "equip":
 				check(int(entry.get("tierStart", 0)) == tier, "%s 来源固定档位" % table.id)
-				var expected_pool := "c2_legendary" if tier == 11 else "legendary"
 				var weights: Dictionary = entry.get("qualityWeight", {})
-				if not (weights.size() == 1 and weights.has("legendary")):
-					expected_pool = "c2_normal" if tier == 11 else "normal"
-				check(entry.get("templatePool") == expected_pool, "%s 使用本档型号池" % table.id)
+				var only_legendary := weights.size() == 1 and weights.has("legendary")
+				check(entry.get("templatePool") == pool_of[tier]["legendary" if only_legendary else "normal"],
+					"%s 使用本档型号池" % table.id)
 	for _i in range(250):
-		for table_id in ["DT_Wild_L1", "DT_Boss_L1", "DT_C2_Normal", "DT_C2_Boss_Final"]:
-			var expected_tier := 11 if table_id.begins_with("DT_C2_") else 1
+		for table_id in ["DT_Wild_L1", "DT_Boss_L1", "DT_C2_Normal", "DT_C2_Boss_Final", "DT_C3_Normal", "DT_C3_Elite", "DT_C3_Boss"]:
+			var expected_tier := _tier_of(table_id)
 			for item in Loot.roll(table_id, rng):
 				if item.get("kind") == "equip":
 					check(int(item.requiredLevel) == int(DataLoader.get_entry("equipments", item.itemId).requiredLevel) and coverage[expected_tier].values().has(item.itemId),
@@ -187,6 +193,14 @@ func _ready() -> void:
 		for failure in failures:
 			push_error("FAIL: " + failure)
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 掉落表名前缀 → 套起点：DT_C3_* 第三档（21）、DT_C2_* 第二档（11）、其余第一档（1）。
+func _tier_of(table_id: String) -> int:
+	if table_id.begins_with("DT_C3_"):
+		return 21
+	if table_id.begins_with("DT_C2_"):
+		return 11
+	return 1
 
 ## 记录失败并继续收集同轮规则错误，便于一次修完配置。
 func check(ok: bool, label: String) -> void:
