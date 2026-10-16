@@ -493,7 +493,7 @@
     "name": "渠卫长剑",
     "slot": "weapon",
     "price": 50,
-    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "icon": "res://assets/sprites/equip/c3_equip_weapon.png",
     "desc": "第三章常规制式；穿戴要求 Lv21，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -517,7 +517,7 @@
     "name": "渠石靴",
     "slot": "shoes",
     "price": 50,
-    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "icon": "res://assets/sprites/equip/c3_equip_shoes.png",
     "desc": "第三章常规制式；穿戴要求 Lv22，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -542,7 +542,7 @@
     "name": "渠卫护甲",
     "slot": "armor",
     "price": 80,
-    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "icon": "res://assets/sprites/equip/c3_equip_armor.png",
     "desc": "第三章常规制式；穿戴要求 Lv23，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -567,7 +567,7 @@
     "name": "铜檐盔",
     "slot": "helmet",
     "price": 60,
-    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "icon": "res://assets/sprites/equip/c3_equip_helmet.png",
     "desc": "第三章常规制式；穿戴要求 Lv24，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -591,7 +591,7 @@
     "name": "渠卫护腕",
     "slot": "bracer",
     "price": 60,
-    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "icon": "res://assets/sprites/equip/c3_equip_bracer.png",
     "desc": "第三章常规制式；穿戴要求 Lv25，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -615,7 +615,7 @@
     "name": "渠卫护膝",
     "slot": "knee",
     "price": 60,
-    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "icon": "res://assets/sprites/equip/c3_equip_knee.png",
     "desc": "第三章常规制式；穿戴要求 Lv26，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -639,7 +639,7 @@
     "name": "刻渠盾",
     "slot": "shield",
     "price": 80,
-    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "icon": "res://assets/sprites/equip/c3_equip_shield.png",
     "desc": "第三章常规制式；穿戴要求 Lv27，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -664,7 +664,7 @@
     "name": "铜尺手镯",
     "slot": "bracelet",
     "price": 60,
-    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "icon": "res://assets/sprites/equip/c3_equip_bracelet.png",
     "desc": "第三章常规制式；穿戴要求 Lv28，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -688,7 +688,7 @@
     "name": "量水戒",
     "slot": "ring",
     "price": 60,
-    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "icon": "res://assets/sprites/equip/c3_equip_ring.png",
     "desc": "第三章常规制式；穿戴要求 Lv29，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
@@ -713,7 +713,7 @@
     "name": "清渠项链",
     "slot": "necklace",
     "price": 70,
-    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "icon": "res://assets/sprites/equip/c3_equip_necklace.png",
     "desc": "第三章常规制式；穿戴要求 Lv30，品质、词条与星级由统一三轴规则生成。",
     "tierBases": {
       "21": {
