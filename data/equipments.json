@@ -1219,5 +1219,249 @@
       "cdr"
     ],
     "requiredLevel": 50
+  },
+  {
+    "id": "c6_equip_weapon",
+    "name": "镇脉长剑",
+    "slot": "weapon",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第六章常规制式；穿戴要求 Lv51，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "atk": 75
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 51
+  },
+  {
+    "id": "c6_equip_shoes",
+    "name": "归光战靴",
+    "slot": "shoes",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "desc": "第六章常规制式；穿戴要求 Lv52，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "def": 18,
+        "mp": 44
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 52
+  },
+  {
+    "id": "c6_equip_armor",
+    "name": "镇脉护甲",
+    "slot": "armor",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第六章常规制式；穿戴要求 Lv53，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "def": 40,
+        "hp": 110
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 53
+  },
+  {
+    "id": "c6_equip_helmet",
+    "name": "守誓盔",
+    "slot": "helmet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "desc": "第六章常规制式；穿戴要求 Lv54，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "def": 22
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 54
+  },
+  {
+    "id": "c6_equip_bracer",
+    "name": "镇脉护腕",
+    "slot": "bracer",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第六章常规制式；穿戴要求 Lv55，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "def": 18
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 55
+  },
+  {
+    "id": "c6_equip_knee",
+    "name": "镇脉护膝",
+    "slot": "knee",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "desc": "第六章常规制式；穿戴要求 Lv56，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "def": 18
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 56
+  },
+  {
+    "id": "c6_equip_shield",
+    "name": "回流盾",
+    "slot": "shield",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第六章常规制式；穿戴要求 Lv57，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "def": 44,
+        "hp": 66
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 57
+  },
+  {
+    "id": "c6_equip_bracelet",
+    "name": "守誓手镯",
+    "slot": "bracelet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "desc": "第六章常规制式；穿戴要求 Lv58，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "atk": 18
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 58
+  },
+  {
+    "id": "c6_equip_ring",
+    "name": "定脉戒",
+    "slot": "ring",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第六章常规制式；穿戴要求 Lv59，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "atk": 13,
+        "mp": 35
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 59
+  },
+  {
+    "id": "c6_equip_necklace",
+    "name": "长明项链",
+    "slot": "necklace",
+    "price": 70,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第六章常规制式；穿戴要求 Lv60，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "51": {
+        "hp": 110
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 60
   }
 ]

@@ -2135,5 +2135,478 @@
     "trackerText": "到 {map:c5_map00} 交谈 {npc:c5_npc07}（{current}/{count}）。",
     "turnInText": "到 {npc:c5_npc07} 交付“回程票”；不自动交付。",
     "talkOnAccept": true
+  },
+  {
+    "id": "C6Q01",
+    "name": "停机写在前面",
+    "type": "main",
+    "giver": "c6_npc01",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1132,
+      "xp": 11905
+    },
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C5Q14",
+    "abandonable": false,
+    "desc": "先读停止条件，再去看核心。",
+    "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc01} 交付“停机写在前面”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C6Q02",
+    "name": "外廊还给人走",
+    "type": "main",
+    "giver": "c6_npc09",
+    "turnIn": "c6_npc09",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc09",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1132,
+      "xp": 11905
+    },
+    "mapScope": [
+      "c6_map01"
+    ],
+    "prev": "C6Q01",
+    "abandonable": false,
+    "desc": "先和我核对外廊路标，进核心的路也必须能返回。",
+    "trackerText": "到 {map:c6_map01} 交谈 {npc:c6_npc09}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc09} 交付“外廊还给人走”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C6Q03",
+    "name": "守誓的原条",
+    "type": "main",
+    "giver": "c6_npc09",
+    "turnIn": "c6_npc09",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c6_item_q03",
+      "count": 4,
+      "sourceMonster": "c6_normal05"
+    },
+    "reward": {
+      "gold": 2075,
+      "xp": 21826,
+      "item": "c6_equip_armor",
+      "quality": "rare",
+      "tierStart": 51,
+      "unlocks": [
+        "c6_access_02"
+      ]
+    },
+    "mapScope": [
+      "c6_map01"
+    ],
+    "prev": "C6Q02",
+    "abandonable": false,
+    "desc": "守库铜卫背着旧誓条，原文不该只剩服从。",
+    "trackerText": "到 {map:c6_map01} 收集 {item:c6_item_q03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc09} 交付“守誓的原条”；不自动交付。"
+  },
+  {
+    "id": "C6Q04",
+    "name": "兵库外的拒令",
+    "type": "main",
+    "giver": "c6_npc09",
+    "turnIn": "c6_npc09",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_normal01",
+      "count": 10
+    },
+    "reward": {
+      "gold": 1887,
+      "xp": 19842
+    },
+    "mapScope": [
+      "c6_map02"
+    ],
+    "prev": "C6Q03",
+    "abandonable": false,
+    "desc": "原誓条说人有返回权，清开仍在执行错令的卫体。",
+    "trackerText": "到 {map:c6_map02} 击杀 {monster:c6_normal01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc09} 交付“兵库外的拒令”；不自动交付。"
+  },
+  {
+    "id": "C6Q05",
+    "name": "审判体的旧令",
+    "type": "main",
+    "giver": "c6_npc09",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_boss01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 2642,
+      "xp": 27778,
+      "unlocks": [
+        "c6_access_03"
+      ]
+    },
+    "mapScope": [
+      "c6_map02"
+    ],
+    "prev": "C6Q04",
+    "abandonable": false,
+    "desc": "解除错误判定，分流组才能进入环室。",
+    "trackerText": "到 {map:c6_map02} 击败首领 {monster:c6_boss01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc01} 交付“审判体的旧令”；不自动交付。"
+  },
+  {
+    "id": "C6Q06",
+    "name": "每一段都能停止",
+    "type": "main",
+    "giver": "c6_npc01",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c6_item_q06",
+      "count": 6,
+      "sourceMonster": "c6_normal08"
+    },
+    "reward": {
+      "gold": 2075,
+      "xp": 21826,
+      "item": "c6_equip_bracer",
+      "quality": "rare",
+      "tierStart": 51,
+      "unlocks": [
+        "c6_access_04"
+      ]
+    },
+    "mapScope": [
+      "c6_map03"
+    ],
+    "prev": "C6Q05",
+    "abandonable": false,
+    "desc": "清理析出体，取回旁路校验片。",
+    "trackerText": "到 {map:c6_map03} 收集 {item:c6_item_q06}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc01} 交付“每一段都能停止”；不自动交付。"
+  },
+  {
+    "id": "C6Q07",
+    "name": "三份记录同一页",
+    "type": "main",
+    "giver": "c6_npc08",
+    "turnIn": "c6_npc08",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc08",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1132,
+      "xp": 11905
+    },
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C6Q06",
+    "abandonable": false,
+    "desc": "让城里的警报、林里的证词和前线钥匙对上。",
+    "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc08} 交付“三份记录同一页”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C6Q08",
+    "name": "给回程留一圈光",
+    "type": "main",
+    "giver": "c6_npc07",
+    "turnIn": "c6_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_normal07",
+      "count": 14
+    },
+    "reward": {
+      "gold": 1887,
+      "xp": 19842,
+      "item": "c6_equip_shield",
+      "quality": "rare",
+      "tierStart": 51
+    },
+    "mapScope": [
+      "c6_map03"
+    ],
+    "prev": "C6Q07",
+    "abandonable": false,
+    "desc": "清出环室的重体，别让出口只在图上存在。",
+    "trackerText": "到 {map:c6_map03} 击杀 {monster:c6_normal07}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc10} 交付“给回程留一圈光”；不自动交付。"
+  },
+  {
+    "id": "C6Q09",
+    "name": "核心门前的回答",
+    "type": "main",
+    "giver": "c6_npc10",
+    "turnIn": "c6_npc10",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc10",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1132,
+      "xp": 11905,
+      "unlocks": [
+        "c6_access_05"
+      ]
+    },
+    "mapScope": [
+      "c6_map04"
+    ],
+    "prev": "C6Q08",
+    "abandonable": false,
+    "desc": "再问一次：有人叫停，你会回来吗。",
+    "trackerText": "到 {map:c6_map04} 交谈 {npc:c6_npc10}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc10} 交付“核心门前的回答”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C6Q10",
+    "name": "空天之眼",
+    "type": "main",
+    "giver": "c6_npc10",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_boss03",
+      "count": 1
+    },
+    "reward": {
+      "gold": 2642,
+      "xp": 27778
+    },
+    "mapScope": [
+      "c6_map05"
+    ],
+    "prev": "C6Q09",
+    "abandonable": false,
+    "desc": "先清除侵入核心，再按分段流程回注。",
+    "trackerText": "到 {map:c6_map05} 击败首领 {monster:c6_boss03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc01} 交付“空天之眼”；不自动交付。"
+  },
+  {
+    "id": "C6Q11",
+    "name": "光不是从一个人身上熄灭",
+    "type": "main",
+    "giver": "c6_npc01",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1132,
+      "xp": 11905
+    },
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C6Q10",
+    "abandonable": false,
+    "desc": "你站在这里，我们才开始最后一次确认。",
+    "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc01} 交付“光不是从一个人身上熄灭”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C6Q12",
+    "name": "最后一页的归途",
+    "type": "main",
+    "giver": "c6_npc08",
+    "turnIn": "c6_npc08",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc08",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1132,
+      "xp": 11904,
+      "item": "c6_equip_weapon",
+      "quality": "epic",
+      "tierStart": 51,
+      "unlocks": [
+        "campaign_complete"
+      ]
+    },
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C6Q11",
+    "abandonable": false,
+    "desc": "名字都齐了，现在由你来读最后一页。",
+    "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc08} 交付“最后一页的归途”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C6S01",
+    "name": "药灯不用熄",
+    "type": "side",
+    "giver": "c6_npc05",
+    "turnIn": "c6_npc05",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c6_item_s01",
+      "count": 3,
+      "sourceMonster": "c6_normal02"
+    },
+    "reward": {
+      "gold": 1065,
+      "xp": 10661
+    },
+    "mapScope": [
+      "c6_map01"
+    ],
+    "prev": "C6Q01",
+    "abandonable": true,
+    "desc": "漏光螯虫拖走了药架扣，先拿回来。",
+    "trackerText": "到 {map:c6_map01} 收集 {item:c6_item_s01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc05} 交付“药灯不用熄”；不自动交付。"
+  },
+  {
+    "id": "C6S02",
+    "name": "库里最后一张借条",
+    "type": "side",
+    "giver": "c6_npc04",
+    "turnIn": "c6_npc04",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_normal05",
+      "count": 8
+    },
+    "reward": {
+      "gold": 968,
+      "xp": 9692
+    },
+    "mapScope": [
+      "c6_map01"
+    ],
+    "prev": "C6Q05",
+    "abandonable": true,
+    "desc": "清理守库铜卫，让最后一箱工具能正常出借。",
+    "trackerText": "到 {map:c6_map01} 击杀 {monster:c6_normal05}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc04} 交付“库里最后一张借条”；不自动交付。"
+  },
+  {
+    "id": "C6S03",
+    "name": "前代留下的空白",
+    "type": "side",
+    "giver": "c6_npc08",
+    "turnIn": "c6_npc08",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c6_item_s03",
+      "count": 3,
+      "sourceMonster": "c6_normal06"
+    },
+    "reward": {
+      "gold": 1065,
+      "xp": 10661
+    },
+    "mapScope": [
+      "c6_map03"
+    ],
+    "prev": "C6Q03",
+    "abandonable": true,
+    "desc": "断誓游魂身上的旧签，可能补全那个名字。",
+    "trackerText": "到 {map:c6_map03} 收集 {item:c6_item_s03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc08} 交付“前代留下的空白”；不自动交付。"
+  },
+  {
+    "id": "C6S04",
+    "name": "誓影外环",
+    "type": "side",
+    "giver": "c6_npc07",
+    "turnIn": "c6_npc07",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_normal04",
+      "count": 10
+    },
+    "reward": {
+      "gold": 968,
+      "xp": 9692
+    },
+    "mapScope": [
+      "c6_map04"
+    ],
+    "prev": "C6Q06",
+    "abandonable": true,
+    "desc": "清开誓影外环，训练场不该堵住回程路。",
+    "trackerText": "到 {map:c6_map04} 击杀 {monster:c6_normal04}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc07} 交付“誓影外环”；不自动交付。"
+  },
+  {
+    "id": "C6S05",
+    "name": "不必重复的失败",
+    "type": "side",
+    "giver": "c6_npc07",
+    "turnIn": "c6_npc07",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c6_boss02",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1355,
+      "xp": 13569,
+      "item": "c6_equip_ring",
+      "quality": "epic",
+      "tierStart": 51
+    },
+    "mapScope": [
+      "c6_map04"
+    ],
+    "prev": "C6S04",
+    "abandonable": true,
+    "desc": "你可以挑战残响，但不必向它证明有资格活着。",
+    "trackerText": "到 {map:c6_map04} 击败首领 {monster:c6_boss02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc07} 交付“不必重复的失败”；不自动交付。"
+  },
+  {
+    "id": "C6S06",
+    "name": "把第一章的灯写进来",
+    "type": "side",
+    "giver": "c6_npc08",
+    "turnIn": "c6_npc08",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc08",
+      "count": 1
+    },
+    "reward": {
+      "gold": 579,
+      "xp": 5817
+    },
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C6Q12",
+    "abandonable": true,
+    "desc": "主线记录已完成，再听一遍那些普通人的回信。",
+    "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc08} 交付“把第一章的灯写进来”；不自动交付。",
+    "talkOnAccept": true
   }
 ]
