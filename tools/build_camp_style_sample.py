@@ -29,6 +29,19 @@ def magick(*args):
     subprocess.run(["magick", *map(str, args)], check=True)
 
 
+def smooth_path(points, scale):
+    """用二次曲线穿过现有道路点；只平滑画面，不移动布局事实源。"""
+    coordinates = [((x-PATCH[0])*scale, (y-PATCH[1])*scale) for x, y in points]
+    path = [f"M {coordinates[0][0]},{coordinates[0][1]}"]
+    for index in range(1, len(coordinates)-1):
+        x, y = coordinates[index]
+        nx, ny = coordinates[index+1]
+        path.append(f"Q {x},{y} {(x+nx)/2},{(y+ny)/2}")
+    x, y = coordinates[-1]
+    path.append(f"T {x},{y}")
+    return " ".join(path)
+
+
 def write_ground(style, scale, output, scratch, layout):
     """铺设可踩地面和贴地道路；局部边缘用透明渐隐标出样板边界。"""
     tile_source = SOURCE / f"ground_{style}.png"
@@ -38,7 +51,12 @@ def write_ground(style, scale, output, scratch, layout):
     top = scratch / "top.png"
     bottom = scratch / "bottom.png"
     seamless = scratch / "seamless.png"
-    magick(tile_source, "-resize", f"{tile_size}x{tile_size}!", tile)
+    if style == "b":
+        # 降低颗粒对比并轻微软化地面，人物与可交互对象优先被看见。
+        magick(tile_source, "-resize", f"{tile_size}x{tile_size}!", "-modulate", "100,72,100",
+               "-brightness-contrast", "0x-16", "-blur", f"0x{0.7*scale}", tile)
+    else:
+        magick(tile_source, "-resize", f"{tile_size}x{tile_size}!", tile)
     magick(tile, "-flop", right)
     magick(tile, right, "+append", top)
     magick(top, "-flip", bottom)
@@ -47,26 +65,46 @@ def write_ground(style, scale, output, scratch, layout):
     base = scratch / "base.png"
     magick("-size", f"{width}x{height}", f"tile:{seamless}", base)
     paths = [layout["main_road"], *layout["branches"]]
-    road_solid = scratch / "roads_solid.png"
     road_png = scratch / "roads.png"
-    roads_cmd = ["-size", f"{width}x{height}", "xc:none"]
-    colors = [("#755c3d", 92), ("#b59b72", 76)] if style == "a" \
-        else [("#826443", 92), ("#c09e6f", 76)]
-    for color, stroke in colors:
-        radius = stroke * scale / 2
-        roads_cmd += ["-stroke", color, "-strokewidth", str(stroke * scale), "-fill", "none"]
-        for points in paths:
-            for (x1, y1), (x2, y2) in zip(points, points[1:]):
-                ax, ay = (x1-PATCH[0])*scale, (y1-PATCH[1])*scale
-                bx, by = (x2-PATCH[0])*scale, (y2-PATCH[1])*scale
-                roads_cmd += ["-draw", f"line {ax},{ay} {bx},{by}"]
-        roads_cmd += ["-stroke", "none", "-fill", color]
-        for points in paths:
-            for x, y in points:
-                px, py = (x-PATCH[0])*scale, (y-PATCH[1])*scale
-                roads_cmd += ["-draw", f"circle {px},{py} {px+radius},{py}"]
-    magick(*roads_cmd, road_solid)
-    magick(road_solid, "-channel", "A", "-evaluate", "multiply", "0.68", "+channel", road_png)
+    if style == "b":
+        # 两层低对比曲线路面：模糊外缘是贴地过渡，不是可踩区域外的立体边框。
+        blended = scratch / "road_blended.png"
+        for name, color, stroke, opacity, blur in [
+            ("outer", "#ad9168", 112, 0.48, 10),
+            ("inner", "#c6aa7f", 78, 0.59, 3),
+        ]:
+            png = scratch / f"road_{name}.png"
+            cmd = ["-size", f"{width}x{height}", "xc:none", "-fill", "none",
+                   "-stroke", color, "-strokewidth", str(stroke*scale)]
+            for points in paths:
+                cmd += ["-draw", f"path '{smooth_path(points, scale)}'"]
+                for x, y in [points[0], points[-1]]:
+                    px, py = (x-PATCH[0])*scale, (y-PATCH[1])*scale
+                    cmd += ["-draw", f"circle {px},{py} {px+stroke*scale/2},{py}"]
+            magick(*cmd, "-blur", f"0x{blur*scale}", "-channel", "A", "-evaluate",
+                   "multiply", str(opacity), "+channel", png)
+        magick(scratch / "road_outer.png", scratch / "road_inner.png", "-compose", "Over",
+               "-composite", blended)
+        shutil.copy2(blended, road_png)
+    else:
+        road_solid = scratch / "roads_solid.png"
+        roads_cmd = ["-size", f"{width}x{height}", "xc:none"]
+        for color, stroke in [("#755c3d", 92), ("#b59b72", 76)]:
+            radius = stroke * scale / 2
+            roads_cmd += ["-stroke", color, "-strokewidth", str(stroke * scale), "-fill", "none"]
+            for points in paths:
+                for (x1, y1), (x2, y2) in zip(points, points[1:]):
+                    ax, ay = (x1-PATCH[0])*scale, (y1-PATCH[1])*scale
+                    bx, by = (x2-PATCH[0])*scale, (y2-PATCH[1])*scale
+                    roads_cmd += ["-draw", f"line {ax},{ay} {bx},{by}"]
+            roads_cmd += ["-stroke", "none", "-fill", color]
+            for points in paths:
+                for x, y in points:
+                    px, py = (x-PATCH[0])*scale, (y-PATCH[1])*scale
+                    roads_cmd += ["-draw", f"circle {px},{py} {px+radius},{py}"]
+        road_solid = scratch / "roads_solid.png"
+        magick(*roads_cmd, road_solid)
+        magick(road_solid, "-channel", "A", "-evaluate", "multiply", "0.68", "+channel", road_png)
     painted = scratch / "painted.png"
     shadow = scratch / "shadows.png"
     shadow_cmd = ["-size", f"{width}x{height}", "xc:none", "-fill", "rgba(26,19,12,0.23)", "-stroke", "none"]
@@ -134,9 +172,25 @@ def write_fence(style, scale, output):
 
 def write_western_rocks(style, scale, output):
     """只在现有西侧岩石障碍范围画立体岩面，避免新增可踩假障碍。"""
-    dark = "#4f4942" if style == "a" else "#494b4b"
-    mid = "#777267" if style == "a" else "#747673"
-    light = "#a49a82" if style == "a" else "#aaa492"
+    if style == "b":
+        with tempfile.TemporaryDirectory(prefix="camp-rock-cutout-") as folder:
+            scratch = Path(folder)
+            fitted = scratch / "fitted.png"
+            mask = scratch / "footprint.png"
+            width, height = 95 * scale, 400 * scale
+            magick(SOURCE / "western_rocks_b.png", "-trim", "+repage", "-resize",
+                   f"{width}x{height}!", "-strip", fitted)
+            points = " ".join(f"{x*scale},{y*scale}" for x, y in
+                              [(0, 0), (30, 0), (95, 240), (55, 370), (0, 400)])
+            magick("-size", f"{width}x{height}", "xc:none", "-fill", "white", "-draw",
+                   f"polygon {points}", mask)
+            magick(fitted, mask, "-compose", "DstIn", "-composite", "-strip",
+                   output / "western_rocks_front.png")
+        return {"id": "western_rocks", "rect": [0, 450, 95, 400], "foot_y": 850,
+                "front": f"res://assets/maps/camp_style_sample/{style}/western_rocks_front.png"}
+    dark = "#4f4942"
+    mid = "#777267"
+    light = "#a49a82"
     cliff = "M0 0 L30 0 L95 240 L55 370 L0 400 Z"
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{95*scale}" height="{400*scale}" viewBox="0 0 95 400">',
            f'<defs><clipPath id="cliff"><path d="{cliff}"/></clipPath></defs>',
