@@ -1420,8 +1420,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_weapon/",
       "runtime_art": "assets/sprites/equip/c5_equip_weapon.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_shoes",
@@ -1435,8 +1435,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_shoes/",
       "runtime_art": "assets/sprites/equip/c5_equip_shoes.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_armor",
@@ -1450,8 +1450,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_armor/",
       "runtime_art": "assets/sprites/equip/c5_equip_armor.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_helmet",
@@ -1465,8 +1465,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_helmet/",
       "runtime_art": "assets/sprites/equip/c5_equip_helmet.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_bracer",
@@ -1480,8 +1480,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_bracer/",
       "runtime_art": "assets/sprites/equip/c5_equip_bracer.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_knee",
@@ -1495,8 +1495,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_knee/",
       "runtime_art": "assets/sprites/equip/c5_equip_knee.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_shield",
@@ -1510,8 +1510,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_shield/",
       "runtime_art": "assets/sprites/equip/c5_equip_shield.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_bracelet",
@@ -1525,8 +1525,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_bracelet/",
       "runtime_art": "assets/sprites/equip/c5_equip_bracelet.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_ring",
@@ -1540,8 +1540,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_ring/",
       "runtime_art": "assets/sprites/equip/c5_equip_ring.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_equip_necklace",
@@ -1555,8 +1555,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch05/equip/c5_equip_necklace/",
       "runtime_art": "assets/sprites/equip/c5_equip_necklace.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c5_item_q03",
@@ -1569,8 +1569,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch05/quest_items/c5_item_q03/",
       "runtime_art": "assets/sprites/items/c5_item_q03.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c5_item_q06",
@@ -1583,8 +1583,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch05/quest_items/c5_item_q06/",
       "runtime_art": "assets/sprites/items/c5_item_q06.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c5_item_s02",
@@ -1597,8 +1597,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch05/quest_items/c5_item_s02/",
       "runtime_art": "assets/sprites/items/c5_item_s02.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c5_item_s03",
@@ -1611,8 +1611,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch05/quest_items/c5_item_s03/",
       "runtime_art": "assets/sprites/items/c5_item_s03.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c5_item_s06",
@@ -1625,8 +1625,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch05/quest_items/c5_item_s06/",
       "runtime_art": "assets/sprites/items/c5_item_s06.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c5_normal01",
