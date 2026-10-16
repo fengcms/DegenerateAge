@@ -1,6 +1,6 @@
 """按开放边界营地布局生成 B 方案第二版地面、像素栅栏与整体实体。
 
-输入是 B 样板、二版地表/栅栏源图和 camp_whitebox_v2.json；输出只写
+输入是 B 样板、二版地表/栅栏源图、地面笔刷清单和 camp_whitebox_v2.json；输出只写
 assets/maps/camp_style_full_b_v2/。需要 ImageMagick；布局、通行由白盒编译器负责。
 """
 
@@ -23,6 +23,7 @@ SOURCE = ROOT / "art_source/environment/camp_style_full_b"
 SOURCE_V2 = ROOT / "art_source/environment/camp_style_full_b_v2"
 SAMPLE = ROOT / "assets/maps/camp_style_sample/b"
 OUTPUT = ROOT / "assets/maps/camp_style_full_b_v2"
+GROUND_PALETTE = ROOT / "data/map_art/camp_ground_palette.json"
 CANVAS = (1672, 941)
 LARGE_ENTITIES = {
     "elder_tree": 130,
@@ -84,6 +85,56 @@ def write_rgba_png(path, width, height, rgba):
     path.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width,
                      height, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(rows, 7))
                      + chunk(b"IEND", b""))
+
+
+def write_ground_stamps(output):
+    """从同风格源图裁出带透明软边的 128 像素地面笔刷，供编辑器与正式图共用。"""
+    palette = json.loads(GROUND_PALETTE.read_text())
+    side = palette["cell_size"]
+    if side != 128:
+        raise ValueError("营地地面笔刷尺寸必须是 128 像素")
+    stamps = {}
+    for entry in palette["tiles"]:
+        x, y, width, height = entry["source_rect"]
+        if width != side or height != side:
+            raise ValueError(f"地面笔刷尺寸错误：{entry['id']}")
+        result = subprocess.run(["magick", str(SOURCE_V2 / "ground_diagonal.png"),
+                                 "-crop", f"{side}x{side}+{x}+{y}", "+repage",
+                                 "-depth", "8", "rgba:-"], check=True, capture_output=True)
+        pixels = bytearray(result.stdout)
+        if len(pixels) != side * side * 4:
+            raise ValueError(f"地面笔刷裁切失败：{entry['id']}")
+        for py in range(side):
+            for px in range(side):
+                distance = min(px, py, side - 1 - px, side - 1 - py)
+                opacity = min(1.0, distance / 20.0)
+                pixels[(py * side + px) * 4 + 3] = round(225 * opacity)
+        path = output / f"ground_stamp_{entry['id']}.png"
+        write_rgba_png(path, side, side, pixels)
+        stamps[entry["id"]] = pixels
+    return stamps
+
+
+def write_ground_overlay(output, layout, stamps):
+    """按画布网格合成已画笔刷，一张透明图供运行时单次绘制，空白格不改变原地面。"""
+    width, height = CANVAS
+    side = 128
+    rgba = bytearray(width * height * 4)
+    occupied = set()
+    for patch in layout.get("ground_patches", []):
+        tile_id = patch["tile"]
+        col, row = patch["cell"]
+        if tile_id not in stamps or (col, row) in occupied or not (0 <= col < 14 and 0 <= row < 8):
+            raise ValueError(f"地面笔刷无效或重复：{patch}")
+        occupied.add((col, row))
+        stamp = stamps[tile_id]
+        for py in range(min(side, height - row * side)):
+            src = py * side * 4
+            dst = ((row * side + py) * width + col * side) * 4
+            length = min(side, width - col * side) * 4
+            rgba[dst:dst + length] = stamp[src:src + length]
+    write_rgba_png(output / "ground_patches.png", width, height, rgba)
+    return "res://assets/maps/camp_style_full_b_v2/ground_patches.png"
 
 
 def stamp_cobble(rgba, width, height, cx, cy, rx, ry, tone, alpha):
@@ -156,12 +207,13 @@ def polygon_bounds(points):
 
 
 def write_fence(entry, output, scratch):
-    """从已生成的像素木栅源图重复实景栏段；每个障碍仍是一张整体精灵。"""
+    """从像素木栅源图重复实景栏段；若已有美术矩形，碰撞顶点编辑不改变精灵。"""
     name = str(entry["id"])
     minx, miny, maxx, maxy = polygon_bounds(entry["polygon"])
-    vertical = maxy - miny > maxx - minx
+    visual_rect = entry.get("art_rect")
+    vertical = (visual_rect[3] > visual_rect[2]) if visual_rect else (maxy - miny > maxx - minx)
     if vertical:
-        rect = [minx - 11, miny - 20, maxx - minx + 22, maxy - miny + 27]
+        rect = entry.get("art_rect", [minx - 11, miny - 20, maxx - minx + 22, maxy - miny + 27])
         source = SOURCE_V2 / "fence_vertical.png"
         strip = scratch / f"{name}_strip.png"
         pair = scratch / f"{name}_pair.png"
@@ -176,7 +228,7 @@ def write_fence(entry, output, scratch):
                "-geometry", f"+{(width - 40)//2}+0", "-compose", "Over", "-composite",
                "-strip", output / f"{name}_front.png")
     else:
-        rect = [minx, miny - 25, maxx - minx, maxy - miny + 36]
+        rect = entry.get("art_rect", [minx, miny - 25, maxx - minx, maxy - miny + 36])
         source = SOURCE_V2 / "fence_horizontal.png"
         strip = scratch / f"{name}_strip.png"
         tiled = scratch / f"{name}_tiled.png"
@@ -188,7 +240,7 @@ def write_fence(entry, output, scratch):
         magick("-size", f"{width}x{height}", "xc:none", tiled,
                "-geometry", "+0+8", "-compose", "Over", "-composite",
                "-strip", output / f"{name}_front.png")
-    return {"id": name, "rect": rect, "foot_y": maxy, "pixel_art": True,
+    return {"id": name, "rect": rect, "foot_y": entry.get("art_foot_y", maxy), "pixel_art": True,
             "front": f"res://assets/maps/camp_style_full_b_v2/{name}_front.png"}
 
 
@@ -204,6 +256,12 @@ def main():
         scratch = Path(folder)
         tile = write_ground_tile(OUTPUT, scratch)
         roads = write_road_overlay(OUTPUT, scratch, layout)
+        stamps = write_ground_stamps(OUTPUT)
+        ground_overlay = ""
+        if layout.get("ground_patches", []):
+            ground_overlay = write_ground_overlay(OUTPUT, layout, stamps)
+        else:
+            (OUTPUT / "ground_patches.png").unlink(missing_ok=True)
         sample_manifest = json.loads((SAMPLE / "manifest.json").read_text())
         by_id = {entry["id"]: entry for entry in layout["entities"]}
         objects = []
@@ -221,8 +279,10 @@ def main():
     manifest = {"source": "art_source/environment/camp_style_full_b_v2/",
                 "layout_id": layout["id"], "canvas": list(CANVAS),
                 "ground_tile": tile, "road_overlay": roads, "objects": objects}
+    if ground_overlay:
+        manifest["ground_overlay"] = ground_overlay
     (OUTPUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print("营地 B 第二版：1 张循环地纹、1 张透明碎石路、7 个实体、4 段训练场像素木栅")
+    print("营地 B 第二版：1 张循环地纹、按需合成地面笔刷、1 张透明碎石路、7 个实体、4 段训练场像素木栅")
 
 
 if __name__ == "__main__":

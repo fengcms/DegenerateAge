@@ -1,14 +1,16 @@
 @tool
 extends RefCounted
-## 幸存者营地可视化编辑数据模型。只编辑现有整体实体的位置与道路控制点，
-## 草稿与正式地图分离；应用前由 Python 校验并重建通行、美术和碰撞。
+## 幸存者营地可视化编辑数据模型。编辑地面笔刷排布、整体实体位置、
+## 碰撞多边形和道路控制点；草稿与正式地图分离，应用前由 Python 校验。
 
 const SOURCE_PATH := "res://data/map_art/camp_whitebox_v2.json"
 const DRAFT_PATH := "res://data/map_art/camp_editor_draft.json"
 const MANIFEST_PATH := "res://assets/maps/camp_style_full_b_v2/manifest.json"
+const PALETTE_PATH := "res://data/map_art/camp_ground_palette.json"
 
 var layout: Dictionary = {}
 var manifest: Dictionary = {}
+var palette: Dictionary = {}
 var base_hash := ""
 var dirty := false
 var undo_stack: Array[Dictionary] = []
@@ -40,6 +42,14 @@ func open() -> String:
 	if not art is Dictionary:
 		return "营地美术清单不是有效 JSON。"
 	manifest = art
+	var palette_file := FileAccess.open(PALETTE_PATH, FileAccess.READ)
+	if palette_file == null:
+		return "找不到营地地面笔刷清单。"
+	var palette_data: Variant = JSON.parse_string(palette_file.get_as_text())
+	if not palette_data is Dictionary:
+		return "营地地面笔刷清单不是有效 JSON。"
+	palette = palette_data
+	_ensure_fence_art_metadata()
 	_sync_manifest_positions()
 	undo_stack.clear()
 	redo_stack.clear()
@@ -61,19 +71,15 @@ func validate() -> String:
 		if rect.size() != 4 or rect[0] < 0 or rect[1] < 0 \
 				or rect[0] + rect[2] > 1672 or rect[1] + rect[3] > 941:
 			return "实体超出画布：%s" % id
-		for point: Array in item["footprint"]:
-			if point.size() != 2 or point[0] < 0 or point[0] > 1672 \
-					or point[1] < 0 or point[1] > 941:
-				return "实体碰撞超出画布：%s" % id
+		if not _valid_polygon(item["footprint"]):
+			return "实体碰撞轮廓无效、交叉或超出画布：%s" % id
 	for fence: Dictionary in layout.get("fences", []):
 		var id := String(fence.get("id", ""))
 		if ids.has(id) or not fence.get("polygon") is Array:
 			return "围栏数据不完整或 ID 重复：%s" % id
 		ids[id] = true
-		for point: Array in fence["polygon"]:
-			if point.size() != 2 or point[0] < 0 or point[0] > 1672 \
-					or point[1] < 0 or point[1] > 941:
-				return "围栏碰撞超出画布：%s" % id
+		if not _valid_polygon(fence["polygon"]):
+			return "围栏碰撞轮廓无效、交叉或超出画布：%s" % id
 		var fence_rect := art_rect(id)
 		if fence_rect.position.x < 0 or fence_rect.position.y < 0 \
 				or fence_rect.end.x > 1672 or fence_rect.end.y > 941:
@@ -89,7 +95,37 @@ func validate() -> String:
 				return "道路控制点超出画布。"
 			if index > 0 and point == points[index - 1]:
 				return "道路出现零长线段。"
+	var known_tiles: Dictionary = {}
+	for tile: Dictionary in palette.get("tiles", []):
+		known_tiles[String(tile.get("id", ""))] = true
+	var used_cells: Dictionary = {}
+	for patch: Dictionary in layout.get("ground_patches", []):
+		var cell: Array = patch.get("cell", [])
+		var tile_id := String(patch.get("tile", ""))
+		if cell.size() != 2 or not known_tiles.has(tile_id) \
+				or int(cell[0]) != cell[0] or int(cell[1]) != cell[1] \
+				or cell[0] < 0 or cell[0] >= 14 or cell[1] < 0 or cell[1] >= 8:
+			return "地面笔刷格或类型无效。"
+		var key := "%s,%s" % [cell[0], cell[1]]
+		if used_cells.has(key):
+			return "地面笔刷格重复：%s" % key
+		used_cells[key] = true
 	return ""
+
+## 检查画布像素多边形是否可供碰撞和通行共用：至少三点、无自交且可三角化。
+func _valid_polygon(raw: Array) -> bool:
+	if raw.size() < 3 or raw.size() > 32:
+		return false
+	var points := PackedVector2Array()
+	var double_area := 0.0
+	for index in range(raw.size()):
+		var point: Array = raw[index]
+		if point.size() != 2 or point[0] < 0 or point[0] > 1672 or point[1] < 0 or point[1] > 941:
+			return false
+		var next_point: Array = raw[(index + 1) % raw.size()]
+		double_area += float(point[0]) * float(next_point[1]) - float(next_point[0]) * float(point[1])
+		points.append(Vector2(point[0], point[1]))
+	return absf(double_area) >= 16.0 and not Geometry2D.triangulate_polygon(points).is_empty()
 
 ## 取得指定实体或围栏在画布中的运行美术矩形，供命中测试和标注。
 func art_rect(object_id: String) -> Rect2:
@@ -110,6 +146,61 @@ func footprint(object_id: String) -> PackedVector2Array:
 				result.append(Vector2(point[0], point[1]))
 			return result
 	return PackedVector2Array()
+
+## 返回指定对象的可变碰撞数组；实体用 footprint，围栏用 polygon。
+func _collision_points(object_id: String) -> Array:
+	for group in ["entities", "fences"]:
+		for item: Dictionary in layout.get(group, []):
+			if String(item.get("id", "")) == object_id:
+				return item["footprint" if group == "entities" else "polygon"]
+	return []
+
+## 将一个碰撞顶点移到参考画布内的整数像素；不移动任何美术图层。
+func move_collision_vertex(object_id: String, vertex_index: int, position: Vector2i) -> void:
+	var points := _collision_points(object_id)
+	if vertex_index < 0 or vertex_index >= points.size():
+		return
+	points[vertex_index] = [clampi(position.x, 0, 1672), clampi(position.y, 0, 941)]
+
+## 在指定边后插入碰撞顶点；新增点与原多边形仍作为单个整体碰撞。
+func insert_collision_vertex(object_id: String, edge_index: int, position: Vector2i) -> int:
+	var points := _collision_points(object_id)
+	if edge_index < 0 or edge_index >= points.size() or points.size() >= 32:
+		return -1
+	points.insert(edge_index + 1, [clampi(position.x, 0, 1672), clampi(position.y, 0, 941)])
+	return edge_index + 1
+
+## 删除指定碰撞顶点，最低保留三点；返回是否确实删除。
+func remove_collision_vertex(object_id: String, vertex_index: int) -> bool:
+	var points := _collision_points(object_id)
+	if points.size() <= 3 or vertex_index < 0 or vertex_index >= points.size():
+		return false
+	points.remove_at(vertex_index)
+	return true
+
+## 查找画布上一个 128×128 地面格当前的笔刷 ID；空串表示原始地面。
+func ground_patch_at(cell: Vector2i) -> String:
+	for patch: Dictionary in layout.get("ground_patches", []):
+		if patch.get("cell", []) == [cell.x, cell.y]:
+			return String(patch.get("tile", ""))
+	return ""
+
+## 在地面格放置一个笔刷；空 ID 会擦除覆盖层并露出原始地纹。
+func set_ground_patch(cell: Vector2i, tile_id: String) -> void:
+	if cell.x < 0 or cell.x >= 14 or cell.y < 0 or cell.y >= 8:
+		return
+	var patches: Array = layout.get("ground_patches", [])
+	for index in range(patches.size()):
+		if patches[index].get("cell", []) == [cell.x, cell.y]:
+			if tile_id.is_empty():
+				patches.remove_at(index)
+			else:
+				patches[index]["tile"] = tile_id
+			layout["ground_patches"] = patches
+			return
+	if not tile_id.is_empty():
+		patches.append({"cell": [cell.x, cell.y], "tile": tile_id})
+	layout["ground_patches"] = patches
 
 ## 鼠标拖动开始时记录完整快照；同一次拖动只占一个撤销步骤。
 func begin_change() -> void:
@@ -183,7 +274,19 @@ func save_draft() -> String:
 	dirty = false
 	return ""
 
-## 从唯一布局重算预览矩形；当前四段围栏的尺寸固定，拖动时仅平移其运行图。
+## 旧围栏源只记录碰撞轮廓：用当前运行美术补齐独立矩形和脚底深度。
+## 补齐后可单独编辑碰撞顶点，而不会意外拉伸或换位围栏贴图。
+func _ensure_fence_art_metadata() -> void:
+	for fence: Dictionary in layout.get("fences", []):
+		if fence.has("art_rect") and fence.has("art_foot_y"):
+			continue
+		for art: Dictionary in manifest.get("objects", []):
+			if String(art.get("id", "")) == String(fence.get("id", "")):
+				fence["art_rect"] = art["rect"].duplicate()
+				fence["art_foot_y"] = art["foot_y"]
+				break
+
+## 从唯一布局重算预览矩形；围栏美术坐标独立于可编辑的碰撞轮廓。
 func _sync_manifest_positions() -> void:
 	for art: Dictionary in manifest.get("objects", []):
 		var id := String(art.get("id", ""))
@@ -195,6 +298,10 @@ func _sync_manifest_positions() -> void:
 		for fence: Dictionary in layout.get("fences", []):
 			if String(fence.get("id", "")) != id:
 				continue
+			if fence.has("art_rect") and fence.has("art_foot_y"):
+				art["rect"] = fence["art_rect"].duplicate()
+				art["foot_y"] = fence["art_foot_y"]
+				break
 			var polygon: Array = fence["polygon"]
 			var min_x := 1672
 			var min_y := 941

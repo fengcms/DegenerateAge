@@ -1,6 +1,6 @@
 """校验并应用营地可视化编辑草稿，同时重建美术、碰撞和通行。
 
-仅允许平移现有 7 个整体实体、4 段围栏与调整已有道路控制点；
+允许平移现有整体实体、调整其单体碰撞轮廓、绘制地面笔刷与移动道路控制点；
 NPC、出入口、画布、世界尺寸和其他布局字段保持不变。失败时恢复正式文件。
 用法：python3 tools/apply_camp_map_editor.py data/map_art/camp_editor_draft.json
 """
@@ -22,6 +22,7 @@ SOURCE = ROOT / "data/map_art/camp_whitebox_v2.json"
 MAPS = ROOT / "data/maps.json"
 LAYOUT = ROOT / "data/layouts/camp.json"
 ART = ROOT / "assets/maps/camp_style_full_b_v2"
+GROUND_PALETTE = ROOT / "data/map_art/camp_ground_palette.json"
 
 
 def normalize_numbers(value):
@@ -40,46 +41,137 @@ def translated_polygon(points: list[list[int]], dx: int, dy: int) -> list[list[i
     return [[x + dx, y + dy] for x, y in points]
 
 
+def fence_art_geometry(fence: dict) -> tuple[list[int], int]:
+    """为旧围栏数据计算其已生成的美术矩形和脚底 Y，碰撞编辑后保持这两项不变。"""
+    if "art_rect" in fence and "art_foot_y" in fence:
+        return fence["art_rect"], fence["art_foot_y"]
+    xs = [point[0] for point in fence["polygon"]]
+    ys = [point[1] for point in fence["polygon"]]
+    minx, miny, maxx, maxy = min(xs), min(ys), max(xs), max(ys)
+    if maxy - miny > maxx - minx:
+        return [minx - 11, miny - 20, maxx - minx + 22, maxy - miny + 27], maxy
+    return [minx, miny - 25, maxx - minx, maxy - miny + 36], maxy
+
+
+def validate_polygon(points: list, object_id: str) -> None:
+    """拒绝越界、退化和自交轮廓，保证白盒掩码与 Godot 单体碰撞一致。"""
+    if not isinstance(points, list) or not 3 <= len(points) <= 32:
+        raise ValueError(f"{object_id} 的碰撞顶点数量须为 3–32")
+    for point in points:
+        if (not isinstance(point, list) or len(point) != 2
+                or any(type(value) is not int for value in point)
+                or not (0 <= point[0] <= 1672 and 0 <= point[1] <= 941)):
+            raise ValueError(f"{object_id} 的碰撞顶点必须是画布内整数像素")
+
+    def orientation(a, b, c):
+        """计算三点有向面积，供线段相交判断使用。"""
+        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+    def on_segment(a, b, c):
+        """判断共线点 c 是否位于闭线段 a-b 上。"""
+        return (orientation(a, b, c) == 0 and min(a[0], b[0]) <= c[0] <= max(a[0], b[0])
+                and min(a[1], b[1]) <= c[1] <= max(a[1], b[1]))
+
+    def intersects(a, b, c, d):
+        """包含端点与共线重叠的线段相交检测。"""
+        ab_c, ab_d = orientation(a, b, c), orientation(a, b, d)
+        cd_a, cd_b = orientation(c, d, a), orientation(c, d, b)
+        return ((ab_c == 0 and on_segment(a, b, c))
+                or (ab_d == 0 and on_segment(a, b, d))
+                or (cd_a == 0 and on_segment(c, d, a))
+                or (cd_b == 0 and on_segment(c, d, b))
+                or (ab_c * ab_d < 0 and cd_a * cd_b < 0))
+
+    count = len(points)
+    for index in range(count):
+        a, b = points[index], points[(index + 1) % count]
+        if a == b:
+            raise ValueError(f"{object_id} 的碰撞边长度为零")
+        c = points[(index + 2) % count]
+        if orientation(a, b, c) == 0 and ((b[0] - a[0]) * (c[0] - b[0])
+                                           + (b[1] - a[1]) * (c[1] - b[1])) < 0:
+            raise ValueError(f"{object_id} 的碰撞边发生折返重叠")
+        for other in range(index + 1, count):
+            if other == index + 1 or (index == 0 and other == count - 1):
+                continue
+            if intersects(a, b, points[other], points[(other + 1) % count]):
+                raise ValueError(f"{object_id} 的碰撞轮廓自交")
+    area2 = sum(a[0] * b[1] - b[0] * a[1]
+                for a, b in zip(points, points[1:] + points[:1]))
+    if abs(area2) < 16:
+        raise ValueError(f"{object_id} 的碰撞轮廓面积过小")
+
+
 def validate_object_edits(original: dict, draft: dict) -> None:
-    """只接受既有实体的整体平移；不可通过草稿添加物件或改动关卡元数据。"""
-    if set(original) != set(draft):
+    """仅允许既有实体平移与碰撞编辑；围栏美术从旧轮廓一次性迁移后独立保存。"""
+    if set(original) - set(draft) or set(draft) - set(original) - {"ground_patches"}:
         raise ValueError("草稿修改了地图顶层字段")
     for key in original:
-        if key not in {"entities", "fences", "main_road", "branches"} and draft[key] != original[key]:
+        if key not in {"entities", "fences", "main_road", "branches", "ground_patches"} and draft[key] != original[key]:
             raise ValueError(f"固定地图字段被修改：{key}")
     for group in ("entities", "fences"):
         if len(original[group]) != len(draft[group]):
             raise ValueError(f"{group} 数量不能改变")
         for before, after in zip(original[group], draft[group]):
-            if before["id"] != after["id"] or set(before) != set(after):
+            if before["id"] != after["id"]:
                 raise ValueError("实体 ID 或字段不能改变")
             if group == "entities":
+                if set(before) != set(after):
+                    raise ValueError("实体字段不能改变")
                 old_rect, new_rect = before["art_rect"], after["art_rect"]
                 dx, dy = new_rect[0] - old_rect[0], new_rect[1] - old_rect[1]
                 expected = json.loads(json.dumps(before))
                 expected["art_rect"][0] += dx
                 expected["art_rect"][1] += dy
                 expected["art_foot_y"] += dy
-                expected["footprint"] = translated_polygon(before["footprint"], dx, dy)
+                expected["footprint"] = after["footprint"]
                 if "visual" in before:
                     expected["visual"] = translated_polygon(before["visual"], dx, dy)
                 if "visual_foot_y" in before:
                     expected["visual_foot_y"] += dy
             else:
-                old_point, new_point = before["polygon"][0], after["polygon"][0]
-                dx, dy = new_point[0] - old_point[0], new_point[1] - old_point[1]
                 expected = json.loads(json.dumps(before))
-                expected["polygon"] = translated_polygon(before["polygon"], dx, dy)
+                old_rect, old_foot_y = fence_art_geometry(before)
+                expected["art_rect"] = old_rect.copy()
+                expected["art_foot_y"] = old_foot_y
+                if set(expected) != set(after):
+                    raise ValueError("围栏字段不能改变")
+                new_rect = after["art_rect"]
+                dx, dy = new_rect[0] - old_rect[0], new_rect[1] - old_rect[1]
+                expected["art_rect"][0] += dx
+                expected["art_rect"][1] += dy
+                expected["art_foot_y"] += dy
+                expected["polygon"] = after["polygon"]
             if not isinstance(dx, int) or not isinstance(dy, int) or expected != after:
-                raise ValueError(f"{before['id']} 只支持整体像素平移")
-            for point in after["footprint" if group == "entities" else "polygon"]:
-                if not (0 <= point[0] <= 1672 and 0 <= point[1] <= 941):
-                    raise ValueError(f"{before['id']} 的碰撞超出画布")
-            if group == "entities":
-                x, y, width, height = after["art_rect"]
-                if not (0 <= x and 0 <= y and width > 0 and height > 0
-                        and x + width <= 1672 and y + height <= 941):
-                    raise ValueError(f"{before['id']} 的美术超出画布")
+                raise ValueError(f"{before['id']} 仅支持整体美术平移与单体碰撞编辑")
+            validate_polygon(after["footprint" if group == "entities" else "polygon"], before["id"])
+            x, y, width, height = after["art_rect"]
+            if not (0 <= x and 0 <= y and width > 0 and height > 0
+                    and x + width <= 1672 and y + height <= 941):
+                raise ValueError(f"{before['id']} 的美术超出画布")
+
+
+def validate_ground_patches(draft: dict) -> None:
+    """地面笔刷只改变装饰像素，不允许重复格、未知素材或超过画布范围。"""
+    palette = json.loads(GROUND_PALETTE.read_text())
+    if palette["cell_size"] != 128:
+        raise ValueError("地面笔刷网格尺寸不受支持")
+    known = {tile["id"] for tile in palette["tiles"]}
+    patches = draft.get("ground_patches", [])
+    if not isinstance(patches, list) or len(patches) > 112:
+        raise ValueError("地面笔刷数量无效")
+    occupied = set()
+    for patch in patches:
+        if not isinstance(patch, dict) or set(patch) != {"cell", "tile"}:
+            raise ValueError("地面笔刷字段无效")
+        cell = patch["cell"]
+        if (not isinstance(cell, list) or len(cell) != 2
+                or any(type(value) is not int for value in cell)
+                or not (0 <= cell[0] < 14 and 0 <= cell[1] < 8)
+                or not isinstance(patch["tile"], str)
+                or patch["tile"] not in known or tuple(cell) in occupied):
+            raise ValueError("地面笔刷格重复、越界或素材未知")
+        occupied.add(tuple(cell))
 
 
 def validate_roads(original: dict, draft: dict) -> None:
@@ -180,6 +272,7 @@ def apply(draft_path: Path) -> None:
         raise ValueError("草稿缺少布局对象")
     validate_object_edits(original, draft)
     validate_roads(original, draft)
+    validate_ground_patches(draft)
     rows = compiled_rows(draft)
     validate_fixed_targets(draft, rows)
     paths = [SOURCE, MAPS, LAYOUT, *ART.glob("*.png"), ART / "manifest.json"]
@@ -190,11 +283,14 @@ def apply(draft_path: Path) -> None:
             subprocess.run([sys.executable, str(ROOT / "tools" / script)], check=True,
                            cwd=ROOT, capture_output=True, text=True)
     except Exception:
+        for path in ART.glob("*.png"):
+            if path not in backup:
+                path.unlink()
         for path, contents in backup.items():
             path.write_bytes(contents)
         raise
     draft_path.unlink()
-    print("营地草稿已应用：整体美术、道路、碰撞与通行已同步重建。")
+    print("营地草稿已应用：整体美术、地面笔刷、道路、碰撞与通行已同步重建。")
 
 
 def main() -> int:
