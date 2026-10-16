@@ -272,22 +272,16 @@ func _physics_process(delta: float) -> void:
 			_update_blink()
 			return
 
-	# 面板接管手动输入；F 挂机已开启时仍执行自动战斗的移动意图。
-	if GameState.panel_open and not GameState.auto_battle_on:
-		auto_move = Vector2.ZERO
-		manual_input_active = false
-		velocity = Vector2.ZERO
-		move_and_slide()
-		_update_blink()
-		return
+	# 普通面板只接管手动输入：忽略按键与点击，但自动寻路（地图点击 / 任务导航）
+	# 与自动战斗（F 挂机）继续运行，打开面板不再中断自动行走。
+	# 暂停整棵场景树的模态面板（主菜单 / 死亡 / 装备确认）由引擎自动冻结本节点。
+	if GameState.panel_open:
+		manual_attack_active = false
+		_pending_skill_id = ""
 
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
 	var dir := Vector2.ZERO if GameState.panel_open else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	manual_input_active = dir.length() > MANUAL_EPS
-	if GameState.panel_open:
-		manual_attack_active = false
-		_pending_skill_id = ""
-		map_move_active = false
 	if manual_input_active:
 		map_move_active = false
 		manual_attack_active = false

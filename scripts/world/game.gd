@@ -35,7 +35,7 @@ func _process(_delta: float) -> void:
 		MapService.walk_key_released = true
 	_update_exit_nearness()
 	_tick_quest_navigation()
-	if GameState.panel_open or _player.is_dead:
+	if _player.is_dead:
 		_pending_npc = null
 		_pending_exit = null
 		return
@@ -74,10 +74,6 @@ func request_map_move(point: Vector2) -> bool:
 
 func _tick_quest_navigation() -> void:
 	if MapService.quest_nav_target.is_empty():
-		_quest_nav_issued = false
-		return
-	if GameState.panel_open:
-		# 普通面板会暂停角色的手动移动；关闭后应重新发出任务导航，而非误报道路失败。
 		_quest_nav_issued = false
 		return
 	if _player.is_dead:

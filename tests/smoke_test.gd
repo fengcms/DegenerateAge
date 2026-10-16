@@ -3898,16 +3898,16 @@ func _test_fog_ui() -> void:
 	_expect(pilot.get("_state") == AutoBattle.State.MANUAL_OVERRIDE, "地图行走被自动战斗抢占")
 	panel.set_open(true)
 	var held := player.global_position
-	var manual_t := float(pilot.get("_manual_t"))
 	await get_tree().create_timer(0.2).timeout
-	_expect(player.global_position.is_equal_approx(held) and float(pilot.get("_manual_t")) < manual_t,
-		"打开地图后手动路线应停下，自动战斗接管倒计时应继续")
+	_expect(player.map_move_active and player.global_position.distance_to(held) > 1.0,
+		"打开地图后自动寻路路线应继续推进")
 	EventBus.panel_opened.emit("inventory")
 	_expect(not panel.visible, "地图未与其他面板互斥")
 	GameState.set_panel_open("inventory", false)
+	var before_bg := player.global_position
 	player._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	await get_tree().create_timer(0.15).timeout
-	_expect(player.global_position.is_equal_approx(held), "后台地图路线仍推进")
+	_expect(player.global_position.is_equal_approx(before_bg), "后台失焦时地图路线应暂停")
 	player._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
 	GameState.set_auto_battle(false)
 	Input.action_press("move_right")
