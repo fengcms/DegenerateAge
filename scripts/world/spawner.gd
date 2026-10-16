@@ -15,7 +15,10 @@ const MONSTER_SCENE := preload("res://scenes/entities/Monster.tscn")
 const MIN_SPAWN_DIST := 220.0   # 与玩家出生点的最小距离（px），避免开局被贴脸
 const ACTIVE_DISTANCE := 760.0
 const RETIRE_DISTANCE := 1100.0
-const CHAPTER_TWO_NORMAL_BUDGET := 10
+## E1（工程文档 30 §4）：刷新预算改由**每图配置**驱动 —— 读 `maps.json` 的
+## `normalCap` / `eliteCap` / `bossCap`。未配置的旧图沿用旧行为：`c2_` 前缀限普通 10、其余不限。
+const LEGACY_NORMAL_CAP := 10
+const UNLIMITED_CAP := -1
 ## 无地图的显式测试规格（`spawn_from_specs` 未传 map_id）所用的状态前缀 ——
 ## 保证这类点同样受刷新状态管理（否则会「击杀即重生」，违反 7.9）。
 const LOCAL_MAP_ID := "_local"
@@ -26,6 +29,8 @@ var _rng := RandomNumberGenerator.new()
 var _points: Array[Dictionary] = []
 ## 当前装配的地图 id（M4-10：刷新状态 key 需要）。显式测试规格为空 → 用 LOCAL_MAP_ID。
 var _map_id: String = ""
+## 本图刷新预算（kind → cap；UNLIMITED_CAP = 该档不限）。装配期读一次，供批量生成 / _process 共用。
+var _caps: Dictionary = {}
 ## 本图装配期的「同种怪物序号」计数（跨 spawnPoints / bossSpawn 两次调用累计）。
 var _ordinal: Dictionary = {}
 
@@ -41,6 +46,7 @@ func spawn_from_map(map_id: String) -> void:
 	if m == null:
 		return
 	_map_id = map_id
+	_load_caps()
 	_ordinal.clear()
 	var pts = m.get("spawnPoints", [])
 	if pts is Array:
@@ -51,6 +57,7 @@ func spawn_from_map(map_id: String) -> void:
 func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 	if not map_id.is_empty():
 		_map_id = map_id
+		_load_caps()
 	var tier_range: Array = []
 	if not _map_id.is_empty():
 		var map_data: Variant = DataLoader.get_entry("maps", _map_id)
@@ -58,7 +65,7 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 			var configured: Variant = (map_data as Dictionary).get("tierRange", [])
 			if configured is Array:
 				tier_range = configured
-	var active_normal := _active_normal_count() if _map_id.begins_with("c2_") else 0
+	var active := _active_counts()
 	for s in specs:
 		if not (s is Dictionary):
 			continue
@@ -94,8 +101,9 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				point["position"] = Iso.grid_to_world(Vector2i(int(fixed_cell[0]), int(fixed_cell[1])))
 				point["fixed"] = true
 			_points.append(point)
-			if _spawn(point, active_normal) and String(point.kind) == "normal":
-				active_normal += 1
+			if _spawn(point, active):
+				var kind := String(point.kind)
+				active[kind] = int(active.get(kind, 0)) + 1
 
 ## 当前存活怪物数（测试 / 调试用）。
 func alive_count() -> int:
@@ -111,24 +119,24 @@ func point_count() -> int:
 
 func _process(_delta: float) -> void:
 	# Each pass owns a budget snapshot; never rescan all sites for each candidate.
-	var active_normal := _active_normal_count() if _map_id.begins_with("c2_") else 0
+	var active := _active_counts()
 	# M4-10：倒计时由 `GameState.world_time` 统一驱动（本节点不再累加 delta）。
 	for p in _points:
+		var kind := String(p.get("kind", "normal"))
 		if p.entry != null and is_instance_valid(p.entry):
 			if bool(p.get("fixed", false)) and _player != null \
 					and (p.entry as Node2D).global_position.distance_to(_player.global_position) > RETIRE_DISTANCE:
 				p.entry.queue_free()
 				p.entry = null
-				if String(p.kind) == "normal":
-					active_normal -= 1
+				active[kind] = int(active.get(kind, 0)) - 1
 			continue
 		var remaining := _remaining(p)
 		if remaining > 0.0:
 			if is_instance_valid(p.marker):
 				p.marker.set_remaining(remaining)
 			continue
-		if _spawn(p, active_normal) and String(p.kind) == "normal":
-			active_normal += 1
+		if _spawn(p, active):
+			active[kind] = int(active.get(kind, 0)) + 1
 
 ## 该点距刷新完成的剩余时间（秒）；无状态 → 0（可立即生成）。
 func _remaining(point: Dictionary) -> float:
@@ -147,18 +155,19 @@ func marker_points() -> Array[Dictionary]:
 			out.append({"monster_id": point.monster_id, "position": point.position})
 	return out
 
-func _spawn(point: Dictionary, active_normal: int = -1) -> bool:
+func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	var unlock := String(point.get("requires_unlock", ""))
 	if not unlock.is_empty() and not bool(GameState.unlocks.get(unlock, false)):
 		return false
 	if bool(point.get("fixed", false)) and _player != null \
 			and (point.position as Vector2).distance_to(_player.global_position) > ACTIVE_DISTANCE:
 		return false
-	# A standalone call may compute its own snapshot; batch callers supply one.
-	if active_normal < 0:
-		active_normal = _active_normal_count()
-	if _map_id.begins_with("c2_") and String(point.get("kind", "normal")) == "normal" \
-			and active_normal >= CHAPTER_TWO_NORMAL_BUDGET:
+	# 批次调用方传入快照并自行维护增减；独立调用（不传 active）自算一次快照。
+	var counts: Dictionary = active if active is Dictionary else _active_counts()
+	# E1：按 kind 取本图上限（未配置 / 旧图 → UNLIMITED_CAP 或旧行为）。
+	var kind := String(point.get("kind", "normal"))
+	var cap := _cap_for(kind)
+	if cap != UNLIMITED_CAP and int(counts.get(kind, 0)) >= cap:
 		return false
 	# M4-10：仍在刷新等待期 → 不生成怪物；「墓碑点」显示墓碑，其余静默等待。
 	var remaining := _remaining(point)
@@ -185,12 +194,37 @@ func _spawn(point: Dictionary, active_normal: int = -1) -> bool:
 	point.entry = m
 	return true
 
-func _active_normal_count() -> int:
-	var count := 0
+## 本图存活怪物数（按 kind 分桶）—— 刷新预算快照用。
+func _active_counts() -> Dictionary:
+	var counts := {}
 	for point in _points:
-		if String(point.get("kind", "normal")) == "normal" and is_instance_valid(point.get("entry")):
-			count += 1
-	return count
+		if not is_instance_valid(point.get("entry")):
+			continue
+		var kind := String(point.get("kind", "normal"))
+		counts[kind] = int(counts.get(kind, 0)) + 1
+	return counts
+
+## 本图某档的刷新上限（E1）：优先读 `maps.json` 的 `normalCap`/`eliteCap`/`bossCap`；
+## 未配置的旧图保留旧行为（`c2_` 前缀普通 10），其余不限。
+func _cap_for(kind: String) -> int:
+	if _caps.has(kind):
+		return int(_caps[kind])
+	if kind == "normal" and _map_id.begins_with("c2_"):
+		return LEGACY_NORMAL_CAP
+	return UNLIMITED_CAP
+
+## 装配期缓存本图 cap 配置（无地图 / 显式测试规格 → 全不限）。
+func _load_caps() -> void:
+	_caps.clear()
+	if _map_id.is_empty():
+		return
+	var m: Variant = DataLoader.get_entry("maps", _map_id)
+	if not (m is Dictionary):
+		return
+	for kind in ["normal", "elite", "boss"]:
+		var key: String = String(kind) + "Cap"
+		if (m as Dictionary).has(key):
+			_caps[String(kind)] = int((m as Dictionary).get(key, UNLIMITED_CAP))
 
 func _on_monster_died(point: Dictionary) -> void:
 	var pos := Vector2.ZERO
