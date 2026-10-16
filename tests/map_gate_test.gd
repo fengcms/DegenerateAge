@@ -64,12 +64,12 @@ func _ready() -> void:
 	check(String(route.get("first_hop", "")) == "c3_map01", "第一跳落在相邻已开图")
 	MapService.clear_quest_navigation()
 
-	# 车夫只列本集群附属图与相邻枢纽；未发布章不出现可进入目的地。
+	# 车夫只列本集群附属图与相邻**已发布**枢纽；未发布章不出现可进入目的地。
 	var destinations := MapService.destinations()
 	check(not destinations.is_empty(), "枢纽有车夫目的地")
 	for entry in destinations:
 		var id := String(entry.get("id", ""))
-		check(not id.begins_with("c4_") and id != "ash_land", "不跨集群、不列未发布章：%s" % id)
+		check(id != "ash_land" and (id == "c4_map00" or not id.begins_with("c4_")), "不跨集群、不列未发布章：%s" % id)
 		check(bool(entry.get("unlocked", false)) or not String(entry.get("reason", "")).is_empty(), "%s 未开放时说明原因" % id)
 
 	# 无人产出的解锁键（或写错类型）必须在启动校验被拦下，避免内容永久锁死。
