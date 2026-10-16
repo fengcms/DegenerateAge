@@ -1162,5 +1162,184 @@
         "count": 2
       }
     ]
+  },
+  {
+    "id": "DT_C5_Normal",
+    "desc": "第五章普通怪；普通65/优秀25/稀有9/史诗1。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          36,
+          48
+        ]
+      },
+      {
+        "kind": "potion",
+        "chance": 0.15,
+        "itemId": "potion_hp_large"
+      },
+      {
+        "kind": "potion",
+        "chance": 0.1,
+        "itemId": "potion_mp_large"
+      },
+      {
+        "kind": "equip",
+        "chance": 0.2,
+        "levelRange": [
+          41,
+          50
+        ],
+        "templatePool": "c5_normal",
+        "qualityWeight": {
+          "common": 65,
+          "uncommon": 25,
+          "rare": 9,
+          "epic": 1
+        },
+        "tierStart": 41
+      }
+    ]
+  },
+  {
+    "id": "DT_C5_Elite",
+    "desc": "第五章精英；低档组 2—3 件 + 好装组 1 件。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          288,
+          384
+        ]
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          2,
+          3
+        ],
+        "levelRange": [
+          41,
+          50
+        ],
+        "templatePool": "c5_normal",
+        "qualityWeight": {
+          "common": 55,
+          "uncommon": 45
+        },
+        "tierStart": 41
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          1,
+          1
+        ],
+        "levelRange": [
+          41,
+          50
+        ],
+        "templatePool": "c5_normal",
+        "qualityWeight": {
+          "rare": 90,
+          "epic": 10
+        },
+        "tierStart": 41
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_hp_large"
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_mp_large"
+      }
+    ]
+  },
+  {
+    "id": "DT_C5_Boss",
+    "desc": "第五章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          2400,
+          2800
+        ]
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          5,
+          8
+        ],
+        "levelRange": [
+          41,
+          50
+        ],
+        "templatePool": "c5_normal",
+        "qualityWeight": {
+          "common": 70,
+          "uncommon": 30
+        },
+        "tierStart": 41
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "countRange": [
+          2,
+          2
+        ],
+        "levelRange": [
+          41,
+          50
+        ],
+        "templatePool": "c5_normal",
+        "qualityWeight": {
+          "rare": 75,
+          "epic": 25
+        },
+        "tierStart": 41
+      },
+      {
+        "kind": "equip",
+        "chance": 0.05,
+        "countRange": [
+          1,
+          1
+        ],
+        "levelRange": [
+          41,
+          50
+        ],
+        "templatePool": "c5_legendary",
+        "qualityWeight": {
+          "legendary": 100
+        },
+        "tierStart": 41
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_hp_large",
+        "count": 2
+      },
+      {
+        "kind": "potion",
+        "chance": 1.0,
+        "itemId": "potion_mp_large",
+        "count": 2
+      }
+    ]
   }
 ]

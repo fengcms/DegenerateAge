@@ -975,5 +975,249 @@
       "cdr"
     ],
     "requiredLevel": 40
+  },
+  {
+    "id": "c5_equip_weapon",
+    "name": "关卫长刀",
+    "slot": "weapon",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "desc": "第五章常规制式；穿戴要求 Lv41，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "atk": 54
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 41
+  },
+  {
+    "id": "c5_equip_shoes",
+    "name": "越堤战靴",
+    "slot": "shoes",
+    "price": 50,
+    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "desc": "第五章常规制式；穿戴要求 Lv42，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "def": 13,
+        "mp": 32
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 42
+  },
+  {
+    "id": "c5_equip_armor",
+    "name": "关卫甲",
+    "slot": "armor",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "desc": "第五章常规制式；穿戴要求 Lv43，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "def": 29,
+        "hp": 80
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 43
+  },
+  {
+    "id": "c5_equip_helmet",
+    "name": "断旗盔",
+    "slot": "helmet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "desc": "第五章常规制式；穿戴要求 Lv44，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "def": 16
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 44
+  },
+  {
+    "id": "c5_equip_bracer",
+    "name": "关卫护腕",
+    "slot": "bracer",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "desc": "第五章常规制式；穿戴要求 Lv45，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "def": 13
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 45
+  },
+  {
+    "id": "c5_equip_knee",
+    "name": "关卫护膝",
+    "slot": "knee",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "desc": "第五章常规制式；穿戴要求 Lv46，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "def": 13
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 46
+  },
+  {
+    "id": "c5_equip_shield",
+    "name": "壁关盾",
+    "slot": "shield",
+    "price": 80,
+    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "desc": "第五章常规制式；穿戴要求 Lv47，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "def": 32,
+        "hp": 48
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 47
+  },
+  {
+    "id": "c5_equip_bracelet",
+    "name": "铁誓手镯",
+    "slot": "bracelet",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "desc": "第五章常规制式；穿戴要求 Lv48，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "atk": 13
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 48
+  },
+  {
+    "id": "c5_equip_ring",
+    "name": "烽线戒",
+    "slot": "ring",
+    "price": 60,
+    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "desc": "第五章常规制式；穿戴要求 Lv49，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "atk": 10,
+        "mp": 26
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 49
+  },
+  {
+    "id": "c5_equip_necklace",
+    "name": "归途项链",
+    "slot": "necklace",
+    "price": 70,
+    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "desc": "第五章常规制式；穿戴要求 Lv50，品质、词条与星级由统一三轴规则生成。",
+    "tierBases": {
+      "41": {
+        "hp": 80
+      }
+    },
+    "defaultQuality": "common",
+    "affixPool": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "hpPercent",
+      "mpPercent",
+      "cdr"
+    ],
+    "requiredLevel": 50
   }
 ]

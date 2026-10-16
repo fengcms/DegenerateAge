@@ -1585,5 +1585,555 @@
     "trackerText": "到 {map:c4_map00} 交谈 {npc:c4_npc01}（{current}/{count}）。",
     "turnInText": "到 {npc:c4_npc01} 交付“回信已送达”；不自动交付。",
     "talkOnAccept": true
+  },
+  {
+    "id": "C5Q01",
+    "name": "关内的人数",
+    "type": "main",
+    "giver": "c5_npc01",
+    "turnIn": "c5_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 762,
+      "xp": 7246
+    },
+    "mapScope": [
+      "c5_map00"
+    ],
+    "prev": "C4Q12",
+    "abandonable": false,
+    "desc": "先看撤离册，再看军旗。",
+    "trackerText": "到 {map:c5_map00} 交谈 {npc:c5_npc01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc01} 交付“关内的人数”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5Q02",
+    "name": "通往前哨的堤",
+    "type": "main",
+    "giver": "c5_npc01",
+    "turnIn": "c5_npc09",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_normal01",
+      "count": 12
+    },
+    "reward": {
+      "gold": 1270,
+      "xp": 12077
+    },
+    "mapScope": [
+      "c5_map01"
+    ],
+    "prev": "C5Q01",
+    "abandonable": false,
+    "desc": "清开长堤，让信兵报回真实兵力。",
+    "trackerText": "到 {map:c5_map01} 击杀 {monster:c5_normal01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc09} 交付“通往前哨的堤”；不自动交付。"
+  },
+  {
+    "id": "C5Q03",
+    "name": "号令的节拍",
+    "type": "main",
+    "giver": "c5_npc09",
+    "turnIn": "c5_npc09",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c5_item_q03",
+      "count": 4,
+      "sourceMonster": "c5_normal04"
+    },
+    "reward": {
+      "gold": 1397,
+      "xp": 13284,
+      "item": "c5_equip_armor",
+      "quality": "rare",
+      "tierStart": 41,
+      "unlocks": [
+        "c5_access_02"
+      ]
+    },
+    "mapScope": [
+      "c5_map01"
+    ],
+    "prev": "C5Q02",
+    "abandonable": false,
+    "desc": "空旗游魂带着号台残签，取回才能识别号令。",
+    "trackerText": "到 {map:c5_map01} 收集 {item:c5_item_q03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc09} 交付“号令的节拍”；不自动交付。"
+  },
+  {
+    "id": "C5Q04",
+    "name": "报实数的人",
+    "type": "main",
+    "giver": "c5_npc09",
+    "turnIn": "c5_npc09",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc09",
+      "count": 1
+    },
+    "reward": {
+      "gold": 762,
+      "xp": 7246
+    },
+    "mapScope": [
+      "c5_map01"
+    ],
+    "prev": "C5Q03",
+    "abandonable": false,
+    "desc": "旗还在，不代表守旗的人还在。",
+    "trackerText": "到 {map:c5_map01} 交谈 {npc:c5_npc09}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc09} 交付“报实数的人”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5Q05",
+    "name": "打断号将",
+    "type": "main",
+    "giver": "c5_npc09",
+    "turnIn": "c5_npc01",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_boss01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1778,
+      "xp": 16907,
+      "unlocks": [
+        "c5_access_03"
+      ]
+    },
+    "mapScope": [
+      "c5_map02"
+    ],
+    "prev": "C5Q04",
+    "abandonable": false,
+    "desc": "夺回号台，先让撤离的信号传得出去。",
+    "trackerText": "到 {map:c5_map02} 击败首领 {monster:c5_boss01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc01} 交付“打断号将”；不自动交付。"
+  },
+  {
+    "id": "C5Q06",
+    "name": "给担架的路",
+    "type": "main",
+    "giver": "c5_npc05",
+    "turnIn": "c5_npc05",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c5_item_q06",
+      "count": 6,
+      "sourceMonster": "c5_normal07"
+    },
+    "reward": {
+      "gold": 1397,
+      "xp": 13284,
+      "item": "c5_equip_bracer",
+      "quality": "rare",
+      "tierStart": 41,
+      "unlocks": [
+        "c5_access_04"
+      ]
+    },
+    "mapScope": [
+      "c5_map03"
+    ],
+    "prev": "C5Q05",
+    "abandonable": false,
+    "desc": "缚索虫拖走了营道标片，取回后我们重画担架线。",
+    "trackerText": "到 {map:c5_map03} 收集 {item:c5_item_q06}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc05} 交付“给担架的路”；不自动交付。"
+  },
+  {
+    "id": "C5Q07",
+    "name": "撤离也是军令",
+    "type": "main",
+    "giver": "c5_npc01",
+    "turnIn": "c5_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 762,
+      "xp": 7246
+    },
+    "mapScope": [
+      "c5_map00"
+    ],
+    "prev": "C5Q06",
+    "abandonable": false,
+    "desc": "我签字，撤离不是逃亡。",
+    "trackerText": "到 {map:c5_map00} 交谈 {npc:c5_npc01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc01} 交付“撤离也是军令”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5Q08",
+    "name": "别让旗索追上来",
+    "type": "main",
+    "giver": "c5_npc05",
+    "turnIn": "c5_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_normal02",
+      "count": 14
+    },
+    "reward": {
+      "gold": 1270,
+      "xp": 12077,
+      "item": "c5_equip_shield",
+      "quality": "rare",
+      "tierStart": 41
+    },
+    "mapScope": [
+      "c5_map03"
+    ],
+    "prev": "C5Q07",
+    "abandonable": false,
+    "desc": "把猎手从营道两侧赶走，别让担架变成靶子。",
+    "trackerText": "到 {map:c5_map03} 击杀 {monster:c5_normal02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc10} 交付“别让旗索追上来”；不自动交付。"
+  },
+  {
+    "id": "C5Q09",
+    "name": "来自另一侧的证人",
+    "type": "main",
+    "giver": "c5_npc10",
+    "turnIn": "c5_npc10",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc10",
+      "count": 1
+    },
+    "reward": {
+      "gold": 762,
+      "xp": 7246,
+      "unlocks": [
+        "c5_access_05"
+      ]
+    },
+    "mapScope": [
+      "c5_map04"
+    ],
+    "prev": "C5Q08",
+    "abandonable": false,
+    "desc": "我给你频率，也要把侵略者的名字说清。",
+    "trackerText": "到 {map:c5_map04} 交谈 {npc:c5_npc10}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc10} 交付“来自另一侧的证人”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5Q10",
+    "name": "逆风关门",
+    "type": "main",
+    "giver": "c5_npc10",
+    "turnIn": "c5_npc11",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_boss03",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1778,
+      "xp": 16907
+    },
+    "mapScope": [
+      "c5_map05"
+    ],
+    "prev": "C5Q09",
+    "abandonable": false,
+    "desc": "军团长的门只准命令过，不准活人过。",
+    "trackerText": "到 {map:c5_map05} 击败首领 {monster:c5_boss03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc11} 交付“逆风关门”；不自动交付。"
+  },
+  {
+    "id": "C5Q11",
+    "name": "接班的人",
+    "type": "main",
+    "giver": "c5_npc11",
+    "turnIn": "c5_npc11",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc11",
+      "count": 1
+    },
+    "reward": {
+      "gold": 762,
+      "xp": 7246,
+      "unlocks": [
+        "c5_access_06"
+      ]
+    },
+    "mapScope": [
+      "c5_map05"
+    ],
+    "prev": "C5Q10",
+    "abandonable": false,
+    "desc": "有人接住门，我才把钥匙带走。",
+    "trackerText": "到 {map:c5_map05} 交谈 {npc:c5_npc11}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc11} 交付“接班的人”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5Q12",
+    "name": "灯下的统帅",
+    "type": "main",
+    "giver": "c5_npc11",
+    "turnIn": "c5_npc01",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_boss04",
+      "count": 1
+    },
+    "reward": {
+      "gold": 1778,
+      "xp": 16907
+    },
+    "mapScope": [
+      "c5_map06"
+    ],
+    "prev": "C5Q11",
+    "abandonable": false,
+    "desc": "不能再让它用别人的家乡维持军团。",
+    "trackerText": "到 {map:c5_map06} 击败首领 {monster:c5_boss04}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc01} 交付“灯下的统帅”；不自动交付。"
+  },
+  {
+    "id": "C5Q13",
+    "name": "最后一班不缺员",
+    "type": "main",
+    "giver": "c5_npc07",
+    "turnIn": "c5_npc07",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc07",
+      "count": 1
+    },
+    "reward": {
+      "gold": 762,
+      "xp": 7246
+    },
+    "mapScope": [
+      "c5_map00"
+    ],
+    "prev": "C5Q12",
+    "abandonable": false,
+    "desc": "和我把到达册核对到最后一行。",
+    "trackerText": "到 {map:c5_map00} 交谈 {npc:c5_npc07}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc07} 交付“最后一班不缺员”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5Q14",
+    "name": "通往镇脉台",
+    "type": "main",
+    "giver": "c5_npc08",
+    "turnIn": "c5_npc08",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc08",
+      "count": 1
+    },
+    "reward": {
+      "gold": 760,
+      "xp": 7245,
+      "item": "c5_equip_weapon",
+      "quality": "epic",
+      "tierStart": 41,
+      "unlocks": [
+        "chapter6"
+      ]
+    },
+    "mapScope": [
+      "c5_map00"
+    ],
+    "prev": "C5Q13",
+    "abandonable": false,
+    "desc": "频率和钥匙都带上，别丢掉林海的停机条件。",
+    "trackerText": "到 {map:c5_map00} 交谈 {npc:c5_npc08}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc08} 交付“通往镇脉台”；不自动交付。",
+    "talkOnAccept": true
+  },
+  {
+    "id": "C5S01",
+    "name": "出征册里的孩子",
+    "type": "side",
+    "giver": "c5_npc07",
+    "turnIn": "c5_npc07",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_normal05",
+      "count": 8
+    },
+    "reward": {
+      "gold": 685,
+      "xp": 5955
+    },
+    "mapScope": [
+      "c5_map01"
+    ],
+    "prev": "C5Q01",
+    "abandonable": true,
+    "desc": "清开潜猎者占的路，我去找那双小鞋。",
+    "trackerText": "到 {map:c5_map01} 击杀 {monster:c5_normal05}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc07} 交付“出征册里的孩子”；不自动交付。"
+  },
+  {
+    "id": "C5S02",
+    "name": "未寄出的军报",
+    "type": "side",
+    "giver": "c5_npc08",
+    "turnIn": "c5_npc08",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c5_item_s02",
+      "count": 3,
+      "sourceMonster": "c5_normal04"
+    },
+    "reward": {
+      "gold": 753,
+      "xp": 6551
+    },
+    "mapScope": [
+      "c5_map01"
+    ],
+    "prev": "C5Q05",
+    "abandonable": true,
+    "desc": "空旗背面藏着原始战报，别只看捷报。",
+    "trackerText": "到 {map:c5_map01} 收集 {item:c5_item_s02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc08} 交付“未寄出的军报”；不自动交付。"
+  },
+  {
+    "id": "C5S03",
+    "name": "担架的绑带",
+    "type": "side",
+    "giver": "c5_npc05",
+    "turnIn": "c5_npc05",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c5_item_s03",
+      "count": 3,
+      "sourceMonster": "c5_normal07"
+    },
+    "reward": {
+      "gold": 753,
+      "xp": 6551
+    },
+    "mapScope": [
+      "c5_map03"
+    ],
+    "prev": "C5Q03",
+    "abandonable": true,
+    "desc": "取回虫索拖走的绑带扣，伤员不能靠抓车沿。",
+    "trackerText": "到 {map:c5_map03} 收集 {item:c5_item_s03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc05} 交付“担架的绑带”；不自动交付。"
+  },
+  {
+    "id": "C5S04",
+    "name": "泊位外的灯",
+    "type": "side",
+    "giver": "c5_npc10",
+    "turnIn": "c5_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_normal03",
+      "count": 10
+    },
+    "reward": {
+      "gold": 685,
+      "xp": 5955
+    },
+    "mapScope": [
+      "c5_map04"
+    ],
+    "prev": "C5Q06",
+    "abandonable": true,
+    "desc": "先清泊位外侧，不要让居民误入巨兽巢。",
+    "trackerText": "到 {map:c5_map04} 击杀 {monster:c5_normal03}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc10} 交付“泊位外的灯”；不自动交付。"
+  },
+  {
+    "id": "C5S05",
+    "name": "裂舟余骨",
+    "type": "side",
+    "giver": "c5_npc10",
+    "turnIn": "c5_npc10",
+    "objective": {
+      "kind": "kill",
+      "targetId": "c5_boss02",
+      "count": 1
+    },
+    "reward": {
+      "gold": 959,
+      "xp": 8338,
+      "item": "c5_equip_ring",
+      "quality": "epic",
+      "tierStart": 41
+    },
+    "mapScope": [
+      "c5_map04"
+    ],
+    "prev": "C5S04",
+    "abandonable": true,
+    "desc": "如果你愿意，巨兽占的旧舟还可以当掩体。",
+    "trackerText": "到 {map:c5_map04} 击败首领 {monster:c5_boss02}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc10} 交付“裂舟余骨”；不自动交付。"
+  },
+  {
+    "id": "C5S06",
+    "name": "无名门牌",
+    "type": "side",
+    "giver": "c5_npc11",
+    "turnIn": "c5_npc11",
+    "objective": {
+      "kind": "collect",
+      "targetId": "c5_item_s06",
+      "count": 4,
+      "sourceMonster": "c5_normal06"
+    },
+    "reward": {
+      "gold": 753,
+      "xp": 6551
+    },
+    "mapScope": [
+      "c5_map05"
+    ],
+    "prev": "C5Q09",
+    "abandonable": true,
+    "desc": "潮盾卫夺走门牌，取回后我把交接人写全。",
+    "trackerText": "到 {map:c5_map05} 收集 {item:c5_item_s06}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc11} 交付“无名门牌”；不自动交付。"
+  },
+  {
+    "id": "C5S07",
+    "name": "回程票",
+    "type": "side",
+    "giver": "c5_npc07",
+    "turnIn": "c5_npc07",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c5_npc07",
+      "count": 1
+    },
+    "reward": {
+      "gold": 412,
+      "xp": 3574
+    },
+    "mapScope": [
+      "c5_map00"
+    ],
+    "prev": "C5Q14",
+    "abandonable": true,
+    "desc": "让我把最后一张票给那孩子。",
+    "trackerText": "到 {map:c5_map00} 交谈 {npc:c5_npc07}（{current}/{count}）。",
+    "turnInText": "到 {npc:c5_npc07} 交付“回程票”；不自动交付。",
+    "talkOnAccept": true
   }
 ]

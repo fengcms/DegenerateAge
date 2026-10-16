@@ -117,5 +117,40 @@
     "useType": "quest",
     "animation": "",
     "desc": "第四章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_q03",
+    "name": "号台残签",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_q06",
+    "name": "营道标片",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_s02",
+    "name": "原始军报",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_s03",
+    "name": "担架带扣",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
+  },
+  {
+    "id": "c5_item_s06",
+    "name": "值守门牌",
+    "useType": "quest",
+    "animation": "",
+    "desc": "第五章任务袋物品，不占背包格。"
   }
 ]

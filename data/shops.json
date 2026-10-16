@@ -86,5 +86,27 @@
       { "itemId": "misc_town_scroll", "price": 80, "tier": 1 },
       { "itemId": "misc_revive_scroll", "price": 120, "tier": 1 }
     ]
+  },
+  {
+    "npcId": "c5_apothecary",
+    "name": "温缄（断旗关医官）",
+    "sellEnabled": true,
+    "buyItems": [
+      { "itemId": "potion_hp_mid", "price": 60, "tier": 2 },
+      { "itemId": "potion_mp_mid", "price": 60, "tier": 2 },
+      { "itemId": "potion_hp_large", "price": 150, "tier": 3 },
+      { "itemId": "potion_mp_large", "price": 150, "tier": 3 }
+    ]
+  },
+  {
+    "npcId": "c5_peddler",
+    "name": "柳货（断旗关货郎）",
+    "sellEnabled": true,
+    "buyItems": [
+      { "itemId": "potion_hp_mid", "price": 60, "tier": 2 },
+      { "itemId": "potion_mp_mid", "price": 60, "tier": 2 },
+      { "itemId": "misc_town_scroll", "price": 80, "tier": 1 },
+      { "itemId": "misc_revive_scroll", "price": 120, "tier": 1 }
+    ]
   }
 ]

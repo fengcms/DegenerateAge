@@ -126,5 +126,37 @@
       "c4_equip_ring",
       "c4_equip_necklace"
     ]
+  },
+  {
+    "id": "c5_normal",
+    "desc": "第五档十种装备型号；品质由掉落表决定。",
+    "includeIds": [
+      "c5_equip_weapon",
+      "c5_equip_shoes",
+      "c5_equip_armor",
+      "c5_equip_helmet",
+      "c5_equip_bracer",
+      "c5_equip_knee",
+      "c5_equip_shield",
+      "c5_equip_bracelet",
+      "c5_equip_ring",
+      "c5_equip_necklace"
+    ]
+  },
+  {
+    "id": "c5_legendary",
+    "desc": "第五档首领传说追加槽；所有部位均可出现。",
+    "includeIds": [
+      "c5_equip_weapon",
+      "c5_equip_shoes",
+      "c5_equip_armor",
+      "c5_equip_helmet",
+      "c5_equip_bracer",
+      "c5_equip_knee",
+      "c5_equip_shield",
+      "c5_equip_bracelet",
+      "c5_equip_ring",
+      "c5_equip_necklace"
+    ]
   }
 ]
