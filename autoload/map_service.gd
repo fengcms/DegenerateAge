@@ -170,6 +170,14 @@ func is_safe_zone(map_id: String) -> bool:
 		return bool((m as Dictionary).get("safeZone", false))
 	return false
 
+## 供回城卷与免费复活共用：返回地图所属集群中已解锁的安全城镇。
+## hubId 缺失、城镇配置无效或尚未解锁时返回空串，不擅自送往起始营地。
+func safe_town_for(map_id: String) -> String:
+	var town_id := String(data_for(map_id).get("hubId", ""))
+	if town_id.is_empty() or not exists(town_id) or not is_safe_zone(town_id) or not is_unlocked(town_id):
+		return ""
+	return town_id
+
 # ---- 车夫拓扑与费用 ----
 
 ## 所属集群及枢纽相邻集群；按配置顺序去重。

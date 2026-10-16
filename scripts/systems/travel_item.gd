@@ -9,14 +9,13 @@ static func use_town_scroll(inv_index: int, reload_scene: bool = true) -> Dictio
 	var item: Dictionary = GameState.inventory[inv_index]
 	if item.get("kind") != "misc" or item.get("itemId") != HotbarConfig.TOWN_SCROLL:
 		return _fail(Localization.tr_key("msg.travel_item.p002"))
-	var town_id := String(MapService.current_data().get("hubId", ""))
+	var town_id := MapService.safe_town_for(GameState.current_map)
 	if town_id == GameState.current_map:
 		return _fail(Localization.tr_key("msg.travel_item.p003"))
 	var player := GameState.get_tree().get_first_node_in_group("player") as PlayerCharacter
 	if int(GameState.player.get("hp", 0)) <= 0 or (player != null and player.is_dead):
 		return _fail(Localization.tr_key("msg.travel_item.p004"))
-	if town_id.is_empty() or not MapService.exists(town_id) or not MapService.is_safe_zone(town_id) \
-			or not MapService.is_unlocked(town_id):
+	if town_id.is_empty():
 		return _fail(Localization.tr_key("msg.travel_item.p005"))
 	if reload_scene and GameState.get_tree().get_first_node_in_group("map_world") == null:
 		return _fail(Localization.tr_key("msg.travel_item.p006"))

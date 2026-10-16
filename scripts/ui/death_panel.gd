@@ -96,19 +96,23 @@ func revive_here() -> bool:
 
 func revive_camp() -> bool:
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
-	if player == null or not player.is_dead or not MapService.exists("camp"):
+	if player == null or not player.is_dead:
 		return false
-	if GameState.current_map != "camp" and (get_tree().current_scene == null or not get_tree().current_scene.has_node("Game")):
-		# A-P2-3：非营地且世界场景未就绪时无法切图，明确反馈而非静默失败。
+	var town_id := MapService.safe_town_for(GameState.current_map)
+	if town_id.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.death_panel.p005"), "danger")
 		return false
-	if GameState.current_map == "camp":
-		player.global_position = MapService.entry_point("camp")
+	if GameState.current_map != town_id and (get_tree().current_scene == null or not get_tree().current_scene.has_node("Game")):
+		# A-P2-3：跨图复活但世界场景未就绪时无法切图，明确反馈而非静默失败。
+		EventBus.toast_requested.emit(Localization.tr_key("ui.death_panel.p005"), "danger")
+		return false
+	if GameState.current_map == town_id:
+		player.global_position = MapService.entry_point(town_id)
 		player._revive()
 		_close()
 		SaveManager.request_autosave()
 		return true
-	var result := MapService._prepare_travel("camp", "revive", 0, MapService.entry_point("camp"))
+	var result := MapService._prepare_travel(town_id, "revive", 0, MapService.entry_point(town_id))
 	if not bool(result.get("ok", false)):
 		# A-P2-3：切图准备失败（目标图不可达等）时明确反馈，避免玩家点了没反应。
 		EventBus.toast_requested.emit(Localization.tr_key("ui.death_panel.p005"), "danger")
