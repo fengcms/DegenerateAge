@@ -34,6 +34,9 @@ const ICONS := {
 const GROUND := {
 	"weapon_iron": preload("res://assets/sprites/items/weapon_starter_ground.png"),
 }
+const MOUNT_ICONS := {
+	"mount_corrupted_wing": preload("res://assets/sprites/mounts/mount_corrupted_wing.png"),
+}
 const SKILL_ICONS := {
 	"basic_slash": preload("res://assets/sprites/skills/basic_slash.png"),
 	"earth_cleave": preload("res://assets/sprites/skills/earth_cleave.png"),
@@ -49,6 +52,8 @@ static func skill_icon(skill_id: String) -> Texture2D:
 static func icon_for(item: Variant) -> Texture2D:
 	if not item is Dictionary:
 		return null
+	if String(item.get("kind", "")) == "mount":
+		return MOUNT_ICONS.get(String(item.get("itemId", ""))) as Texture2D
 	if String(item.get("kind", "")) == "equip":
 		var item_id := String(item.get("itemId", ""))
 		if ICONS.has(item_id):
@@ -59,11 +64,14 @@ static func icon_for(item: Variant) -> Texture2D:
 			return load(path) as Texture2D
 	return ICONS.get(String(item.get("itemId", ""))) as Texture2D
 
+## 地面动画会反复重绘；只读取预载表，避免在绘制热路径动态加载装备模板贴图。
 static func ground_for(item: Dictionary) -> Texture2D:
 	var item_id := String(item.get("itemId", ""))
 	if GROUND.has(item_id):
 		return GROUND[item_id] as Texture2D
-	return icon_for(item)
+	if String(item.get("kind", "")) == "mount":
+		return MOUNT_ICONS.get(item_id) as Texture2D
+	return ICONS.get(item_id) as Texture2D
 
 static func binding_icon(binding: Variant) -> Texture2D:
 	if not binding is Dictionary:

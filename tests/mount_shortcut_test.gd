@@ -11,6 +11,21 @@ func _ready() -> void:
 	check(_mapped_key("mount_toggle") == KEY_R, "运行时 InputMap 包含默认 R 键")
 	check(not GameState.toggle_mount() and GameState.active_mount.is_empty(), "未收藏坐骑时不改变骑乘状态")
 	check(GameState.collect_mount("mount_corrupted_wing"), "可收藏第一章坐骑")
+	var mount_icon := SampleArt.ground_for({"kind": "mount", "itemId": "mount_corrupted_wing"})
+	check(mount_icon != null and mount_icon.get_size() == Vector2(48, 48)
+		and mount_icon.resource_path == String(DataLoader.get_entry("mounts", "mount_corrupted_wing").get("icon", "")),
+		"腐化之翼的地面掉落与收藏界面使用同一张正式图标")
+	check(SampleArt.ground_for({"kind": "mount", "itemId": "mount_furnace_beast"}) == null,
+		"尚无设计稿的第二章坐骑保留地面回退图形")
+	var mount_panel := preload("res://scripts/ui/mount_panel.gd").new()
+	add_child(mount_panel)
+	mount_panel._selected_mount = "mount_corrupted_wing"
+	mount_panel.visible = true
+	mount_panel._refresh()
+	check(mount_panel._image.texture == mount_icon
+		and mount_panel._image.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
+		"坐骑收藏预览加载正式图标并保持像素边缘")
+	mount_panel.queue_free()
 	GameState.player.level = 19
 	check(not GameState.toggle_mount() and GameState.active_mount.is_empty(), "等级不足时快捷键不可越级骑乘")
 	GameState.player.level = 20

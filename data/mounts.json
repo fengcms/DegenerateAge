@@ -4,7 +4,7 @@
     "name": "腐化之翼",
     "speedBonus": 0.3,
     "dropBossId": "boss_corrupted_beast",
-    "icon": "res://assets/sprites/mounts/corrupted_wing.svg",
+    "icon": "res://assets/sprites/mounts/mount_corrupted_wing.png",
     "levelReq": 20,
     "desc": "腐化巨兽残留的羽翼。收藏后达到 20 级可骑乘，移动速度提高 30%。"
   },

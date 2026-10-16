@@ -124,6 +124,7 @@ func _build() -> void:
 	preview.add_theme_constant_override("separation", 8)
 	preview_card.add_child(preview)
 	_image = TextureRect.new()
+	_image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_image.custom_minimum_size = Vector2(210, 200)
 	_image.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
