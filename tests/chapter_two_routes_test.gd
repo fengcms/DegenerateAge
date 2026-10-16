@@ -43,7 +43,7 @@ func _ready() -> void:
 	var ground := main.get_node("Game/Ground") as IsoGround
 	check(ground.map_id == "c2_well_town" and ground.cave != null, "沉井镇世界按新版布局装配")
 	check(main.get_node("Game/Npcs").get_child_count() == 8, "沉井镇装配八名故事 NPC")
-	check(main.get_node("Game/Exits").get_child_count() == 2, "沉井镇装配双向道路")
+	check(main.get_node("Game/Exits").get_child_count() == MapService.data_for("c2_well_town").get("exits", []).size(), "沉井镇装配配置中的全部道路")
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.current_map = "c2_well_core"

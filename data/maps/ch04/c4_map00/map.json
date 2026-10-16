@@ -1,0 +1,175 @@
+{
+  "id": "c4_map00",
+  "name": "根驿营地",
+  "size": {
+    "w": 96,
+    "h": 54
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c4_map00.json",
+  "tierRange": [
+    31,
+    31
+  ],
+  "recommendedLevel": 31,
+  "safeZone": true,
+  "kind": "hub",
+  "hubId": "c4_map00",
+  "requiresUnlock": "chapter4",
+  "exits": [
+    {
+      "id": "c4_map00_exit01",
+      "label": "回沉井镇",
+      "cell": [
+        4,
+        27
+      ],
+      "toMap": "c3_map00",
+      "toEntrance": "from_c4_map00"
+    },
+    {
+      "id": "c4_map00_exit02",
+      "label": "往倒根驿路",
+      "cell": [
+        92,
+        27
+      ],
+      "toMap": "c4_map01",
+      "toEntrance": "from_c4_map00"
+    },
+    {
+      "id": "c4_map00_exit03",
+      "label": "往断旗关",
+      "cell": [
+        52,
+        3
+      ],
+      "toMap": "c5_map00",
+      "toEntrance": "from_c4_map00",
+      "requiresUnlock": "chapter5"
+    }
+  ],
+  "entrances": {
+    "from_c3_map00": [
+      4,
+      27
+    ],
+    "from_c4_map01": [
+      92,
+      27
+    ],
+    "from_c5_map00": [
+      52,
+      3
+    ]
+  },
+  "carterArrival": [
+    10,
+    27
+  ],
+  "spawnPoints": [],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "叶闻舟",
+      "cell": [
+        33,
+        22
+      ],
+      "npcId": "c4_npc01"
+    },
+    {
+      "role": "blacksmith",
+      "npcName": "樊枝",
+      "cell": [
+        42,
+        22
+      ],
+      "npcId": "c4_npc02",
+      "greeting": "根长得快，铆钉也得钉得稳。"
+    },
+    {
+      "role": "shop",
+      "npcName": "苗叶",
+      "cell": [
+        52,
+        22
+      ],
+      "npcId": "c4_npc03",
+      "shopId": "c4_peddler"
+    },
+    {
+      "role": "warehouse",
+      "npcName": "顾匣",
+      "cell": [
+        61,
+        22
+      ],
+      "npcId": "c4_npc04"
+    },
+    {
+      "role": "shop",
+      "npcName": "苏苓",
+      "cell": [
+        33,
+        35
+      ],
+      "npcId": "c4_npc05",
+      "shopId": "c4_apothecary"
+    },
+    {
+      "role": "carter",
+      "npcName": "柏辙",
+      "cell": [
+        42,
+        35
+      ],
+      "npcId": "c4_npc06"
+    },
+    {
+      "role": "quest",
+      "npcName": "宁穗",
+      "cell": [
+        52,
+        35
+      ],
+      "npcId": "c4_npc07"
+    },
+    {
+      "role": "quest",
+      "npcName": "邵衡",
+      "cell": [
+        61,
+        35
+      ],
+      "npcId": "c4_npc08"
+    }
+  ],
+  "normalCap": 0,
+  "eliteCap": 0,
+  "bossCap": 0,
+  "safeArea": {
+    "min": [
+      0,
+      0
+    ],
+    "max": [
+      95,
+      53
+    ]
+  },
+  "hubLinks": [
+    "c3_map00",
+    "c5_map00"
+  ],
+  "carterFare": {
+    "spoke": 150,
+    "hub": 300
+  },
+  "carterFares": {
+    "c3_map00": 400,
+    "c5_map00": 500
+  },
+  "desc": "第四章安全枢纽，八名服务/故事点集中在中街，无常态刷怪。"
+}

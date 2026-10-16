@@ -7,6 +7,7 @@ It only updates chapter-two entries in the four gameplay data tables.
 import copy
 import json
 from pathlib import Path
+from map_catalog import load_maps, save_maps
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,7 +112,7 @@ def main():
             monster["dropTableId"] = "DT_C2_Boss_Slag"
     write("monsters.json", monsters)
 
-    maps = read("maps.json")
+    maps = load_maps(ROOT)
     for map_data in maps:
         map_id = map_data["id"]
         if map_id not in ("c2_lower_works", "c2_ember_furnace"):
@@ -120,7 +121,7 @@ def main():
             point["dropTableId"] = "DT_C2_Industrial_Elite" if point.get("kind") == "elite" else "DT_C2_Industrial_Normal"
         if map_id == "c2_ember_furnace":
             map_data["bossSpawn"]["dropTableId"] = "DT_C2_Boss_Slag"
-    write("maps.json", maps)
+    save_maps(maps, ROOT)
 
 
 if __name__ == "__main__":

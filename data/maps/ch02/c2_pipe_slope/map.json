@@ -1,0 +1,543 @@
+{
+  "id": "c2_pipe_slope",
+  "name": "断管坡",
+  "size": {
+    "w": 192,
+    "h": 108
+  },
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/c2_pipe_slope.json",
+  "tierRange": [
+    11,
+    13
+  ],
+  "recommendedLevel": 11,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c2_well_town",
+  "requiresUnlock": "chapter2",
+  "exits": [
+    {
+      "id": "to_town",
+      "label": "回沉井镇",
+      "cell": [
+        5,
+        54
+      ],
+      "toMap": "c2_well_town",
+      "toEntrance": "from_slope"
+    },
+    {
+      "id": "to_well",
+      "label": "往旧汲灵井",
+      "cell": [
+        187,
+        54
+      ],
+      "toMap": "c2_old_well",
+      "toEntrance": "from_slope"
+    }
+  ],
+  "entrances": {
+    "from_town": [
+      9,
+      54
+    ],
+    "from_well": [
+      183,
+      54
+    ]
+  },
+  "carterArrival": [
+    17,
+    62
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c2_spirit_larva",
+      "level": 11,
+      "respawnTime": 15,
+      "count": 11,
+      "cells": [
+        [
+          30,
+          41
+        ],
+        [
+          30,
+          38
+        ],
+        [
+          27,
+          41
+        ],
+        [
+          33,
+          41
+        ],
+        [
+          30,
+          44
+        ],
+        [
+          27,
+          38
+        ],
+        [
+          33,
+          38
+        ],
+        [
+          27,
+          44
+        ],
+        [
+          33,
+          44
+        ],
+        [
+          30,
+          35
+        ],
+        [
+          24,
+          41
+        ]
+      ],
+      "zone": "A"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 12,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          36,
+          41
+        ],
+        [
+          30,
+          47
+        ],
+        [
+          27,
+          35
+        ],
+        [
+          33,
+          35
+        ],
+        [
+          24,
+          38
+        ]
+      ],
+      "zone": "A"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 13,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          36,
+          38
+        ],
+        [
+          24,
+          44
+        ],
+        [
+          36,
+          44
+        ],
+        [
+          27,
+          47
+        ],
+        [
+          33,
+          47
+        ]
+      ],
+      "zone": "A"
+    },
+    {
+      "monsterId": "c2_spirit_larva",
+      "level": 11,
+      "respawnTime": 15,
+      "count": 11,
+      "cells": [
+        [
+          92,
+          22
+        ],
+        [
+          92,
+          19
+        ],
+        [
+          89,
+          22
+        ],
+        [
+          95,
+          22
+        ],
+        [
+          92,
+          25
+        ],
+        [
+          89,
+          19
+        ],
+        [
+          95,
+          19
+        ],
+        [
+          89,
+          25
+        ],
+        [
+          95,
+          25
+        ],
+        [
+          92,
+          16
+        ],
+        [
+          86,
+          22
+        ]
+      ],
+      "zone": "B"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 12,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          98,
+          22
+        ],
+        [
+          92,
+          28
+        ],
+        [
+          89,
+          16
+        ],
+        [
+          95,
+          16
+        ],
+        [
+          86,
+          19
+        ]
+      ],
+      "zone": "B"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 13,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          98,
+          19
+        ],
+        [
+          98,
+          25
+        ],
+        [
+          89,
+          28
+        ],
+        [
+          95,
+          28
+        ],
+        [
+          86,
+          16
+        ]
+      ],
+      "zone": "B"
+    },
+    {
+      "monsterId": "c2_spirit_larva",
+      "level": 11,
+      "respawnTime": 15,
+      "count": 10,
+      "cells": [
+        [
+          158,
+          32
+        ],
+        [
+          158,
+          29
+        ],
+        [
+          155,
+          32
+        ],
+        [
+          161,
+          32
+        ],
+        [
+          158,
+          35
+        ],
+        [
+          155,
+          29
+        ],
+        [
+          161,
+          29
+        ],
+        [
+          155,
+          35
+        ],
+        [
+          161,
+          35
+        ],
+        [
+          158,
+          26
+        ]
+      ],
+      "zone": "C"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 12,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          152,
+          32
+        ],
+        [
+          164,
+          32
+        ],
+        [
+          158,
+          38
+        ],
+        [
+          155,
+          26
+        ],
+        [
+          161,
+          26
+        ],
+        [
+          152,
+          29
+        ]
+      ],
+      "zone": "C"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 13,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          164,
+          29
+        ],
+        [
+          152,
+          35
+        ],
+        [
+          164,
+          35
+        ],
+        [
+          155,
+          38
+        ],
+        [
+          161,
+          38
+        ]
+      ],
+      "zone": "C"
+    },
+    {
+      "monsterId": "c2_spirit_larva",
+      "level": 11,
+      "respawnTime": 15,
+      "count": 10,
+      "cells": [
+        [
+          90,
+          91
+        ],
+        [
+          90,
+          88
+        ],
+        [
+          87,
+          91
+        ],
+        [
+          93,
+          91
+        ],
+        [
+          90,
+          94
+        ],
+        [
+          87,
+          88
+        ],
+        [
+          93,
+          88
+        ],
+        [
+          87,
+          94
+        ],
+        [
+          93,
+          94
+        ],
+        [
+          90,
+          85
+        ]
+      ],
+      "zone": "D"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 12,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          84,
+          91
+        ],
+        [
+          96,
+          91
+        ],
+        [
+          90,
+          97
+        ],
+        [
+          87,
+          85
+        ],
+        [
+          93,
+          85
+        ]
+      ],
+      "zone": "D"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 13,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          84,
+          88
+        ],
+        [
+          96,
+          88
+        ],
+        [
+          84,
+          94
+        ],
+        [
+          96,
+          94
+        ],
+        [
+          87,
+          97
+        ],
+        [
+          93,
+          97
+        ]
+      ],
+      "zone": "D"
+    },
+    {
+      "monsterId": "c2_elite_copper_matriarch",
+      "level": 13,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        164,
+        88
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c2_elite_broken_inspector",
+      "level": 13,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        41,
+        80
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "carter",
+      "npcName": "驿站车夫",
+      "cell": [
+        17,
+        59
+      ]
+    },
+    {
+      "role": "quest",
+      "npcName": "石岑",
+      "cell": [
+        21,
+        59
+      ],
+      "npcId": "c2_shi_cen"
+    }
+  ]
+}

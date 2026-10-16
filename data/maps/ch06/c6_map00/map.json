@@ -1,0 +1,158 @@
+{
+  "id": "c6_map00",
+  "name": "镇脉前哨",
+  "size": {
+    "w": 96,
+    "h": 54
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c6_map00.json",
+  "tierRange": [
+    51,
+    51
+  ],
+  "recommendedLevel": 51,
+  "safeZone": true,
+  "kind": "hub",
+  "hubId": "c6_map00",
+  "requiresUnlock": "chapter6",
+  "exits": [
+    {
+      "id": "c6_map00_exit01",
+      "label": "回断旗关",
+      "cell": [
+        4,
+        27
+      ],
+      "toMap": "c5_map00",
+      "toEntrance": "from_c6_map00"
+    },
+    {
+      "id": "c6_map00_exit02",
+      "label": "往埋光外廊",
+      "cell": [
+        92,
+        27
+      ],
+      "toMap": "c6_map01",
+      "toEntrance": "from_c6_map00"
+    }
+  ],
+  "entrances": {
+    "from_c5_map00": [
+      4,
+      27
+    ],
+    "from_c6_map01": [
+      92,
+      27
+    ]
+  },
+  "carterArrival": [
+    10,
+    27
+  ],
+  "spawnPoints": [],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "卫澄",
+      "cell": [
+        33,
+        22
+      ],
+      "npcId": "c6_npc01"
+    },
+    {
+      "role": "blacksmith",
+      "npcName": "闻钧",
+      "greeting": "别叫它最后一锤，工具还得留给明天。",
+      "cell": [
+        42,
+        22
+      ],
+      "npcId": "c6_npc02"
+    },
+    {
+      "role": "shop",
+      "npcName": "陶绫",
+      "shopId": "c6_peddler",
+      "cell": [
+        52,
+        22
+      ],
+      "npcId": "c6_npc03"
+    },
+    {
+      "role": "warehouse",
+      "npcName": "杜仓",
+      "cell": [
+        61,
+        22
+      ],
+      "npcId": "c6_npc04"
+    },
+    {
+      "role": "shop",
+      "npcName": "辛芷",
+      "shopId": "c6_apothecary",
+      "cell": [
+        33,
+        35
+      ],
+      "npcId": "c6_npc05"
+    },
+    {
+      "role": "carter",
+      "npcName": "石辕",
+      "cell": [
+        42,
+        35
+      ],
+      "npcId": "c6_npc06"
+    },
+    {
+      "role": "quest",
+      "npcName": "符素",
+      "cell": [
+        52,
+        35
+      ],
+      "npcId": "c6_npc07"
+    },
+    {
+      "role": "quest",
+      "npcName": "程录",
+      "cell": [
+        61,
+        35
+      ],
+      "npcId": "c6_npc08"
+    }
+  ],
+  "normalCap": 0,
+  "eliteCap": 0,
+  "bossCap": 0,
+  "safeArea": {
+    "min": [
+      0,
+      0
+    ],
+    "max": [
+      95,
+      53
+    ]
+  },
+  "hubLinks": [
+    "c5_map00"
+  ],
+  "carterFare": {
+    "spoke": 150,
+    "hub": 500
+  },
+  "carterFares": {
+    "c5_map00": 600
+  },
+  "desc": "第六章安全枢纽，八个服务/故事点集中在中街，无常态刷怪。"
+}

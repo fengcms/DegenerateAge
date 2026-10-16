@@ -1,0 +1,404 @@
+{
+  "id": "c6_map01",
+  "name": "埋光外廊",
+  "size": {
+    "w": 208,
+    "h": 117
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c6_map01.json",
+  "tierRange": [
+    52,
+    53
+  ],
+  "recommendedLevel": 52,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c6_map00",
+  "requiresUnlock": "",
+  "exits": [
+    {
+      "id": "c6_map01_exit01",
+      "label": "往镇脉前哨",
+      "cell": [
+        8,
+        59
+      ],
+      "toMap": "c6_map00",
+      "toEntrance": "from_c6_map01"
+    },
+    {
+      "id": "c6_map01_exit02",
+      "label": "往守誓兵库",
+      "cell": [
+        200,
+        59
+      ],
+      "toMap": "c6_map02",
+      "toEntrance": "from_c6_map01",
+      "requiresUnlock": "c6_access_02"
+    }
+  ],
+  "entrances": {
+    "from_c6_map00": [
+      8,
+      59
+    ],
+    "from_c6_map02": [
+      200,
+      59
+    ]
+  },
+  "carterArrival": [
+    14,
+    59
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c6_normal01",
+      "level": 52,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          152,
+          64
+        ],
+        [
+          96,
+          64
+        ],
+        [
+          76,
+          72
+        ],
+        [
+          88,
+          52
+        ],
+        [
+          72,
+          48
+        ],
+        [
+          124,
+          108
+        ],
+        [
+          124,
+          48
+        ],
+        [
+          136,
+          76
+        ],
+        [
+          80,
+          4
+        ],
+        [
+          116,
+          52
+        ],
+        [
+          72,
+          80
+        ],
+        [
+          140,
+          76
+        ],
+        [
+          64,
+          64
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c6_normal02",
+      "level": 52,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          140,
+          20
+        ],
+        [
+          68,
+          100
+        ],
+        [
+          160,
+          88
+        ],
+        [
+          68,
+          64
+        ],
+        [
+          120,
+          24
+        ],
+        [
+          136,
+          60
+        ],
+        [
+          132,
+          64
+        ],
+        [
+          72,
+          84
+        ],
+        [
+          88,
+          4
+        ],
+        [
+          108,
+          60
+        ],
+        [
+          44,
+          16
+        ],
+        [
+          48,
+          12
+        ],
+        [
+          124,
+          8
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c6_normal03",
+      "level": 53,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          64,
+          80
+        ],
+        [
+          40,
+          28
+        ],
+        [
+          148,
+          8
+        ],
+        [
+          68,
+          112
+        ],
+        [
+          52,
+          4
+        ],
+        [
+          72,
+          96
+        ],
+        [
+          36,
+          8
+        ],
+        [
+          116,
+          8
+        ],
+        [
+          132,
+          48
+        ],
+        [
+          160,
+          32
+        ],
+        [
+          76,
+          96
+        ],
+        [
+          68,
+          52
+        ],
+        [
+          132,
+          108
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c6_normal04",
+      "level": 53,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          56,
+          4
+        ],
+        [
+          156,
+          72
+        ],
+        [
+          112,
+          64
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          96,
+          8
+        ],
+        [
+          72,
+          104
+        ],
+        [
+          136,
+          16
+        ],
+        [
+          132,
+          32
+        ],
+        [
+          88,
+          8
+        ],
+        [
+          100,
+          44
+        ],
+        [
+          76,
+          104
+        ],
+        [
+          44,
+          112
+        ],
+        [
+          68,
+          60
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c6_normal05",
+      "level": 53,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          100,
+          12
+        ],
+        [
+          124,
+          112
+        ],
+        [
+          60,
+          4
+        ],
+        [
+          52,
+          8
+        ],
+        [
+          108,
+          52
+        ],
+        [
+          64,
+          100
+        ],
+        [
+          108,
+          36
+        ],
+        [
+          116,
+          60
+        ],
+        [
+          96,
+          48
+        ],
+        [
+          156,
+          80
+        ],
+        [
+          104,
+          100
+        ],
+        [
+          104,
+          20
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c6_elite01",
+      "level": 53,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          68,
+          38
+        ]
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c6_elite02",
+      "level": 53,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          132,
+          87
+        ]
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "程霁",
+      "cell": [
+        25,
+        59
+      ],
+      "npcId": "c6_npc09"
+    }
+  ],
+  "normalCap": 10,
+  "eliteCap": 2,
+  "bossCap": 1,
+  "carterFares": {
+    "c6_map00": 150
+  },
+  "desc": "倒伏镇脉柱与旧检修槽交错，形成通往核心的两条检修路。"
+}

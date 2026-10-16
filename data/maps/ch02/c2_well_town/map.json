@@ -1,0 +1,170 @@
+{
+  "id": "c2_well_town",
+  "name": "沉井镇",
+  "size": {
+    "w": 96,
+    "h": 54
+  },
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/c2_well_town.json",
+  "tierRange": [
+    11,
+    11
+  ],
+  "recommendedLevel": 11,
+  "safeZone": true,
+  "kind": "hub",
+  "hubId": "c2_well_town",
+  "requiresUnlock": "chapter2",
+  "exits": [
+    {
+      "id": "to_camp",
+      "label": "回幸存者营地",
+      "cell": [
+        2,
+        27
+      ],
+      "toMap": "camp",
+      "toEntrance": "from_c2"
+    },
+    {
+      "id": "to_slope",
+      "label": "往断管坡",
+      "cell": [
+        94,
+        27
+      ],
+      "toMap": "c2_pipe_slope",
+      "toEntrance": "from_town"
+    },
+    {
+      "id": "to_c3",
+      "label": "往无雨之城",
+      "cell": [
+        80,
+        27
+      ],
+      "toMap": "c3_map00",
+      "toEntrance": "from_c2_well_town"
+    }
+  ],
+  "entrances": {
+    "from_camp": [
+      6,
+      27
+    ],
+    "from_slope": [
+      90,
+      27
+    ],
+    "from_c3_map00": [
+      80,
+      27
+    ]
+  },
+  "carterArrival": [
+    69,
+    36
+  ],
+  "spawnPoints": [],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "陆衡",
+      "cell": [
+        56,
+        26
+      ],
+      "npcId": "c2_lu_heng"
+    },
+    {
+      "role": "shop",
+      "npcName": "白芷",
+      "cell": [
+        39,
+        19
+      ],
+      "npcId": "c2_bai_zhi",
+      "shopId": "c2_apothecary"
+    },
+    {
+      "role": "blacksmith",
+      "npcName": "许铸",
+      "cell": [
+        55,
+        19
+      ],
+      "npcId": "c2_xu_zhu",
+      "greeting": "炉火还亮着，带装备来看看吧。"
+    },
+    {
+      "role": "warehouse",
+      "npcName": "米仓",
+      "cell": [
+        69,
+        19
+      ],
+      "npcId": "c2_mi_cang"
+    },
+    {
+      "role": "shop",
+      "npcName": "阿絮",
+      "cell": [
+        38,
+        34
+      ],
+      "npcId": "c2_a_xu",
+      "shopId": "c2_peddler"
+    },
+    {
+      "role": "quest",
+      "npcName": "祁言",
+      "cell": [
+        56,
+        35
+      ],
+      "npcId": "c2_qi_yan"
+    },
+    {
+      "role": "quest",
+      "npcName": "苗苗",
+      "cell": [
+        27,
+        22
+      ],
+      "npcId": "c2_miao_miao"
+    },
+    {
+      "role": "carter",
+      "npcName": "老辙",
+      "cell": [
+        69,
+        33
+      ],
+      "npcId": "c2_lao_zhe"
+    }
+  ],
+  "safeArea": {
+    "min": [
+      0,
+      0
+    ],
+    "max": [
+      95,
+      53
+    ]
+  },
+  "hubLinks": [
+    "camp",
+    "c3_map00"
+  ],
+  "carterFare": {
+    "spoke": 80,
+    "hub": 200
+  },
+  "carterFares": {
+    "camp": 200,
+    "c3_map00": 300
+  }
+}

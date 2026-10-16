@@ -1,0 +1,404 @@
+{
+  "id": "c4_map01",
+  "name": "倒根驿路",
+  "size": {
+    "w": 208,
+    "h": 117
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c4_map01.json",
+  "tierRange": [
+    32,
+    34
+  ],
+  "recommendedLevel": 32,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c4_map00",
+  "requiresUnlock": "",
+  "exits": [
+    {
+      "id": "c4_map01_exit01",
+      "label": "往根驿营地",
+      "cell": [
+        8,
+        59
+      ],
+      "toMap": "c4_map00",
+      "toEntrance": "from_c4_map01"
+    },
+    {
+      "id": "c4_map01_exit02",
+      "label": "往失声哨林",
+      "cell": [
+        200,
+        59
+      ],
+      "toMap": "c4_map02",
+      "toEntrance": "from_c4_map01",
+      "requiresUnlock": "c4_access_02"
+    }
+  ],
+  "entrances": {
+    "from_c4_map00": [
+      8,
+      59
+    ],
+    "from_c4_map02": [
+      200,
+      59
+    ]
+  },
+  "carterArrival": [
+    14,
+    59
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c4_normal01",
+      "level": 32,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          132,
+          28
+        ],
+        [
+          76,
+          44
+        ],
+        [
+          44,
+          76
+        ],
+        [
+          84,
+          40
+        ],
+        [
+          152,
+          52
+        ],
+        [
+          72,
+          24
+        ],
+        [
+          68,
+          28
+        ],
+        [
+          152,
+          4
+        ],
+        [
+          76,
+          12
+        ],
+        [
+          144,
+          48
+        ],
+        [
+          152,
+          108
+        ],
+        [
+          112,
+          108
+        ],
+        [
+          68,
+          88
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c4_normal02",
+      "level": 32,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          108,
+          4
+        ],
+        [
+          72,
+          44
+        ],
+        [
+          64,
+          44
+        ],
+        [
+          64,
+          108
+        ],
+        [
+          152,
+          16
+        ],
+        [
+          144,
+          32
+        ],
+        [
+          140,
+          28
+        ],
+        [
+          108,
+          112
+        ],
+        [
+          40,
+          96
+        ],
+        [
+          36,
+          76
+        ],
+        [
+          156,
+          36
+        ],
+        [
+          104,
+          80
+        ],
+        [
+          44,
+          96
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c4_normal03",
+      "level": 33,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          140,
+          12
+        ],
+        [
+          132,
+          52
+        ],
+        [
+          148,
+          12
+        ],
+        [
+          92,
+          4
+        ],
+        [
+          152,
+          104
+        ],
+        [
+          128,
+          64
+        ],
+        [
+          132,
+          112
+        ],
+        [
+          116,
+          4
+        ],
+        [
+          148,
+          52
+        ],
+        [
+          84,
+          104
+        ],
+        [
+          128,
+          104
+        ],
+        [
+          144,
+          4
+        ],
+        [
+          160,
+          56
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c4_normal04",
+      "level": 34,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          132,
+          24
+        ],
+        [
+          92,
+          108
+        ],
+        [
+          76,
+          112
+        ],
+        [
+          80,
+          100
+        ],
+        [
+          100,
+          52
+        ],
+        [
+          140,
+          60
+        ],
+        [
+          132,
+          104
+        ],
+        [
+          100,
+          44
+        ],
+        [
+          156,
+          44
+        ],
+        [
+          100,
+          12
+        ],
+        [
+          148,
+          56
+        ],
+        [
+          156,
+          96
+        ],
+        [
+          148,
+          40
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c4_normal06",
+      "level": 34,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          160,
+          24
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          128,
+          84
+        ],
+        [
+          36,
+          108
+        ],
+        [
+          156,
+          112
+        ],
+        [
+          128,
+          92
+        ],
+        [
+          100,
+          32
+        ],
+        [
+          64,
+          60
+        ],
+        [
+          104,
+          56
+        ],
+        [
+          48,
+          104
+        ],
+        [
+          156,
+          16
+        ],
+        [
+          60,
+          4
+        ]
+      ],
+      "zone": 4
+    },
+    {
+      "monsterId": "c4_elite01",
+      "level": 34,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          71,
+          35
+        ]
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c4_elite02",
+      "level": 34,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          119,
+          85
+        ]
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "蒲简",
+      "cell": [
+        25,
+        59
+      ],
+      "npcId": "c4_npc09"
+    }
+  ],
+  "normalCap": 10,
+  "eliteCap": 2,
+  "bossCap": 1,
+  "carterFares": {
+    "c4_map00": 150
+  },
+  "desc": "倒根把旧路劈成三股，可沿根上缺口或根下土路绕行。"
+}

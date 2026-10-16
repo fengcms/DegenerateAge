@@ -1,0 +1,404 @@
+{
+  "id": "c5_map01",
+  "name": "折旗长堤",
+  "size": {
+    "w": 208,
+    "h": 117
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c5_map01.json",
+  "tierRange": [
+    42,
+    44
+  ],
+  "recommendedLevel": 42,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c5_map00",
+  "requiresUnlock": "",
+  "exits": [
+    {
+      "id": "c5_map01_exit01",
+      "label": "往断旗关",
+      "cell": [
+        8,
+        59
+      ],
+      "toMap": "c5_map00",
+      "toEntrance": "from_c5_map01"
+    },
+    {
+      "id": "c5_map01_exit02",
+      "label": "往失陷号台",
+      "cell": [
+        200,
+        59
+      ],
+      "toMap": "c5_map02",
+      "toEntrance": "from_c5_map01",
+      "requiresUnlock": "c5_access_02"
+    }
+  ],
+  "entrances": {
+    "from_c5_map00": [
+      8,
+      59
+    ],
+    "from_c5_map02": [
+      200,
+      59
+    ]
+  },
+  "carterArrival": [
+    14,
+    59
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c5_normal01",
+      "level": 42,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          92,
+          16
+        ],
+        [
+          92,
+          40
+        ],
+        [
+          152,
+          16
+        ],
+        [
+          80,
+          4
+        ],
+        [
+          156,
+          16
+        ],
+        [
+          40,
+          48
+        ],
+        [
+          124,
+          56
+        ],
+        [
+          112,
+          8
+        ],
+        [
+          52,
+          76
+        ],
+        [
+          156,
+          60
+        ],
+        [
+          132,
+          84
+        ],
+        [
+          112,
+          48
+        ],
+        [
+          88,
+          40
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c5_normal02",
+      "level": 42,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          72,
+          16
+        ],
+        [
+          128,
+          84
+        ],
+        [
+          92,
+          20
+        ],
+        [
+          92,
+          108
+        ],
+        [
+          128,
+          108
+        ],
+        [
+          136,
+          100
+        ],
+        [
+          144,
+          52
+        ],
+        [
+          84,
+          32
+        ],
+        [
+          72,
+          28
+        ],
+        [
+          156,
+          84
+        ],
+        [
+          100,
+          40
+        ],
+        [
+          116,
+          52
+        ],
+        [
+          124,
+          8
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c5_normal03",
+      "level": 43,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          96,
+          56
+        ],
+        [
+          132,
+          88
+        ],
+        [
+          96,
+          36
+        ],
+        [
+          40,
+          96
+        ],
+        [
+          76,
+          52
+        ],
+        [
+          104,
+          68
+        ],
+        [
+          136,
+          24
+        ],
+        [
+          88,
+          80
+        ],
+        [
+          80,
+          32
+        ],
+        [
+          124,
+          12
+        ],
+        [
+          72,
+          4
+        ],
+        [
+          56,
+          112
+        ],
+        [
+          68,
+          28
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c5_normal04",
+      "level": 44,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          44,
+          48
+        ],
+        [
+          156,
+          112
+        ],
+        [
+          136,
+          72
+        ],
+        [
+          92,
+          32
+        ],
+        [
+          160,
+          60
+        ],
+        [
+          128,
+          28
+        ],
+        [
+          60,
+          20
+        ],
+        [
+          80,
+          88
+        ],
+        [
+          140,
+          52
+        ],
+        [
+          108,
+          56
+        ],
+        [
+          108,
+          8
+        ],
+        [
+          80,
+          96
+        ],
+        [
+          40,
+          104
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c5_normal05",
+      "level": 44,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          88,
+          28
+        ],
+        [
+          76,
+          84
+        ],
+        [
+          148,
+          72
+        ],
+        [
+          52,
+          92
+        ],
+        [
+          120,
+          68
+        ],
+        [
+          156,
+          32
+        ],
+        [
+          40,
+          72
+        ],
+        [
+          64,
+          8
+        ],
+        [
+          112,
+          52
+        ],
+        [
+          140,
+          104
+        ],
+        [
+          44,
+          72
+        ],
+        [
+          132,
+          92
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c5_elite01",
+      "level": 44,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          71,
+          35
+        ]
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c5_elite02",
+      "level": 44,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          120,
+          84
+        ]
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "顾烽",
+      "cell": [
+        25,
+        59
+      ],
+      "npcId": "c5_npc09"
+    }
+  ],
+  "normalCap": 10,
+  "eliteCap": 2,
+  "bossCap": 1,
+  "carterFares": {
+    "c5_map00": 150
+  },
+  "desc": "断墙、深沟和弃械架形成南北并行的前线通路。"
+}

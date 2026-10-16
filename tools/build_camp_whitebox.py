@@ -1,16 +1,16 @@
 """将营地白盒原画布局编译为正式地图配置和等距通行掩码。
 
-输入为 data/map_art/camp_whitebox_v2.json；输出仅覆盖 maps.json 的 camp 条目
+输入为 data/map_art/camp_whitebox_v2.json；输出仅覆盖营地地图目录的 map.json
 及 data/layouts/camp.json。供布局调整后重建，不修改其他地图。
 """
 
 import json
 from pathlib import Path
+from map_catalog import load_maps, save_maps
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data/map_art/camp_whitebox_v2.json"
-MAPS = ROOT / "data/maps.json"
 LAYOUT = ROOT / "data/layouts/camp.json"
 CLEARANCE = 14.0
 VERSION = "2026-10-16-camp-open-perimeter-v2"
@@ -89,7 +89,7 @@ def main():
     camp_layout = {"id": "camp", "layoutVersion": VERSION, "grid_size": [width, height],
                    "points": targets | {"spawn": spawn}, "walkable_rows": rows}
     LAYOUT.write_text(json.dumps(camp_layout, ensure_ascii=False, separators=(",", ":")) + "\n")
-    maps = json.loads(MAPS.read_text())
+    maps = load_maps(ROOT)
     camp = next(entry for entry in maps if entry["id"] == "camp")
     camp["size"] = {"w": width, "h": height}
     camp["worldRect"] = source["world_rect"]
@@ -112,7 +112,7 @@ def main():
         camp["carterArrival"] = arrival
     else:
         camp["carterArrival"] = nearest_open([1044, 775], rows, source)
-    MAPS.write_text(json.dumps(maps, ensure_ascii=False, indent=2) + "\n")
+    save_maps(maps, ROOT)
     print(f"营地白盒已编译：{width}×{height}，可走格 {sum(row.count('1') for row in rows)}")
 
 

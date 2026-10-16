@@ -1,0 +1,384 @@
+{
+  "id": "c2_ember_furnace",
+  "name": "余烬炉房",
+  "size": {
+    "w": 160,
+    "h": 90
+  },
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/c2_ember_furnace.json",
+  "tierRange": [
+    17,
+    19
+  ],
+  "recommendedLevel": 17,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c2_well_town",
+  "requiresUnlock": "chapter2",
+  "exits": [
+    {
+      "id": "to_works",
+      "label": "回工坊下层",
+      "cell": [
+        91,
+        4
+      ],
+      "toMap": "c2_lower_works",
+      "toEntrance": "from_furnace"
+    }
+  ],
+  "entrances": {
+    "from_works": [
+      91,
+      8
+    ]
+  },
+  "carterArrival": [
+    82,
+    14
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 8,
+      "cells": [
+        [
+          45,
+          15
+        ],
+        [
+          45,
+          12
+        ],
+        [
+          42,
+          15
+        ],
+        [
+          48,
+          15
+        ],
+        [
+          45,
+          18
+        ],
+        [
+          42,
+          12
+        ],
+        [
+          48,
+          12
+        ],
+        [
+          42,
+          18
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          48,
+          18
+        ],
+        [
+          45,
+          9
+        ],
+        [
+          39,
+          15
+        ],
+        [
+          51,
+          15
+        ],
+        [
+          45,
+          21
+        ],
+        [
+          42,
+          9
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          48,
+          9
+        ],
+        [
+          39,
+          12
+        ],
+        [
+          51,
+          12
+        ],
+        [
+          39,
+          18
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 8,
+      "cells": [
+        [
+          48,
+          77
+        ],
+        [
+          48,
+          74
+        ],
+        [
+          45,
+          77
+        ],
+        [
+          51,
+          77
+        ],
+        [
+          48,
+          80
+        ],
+        [
+          45,
+          74
+        ],
+        [
+          51,
+          74
+        ],
+        [
+          45,
+          80
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          51,
+          80
+        ],
+        [
+          48,
+          71
+        ],
+        [
+          42,
+          77
+        ],
+        [
+          54,
+          77
+        ],
+        [
+          48,
+          83
+        ],
+        [
+          45,
+          71
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          51,
+          71
+        ],
+        [
+          54,
+          74
+        ],
+        [
+          42,
+          80
+        ],
+        [
+          54,
+          80
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 8,
+      "cells": [
+        [
+          103,
+          42
+        ],
+        [
+          103,
+          39
+        ],
+        [
+          100,
+          42
+        ],
+        [
+          106,
+          42
+        ],
+        [
+          103,
+          45
+        ],
+        [
+          100,
+          39
+        ],
+        [
+          106,
+          39
+        ],
+        [
+          100,
+          45
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_copper_worm",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          106,
+          45
+        ],
+        [
+          103,
+          36
+        ],
+        [
+          97,
+          42
+        ],
+        [
+          109,
+          42
+        ],
+        [
+          103,
+          48
+        ],
+        [
+          100,
+          36
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          106,
+          36
+        ],
+        [
+          97,
+          39
+        ],
+        [
+          109,
+          39
+        ],
+        [
+          97,
+          45
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_elite_copper_matriarch",
+      "level": 17,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        49,
+        61
+      ],
+      "kind": "elite",
+      "dropTableId": "DT_C2_Industrial_Elite"
+    }
+  ],
+  "bossSpawn": {
+    "monsterId": "c2_boss_slag_devourer",
+    "level": 18,
+    "respawnTime": 300,
+    "count": 1,
+    "cell": [
+      137,
+      46
+    ],
+    "kind": "boss",
+    "tombstone": true,
+    "dropTableId": "DT_C2_Boss_Slag"
+  },
+  "npcs": [
+    {
+      "role": "carter",
+      "npcName": "驿站车夫",
+      "cell": [
+        82,
+        11
+      ]
+    }
+  ]
+}

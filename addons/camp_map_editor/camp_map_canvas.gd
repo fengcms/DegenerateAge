@@ -46,12 +46,9 @@ func _ready() -> void:
 	_road = load(ROAD) as Texture2D
 	for tile: Dictionary in document.palette.get("tiles", []):
 		_ground_stamps[String(tile["id"])] = load(String(tile["path"])) as Texture2D
-	var maps: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps.json"))
-	if maps is Array:
-		for map_entry: Dictionary in maps:
-			if map_entry.get("id") == "camp":
-				_npc_cells = map_entry.get("npcs", [])
-				break
+	var camp: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/ch01/camp/map.json"))
+	if camp is Dictionary:
+		_npc_cells = camp.get("npcs", [])
 	resized.connect(queue_redraw)
 
 ## 应用新道路贴图后清除图像缓存，让编辑画布立即显示重建结果。

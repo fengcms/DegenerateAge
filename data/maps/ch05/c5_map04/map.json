@@ -1,0 +1,402 @@
+{
+  "id": "c5_map04",
+  "name": "裂舟坞",
+  "size": {
+    "w": 176,
+    "h": 99
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c5_map04.json",
+  "tierRange": [
+    46,
+    48
+  ],
+  "recommendedLevel": 46,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c5_map00",
+  "exits": [
+    {
+      "id": "c5_map04_exit01",
+      "label": "往渡火营道",
+      "cell": [
+        7,
+        50
+      ],
+      "toMap": "c5_map03",
+      "toEntrance": "from_c5_map04"
+    }
+  ],
+  "entrances": {
+    "from_c5_map03": [
+      7,
+      50
+    ]
+  },
+  "carterArrival": [
+    13,
+    50
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c5_normal07",
+      "level": 47,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          120,
+          8
+        ],
+        [
+          84,
+          28
+        ],
+        [
+          72,
+          40
+        ],
+        [
+          40,
+          80
+        ],
+        [
+          36,
+          12
+        ],
+        [
+          76,
+          84
+        ],
+        [
+          44,
+          8
+        ],
+        [
+          40,
+          8
+        ],
+        [
+          64,
+          52
+        ],
+        [
+          136,
+          72
+        ],
+        [
+          60,
+          72
+        ],
+        [
+          132,
+          24
+        ],
+        [
+          44,
+          72
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c5_normal08",
+      "level": 48,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          132,
+          92
+        ],
+        [
+          32,
+          80
+        ],
+        [
+          64,
+          4
+        ],
+        [
+          124,
+          12
+        ],
+        [
+          84,
+          36
+        ],
+        [
+          92,
+          32
+        ],
+        [
+          92,
+          20
+        ],
+        [
+          128,
+          88
+        ],
+        [
+          48,
+          4
+        ],
+        [
+          40,
+          72
+        ],
+        [
+          32,
+          56
+        ],
+        [
+          52,
+          4
+        ],
+        [
+          100,
+          48
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c5_normal09",
+      "level": 48,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          128,
+          76
+        ],
+        [
+          108,
+          84
+        ],
+        [
+          88,
+          92
+        ],
+        [
+          132,
+          28
+        ],
+        [
+          80,
+          40
+        ],
+        [
+          80,
+          32
+        ],
+        [
+          52,
+          72
+        ],
+        [
+          112,
+          76
+        ],
+        [
+          60,
+          92
+        ],
+        [
+          68,
+          40
+        ],
+        [
+          52,
+          92
+        ],
+        [
+          96,
+          24
+        ],
+        [
+          124,
+          56
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c5_normal01",
+      "level": 46,
+      "respawnTime": 18,
+      "count": 13,
+      "cells": [
+        [
+          60,
+          64
+        ],
+        [
+          100,
+          16
+        ],
+        [
+          88,
+          36
+        ],
+        [
+          124,
+          80
+        ],
+        [
+          68,
+          92
+        ],
+        [
+          76,
+          88
+        ],
+        [
+          32,
+          24
+        ],
+        [
+          52,
+          88
+        ],
+        [
+          88,
+          20
+        ],
+        [
+          80,
+          92
+        ],
+        [
+          128,
+          64
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          60,
+          60
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c5_normal03",
+      "level": 46,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          56,
+          68
+        ],
+        [
+          136,
+          88
+        ],
+        [
+          108,
+          88
+        ],
+        [
+          132,
+          36
+        ],
+        [
+          116,
+          92
+        ],
+        [
+          96,
+          84
+        ],
+        [
+          84,
+          40
+        ],
+        [
+          92,
+          12
+        ],
+        [
+          100,
+          88
+        ],
+        [
+          112,
+          56
+        ],
+        [
+          116,
+          60
+        ],
+        [
+          68,
+          16
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c5_elite04",
+      "level": 47,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          67,
+          30
+        ]
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c5_elite05",
+      "level": 48,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          93,
+          75
+        ]
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": {
+    "monsterId": "c5_boss02",
+    "level": 47,
+    "respawnTime": 600,
+    "count": 1,
+    "kind": "boss",
+    "tombstone": true,
+    "cells": [
+      [
+        151,
+        50
+      ]
+    ]
+  },
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "迟砚",
+      "cell": [
+        21,
+        50
+      ],
+      "npcId": "c5_npc10"
+    }
+  ],
+  "normalCap": 10,
+  "eliteCap": 2,
+  "bossCap": 1,
+  "carterFares": {
+    "c5_map00": 250
+  },
+  "desc": "搁浅异界舟骨环抱证人棚，可选巨兽在南侧封闭泊位。",
+  "requiresUnlock": "c5_access_04"
+}

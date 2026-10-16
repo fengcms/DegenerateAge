@@ -2,14 +2,15 @@ extends Node
 ## DataLoader — 数据加载与校验（单例 / Autoload）。
 ##
 ## 职责：
-##   1. 读取 res://data/ 下由 TABLES 登记的 JSON 配置表（见 docs/产品文档/10 数据配置与存档技术）。
+##   1. 读取 res://data/ 下由 TABLES 登记的 JSON 配置表；地图按 data/maps/index.json
+##      聚合各目录的 map.json（见 docs/产品文档/10 数据配置与存档技术）。
 ##      文案表 `localization.json` 由 `Localization` 独立加载，**不在此列**（B-P3-2：避免双份内存与漂移）。
 ##   2. 在启动时执行校验（ID 唯一 / 引用合法 / 等级范围），非法时明确报错而非静默。
 ## 数据全部文本可编辑——新增物品 / 怪物只需加 JSON 条目，无需改代码。
 
 const DATA_DIR := "res://data/"
 
-## 逻辑表名 -> 文件名。新增配置表在此登记。
+## 逻辑表名 -> 文件名；地图为单独的目录清单加载逻辑。
 const TABLES := {
 	"equipments": "equipments.json",
 	"equipmentRules": "equipmentRules.json",
@@ -26,8 +27,9 @@ const TABLES := {
 	"warehouse": "warehouse.json",
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",
-	"maps": "maps.json",
 }
+
+const MAP_INDEX := "res://data/maps/index.json"
 
 ## 需要做「ID 唯一」校验的表（数组型）。
 const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
@@ -61,13 +63,14 @@ func load_all() -> void:
 	errors.clear()
 	for key in TABLES.keys():
 		tables[key] = _load_json(DATA_DIR + TABLES[key])
+	tables["maps"] = _load_maps()
 	_build_index()
 	EventBus.data_loaded.emit()
 
 ## 按各表唯一键构建查表索引（仅数组表）。字典表本身即为键值表，无需另建。
 func _build_index() -> void:
 	_index.clear()
-	for key in TABLES.keys():
+	for key in tables.keys():
 		var t = tables.get(key)
 		if not (t is Array):
 			continue
@@ -96,6 +99,33 @@ func _load_json(path: String):
 		errors.append("JSON 解析失败（语法错误）：%s" % path)
 		return null
 	return parsed
+
+## 按地图清单读取各目录的 map.json，聚合为旧版 maps 数组接口。
+## 缺失、非法路径及目录 ID 不符时记录配置错误，避免静默丢地图。
+func _load_maps() -> Array:
+	var entries = _load_json(MAP_INDEX)
+	var result: Array = []
+	if not (entries is Array):
+		errors.append("地图索引必须是路径数组：%s" % MAP_INDEX)
+		return result
+	var seen := {}
+	for relative in entries:
+		if not (relative is String) or not relative.ends_with("/map.json") or relative.begins_with("/") or relative.contains(".."):
+			errors.append("非法地图索引路径：%s" % str(relative))
+			continue
+		var path: String = "res://data/maps/" + relative
+		var map_data = _load_json(path)
+		if not (map_data is Dictionary):
+			errors.append("地图配置必须是对象：%s" % path)
+			continue
+		var directory_id: String = relative.get_base_dir().get_file()
+		var map_id: String = String(map_data.get("id", ""))
+		if map_id != directory_id or seen.has(map_id):
+			errors.append("地图 ID 与目录不符或重复：%s" % path)
+			continue
+		seen[map_id] = true
+		result.append(map_data)
+	return result
 
 ## 取整表。
 func get_table(table_name: String) -> Variant:

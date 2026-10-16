@@ -2,10 +2,10 @@
 
 import json
 from pathlib import Path
+from map_catalog import load_maps, save_maps
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAPS_PATH = ROOT / "data/maps.json"
 REF_DIRS = (
     ROOT / "docs/游戏创意/第一章地图重设计示意图",
     ROOT / "docs/游戏创意/地图示意图",
@@ -70,9 +70,11 @@ def chapter_two_npcs(map_id, points):
 def main():
     """重建营地以外九张地图，保留现有营地白盒配置。"""
     refs = references()
-    maps = json.loads(MAPS_PATH.read_text())
+    maps = load_maps(ROOT)
     assert len(refs) == 10 and [entry["id"] for entry in maps[:4]] == [
         "camp", "wild_trial", "ash_land", "corruption_source"]
+    # 只重建第一、二章，保留后续章节地图配置及其索引顺序。
+    later_maps = maps[10:]
     maps = maps[:4]
     for entry in maps:
         # 正式营地已迁至矩形白盒事实源，避免旧参考覆盖其入口、尺寸和 NPC。
@@ -116,7 +118,7 @@ def main():
             entry["carterFare"] = {"spoke": 80, "hub": 200}
             entry["carterFares"] = {"camp": 200}
         maps.append(entry)
-    MAPS_PATH.write_text(json.dumps(maps, ensure_ascii=False, indent=2) + "\n")
+    save_maps(maps + later_maps, ROOT)
 
 
 if __name__ == "__main__":

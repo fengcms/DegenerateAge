@@ -4,10 +4,10 @@ import json
 import copy
 from collections import defaultdict
 from pathlib import Path
+from map_catalog import load_maps, save_maps
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAPS = ROOT / "data/maps.json"
 MONSTERS = ROOT / "data/monsters.json"
 TABLES = ROOT / "data/dropTables.json"
 POOLS = ROOT / "data/lootPools.json"
@@ -228,7 +228,7 @@ def build_mounts(existing):
 
 
 def main():
-    maps = json.loads(MAPS.read_text())
+    maps = load_maps(ROOT)
     monsters = [m for m in json.loads(MONSTERS.read_text()) if not m["id"].startswith("c2_")]
     tables = [t for t in json.loads(TABLES.read_text()) if not t["id"].startswith("DT_C2_")]
     refs = {d["id"]: d for path in REFS.glob("*-布局参考.json") for d in [json.loads(path.read_text())]}
@@ -238,7 +238,7 @@ def main():
         if entry["id"] in refs:
             build_spawns(entry, refs[entry["id"]])
     build_tables(tables)
-    MAPS.write_text(json.dumps(maps, ensure_ascii=False, indent=2) + "\n")
+    save_maps(maps, ROOT)
     MONSTERS.write_text(json.dumps(monsters, ensure_ascii=False, indent=2) + "\n")
     TABLES.write_text(json.dumps(tables, ensure_ascii=False, indent=2) + "\n")
     POOLS.write_text(json.dumps(build_pools(json.loads(POOLS.read_text())), ensure_ascii=False, indent=2) + "\n")

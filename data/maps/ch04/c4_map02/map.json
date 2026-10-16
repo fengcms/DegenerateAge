@@ -1,0 +1,448 @@
+{
+  "id": "c4_map02",
+  "name": "失声哨林",
+  "size": {
+    "w": 192,
+    "h": 108
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c4_map02.json",
+  "tierRange": [
+    34,
+    36
+  ],
+  "recommendedLevel": 34,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c4_map00",
+  "requiresUnlock": "c4_access_02",
+  "exits": [
+    {
+      "id": "c4_map02_exit01",
+      "label": "往倒根驿路",
+      "cell": [
+        8,
+        54
+      ],
+      "toMap": "c4_map01",
+      "toEntrance": "from_c4_map02"
+    },
+    {
+      "id": "c4_map02_exit02",
+      "label": "往观测站外环",
+      "cell": [
+        184,
+        54
+      ],
+      "toMap": "c4_map03",
+      "toEntrance": "from_c4_map02",
+      "requiresUnlock": "c4_access_03"
+    }
+  ],
+  "entrances": {
+    "from_c4_map01": [
+      8,
+      54
+    ],
+    "from_c4_map03": [
+      184,
+      54
+    ]
+  },
+  "carterArrival": [
+    14,
+    54
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c4_normal02",
+      "level": 34,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          60,
+          4
+        ],
+        [
+          136,
+          56
+        ],
+        [
+          60,
+          88
+        ],
+        [
+          44,
+          96
+        ],
+        [
+          88,
+          28
+        ],
+        [
+          36,
+          72
+        ],
+        [
+          116,
+          60
+        ],
+        [
+          52,
+          68
+        ],
+        [
+          88,
+          52
+        ],
+        [
+          132,
+          92
+        ],
+        [
+          100,
+          40
+        ],
+        [
+          88,
+          96
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c4_normal03",
+      "level": 34,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          76,
+          96
+        ],
+        [
+          108,
+          8
+        ],
+        [
+          40,
+          56
+        ],
+        [
+          124,
+          44
+        ],
+        [
+          88,
+          16
+        ],
+        [
+          56,
+          84
+        ],
+        [
+          88,
+          12
+        ],
+        [
+          136,
+          68
+        ],
+        [
+          128,
+          44
+        ],
+        [
+          36,
+          76
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          76,
+          4
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c4_normal04",
+      "level": 34,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          80,
+          36
+        ],
+        [
+          88,
+          20
+        ],
+        [
+          124,
+          96
+        ],
+        [
+          48,
+          16
+        ],
+        [
+          60,
+          28
+        ],
+        [
+          84,
+          8
+        ],
+        [
+          112,
+          92
+        ],
+        [
+          72,
+          24
+        ],
+        [
+          148,
+          28
+        ],
+        [
+          100,
+          104
+        ],
+        [
+          60,
+          8
+        ],
+        [
+          96,
+          8
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c4_normal05",
+      "level": 35,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          112,
+          40
+        ],
+        [
+          36,
+          20
+        ],
+        [
+          52,
+          12
+        ],
+        [
+          60,
+          20
+        ],
+        [
+          124,
+          48
+        ],
+        [
+          148,
+          20
+        ],
+        [
+          132,
+          88
+        ],
+        [
+          36,
+          24
+        ],
+        [
+          100,
+          44
+        ],
+        [
+          144,
+          100
+        ],
+        [
+          32,
+          84
+        ],
+        [
+          148,
+          40
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c4_normal06",
+      "level": 36,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          40,
+          96
+        ],
+        [
+          96,
+          48
+        ],
+        [
+          72,
+          12
+        ],
+        [
+          64,
+          72
+        ],
+        [
+          84,
+          96
+        ],
+        [
+          40,
+          24
+        ],
+        [
+          64,
+          96
+        ],
+        [
+          104,
+          96
+        ],
+        [
+          112,
+          96
+        ],
+        [
+          136,
+          64
+        ],
+        [
+          80,
+          4
+        ],
+        [
+          112,
+          52
+        ]
+      ],
+      "zone": 1
+    },
+    {
+      "monsterId": "c4_normal08",
+      "level": 36,
+      "respawnTime": 18,
+      "count": 12,
+      "cells": [
+        [
+          80,
+          100
+        ],
+        [
+          140,
+          68
+        ],
+        [
+          120,
+          52
+        ],
+        [
+          148,
+          92
+        ],
+        [
+          36,
+          68
+        ],
+        [
+          68,
+          56
+        ],
+        [
+          40,
+          100
+        ],
+        [
+          56,
+          80
+        ],
+        [
+          40,
+          60
+        ],
+        [
+          140,
+          88
+        ],
+        [
+          32,
+          16
+        ],
+        [
+          72,
+          32
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c4_elite02",
+      "level": 35,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          65,
+          32
+        ]
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c4_elite03",
+      "level": 36,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          110,
+          79
+        ]
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": {
+    "monsterId": "c4_boss01",
+    "level": 35,
+    "respawnTime": 600,
+    "count": 1,
+    "kind": "boss",
+    "tombstone": true,
+    "cells": [
+      [
+        165,
+        54
+      ]
+    ]
+  },
+  "npcs": [],
+  "normalCap": 10,
+  "eliteCap": 2,
+  "bossCap": 1,
+  "carterFares": {
+    "c4_map00": 250
+  },
+  "desc": "三座失声哨塔组成横向监听带，东端留给护林机关。"
+}

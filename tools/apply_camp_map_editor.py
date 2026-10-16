@@ -19,7 +19,7 @@ import build_camp_whitebox as whitebox
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data/map_art/camp_whitebox_v2.json"
-MAPS = ROOT / "data/maps.json"
+MAPS = ROOT / "data/maps/ch01/camp/map.json"
 LAYOUT = ROOT / "data/layouts/camp.json"
 ART = ROOT / "assets/maps/camp_style_full_b_v2"
 GROUND_PALETTE = ROOT / "data/map_art/camp_ground_palette.json"
@@ -215,8 +215,7 @@ def compiled_rows(source: dict) -> list[str]:
 
 def validate_fixed_targets(source: dict, rows: list[str]) -> None:
     """要求 NPC、入口、出口和出生点保留现有格，且各服务点仍从出生点可达。"""
-    maps = json.loads(MAPS.read_text())
-    camp = next(item for item in maps if item["id"] == "camp")
+    camp = json.loads(MAPS.read_text())
     targets = source["targets"]
     expected = {"shop": "shop", "quest": "elder", "blacksmith": "blacksmith",
                 "warehouse": "warehouse", "carter": "carter"}
@@ -275,7 +274,7 @@ def apply(draft_path: Path) -> None:
     validate_ground_patches(draft)
     rows = compiled_rows(draft)
     validate_fixed_targets(draft, rows)
-    paths = [SOURCE, MAPS, LAYOUT, *ART.glob("*.png"), ART / "manifest.json"]
+    paths = [SOURCE, MAPS, MAPS.parent / "README.md", LAYOUT, *ART.glob("*.png"), ART / "manifest.json"]
     backup = {path: path.read_bytes() for path in paths if path.is_file()}
     try:
         SOURCE.write_text(json.dumps(draft, ensure_ascii=False, indent=2) + "\n")

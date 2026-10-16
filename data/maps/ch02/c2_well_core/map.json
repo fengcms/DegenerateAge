@@ -1,0 +1,325 @@
+{
+  "id": "c2_well_core",
+  "name": "井心机室",
+  "size": {
+    "w": 208,
+    "h": 117
+  },
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/c2_well_core.json",
+  "tierRange": [
+    18,
+    20
+  ],
+  "recommendedLevel": 18,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c2_well_town",
+  "requiresUnlock": "c2_backup_furnace",
+  "exits": [
+    {
+      "id": "to_works",
+      "label": "回工坊下层",
+      "cell": [
+        5,
+        58
+      ],
+      "toMap": "c2_lower_works",
+      "toEntrance": "from_core"
+    }
+  ],
+  "entrances": {
+    "from_works": [
+      9,
+      58
+    ]
+  },
+  "carterArrival": [
+    18,
+    68
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c2_purple_parasite",
+      "level": 19,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          36,
+          58
+        ],
+        [
+          36,
+          55
+        ],
+        [
+          33,
+          58
+        ],
+        [
+          39,
+          58
+        ],
+        [
+          36,
+          61
+        ],
+        [
+          33,
+          55
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 18,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          39,
+          55
+        ],
+        [
+          33,
+          61
+        ],
+        [
+          39,
+          61
+        ],
+        [
+          36,
+          52
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 18,
+      "respawnTime": 15,
+      "count": 2,
+      "cells": [
+        [
+          30,
+          58
+        ],
+        [
+          42,
+          58
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_purple_parasite",
+      "level": 19,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          90,
+          23
+        ],
+        [
+          90,
+          20
+        ],
+        [
+          87,
+          23
+        ],
+        [
+          93,
+          23
+        ],
+        [
+          90,
+          26
+        ],
+        [
+          87,
+          20
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 18,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          93,
+          20
+        ],
+        [
+          87,
+          26
+        ],
+        [
+          93,
+          26
+        ],
+        [
+          90,
+          17
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 18,
+      "respawnTime": 15,
+      "count": 2,
+      "cells": [
+        [
+          84,
+          23
+        ],
+        [
+          96,
+          23
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_purple_parasite",
+      "level": 19,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          88,
+          99
+        ],
+        [
+          88,
+          96
+        ],
+        [
+          85,
+          99
+        ],
+        [
+          91,
+          99
+        ],
+        [
+          88,
+          102
+        ],
+        [
+          85,
+          96
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 18,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          91,
+          96
+        ],
+        [
+          85,
+          102
+        ],
+        [
+          91,
+          102
+        ],
+        [
+          88,
+          93
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 18,
+      "respawnTime": 15,
+      "count": 2,
+      "cells": [
+        [
+          82,
+          99
+        ],
+        [
+          94,
+          99
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Core_Normal"
+    },
+    {
+      "monsterId": "c2_elite_spirit_guard",
+      "level": 18,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        143,
+        23
+      ],
+      "kind": "elite",
+      "dropTableId": "DT_C2_Core_Elite"
+    },
+    {
+      "monsterId": "c2_elite_ash_leader",
+      "level": 18,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        143,
+        98
+      ],
+      "kind": "elite",
+      "dropTableId": "DT_C2_Core_Elite"
+    }
+  ],
+  "bossSpawn": {
+    "monsterId": "c2_boss_hundred_arm_extractor",
+    "level": 20,
+    "respawnTime": 600,
+    "count": 1,
+    "cell": [
+      177,
+      58
+    ],
+    "kind": "boss",
+    "tombstone": true,
+    "requiresUnlock": "c2_core_access",
+    "dropTableId": "DT_C2_Boss_Final"
+  },
+  "npcs": [
+    {
+      "role": "carter",
+      "npcName": "驿站车夫",
+      "cell": [
+        18,
+        65
+      ]
+    }
+  ]
+}

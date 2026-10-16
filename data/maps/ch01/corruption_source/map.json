@@ -1,0 +1,91 @@
+{
+  "id": "corruption_source",
+  "name": "腐化源头",
+  "size": {
+    "w": 160,
+    "h": 90
+  },
+  "tierRange": [
+    10,
+    10
+  ],
+  "safeZone": false,
+  "recommendedLevel": 10,
+  "kind": "spoke",
+  "hubId": "camp",
+  "carterFares": {
+    "camp": 170,
+    "wild_trial": 150,
+    "ash_land": 100
+  },
+  "requiresUnlock": "",
+  "exits": [
+    {
+      "id": "to_ash",
+      "label": "回灰烬之地",
+      "cell": [
+        4,
+        45
+      ],
+      "toMap": "ash_land",
+      "toEntrance": "from_source"
+    }
+  ],
+  "entrances": {
+    "from_ash": [
+      8,
+      45
+    ]
+  },
+  "carterArrival": [
+    14,
+    52
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "shellback_bug",
+      "level": 10,
+      "respawnTime": 60,
+      "count": 5
+    },
+    {
+      "monsterId": "ash_wraith",
+      "level": 10,
+      "respawnTime": 60,
+      "count": 3
+    },
+    {
+      "monsterId": "elite_ash_wraith",
+      "level": 10,
+      "respawnTime": 120,
+      "count": 2,
+      "kind": "elite"
+    },
+    {
+      "monsterId": "elite_shellback_bug",
+      "level": 10,
+      "respawnTime": 120,
+      "count": 2,
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": {
+    "monsterId": "boss_corrupted_beast",
+    "level": 10,
+    "respawnTime": 300,
+    "tombstone": true
+  },
+  "npcs": [
+    {
+      "role": "carter",
+      "npcName": "车夫",
+      "cell": [
+        14,
+        49
+      ]
+    }
+  ],
+  "desc": "第一章 Boss 区，8 只普通怪、4 只精英怪及腐化巨兽；Boss 死亡生成墓碑倒计时。",
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/corruption_source.json"
+}

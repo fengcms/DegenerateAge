@@ -1,0 +1,108 @@
+{
+  "id": "ash_land",
+  "name": "灰烬之地",
+  "size": {
+    "w": 192,
+    "h": 108
+  },
+  "tierRange": [
+    5,
+    9
+  ],
+  "safeZone": false,
+  "recommendedLevel": 6,
+  "kind": "spoke",
+  "hubId": "camp",
+  "carterFares": {
+    "camp": 70,
+    "wild_trial": 50,
+    "corruption_source": 100
+  },
+  "requiresUnlock": "",
+  "exits": [
+    {
+      "id": "to_wild",
+      "label": "回试炼野外",
+      "cell": [
+        5,
+        54
+      ],
+      "toMap": "wild_trial",
+      "toEntrance": "from_ash"
+    },
+    {
+      "id": "to_source",
+      "label": "往腐化源头",
+      "cell": [
+        187,
+        54
+      ],
+      "toMap": "corruption_source",
+      "toEntrance": "from_ash"
+    }
+  ],
+  "entrances": {
+    "from_wild": [
+      9,
+      54
+    ],
+    "from_source": [
+      183,
+      54
+    ]
+  },
+  "carterArrival": [
+    17,
+    61
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "ash_wraith",
+      "level": 6,
+      "respawnTime": 45,
+      "count": 3
+    },
+    {
+      "monsterId": "shellback_bug",
+      "level": 7,
+      "respawnTime": 45,
+      "count": 3
+    },
+    {
+      "monsterId": "elite_ash_wraith",
+      "level": 8,
+      "respawnTime": 120,
+      "count": 1,
+      "kind": "elite"
+    },
+    {
+      "monsterId": "elite_shellback_bug",
+      "level": 9,
+      "respawnTime": 120,
+      "count": 1,
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "shop",
+      "shopId": "peddler_ash",
+      "cell": [
+        20,
+        58
+      ]
+    },
+    {
+      "role": "carter",
+      "npcName": "车夫",
+      "cell": [
+        17,
+        58
+      ]
+    }
+  ],
+  "desc": "第一章中间图，6 只普通怪与 2 只精英怪，远程怪登场。",
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/ash_land.json"
+}

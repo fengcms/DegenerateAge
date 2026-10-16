@@ -1,0 +1,153 @@
+{
+  "id": "camp",
+  "name": "幸存者营地",
+  "size": {
+    "w": 110,
+    "h": 110
+  },
+  "tierRange": [
+    1,
+    1
+  ],
+  "safeZone": true,
+  "safeArea": {
+    "min": [
+      43,
+      33
+    ],
+    "max": [
+      75,
+      79
+    ]
+  },
+  "recommendedLevel": 1,
+  "kind": "hub",
+  "hubId": "camp",
+  "hubLinks": [
+    "c2_well_town"
+  ],
+  "carterFare": {
+    "spoke": 50,
+    "hub": 150
+  },
+  "carterFares": {
+    "wild_trial": 0,
+    "ash_land": 50,
+    "corruption_source": 150,
+    "c2_well_town": 200
+  },
+  "requiresUnlock": "",
+  "exits": [
+    {
+      "id": "to_wild",
+      "label": "往试炼野外",
+      "cell": [
+        79,
+        31
+      ],
+      "toMap": "wild_trial",
+      "toEntrance": "from_camp"
+    },
+    {
+      "id": "to_c2",
+      "label": "往沉井镇",
+      "cell": [
+        81,
+        81
+      ],
+      "toMap": "c2_well_town",
+      "toEntrance": "from_camp"
+    }
+  ],
+  "entrances": {
+    "from_wild": [
+      76,
+      33
+    ],
+    "from_c2": [
+      76,
+      77
+    ]
+  },
+  "carterArrival": [
+    42,
+    30
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "training_dummy",
+      "level": 1,
+      "respawnTime": 20,
+      "count": 3,
+      "ai": false,
+      "cells": [
+        [
+          36,
+          51
+        ],
+        [
+          38,
+          47
+        ],
+        [
+          41,
+          46
+        ]
+      ]
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "shop",
+      "shopId": "peddler_camp",
+      "cell": [
+        43,
+        63
+      ]
+    },
+    {
+      "role": "quest",
+      "npcId": "elder",
+      "npcName": "长老",
+      "cell": [
+        64,
+        48
+      ]
+    },
+    {
+      "role": "blacksmith",
+      "npcName": "铁匠",
+      "greeting": "炉火还旺。带上装备和金币，我替你试试升星。",
+      "cell": [
+        49,
+        78
+      ]
+    },
+    {
+      "role": "warehouse",
+      "npcName": "仓库管理员",
+      "cell": [
+        72,
+        56
+      ]
+    },
+    {
+      "role": "carter",
+      "npcName": "车夫",
+      "cell": [
+        46,
+        33
+      ]
+    }
+  ],
+  "desc": "营地 NPC 周围为矩形安全区；区外可以战斗。",
+  "layoutVersion": "2026-10-16-camp-open-perimeter-v2",
+  "layoutPath": "res://data/layouts/camp.json",
+  "worldRect": [
+    -1600,
+    -2660,
+    3200,
+    1800
+  ]
+}

@@ -1,0 +1,930 @@
+{
+  "id": "c2_lower_works",
+  "name": "工坊下层",
+  "size": {
+    "w": 240,
+    "h": 135
+  },
+  "layoutVersion": "2026-10-14-landscape-v2",
+  "layoutPath": "res://data/layouts/c2_lower_works.json",
+  "tierRange": [
+    15,
+    18
+  ],
+  "recommendedLevel": 15,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c2_well_town",
+  "requiresUnlock": "chapter2",
+  "exits": [
+    {
+      "id": "to_well",
+      "label": "回旧汲灵井",
+      "cell": [
+        6,
+        68
+      ],
+      "toMap": "c2_old_well",
+      "toEntrance": "from_works"
+    },
+    {
+      "id": "to_core",
+      "label": "往井心机室",
+      "cell": [
+        234,
+        68
+      ],
+      "toMap": "c2_well_core",
+      "toEntrance": "from_works"
+    },
+    {
+      "id": "to_furnace",
+      "label": "往余烬炉房",
+      "cell": [
+        136,
+        129
+      ],
+      "toMap": "c2_ember_furnace",
+      "toEntrance": "from_works"
+    }
+  ],
+  "entrances": {
+    "from_well": [
+      10,
+      68
+    ],
+    "from_furnace": [
+      136,
+      125
+    ],
+    "from_core": [
+      230,
+      68
+    ]
+  },
+  "carterArrival": [
+    22,
+    75
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 7,
+      "cells": [
+        [
+          40,
+          44
+        ],
+        [
+          40,
+          41
+        ],
+        [
+          37,
+          44
+        ],
+        [
+          43,
+          44
+        ],
+        [
+          40,
+          47
+        ],
+        [
+          37,
+          41
+        ],
+        [
+          43,
+          41
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_badge_wraith",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          37,
+          47
+        ],
+        [
+          43,
+          47
+        ],
+        [
+          40,
+          38
+        ],
+        [
+          34,
+          44
+        ],
+        [
+          46,
+          44
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          40,
+          50
+        ],
+        [
+          37,
+          38
+        ],
+        [
+          43,
+          38
+        ],
+        [
+          34,
+          41
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 3,
+      "cells": [
+        [
+          46,
+          41
+        ],
+        [
+          34,
+          47
+        ],
+        [
+          46,
+          47
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 1,
+      "cells": [
+        [
+          37,
+          50
+        ]
+      ],
+      "zone": "A",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 7,
+      "cells": [
+        [
+          111,
+          22
+        ],
+        [
+          111,
+          19
+        ],
+        [
+          108,
+          22
+        ],
+        [
+          114,
+          22
+        ],
+        [
+          111,
+          25
+        ],
+        [
+          108,
+          19
+        ],
+        [
+          114,
+          19
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_badge_wraith",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          108,
+          25
+        ],
+        [
+          114,
+          25
+        ],
+        [
+          111,
+          16
+        ],
+        [
+          105,
+          22
+        ],
+        [
+          117,
+          22
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          111,
+          28
+        ],
+        [
+          108,
+          16
+        ],
+        [
+          114,
+          16
+        ],
+        [
+          105,
+          19
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 3,
+      "cells": [
+        [
+          117,
+          19
+        ],
+        [
+          105,
+          25
+        ],
+        [
+          117,
+          25
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 1,
+      "cells": [
+        [
+          108,
+          28
+        ]
+      ],
+      "zone": "B",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 7,
+      "cells": [
+        [
+          202,
+          46
+        ],
+        [
+          202,
+          43
+        ],
+        [
+          199,
+          46
+        ],
+        [
+          205,
+          46
+        ],
+        [
+          202,
+          49
+        ],
+        [
+          199,
+          43
+        ],
+        [
+          205,
+          43
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_badge_wraith",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          199,
+          49
+        ],
+        [
+          205,
+          49
+        ],
+        [
+          202,
+          40
+        ],
+        [
+          196,
+          46
+        ],
+        [
+          208,
+          46
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          202,
+          52
+        ],
+        [
+          199,
+          40
+        ],
+        [
+          205,
+          40
+        ],
+        [
+          196,
+          43
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 3,
+      "cells": [
+        [
+          208,
+          43
+        ],
+        [
+          196,
+          49
+        ],
+        [
+          208,
+          49
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          199,
+          52
+        ],
+        [
+          205,
+          52
+        ],
+        [
+          196,
+          40
+        ],
+        [
+          208,
+          40
+        ],
+        [
+          196,
+          52
+        ]
+      ],
+      "zone": "C",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 7,
+      "cells": [
+        [
+          116,
+          66
+        ],
+        [
+          116,
+          63
+        ],
+        [
+          113,
+          66
+        ],
+        [
+          119,
+          66
+        ],
+        [
+          116,
+          69
+        ],
+        [
+          113,
+          63
+        ],
+        [
+          119,
+          63
+        ]
+      ],
+      "zone": "D",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_badge_wraith",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 5,
+      "cells": [
+        [
+          113,
+          69
+        ],
+        [
+          119,
+          69
+        ],
+        [
+          116,
+          60
+        ],
+        [
+          110,
+          66
+        ],
+        [
+          122,
+          66
+        ]
+      ],
+      "zone": "D",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          116,
+          72
+        ],
+        [
+          113,
+          60
+        ],
+        [
+          119,
+          60
+        ],
+        [
+          110,
+          63
+        ]
+      ],
+      "zone": "D",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 3,
+      "cells": [
+        [
+          122,
+          63
+        ],
+        [
+          110,
+          69
+        ],
+        [
+          122,
+          69
+        ]
+      ],
+      "zone": "D",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 1,
+      "cells": [
+        [
+          113,
+          72
+        ]
+      ],
+      "zone": "D",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          54,
+          105
+        ],
+        [
+          54,
+          102
+        ],
+        [
+          51,
+          105
+        ],
+        [
+          57,
+          105
+        ],
+        [
+          54,
+          108
+        ],
+        [
+          51,
+          102
+        ]
+      ],
+      "zone": "E",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_badge_wraith",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          57,
+          102
+        ],
+        [
+          51,
+          108
+        ],
+        [
+          57,
+          108
+        ],
+        [
+          54,
+          99
+        ],
+        [
+          48,
+          105
+        ],
+        [
+          60,
+          105
+        ]
+      ],
+      "zone": "E",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          54,
+          111
+        ],
+        [
+          51,
+          99
+        ],
+        [
+          57,
+          99
+        ],
+        [
+          48,
+          102
+        ]
+      ],
+      "zone": "E",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 2,
+      "cells": [
+        [
+          60,
+          102
+        ],
+        [
+          48,
+          108
+        ]
+      ],
+      "zone": "E",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 2,
+      "cells": [
+        [
+          60,
+          108
+        ],
+        [
+          51,
+          111
+        ]
+      ],
+      "zone": "E",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_broken_guard",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          156,
+          112
+        ],
+        [
+          156,
+          109
+        ],
+        [
+          153,
+          112
+        ],
+        [
+          159,
+          112
+        ],
+        [
+          156,
+          115
+        ],
+        [
+          153,
+          109
+        ]
+      ],
+      "zone": "F",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_badge_wraith",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          159,
+          109
+        ],
+        [
+          153,
+          115
+        ],
+        [
+          159,
+          115
+        ],
+        [
+          156,
+          106
+        ],
+        [
+          150,
+          112
+        ],
+        [
+          162,
+          112
+        ]
+      ],
+      "zone": "F",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_slag_leech",
+      "level": 15,
+      "respawnTime": 15,
+      "count": 4,
+      "cells": [
+        [
+          156,
+          118
+        ],
+        [
+          153,
+          106
+        ],
+        [
+          159,
+          106
+        ],
+        [
+          150,
+          109
+        ]
+      ],
+      "zone": "F",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_spirit_attendant",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 2,
+      "cells": [
+        [
+          162,
+          109
+        ],
+        [
+          150,
+          115
+        ]
+      ],
+      "zone": "F",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_ash_beast",
+      "level": 17,
+      "respawnTime": 15,
+      "count": 6,
+      "cells": [
+        [
+          162,
+          115
+        ],
+        [
+          153,
+          118
+        ],
+        [
+          159,
+          118
+        ],
+        [
+          150,
+          106
+        ],
+        [
+          162,
+          106
+        ],
+        [
+          150,
+          118
+        ]
+      ],
+      "zone": "F",
+      "dropTableId": "DT_C2_Industrial_Normal"
+    },
+    {
+      "monsterId": "c2_elite_broken_inspector",
+      "level": 15,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        45,
+        87
+      ],
+      "kind": "elite",
+      "dropTableId": "DT_C2_Industrial_Elite"
+    },
+    {
+      "monsterId": "c2_elite_gray_scribe",
+      "level": 17,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        186,
+        20
+      ],
+      "kind": "elite",
+      "dropTableId": "DT_C2_Industrial_Elite"
+    },
+    {
+      "monsterId": "c2_elite_ash_leader",
+      "level": 18,
+      "respawnTime": 120,
+      "count": 1,
+      "cell": [
+        214,
+        116
+      ],
+      "kind": "elite",
+      "dropTableId": "DT_C2_Industrial_Elite"
+    }
+  ],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "carter",
+      "npcName": "驿站车夫",
+      "cell": [
+        22,
+        72
+      ]
+    }
+  ]
+}

@@ -86,7 +86,8 @@ class CampMapEditorApplyTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="camp-editor-apply-") as folder:
             root = Path(folder)
             files = ["data/map_art/camp_whitebox_v2.json", "data/map_art/camp_ground_palette.json",
-                     "data/maps.json", "data/layouts/camp.json", "tools/build_camp_whitebox.py",
+                     "data/maps/index.json", "data/maps/ch01/camp/map.json",
+                     "data/maps/ch01/camp/README.md", "data/layouts/camp.json", "tools/map_catalog.py", "tools/build_camp_whitebox.py",
                      "tools/build_camp_style_full_b_v2.py", "tools/build_camp_style_sample.py"]
             directories = ["art_source/environment/camp_style_full_b",
                            "art_source/environment/camp_style_full_b_v2",
@@ -95,6 +96,7 @@ class CampMapEditorApplyTest(unittest.TestCase):
                 destination = root / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(ROOT / relative, destination)
+            (root / "data/maps/index.json").write_text('["ch01/camp/map.json"]\n')
             for relative in directories:
                 shutil.copytree(ROOT / relative, root / relative)
             source = root / "data/map_art/camp_whitebox_v2.json"
@@ -105,7 +107,7 @@ class CampMapEditorApplyTest(unittest.TestCase):
             draft_path.write_text(json.dumps({"base_hash": hashlib.sha256(source.read_bytes()).hexdigest(),
                                               "layout": draft}, ensure_ascii=False))
             with mock.patch.multiple(editor_apply, ROOT=root, SOURCE=source,
-                                     MAPS=root / "data/maps.json", LAYOUT=root / "data/layouts/camp.json",
+                                     MAPS=root / "data/maps/ch01/camp/map.json", LAYOUT=root / "data/layouts/camp.json",
                                      ART=root / "assets/maps/camp_style_full_b_v2",
                                      GROUND_PALETTE=root / "data/map_art/camp_ground_palette.json"):
                 editor_apply.apply(draft_path)

@@ -1,0 +1,175 @@
+{
+  "id": "c5_map00",
+  "name": "断旗关",
+  "size": {
+    "w": 96,
+    "h": 54
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c5_map00.json",
+  "tierRange": [
+    41,
+    41
+  ],
+  "recommendedLevel": 41,
+  "safeZone": true,
+  "kind": "hub",
+  "hubId": "c5_map00",
+  "requiresUnlock": "chapter5",
+  "exits": [
+    {
+      "id": "c5_map00_exit01",
+      "label": "回根驿营地",
+      "cell": [
+        4,
+        27
+      ],
+      "toMap": "c4_map00",
+      "toEntrance": "from_c5_map00"
+    },
+    {
+      "id": "c5_map00_exit02",
+      "label": "往折旗长堤",
+      "cell": [
+        92,
+        27
+      ],
+      "toMap": "c5_map01",
+      "toEntrance": "from_c5_map00"
+    },
+    {
+      "id": "c5_map00_exit03",
+      "label": "往镇脉前哨",
+      "cell": [
+        54,
+        3
+      ],
+      "toMap": "c6_map00",
+      "toEntrance": "from_c5_map00",
+      "requiresUnlock": "chapter6"
+    }
+  ],
+  "entrances": {
+    "from_c4_map00": [
+      4,
+      27
+    ],
+    "from_c5_map01": [
+      92,
+      27
+    ],
+    "from_c6_map00": [
+      54,
+      3
+    ]
+  },
+  "carterArrival": [
+    10,
+    27
+  ],
+  "spawnPoints": [],
+  "bossSpawn": null,
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "韩照",
+      "cell": [
+        33,
+        22
+      ],
+      "npcId": "c5_npc01"
+    },
+    {
+      "role": "blacksmith",
+      "npcName": "钟砾",
+      "cell": [
+        42,
+        22
+      ],
+      "npcId": "c5_npc02",
+      "greeting": "锋口可以再磨，担架不能再断。"
+    },
+    {
+      "role": "shop",
+      "npcName": "柳货",
+      "cell": [
+        52,
+        22
+      ],
+      "npcId": "c5_npc03",
+      "shopId": "c5_peddler"
+    },
+    {
+      "role": "warehouse",
+      "npcName": "任筹",
+      "cell": [
+        61,
+        22
+      ],
+      "npcId": "c5_npc04"
+    },
+    {
+      "role": "shop",
+      "npcName": "温缄",
+      "cell": [
+        33,
+        35
+      ],
+      "npcId": "c5_npc05",
+      "shopId": "c5_apothecary"
+    },
+    {
+      "role": "carter",
+      "npcName": "陆辕",
+      "cell": [
+        42,
+        35
+      ],
+      "npcId": "c5_npc06"
+    },
+    {
+      "role": "quest",
+      "npcName": "穆禾",
+      "cell": [
+        52,
+        35
+      ],
+      "npcId": "c5_npc07"
+    },
+    {
+      "role": "quest",
+      "npcName": "裴炬",
+      "cell": [
+        61,
+        35
+      ],
+      "npcId": "c5_npc08"
+    }
+  ],
+  "normalCap": 0,
+  "eliteCap": 0,
+  "bossCap": 0,
+  "safeArea": {
+    "min": [
+      0,
+      0
+    ],
+    "max": [
+      95,
+      53
+    ]
+  },
+  "hubLinks": [
+    "c4_map00",
+    "c6_map00"
+  ],
+  "carterFare": {
+    "spoke": 150,
+    "hub": 400
+  },
+  "carterFares": {
+    "c4_map00": 500,
+    "c6_map00": 600
+  },
+  "desc": "第五章安全枢纽，八个服务/故事点集中在中街，无常态刷怪。"
+}

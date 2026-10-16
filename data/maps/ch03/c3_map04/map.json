@@ -1,0 +1,483 @@
+{
+  "id": "c3_map04",
+  "name": "沉沙库庭",
+  "size": {
+    "w": 176,
+    "h": 99
+  },
+  "layoutVersion": "2026-10-15-content-v1",
+  "layoutPath": "res://data/layouts/c3_map04.json",
+  "tierRange": [
+    28,
+    29
+  ],
+  "recommendedLevel": 28,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c3_map00",
+  "requiresUnlock": "c3_access_04",
+  "exits": [
+    {
+      "id": "c3_map04_exit01",
+      "label": "回旱井旧坊",
+      "cell": [
+        7,
+        50
+      ],
+      "toMap": "c3_map03",
+      "toEntrance": "from_c3_map04"
+    }
+  ],
+  "entrances": {
+    "from_c3_map03": [
+      7,
+      50
+    ]
+  },
+  "carterArrival": [
+    13,
+    50
+  ],
+  "spawnPoints": [
+    {
+      "monsterId": "c3_normal07",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 5,
+      "cells": [
+        [
+          112,
+          40
+        ],
+        [
+          104,
+          4
+        ],
+        [
+          124,
+          48
+        ],
+        [
+          100,
+          44
+        ],
+        [
+          88,
+          40
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c3_normal08",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 8,
+      "cells": [
+        [
+          72,
+          60
+        ],
+        [
+          72,
+          68
+        ],
+        [
+          64,
+          88
+        ],
+        [
+          56,
+          76
+        ],
+        [
+          84,
+          20
+        ],
+        [
+          64,
+          84
+        ],
+        [
+          76,
+          20
+        ],
+        [
+          48,
+          80
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c3_normal01",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 3,
+      "cells": [
+        [
+          136,
+          60
+        ],
+        [
+          132,
+          40
+        ],
+        [
+          132,
+          32
+        ]
+      ],
+      "zone": 4
+    },
+    {
+      "monsterId": "c3_normal02",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 6,
+      "cells": [
+        [
+          52,
+          68
+        ],
+        [
+          84,
+          80
+        ],
+        [
+          48,
+          60
+        ],
+        [
+          52,
+          76
+        ],
+        [
+          68,
+          24
+        ],
+        [
+          60,
+          76
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c3_normal07",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 10,
+      "cells": [
+        [
+          64,
+          20
+        ],
+        [
+          84,
+          4
+        ],
+        [
+          80,
+          48
+        ],
+        [
+          68,
+          56
+        ],
+        [
+          52,
+          56
+        ],
+        [
+          76,
+          4
+        ],
+        [
+          56,
+          72
+        ],
+        [
+          56,
+          68
+        ],
+        [
+          56,
+          84
+        ],
+        [
+          68,
+          72
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c3_normal08",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 1,
+      "cells": [
+        [
+          32,
+          76
+        ]
+      ],
+      "zone": 1
+    },
+    {
+      "monsterId": "c3_normal01",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 3,
+      "cells": [
+        [
+          40,
+          92
+        ],
+        [
+          40,
+          60
+        ],
+        [
+          36,
+          48
+        ]
+      ],
+      "zone": 1
+    },
+    {
+      "monsterId": "c3_normal02",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 8,
+      "cells": [
+        [
+          96,
+          44
+        ],
+        [
+          100,
+          20
+        ],
+        [
+          128,
+          64
+        ],
+        [
+          108,
+          28
+        ],
+        [
+          120,
+          64
+        ],
+        [
+          88,
+          28
+        ],
+        [
+          100,
+          24
+        ],
+        [
+          88,
+          24
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c3_normal07",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 1,
+      "cells": [
+        [
+          136,
+          4
+        ]
+      ],
+      "zone": 4
+    },
+    {
+      "monsterId": "c3_normal08",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 6,
+      "cells": [
+        [
+          116,
+          36
+        ],
+        [
+          100,
+          16
+        ],
+        [
+          96,
+          12
+        ],
+        [
+          124,
+          8
+        ],
+        [
+          92,
+          40
+        ],
+        [
+          124,
+          72
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c3_normal01",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 8,
+      "cells": [
+        [
+          116,
+          8
+        ],
+        [
+          96,
+          28
+        ],
+        [
+          104,
+          32
+        ],
+        [
+          92,
+          88
+        ],
+        [
+          120,
+          52
+        ],
+        [
+          100,
+          92
+        ],
+        [
+          108,
+          8
+        ],
+        [
+          100,
+          40
+        ]
+      ],
+      "zone": 3
+    },
+    {
+      "monsterId": "c3_normal08",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 1,
+      "cells": [
+        [
+          132,
+          72
+        ]
+      ],
+      "zone": 4
+    },
+    {
+      "monsterId": "c3_normal02",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 2,
+      "cells": [
+        [
+          40,
+          8
+        ],
+        [
+          40,
+          84
+        ]
+      ],
+      "zone": 1
+    },
+    {
+      "monsterId": "c3_normal01",
+      "level": 28,
+      "respawnTime": 18,
+      "count": 2,
+      "cells": [
+        [
+          84,
+          48
+        ],
+        [
+          44,
+          20
+        ]
+      ],
+      "zone": 2
+    },
+    {
+      "monsterId": "c3_elite04",
+      "level": 28,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          58,
+          21
+        ]
+      ],
+      "kind": "elite"
+    },
+    {
+      "monsterId": "c3_elite01",
+      "level": 28,
+      "respawnTime": 90,
+      "count": 1,
+      "cells": [
+        [
+          100,
+          81
+        ]
+      ],
+      "kind": "elite"
+    }
+  ],
+  "bossSpawn": {
+    "monsterId": "c3_boss02",
+    "level": 28,
+    "respawnTime": 600,
+    "count": 1,
+    "kind": "boss",
+    "tombstone": true,
+    "cells": [
+      [
+        151,
+        50
+      ]
+    ]
+  },
+  "npcs": [
+    {
+      "role": "quest",
+      "npcName": "陈榆",
+      "cell": [
+        21,
+        50
+      ],
+      "npcId": "c3_npc10"
+    }
+  ],
+  "normalCap": 10,
+  "eliteCap": 2,
+  "bossCap": 1,
+  "carterFares": {
+    "c3_map00": 250
+  },
+  "desc": "两座半埋库房围出环路，北侧证人亭与南侧首领分离。"
+}
