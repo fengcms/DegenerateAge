@@ -1,0 +1,10 @@
+{
+  "id": "wolf_corrupted",
+  "renderer": "sample_atlas",
+  "main": "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png",
+  "walk": "res://assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png",
+  "pivot": [
+    40,
+    64
+  ]
+}

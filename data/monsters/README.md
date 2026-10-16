@@ -6,4 +6,4 @@
 
 生成器使用 `tools/monster_catalog.py::load_chapter` / `save_chapter`，只更新所属章节及其 README 清单。手工编辑后运行 `python3 tools/check_monster_catalog.py`；清单不一致时可调用同模块的 `refresh_readme` 同步，人工说明仍需维护。
 
-怪物数值与掉落规则属于此处；表现资源与动作元数据将独立放在 `data/monster_appearances/`。战斗伤害、技能冷却不应放进美术档案。
+怪物数值与掉落规则属于此处；每只怪物用 `appearanceId` 引用 `data/monster_appearances/` 的表现档案，多只怪物可以共用一个外观。战斗伤害、技能冷却不应放进美术档案。

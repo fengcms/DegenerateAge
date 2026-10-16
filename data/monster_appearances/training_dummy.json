@@ -1,0 +1,11 @@
+{
+  "id": "training_dummy",
+  "renderer": "static_atlas",
+  "texture": "res://assets/sprites/monsters/training_dummy/dummy_atlas.png",
+  "hframes": 3,
+  "offset": [
+    -32,
+    -64
+  ],
+  "headHpY": -70
+}

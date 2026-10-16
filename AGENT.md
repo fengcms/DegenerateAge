@@ -53,6 +53,7 @@ Godot 的 `_draw()` 命令缓存只避免反复执行绘制脚本，不等于减
 - 具体怪物模板位于 `data/monsters/chNN/monsters.json`；`data/monsters/index.json` 登记章节读取顺序。`DataLoader` 聚合为原 `monsters` 表，地图、任务和存档继续按稳定怪物 ID 引用。章节归属按设计归属，不因其他地图的刷新等级覆盖而复制或移动模板。
 - **每次编辑章节怪物必须同步该章 `README.md`。** 名称、等级、类型、掉落和增删怪物由 `tools/monster_catalog.py::save_chapter` 同步清单标记区；人工维护的用途、行为、数值设计理由在标记外更新。不要把说明文件当作运行数据源，JSON 不写注释。
 - 新增章节应建立配置与 README 并登记索引；跨章节 ID 不得重复。构建工具应使用 `tools/monster_catalog.py` 读写，不直接读旧 `data/monsters.json`。提交前运行 `python3 tools/check_monster_catalog.py` 及受影响的战斗、地图刷新、任务与掉落测试。
+- 怪物模板用 `appearanceId` 引用 `data/monster_appearances/<外观 ID>.json`；表现清单见同目录 `index.json` 与 `README.md`。同一外观可以供多个怪物使用，图集和动画只登记一次。改外观、动作、锚点或头顶血条位置时同步外观档案及说明；战斗伤害、冷却、经验与掉落保留在怪物/能力规则中，不混入美术档案。未接入正式美术时显式引用 `placeholder`。
 
 - 地形显示、可通行掩码、寻路和碰撞使用同一布局事实源。地图尺寸、入口、出口、刷新格、Boss 场地和门禁必须一致。
 - 地图面积增加不应直接放大每帧的全图脚本扫描、节点更新和绘制调用。静态数据在加载阶段准备；局部变化更新对应缓存。

@@ -60,11 +60,12 @@ def load_monsters(root: Path = ROOT) -> list[dict]:
 
 def list_section(rows: list[dict]) -> str:
     """生成章节 README 的怪物清单区，数值仅供浏览并以 JSON 为准。"""
-    lines = [START, "", "| ID | 名称 | 模板等级 | 类型 | 掉落表 |", "|---|---|---:|---|---|"]
+    lines = [START, "", "| ID | 名称 | 模板等级 | 类型 | 掉落表 | 外观 ID |", "|---|---|---:|---|---|---|"]
     for row in rows:
         values = (str(row.get("id", "")), str(row.get("name", "")), str(row.get("level", "")),
-                  KINDS.get(str(row.get("kind", "normal")), str(row.get("kind", "normal"))), str(row.get("dropTableId", "")))
-        lines.append("| `%s` | %s | %s | %s | `%s` |" % values)
+                  KINDS.get(str(row.get("kind", "normal")), str(row.get("kind", "normal"))), str(row.get("dropTableId", "")),
+                  str(row.get("appearanceId", "")))
+        lines.append("| `%s` | %s | %s | %s | `%s` | `%s` |" % values)
     lines += ["", END]
     return "\n".join(lines)
 

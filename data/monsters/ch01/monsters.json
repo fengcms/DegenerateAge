@@ -2,7 +2,6 @@
   {
     "id": "training_dummy",
     "name": "木桩怪",
-    "headHpY": -64,
     "tier": 1,
     "level": 1,
     "hpBase": 50,
@@ -25,7 +24,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 0,
-    "desc": "安全区内的教学木桩，不反击、无掉落。"
+    "desc": "安全区内的教学木桩，不反击、无掉落。",
+    "appearanceId": "training_dummy"
   },
   {
     "id": "wolf_corrupted",
@@ -53,7 +53,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第一章近战普通怪，行动快、血薄。"
+    "desc": "第一章近战普通怪，行动快、血薄。",
+    "appearanceId": "wolf_corrupted"
   },
   {
     "id": "shellback_bug",
@@ -81,7 +82,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 0.6,
-    "desc": "高防型普通怪，贯穿多张地图、按刷新等级自动缩放 HP。专属掉落表必掉灵能碎片（Q003 收集物来源）。"
+    "desc": "高防型普通怪，贯穿多张地图、按刷新等级自动缩放 HP。专属掉落表必掉灵能碎片（Q003 收集物来源）。",
+    "appearanceId": "shellback_bug"
   },
   {
     "id": "ash_wraith",
@@ -109,7 +111,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 0.8,
-    "desc": "远程普通怪，保持距离攻击。"
+    "desc": "远程普通怪，保持距离攻击。",
+    "appearanceId": "ash_wraith"
   },
   {
     "id": "elite_ash_wraith",
@@ -149,7 +152,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "elite_ash_wraith"
   },
   {
     "id": "elite_shellback_bug",
@@ -189,7 +193,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "elite_shellback_bug"
   },
   {
     "id": "elite_wolf_king",
@@ -229,7 +234,8 @@
     ],
     "bossSkill": null,
     "spawnWeight": 0.0,
-    "desc": "第一章精英怪，高血量 + 特殊攻击（减速），掉优奖。"
+    "desc": "第一章精英怪，高血量 + 特殊攻击（减速），掉优奖。",
+    "appearanceId": "elite_wolf_king"
   },
   {
     "id": "boss_corrupted_beast",
@@ -281,6 +287,7 @@
     "firstClearReward": {
       "unlock": "chapter2"
     },
-    "desc": "第一章 Boss，三阶段行为（见 03 文档 3.12）；首通推进 Q005、解锁下一区域。"
+    "desc": "第一章 Boss，三阶段行为（见 03 文档 3.12）；首通推进 Q005、解锁下一区域。",
+    "appearanceId": "boss_corrupted_beast"
   }
 ]

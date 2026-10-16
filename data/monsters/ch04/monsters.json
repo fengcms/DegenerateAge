@@ -25,7 +25,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal02",
@@ -53,7 +54,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal03",
@@ -81,7 +83,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal04",
@@ -109,7 +112,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal05",
@@ -137,7 +141,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal06",
@@ -165,7 +170,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal07",
@@ -193,7 +199,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_normal08",
@@ -221,7 +228,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第四章 normal；数值待实机校准。"
+    "desc": "第四章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_elite01",
@@ -261,7 +269,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_elite02",
@@ -301,7 +310,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_elite03",
@@ -341,7 +351,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_elite04",
@@ -381,7 +392,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_boss01",
@@ -437,7 +449,8 @@
       }
     },
     "spawnWeight": 1.0,
-    "desc": "第四章 boss；数值待实机校准。"
+    "desc": "第四章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_boss02",
@@ -505,7 +518,8 @@
       }
     },
     "spawnWeight": 1.0,
-    "desc": "第四章 boss；数值待实机校准。"
+    "desc": "第四章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c4_boss03",
@@ -567,6 +581,7 @@
       }
     },
     "spawnWeight": 1.0,
-    "desc": "第四章 boss；数值待实机校准。"
+    "desc": "第四章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   }
 ]

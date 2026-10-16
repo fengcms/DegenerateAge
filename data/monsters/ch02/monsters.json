@@ -25,7 +25,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_copper_worm",
@@ -53,7 +54,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_broken_guard",
@@ -81,7 +83,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_slag_leech",
@@ -109,7 +112,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_badge_wraith",
@@ -137,7 +141,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_ash_beast",
@@ -165,7 +170,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_spirit_attendant",
@@ -193,7 +199,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_purple_parasite",
@@ -221,7 +228,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 normal；数值待实机校准。"
+    "desc": "第二章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_elite_copper_matriarch",
@@ -259,7 +267,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_elite_broken_inspector",
@@ -297,7 +306,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_elite_gray_scribe",
@@ -335,7 +345,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_elite_spirit_guard",
@@ -373,7 +384,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_elite_ash_leader",
@@ -411,7 +423,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_boss_iron_foreman",
@@ -439,7 +452,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 boss；数值待实机校准。"
+    "desc": "第二章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_boss_slag_devourer",
@@ -467,7 +481,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 boss；数值待实机校准。"
+    "desc": "第二章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c2_boss_hundred_arm_extractor",
@@ -495,6 +510,7 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第二章 boss；数值待实机校准。"
+    "desc": "第二章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   }
 ]

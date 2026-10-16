@@ -4,7 +4,7 @@ extends CharacterBody2D
 ##
 ## 状态机子集：IDLE/patrol → aggro → chase → attack → (return) → dead → respawn。
 ## 死亡结算（经验 + 掉落）**仅一次**；掉落按 dropTableId 走掉落表（M1-6），任务推进在 M2。
-## AI 参数来自 monsters.json；木桩等静态目标 ai_enabled=false。
+## AI 参数来自聚合后的 monsters 表；表现由 appearanceId 解析，木桩等静态目标 ai_enabled=false。
 
 const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
 
@@ -62,6 +62,8 @@ var is_dead: bool = false
 var selected := false
 var sample_art: SampleActorArt
 var dummy_art: Sprite2D
+## 表现档案的头顶 UI 高度；null 表示沿用渲染器默认位置。
+var appearance_head_hp_y: Variant = null
 
 func set_selected(value: bool) -> void:
 	selected = value
@@ -123,40 +125,30 @@ var _flash_t: float = 0.0
 var _flash_dirty: bool = false
 var _cave_nav := CaveNavigator.new()
 
+## 怪物入树时读取具体模板并按 appearanceId 装配一次表现，运行状态留在本实例。
 func _ready() -> void:
 	add_to_group("enemies")
 	_rng.randomize()
 	_load_template()
-	if monster_id in MonsterActorArt.IDS:
-		sample_art = MonsterActorArt.attach_monster(self, monster_id)
-	elif monster_id.begins_with("c2_"):
-		sample_art = ChapterTwoArt.attach(self, monster_id)
-	elif monster_id == "wolf_corrupted":
-		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/wolf_corrupted/wolf_atlas.png", Vector2(40, 64), "", "res://assets/sprites/monsters/wolf_corrupted/wolf_walk_atlas.png")
-	elif monster_id == "shellback_bug":
-		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/shellback_bug/actor_atlas.png", Vector2(40, 64))
-	elif monster_id == "ash_wraith":
-		sample_art = SampleActorArt.attach(self, "res://assets/sprites/monsters/ash_wraith/actor_atlas.png", Vector2(32, 64))
-	elif monster_id == "training_dummy":
-		dummy_art = Sprite2D.new()
-		dummy_art.name = "DummyArt"
-		dummy_art.texture = load("res://assets/sprites/monsters/training_dummy/dummy_atlas.png") as Texture2D
-		dummy_art.hframes = 3
-		dummy_art.centered = false
-		dummy_art.offset = Vector2(-32, -64)
-		dummy_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		add_child(dummy_art)
+	var art: CanvasItem = MonsterAppearance.attach(self, String(template.get("appearanceId", "placeholder")))
+	if art is SampleActorArt:
+		sample_art = art as SampleActorArt
+	elif art is Sprite2D:
+		dummy_art = art as Sprite2D
 	if spawn_position == Vector2.ZERO:
 		spawn_position = position
 	_state_t = _rng.randf() * IDLE_TIME   # 错开巡逻相位
 	queue_redraw()
 
+## 按稳定 monster_id 取得战斗数值；外观档案只提供头顶 UI 高度，不覆盖玩法字段。
 func _load_template() -> void:
 	template = DataLoader.get_entry("monsters", monster_id)
 	if template == null:
 		push_warning("[Monster] 未找到怪物模板 '%s'" % monster_id)
 		template = {}
 	display_name = String(template.get("name", monster_id))
+	var appearance: Variant = DataLoader.get_entry("monsterAppearances", String(template.get("appearanceId", "placeholder")))
+	appearance_head_hp_y = appearance.get("headHpY") if appearance is Dictionary else null
 	radius = radius_for_kind(_kind())
 	var tpl_level: int = int(template.get("level", 1))
 	level = spawn_level if spawn_level > 0 else tpl_level
@@ -1113,12 +1105,14 @@ func _draw_head_hp_bar() -> void:
 	draw_rect(Rect2(x, y, s.x * hp_ratio(), s.y), COLOR_HP_FG)
 	draw_rect(Rect2(x, y, s.x, s.y), Color(0, 0, 0, 0.5), false, 1.0)
 
-## 贴图怪默认沿用已验收的位置；特殊身高可在怪物模板中单独覆写。
+## 贴图怪默认沿用已验收的位置；外观档案可设置特殊身高的头顶 UI 高度。
 func _head_hp_y() -> float:
+	if appearance_head_hp_y is float or appearance_head_hp_y is int:
+		return float(appearance_head_hp_y)
 	if sample_art is MonsterActorArt:
-		return float(template.get("headHpY", -(sample_art as MonsterActorArt).pivot.y - 6.0))
+		return -(sample_art as MonsterActorArt).pivot.y - 6.0
 	if sample_art != null or dummy_art != null:
-		return float(template.get("headHpY", -46.0))
+		return -46.0
 	return -radius * 2.4
 
 func _draw_sprite_identity() -> void:

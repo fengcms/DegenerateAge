@@ -1,0 +1,9 @@
+{
+  "id": "ash_wraith",
+  "renderer": "sample_atlas",
+  "main": "res://assets/sprites/monsters/ash_wraith/actor_atlas.png",
+  "pivot": [
+    32,
+    64
+  ]
+}

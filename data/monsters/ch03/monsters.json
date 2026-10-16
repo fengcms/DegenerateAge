@@ -25,7 +25,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal02",
@@ -53,7 +54,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal03",
@@ -81,7 +83,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal04",
@@ -109,7 +112,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal05",
@@ -137,7 +141,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal06",
@@ -165,7 +170,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal07",
@@ -193,7 +199,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_normal08",
@@ -221,7 +228,8 @@
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
-    "desc": "第三章 normal；数值待实机校准。"
+    "desc": "第三章 normal；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_elite01",
@@ -261,7 +269,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_elite02",
@@ -301,7 +310,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_elite03",
@@ -341,7 +351,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_elite04",
@@ -381,7 +392,8 @@
     "affixCount": [
       1,
       2
-    ]
+    ],
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_boss01",
@@ -443,7 +455,8 @@
       }
     },
     "spawnWeight": 1.0,
-    "desc": "第三章 boss；数值待实机校准。"
+    "desc": "第三章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_boss02",
@@ -511,7 +524,8 @@
       }
     },
     "spawnWeight": 1.0,
-    "desc": "第三章 boss；数值待实机校准。"
+    "desc": "第三章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   },
   {
     "id": "c3_boss03",
@@ -571,6 +585,7 @@
       }
     },
     "spawnWeight": 1.0,
-    "desc": "第三章 boss；数值待实机校准。"
+    "desc": "第三章 boss；数值待实机校准。",
+    "appearanceId": "placeholder"
   }
 ]

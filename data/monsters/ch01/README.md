@@ -4,16 +4,16 @@
 
 <!-- MONSTER LIST START -->
 
-| ID | 名称 | 模板等级 | 类型 | 掉落表 |
-|---|---|---:|---|---|
-| `training_dummy` | 木桩怪 | 1 | 普通 | `` |
-| `wolf_corrupted` | 腐化野狼 | 2 | 普通 | `DT_Wild_L1` |
-| `shellback_bug` | 裂壳虫 | 3 | 普通 | `DT_Shellback_L1` |
-| `ash_wraith` | 灰烬游魂 | 6 | 普通 | `DT_Ash_L1` |
-| `elite_ash_wraith` | 灰烬怨灵 | 8 | 精英 | `DT_Elite_L1` |
-| `elite_shellback_bug` | 裂壳虫卫 | 8 | 精英 | `DT_Elite_L1` |
-| `elite_wolf_king` | 裂爪狼王 | 4 | 精英 | `DT_Elite_L1` |
-| `boss_corrupted_beast` | 腐化巨兽 | 10 | 首领 | `DT_Boss_L1` |
+| ID | 名称 | 模板等级 | 类型 | 掉落表 | 外观 ID |
+|---|---|---:|---|---|---|
+| `training_dummy` | 木桩怪 | 1 | 普通 | `` | `training_dummy` |
+| `wolf_corrupted` | 腐化野狼 | 2 | 普通 | `DT_Wild_L1` | `wolf_corrupted` |
+| `shellback_bug` | 裂壳虫 | 3 | 普通 | `DT_Shellback_L1` | `shellback_bug` |
+| `ash_wraith` | 灰烬游魂 | 6 | 普通 | `DT_Ash_L1` | `ash_wraith` |
+| `elite_ash_wraith` | 灰烬怨灵 | 8 | 精英 | `DT_Elite_L1` | `elite_ash_wraith` |
+| `elite_shellback_bug` | 裂壳虫卫 | 8 | 精英 | `DT_Elite_L1` | `elite_shellback_bug` |
+| `elite_wolf_king` | 裂爪狼王 | 4 | 精英 | `DT_Elite_L1` | `elite_wolf_king` |
+| `boss_corrupted_beast` | 腐化巨兽 | 10 | 首领 | `DT_Boss_L1` | `boss_corrupted_beast` |
 
 <!-- MONSTER LIST END -->
 

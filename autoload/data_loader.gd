@@ -30,9 +30,10 @@ const TABLES := {
 
 const MAP_INDEX := "res://data/maps/index.json"
 const MONSTER_INDEX := "res://data/monsters/index.json"
+const APPEARANCE_INDEX := "res://data/monster_appearances/index.json"
 
 ## 需要做「ID 唯一」校验的表（数组型）。
-const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
+const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "monsterAppearances", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
 
 ## 各表用作「唯一键」的字段名（缺省为 id）。shops 以 npcId 为键（见 docs 第 10 章 schema）。
 const KEY_FIELDS := {
@@ -54,10 +55,11 @@ var errors: Array[String] = []
 ## 表名 -> { 唯一键 -> 条目 }。启动时构建一次，使 get_entry 由线性扫描降为 O(1)。
 var _index: Dictionary = {}
 
+## 启动时一次性加载各表、地图、怪物与表现档案，随后供实体按 ID 查询。
 func _ready() -> void:
 	load_all()
 
-## 加载全部配置表。
+## 重新加载全部配置表并重建索引；编辑器或测试主动重载时会发出 data_loaded。
 func load_all() -> void:
 	tables.clear()
 	errors.clear()
@@ -65,6 +67,7 @@ func load_all() -> void:
 		tables[key] = _load_json(DATA_DIR + TABLES[key])
 	tables["maps"] = _load_maps()
 	tables["monsters"] = _load_monsters()
+	tables["monsterAppearances"] = _load_monster_appearances()
 	_build_index()
 	EventBus.data_loaded.emit()
 
@@ -157,6 +160,65 @@ func _load_monsters() -> Array:
 			result.append(row)
 	return result
 
+## 读取一档案一文件的怪物表现清单，按稳定外观 ID 聚合一次供实例复用。
+## 文件名必须与档案 ID 一致；非法路径或缺失内容报告为启动配置错误。
+func _load_monster_appearances() -> Array:
+	var entries: Variant = _load_json(APPEARANCE_INDEX)
+	var result: Array = []
+	if not (entries is Array):
+		errors.append("怪物表现索引必须是路径数组：%s" % APPEARANCE_INDEX)
+		return result
+	var seen_paths := {}
+	for relative in entries:
+		if not (relative is String) or not relative.ends_with(".json") or relative.contains("/") or relative.contains(".."):
+			errors.append("非法怪物表现索引路径：%s" % str(relative))
+			continue
+		if seen_paths.has(relative):
+			errors.append("重复怪物表现索引路径：%s" % relative)
+			continue
+		seen_paths[relative] = true
+		var path: String = "res://data/monster_appearances/" + relative
+		var appearance: Variant = _load_json(path)
+		if not (appearance is Dictionary) or String(appearance.get("id", "")) != relative.get_basename():
+			errors.append("怪物表现 ID 与文件名不符：%s" % path)
+			continue
+		result.append(appearance)
+	return result
+
+## 启动时验证表现档案的渲染类型、关键元数据与资源引用。
+## 本函数不加载纹理或创建节点，缺资源在此报错，运行端仍可回退占位图。
+func _validate_monster_appearance(spec: Dictionary) -> Array[String]:
+	var report: Array[String] = []
+	var id := String(spec.get("id", "?"))
+	var renderer := String(spec.get("renderer", ""))
+	if not renderer in ["procedural", "sample_atlas", "static_atlas", "animation_pack", "chapter2_manifest"]:
+		report.append("[monsterAppearances] %s 的 renderer 无效：%s" % [id, renderer])
+		return report
+	if spec.has("headHpY") and not (spec.headHpY is float or spec.headHpY is int):
+		report.append("[monsterAppearances] %s 的 headHpY 必须是数值" % id)
+	if spec.has("displayScale") and (not (spec.displayScale is float or spec.displayScale is int) or float(spec.displayScale) <= 0.0):
+		report.append("[monsterAppearances] %s 的 displayScale 必须大于 0" % id)
+	if renderer in ["sample_atlas", "static_atlas"]:
+		var fields := ["main"] if renderer == "sample_atlas" else ["texture"]
+		if renderer == "sample_atlas":
+			fields.append_array(["walk", "extra"])
+		for field in fields:
+			var path := String(spec.get(field, ""))
+			if field in ["walk", "extra"] and path.is_empty():
+				continue
+			if not path.begins_with("res://assets/sprites/monsters/") or not ResourceLoader.exists(path):
+				report.append("[monsterAppearances] %s 的 %s 素材缺失：%s" % [id, field, path])
+		var coords: Variant = spec.get("pivot", []) if renderer == "sample_atlas" else spec.get("offset", [])
+		if not (coords is Array) or coords.size() != 2 or not (coords[0] is int or coords[0] is float) or not (coords[1] is int or coords[1] is float):
+			report.append("[monsterAppearances] %s 的脚底锚点/偏移无效" % id)
+		if renderer == "static_atlas" and int(spec.get("hframes", 0)) <= 0:
+			report.append("[monsterAppearances] %s 的 hframes 无效" % id)
+	if renderer == "animation_pack" and not MonsterAnimationLibrary.PACKS.has(String(spec.get("assetKey", ""))):
+		report.append("[monsterAppearances] %s 的 animation_pack 未在生成库登记" % id)
+	if renderer == "chapter2_manifest" and String(spec.get("assetKey", "")).is_empty():
+		report.append("[monsterAppearances] %s 缺少第二章清单 assetKey" % id)
+	return report
+
 ## 取整表。
 func get_table(table_name: String) -> Variant:
 	return tables.get(table_name)
@@ -242,6 +304,14 @@ func validate_all() -> Array[String]:
 			var dtid: String = String(m.get("dropTableId", ""))
 			if not dtid.is_empty() and not dt_ids.has(dtid):
 				report.append("[monsters] %s 的 dropTableId '%s' 未在 dropTables 中定义" % [m.get("id", "?"), dtid])
+			var appearance_id := String(m.get("appearanceId", ""))
+			if appearance_id.is_empty() or get_entry("monsterAppearances", appearance_id) == null:
+				report.append("[monsters] %s 引用未登记的 appearanceId '%s'" % [m.get("id", "?"), appearance_id])
+	var appearances = tables.get("monsterAppearances")
+	if appearances is Array:
+		for appearance in appearances:
+			if appearance is Dictionary:
+				report.append_array(_validate_monster_appearance(appearance))
 
 	# 3) 引用合法性：地图 spawnPoints / bossSpawn 的 monsterId 必须存在于 monsters
 	var monster_ids := {}
