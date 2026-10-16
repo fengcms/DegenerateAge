@@ -227,9 +227,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_spirit_larva/",
       "runtime_art": "assets/sprites/monsters/c2_spirit_larva/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": true
+      "existing_partial": true,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_spirit_larva/concept.png"
     },
     {
       "data_id": "c2_copper_worm",
@@ -244,9 +245,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_copper_worm/",
       "runtime_art": "assets/sprites/monsters/c2_copper_worm/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_copper_worm/concept.png"
     },
     {
       "data_id": "c2_broken_guard",
@@ -261,9 +263,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_broken_guard/",
       "runtime_art": "assets/sprites/monsters/c2_broken_guard/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_broken_guard/concept.png"
     },
     {
       "data_id": "c2_slag_leech",
@@ -278,9 +281,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_slag_leech/",
       "runtime_art": "assets/sprites/monsters/c2_slag_leech/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_slag_leech/concept.png"
     },
     {
       "data_id": "c2_badge_wraith",
@@ -295,9 +299,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_badge_wraith/",
       "runtime_art": "assets/sprites/monsters/c2_badge_wraith/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_badge_wraith/concept.png"
     },
     {
       "data_id": "c2_ash_beast",
@@ -312,9 +317,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_ash_beast/",
       "runtime_art": "assets/sprites/monsters/c2_ash_beast/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_ash_beast/concept.png"
     },
     {
       "data_id": "c2_spirit_attendant",
@@ -329,9 +335,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_spirit_attendant/",
       "runtime_art": "assets/sprites/monsters/c2_spirit_attendant/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_spirit_attendant/concept.png"
     },
     {
       "data_id": "c2_purple_parasite",
@@ -346,9 +353,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_purple_parasite/",
       "runtime_art": "assets/sprites/monsters/c2_purple_parasite/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_purple_parasite/concept.png"
     },
     {
       "data_id": "c2_elite_copper_matriarch",
@@ -363,9 +371,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_copper_matriarch/",
       "runtime_art": "assets/sprites/monsters/c2_elite_copper_matriarch/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_elite_copper_matriarch/concept.png"
     },
     {
       "data_id": "c2_elite_broken_inspector",
@@ -380,9 +389,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_broken_inspector/",
       "runtime_art": "assets/sprites/monsters/c2_elite_broken_inspector/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_elite_broken_inspector/concept.png"
     },
     {
       "data_id": "c2_elite_gray_scribe",
@@ -397,9 +407,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_gray_scribe/",
       "runtime_art": "assets/sprites/monsters/c2_elite_gray_scribe/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_elite_gray_scribe/concept.png"
     },
     {
       "data_id": "c2_elite_spirit_guard",
@@ -414,9 +425,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_spirit_guard/",
       "runtime_art": "assets/sprites/monsters/c2_elite_spirit_guard/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_elite_spirit_guard/concept.png"
     },
     {
       "data_id": "c2_elite_ash_leader",
@@ -431,9 +443,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_ash_leader/",
       "runtime_art": "assets/sprites/monsters/c2_elite_ash_leader/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_elite_ash_leader/concept.png"
     },
     {
       "data_id": "c2_boss_iron_foreman",
@@ -448,9 +461,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_boss_iron_foreman/",
       "runtime_art": "assets/sprites/monsters/c2_boss_iron_foreman/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_boss_iron_foreman/concept.png"
     },
     {
       "data_id": "c2_boss_slag_devourer",
@@ -465,9 +479,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_boss_slag_devourer/",
       "runtime_art": "assets/sprites/monsters/c2_boss_slag_devourer/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_boss_slag_devourer/concept.png"
     },
     {
       "data_id": "c2_boss_hundred_arm_extractor",
@@ -482,9 +497,10 @@
       "source_data": "data/monsters/ch02/monsters.json",
       "source_art": "art_source/chapters/ch02/monsters/c2_boss_hundred_arm_extractor/",
       "runtime_art": "assets/sprites/monsters/c2_boss_hundred_arm_extractor/",
-      "status": "planned",
+      "status": "designed",
       "integration": "pending",
-      "existing_partial": false
+      "existing_partial": false,
+      "concept_art": "art_source/chapters/ch02/monsters/c2_boss_hundred_arm_extractor/concept.png"
     },
     {
       "data_id": "c3_equip_weapon",
