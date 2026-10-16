@@ -210,7 +210,14 @@
           309
         ]
       ],
-      "visual_foot_y": 310
+      "visual_foot_y": 310,
+      "art_rect": [
+        230,
+        120,
+        310,
+        190
+      ],
+      "art_foot_y": 310
     },
     {
       "id": "warehouse",
@@ -259,7 +266,14 @@
           288
         ]
       ],
-      "visual_foot_y": 301
+      "visual_foot_y": 301,
+      "art_rect": [
+        995,
+        100,
+        315,
+        201
+      ],
+      "art_foot_y": 301
     },
     {
       "id": "merchant",
@@ -307,7 +321,14 @@
           304,
           478
         ]
-      ]
+      ],
+      "art_rect": [
+        305,
+        315,
+        310,
+        165
+      ],
+      "art_foot_y": 482
     },
     {
       "id": "guardian_lamp",
@@ -351,7 +372,14 @@
           742,
           435
         ]
-      ]
+      ],
+      "art_rect": [
+        747,
+        296,
+        84,
+        150
+      ],
+      "art_foot_y": 446
     },
     {
       "id": "elder_tree",
@@ -419,7 +447,14 @@
           965,
           420
         ]
-      ]
+      ],
+      "art_rect": [
+        925,
+        225,
+        260,
+        195
+      ],
+      "art_foot_y": 418
     },
     {
       "id": "caravan",
@@ -476,7 +511,14 @@
           671
         ]
       ],
-      "visual_foot_y": 670
+      "visual_foot_y": 670,
+      "art_rect": [
+        1040,
+        545,
+        220,
+        125
+      ],
+      "art_foot_y": 670
     },
     {
       "id": "training_fire",
@@ -498,7 +540,14 @@
           636,
           670
         ]
-      ]
+      ],
+      "art_rect": [
+        637,
+        636,
+        38,
+        34
+      ],
+      "art_foot_y": 670
     }
   ],
   "fences": [

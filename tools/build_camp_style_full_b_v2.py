@@ -25,11 +25,11 @@ SAMPLE = ROOT / "assets/maps/camp_style_sample/b"
 OUTPUT = ROOT / "assets/maps/camp_style_full_b_v2"
 CANVAS = (1672, 941)
 LARGE_ENTITIES = {
-    "elder_tree": {"rect": [925, 225, 260, 195], "cut": 130, "foot_y": 418},
-    "warehouse": {"rect": [995, 100, 315, 201], "cut": 164, "foot_y": 301},
-    "guardian_lamp": {"rect": [747, 296, 84, 150], "cut": 116, "foot_y": 446},
-    "caravan": {"rect": [1040, 545, 220, 125], "cut": 97, "foot_y": 670},
-    "training_fire": {"rect": [637, 636, 38, 34], "cut": 25, "foot_y": 670},
+    "elder_tree": 130,
+    "warehouse": 164,
+    "guardian_lamp": 116,
+    "caravan": 97,
+    "training_fire": 25,
 }
 
 
@@ -128,10 +128,11 @@ def write_road_overlay(output, scratch, layout):
     return "res://assets/maps/camp_style_full_b_v2/roads_and_shadows.png"
 
 
-def write_split_entity(name, spec, output, scratch):
+def write_split_entity(name, entry, cut_y, output, scratch):
     """把大型精灵按前沿深度切成互斥背层与遮挡层，矩形为参考画布坐标。"""
-    width, height = spec["rect"][2] * 2, spec["rect"][3] * 2
-    cut = spec["cut"] * 2
+    rect = entry["art_rect"]
+    width, height = rect[2] * 2, rect[3] * 2
+    cut = cut_y * 2
     source = SOURCE / f"{name}.png"
     full = scratch / f"{name}_full.png"
     back_crop = scratch / f"{name}_back_crop.png"
@@ -142,7 +143,7 @@ def write_split_entity(name, spec, output, scratch):
     magick(full, "-crop", f"{width}x{height-cut}+0+{cut}", "+repage", back_crop)
     magick("-size", f"{width}x{height}", "xc:none", back_crop, "-geometry", f"+0+{cut}",
            "-compose", "Over", "-composite", "-strip", output / f"{name}_back.png")
-    return {"id": name, "rect": spec["rect"], "foot_y": spec["foot_y"],
+    return {"id": name, "rect": rect, "foot_y": entry["art_foot_y"],
             "back": f"res://assets/maps/camp_style_full_b_v2/{name}_back.png",
             "front": f"res://assets/maps/camp_style_full_b_v2/{name}_front.png"}
 
@@ -204,10 +205,15 @@ def main():
         tile = write_ground_tile(OUTPUT, scratch)
         roads = write_road_overlay(OUTPUT, scratch, layout)
         sample_manifest = json.loads((SAMPLE / "manifest.json").read_text())
-        objects = [entry for entry in sample_manifest["objects"]
-                   if entry["id"] in ["blacksmith", "merchant"]]
-        for name, spec in LARGE_ENTITIES.items():
-            objects.append(write_split_entity(name, spec, OUTPUT, scratch))
+        by_id = {entry["id"]: entry for entry in layout["entities"]}
+        objects = []
+        for sample in sample_manifest["objects"]:
+            if sample["id"] in ["blacksmith", "merchant"]:
+                entry = by_id[sample["id"]]
+                objects.append(sample | {"rect": entry["art_rect"],
+                                         "foot_y": entry["art_foot_y"]})
+        for name, cut_y in LARGE_ENTITIES.items():
+            objects.append(write_split_entity(name, by_id[name], cut_y, OUTPUT, scratch))
         for entry in layout["fences"]:
             objects.append(write_fence(entry, OUTPUT, scratch))
     ids = [entry["id"] for entry in objects]
