@@ -147,6 +147,22 @@ def check_exported_icons(existing: dict) -> None:
             raise ValueError(f"运行数据或导出预载未指向正式图标: {asset_id}")
 
 
+def check_designed_monsters(existing: dict) -> None:
+    """只核对已设计怪物概念源稿的覆盖；不把概念图误认成八向运行动画。"""
+    for row in existing["assets"]:
+        if row["type"] != "monster" or row["status"] == "planned":
+            continue
+        concept = row.get("concept_art", "")
+        if not isinstance(concept, str) or not concept.startswith(row["source_art"]):
+            raise ValueError(f"怪物概念路径未登记: {row['data_id']}")
+        path = ROOT / concept
+        if not path.is_file() or path.stat().st_size < 100:
+            raise ValueError(f"怪物概念 PNG 缺失或无效: {row['data_id']}")
+        with path.open("rb") as file:
+            if file.read(8) != b"\x89PNG\r\n\x1a\n":
+                raise ValueError(f"怪物概念 PNG 签名无效: {row['data_id']}")
+
+
 def main() -> None:
     """写入或只读校验清单；存在人工进度时拒绝覆盖，避免丢失后续状态。"""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -160,6 +176,7 @@ def main() -> None:
         if expected_ids != actual_ids:
             raise ValueError("清单与运行数据 ID/顺序不一致")
         check_exported_icons(existing)
+        check_designed_monsters(existing)
         print(f"通过：{len(actual_ids)} 个稳定 ID，{existing['counts']}")
         return
     if OUTPUT.exists():
