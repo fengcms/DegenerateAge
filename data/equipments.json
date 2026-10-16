@@ -249,7 +249,7 @@
     "slot": "weapon",
     "look": "look_02",
     "price": 160,
-    "icon": "res://assets/sprites/equip/weapon_starter.png",
+    "icon": "res://assets/sprites/equip/c2_road_blade.png",
     "desc": "第二档常规装备；穿戴要求 Lv11，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -273,7 +273,7 @@
     "name": "铜面护盾",
     "slot": "shield",
     "price": 160,
-    "icon": "res://assets/sprites/equip/shield_basic.png",
+    "icon": "res://assets/sprites/equip/c2_copper_shield.png",
     "desc": "第二档常规装备；穿戴要求 Lv17，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -298,7 +298,7 @@
     "name": "守路夹甲",
     "slot": "armor",
     "price": 160,
-    "icon": "res://assets/sprites/equip/armor_starter.png",
+    "icon": "res://assets/sprites/equip/c2_road_armor.png",
     "desc": "第二档常规装备；穿戴要求 Lv13，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -323,7 +323,7 @@
     "name": "巡路帽",
     "slot": "helmet",
     "price": 160,
-    "icon": "res://assets/sprites/equip/helmet_cloth.png",
+    "icon": "res://assets/sprites/equip/c2_road_helmet.png",
     "desc": "第二档常规装备；穿戴要求 Lv14，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -347,7 +347,7 @@
     "name": "山路靴",
     "slot": "shoes",
     "price": 160,
-    "icon": "res://assets/sprites/equip/shoes_cloth.png",
+    "icon": "res://assets/sprites/equip/c2_road_shoes.png",
     "desc": "第二档常规装备；穿戴要求 Lv12，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -372,7 +372,7 @@
     "name": "守路腕甲",
     "slot": "bracer",
     "price": 160,
-    "icon": "res://assets/sprites/equip/bracer_basic.png",
+    "icon": "res://assets/sprites/equip/c2_road_bracer.png",
     "desc": "第二档常规装备；穿戴要求 Lv15，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -396,7 +396,7 @@
     "name": "守路护膝",
     "slot": "knee",
     "price": 160,
-    "icon": "res://assets/sprites/equip/knee_basic.png",
+    "icon": "res://assets/sprites/equip/c2_road_knee.png",
     "desc": "第二档常规装备；穿戴要求 Lv16，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -420,7 +420,7 @@
     "name": "铜环手镯",
     "slot": "bracelet",
     "price": 160,
-    "icon": "res://assets/sprites/equip/bracelet_basic.png",
+    "icon": "res://assets/sprites/equip/c2_copper_bracelet.png",
     "desc": "第二档常规装备；穿戴要求 Lv18，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -444,7 +444,7 @@
     "name": "巡路戒",
     "slot": "ring",
     "price": 160,
-    "icon": "res://assets/sprites/equip/ring_basic.png",
+    "icon": "res://assets/sprites/equip/c2_road_ring.png",
     "desc": "第二档常规装备；穿戴要求 Lv19，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {
@@ -469,7 +469,7 @@
     "name": "暖石项链",
     "slot": "necklace",
     "price": 160,
-    "icon": "res://assets/sprites/equip/necklace_basic.png",
+    "icon": "res://assets/sprites/equip/c2_warm_necklace.png",
     "desc": "第二档常规装备；穿戴要求 Lv20，品质、词条与星级决定个体差异。",
     "tierBases": {
       "11": {

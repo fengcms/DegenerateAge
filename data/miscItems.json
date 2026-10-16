@@ -39,28 +39,32 @@
     "name": "调压片",
     "useType": "quest",
     "animation": "",
-    "desc": "第二章任务袋物品，不占背包格。"
+    "desc": "第二章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c2_pressure_plate.png"
   },
   {
     "id": "c2_worker_badge",
     "name": "旧工牌",
     "useType": "quest",
     "animation": "",
-    "desc": "第二章任务袋物品，不占背包格。"
+    "desc": "第二章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c2_worker_badge.png"
   },
   {
     "id": "c2_heat_component",
     "name": "耐热组件",
     "useType": "quest",
     "animation": "",
-    "desc": "第二章任务袋物品，不占背包格。"
+    "desc": "第二章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c2_heat_component.png"
   },
   {
     "id": "c2_named_badge",
     "name": "具名工牌",
     "useType": "quest",
     "animation": "",
-    "desc": "第二章任务袋物品，不占背包格。"
+    "desc": "第二章任务袋物品，不占背包格。",
+    "icon": "res://assets/sprites/items/c2_named_badge.png"
   },
   {
     "id": "c3_item_q03",

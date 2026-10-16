@@ -14,6 +14,20 @@ const ICONS := {
 	"bracelet_basic": preload("res://assets/sprites/equip/bracelet_basic.png"),
 	"ring_basic": preload("res://assets/sprites/equip/ring_basic.png"),
 	"necklace_basic": preload("res://assets/sprites/equip/necklace_basic.png"),
+	"c2_road_blade": preload("res://assets/sprites/equip/c2_road_blade.png"),
+	"c2_copper_shield": preload("res://assets/sprites/equip/c2_copper_shield.png"),
+	"c2_road_armor": preload("res://assets/sprites/equip/c2_road_armor.png"),
+	"c2_road_helmet": preload("res://assets/sprites/equip/c2_road_helmet.png"),
+	"c2_road_shoes": preload("res://assets/sprites/equip/c2_road_shoes.png"),
+	"c2_road_bracer": preload("res://assets/sprites/equip/c2_road_bracer.png"),
+	"c2_road_knee": preload("res://assets/sprites/equip/c2_road_knee.png"),
+	"c2_copper_bracelet": preload("res://assets/sprites/equip/c2_copper_bracelet.png"),
+	"c2_road_ring": preload("res://assets/sprites/equip/c2_road_ring.png"),
+	"c2_warm_necklace": preload("res://assets/sprites/equip/c2_warm_necklace.png"),
+	"c2_pressure_plate": preload("res://assets/sprites/items/c2_pressure_plate.png"),
+	"c2_worker_badge": preload("res://assets/sprites/items/c2_worker_badge.png"),
+	"c2_heat_component": preload("res://assets/sprites/items/c2_heat_component.png"),
+	"c2_named_badge": preload("res://assets/sprites/items/c2_named_badge.png"),
 	"potion_hp_small": preload("res://assets/sprites/items/potion_hp_small.png"),
 	"potion_mp_small": preload("res://assets/sprites/items/potion_mp_small.png"),
 	"potion_hp_mid": preload("res://assets/sprites/items/potion_hp_mid.png"),
@@ -46,9 +60,11 @@ const SKILL_ICONS := {
 	"spirit_storm": preload("res://assets/sprites/skills/spirit_storm.png"),
 }
 
+## 读取预载技能图标；找不到时返回空，供快捷栏保留文字回退。
 static func skill_icon(skill_id: String) -> Texture2D:
 	return SKILL_ICONS.get(skill_id) as Texture2D
 
+## 按物品实例 ID 读取预载图标；装备旧路径只作过渡回退。
 static func icon_for(item: Variant) -> Texture2D:
 	if not item is Dictionary:
 		return null
@@ -73,6 +89,7 @@ static func ground_for(item: Dictionary) -> Texture2D:
 		return MOUNT_ICONS.get(item_id) as Texture2D
 	return ICONS.get(item_id) as Texture2D
 
+## 返回快捷键绑定对应的物品或技能图标，未配置时返回空。
 static func binding_icon(binding: Variant) -> Texture2D:
 	if not binding is Dictionary:
 		return null
@@ -82,6 +99,7 @@ static func binding_icon(binding: Variant) -> Texture2D:
 		return ICONS.potion_hp_small if binding.get("id") == "red" else ICONS.potion_mp_small if binding.get("id") == "blue" else null
 	return ICONS.get(String(binding.get("id", ""))) as Texture2D
 
+## 将图标应用到快捷栏按钮；只调整视觉，不改变绑定行为。
 static func decorate(button: Button, texture: Texture2D) -> void:
 	if button is HotbarSlot and (button as HotbarSlot).entry is Dictionary:
 		var binding: Dictionary = (button as HotbarSlot).entry

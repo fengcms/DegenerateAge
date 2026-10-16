@@ -20,8 +20,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_blade/",
       "runtime_art": "assets/sprites/equip/c2_road_blade.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_copper_shield",
@@ -35,8 +35,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_copper_shield/",
       "runtime_art": "assets/sprites/equip/c2_copper_shield.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_road_armor",
@@ -50,8 +50,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_armor/",
       "runtime_art": "assets/sprites/equip/c2_road_armor.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_road_helmet",
@@ -65,8 +65,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_helmet/",
       "runtime_art": "assets/sprites/equip/c2_road_helmet.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_road_shoes",
@@ -80,8 +80,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_shoes/",
       "runtime_art": "assets/sprites/equip/c2_road_shoes.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_road_bracer",
@@ -95,8 +95,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_bracer/",
       "runtime_art": "assets/sprites/equip/c2_road_bracer.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_road_knee",
@@ -110,8 +110,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_knee/",
       "runtime_art": "assets/sprites/equip/c2_road_knee.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_copper_bracelet",
@@ -125,8 +125,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_copper_bracelet/",
       "runtime_art": "assets/sprites/equip/c2_copper_bracelet.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_road_ring",
@@ -140,8 +140,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_road_ring/",
       "runtime_art": "assets/sprites/equip/c2_road_ring.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_warm_necklace",
@@ -155,8 +155,8 @@
       "source_data": "data/equipments.json",
       "source_art": "art_source/chapters/ch02/equip/c2_warm_necklace/",
       "runtime_art": "assets/sprites/equip/c2_warm_necklace.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "integrated"
     },
     {
       "data_id": "c2_pressure_plate",
@@ -169,8 +169,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch02/quest_items/c2_pressure_plate/",
       "runtime_art": "assets/sprites/items/c2_pressure_plate.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c2_worker_badge",
@@ -183,8 +183,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch02/quest_items/c2_worker_badge/",
       "runtime_art": "assets/sprites/items/c2_worker_badge.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c2_heat_component",
@@ -197,8 +197,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch02/quest_items/c2_heat_component/",
       "runtime_art": "assets/sprites/items/c2_heat_component.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c2_named_badge",
@@ -211,8 +211,8 @@
       "source_data": "data/miscItems.json",
       "source_art": "art_source/chapters/ch02/quest_items/c2_named_badge/",
       "runtime_art": "assets/sprites/items/c2_named_badge.png",
-      "status": "planned",
-      "integration": "pending"
+      "status": "reviewed",
+      "integration": "resource_registered"
     },
     {
       "data_id": "c2_spirit_larva",
