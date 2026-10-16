@@ -1,0 +1,43 @@
+{
+	"first_scene_load_ms": 137.562,
+	"logical_viewport": "(1280.0, 800.0)",
+	"physical_capture": [
+		2560,
+		1600
+	],
+	"screen_scale": 2.0,
+	"style": "B",
+	"texture_monitor_before_bytes": 178315403.0,
+	"texture_monitor_delta_bytes": 40801984.0,
+	"texture_monitor_loaded_bytes": 219117387.0,
+	"warm_scene_load_ms": 131.703,
+	"zoom_runs": {
+		"1.0": {
+			"capture": "/tmp/camp_style_benchmark_b_100.png",
+			"draw_calls_mean": 21.0,
+			"median_ms": 0.67,
+			"p95_ms": 0.978,
+			"p99_ms": 1.624,
+			"peak_ms": 1.624,
+			"rendered_frames": 120
+		},
+		"1.5": {
+			"capture": "/tmp/camp_style_benchmark_b_150.png",
+			"draw_calls_mean": 15.0,
+			"median_ms": 0.623,
+			"p95_ms": 0.985,
+			"p99_ms": 1.132,
+			"peak_ms": 1.132,
+			"rendered_frames": 120
+		},
+		"2.0": {
+			"capture": "/tmp/camp_style_benchmark_b_200.png",
+			"draw_calls_mean": 14.0,
+			"median_ms": 0.583,
+			"p95_ms": 0.8,
+			"p99_ms": 0.818,
+			"peak_ms": 0.818,
+			"rendered_frames": 120
+		}
+	}
+}

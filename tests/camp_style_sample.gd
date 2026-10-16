@@ -31,10 +31,12 @@ func _ready() -> void:
 	player = world.get_node("Entities/Player") as PlayerCharacter
 	camera = player.get_node("Camera2D") as Camera2D
 	ground.visible = false
-	for style in ["a", "b"]:
+	var benchmark_only := OS.get_environment("DEGENERATEAGE_CAMP_BENCH_STYLE")
+	var styles := [benchmark_only] if benchmark_only in ["a", "b"] else ["a", "b"]
+	for style in styles:
 		_styles[style] = _build_style(style)
 		world.add_child(_styles[style])
-	_show_style("b")
+	_show_style(benchmark_only if benchmark_only in ["a", "b"] else "b")
 	_focus("blacksmith")
 	_build_help()
 
