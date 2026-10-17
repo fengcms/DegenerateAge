@@ -23,5 +23,20 @@
   "c2_elite_ash_leader.json",
   "c2_boss_iron_foreman.json",
   "c2_boss_slag_devourer.json",
-  "c2_boss_hundred_arm_extractor.json"
+  "c2_boss_hundred_arm_extractor.json",
+  "c3_normal01.json",
+  "c3_normal02.json",
+  "c3_normal03.json",
+  "c3_normal04.json",
+  "c3_normal05.json",
+  "c3_normal06.json",
+  "c3_normal07.json",
+  "c3_normal08.json",
+  "c3_elite01.json",
+  "c3_elite02.json",
+  "c3_elite03.json",
+  "c3_elite04.json",
+  "c3_boss01.json",
+  "c3_boss02.json",
+  "c3_boss03.json"
 ]

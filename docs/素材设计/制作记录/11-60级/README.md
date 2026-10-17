@@ -57,3 +57,5 @@
 已接入批次的清单记为 `reviewed/temporary_static`，并以 `temporary_sprite` 记录实际 PNG；这表示临时图在游戏中使用，**不表示原计划 P3/P4 的动画通过**。`--check` 同时检查三格尺寸、RGBA、外观档案、怪物数据引用和导出预载。
 
 第二章 16 只的[运行尺寸深浅底拼版](ch02_monsters_runtime_preview.png)已检查，普通 80×80、精英 112×112、首领 192×192；原图各保留在 `art_source`，运行图在 `assets/sprites/monsters/<id>/`。只改外观引用，不改碰撞、伤害、掉落、任务计数或存档身份。
+
+第三章 15 只的[运行尺寸深浅底拼版](ch03_monsters_runtime_preview.png)已按同一规格复核。砂背虫、巡渠卫、精英和三名首领在原尺寸下有独立轮廓；各 ID 已登记临时静态档案与导出预载，正式八向动画仍待制作。
