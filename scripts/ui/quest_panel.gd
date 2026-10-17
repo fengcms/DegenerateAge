@@ -322,7 +322,7 @@ func _make_action_button(qid: String, state: String) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(92, 30)
 	match state:
-		Quest.STATE_AVAILABLE:
+		Quest.STATE_AVAILABLE, Quest.STATE_ABANDONED:
 			b.text = Localization.tr_key("ui.quest_panel.p012")
 			b.pressed.connect(_on_accept.bind(qid))
 		Quest.STATE_ACTIVE:

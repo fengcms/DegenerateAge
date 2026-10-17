@@ -96,42 +96,79 @@ static func has_state(state: String) -> bool:
 			return true
 	return false
 
+## NPC 是否能打开任务面板处理可接或可交付任务；不用于头顶“可接”标记。
 static func has_actionable_at_npc(npc_id: String) -> bool:
 	for tpl in all():
 		if not tpl is Dictionary:
 			continue
 		var qid := String(tpl.get("id", ""))
 		var state := state_of(qid)
-		if state == STATE_AVAILABLE and String(tpl.get("giver", "")) == npc_id:
+		if state in [STATE_AVAILABLE, STATE_ABANDONED] and String(tpl.get("giver", "")) == npc_id:
 			return true
 		if state == STATE_COMPLETED and String(tpl.get("turnIn", tpl.get("giver", ""))) == npc_id:
 			return true
 	return false
+
+## 不产生提示或状态变更，供“接受任务”按钮和 NPC 头顶标记共用接取条件。
+static func can_accept(quest_id: String, npc_id: String = "") -> bool:
+	return _accept_block_reason(quest_id, npc_id).is_empty()
+
+## 返回接取被阻止的原因；空串表示可以接取，保持 UI 与任务逻辑判定一致。
+static func _accept_block_reason(quest_id: String, npc_id: String = "") -> String:
+	var tpl := template(quest_id)
+	if tpl.is_empty():
+		return Localization.tr_key("msg.quest.p001")
+	if not npc_id.is_empty() and npc_id != String(tpl.get("giver", "")):
+		return "只能向任务发布人接取"
+	if not npc_id.is_empty() and MapService.map_for_npc(npc_id) != GameState.current_map:
+		return "请到任务发布人所在地图接取"
+	match state_of(quest_id):
+		STATE_AVAILABLE, STATE_ABANDONED:
+			pass
+		STATE_LOCKED:
+			return Localization.tr_key("msg.quest.p002")
+		STATE_ACTIVE:
+			return Localization.tr_key("msg.quest.p003")
+		STATE_COMPLETED:
+			return Localization.tr_key("msg.quest.p004")
+		STATE_REWARDED:
+			return Localization.tr_key("msg.quest.p005")
+		_:
+			return Localization.tr_key("msg.quest.p002")
+	if active_count() >= MAX_ACTIVE:
+		return Localization.tr_key("msg.quest.p006") % MAX_ACTIVE
+	return ""
+
+## 查询当前地图上确实可以接取任务的 NPC ID；事件触发时扫描一次，不用于逐帧调用。
+static func available_givers_on_map(map_id: String) -> Dictionary:
+	var available := {}
+	if map_id != GameState.current_map or active_count() >= MAX_ACTIVE:
+		return available
+	var npc_ids := {}
+	for spec in MapService.current_npcs():
+		if spec is Dictionary:
+			var npc_id := String(spec.get("npcId", ""))
+			if not npc_id.is_empty():
+				npc_ids[npc_id] = true
+	for tpl in all():
+		if not tpl is Dictionary:
+			continue
+		var giver := String(tpl.get("giver", ""))
+		if not npc_ids.has(giver) or available.has(giver):
+			continue
+		if can_accept(String(tpl.get("id", "")), giver):
+			available[giver] = true
+	return available
 
 # ---- 接取 / 放弃（08 §8.2 / §8.4）----
 
 ## 接取任务。返回 {ok, reason, state}。
 ## `talk` 类目标（D4-A）：接取即达标 → 直接置 completed（"与长老交谈"在接取那刻已发生）。
 static func accept(quest_id: String, npc_id: String = "") -> Dictionary:
+	var blocked := _accept_block_reason(quest_id, npc_id)
+	if not blocked.is_empty():
+		return _fail(blocked)
 	var tpl := template(quest_id)
-	if tpl.is_empty():
-		return _fail(Localization.tr_key("msg.quest.p001"))
-	if not npc_id.is_empty() and npc_id != String(tpl.get("giver", "")):
-		return _fail("只能向任务发布人接取")
-	if not npc_id.is_empty() and MapService.map_for_npc(npc_id) != GameState.current_map:
-		return _fail("请到任务发布人所在地图接取")
-	var st := state_of(quest_id)
-	match st:
-		STATE_LOCKED:
-			return _fail(Localization.tr_key("msg.quest.p002"))
-		STATE_ACTIVE:
-			return _fail(Localization.tr_key("msg.quest.p003"))
-		STATE_COMPLETED:
-			return _fail(Localization.tr_key("msg.quest.p004"))
-		STATE_REWARDED:
-			return _fail(Localization.tr_key("msg.quest.p005"))
-	if active_count() >= MAX_ACTIVE:
-		return _fail(Localization.tr_key("msg.quest.p006") % MAX_ACTIVE)
 
 	var obj = tpl.get("objective", {})
 	var kind := ""
