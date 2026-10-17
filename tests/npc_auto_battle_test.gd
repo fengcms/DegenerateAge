@@ -1,7 +1,9 @@
 extends Node
+## NPC 对话回归：验证挂机暂停、手动移动与会话关闭后的恢复，不写正式存档。
 
 var failures: Array[String] = []
 
+## 构造真实货郎与背包会话，检查自动决策和玩家手动输入的边界。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	var main := preload("res://scenes/Main.tscn").instantiate()
@@ -19,6 +21,14 @@ func _ready() -> void:
 	check(shop.visible and GameState.npc_dialog_open(), "货郎对话标记为 NPC 会话")
 	check(GameState.auto_battle_on and pilot.current_phase() == Localization.tr_key("ui.auto.npc_dialog")
 		and player.auto_move == Vector2.ZERO, "对话中保留 F 开关并停止自动移动")
+	var before_manual := player.global_position
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("move_left")
+	check(player.global_position.distance_to(before_manual) > 1.0
+		and pilot.current_phase() == Localization.tr_key("ui.auto.npc_dialog"),
+		"NPC 对话时仍能手动移动，但挂机决策保持暂停")
 	var f := InputEventAction.new()
 	f.action = "auto_battle"
 	f.pressed = true
@@ -46,6 +56,7 @@ func _ready() -> void:
 			push_error("FAIL: " + failure)
 	get_tree().quit(0 if failures.is_empty() else 1)
 
+## 累积失败信息并由测试退出码统一报告。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)

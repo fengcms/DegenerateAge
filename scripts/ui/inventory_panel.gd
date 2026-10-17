@@ -7,7 +7,7 @@ extends Control
 ##   I 开关（`panel_inventory`）、Esc 关闭；
 ##   与人物面板并开时可双击或拖放穿戴；单开时装备双击无效；
 ##   悬停显示属性；装备类物品同时显示同槽已穿戴对比与评分高低（5.9）。
-##   面板打开时屏蔽角色操控（不暂停世界模拟，见 player.gd）。
+##   面板打开时仍可操作角色与快捷栏；鼠标命中面板控件时优先处理背包操作。
 ## 交易会话（M1-8 改造）：货郎开店时本面板**不关闭**，改为与货郎面板**并列**显示——
 ##   左半屏背包、右半屏货郎；背包格可把装备拖到出售托盘（6.4）。
 ## 通常打开时，可用药品/回城卷拖至 HUD 快捷栏；与人物面板并开时装备可拖出。
@@ -73,7 +73,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			set_open(false)
 		get_viewport().set_input_as_handled()
 
-## 开关面板；同步全局面板标志（角色操控在 player.gd 中据此屏蔽）。
+## 开关面板；同步全局可见面板集合，普通背包不阻断世界操控。
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("inventory", open)

@@ -186,14 +186,14 @@ func _physics_process(delta: float) -> void:
 		_manual_t = 0.0
 		_set_state(State.SEARCH_TARGET)
 
-	# 普通界面面板只拦截手动输入；NPC 会话在上方单独暂停自动决策。
+	# NPC 会话在上方单独暂停自动决策；普通面板中的手动操作仍可接管挂机。
 	if get_tree().paused:
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.RECOVER, Localization.tr_key("ui.auto.paused"))
 		return
 
 	# 持续手动操作先刷新计时；松手后才开始倒计时，避免按住时提前恢复。
-	if _player.map_move_active or _player.manual_attack_active or (not GameState.panel_open and _has_manual_input()):
+	if _player.map_move_active or _player.manual_attack_active or (not GameState.world_controls_blocked() and _has_manual_input()):
 		begin_manual_override()
 		return
 	if _manual_t > 0.0:
@@ -606,8 +606,7 @@ func _has_manual_input() -> bool:
 		return true
 	if Input.is_action_pressed("attack") or Input.is_action_pressed("target_next"):
 		return true
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		return true
+	# 世界右键在 Game._unhandled_input 中直接 begin_manual_command；这里轮询鼠标会把面板内右键也误判为手动接管。
 	return false
 
 # ---- 状态与提示 ----

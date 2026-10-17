@@ -45,7 +45,7 @@ var equipment: Dictionary = {}      # 已穿戴装备（槽 id → 实例，14 �
 var skip_equipment_downgrade_prompt := false
 var pending_equipment_change: Dictionary = {}
 var _equipment_request_sequence := 0
-var panel_open: bool = false        # 是否有关闭式面板打开中（面板开启时屏蔽角色操控）
+var panel_open: bool = false        # 是否有关闭式面板打开中；普通面板不阻断角色操控
 var _open_panels: Dictionary = {}   # 已打开面板 id 集合（多面板互斥，见 set_panel_open）
 var quest_states: Dictionary = {}   # quest_id -> {"state": String, "progress": int}（M2 起；见 scripts/systems/quest.gd）
 var quest_items: Dictionary = {}    # 第二章确定来源的任务物品；独立任务袋，不占背包格
@@ -1032,8 +1032,10 @@ func toggle_auto_pickup() -> bool:
 const FLOATING_PANEL_IDS := ["inventory", "character", "skill", "mount"]
 ## NPC 会话面板：打开期间暂停自动战斗挂机（普通可并开的信息面板不影响自动决策）。
 const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade"]
+## 真正接管键盘的流程面板；普通信息与 NPC 面板可在操作角色时保持打开。
+const WORLD_INPUT_BLOCKING_PANEL_IDS := ["menu", "settings", "save", "death", "equipment_confirm"]
 
-## 登记 / 注销一个已打开的面板；任一面板打开即置 panel_open（player.gd 据此屏蔽操控）。
+## 登记 / 注销一个已打开的面板；panel_open 只描述可见状态，不再代表世界输入禁用。
 ## 多面板互斥由各面板订阅 EventBus.panel_opened 自行关闭实现（I 背包 / E 货郎），
 ## 但「可并开集合」只在本文件声明（见 panels_coexist），面板侧仅查询、不自带名单（F-P3-1）。
 func set_panel_open(panel_id: String, open: bool) -> void:
@@ -1042,6 +1044,15 @@ func set_panel_open(panel_id: String, open: bool) -> void:
 	else:
 		_open_panels.erase(panel_id)
 	panel_open = not _open_panels.is_empty()
+
+## 判断是否有模态流程或正在编辑的文字接管键盘；供角色、世界和快捷栏共用。
+## 面板遮住的鼠标区域仍由 GUI 命中处理，不靠本判据把整张地图封住。
+func world_controls_blocked() -> bool:
+	for panel_id in WORLD_INPUT_BLOCKING_PANEL_IDS:
+		if _open_panels.has(panel_id):
+			return true
+	var focus := get_viewport().gui_get_focus_owner()
+	return focus != null and focus.is_visible_in_tree() and (focus is LineEdit or focus is TextEdit)
 
 ## 面板互斥查询（F-P3-1）：`opened_id` 打开时，本面板 `self_id` 是否应保持打开。
 ## 仅「同一面板」或「同属常驻浮窗组」可并开；货郎交易会话中的背包例外由背包 / 货郎面板自身处理。

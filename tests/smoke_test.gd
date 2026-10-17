@@ -427,7 +427,7 @@ func _test_warehouse() -> void:
 		player.global_position = keeper.global_position + Vector2(32.0, 0.0)
 		_expect(world._try_interact(), "靠近仓库管理员按 E 应派发交互")
 		var panel: Control = main.get_node("UI/WarehousePanel")
-		_expect(panel.visible and GameState.panel_open, "仓库面板应可打开并阻止世界操控")
+		_expect(panel.visible and GameState.panel_open, "仓库面板应可打开并登记可见状态")
 		panel._on_slot_pressed("bag", 0)
 		panel._on_slot_pressed("bag", 0)
 		_expect(GameState.warehouse[0] == ui_item and GameState.inventory[0] == null,
@@ -439,7 +439,7 @@ func _test_warehouse() -> void:
 		_expect(GameState.warehouse[0] == null and GameState.inventory[10] == ui_item,
 			"拖放仓库装备到背包指定空格应取出")
 		panel.set_open(false)
-		_expect(not GameState.panel_open, "关闭仓库应恢复世界操控")
+		_expect(not GameState.panel_open, "关闭仓库应清除面板可见状态")
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
@@ -553,7 +553,7 @@ func _test_upgrade() -> void:
 	var panel := preload("res://scenes/ui/UpgradePanel.tscn").instantiate()
 	add_child(panel)
 	panel.set_open(true)
-	_expect(panel.visible and GameState.panel_open, "升星面板应可打开并屏蔽世界操控")
+	_expect(panel.visible and GameState.panel_open, "升星面板应可打开并登记可见状态")
 	panel.set_open(false)
 	panel.queue_free()
 	GameState.reset_to_defaults()
@@ -1885,7 +1885,7 @@ func _test_trade_panel() -> void:
 		"关闭货郎面板后背包应保留且退出交易布局")
 	_expect(inv._center.panel_box.global_position.distance_to(bag_position_before_close) <= 1.0,
 		"关闭货郎后背包应留在交易时的屏幕位置")
-	_expect(GameState.panel_open, "背包仍打开时角色操控应继续屏蔽")
+	_expect(GameState.panel_open, "背包仍打开时应保留面板可见状态")
 
 	# 关闭时托盘内未确认装备应退回背包（不静默丢失，🔴R3）
 	EventBus.shop_open_requested.emit("peddler_camp")

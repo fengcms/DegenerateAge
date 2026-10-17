@@ -249,7 +249,7 @@ func _update_exit_nearness() -> void:
 	for child in _exits.get_children():
 		var exit_node := child as TravelExit
 		if exit_node != null:
-			exit_node.set_player_near(exit_node == nearest and not GameState.panel_open and not _player.is_dead)
+			exit_node.set_player_near(exit_node == nearest and not GameState.world_controls_blocked() and not _player.is_dead)
 
 func nearest_exit() -> TravelExit:
 	var player_cell := Iso.world_to_grid(_player.global_position)
@@ -353,20 +353,23 @@ func enemy_at_screen(point: Vector2) -> Node2D:
 			best = enemy
 	return best
 
+## Tab 是世界目标切换键，须在 GUI 焦点处理之前接管；模态面板与文本输入仍优先。
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("target_next") and not event.is_echo() \
+			and not GameState.world_controls_blocked() and _player != null and not _player.is_dead:
+		cycle_target()
+		get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
 	# 坐骑切换沿用 GameState 的骑乘/下马规则，不受普通浮窗打开状态影响。
-	if event.is_action_pressed("mount_toggle") and not event.is_echo():
+	if event.is_action_pressed("mount_toggle") and not event.is_echo() and not GameState.world_controls_blocked():
 		if _player != null and not _player.is_dead:
 			GameState.toggle_mount()
 			get_viewport().set_input_as_handled()
 		return
-	if not GameState.panel_open and not _player.is_dead:
+	if not GameState.world_controls_blocked() and not _player.is_dead:
 		if event.is_action_pressed("sit_toggle") and not event.is_echo():
 			_player.set_sitting(not _player.is_sitting)
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("target_next") and not event.is_echo():
-			cycle_target()
 			get_viewport().set_input_as_handled()
 			return
 		if event is InputEventMouseButton and event.pressed and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
@@ -399,21 +402,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	# F 是全局挂机开关，面板打开时也必须能操作；NPC 会话只暂停决策，不禁用开关。
-	if event.is_action_pressed("auto_battle") and not event.is_echo():
+	if event.is_action_pressed("auto_battle") and not event.is_echo() and not GameState.world_controls_blocked():
 		if not GameState.auto_battle_on:
 			_player.set_sitting(false)
 		GameState.toggle_auto_battle()
 		get_viewport().set_input_as_handled()
 		return
-	# 自动拾取（G）保留面板外快捷操作。
-	if not GameState.panel_open:
+	# 自动拾取（G）在普通面板打开时仍可切换。
+	if not GameState.world_controls_blocked():
 		if event.is_action_pressed("auto_pickup"):
 			GameState.toggle_auto_pickup()
 			get_viewport().set_input_as_handled()
 			return
 
-	# 与 NPC 交互（6.3 通用交互）：靠近后按 E；面板打开时不响应
-	if event.is_action_pressed("interact") and not event.is_echo() and not GameState.panel_open and not _player.is_dead:
+	# 与 NPC 交互（6.3 通用交互）：模态流程接管时才屏蔽；普通面板可边走边交互。
+	if event.is_action_pressed("interact") and not event.is_echo() and not GameState.world_controls_blocked() and not _player.is_dead:
 		if _try_interact():
 			get_viewport().set_input_as_handled()
 

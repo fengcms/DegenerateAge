@@ -86,7 +86,7 @@ func _on_shop_close_requested() -> void:
 	if visible:
 		set_open(false)
 
-## 开关面板；同步全局面板标志（角色操控在 player.gd 中据此屏蔽）。
+## 开关面板；同步全局可见面板集合，交易会话仅暂停自动战斗决策。
 ## 开启 = 进入交易会话（拉起背包面板并列）；关闭 = 退出会话 + **托盘内未确认装备退回背包**。
 func set_open(open: bool) -> void:
 	visible = open

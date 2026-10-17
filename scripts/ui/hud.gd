@@ -395,11 +395,11 @@ func _current_map_name() -> String:
 # ---- 快捷栏：前 12 格放已接通操作，后 4 格打开面板 ----
 
 func _unhandled_input(event: InputEvent) -> void:
-	if GameState.panel_open or not event is InputEventKey or not event.pressed or event.echo:
+	if GameState.world_controls_blocked() or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	for i in range(12):
 		if InputMap.has_action("hotbar_%d" % (i + 1)) and event.is_action_pressed("hotbar_%d" % (i + 1)):
-			_activate_hotbar(i)
+			_activate_hotbar(i, true)
 			get_viewport().set_input_as_handled()
 			return
 
@@ -523,8 +523,9 @@ func _on_binding_dropped(index: int, payload: Dictionary) -> void:
 			if Warehouse.token_matches(item, String(payload.get("token", ""))):
 				GameState.set_hotbar_entry(index, HotbarConfig.entry_for_item(item))
 
-func _activate_hotbar(index: int) -> void:
-	if index < 0 or index >= 12 or GameState.panel_open:
+## 键盘快捷栏可在普通面板打开时使用；鼠标点格在拖放模式下保持原有防误触规则。
+func _activate_hotbar(index: int, from_keyboard: bool = false) -> void:
+	if index < 0 or index >= 12 or GameState.world_controls_blocked() or (GameState.panel_open and not from_keyboard):
 		return
 	var binding = GameState.hotbar[index]
 	if not binding is Dictionary:

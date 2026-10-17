@@ -2,11 +2,13 @@ extends Node
 ## 使用真实 Main 和 Viewport 输入路由验证试玩反馈；独立 tests 存档闸门。
 var failures: Array[String] = []
 
+## 累积输入验收失败，供测试结束时一次性报告。
 func check(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
 		print("[InputFeedback] 失败：", message)
 
+## 向真实 Viewport 送一组按下与松开事件，覆盖面板与世界的输入路由。
 func key(code: Key) -> void:
 	for pressed in [true, false]:
 		var event := InputEventKey.new()
@@ -15,6 +17,7 @@ func key(code: Key) -> void:
 		event.pressed = pressed
 		get_viewport().push_input(event, true)
 
+## 模拟左键点击屏幕位置，验证 GUI 命中与世界点击是否正确分流。
 func click(point: Vector2) -> void:
 	for pressed in [true, false]:
 		var event := InputEventMouseButton.new()
@@ -23,6 +26,7 @@ func click(point: Vector2) -> void:
 		event.pressed = pressed
 		get_viewport().push_input(event, true)
 
+## 构造真实主场景并执行鼠标、键盘、面板和自动战斗的综合输入回归。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	# 交互回归需要可攻击的近距离怪；营地出生点位于免战区内。
@@ -105,13 +109,65 @@ func _ready() -> void:
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("/tmp/degenerateage_input_selected.png")
-	# 打开面板后，地图区域鼠标不能驱动人物。
+	# 普通面板打开时，键盘仍能接管角色与快捷栏；鼠标命中面板控件仍归 GUI。
 	key(KEY_M)
 	var stopped := player.global_position
-	var hp_before := enemies[1].hp
-	await get_tree().create_timer(0.3).timeout
-	check(player.global_position.is_equal_approx(stopped) and enemies[1].hp == hp_before, "面板阻断追击及攻击")
+	check(GameState.panel_open and not GameState.world_controls_blocked(), "普通地图面板不接管世界键盘")
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("move_left")
+	check(player.global_position.distance_to(stopped) > 1.0 and not player.manual_attack_active,
+		"面板打开时 WASD 仍能移动并取消连续攻击")
+	key(KEY_TAB)
+	check(player.locked_target == enemies[0], "面板打开时 Tab 仍能切换目标")
+	Input.action_press("attack")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("attack")
+	check(player.manual_attack_active or enemies[0].hp < 1000,
+		"面板打开时 Space 仍能向选中怪物发起普攻")
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	Input.action_release("move_left")
+	key(KEY_G)
+	check(GameState.auto_pickup_on, "面板打开时 G 仍能切换自动拾取")
+	key(KEY_G)
+	key(KEY_F)
+	check(GameState.auto_battle_on, "面板打开时 F 仍能切换自动战斗")
+	key(KEY_F)
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 2}
+	GameState.player.hp = maxi(1, int(GameState.player.hp) - 30)
+	hud._activate_hotbar(0)
+	check(int(GameState.inventory[0].count) == 2, "普通面板内鼠标点快捷格仍防止拖放误用")
+	key(KEY_1)
+	check(GameState.inventory[0] is Dictionary and int(GameState.inventory[0].count) == 1,
+		"面板打开时快捷栏数字键仍能使用药品")
 	key(KEY_ESCAPE)
+	var inventory_panel: Control = main.get_node("UI/InventoryPanel")
+	inventory_panel.set_open(true)
+	var bag_position := player.global_position
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("move_left")
+	check(player.global_position.distance_to(bag_position) > 1.0,
+		"背包浮窗打开时 WASD 仍能操作角色")
+	inventory_panel._organize_button.grab_focus()
+	var before_focused_tab := player.locked_target
+	key(KEY_TAB)
+	check(player.locked_target != before_focused_tab, "背包按钮持有焦点时 Tab 仍切换世界目标")
+	inventory_panel.set_open(false)
+	var settings_panel: Control = main.get_node("UI/SettingsPanel")
+	settings_panel.set_open(true)
+	var modal_position := player.global_position
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("move_left")
+	check(GameState.world_controls_blocked() and player.global_position.is_equal_approx(modal_position),
+		"设置模态面板仍阻止角色移动")
+	settings_panel.set_open(false)
 	Input.action_press("move_left")
 	await get_tree().physics_frame
 	await get_tree().physics_frame
@@ -138,11 +194,14 @@ func _ready() -> void:
 	GameState.set_auto_battle(true)
 	pilot.set_physics_process(false)
 	player.set_physics_process(false)
+	inventory_panel.set_open(true)
 	Input.action_press("move_left")
 	for i in range(5):
 		pilot._physics_process(1.0)
-	check(pilot._manual_t == 1.5 and pilot.current_state() == AutoBattle.State.MANUAL_OVERRIDE, "持续手动操作刷新 1.5 秒")
+	check(pilot._manual_t == 1.5 and pilot.current_state() == AutoBattle.State.MANUAL_OVERRIDE,
+		"普通面板打开期间持续手动操作仍刷新 1.5 秒接管")
 	Input.action_release("move_left")
+	inventory_panel.set_open(false)
 	pilot._physics_process(1.0)
 	check(pilot.current_phase().contains("0.5 秒") and String(hud.get_node("%AutoLabel").text).contains("0.5 秒"), "HUD 显示真实倒计时")
 	pilot.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)

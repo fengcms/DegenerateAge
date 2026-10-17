@@ -284,9 +284,10 @@ func _physics_process(delta: float) -> void:
 	_tick_regen(delta)
 
 	_stun = maxf(0.0, _stun - delta)
+	var world_controls_blocked := GameState.world_controls_blocked()
 	if is_sitting:
-		var wants_move := Input.get_vector("move_left", "move_right", "move_up", "move_down").length() > MANUAL_EPS
-		if wants_move or Input.is_action_pressed("attack"):
+		var wants_move := not world_controls_blocked and Input.get_vector("move_left", "move_right", "move_up", "move_down").length() > MANUAL_EPS
+		if wants_move or (not world_controls_blocked and Input.is_action_pressed("attack")):
 			set_sitting(false)
 		else:
 			auto_move = Vector2.ZERO
@@ -296,21 +297,20 @@ func _physics_process(delta: float) -> void:
 			_update_blink()
 			return
 
-	# 普通面板只接管手动输入：忽略按键与点击，但自动寻路（地图点击 / 任务导航）
-	# 与自动战斗（F 挂机）继续运行，打开面板不再中断自动行走。
-	# 暂停整棵场景树的模态面板（主菜单 / 死亡 / 装备确认）由引擎自动冻结本节点。
-	if GameState.panel_open:
+	# 普通面板保留手动移动与攻击；设置、存档等模态流程和文本编辑才接管键盘。
+	# 暂停整棵场景树的菜单、死亡及装备确认由引擎自动冻结本节点。
+	if world_controls_blocked:
 		manual_attack_active = false
 		_pending_skill_id = ""
 
 	# Input.get_vector 已做归一化：斜向不会比正向更快（八向移动）
-	var dir := Vector2.ZERO if GameState.panel_open else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var dir := Vector2.ZERO if world_controls_blocked else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	manual_input_active = dir.length() > MANUAL_EPS
 	if manual_input_active:
 		map_move_active = false
 		manual_attack_active = false
 		_pending_skill_id = ""
-	if not GameState.panel_open and Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:
+	if not world_controls_blocked and Input.is_action_pressed("attack") and not manual_input_active and not manual_attack_active:
 		if valid_target(locked_target):
 			request_target_attack(locked_target)
 		else:
@@ -330,7 +330,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# 普攻：按住攻击键，冷却结束即发动一次（每次发动 = 一次结算）
-	if not GameState.panel_open and not manual_attack_active and _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
+	if not world_controls_blocked and not manual_attack_active and _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
 		_try_attack()
 
 	_update_blink()
