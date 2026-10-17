@@ -41,5 +41,8 @@ func _ready() -> void:
 	MonsterAnimationCache.prepare_for_map("c2_lower_works")
 	check(MonsterAnimationCache.cached_preview_ids().has("c2_badge_wraith"), "工坊下层预取工牌游魂试玩图")
 	MonsterAnimationCache.release_for_map("c2_lower_works")
+	MonsterAnimationCache.prepare_for_map("c2_ember_furnace")
+	check(MonsterAnimationCache.cached_preview_ids().has("c2_ash_beast"), "余烬炉房预取煤灰兽试玩图")
+	MonsterAnimationCache.release_for_map("c2_ember_furnace")
 	print("[MonsterAnimationCacheTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
