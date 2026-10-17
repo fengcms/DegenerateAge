@@ -16,6 +16,8 @@ const UI_SCALE_MIN := 0.8
 const UI_SCALE_MAX := 2.0
 const MAP_SCALE_MIN := 0.8
 const MAP_SCALE_MAX := 2.0
+## 弹层（Window 类对话框）允许占用的界面设计空间上限比例，留边避免高倍率下顶满窗口。
+const DIALOG_FIT_RATIO := 0.96
 const TEXT_SCALE_MIN := 0.8
 const TEXT_SCALE_MAX := 2.0
 ## 与角色进度分离的本机显示偏好；旧槽的 settings 字段继续保留以兼容旧档。
@@ -269,6 +271,28 @@ static func apply_ui_scale_to(ui: CanvasLayer) -> void:
 
 static func ui_scale_value() -> float:
 	return clampf(float(GameState.settings.get("uiScale", 1.0)), UI_SCALE_MIN, UI_SCALE_MAX) * display_scale_factor()
+
+## 把界面倍率补到 Window 类弹层（FileDialog / Popup 等）上。
+## 界面轴挂在 UI CanvasLayer 的 transform，而 transform 只作用于 CanvasItem；Window 不是
+## CanvasItem，落在视口像素坐标系，不会跟随界面倍率 ⇒ 高分屏 / 高界面倍率下弹层会明显小于
+## 其余面板、内容（文字、行高）也不放大，必须在弹层自身补同一份内容缩放。
+## 弹层内部的子弹层（FileDialog 自带的覆盖确认 / 收藏夹菜单等）同样落在独立视口，一并补上。
+## 见工程文档《存档导出文件选择器高分屏缩放修正》。
+static func apply_ui_scale_to_window(dialog: Window) -> void:
+	var scale_value := ui_scale_value()
+	for window in [dialog] + dialog.find_children("*", "Window", true, false):
+		(window as Window).content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		(window as Window).content_scale_factor = scale_value
+
+## 弹层的视口像素尺寸 = 设计尺寸 × 界面倍率：弹层内可用设计空间因此恒等于设计尺寸，
+## 与同倍率下的面板同一口径（面板也是在「视口尺寸 / 倍率」的设计空间里排版）。
+## 界面倍率越大，窗口能容纳的设计空间越小，故按设计空间收缩，避免弹层大过游戏窗口、
+## 确认按钮落到屏幕外。`viewport_size` 取弹层父视口的可见尺寸。
+static func dialog_popup_size(viewport_size: Vector2, design_size: Vector2i) -> Vector2i:
+	var scale_value := ui_scale_value()
+	var design_space := viewport_size / maxf(scale_value, 0.01)
+	var design := Vector2(design_size).min(design_space * DIALOG_FIT_RATIO)
+	return Vector2i((design * scale_value).round())
 
 static func _apply_text_scale() -> void:
 	# 引擎的原生悬浮提示不在 UI CanvasLayer 下，必须单独给 TooltipLabel 设置字号。

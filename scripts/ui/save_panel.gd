@@ -16,7 +16,9 @@ extends Control
 const PANEL_ID := "save"
 ## 一行最多同时出现 5 个按钮（保存 / 读取 / 导出 / 导入 / 删除），故下限比原来 560 放宽（工程文档 §4.3）。
 const CARD_MIN := Vector2(700, 0)
-## 内置文件选择器尺寸（不使用平台原生对话框，见工程文档 §4.3）。
+## 内置文件选择器的**设计尺寸**（不使用平台原生对话框，见工程文档 §4.3）。
+## 与面板同处界面设计坐标系：弹出时必须按界面倍率换算成视口像素并补上内容缩放，
+## 否则高分屏 / 高界面倍率下会明显小于其余面板（见 _popup_file_dialog）。
 const FILE_DIALOG_SIZE := Vector2i(760, 520)
 
 const COL_WARN := Color(0.92, 0.55, 0.45)
@@ -213,6 +215,13 @@ func _make_file_dialog(title: String, mode: FileDialog.FileMode, desktop: String
 		d.current_dir = desktop
 	add_child(d)
 	return d
+
+## 弹出文件选择器：FileDialog 是独立 Window，不受 UI CanvasLayer 的界面倍率变换影响，
+## 故弹出前先补上同一份内容缩放，并把设计尺寸换算成视口像素
+## （高分屏 / 高界面倍率下才不会比其余面板小一圈）。
+func _popup_file_dialog(dialog: FileDialog) -> void:
+	SettingsRuntime.apply_ui_scale_to_window(dialog)
+	dialog.popup_centered(SettingsRuntime.dialog_popup_size(get_viewport().get_visible_rect().size, FILE_DIALOG_SIZE))
 
 func _build_card(slot: int, parent: Node) -> void:
 	var card := PanelContainer.new()
@@ -443,7 +452,7 @@ func _on_export_pressed(slot: int) -> void:
 		return
 	_export_slot = slot
 	_export_dialog.current_file = SaveManager.export_file_name(String(s.get("name", "")), int(s.get("level", 1)))
-	_export_dialog.popup_centered(FILE_DIALOG_SIZE)
+	_popup_file_dialog(_export_dialog)
 
 func _on_export_file_selected(path: String) -> void:
 	var slot := _export_slot
@@ -457,7 +466,7 @@ func _on_import_pressed(slot: int) -> void:
 	if slot == SaveManager.active_slot:
 		return
 	_import_slot = slot
-	_import_dialog.popup_centered(FILE_DIALOG_SIZE)
+	_popup_file_dialog(_import_dialog)
 
 func _on_import_file_selected(path: String) -> void:
 	var slot := _import_slot

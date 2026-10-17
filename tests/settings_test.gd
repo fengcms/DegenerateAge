@@ -107,6 +107,7 @@ func _ready() -> void:
 	await _check_panels_matrix()
 	await _check_embedded_resize()
 	_check_display_preferences()
+	_check_dialog_scale()
 	print("[SettingsTest] 全部通过 ✅")
 	get_tree().quit()
 
@@ -507,6 +508,50 @@ func _check_panels_matrix() -> void:
 	GameState.reset_to_defaults()
 	embedded.queue_free()
 	await get_tree().process_frame
+
+## M5-9g：界面倍率必须同时作用于 Window 类弹层（FileDialog 走独立视口，不吃 CanvasLayer 变换）。
+## 见工程文档《存档导出文件选择器高分屏缩放修正》。
+func _check_dialog_scale() -> void:
+	var design := Vector2i(760, 520)
+	var viewport_size := Vector2i(1280, 800)
+	GameState.settings["displayScaleMode"] = "auto"
+	GameState.settings["displayScale"] = 1.0
+	GameState.settings["uiScale"] = 1.0
+	_check(SettingsRuntime.dialog_popup_size(Vector2(viewport_size), design) == design,
+		"界面 100% 时弹层尺寸应与设计尺寸一致")
+	for factor in [1.5, 2.0]:
+		GameState.settings["uiScale"] = factor
+		var zoomed := SettingsRuntime.dialog_popup_size(Vector2(viewport_size), design)
+		_check(zoomed.x > design.x and zoomed.y > design.y,
+			"界面 %.0f%% 时弹层应随之放大，实际 %s" % [factor * 100.0, str(zoomed)])
+		_check(zoomed.x <= viewport_size.x and zoomed.y <= viewport_size.y,
+			"放大后弹层不得超过游戏窗口，实际 %s" % str(zoomed))
+		# 内容缩放与视口尺寸必须同倍率：弹层内可用设计空间 = 尺寸 / 倍率
+		var design_space: Vector2 = Vector2(zoomed) / float(factor)
+		_check(design_space.x <= design.x + 0.6 and design_space.y <= design.y + 0.6,
+			"弹层内设计空间不得大于设计尺寸（界面 %.0f%%，实际 %s）" % [factor * 100.0, str(design_space)])
+	# 窗口相对变小时按可用设计空间收缩，绝不溢出到屏幕外。
+	var small := Vector2i(800, 600)
+	var shrunk := SettingsRuntime.dialog_popup_size(Vector2(small), design)
+	_check(shrunk.x <= small.x and shrunk.y <= small.y, "小窗口高倍率下弹层仍不得溢出，实际 %s" % str(shrunk))
+	var dialog := FileDialog.new()
+	add_child(dialog)
+	SettingsRuntime.apply_ui_scale_to_window(dialog)
+	_check(dialog.content_scale_mode == Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		and is_equal_approx(dialog.content_scale_factor, 2.0),
+		"弹层应启用内容缩放并按界面倍率取值，实际 mode=%d factor=%.2f" % [dialog.content_scale_mode, dialog.content_scale_factor])
+	dialog.queue_free()
+	# 弹层内部的子弹层（真 FileDialog 的覆盖确认 / 收藏夹菜单）也要吃到同一倍率，否则内部提示仍偏小。
+	var outer := Window.new()
+	add_child(outer)
+	var inner := Window.new()
+	outer.add_child(inner)
+	SettingsRuntime.apply_ui_scale_to_window(outer)
+	_check(inner.content_scale_mode == Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		and is_equal_approx(inner.content_scale_factor, 2.0),
+		"弹层内部子弹层应一并吃到界面倍率，实际 mode=%d factor=%.2f" % [inner.content_scale_mode, inner.content_scale_factor])
+	outer.queue_free()
+	GameState.settings["uiScale"] = 1.0
 
 func _check_embedded_resize() -> void:
 	var embedded := SubViewport.new()
