@@ -31,6 +31,7 @@ func _ready() -> void:
 	check(MonsterAnimationCache.cached_preview_ids().has("c2_spirit_larva"), "断管坡预取汲灵幼虫试玩图")
 	check(MonsterAnimationCache.cached_preview_ids().has("c2_copper_worm"), "断管坡预取铜壳蠕虫试玩图")
 	check(MonsterAnimationCache.cached_preview_ids().has("c2_broken_guard"), "断管坡预取断链守卫试玩图")
+	check(MonsterAnimationCache.cached_preview_ids().has("c2_elite_copper_matriarch"), "断管坡预取铜壳母虫试玩图")
 	var larva := MonsterAnimationCache.get_preview_texture("c2_spirit_larva", "res://assets/sprites/monsters/c2_spirit_larva/directional_preview_atlas.png")
 	check(larva != null and larva.get_size() == Vector2(240, 640), "试玩图集由地图缓存共享")
 	MonsterAnimationCache.release_for_map("c2_pipe_slope")

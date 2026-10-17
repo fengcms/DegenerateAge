@@ -1,6 +1,6 @@
 extends Node
 ## 第二至六章临时怪物外观集成测试：逐 ID 装配真实实体，核对独立图集与三档脚底规格。
-## 另验证汲灵幼虫的八方向单帧试玩稿；不把它误判为正式五状态动画。
+## 另验证各体型的八方向单帧试玩稿；不把它误判为正式五状态动画。
 
 const MONSTER_SCENE := preload("res://scenes/entities/Monster.tscn")
 const SIZES := {"normal": [80, 64], "elite": [112, 88], "boss": [192, 152]}
@@ -28,12 +28,15 @@ func _ready() -> void:
 		monster.monster_id = id
 		add_child(monster)
 		monster.set_physics_process(false)
-		if id in ["c2_spirit_larva", "c2_copper_worm", "c2_broken_guard", "c2_slag_leech", "c2_badge_wraith", "c2_ash_beast", "c2_spirit_attendant", "c2_purple_parasite"]:
+		if id in ["c2_spirit_larva", "c2_copper_worm", "c2_broken_guard", "c2_slag_leech", "c2_badge_wraith", "c2_ash_beast", "c2_spirit_attendant", "c2_purple_parasite", "c2_elite_copper_matriarch"]:
 			var preview := monster.sample_art as MonsterDirectionalPreviewArt
 			check(preview != null, "%s 装配八方向试玩外观" % id)
 			if preview != null:
-				check(preview.texture.get_size() == Vector2(240, 640), "试玩图集为 3 列 8 行，每格 80 像素")
-				check(preview.offset == Vector2(-40, -64), "试玩图保持原脚底锚点")
+				var dimensions: Array = SIZES[String(entry.get("kind", "normal"))]
+				var side := int(dimensions[0])
+				var foot_y := int(dimensions[1])
+				check(preview.texture.get_size() == Vector2(side * 3, side * 8), "%s 试玩图集为 3 列 8 行，帧宽 %d" % [id, side])
+				check(preview.offset == Vector2(-side / 2.0, -foot_y), "%s 试玩图保持原脚底锚点" % id)
 				preview.face(Vector2.DOWN)
 				preview._process(0.0)
 				check(preview.frame_coords == Vector2i(0, 0), "向南显示正面")

@@ -3,7 +3,6 @@ extends RefCounted
 ## 由 tools/build_simplified_monster_art.py 生成；预载已接入的临时怪物静态图。
 ## 三格为原姿、受击、死亡；后续八向动画可逐 ID 替换外观档案。
 const TEXTURES := {
-	"c2_elite_copper_matriarch": preload("res://assets/sprites/monsters/c2_elite_copper_matriarch/simplified_atlas.png"),
 	"c2_elite_broken_inspector": preload("res://assets/sprites/monsters/c2_elite_broken_inspector/simplified_atlas.png"),
 	"c2_elite_gray_scribe": preload("res://assets/sprites/monsters/c2_elite_gray_scribe/simplified_atlas.png"),
 	"c2_elite_spirit_guard": preload("res://assets/sprites/monsters/c2_elite_spirit_guard/simplified_atlas.png"),
