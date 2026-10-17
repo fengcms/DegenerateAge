@@ -17,12 +17,21 @@ const WILD_TILES := [
 	preload("res://assets/tiles/wild/tile_1.png"),
 	preload("res://assets/tiles/wild/tile_2.png"),
 	preload("res://assets/tiles/wild/tile_3.png"),
+	preload("res://assets/tiles/wild/tile_4.png"),
+	preload("res://assets/tiles/wild/tile_5.png"),
+	preload("res://assets/tiles/wild/tile_6.png"),
+	preload("res://assets/tiles/wild/tile_7.png"),
+	preload("res://assets/tiles/wild/tile_8.png"),
 ]
 const ASH_TILES := [
 	preload("res://assets/tiles/ash/tile_0.png"),
 	preload("res://assets/tiles/ash/tile_1.png"),
 	preload("res://assets/tiles/ash/tile_2.png"),
-	preload("res://assets/tiles/chapter1_v2/ash_land/road_soft.png"),
+	preload("res://assets/tiles/ash/tile_3.png"),
+	preload("res://assets/tiles/ash/tile_4.png"),
+	preload("res://assets/tiles/ash/tile_5.png"),
+	preload("res://assets/tiles/ash/tile_6.png"),
+	preload("res://assets/tiles/ash/tile_7.png"),
 ]
 const CAVE_TILES := [
 	preload("res://assets/tiles/cave/tile_0.png"),
@@ -35,6 +44,14 @@ const CAVE_TILES := [
 	preload("res://assets/tiles/cave/tile_7.png"),
 	preload("res://assets/tiles/cave/tile_8.png"),
 ]
+## 道路中心砖：与族变体数解耦，各图占族砖之后的独立槽位（详见 _road_atlas_index 与 44 号文档）。
+## wild 的族砖换成 3×3 后，原 2×2 的浅褐土路砖另存为独立道路资源，道路观感保持不变。
+const CAMP_ROAD := preload("res://assets/tiles/camp/tile_3.png")
+const WILD_ROAD := preload("res://assets/tiles/wild/road.png")
+const ASH_ROAD := preload("res://assets/tiles/chapter1_v2/ash_land/road_soft.png")
+const CAVE_ROAD := preload("res://assets/tiles/cave/tile_3.png")
+## 九档加权散列的累计阈值（35 号 §8：0:38 / 1:24 / 2:10 / 3:7 / 4:6 / 5:5 / 6:4 / 7:3 / 8:3）。
+const WEIGHTED_CUMULATIVE := [38, 62, 72, 79, 85, 90, 94, 97, 100]
 const CH1_CAMP_EDGES := [
 	preload("res://assets/tiles/chapter1_v2/camp/road_edge_n.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_e.png"),
 	preload("res://assets/tiles/chapter1_v2/camp/road_edge_s.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_w.png"),
@@ -465,7 +482,7 @@ func _draw_camp_whitebox() -> void:
 func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool = false) -> void:
 	var active_tiles: Array = tiles
 	if not _chapter_one_road_rows.is_empty():
-		active_tiles = tiles + _chapter_one_road_edges()
+		active_tiles = tiles + [_road_tile()] + _chapter_one_road_edges()
 	if _tile_atlas == null or _atlas_tiles != active_tiles:
 		var atlas := Image.create(int(Iso.TILE_W) * active_tiles.size(), int(Iso.TILE_H), false, Image.FORMAT_RGBA8)
 		for i in range(active_tiles.size()):
@@ -502,19 +519,31 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 	if _tile_mesh != null:
 		draw_mesh(_tile_mesh, _tile_atlas, Transform2D.IDENTITY, Color("a9aaae") if cave_style else Color.WHITE)
 
-## 地砖变体散列：4 变体沿用历史公式以保持既有地图画面不变；9 变体按 35 号 §8 加权表取值。
+## 地砖变体散列：4 变体沿用历史公式以保持既有地图画面不变；8/9 变体按 35 号 §8 加权表取值，
+## 变体数不足九档时把末档并入前一档（ash 只有 8 块，末档 3% 并入第 7 档得 6%）。
 func _pick_theme_tile(cell: Vector2i, theme_size: int) -> int:
 	var hash := posmod(cell.x * 73 + cell.y * 37 + cell.x * cell.y * 11, 19)
 	if theme_size <= 4:
 		return 1 if hash < 4 else 2 if hash == 5 else 0
 	hash = posmod(cell.x * 73 + cell.y * 37 + cell.x * cell.y * 11, 100)
-	return 0 if hash < 38 else 1 if hash < 62 else 2 if hash < 72 else 3 if hash < 79 \
-		else 4 if hash < 85 else 5 if hash < 90 else 6 if hash < 94 else 7 if hash < 97 else 8
+	for tier in range(theme_size):
+		if tier == theme_size - 1 or hash < WEIGHTED_CUMULATIVE[tier]:
+			return tier
+	return theme_size - 1
 
-## 把道路索引（3 为中心、4..11 为八张边缘）映射为「本族砖 + 道路边缘」图集内的绝对下标：
-## 中心沿用第 3 号砖，八张边缘固定在族砖之后的槽位，因此与族变体数解耦。
+## 返回本图道路中心砖；道路中心不再借用族砖下标 3，避免族变体数变化顶掉道路。
+func _road_tile() -> Texture2D:
+	match map_id:
+		"camp": return CAMP_ROAD
+		"wild_trial": return WILD_ROAD
+		"ash_land": return ASH_ROAD
+		"corruption_source": return CAVE_ROAD
+	return WILD_ROAD
+
+## 把道路索引（3 为中心、4..11 为八张边缘）映射为「族砖 + 道路中心 + 八张边缘」图集内的绝对下标：
+## 中心固定在族砖之后的第 1 个槽位，八张边缘紧随其后，因此与族变体数完全解耦。
 func _road_atlas_index(road_index: int, theme_size: int) -> int:
-	return 3 if road_index == 3 else theme_size + road_index - 4
+	return theme_size if road_index == 3 else theme_size + 1 + road_index - 4
 
 ## 返回本图八张 1×1 道路边缘/转角纹理；第二章不调用。
 func _chapter_one_road_edges() -> Array:

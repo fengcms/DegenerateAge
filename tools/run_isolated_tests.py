@@ -33,7 +33,7 @@ DEFAULT_TESTS = [
     "BossReviewTest", "BossActionTest", "QuestRewardPlanTest", "MapGateTest",
     "MapRouteOverlayTest", "MinimapViewportTest",
     "ChapterOneAcceptance",
-    # 地面砖族选择与道路索引契约：锁定 cave 9 变体与 wild/ash/camp 4 变体两套规则。
+    # 地面砖族选择与道路索引契约：锁定 wild 9 / ash 8 / cave 9 / camp 4 四套变体与道路中心解耦规则。
     "GroundTileThemeTest",
     # 第四/五/六章各 1 个地图契约场景，令默认回归覆盖 31—60 级交付核心契约。
     "ChapterFourMapTest", "ChapterFiveMapTest", "ChapterSixMapTest",

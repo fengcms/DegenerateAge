@@ -30,11 +30,12 @@ func _ready() -> void:
 		var arrays := ground._tile_mesh.surface_get_arrays(0)
 		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
-		# 图集 = 本族地砖 + 八张道路过渡砖；道路边缘固定排在族砖之后，故族变体数与道路槽位无关。
+		# 图集 = 本族地砖 + 1 块道路中心砖 + 八张道路过渡砖；道路槽位固定排在族砖之后，
+		# 故族变体数与道路槽位完全无关（见 ground.gd 的 _road_atlas_index 与 43/44 号文档）。
 		var atlas_size := ground._atlas_tiles.size()
-		var theme_size := atlas_size - 8
-		assert(theme_size == (9 if map_id == "corruption_source" else 4),
-			"corruption_source 用 9 变体，wild_trial/ash_land 仍 4 变体")
+		var theme_size := atlas_size - 9
+		assert(theme_size == (9 if map_id == "corruption_source" else 9 if map_id == "wild_trial" else 8),
+			"corruption_source/wild_trial 用 9 变体，ash_land 用 8 变体")
 		var transition_count := 0
 		for offset in range(0, vertices.size(), 4):
 			var center := Vector2(vertices[offset].x + 32, vertices[offset].y + 16)
