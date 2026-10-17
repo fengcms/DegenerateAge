@@ -4,9 +4,12 @@ extends Control
 ##
 ## 两个页签：
 ##   购买 —— 读 shops.json 的 buyItems，逐项显示名称 / 简介 / 已拥有 / 价格 + 购买按钮；
-##   出售 —— **出售托盘**：从左侧背包面板把装备**拖入**托盘暂存（一格一件），
-##          托盘内点一下取回；「一键移入」按背包里的等级与成色阈值筛选；
+##   出售 —— **出售托盘**：从左侧背包面板把**物品**（装备 / 药水 / 杂项 / 如意）**拖入**托盘暂存
+##          （一格一件，堆叠品整叠一格）；托盘内点一下取回；
+##          「一键移入」按等级与成色筛选**装备**、「一键移入材料」批量收药水 / 材料 / 如意；
 ##          「全部取回」清空托盘；「确认出售」才真正结算为金币。
+## 收购口径（工程文档 39，2026-10-17 修订）：装备 / 药水 / 杂项 / 如意全部收购；
+##          任务物品（`questItem`）与无价物品不收；非装备按 0.6 回收比例结算。
 ## 打开方式：靠近货郎按 E（game.gd 派发 EventBus.shop_open_requested）；E / Esc 关闭。
 ## 交易会话：本面板打开时**同时拉起背包面板**并与之并列（本面板居中于右半屏，
 ##          背包面板居中于左半屏），不互斥——见 EventBus.trade_mode_changed。
@@ -32,8 +35,8 @@ const COL_WARN := Color(0.92, 0.68, 0.34)
 var _shop_id: String = ""
 ## 交易会话是否进行中（由本面板发起，退出时同步关闭背包面板）。
 var _trade_active: bool = false
-## 出售托盘：已从背包移出、尚未结算的装备实例（确认出售 / 取回 / 关闭退回见下）。
-## 固定格位：键是 0..23 的格下标，值是装备实例；空格不占键。
+## 出售托盘：已从背包移出、尚未结算的物品实例（确认出售 / 取回 / 关闭退回见下）。
+## 固定格位：键是 0..23 的格下标，值是物品实例；空格不占键。
 var _tray: Dictionary = {}
 
 var _title: Label
@@ -45,6 +48,7 @@ var _tray_summary: Label
 var _tray_warn: Label
 var _confirm_btn: Button
 var _stage_all_btn: Button
+var _stage_materials_btn: Button
 var _return_all_btn: Button
 var _center: CenterContainer
 var _box: PanelContainer
@@ -283,22 +287,35 @@ func _build_sell_page() -> Control:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(sp)
+	# 工程 39 D-5-A：四个按钮同宽 92（92×4 + 8×3 = 392 ≤ BUY_ROW_MIN.x 430 − 左右边距），
+	# 面板最小宽度不撑破（RK-9）；字号 13 保证「一键移入材料」六字不截断。
 	_return_all_btn = Button.new()
 	_return_all_btn.text = Localization.tr_key("ui.shop_panel.p006")
-	_return_all_btn.custom_minimum_size = Vector2(96, 32)
+	_return_all_btn.custom_minimum_size = Vector2(92, 32)
+	_return_all_btn.add_theme_font_size_override("font_size", 13)
 	_return_all_btn.pressed.connect(_on_return_all_pressed)
 	bar.add_child(_return_all_btn)
 	PanelChrome.style_action(_return_all_btn)
 	_stage_all_btn = Button.new()
 	_stage_all_btn.text = Localization.tr_key("ui.shop_panel.p007")
 	_stage_all_btn.tooltip_text = Localization.tr_key("ui.shop_panel.p008")
-	_stage_all_btn.custom_minimum_size = Vector2(96, 32)
+	_stage_all_btn.custom_minimum_size = Vector2(92, 32)
+	_stage_all_btn.add_theme_font_size_override("font_size", 13)
 	_stage_all_btn.pressed.connect(_on_stage_all_pressed)
 	bar.add_child(_stage_all_btn)
 	PanelChrome.style_action(_stage_all_btn)
+	_stage_materials_btn = Button.new()
+	_stage_materials_btn.text = Localization.tr_key("ui.shop_panel.stage_materials")
+	_stage_materials_btn.tooltip_text = Localization.tr_key("ui.shop_panel.stage_materials_tip")
+	_stage_materials_btn.custom_minimum_size = Vector2(92, 32)
+	_stage_materials_btn.add_theme_font_size_override("font_size", 13)
+	_stage_materials_btn.pressed.connect(_on_stage_materials_pressed)
+	bar.add_child(_stage_materials_btn)
+	PanelChrome.style_action(_stage_materials_btn)
 	_confirm_btn = Button.new()
 	_confirm_btn.text = Localization.tr_key("ui.shop_panel.p009")
-	_confirm_btn.custom_minimum_size = Vector2(96, 32)
+	_confirm_btn.custom_minimum_size = Vector2(92, 32)
+	_confirm_btn.add_theme_font_size_override("font_size", 13)
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	bar.add_child(_confirm_btn)
 	PanelChrome.style_action(_confirm_btn, true)
@@ -450,10 +467,11 @@ func _refresh_tray() -> void:
 		var b: ItemSlot = _tray_slots[i]
 		if _tray.has(i):
 			var it: Dictionary = _tray[i]
+			var tint := _item_tint(it)
 			b.item = it
 			b.text = _short_name(it)
-			b.add_theme_color_override("font_color", ItemUtil.quality_color(Shop.item_quality(it)))
-			_apply_slot_style(b, ItemUtil.quality_color(Shop.item_quality(it)), true)
+			b.add_theme_color_override("font_color", tint)
+			_apply_slot_style(b, tint, true)
 			b.tooltip_text = _tray_tooltip(it)
 		else:
 			b.item = {}
@@ -463,15 +481,32 @@ func _refresh_tray() -> void:
 
 	var total := 0
 	var upgraded := 0
+	var runes := 0
 	for it2 in _tray.values():
 		total += Shop.sell_price(it2)
 		if GameState.is_upgrade_over_worn(it2):
 			upgraded += 1
+		if String((it2 as Dictionary).get("kind", "")) == "rune":
+			runes += 1
 	_tray_summary.text = Localization.tr_key("ui.shop_panel.p016") % [_tray.size(), _tray_slots.size(), total]
-	_tray_warn.text = (Localization.tr_key("ui.shop_panel.p017") % upgraded) if upgraded > 0 else ""
+	# 告警行：升级件（6.4 二次确认）与升星材料（工程 39 D-6）互不覆盖，各占一行。
+	var warns: Array[String] = []
+	if upgraded > 0:
+		warns.append(Localization.tr_key("ui.shop_panel.p017") % upgraded)
+	if runes > 0:
+		warns.append(Localization.tr_key("ui.shop_panel.warn_rune") % runes)
+	_tray_warn.text = "\n".join(PackedStringArray(warns))
 	_confirm_btn.disabled = _tray.is_empty()
 	_stage_all_btn.disabled = GameState.inventory_used() == 0
+	_stage_materials_btn.disabled = not _has_stageable_material()
 	_return_all_btn.disabled = _tray.is_empty()
+
+## 托盘格描边 / 文字色：装备按品质，其余按品类（药水红 / 如意青 / 材料土黄）。
+func _item_tint(item: Dictionary) -> Color:
+	var kind := String(item.get("kind", ""))
+	if kind == "equip":
+		return ItemUtil.quality_color(Shop.item_quality(item))
+	return ItemUtil.kind_color(kind)
 
 # ---- 交互 ----
 
@@ -480,7 +515,7 @@ func _on_buy_pressed(item_id: String) -> void:
 	_refresh()
 
 ## 托盘收到背包格的拖入（ItemSlot.item_dropped）。载荷携带背包下标与物品实例；
-## 这里**以实例反查实时下标**取出，避免拖拽期间其他变动导致的下标位移误移（工程文档 05 🔴R1）。
+## 这里**以载荷下标 + 逐字段核对**取出，避免拖拽期间其他变动导致的下标位移误移（工程文档 05 🔴R1）。
 func _on_tray_drop(tray_index: int, payload: Dictionary) -> void:
 	var item: Dictionary = payload.get("item", {})
 	if item.is_empty():
@@ -496,7 +531,7 @@ func _on_tray_drop(tray_index: int, payload: Dictionary) -> void:
 	if _tray.has(tray_index):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop.tray_occupied"), "danger")
 		return
-	var idx := _index_of_instance(String(item.get("instanceId", "")))
+	var idx := _resolve_source_index(payload)
 	if idx < 0:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p020"), "danger")
 		_refresh()
@@ -507,6 +542,26 @@ func _on_tray_drop(tray_index: int, payload: Dictionary) -> void:
 		return
 	_tray[tray_index] = taken
 	_refresh_tray()
+
+## 反查拖入源在背包中的实时下标（-1 = 已不在背包）。
+## 工程 39 G9：药水 / 材料**没有 instanceId**（实例只有 kind / itemId / count），
+## 旧实现只按 instanceId 反查 ⇒ 放行后一律判「已不在背包」，整类物品拖不进托盘。
+## 故优先用载荷自带的背包下标并逐字段核对；核对失败再回退 instanceId（装备 / 仓库来源）。
+func _resolve_source_index(payload: Dictionary) -> int:
+	var item: Dictionary = payload.get("item", {})
+	var idx := int(payload.get("index", -1))
+	if idx >= 0 and idx < GameState.inventory.size():
+		var cur = GameState.inventory[idx]
+		if cur is Dictionary and _same_item(cur, item):
+			return idx
+	return _index_of_instance(String(item.get("instanceId", "")))
+
+## 载荷与背包实时项是否为同一件（种类 / 模板 / 数量 / 实例 id 全等）。
+static func _same_item(a: Dictionary, b: Dictionary) -> bool:
+	return String(a.get("kind", "")) == String(b.get("kind", "")) \
+		and String(a.get("itemId", "")) == String(b.get("itemId", "")) \
+		and int(a.get("count", 1)) == int(b.get("count", 1)) \
+		and String(a.get("instanceId", "")) == String(b.get("instanceId", ""))
 
 ## 点托盘格：把该件取回背包（背包满则拒绝，不静默丢失）。
 func _on_tray_slot_pressed(tray_index: int) -> void:
@@ -544,6 +599,43 @@ func _on_stage_all_pressed() -> void:
 		msg += Localization.tr_key("ui.shop.tray_full_suffix")
 	EventBus.toast_requested.emit(msg if moved > 0 else Localization.tr_key("ui.shop_panel.p023"), "pickup" if moved > 0 else "danger")
 	_refresh_tray()
+
+## 一键移入材料（工程 39 D-5-A）：药水 / 杂项 / 如意批量移入托盘空格，任务物品不收。
+## 与「一键移入」互补 —— 后者只筛装备，避免放行非装备后把保命药误当低价值装备卖掉。
+func _on_stage_materials_pressed() -> void:
+	var moved := 0
+	var full := false
+	var i := GameState.inventory.size() - 1
+	while i >= 0:
+		var it = GameState.inventory[i]
+		if not (it is Dictionary) or not _is_material(it):
+			i -= 1
+			continue
+		var free_slot := _first_free_tray_slot()
+		if free_slot < 0:
+			full = true
+			break
+		var taken := GameState.remove_item_at(i)
+		if not taken.is_empty():
+			_tray[free_slot] = taken
+			moved += 1
+		i -= 1
+	var msg := Localization.tr_key("ui.shop.staged_count") % moved
+	if full:
+		msg += Localization.tr_key("ui.shop.tray_full_suffix")
+	EventBus.toast_requested.emit(msg if moved > 0 else Localization.tr_key("ui.shop_panel.no_materials"),
+		"pickup" if moved > 0 else "danger")
+	_refresh_tray()
+
+## 可批量移入的「材料」：药水 / 杂项 / 如意，且当前可售（排除任务物品与无价物品）。
+func _is_material(item: Dictionary) -> bool:
+	return ["potion", "misc", "rune"].has(String(item.get("kind", ""))) and Shop.can_sell(item)
+
+func _has_stageable_material() -> bool:
+	for it in GameState.inventory:
+		if it is Dictionary and _is_material(it):
+			return true
+	return false
 
 ## 全部取回：清空托盘退回背包。
 func _on_return_all_pressed() -> void:
@@ -616,8 +708,19 @@ func _tray_tooltip(item: Dictionary) -> String:
 	lines.append(ItemUtil.display_name(item))
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
+	var count := maxi(1, int(item.get("count", 1)))
+	if String(item.get("kind", "")) != "equip" and count > 1:
+		lines.append(Localization.tr_key("ui.shop_panel.unit_price") % [_unit_price(item), count])
 	lines.append(Localization.tr_key("ui.shop_panel.p028") % Shop.sell_price(item))
+	if String(item.get("kind", "")) == "rune":
+		lines.append(Localization.tr_key("ui.shop_panel.rune_note"))
 	if GameState.is_upgrade_over_worn(item):
 		lines.append(Localization.tr_key("ui.shop_panel.p029"))
 	lines.append(Localization.tr_key("ui.shop_panel.p030"))
 	return "\n".join(PackedStringArray(lines))
+
+## 单件售价：直接按「一件」重算。不可用整叠总价 ÷ 数量 —— 单价先行取整，反推会有误差。
+func _unit_price(item: Dictionary) -> int:
+	var one := item.duplicate(true)
+	one["count"] = 1
+	return Shop.sell_price(one)
