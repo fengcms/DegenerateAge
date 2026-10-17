@@ -1,7 +1,7 @@
 class_name SampleActorArt
 extends Sprite2D
-## Eight screen directions. The atlas supplies key poses; timed micro-motion
-## gives each action a visual cycle without changing combat callbacks.
+## 八向角色的视觉播放入口。初始玩家使用逐帧图集，其他形象与怪物保留既有关键姿态播放。
+## 只更新 Sprite2D，不驱动移动、碰撞、攻击结算或死亡清理。
 
 const HIT_SECONDS := 0.16
 const DEATH_SECONDS := 0.6
@@ -20,6 +20,10 @@ var _death_clock := 0.0
 var _attack_left := 0.0
 var _attack_duration := 0.28
 var _hit_left := 0.0
+var _animations: Dictionary = {}
+var _mounts: Dictionary = {}
+var _mount_id := ""
+var _base_pivot := Vector2.ZERO
 
 static func attach(actor: Node2D, path: String, pivot: Vector2, extra_path := "", walk_path := "") -> SampleActorArt:
 	var art := _create(actor)
@@ -54,15 +58,49 @@ func apply_look(definition: Dictionary) -> void:
 	var main: Texture2D = definition.get("main")
 	if main == null:
 		return
-	var previous := _main_texture
 	_main_texture = main
 	extra_texture = definition.get("extra")
 	walk_texture = definition.get("walk")
 	var pivot: Vector2 = definition.get("pivot", Vector2.ZERO)
+	_base_pivot = pivot
+	_animations = definition.get("animations", {})
+	_mounts = definition.get("mounts", {})
 	offset = -pivot
-	# 静止状态正显示主图集时立即换图，避免切换瞬间闪现旧形象。
-	if texture == previous:
+	# 换装时立即更新当前帧；没有对应坐骑素材的形象按普通角色显示。
+	if not _animations.is_empty():
+		_show_frame(pose if _animations.has(pose) else "idle", phase)
+	else:
 		texture = _main_texture
+		vframes = 8
+		hframes = 8
+		frame_coords = Vector2i(facing, 0)
+	_mount_id = _mount_id if _mounts.has(_mount_id) else ""
+
+## 骑乘状态变化时选择已登记图集；缺失坐骑美术只回退画面，不修改游戏骑乘规则。
+func set_mount(mount_id: String) -> void:
+	_mount_id = mount_id if _mounts.has(mount_id) else ""
+	if not _animations.is_empty():
+		_show_frame(pose if _animations.has(pose) else "idle", phase)
+
+## 显示初始角色的一帧；帧行由动作状态决定，列由八向朝向决定，脚底锚点随图集切换。
+func _show_frame(next_pose: String, next_phase: int) -> void:
+	pose = next_pose
+	var animation: Dictionary = _animations[next_pose]
+	var wanted: Texture2D = animation.texture
+	var frames: int = animation.frames
+	var pivot := _base_pivot
+	if not _mount_id.is_empty() and next_pose in ["idle", "walk"]:
+		var mount: Dictionary = _mounts[_mount_id]
+		wanted = mount[next_pose]
+		frames = 4
+		pivot = mount.pivot
+	phase = clampi(next_phase, 0, frames - 1)
+	if texture != wanted:
+		texture = wanted
+		hframes = 8
+		vframes = frames
+	offset = -pivot
+	frame_coords = Vector2i(facing, phase)
 
 func face(vector: Vector2) -> void:
 	if vector.length_squared() > 0.01:
@@ -75,7 +113,10 @@ func attack(vector: Vector2, interval: float) -> void:
 	_hit_left = 0.0
 	# Damage is resolved by the owner on this same call. Start at contact,
 	# followed by follow-through and recovery.
-	_show("attack", 0, 5)
+	if _animations.is_empty():
+		_show("attack", 0, 5)
+	else:
+		_show_frame("attack", 0)
 
 func hit() -> void:
 	_hit_left = HIT_SECONDS
@@ -98,6 +139,9 @@ func _process(delta: float) -> void:
 	if actor == null:
 		return
 	actor.z_index = clampi(roundi(actor.global_position.y), -3500, 3500)
+	if not _animations.is_empty():
+		_process_frames(actor, delta)
+		return
 	var motion := Vector2.ONE
 	position = Vector2.ZERO
 	rotation = 0.0
@@ -138,3 +182,25 @@ func _process(delta: float) -> void:
 			_show("idle", step, 0 if step in [0, 3] else 1)
 			motion.y = [1.0, 1.005, 1.01, 1.005][step]
 	scale = motion * display_scale
+
+## 按现有角色状态播放六状态逐帧动画；只读速度和动作计时，保持结算时间不变。
+func _process_frames(actor: CharacterBody2D, delta: float) -> void:
+	position = Vector2.ZERO
+	rotation = 0.0
+	scale = Vector2.ONE * display_scale
+	if actor.get("is_dead") == true:
+		_death_clock = minf(_death_clock + delta, DEATH_SECONDS)
+		_show_frame("death", mini(5, int(_death_clock / DEATH_SECONDS * 6.0)))
+		return
+	_death_clock = 0.0
+	if _hit_left > 0.0:
+		_show_frame("hit", mini(1, int((1.0 - _hit_left / HIT_SECONDS) * 2.0)))
+	elif actor.get("is_sitting") == true:
+		_show_frame("sit", posmod(int(_clock * 6.0), 4))
+	elif _attack_left > 0.0:
+		_show_frame("attack", mini(5, int((1.0 - _attack_left / _attack_duration) * 6.0)))
+	elif actor.velocity.length_squared() > 1.0:
+		face(actor.velocity)
+		_show_frame("walk", posmod(int(_clock * 10.0), 4 if not _mount_id.is_empty() else 8))
+	else:
+		_show_frame("idle", posmod(int(_clock * 6.0), 4))

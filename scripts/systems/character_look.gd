@@ -27,6 +27,23 @@ const LOOKS := {
 		"walk": preload("res://assets/sprites/player/guardian/guardian_walk_atlas.png"),
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
+		"panel": preload("res://assets/ui/portraits/guardian_panel.png"),
+		"animations": {
+			"idle": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_idle_atlas.png"), "frames": 4},
+			"walk": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_walk_atlas.png"), "frames": 8},
+			"attack": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_attack_atlas.png"), "frames": 6},
+			"hit": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_hit_atlas.png"), "frames": 2},
+			"death": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_death_atlas.png"), "frames": 6},
+			"sit": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_sit_atlas.png"), "frames": 4},
+		},
+		"mounts": {
+			"mount_corrupted_wing": {
+				"idle": preload("res://assets/sprites/player/guardian/mounts/corrupted_wing_idle_atlas.png"),
+				"walk": preload("res://assets/sprites/player/guardian/mounts/corrupted_wing_walk_atlas.png"),
+				"frame": Vector2i(128, 128),
+				"pivot": Vector2(64, 104),
+			},
+		},
 	},
 	# 守路长刃档（Lv11）。来源为 Hormelz 八向骑士（CC0），由 tools/build_look_atlas.gd 重排；
 	# 该源包没有独立的受击/打坐姿势，故不登记 extra，受击与打坐沿用主图集。
@@ -61,10 +78,12 @@ static func definition(look_id: String) -> Dictionary:
 static func is_declared(look_id: String) -> bool:
 	return LOOKS.has(look_id)
 
-## 人物面板展示纹理：从主图集裁出方向 0 的首帧。
-## 只在形象变化时调用，不在每帧或每次数值刷新路径上创建。
-static func panel_texture(look_id: String) -> AtlasTexture:
+## 人物面板优先使用独立高清展示图；尚未制作展示图的形象沿用主图集首帧。
+## 只在形象变化时调用，不在每帧或每次数值刷新路径上创建裁切资源。
+static func panel_texture(look_id: String) -> Texture2D:
 	var entry := definition(look_id)
+	if entry.has("panel"):
+		return entry.panel
 	var frame: Vector2i = entry.frame
 	var atlas := AtlasTexture.new()
 	atlas.atlas = entry.main

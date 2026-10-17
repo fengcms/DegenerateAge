@@ -245,8 +245,10 @@ func _ready() -> void:
 	_look_id = CharacterLook.look_id_for(GameState.equipment)
 	sample_art = SampleActorArt.attach_look(self, CharacterLook.definition(_look_id))
 	sample_art.display_scale = ART_SCALE
+	_refresh_mount_art()
 	# G-P2-2：订阅生命周期约定见 autoload/event_bus.gd 顶部（随场景释放自动断开，不逐个补 _exit_tree）。
 	EventBus.equipment_changed.connect(_refresh_look)
+	EventBus.mount_changed.connect(_refresh_mount_art)
 	add_to_group("player")
 	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
 	var b = DataLoader.get_entry("skills", "basic_slash")
@@ -265,6 +267,14 @@ func _refresh_look() -> void:
 		return
 	_look_id = next
 	sample_art.apply_look(CharacterLook.definition(next))
+	_refresh_mount_art()
+
+## 骑乘事件或角色外观切换后同步外观；仅已拥有且等级有效的腐化之翼会显示双翼图集。
+func _refresh_mount_art() -> void:
+	if sample_art == null:
+		return
+	var mount_id := GameState.active_mount if GameState.mount_speed_multiplier() > 1.0 else ""
+	sample_art.set_mount(mount_id)
 
 func _physics_process(delta: float) -> void:
 	if locked_target != null and not valid_target(locked_target):
