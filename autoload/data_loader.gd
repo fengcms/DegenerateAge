@@ -421,6 +421,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_quests())
 	report.append_array(_validate_potions())
 	report.append_array(_validate_misc_items())
+	report.append_array(_validate_sellable_prices())
 	report.append_array(_validate_upgrade())
 
 	return report
@@ -1204,6 +1205,26 @@ func _validate_misc_items() -> Array[String]:
 			report.append("[miscItems] %s 的 useType '%s' 非法" % [mid, use_type])
 		if not entry.get("animation", "") is String:
 			report.append("[miscItems] %s 的 animation 应为字符串" % mid)
+	return report
+
+## 可售品类必须配正价格（工程 39 D-7 / G3）：否则 `Shop.base_value()` 返回 0，
+## 放行后玩家卖出去**静默拿 0 金币**。任务物品（`questItem: true`）不收，不参与本检查。
+func _validate_sellable_prices() -> Array[String]:
+	var report: Array[String] = []
+	for table_name in ["potions", "miscItems", "runes"]:
+		var rows = tables.get(table_name)
+		if not (rows is Array):
+			report.append("[%s] 需要数组" % table_name)
+			continue
+		for entry in rows:
+			if not entry is Dictionary:
+				continue
+			if bool((entry as Dictionary).get("questItem", false)):
+				continue
+			var eid := String((entry as Dictionary).get("id", "?"))
+			if not _is_whole_level((entry as Dictionary).get("price", null)) \
+					or int((entry as Dictionary).get("price", 0)) <= 0:
+				report.append("[%s] %s 缺少可售价格 price（可售品类必须为正整数）" % [table_name, eid])
 	return report
 
 ## upgrade.json：成功表长度 / 取值 / 费用参数（B 共性-5、E-P3-3）。

@@ -16,8 +16,17 @@ const QUALITY_SELL_MULT := {
 }
 const QUALITY_ORDER: Array = ItemUtil.QUALITIES   # B-P3-6：品质枚举唯一来源在 ItemUtil，此处仅引用
 
+## 6.4（2026-10-17 修订，工程 39）：货郎收购全部掉落品类，任务物品除外。
+## 白名单之外的 `quest` / `coin` / `mount` 一律不收（任务袋独立 / 货币 / 拾取即解锁）。
+const SELLABLE_KINDS := ["equip", "potion", "misc", "rune"]
+
+## 非装备回收比例（工程 39 D-1 = 0.6 拍板）。装备保持 1.0 —— 现有售价断言数值不变。
+const SELL_RATIO_NON_EQUIP := 0.6
+
+## 一键移入的筛选语义**永远是装备**（工程 39 G4）：与收购范围解耦。
+## 若沿用 `can_sell` 判定，放行药水后「< Lv5 且 ≤ 普通」会把保命药整批塞进托盘。
 static func matches_low_gear(item: Dictionary, level_limit: int, max_quality: String) -> bool:
-	if not can_sell(item) or level_limit < 1:
+	if String(item.get("kind", "")) != "equip" or not can_sell(item) or level_limit < 1:
 		return false
 	var quality_rank := QUALITY_ORDER.find(item_quality(item))
 	var maximum_rank := QUALITY_ORDER.find(max_quality)
@@ -39,7 +48,7 @@ static func display_name(shop_id: String) -> String:
 	var e := entry(shop_id)
 	return String(e.get("name", shop_id))
 
-## 货郎是否收购装备（6.4）。
+## 货郎是否收购物品（6.4）。
 static func sell_enabled(shop_id: String) -> bool:
 	return bool(entry(shop_id).get("sellEnabled", true))
 
@@ -79,17 +88,8 @@ static func describe(item_id: String) -> String:
 ## 杂项 miscItems.price / 如意 runes.price。
 static func base_value(item: Dictionary) -> int:
 	var id := String(item.get("itemId", ""))
-	var tpl = null
-	match String(item.get("kind", "")):
-		"equip":
-			tpl = DataLoader.get_entry("equipments", id)
-		"potion":
-			tpl = DataLoader.get_entry("potions", id)
-		"misc", "quest":
-			tpl = DataLoader.get_entry("miscItems", id)
-		"rune":
-			tpl = DataLoader.get_entry("runes", id)
-	if tpl is Dictionary:
+	var tpl := _template(item)
+	if not tpl.is_empty():
 		var price := int(tpl.get("price", 0))
 		if String(item.get("kind", "")) == "equip":
 			var multipliers: Dictionary = ItemFactory.rules().get("tierValueMultiplier", {})
@@ -101,6 +101,26 @@ static func base_value(item: Dictionary) -> int:
 		return price
 	return 0
 
+## 按品类取模板（找不到返回空字典，调用方不必再做类型判断）。
+static func _template(item: Dictionary) -> Dictionary:
+	var id := String(item.get("itemId", ""))
+	var tpl = null
+	match String(item.get("kind", "")):
+		"equip":
+			tpl = DataLoader.get_entry("equipments", id)
+		"potion":
+			tpl = DataLoader.get_entry("potions", id)
+		"misc", "quest":
+			tpl = DataLoader.get_entry("miscItems", id)
+		"rune":
+			tpl = DataLoader.get_entry("runes", id)
+	return tpl if tpl is Dictionary else {}
+
+## 任务物品标记（工程 39 D-4）：数据侧 `questItem: true` 才是唯一判据。
+## 不复用 `useType == "quest"` —— 灵能碎片同属 quest 用途但设计上可售（会入包）。
+static func is_quest_item(item: Dictionary) -> bool:
+	return bool(_template(item).get("questItem", false))
+
 ## 实例品质：优先实例自带，缺失时回退模板（5.7）。模板字段名为 `defaultQuality`（B-P3-3）。
 static func item_quality(item: Dictionary) -> String:
 	var q := String(item.get("quality", ""))
@@ -110,15 +130,26 @@ static func item_quality(item: Dictionary) -> String:
 			q = String(tpl.get("defaultQuality", "common"))
 	return q if not q.is_empty() else "common"
 
-## 6.2 售价公式：round(baseValue × qualityMult × (1 + star×0.08))。
+## 6.2 售价公式：round(baseValue × qualityMult × (1 + star×0.08))，非装备再 × 回收比例。
+## 工程 39 G2：**整叠计价** —— 此前忽略 `count`，一叠 99 瓶只算 1 瓶钱（装备 count 恒 1，故未暴露）。
+## 先取整单价再乘数量，保证「单价 × 数量 = 总价」可被玩家手算复核。
 static func sell_price(item: Dictionary) -> int:
 	var base := base_value(item)
 	if base <= 0:
 		return 0
 	var mult := float(QUALITY_SELL_MULT.get(item_quality(item), 1.0))
 	var star := int(item.get("star", 0))
-	return int(round(float(base) * mult * (1.0 + float(star) * STAR_SELL_BONUS)))
+	var unit := float(base) * mult * (1.0 + float(star) * STAR_SELL_BONUS)
+	if String(item.get("kind", "")) != "equip":
+		unit *= SELL_RATIO_NON_EQUIP
+	var count := maxi(1, int(item.get("count", 1)))
+	return int(round(unit)) * count
 
-## 该物品能否出售给货郎（6.4：只收购装备）。
+## 该物品能否出售给货郎（6.4 修订：装备 / 药水 / 杂项 / 如意；任务物品与无价物品不收）。
+## `base_value() <= 0` 一并拒绝 —— 宁可不收，也不静默卖 0 金币。
 static func can_sell(item: Dictionary) -> bool:
-	return String(item.get("kind", "")) == "equip"
+	if not SELLABLE_KINDS.has(String(item.get("kind", ""))):
+		return false
+	if is_quest_item(item):
+		return false
+	return base_value(item) > 0

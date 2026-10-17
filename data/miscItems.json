@@ -4,35 +4,40 @@
     "name": "烟花",
     "useType": "playAnimation",
     "animation": "firework",
-    "desc": "点击后播放烟花动画（可扩展杂项物品示例）。"
+    "desc": "点击后播放烟花动画（可扩展杂项物品示例）。",
+    "price": 30
   },
   {
     "id": "misc_random_ticket",
     "name": "随机券",
     "useType": "randomTeleport",
     "animation": "",
-    "desc": "在当前地图内随机传送。"
+    "desc": "在当前地图内随机传送。",
+    "price": 100
   },
   {
     "id": "misc_town_scroll",
     "name": "回城卷",
     "useType": "townPortal",
     "animation": "",
-    "desc": "使用后回到最近的安全城镇。"
+    "desc": "使用后回到最近的安全城镇。",
+    "price": 80
   },
   {
     "id": "misc_revive_scroll",
     "name": "复活卷",
     "useType": "revive",
     "animation": "",
-    "desc": "死亡后原地复活，移动到死亡位置。"
+    "desc": "死亡后原地复活，移动到死亡位置。",
+    "price": 120
   },
   {
     "id": "spirit_shard",
     "name": "灵能碎片",
     "useType": "quest",
     "animation": "",
-    "desc": "荒野遗物任务收集物（Q003）。"
+    "desc": "荒野遗物任务收集物（Q003）。",
+    "price": 16
   },
   {
     "id": "c2_pressure_plate",
@@ -40,7 +45,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第二章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c2_pressure_plate.png"
+    "icon": "res://assets/sprites/items/c2_pressure_plate.png",
+    "questItem": true
   },
   {
     "id": "c2_worker_badge",
@@ -48,7 +54,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第二章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c2_worker_badge.png"
+    "icon": "res://assets/sprites/items/c2_worker_badge.png",
+    "questItem": true
   },
   {
     "id": "c2_heat_component",
@@ -56,7 +63,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第二章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c2_heat_component.png"
+    "icon": "res://assets/sprites/items/c2_heat_component.png",
+    "questItem": true
   },
   {
     "id": "c2_named_badge",
@@ -64,7 +72,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第二章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c2_named_badge.png"
+    "icon": "res://assets/sprites/items/c2_named_badge.png",
+    "questItem": true
   },
   {
     "id": "c3_item_q03",
@@ -72,7 +81,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第三章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c3_item_q03.png"
+    "icon": "res://assets/sprites/items/c3_item_q03.png",
+    "questItem": true
   },
   {
     "id": "c3_item_q06",
@@ -80,7 +90,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第三章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c3_item_q06.png"
+    "icon": "res://assets/sprites/items/c3_item_q06.png",
+    "questItem": true
   },
   {
     "id": "c3_item_s02",
@@ -88,7 +99,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第三章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c3_item_s02.png"
+    "icon": "res://assets/sprites/items/c3_item_s02.png",
+    "questItem": true
   },
   {
     "id": "c3_item_s03",
@@ -96,7 +108,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第三章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c3_item_s03.png"
+    "icon": "res://assets/sprites/items/c3_item_s03.png",
+    "questItem": true
   },
   {
     "id": "c4_item_q02",
@@ -104,7 +117,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第四章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c4_item_q02.png"
+    "icon": "res://assets/sprites/items/c4_item_q02.png",
+    "questItem": true
   },
   {
     "id": "c4_item_q06",
@@ -112,7 +126,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第四章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c4_item_q06.png"
+    "icon": "res://assets/sprites/items/c4_item_q06.png",
+    "questItem": true
   },
   {
     "id": "c4_item_s02",
@@ -120,7 +135,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第四章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c4_item_s02.png"
+    "icon": "res://assets/sprites/items/c4_item_s02.png",
+    "questItem": true
   },
   {
     "id": "c4_item_s03",
@@ -128,7 +144,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第四章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c4_item_s03.png"
+    "icon": "res://assets/sprites/items/c4_item_s03.png",
+    "questItem": true
   },
   {
     "id": "c5_item_q03",
@@ -136,7 +153,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第五章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c5_item_q03.png"
+    "icon": "res://assets/sprites/items/c5_item_q03.png",
+    "questItem": true
   },
   {
     "id": "c5_item_q06",
@@ -144,7 +162,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第五章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c5_item_q06.png"
+    "icon": "res://assets/sprites/items/c5_item_q06.png",
+    "questItem": true
   },
   {
     "id": "c5_item_s02",
@@ -152,7 +171,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第五章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c5_item_s02.png"
+    "icon": "res://assets/sprites/items/c5_item_s02.png",
+    "questItem": true
   },
   {
     "id": "c5_item_s03",
@@ -160,7 +180,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第五章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c5_item_s03.png"
+    "icon": "res://assets/sprites/items/c5_item_s03.png",
+    "questItem": true
   },
   {
     "id": "c5_item_s06",
@@ -168,7 +189,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第五章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c5_item_s06.png"
+    "icon": "res://assets/sprites/items/c5_item_s06.png",
+    "questItem": true
   },
   {
     "id": "c6_item_q03",
@@ -176,7 +198,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第六章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c6_item_q03.png"
+    "icon": "res://assets/sprites/items/c6_item_q03.png",
+    "questItem": true
   },
   {
     "id": "c6_item_q06",
@@ -184,7 +207,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第六章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c6_item_q06.png"
+    "icon": "res://assets/sprites/items/c6_item_q06.png",
+    "questItem": true
   },
   {
     "id": "c6_item_s01",
@@ -192,7 +216,8 @@
     "useType": "quest",
     "animation": "",
     "desc": "第六章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c6_item_s01.png"
+    "icon": "res://assets/sprites/items/c6_item_s01.png",
+    "questItem": true
   },
   {
     "id": "c6_item_s03",
@@ -200,6 +225,7 @@
     "useType": "quest",
     "animation": "",
     "desc": "第六章任务袋物品，不占背包格。",
-    "icon": "res://assets/sprites/items/c6_item_s03.png"
+    "icon": "res://assets/sprites/items/c6_item_s03.png",
+    "questItem": true
   }
 ]

@@ -1691,8 +1691,40 @@ func _test_shop() -> void:
 	_expect(Shop.sell_price(rare_star) == 162,
 		"同型号稀有 +1 星（50 × 3 × 1.08）应为 162，实际 %d" % Shop.sell_price(rare_star))
 	_expect(Shop.can_sell(rare_w), "装备可出售")
-	_expect(not Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
-		"药水不可出售给货郎（6.4）")
+
+	# 6.4 修订（工程 39）：药水 / 杂项 / 如意均可售；任务物品与无价物品不收。
+	_expect(Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
+		"药水应可出售给货郎（6.4 修订）")
+	_expect(Shop.can_sell({"kind": "rune", "itemId": "rune_iron"}), "如意应可出售")
+	_expect(Shop.can_sell({"kind": "misc", "itemId": "misc_town_scroll"}), "杂项应可出售")
+	_expect(not Shop.can_sell({"kind": "misc", "itemId": "c2_pressure_plate"}),
+		"任务物品不可出售（questItem 兜底）")
+	_expect(not Shop.can_sell({"kind": "quest", "itemId": "spirit_shard"}),
+		"quest 品类不在可售白名单内")
+	_expect(not Shop.can_sell({"kind": "misc", "itemId": "__no_such_item__"}),
+		"无模板 / 无价物品不可出售（不静默卖 0）")
+
+	# 整叠计价（工程 39 G2）：一叠 N 件 = 取整单价 × N，非装备按 0.6 回收。
+	var mid_single := {"kind": "potion", "itemId": "potion_hp_mid", "count": 1}
+	_expect(Shop.sell_price(mid_single) == 36,
+		"中红药单瓶（60 × 0.6）售价应为 36，实际 %d" % Shop.sell_price(mid_single))
+	var mid_stack := {"kind": "potion", "itemId": "potion_hp_mid", "count": 99}
+	_expect(Shop.sell_price(mid_stack) == 36 * 99,
+		"一叠 99 瓶中红药应整叠计价 3564，实际 %d" % Shop.sell_price(mid_stack))
+	var no_count := {"kind": "potion", "itemId": "potion_hp_small"}
+	_expect(Shop.sell_price(no_count) == 12,
+		"缺 count 的药水按 1 件计（20 × 0.6 = 12），实际 %d" % Shop.sell_price(no_count))
+	_expect(Shop.sell_price({"kind": "rune", "itemId": "rune_jade", "count": 2}) == 480 * 2,
+		"玉如意 ×2 应按单价 480（800 × 0.6）整叠计价，实际 %d"
+			% Shop.sell_price({"kind": "rune", "itemId": "rune_jade", "count": 2}))
+
+	# 一键移入筛选**只认装备**（工程 39 G4）：放行药水后不得再被低价值筛选命中。
+	_expect(not Shop.matches_low_gear({"kind": "potion", "itemId": "potion_hp_small", "count": 5}, 5, "common"),
+		"低价值筛选应只认装备，药水不得被「一键移入」命中")
+	_expect(not Shop.matches_low_gear({"kind": "rune", "itemId": "rune_iron"}, 5, "common"),
+		"低价值筛选应只认装备，如意不得被「一键移入」命中")
+	_expect(Shop.matches_low_gear(common_w, 5, "common"),
+		"低价值筛选对低等级普通装备仍应命中")
 
 	# B-P3-3：实例缺 `quality` 时按模板 `defaultQuality` 回退（字段名不得误读为 `quality`）。
 	# 临时注入一个非普通品质的探针模板，验证后还原表与索引，避免污染后续用例。
@@ -1712,12 +1744,21 @@ func _test_shop() -> void:
 	DataLoader.tables["equipments"] = equips_backup
 	DataLoader._build_index()
 
-	# 卖 · 非装备拦截
+	# 卖 · 任务物品拦截（6.4 修订后只有任务物品会被拒）
 	GameState.reset_to_defaults()
-	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	GameState.inventory[0] = {"kind": "misc", "itemId": "c2_pressure_plate", "count": 1}
 	var bad_sell := GameState.shop_sell(0)
-	_expect(not bool(bad_sell.get("ok", false)), "药水不应可出售给货郎")
+	_expect(not bool(bad_sell.get("ok", false)), "任务物品不应可出售给货郎")
 	_expect(GameState.inventory[0] != null, "出售失败不应移除物品")
+
+	# 卖 · 整叠药水 → 整格出包并按整叠入账（工程 39 G2）
+	GameState.reset_to_defaults()
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_mid", "count": 37}
+	var potion_sell := GameState.shop_sell(0)
+	_expect(bool(potion_sell.get("ok", false)), "药水应可出售给货郎（6.4 修订）")
+	_expect(GameState.gold == 36 * 37,
+		"整叠 37 瓶中红药应入账 1332，实际 %d" % GameState.gold)
+	_expect(GameState.inventory[0] == null, "整叠出售后该格应清空")
 
 	# 卖 · 装备 → 加金币出包
 	GameState.reset_to_defaults()
