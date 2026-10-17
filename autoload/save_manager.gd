@@ -22,6 +22,13 @@ const MAX_SLOTS := 3
 ## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
 ## v14（E1 / 工程文档 30 §4）新增：`questRewardPlans`（持久任务发奖计划，失败重试复用同一实例与词条）。
 const CURRENT_SCHEMA := 14
+## 可读取的最低 schema 版本（0—10 明确拒读，产品 10.3）。`_is_valid_save` 与导入的前置检查共用同一下限，
+## 避免两处写死 11 后出现「读档能读、导入不能导」的分裂。
+const MIN_READABLE_SCHEMA := 11
+## 角色名长度上限（与存档面板输入框 `max_length` 一致）；导入时超长名字按此截断。
+const MAX_PLAYER_NAME_LENGTH := 16
+## 文件名禁用字符（角色名可能被玩家改成含路径分隔符 / 通配符的内容，仅用于导出文件名安全化）。
+const ILLEGAL_FILENAME_CHARS := ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]
 ## 营地开放外围只增加可走区域；旧白盒档位保留坐标、迷雾和地面战利品。
 const CURRENT_CAMP_LAYOUT_VERSION := "2026-10-16-camp-open-perimeter-v2"
 const PREVIOUS_CAMP_LAYOUT_VERSION := "2026-10-15-camp-whitebox-v1"
@@ -930,6 +937,182 @@ func continue_slot() -> int:
 	var slot := _read_last_slot()
 	return slot if slot >= 1 and slot <= MAX_SLOTS and bool(read_slot(slot).get("ok", false)) else -1
 
+# ---- 导出与导入（角色存档搬运；见工程文档《人物存档导出与导入设计方案》）----
+#
+# 与读档 / 存档共用同一套校验与迁移（`_is_valid_save` / `_migrate`），不同点有三：
+#   1. 导出**只读**：不走 `read_slot`，避免损坏自愈把本机存档改掉；主档坏了就导备份内容。
+#   2. 导入**不采集运行态**：不复用 `save_slot`（它会 `_collect()` 当前进度并改写 `active_slot`）。
+#   3. 导入**不改变 active_slot、不自动读取**：否则导入内容会在 120 秒内被自动存覆盖。
+
+## 导出某槽为可移植的明文 JSON 文件（与槽档同一 schema、同一序列化格式）。
+## 返回 { ok: bool, message: String, path: String }；失败不产生半截文件。
+func export_slot(slot: int, path: String) -> Dictionary:
+	var res := _read_for_export(slot)
+	if not bool(res.get("ok", false)):
+		var reason := String(res.get("message", ""))
+		push_error("[SaveManager] 导出失败：槽 %d，原因「%s」" % [slot, reason])
+		var rejected := Localization.tr_key("msg.save_manager.export_fail") % reason
+		EventBus.toast_requested.emit(rejected, "danger")
+		return {"ok": false, "message": rejected, "path": ""}
+	if not _write_text_atomic_to(path, JSON.stringify(res.get("data", {}), "\t")):
+		push_error("[SaveManager] 导出落盘失败：槽 %d，路径 %s" % [slot, path])
+		var failed := Localization.tr_key("msg.save_manager.export_fail") % path
+		EventBus.toast_requested.emit(failed, "danger")
+		return {"ok": false, "message": failed, "path": ""}
+	var clauses: Array[String] = []
+	clauses.append(Localization.tr_key("msg.save_manager.export_ok") % [slot, path])
+	if String(res.get("source", "main")) == "backup":
+		clauses.append(Localization.tr_key("msg.save_manager.export_from_backup"))
+	var message := "；".join(clauses)
+	EventBus.toast_requested.emit(message, "pickup")
+	return {"ok": true, "message": message, "path": path}
+
+## 只读获取待导出内容：主档有效用主档，否则用有效备份。
+## **不**触发 `_restore_backup` 的自愈写回 —— 导出是「搬走一份」，不该改动本机存档。
+## 返回 { ok: bool, source: "main"/"backup"/"", data: Dictionary, message: String }。
+func _read_for_export(slot: int) -> Dictionary:
+	if slot < 1 or slot > MAX_SLOTS:
+		return {"ok": false, "source": "", "data": {},
+			"message": Localization.tr_key("msg.save_manager.bad_slot") % slot}
+	var main_exists := FileAccess.file_exists(slot_path(slot))
+	var main: Variant = _read_file(slot_path(slot))
+	if _is_valid_save(main):
+		return {"ok": true, "source": "main", "data": _migrate(main as Dictionary), "message": _pruned_notice("")}
+	# 主档不存在时的 `_last_invalid_reason` 是「schemaVersion 非法：<null>」这类噪音，
+	# 只在主档真存在时才留作下方的字段级原因。
+	var main_reason := _last_invalid_reason if main_exists else ""
+	if not FileAccess.file_exists(backup_path(slot)):
+		return {"ok": false, "source": "", "data": {},
+			"message": Localization.tr_key("msg.save_manager.p008") % slot}
+	var bak: Variant = _read_file(backup_path(slot))
+	if _is_valid_save(bak):
+		return {"ok": true, "source": "backup", "data": _migrate(bak as Dictionary), "message": _pruned_notice("")}
+	# 主档与备份都不可用：优先回主档的字段级原因（更贴近玩家手改坏的那一处）。
+	return {"ok": false, "source": "", "data": {},
+		"message": main_reason if not main_reason.is_empty() else _last_invalid_reason}
+
+## 从外部文件导入到指定槽。校验通过才写入；**不改变 active_slot**。
+## 返回 { ok: bool, message: String, pruned: int }。
+func import_from_file(slot: int, path: String) -> Dictionary:
+	if slot < 1 or slot > MAX_SLOTS:
+		return _reject_import(slot, path, Localization.tr_key("msg.save_manager.bad_slot") % slot)
+	var raw: Variant = _read_file(path)
+	if not raw is Dictionary:
+		return _reject_import(slot, path,
+			Localization.tr_key("msg.save_manager.import_invalid") % Localization.tr_key("msg.save_manager.import_bad_json"))
+	var data := raw as Dictionary
+	# 版本前置检查只为把「版本不符」从「结构非法」里拆出来给玩家看：`_is_valid_save` 目前对两者
+	# 都只回一句「schemaVersion 非法」。schemaVersion 缺失 / 非数值仍交由 `_is_valid_save` 报字段级原因。
+	var version := int(data.get("schemaVersion", -1))
+	if version > CURRENT_SCHEMA:
+		return _reject_import(slot, path,
+			Localization.tr_key("msg.save_manager.import_newer") % [version, CURRENT_SCHEMA])
+	if _whole(data.get("schemaVersion"), 0, MIN_READABLE_SCHEMA - 1):
+		return _reject_import(slot, path, Localization.tr_key("msg.save_manager.import_legacy") % version)
+	if not _is_valid_save(data):
+		return _reject_import(slot, path, Localization.tr_key("msg.save_manager.import_invalid") % _last_invalid_reason)
+	return import_to_slot(slot, data)
+
+## 把已校验的存档数据写入某槽（供 `import_from_file` 与自动化测试直接调用）。
+## 只复用 `save_slot` 的「校验 → 备份 → 原子写入」步骤顺序，不采集运行态、不碰 `active_slot`。
+## 与 `new_game` 的差异：导入**不清**旧 `.corrupt`，保留玩家此前改坏的现场。
+func import_to_slot(slot: int, data: Dictionary) -> Dictionary:
+	if slot < 1 or slot > MAX_SLOTS:
+		return _reject_import(slot, "内嵌数据", Localization.tr_key("msg.save_manager.bad_slot") % slot)
+	if not _is_valid_save(data):
+		return _reject_import(slot, "内嵌数据",
+			Localization.tr_key("msg.save_manager.import_invalid") % _last_invalid_reason)
+	var normalized := _migrate(data)
+	var pruned := _last_pruned_equipment
+	# 归一化 1：槽档固有字段，必须与落点一致（`save_slot` 亦有同款改写）。
+	normalized["slotId"] = slot
+	# 归一化 2：角色名截断（见 `_normalize_import_name`）。
+	var renamed := _normalize_import_name(normalized)
+	# 归一化改动了**将要写入的字节**，故必须对最终内容再验一次（校验对象是落盘内容）。
+	if not _is_valid_save(normalized):
+		return _reject_import(slot, "内嵌数据",
+			Localization.tr_key("msg.save_manager.import_invalid") % _last_invalid_reason)
+	_ensure_dir()
+	var path := slot_path(slot)
+	# 与 `save_slot` 同款前提：只有主档**有效**时才留备份，否则会把可用的 .bak 覆盖成坏档（T16 前提）。
+	if _is_valid_save(_read_file(path)) and not _copy_over(path, backup_path(slot)):
+		push_error("[SaveManager] 导入备份失败：槽 %d，路径 %s" % [slot, backup_path(slot)])
+		var backup_failed := Localization.tr_key("msg.save_manager.p004")
+		EventBus.toast_requested.emit(backup_failed, "danger")
+		return {"ok": false, "message": backup_failed, "pruned": pruned}
+	if not _write_json_atomic(path, normalized):
+		push_error("[SaveManager] 导入写入失败：槽 %d，路径 %s" % [slot, path])
+		var write_failed := Localization.tr_key("msg.save_manager.import_write_fail") % slot
+		EventBus.toast_requested.emit(write_failed, "danger")
+		return {"ok": false, "message": write_failed, "pruned": pruned}
+	var clauses: Array[String] = []
+	clauses.append(Localization.tr_key("msg.save_manager.import_ok") % slot)
+	if renamed:
+		clauses.append(Localization.tr_key("msg.save_manager.import_name_clamped"))
+	if pruned > 0:
+		clauses.append(Localization.tr_key("msg.save_manager.pruned_equipment") % pruned)
+	var message := "；".join(clauses)
+	EventBus.toast_requested.emit(message, "pickup")
+	print("[SaveManager] 已导入槽 %d（文件校验通过）" % slot)
+	return {"ok": true, "message": message, "pruned": pruned}
+
+## 导入失败：留在日志与 toast，返回失败结构；**不做任何写入**（目标槽字节不变）。
+func _reject_import(slot: int, source: String, message: String) -> Dictionary:
+	push_error("[SaveManager] 导入被拒（槽 %d，来源 %s）：%s" % [slot, source, message])
+	EventBus.toast_requested.emit(message, "danger")
+	return {"ok": false, "message": message, "pruned": 0}
+
+## 导入归一化：角色名去首尾空白并按 `MAX_PLAYER_NAME_LENGTH` 截断。
+## 校验只要求「非空字符串」而 UI 输入框限 16 字，手改超长名会撑坏卡面与角色面板。
+## 返回是否发生改写；**全空白名保持原值不动**（不静默改名，若真非法由 `_is_valid_save` 拒绝）。
+func _normalize_import_name(data: Dictionary) -> bool:
+	var player: Variant = data.get("player")
+	if not player is Dictionary:
+		return false
+	var current := String((player as Dictionary).get("name", ""))
+	var cleaned := current.strip_edges()
+	if cleaned.is_empty():
+		return false
+	var clamped := cleaned.substr(0, MAX_PLAYER_NAME_LENGTH)
+	(player as Dictionary)["name"] = clamped
+	return clamped != current
+
+## 把文本原子写到任意路径（导出用）：tmp 写好 → 读回校验 → 改名替换。
+## 任一步失败删除临时文件并返回 false，**不产生半截目标文件**。
+## 与 `_write_json_atomic` 同款保证，但不限定在 `SAVE_DIR` 内（导出目标是玩家选的任意目录）。
+func _write_text_atomic_to(path: String, text: String) -> bool:
+	var tmp := path + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		push_error("[SaveManager] 无法写入临时导出文件：%s" % tmp)
+		return false
+	f.store_string(text)
+	f.close()
+	if not _verify_written(tmp, text):
+		push_error("[SaveManager] 导出写入校验失败（内容不完整），已删除临时文件：%s" % tmp)
+		DirAccess.remove_absolute(tmp)
+		return false
+	var err := DirAccess.rename_absolute(tmp, path)
+	if err != OK:
+		push_error("[SaveManager] 导出改名失败（err=%d）：%s" % [err, path])
+		DirAccess.remove_absolute(tmp)
+		return false
+	return true
+
+## 导出文件名：清洗角色名中的路径分隔符 / 通配符 / 控制字符并截断为 16 字，空名回退 `character`；
+## 附时间戳避免同名覆盖。仅用于文件名，不改动存档内的角色名。
+func export_file_name(character_name: String, level: int) -> String:
+	var safe := character_name.strip_edges().substr(0, MAX_PLAYER_NAME_LENGTH)
+	for ch in ILLEGAL_FILENAME_CHARS:
+		safe = safe.replace(ch, "_")
+	var cleaned := ""
+	for i in safe.length():
+		cleaned += "_" if safe.unicode_at(i) < 32 else safe[i]
+	if cleaned.is_empty():
+		cleaned = "character"
+	var stamp := Time.get_datetime_string_from_system().replace(":", "").replace("T", "-")
+	return "save_%s_Lv%d_%s.json" % [cleaned, level, stamp]
+
 # ---- 底层文件操作 ----
 
 ## 原子写入：tmp 写好 → 校验回读 → 替换主档（10.3）。
@@ -978,7 +1161,7 @@ func _read_file(path: String) -> Variant:
 ## 所有读档/备份/应用入口使用同一校验；先识别版本，再迁移再验收，绝不修改输入。
 func _is_valid_save(raw: Variant) -> bool:
 	_last_invalid_reason = ""
-	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), 11, CURRENT_SCHEMA):
+	if not raw is Dictionary or not _whole(raw.get("schemaVersion"), MIN_READABLE_SCHEMA, CURRENT_SCHEMA):
 		return _reject("schemaVersion 非法：%s" % str(raw.get("schemaVersion", "缺失") if raw is Dictionary else raw))
 	if not raw.get("player") is Dictionary or not _whole(raw.player.get("level"), 1):
 		return _reject("player.level 非法")

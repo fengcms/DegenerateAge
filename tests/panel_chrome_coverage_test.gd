@@ -23,8 +23,14 @@ func _ready() -> void:
 	var settings: Control = ui.get_node("SettingsPanel")
 	_check(save.get("_overwrite_dialog") is PanelConfirmDialog, "存档覆盖使用共用确认弹层")
 	_check(settings.get("_conflict") is PanelConfirmDialog, "改键冲突使用共用确认弹层")
-	_check(ui.find_children("*", "ConfirmationDialog", true, false).is_empty(),
-		"主场景没有遗留的原生确认弹窗")
+	# FileDialog 是平台文件选择器（继承 ConfirmationDialog），属明确例外：存档导出 / 导入需要它选外部文件，
+	# 且工程文档《人物存档导出与导入设计方案》§8 明确不引入原生对话框。其余原生确认框一律禁止
+	# （FileDialog 自带的内部确认框「覆盖文件？」等也算选择器的一部分，一并排除）。
+	var legacy_dialogs: Array[Node] = []
+	for node in ui.find_children("*", "ConfirmationDialog", true, false):
+		if not node is FileDialog and not _inside_file_dialog(node):
+			legacy_dialogs.append(node)
+	_check(legacy_dialogs.is_empty(), "主场景没有遗留的原生确认弹窗：%s" % str(legacy_dialogs))
 	if _failures.is_empty():
 		print("[PanelChromeCoverageTest] 全部通过 ✅")
 	else:
@@ -36,3 +42,12 @@ func _ready() -> void:
 func _check(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+## 节点是否位于某个 FileDialog 之内（含 FileDialog 自身的内部确认框）。
+func _inside_file_dialog(node: Node) -> bool:
+	var current := node.get_parent()
+	while current != null:
+		if current is FileDialog:
+			return true
+		current = current.get_parent()
+	return false

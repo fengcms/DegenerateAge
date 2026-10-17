@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 28 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 29 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 
 默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
@@ -29,7 +29,7 @@ DEFAULT_TESTS = [
     "DeathChoiceTest", "DeathDropTest", "RandomTicketTest", "TownScrollTest",
     "HotbarConfigTest", "HotbarUiTest", "InputFeedbackTest", "MenuFlowTest",
     "SkillCombatTest", "AutoControlAcceptance", "AutoExplorationSurvival",
-    "BluePotionDropTest", "CaveNavigationTest", "ReviewRegressionTest",
+    "BluePotionDropTest", "CaveNavigationTest", "ReviewRegressionTest", "SaveTransferTest",
     "BossReviewTest", "BossActionTest", "QuestRewardPlanTest", "MapGateTest",
     "ChapterOneAcceptance",
     # 第四/五/六章各 1 个地图契约场景，令默认回归覆盖 31—60 级交付核心契约。

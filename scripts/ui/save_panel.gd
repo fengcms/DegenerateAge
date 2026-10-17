@@ -8,11 +8,16 @@ extends Control
 ##   「保存」写入该槽并把它设为**活动槽**（此后自动存档都写本槽）；
 ##   「读取」载入该槽 → 关面板 → 重载世界（销旧怪物 / 掉落 / 面板状态，见工程文档 06 §5）；
 ##   「删除」两段式二次确认（9.4），删除后清空该槽。
+##   「导出」把该槽写成可移植的明文 JSON 文件；「导入」从外部文件写回该槽（导入不自动读取；
+##   活动槽禁止导入）——见工程文档《人物存档导出与导入设计方案》。
 ## 面板互斥：与背包 / 货郎同规则（09.2），同一时刻只开一个关闭式面板。
 ## 三张存档卡沿用共用面板材质；确认弹层不改变原有存档事务。
 
 const PANEL_ID := "save"
-const CARD_MIN := Vector2(560, 0)
+## 一行最多同时出现 5 个按钮（保存 / 读取 / 导出 / 导入 / 删除），故下限比原来 560 放宽（工程文档 §4.3）。
+const CARD_MIN := Vector2(700, 0)
+## 内置文件选择器尺寸（不使用平台原生对话框，见工程文档 §4.3）。
+const FILE_DIALOG_SIZE := Vector2i(760, 520)
 
 const COL_WARN := Color(0.92, 0.55, 0.45)
 const COL_OK := Color(0.56, 0.82, 0.48)
@@ -26,6 +31,15 @@ var _name_row: HBoxContainer
 var _name_input: LineEdit
 var _overwrite_dialog: PanelConfirmDialog
 var _pending_overwrite := -1
+## 导出 / 导入的文件选择器与覆盖确认弹层（工程文档《人物存档导出与导入设计方案》§4.3）。
+var _export_dialog: FileDialog
+var _import_dialog: FileDialog
+var _import_confirm: PanelConfirmDialog
+## 待导出 / 待导入的目标槽（-1 = 无待处理动作）；弹层关闭时清空，避免残留上一次目标。
+var _export_slot := -1
+var _import_slot := -1
+## 已选定、等待覆盖确认的导入文件路径。
+var _pending_import := ""
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -38,9 +52,17 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("pause"):
 		return
+	# 文件选择器是独立窗口，Esc 应由它自行关闭，不连带关掉整个存档面板。
+	if _file_dialog_open():
+		return
 	if visible:
 		set_open(false)
 		get_viewport().set_input_as_handled()
+
+## 任一文件选择器是否可见（内置 FileDialog 属独立窗口，不经过本面板的输入链）。
+func _file_dialog_open() -> bool:
+	return (_export_dialog != null and _export_dialog.visible) \
+		or (_import_dialog != null and _import_dialog.visible)
 
 func set_mode(mode: String) -> void:
 	if mode not in ["new", "load", "manage"]:
@@ -56,9 +78,23 @@ func set_open(open: bool) -> void:
 	if open:
 		EventBus.panel_opened.emit(PANEL_ID)
 		_refresh()
-	elif _overwrite_dialog != null:
+	else:
+		_close_dialogs()
+
+## 收起所有弹层并清空待处理槽位，避免下次打开时残留上一次的目标槽。
+func _close_dialogs() -> void:
+	if _overwrite_dialog != null:
 		_overwrite_dialog.hide()
-		_pending_overwrite = -1
+	if _import_confirm != null:
+		_import_confirm.hide()
+	if _export_dialog != null:
+		_export_dialog.hide()
+	if _import_dialog != null:
+		_import_dialog.hide()
+	_pending_overwrite = -1
+	_export_slot = -1
+	_import_slot = -1
+	_pending_import = ""
 
 ## 其他面板打开时自动关闭本面板，保证互斥。
 func _on_panel_opened(panel_id: String) -> void:
@@ -150,6 +186,34 @@ func _build() -> void:
 	_overwrite_dialog.confirmed.connect(_on_overwrite_confirmed)
 	add_child(_overwrite_dialog)
 
+	_import_confirm = PanelConfirmDialog.new()
+	_import_confirm.title = Localization.tr_key("ui.save_panel.p023")
+	_import_confirm.confirmed.connect(_on_import_confirmed)
+	add_child(_import_confirm)
+
+	# 文件选择器用**内置** FileDialog（`use_native_dialog = false`）：macOS / Windows 行为一致，
+	# 且不引入平台原生对话框的额外风险（原生对话框列为可选增强，工程文档 §8）。
+	var desktop := OS.get_system_dir(OS.SYSTEM_DIR_DESKTOP)
+	_export_dialog = _make_file_dialog(Localization.tr_key("ui.save_panel.p024"), FileDialog.FILE_MODE_SAVE_FILE, desktop)
+	_export_dialog.file_selected.connect(_on_export_file_selected)
+	_export_dialog.canceled.connect(func() -> void: _export_slot = -1)
+	_import_dialog = _make_file_dialog(Localization.tr_key("ui.save_panel.p025"), FileDialog.FILE_MODE_OPEN_FILE, desktop)
+	_import_dialog.file_selected.connect(_on_import_file_selected)
+	_import_dialog.canceled.connect(func() -> void: _import_slot = -1)
+
+## 建立只选 JSON 的内置文件选择器；默认目录取系统桌面（取不到时留空由 FileDialog 自定）。
+func _make_file_dialog(title: String, mode: FileDialog.FileMode, desktop: String) -> FileDialog:
+	var d := FileDialog.new()
+	d.title = title
+	d.file_mode = mode
+	d.access = FileDialog.ACCESS_FILESYSTEM
+	d.use_native_dialog = false
+	d.add_filter("*.json", Localization.tr_key("ui.save_panel.p029"))
+	if not desktop.is_empty():
+		d.current_dir = desktop
+	add_child(d)
+	return d
+
 func _build_card(slot: int, parent: Node) -> void:
 	var card := PanelContainer.new()
 	PanelChrome.style_card(card)
@@ -195,6 +259,14 @@ func _build_card(slot: int, parent: Node) -> void:
 	load_b.pressed.connect(_on_load_pressed.bind(slot))
 	btns.add_child(load_b)
 
+	var export_b := _make_button(Localization.tr_key("ui.save_panel.p021"))
+	export_b.pressed.connect(_on_export_pressed.bind(slot))
+	btns.add_child(export_b)
+
+	var import_b := _make_button(Localization.tr_key("ui.save_panel.p022"))
+	import_b.pressed.connect(_on_import_pressed.bind(slot))
+	btns.add_child(import_b)
+
 	var del_b := _make_button(Localization.tr_key("ui.save_panel.p009"))
 	del_b.pressed.connect(_on_delete_pressed.bind(slot))
 	btns.add_child(del_b)
@@ -213,7 +285,8 @@ func _build_card(slot: int, parent: Node) -> void:
 
 	_cards.append({
 		"slot": slot, "info": info,
-		"save": save_b, "load": load_b, "del": del_b, "yes": yes_b, "no": no_b,
+		"save": save_b, "load": load_b, "export": export_b, "import": import_b,
+		"del": del_b, "yes": yes_b, "no": no_b,
 	})
 
 func _make_button(text: String) -> Button:
@@ -243,6 +316,13 @@ func _refresh() -> void:
 		c.yes.visible = false
 		c.no.visible = false
 		c.del.visible = true
+		c.export.visible = true
+		c.import.visible = true
+		# 「导出」只对可用档开放；「导入」对活动槽置灰（否则内容会被自动存覆盖，工程文档 §4.3）。
+		c.export.disabled = not bool(s.get("ok", false))
+		c.export.tooltip_text = Localization.tr_key("ui.save_panel.p028")
+		c.import.disabled = active
+		c.import.tooltip_text = Localization.tr_key("ui.save_panel.p027")
 
 		if bool(s.get("ok", false)):
 			var tag := Localization.tr_key("ui.save_panel.active_slot") if active else "○"
@@ -339,6 +419,9 @@ func _on_delete_pressed(slot: int) -> void:
 		c.del.visible = not is_this
 		c.yes.visible = is_this
 		c.no.visible = is_this
+		# 删除确认期间收起导出 / 导入，避免一行挤到 6 个按钮。
+		c.export.visible = not is_this
+		c.import.visible = not is_this
 
 func _on_delete_cancelled(_slot: int) -> void:
 	_refresh()
@@ -346,4 +429,59 @@ func _on_delete_cancelled(_slot: int) -> void:
 func _on_delete_confirmed(slot: int) -> void:
 	SaveManager.delete_slot(slot)
 	EventBus.toast_requested.emit(Localization.tr_key("ui.save_panel.p020") % slot, "info")
+	_refresh()
+
+# ---- 导出与导入（工程文档《人物存档导出与导入设计方案》§4.3）----
+
+## 「导出」：活动槽先静默落盘一次，使导出内容与玩家当前进度一致（导出是只读副本，不改 active_slot）。
+func _on_export_pressed(slot: int) -> void:
+	if slot == SaveManager.active_slot:
+		SaveManager.save_slot(slot, true)
+	var s := SaveManager.slot_summary(slot)
+	if not bool(s.get("ok", false)):
+		_refresh()
+		return
+	_export_slot = slot
+	_export_dialog.current_file = SaveManager.export_file_name(String(s.get("name", "")), int(s.get("level", 1)))
+	_export_dialog.popup_centered(FILE_DIALOG_SIZE)
+
+func _on_export_file_selected(path: String) -> void:
+	var slot := _export_slot
+	_export_slot = -1
+	if slot < 1:
+		return
+	SaveManager.export_slot(slot, path)
+
+## 「导入」：先选文件，槽内已有有效档时再确认覆盖，最后才写入（活动槽的按钮已置灰）。
+func _on_import_pressed(slot: int) -> void:
+	if slot == SaveManager.active_slot:
+		return
+	_import_slot = slot
+	_import_dialog.popup_centered(FILE_DIALOG_SIZE)
+
+func _on_import_file_selected(path: String) -> void:
+	var slot := _import_slot
+	if slot < 1:
+		return
+	if bool(SaveManager.slot_summary(slot).get("ok", false)):
+		# 覆盖前二次确认：导入会取代该槽现档（现档先转 .bak，原档不会直接丢失）。
+		_pending_import = path
+		_import_confirm.dialog_text = Localization.tr_key("ui.save_panel.p026") % slot
+		_import_confirm.popup_centered()
+		return
+	_do_import(slot, path)
+
+func _on_import_confirmed() -> void:
+	var slot := _import_slot
+	var path := _pending_import
+	if slot < 1 or path.is_empty():
+		return
+	_pending_import = ""
+	_do_import(slot, path)
+
+## 导入并刷新卡面；导入**不自动读取**，由玩家点「读取」进入该角色（工程文档 §5）。
+func _do_import(slot: int, path: String) -> void:
+	_import_slot = -1
+	_pending_import = ""
+	SaveManager.import_from_file(slot, path)
 	_refresh()
