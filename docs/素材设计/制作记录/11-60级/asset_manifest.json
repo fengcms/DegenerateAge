@@ -1779,10 +1779,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal01/",
       "runtime_art": "assets/sprites/monsters/c5_normal01/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal01/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal01/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal01/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal02",
@@ -1797,10 +1799,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal02/",
       "runtime_art": "assets/sprites/monsters/c5_normal02/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal02/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal02/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal02/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal03",
@@ -1815,10 +1819,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal03/",
       "runtime_art": "assets/sprites/monsters/c5_normal03/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal03/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal03/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal03/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal04",
@@ -1833,10 +1839,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal04/",
       "runtime_art": "assets/sprites/monsters/c5_normal04/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal04/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal04/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal04/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal05",
@@ -1851,10 +1859,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal05/",
       "runtime_art": "assets/sprites/monsters/c5_normal05/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal05/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal05/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal05/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal06",
@@ -1869,10 +1879,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal06/",
       "runtime_art": "assets/sprites/monsters/c5_normal06/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal06/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal06/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal06/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal07",
@@ -1887,10 +1899,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal07/",
       "runtime_art": "assets/sprites/monsters/c5_normal07/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal07/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal07/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal07/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal08",
@@ -1905,10 +1919,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal08/",
       "runtime_art": "assets/sprites/monsters/c5_normal08/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal08/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal08/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal08/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_normal09",
@@ -1923,10 +1939,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_normal09/",
       "runtime_art": "assets/sprites/monsters/c5_normal09/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_normal09/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_normal09/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_normal09/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_elite01",
@@ -1941,10 +1959,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_elite01/",
       "runtime_art": "assets/sprites/monsters/c5_elite01/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_elite01/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_elite01/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_elite01/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_elite02",
@@ -1959,10 +1979,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_elite02/",
       "runtime_art": "assets/sprites/monsters/c5_elite02/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_elite02/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_elite02/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_elite02/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_elite03",
@@ -1977,10 +1999,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_elite03/",
       "runtime_art": "assets/sprites/monsters/c5_elite03/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_elite03/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_elite03/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_elite03/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_elite04",
@@ -1995,10 +2019,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_elite04/",
       "runtime_art": "assets/sprites/monsters/c5_elite04/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_elite04/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_elite04/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_elite04/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_elite05",
@@ -2013,10 +2039,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_elite05/",
       "runtime_art": "assets/sprites/monsters/c5_elite05/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_elite05/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_elite05/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_elite05/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_boss01",
@@ -2031,10 +2059,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_boss01/",
       "runtime_art": "assets/sprites/monsters/c5_boss01/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_boss01/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_boss01/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_boss01/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_boss02",
@@ -2049,10 +2079,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_boss02/",
       "runtime_art": "assets/sprites/monsters/c5_boss02/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_boss02/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_boss02/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_boss02/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_boss03",
@@ -2067,10 +2099,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_boss03/",
       "runtime_art": "assets/sprites/monsters/c5_boss03/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_boss03/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_boss03/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_boss03/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c5_boss04",
@@ -2085,10 +2119,12 @@
       "source_data": "data/monsters/ch05/monsters.json",
       "source_art": "art_source/chapters/ch05/monsters/c5_boss04/",
       "runtime_art": "assets/sprites/monsters/c5_boss04/",
-      "status": "designed",
-      "integration": "pending",
+      "status": "reviewed",
+      "integration": "temporary_static",
       "existing_partial": false,
-      "concept_art": "art_source/chapters/ch05/monsters/c5_boss04/concept.png"
+      "concept_art": "art_source/chapters/ch05/monsters/c5_boss04/concept.png",
+      "temporary_sprite": "assets/sprites/monsters/c5_boss04/simplified_atlas.png",
+      "runtime_variant": "single_direction_three_frame"
     },
     {
       "data_id": "c6_equip_weapon",

@@ -1,0 +1,12 @@
+{
+  "id": "c5_elite02",
+  "renderer": "static_atlas",
+  "texture": "res://assets/sprites/monsters/c5_elite02/simplified_atlas.png",
+  "hframes": 3,
+  "offset": [
+    -56,
+    -88
+  ],
+  "headHpY": -96,
+  "desc": "临时简化表现：单个东南向造型，受击与死亡变色；八向五状态动画待补。"
+}

@@ -26,7 +26,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal01"
   },
   {
     "id": "c5_normal02",
@@ -55,7 +55,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal02"
   },
   {
     "id": "c5_normal03",
@@ -84,7 +84,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal03"
   },
   {
     "id": "c5_normal04",
@@ -113,7 +113,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal04"
   },
   {
     "id": "c5_normal05",
@@ -142,7 +142,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal05"
   },
   {
     "id": "c5_normal06",
@@ -171,7 +171,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal06"
   },
   {
     "id": "c5_normal07",
@@ -200,7 +200,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal07"
   },
   {
     "id": "c5_normal08",
@@ -229,7 +229,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal08"
   },
   {
     "id": "c5_normal09",
@@ -258,7 +258,7 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第五章 normal；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_normal09"
   },
   {
     "id": "c5_elite01",
@@ -299,7 +299,7 @@
       1,
       2
     ],
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_elite01"
   },
   {
     "id": "c5_elite02",
@@ -340,7 +340,7 @@
       1,
       2
     ],
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_elite02"
   },
   {
     "id": "c5_elite03",
@@ -381,7 +381,7 @@
       1,
       2
     ],
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_elite03"
   },
   {
     "id": "c5_elite04",
@@ -422,7 +422,7 @@
       1,
       2
     ],
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_elite04"
   },
   {
     "id": "c5_elite05",
@@ -463,7 +463,7 @@
       1,
       2
     ],
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_elite05"
   },
   {
     "id": "c5_boss01",
@@ -519,7 +519,7 @@
     },
     "spawnWeight": 1.0,
     "desc": "第五章 boss；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_boss01"
   },
   {
     "id": "c5_boss02",
@@ -595,7 +595,7 @@
     },
     "spawnWeight": 1.0,
     "desc": "第五章 boss；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_boss02"
   },
   {
     "id": "c5_boss03",
@@ -652,7 +652,7 @@
     },
     "spawnWeight": 1.0,
     "desc": "第五章 boss；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_boss03"
   },
   {
     "id": "c5_boss04",
@@ -713,6 +713,6 @@
     },
     "spawnWeight": 1.0,
     "desc": "第五章 boss；数值待实机校准。",
-    "appearanceId": "placeholder"
+    "appearanceId": "c5_boss04"
   }
 ]
