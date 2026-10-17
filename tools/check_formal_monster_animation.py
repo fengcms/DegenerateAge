@@ -49,6 +49,7 @@ def main() -> None:
         source.update({row["id"]: (chapter, row) for row in rows})
     assert len(source) == 79, "运行怪物 ID 不是 79 个"
     recorded = {row["data_id"]: row for row in manifest["assets"] if row["type"] == "monster"}
+    registered_packs = {row["id"] for row in read_json(ROOT / "data/monster_animation_packs.json")}
     assert set(recorded) == set(source), "资产清单与运行怪物 ID 不一致"
     ids = [row["id"] for row in matrix["rows"]]
     assert len(ids) == len(set(ids)) and set(ids) == set(source), "动画矩阵 ID 不全或重复"
@@ -68,9 +69,15 @@ def main() -> None:
         assert row["required_states"] == expected_states and row["boss_events"] == expected_events(actual), f"{monster_id} 状态或首领视觉事件不一致"
         status = row["formal_status"]
         assert status in STATUSES and recorded[monster_id].get("formal_animation") == status, f"{monster_id} 正式进度不一致"
+        source_dir = ROOT / f"art_source/chapters/ch{chapter:02d}/monsters/{monster_id}/animation"
+        if status != "pending":
+            assert (source_dir / "rig.json").is_file(), f"{monster_id} 缺少可编辑分层源稿"
+        if status in {"baked", "reviewed", "integrated"}:
+            assert (source_dir / "animations_v1/animation.json").is_file(), f"{monster_id} 缺少烘焙元数据"
         appearance = read_json(ROOT / f"data/monster_appearances/{actual['appearanceId']}.json")
         if status == "integrated":
             assert appearance["renderer"] == "animation_pack" and appearance.get("assetKey") == actual["appearanceId"], f"{monster_id} 未切换正式包"
+            assert monster_id in registered_packs, f"{monster_id} 未登记已审核正式包"
         else:
             assert appearance["renderer"] == "static_atlas", f"{monster_id} 未验收却提前切换外观"
         assert (ROOT / f"art_source/chapters/ch{chapter:02d}/monsters/{monster_id}/concept.png").is_file(), f"{monster_id} 概念稿丢失"
