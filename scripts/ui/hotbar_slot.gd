@@ -1,5 +1,8 @@
 class_name HotbarSlot
 extends Button
+## 快捷栏操作格：承载技能 / 药品 / 回城卷等绑定，负责图标、数量角标、冷却秒数与药水颜色标记。
+## 只处理单格显示与拖放契约（拖入 / 拖出 / 右键清空），绑定数据本身由 HotbarConfig 与
+## GameState.hotbar 持有，本节点不自行改写绑定。
 
 signal binding_dropped(index: int, payload: Dictionary)
 signal clear_requested(index: int)
@@ -33,6 +36,10 @@ func _ready() -> void:
 	_cooldown.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_cooldown.add_theme_font_size_override("font_size", 12)
 	_cooldown.add_theme_color_override("font_color", Color("ffcb71"))
+	# 冷却秒数直接压在技能图标上，纯色文字在亮底色块上对比不足；加深色描边提升可辨识度
+	# （与背包格数量、键位角标同一处理口径）。
+	_cooldown.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_cooldown.add_theme_constant_override("outline_size", 2)
 	_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_cooldown)
 	_potion_marker = Label.new()

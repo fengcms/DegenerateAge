@@ -124,6 +124,10 @@ func _ready() -> void:
 	_check(GameState.player.hp == GameState.max_hp() and hud._hotbar_buttons[5]._count.text == "2",
 		"拖入的具体药品可使用且库存同步减少")
 	_check(not hud._hotbar_buttons[5]._cooldown.text.is_empty(), "药品格显示冷却")
+	# 冷却秒数压在图标上，须带深色描边才可辨识（与键位角标同一处理）。
+	_check(hud._hotbar_buttons[5]._cooldown.get_theme_constant("outline_size") > 0
+		and hud._hotbar_buttons[5]._cooldown.get_theme_color("font_outline_color").a > 0.5,
+		"冷却秒数带深色描边便于辨识")
 	_check(is_equal_approx(hud._hotbar.size.x, hud._exp_bar.size.x), "经验条与快捷栏整体同宽")
 	_check(absf(hud._exp_bar.position.y - (hud._hotbar.position.y + hud._hotbar.size.y) - 7.0) < 0.1,
 		"经验槽距快捷栏 7px，与设计稿一致")
