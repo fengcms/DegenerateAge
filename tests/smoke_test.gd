@@ -50,6 +50,7 @@ func _ready() -> void:
 	_test_shop()
 	_test_low_gear_filter_sale()
 	await _test_trade_panel()
+	await _test_trade_panel_materials()
 	await _test_floating_panels()
 	await _test_equipment_panel_interaction()
 	await _test_quest_target_navigation()
@@ -1691,8 +1692,40 @@ func _test_shop() -> void:
 	_expect(Shop.sell_price(rare_star) == 162,
 		"同型号稀有 +1 星（50 × 3 × 1.08）应为 162，实际 %d" % Shop.sell_price(rare_star))
 	_expect(Shop.can_sell(rare_w), "装备可出售")
-	_expect(not Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
-		"药水不可出售给货郎（6.4）")
+
+	# 6.4 修订（工程 39）：药水 / 杂项 / 如意均可售；任务物品与无价物品不收。
+	_expect(Shop.can_sell({"kind": "potion", "itemId": "potion_hp_small"}),
+		"药水应可出售给货郎（6.4 修订）")
+	_expect(Shop.can_sell({"kind": "rune", "itemId": "rune_iron"}), "如意应可出售")
+	_expect(Shop.can_sell({"kind": "misc", "itemId": "misc_town_scroll"}), "杂项应可出售")
+	_expect(not Shop.can_sell({"kind": "misc", "itemId": "c2_pressure_plate"}),
+		"任务物品不可出售（questItem 兜底）")
+	_expect(not Shop.can_sell({"kind": "quest", "itemId": "spirit_shard"}),
+		"quest 品类不在可售白名单内")
+	_expect(not Shop.can_sell({"kind": "misc", "itemId": "__no_such_item__"}),
+		"无模板 / 无价物品不可出售（不静默卖 0）")
+
+	# 整叠计价（工程 39 G2）：一叠 N 件 = 取整单价 × N，非装备按 0.6 回收。
+	var mid_single := {"kind": "potion", "itemId": "potion_hp_mid", "count": 1}
+	_expect(Shop.sell_price(mid_single) == 36,
+		"中红药单瓶（60 × 0.6）售价应为 36，实际 %d" % Shop.sell_price(mid_single))
+	var mid_stack := {"kind": "potion", "itemId": "potion_hp_mid", "count": 99}
+	_expect(Shop.sell_price(mid_stack) == 36 * 99,
+		"一叠 99 瓶中红药应整叠计价 3564，实际 %d" % Shop.sell_price(mid_stack))
+	var no_count := {"kind": "potion", "itemId": "potion_hp_small"}
+	_expect(Shop.sell_price(no_count) == 12,
+		"缺 count 的药水按 1 件计（20 × 0.6 = 12），实际 %d" % Shop.sell_price(no_count))
+	_expect(Shop.sell_price({"kind": "rune", "itemId": "rune_jade", "count": 2}) == 480 * 2,
+		"玉如意 ×2 应按单价 480（800 × 0.6）整叠计价，实际 %d"
+			% Shop.sell_price({"kind": "rune", "itemId": "rune_jade", "count": 2}))
+
+	# 一键移入筛选**只认装备**（工程 39 G4）：放行药水后不得再被低价值筛选命中。
+	_expect(not Shop.matches_low_gear({"kind": "potion", "itemId": "potion_hp_small", "count": 5}, 5, "common"),
+		"低价值筛选应只认装备，药水不得被「一键移入」命中")
+	_expect(not Shop.matches_low_gear({"kind": "rune", "itemId": "rune_iron"}, 5, "common"),
+		"低价值筛选应只认装备，如意不得被「一键移入」命中")
+	_expect(Shop.matches_low_gear(common_w, 5, "common"),
+		"低价值筛选对低等级普通装备仍应命中")
 
 	# B-P3-3：实例缺 `quality` 时按模板 `defaultQuality` 回退（字段名不得误读为 `quality`）。
 	# 临时注入一个非普通品质的探针模板，验证后还原表与索引，避免污染后续用例。
@@ -1712,12 +1745,21 @@ func _test_shop() -> void:
 	DataLoader.tables["equipments"] = equips_backup
 	DataLoader._build_index()
 
-	# 卖 · 非装备拦截
+	# 卖 · 任务物品拦截（6.4 修订后只有任务物品会被拒）
 	GameState.reset_to_defaults()
-	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 1}
+	GameState.inventory[0] = {"kind": "misc", "itemId": "c2_pressure_plate", "count": 1}
 	var bad_sell := GameState.shop_sell(0)
-	_expect(not bool(bad_sell.get("ok", false)), "药水不应可出售给货郎")
+	_expect(not bool(bad_sell.get("ok", false)), "任务物品不应可出售给货郎")
 	_expect(GameState.inventory[0] != null, "出售失败不应移除物品")
+
+	# 卖 · 整叠药水 → 整格出包并按整叠入账（工程 39 G2）
+	GameState.reset_to_defaults()
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_mid", "count": 37}
+	var potion_sell := GameState.shop_sell(0)
+	_expect(bool(potion_sell.get("ok", false)), "药水应可出售给货郎（6.4 修订）")
+	_expect(GameState.gold == 36 * 37,
+		"整叠 37 瓶中红药应入账 1332，实际 %d" % GameState.gold)
+	_expect(GameState.inventory[0] == null, "整叠出售后该格应清空")
 
 	# 卖 · 装备 → 加金币出包
 	GameState.reset_to_defaults()
@@ -1921,6 +1963,88 @@ func _test_trade_panel() -> void:
 	_expect(shop._tray.is_empty(), "关闭后面板托盘应清空")
 	_expect(_index_of_instance("p_lost") >= 0, "关闭面板时未确认的装备应退回背包")
 
+	inv.set_open(false)
+	inv.queue_free()
+	shop.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+## 工程 39（M6-6b）：药水 / 如意可拖入托盘并**整叠结算**；「一键移入材料」只搬非装备，
+## 不误伤装备与任务物品；托盘告警区分升级件与升星材料。
+func _test_trade_panel_materials() -> void:
+	GameState.reset_to_defaults()
+	var inv: Control = load("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	var shop: Control = load("res://scenes/ui/ShopPanel.tscn").instantiate()
+	add_child(inv)
+	add_child(shop)
+	await get_tree().process_frame
+
+	# 背包：① 一叠 37 瓶中红药 ② 普通装备 ③ 铁如意 ④ 任务袋物品
+	# 先清空初始物品（默认背包带回城卷），否则「一键移入材料」的件数不可预期。
+	for i in range(GameState.inventory.size()):
+		GameState.inventory[i] = null
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_mid", "count": 37}
+	GameState.inventory[1] = _equip_instance("weapon_iron", "m_weak", {"atk": 5})
+	GameState.inventory[2] = {"kind": "rune", "itemId": "rune_iron", "count": 1}
+	GameState.inventory[3] = {"kind": "misc", "itemId": "c2_pressure_plate", "count": 1}
+	EventBus.shop_open_requested.emit("peddler_camp")
+	await get_tree().process_frame
+	shop._tabs.current_tab = 1
+	await get_tree().process_frame
+
+	# ① G9：药水实例**没有** instanceId，仍必须能拖入托盘（旧实现按 instanceId 反查 ⇒ 必然失败）
+	_expect(String(GameState.inventory[0].get("instanceId", "")).is_empty(),
+		"前置：药水实例不应带 instanceId，否则本用例测不到 G9")
+	var potion_payload: Variant = inv._bag_buttons[0]._get_drag_data(Vector2.ZERO)
+	_expect(potion_payload is Dictionary, "药水格应可拖出")
+	shop._on_tray_drop(0, potion_payload)
+	await get_tree().process_frame
+	_expect(shop._tray.size() == 1, "药水应能拖入托盘，实际暂存 %d 件" % shop._tray.size())
+	_expect(GameState.inventory[0] == null, "拖入后该格药水应离开背包")
+	var staged_potion: Dictionary = shop._tray.get(0, {})
+	_expect(int(staged_potion.get("count", 0)) == 37,
+		"整叠入托盘应保持 37 瓶，实际 %d" % int(staged_potion.get("count", 0)))
+
+	# ② 整叠计价：摘要显示 36 × 37 = 1332；tooltip 拆出单价 × 数量
+	_expect(shop._tray_summary.text.contains("1332"),
+		"托盘摘要应显示整叠总价 1332，实际「%s」" % shop._tray_summary.text)
+	var potion_tip: String = shop._tray_tooltip(staged_potion)
+	_expect(potion_tip.contains("× 37") and potion_tip.contains("36"),
+		"药水 tooltip 应含「单价 36 金币 × 37 件」，实际「%s」" % potion_tip)
+
+	# ③ 一键移入材料：只搬药水 / 杂项 / 如意（不搬装备、不搬任务物品）
+	shop._on_return_all_pressed()
+	await get_tree().process_frame
+	_expect(shop._tray.is_empty(), "全部取回后托盘应清空")
+	shop._on_stage_materials_pressed()
+	await get_tree().process_frame
+	_expect(shop._tray.size() == 2, "一键移入材料应只搬药水与如意 2 件，实际 %d" % shop._tray.size())
+	var kinds: Array[String] = []
+	for it in shop._tray.values():
+		kinds.append(String((it as Dictionary).get("kind", "")))
+	_expect(kinds.has("potion") and kinds.has("rune"),
+		"托盘应含药水与如意，实际 %s" % [kinds])
+	_expect(not kinds.has("equip") and not kinds.has("misc"),
+		"一键移入材料不得搬装备与任务物品，实际 %s" % [kinds])
+
+	# ④ 告警行：含如意时提示升星材料（与「优于已穿戴」互不覆盖）
+	_expect(shop._tray_warn.text.contains("升星材料"),
+		"托盘含如意应出现升星材料告警，实际「%s」" % shop._tray_warn.text)
+	var rune_only: Array = shop._tray.values().filter(
+		func(it: Variant) -> bool: return String((it as Dictionary).get("kind", "")) == "rune")
+	var rune_tip: String = shop._tray_tooltip(rune_only[0]) if not rune_only.is_empty() else ""
+	_expect(not rune_tip.is_empty() and rune_tip.contains("不可撤回"),
+		"如意 tooltip 应提示升星材料，实际「%s」" % rune_tip)
+
+	# ⑤ 确认出售：药水 36×37 + 铁如意 180 = 1512
+	var gold_before: int = GameState.gold
+	shop._on_confirm_pressed()
+	await get_tree().process_frame
+	_expect(shop._tray.is_empty(), "确认出售后托盘应清空")
+	_expect(GameState.gold - gold_before == 1512,
+		"整叠药水与如意应入账 1512，实际 %d" % (GameState.gold - gold_before))
+
+	shop.set_open(false)
 	inv.set_open(false)
 	inv.queue_free()
 	shop.queue_free()
