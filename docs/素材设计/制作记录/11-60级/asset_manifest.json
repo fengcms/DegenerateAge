@@ -438,11 +438,11 @@
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_gray_scribe/",
       "runtime_art": "assets/sprites/monsters/c2_elite_gray_scribe/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_gray_scribe/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_gray_scribe/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {
@@ -459,11 +459,11 @@
       "source_art": "art_source/chapters/ch02/monsters/c2_elite_spirit_guard/",
       "runtime_art": "assets/sprites/monsters/c2_elite_spirit_guard/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_spirit_guard/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_spirit_guard/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {
