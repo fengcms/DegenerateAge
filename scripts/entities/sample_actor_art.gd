@@ -1,6 +1,6 @@
 class_name SampleActorArt
 extends Sprite2D
-## 八向角色的视觉播放入口。初始玩家使用逐帧图集，其他形象与怪物保留既有关键姿态播放。
+## 八向角色的视觉播放入口。已登记的玩家阶段形象使用独立状态图集，其他形象与怪物保留既有关键姿态播放。
 ## 只更新 Sprite2D，不驱动移动、碰撞、攻击结算或死亡清理。
 
 const HIT_SECONDS := 0.16
@@ -82,7 +82,7 @@ func set_mount(mount_id: String) -> void:
 	if not _animations.is_empty():
 		_show_frame(pose if _animations.has(pose) else "idle", phase)
 
-## 显示初始角色的一帧；帧行由动作状态决定，列由八向朝向决定，脚底锚点随图集切换。
+## 显示阶段形象的一帧；帧行由动作状态决定，列由八向朝向决定，脚底锚点随图集切换。
 func _show_frame(next_pose: String, next_phase: int) -> void:
 	pose = next_pose
 	var animation: Dictionary = _animations[next_pose]
@@ -201,6 +201,6 @@ func _process_frames(actor: CharacterBody2D, delta: float) -> void:
 		_show_frame("attack", mini(5, int((1.0 - _attack_left / _attack_duration) * 6.0)))
 	elif actor.velocity.length_squared() > 1.0:
 		face(actor.velocity)
-		_show_frame("walk", posmod(int(_clock * 10.0), 4 if not _mount_id.is_empty() else 8))
+		_show_frame("walk", posmod(int(_clock * 10.0), 8 if _mount_id.is_empty() else 4))
 	else:
 		_show_frame("idle", posmod(int(_clock * 6.0), 4))

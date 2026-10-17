@@ -24,7 +24,7 @@ func _ready() -> void:
 		get_tree().quit(1)
 
 ## 校验数据落点与解析入口：空手、未标注 look 的装备一律回退 look_01。
-## 形象素材未到时必须回退默认图集，保证换装链路可用且不出现空白形象。
+## 形象素材未到时仍须回退默认图集，保证换装链路可用且不出现空白形象。
 func _test_resolution() -> void:
 	var iron: Variant = DataLoader.get_entry("equipments", "weapon_iron")
 	var blade: Variant = DataLoader.get_entry("equipments", "c2_road_blade")
@@ -44,13 +44,23 @@ func _test_resolution() -> void:
 	var panel_frame := CharacterLook.panel_texture("look_01")
 	expect(panel_frame == default_entry.panel and panel_frame.get_size() == Vector2(256, 400),
 		"初始形象应使用独立 256×400 高清面板图")
-	# 各 look 共用同一帧格与锚点，面板的 ×4 整数倍放大才成立；素材未到时按回退校验。
-	if CharacterLook.is_declared("look_02"):
-		var second := CharacterLook.definition("look_02")
-		expect(second.frame == default_entry.frame and second.pivot == default_entry.pivot,
-			"各 look 必须共用同一帧格与锚点")
-	else:
-		expect(CharacterLook.definition("look_02").main == default_entry.main, "素材未到的形象应回退默认图集")
+	for tier in range(2, 7):
+		var look_id := "look_%02d" % tier
+		var weapon_id := "c%d_%s" % [tier, "road_blade" if tier == 2 else "equip_weapon"]
+		var weapon: Variant = DataLoader.get_entry("equipments", weapon_id)
+		expect(weapon is Dictionary and String(weapon.get("look", "")) == look_id,
+			"章节武器应登记 %s" % look_id)
+		expect(CharacterLook.is_declared(look_id), "%s 应在形象表中登记" % look_id)
+		var stage := CharacterLook.definition(look_id)
+		expect(stage.frame == default_entry.frame and stage.pivot == default_entry.pivot,
+			"%s 应共用 64×80 帧格与脚底锚点" % look_id)
+		expect(stage.panel.get_size() == Vector2(256, 400), "%s 应使用独立 256×400 面板图" % look_id)
+		for state in ["idle", "walk", "attack", "hit", "death", "sit"]:
+			var animation: Dictionary = stage.animations[state]
+			expect(animation.texture.get_size() == Vector2(512, 80 * int(animation.frames)),
+				"%s/%s 图集尺寸应与八向帧格匹配" % [look_id, state])
+	expect(CharacterLook.definition("look_missing").main == default_entry.main,
+		"未制作形象应回退默认图集")
 
 ## 换武器后世界玩家与人物面板按新 look 刷新；HUD 头像固定一张，不随 look 更换。
 func _test_weapon_switch() -> void:
@@ -87,10 +97,31 @@ func _test_weapon_switch() -> void:
 	expect(player.sample_art.texture == CharacterLook.definition("look_02").main,
 		"世界玩家图集应随形象切换（素材未到时回退默认图集）")
 	expect(player.sample_art.walk_texture == CharacterLook.definition("look_02").walk, "行走图集应与形象同步切换")
+	player.sample_art._clock = 0.6
+	player.velocity = Vector2(16, 0)
+	player.sample_art._process_frames(player, 0.0)
+	expect(player.sample_art.vframes == 8 and player.sample_art.phase >= 4,
+		"步行应播放完整八帧，而非只循环前四帧")
+	player.velocity = Vector2.ZERO
 	expect(panel._look_id == "look_02", "人物面板形象 id 应随武器刷新")
-	expect((panel._portrait.texture as AtlasTexture).atlas == CharacterLook.definition("look_02").main,
-		"面板形象应随武器切换（素材未到时回退默认图集）")
+	expect(panel._portrait.texture == CharacterLook.definition("look_02").panel,
+		"面板形象应随武器切换到独立高清图")
 	expect(avatar.texture == fixed_avatar, "HUD 头像固定一张，不随 look 更换")
+	for tier in range(3, 7):
+		var weapon_id := "c%d_equip_weapon" % tier
+		var look_id := "look_%02d" % tier
+		GameState.player["level"] = (tier - 1) * 10 + 1
+		GameState.inventory.append(ItemFactory.make_any(weapon_id))
+		result = GameState.equip_from_inventory(GameState.inventory.size() - 1, "weapon")
+		expect(bool(result.get("ok", false)), "%s 应能穿上" % weapon_id)
+		await get_tree().process_frame
+		expect(player._look_id == look_id and panel._look_id == look_id,
+			"%s 的世界形象和面板应一起切换" % weapon_id)
+		expect(player.sample_art.texture == CharacterLook.definition(look_id).animations.idle.texture,
+			"%s 应显示对应八向待机图集" % look_id)
+		expect(panel._portrait.texture == CharacterLook.definition(look_id).panel,
+			"%s 应显示独立高清面板图" % look_id)
+	expect(avatar.texture == fixed_avatar, "换至 51 级外观后 HUD 头像仍固定")
 
 	panel.set_open(false)
 	main.queue_free()

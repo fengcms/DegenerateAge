@@ -11,7 +11,7 @@ extends RefCounted
 ##   - 只决定「当前该显示哪套形象」，不做装备语义、不结算属性、不写存档。
 ##   - 头像不在此处理：头像固定一张，见 HUD。
 ## 资源全部用 preload 登记，保证进入导出包；新增 look 只需在此补纹理与帧格，
-## 世界渲染、人物面板与测试都不需要改动代码。
+## 世界渲染与人物面板不需要为每档改动代码；换装测试校验所有已登记档位。
 
 ## 武器未标注 look、空手、或标注了尚未登记的 look 时统一回退到该形象。
 const DEFAULT_LOOK := "look_01"
@@ -19,7 +19,7 @@ const DEFAULT_LOOK := "look_01"
 ## look 表：look_id → 世界图集与帧格参数。
 ## main 关键姿态（列＝方向，行＝姿势帧）、extra 受击/打坐、walk 行走；
 ## frame 为单帧尺寸（像素），pivot 为帧内脚底锚点（像素）。
-## 玩家各 look 必须使用同一帧格与锚点，人物面板才能按固定倍数整数放大。
+## 玩家各 look 使用同一帧格与锚点；人物面板另用独立高清图。
 const LOOKS := {
 	"look_01": {
 		"main": preload("res://assets/sprites/player/guardian/guardian_atlas.png"),
@@ -45,13 +45,80 @@ const LOOKS := {
 			},
 		},
 	},
-	# 守路长刃档（Lv11）。来源为 Hormelz 八向骑士（CC0），由 tools/build_look_atlas.gd 重排；
-	# 该源包没有独立的受击/打坐姿势，故不登记 extra，受击与打坐沿用主图集。
 	"look_02": {
-		"main": preload("res://assets/sprites/player/knight/knight_atlas.png"),
-		"walk": preload("res://assets/sprites/player/knight/knight_walk_atlas.png"),
+		"main": preload("res://assets/sprites/player/stage_looks/look_02/look_02_idle_atlas.png"),
+		"walk": preload("res://assets/sprites/player/stage_looks/look_02/look_02_walk_atlas.png"),
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
+		"panel": preload("res://assets/ui/portraits/look_02_panel.png"),
+		"animations": {
+			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_idle_atlas.png"), "frames": 4},
+			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_walk_atlas.png"), "frames": 8},
+			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_attack_atlas.png"), "frames": 6},
+			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_hit_atlas.png"), "frames": 2},
+			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_death_atlas.png"), "frames": 6},
+			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_sit_atlas.png"), "frames": 4},
+		},
+	},
+	"look_03": {
+		"main": preload("res://assets/sprites/player/stage_looks/look_03/look_03_idle_atlas.png"),
+		"walk": preload("res://assets/sprites/player/stage_looks/look_03/look_03_walk_atlas.png"),
+		"frame": Vector2i(64, 80),
+		"pivot": Vector2(32, 64),
+		"panel": preload("res://assets/ui/portraits/look_03_panel.png"),
+		"animations": {
+			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_idle_atlas.png"), "frames": 4},
+			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_walk_atlas.png"), "frames": 8},
+			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_attack_atlas.png"), "frames": 6},
+			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_hit_atlas.png"), "frames": 2},
+			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_death_atlas.png"), "frames": 6},
+			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_sit_atlas.png"), "frames": 4},
+		},
+	},
+	"look_04": {
+		"main": preload("res://assets/sprites/player/stage_looks/look_04/look_04_idle_atlas.png"),
+		"walk": preload("res://assets/sprites/player/stage_looks/look_04/look_04_walk_atlas.png"),
+		"frame": Vector2i(64, 80),
+		"pivot": Vector2(32, 64),
+		"panel": preload("res://assets/ui/portraits/look_04_panel.png"),
+		"animations": {
+			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_idle_atlas.png"), "frames": 4},
+			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_walk_atlas.png"), "frames": 8},
+			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_attack_atlas.png"), "frames": 6},
+			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_hit_atlas.png"), "frames": 2},
+			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_death_atlas.png"), "frames": 6},
+			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_sit_atlas.png"), "frames": 4},
+		},
+	},
+	"look_05": {
+		"main": preload("res://assets/sprites/player/stage_looks/look_05/look_05_idle_atlas.png"),
+		"walk": preload("res://assets/sprites/player/stage_looks/look_05/look_05_walk_atlas.png"),
+		"frame": Vector2i(64, 80),
+		"pivot": Vector2(32, 64),
+		"panel": preload("res://assets/ui/portraits/look_05_panel.png"),
+		"animations": {
+			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_idle_atlas.png"), "frames": 4},
+			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_walk_atlas.png"), "frames": 8},
+			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_attack_atlas.png"), "frames": 6},
+			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_hit_atlas.png"), "frames": 2},
+			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_death_atlas.png"), "frames": 6},
+			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_sit_atlas.png"), "frames": 4},
+		},
+	},
+	"look_06": {
+		"main": preload("res://assets/sprites/player/stage_looks/look_06/look_06_idle_atlas.png"),
+		"walk": preload("res://assets/sprites/player/stage_looks/look_06/look_06_walk_atlas.png"),
+		"frame": Vector2i(64, 80),
+		"pivot": Vector2(32, 64),
+		"panel": preload("res://assets/ui/portraits/look_06_panel.png"),
+		"animations": {
+			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_idle_atlas.png"), "frames": 4},
+			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_walk_atlas.png"), "frames": 8},
+			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_attack_atlas.png"), "frames": 6},
+			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_hit_atlas.png"), "frames": 2},
+			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_death_atlas.png"), "frames": 6},
+			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_sit_atlas.png"), "frames": 4},
+		},
 	},
 }
 
