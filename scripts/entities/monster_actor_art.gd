@@ -21,8 +21,8 @@ var _warning_pose := false
 var _queued_enrage := false
 
 static func attach_monster(actor: Node2D, id: String) -> MonsterActorArt:
-	var raw: Variant = MonsterAnimationLibrary.PACKS.get(id)
-	if not raw is Dictionary:
+	var raw: Variant = MonsterAnimationCache.get_pack(id)
+	if not raw is Dictionary or (raw as Dictionary).is_empty():
 		push_error("Missing monster animation pack: " + id)
 		return null
 	var art := MonsterActorArt.new()
@@ -129,7 +129,7 @@ func _process(delta: float) -> void:
 			_queued_enrage = false
 			play_enrage()
 			return
-	var wanted := "walk" if actor.velocity.length_squared() > 1.0 else "idle"
+	var wanted := "walk" if actor.velocity.length_squared() > 1.0 and definitions.has("walk") else "idle"
 	if wanted != pose:
 		_cycle_elapsed = 0.0
 	_cycle_elapsed += delta

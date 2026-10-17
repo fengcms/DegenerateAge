@@ -29,6 +29,7 @@ var _pending_npc: Npc = null
 var _pending_exit: TravelExit = null
 var _quest_nav_issued := false
 var _quest_nav_serial_seen := -1
+var _animation_map_id := ""
 
 func _process(_delta: float) -> void:
 	if not Input.is_action_pressed("interact"):
@@ -176,6 +177,9 @@ func _ready() -> void:
 	SettingsRuntime.apply_map_scale_to(_camera)
 	_camera.reset_smoothing()
 
+	# 怪物实例生成前准备本图正式动画；切图释放由 _exit_tree 对应处理。
+	_animation_map_id = GameState.current_map
+	MonsterAnimationCache.prepare_for_map(_animation_map_id)
 	# 怪物点 / Boss 点 / NPC：全部按当前地图数据装配（M3-1）
 	_ground.add_child(RestZoneOverlay.new())
 	_spawner.setup(_ground, _player)
@@ -202,6 +206,11 @@ func _ready() -> void:
 
 	add_to_group("map_world")
 	Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(_player.global_position).round()))
+
+## 世界退场时释放本图正式动画缓存；若切图事务已改变全局地图 ID，仍按旧图身份释放。
+func _exit_tree() -> void:
+	if not _animation_map_id.is_empty():
+		MonsterAnimationCache.release_for_map(_animation_map_id)
 
 ## 按当前地图的 NPC 点生成（6.3）。数据源：`maps.json` 的 `npcs`（M3-1 数据化）。
 func _spawn_npcs() -> void:

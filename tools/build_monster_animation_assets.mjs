@@ -77,13 +77,13 @@ function buildPack(entry) {
   return runtime;
 }
 
-/** 根据清单生成格式稳定的 GDScript 包索引；暂保留第一章原有预载行为。 */
+/** 根据清单生成格式稳定的 GDScript 路径索引；运行时按地图载入纹理。 */
 function renderLibrary(packs) {
-  let output = 'class_name MonsterAnimationLibrary\nextends RefCounted\n## 由 tools/build_monster_animation_assets.mjs 生成；正式动画包索引。\n## 当前预载行为将在按地图加载节点替换，新增包接入前必须完成该改造。\nconst PACKS := {\n';
+  let output = 'class_name MonsterAnimationLibrary\nextends RefCounted\n## 由 tools/build_monster_animation_assets.mjs 生成；只保存已审核图集的路径和帧元数据。\n## 纹理由 MonsterAnimationCache 按当前地图载入，不在脚本初始化时全局预载。\nconst PACKS := {\n';
   for (const pack of packs) {
     output += `\t${JSON.stringify(pack.id)}: {"pivot": ${JSON.stringify(pack.pivot)}, "frameSize": ${JSON.stringify(pack.frameSize)}, "states": {\n`;
     for (const [state, def] of Object.entries(pack.states)) {
-      output += `\t\t${JSON.stringify(state)}: {"texture": preload(${JSON.stringify(def.texture)}), "frames": ${def.frames}, "fps": ${def.fps}, "loop": ${def.loop}, "contact": ${def.contact}},\n`;
+      output += `\t\t${JSON.stringify(state)}: {"texture": ${JSON.stringify(def.texture)}, "frames": ${def.frames}, "fps": ${def.fps}, "loop": ${def.loop}, "contact": ${def.contact}},\n`;
     }
     output += '\t}},\n';
   }
