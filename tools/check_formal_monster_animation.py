@@ -78,6 +78,9 @@ def main() -> None:
         if status == "integrated":
             assert appearance["renderer"] == "animation_pack" and appearance.get("assetKey") == actual["appearanceId"], f"{monster_id} 未切换正式包"
             assert monster_id in registered_packs, f"{monster_id} 未登记已审核正式包"
+        elif recorded[monster_id].get("integration") == "directional_preview":
+            assert monster_id == "c2_spirit_larva" and appearance["renderer"] == "directional_preview", f"{monster_id} 的方向试玩稿登记错误"
+            assert (ROOT / f"assets/sprites/monsters/{monster_id}/directional_preview_atlas.png").is_file(), f"{monster_id} 缺少方向试玩图集"
         else:
             assert appearance["renderer"] == "static_atlas", f"{monster_id} 未验收却提前切换外观"
         assert (ROOT / f"art_source/chapters/ch{chapter:02d}/monsters/{monster_id}/concept.png").is_file(), f"{monster_id} 概念稿丢失"

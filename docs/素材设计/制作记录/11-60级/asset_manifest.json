@@ -228,11 +228,11 @@
       "source_art": "art_source/chapters/ch02/monsters/c2_spirit_larva/",
       "runtime_art": "assets/sprites/monsters/c2_spirit_larva/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": true,
       "concept_art": "art_source/chapters/ch02/monsters/c2_spirit_larva/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_spirit_larva/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {

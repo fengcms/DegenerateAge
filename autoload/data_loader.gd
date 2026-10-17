@@ -191,7 +191,7 @@ func _validate_monster_appearance(spec: Dictionary) -> Array[String]:
 	var report: Array[String] = []
 	var id := String(spec.get("id", "?"))
 	var renderer := String(spec.get("renderer", ""))
-	if not renderer in ["procedural", "sample_atlas", "static_atlas", "animation_pack", "chapter2_manifest"]:
+	if not renderer in ["procedural", "sample_atlas", "static_atlas", "animation_pack", "directional_preview", "chapter2_manifest"]:
 		report.append("[monsterAppearances] %s 的 renderer 无效：%s" % [id, renderer])
 		return report
 	if spec.has("headHpY") and not (spec.headHpY is float or spec.headHpY is int):
@@ -215,6 +215,8 @@ func _validate_monster_appearance(spec: Dictionary) -> Array[String]:
 			report.append("[monsterAppearances] %s 的 hframes 无效" % id)
 	if renderer == "animation_pack" and not MonsterAnimationLibrary.PACKS.has(String(spec.get("assetKey", ""))):
 		report.append("[monsterAppearances] %s 的 animation_pack 未在生成库登记" % id)
+	if renderer == "directional_preview" and id != "c2_spirit_larva":
+		report.append("[monsterAppearances] %s 未配置方向试玩表现" % id)
 	if renderer == "chapter2_manifest" and String(spec.get("assetKey", "")).is_empty():
 		report.append("[monsterAppearances] %s 缺少第二章清单 assetKey" % id)
 	return report

@@ -18,6 +18,10 @@ static func attach(actor: Node2D, appearance_id: String) -> CanvasItem:
 			return null
 		"animation_pack":
 			art = MonsterActorArt.attach_monster(actor, String(spec.get("assetKey", "")))
+		"directional_preview":
+			# 逐方向单帧试玩；与已审核的正式动画包分开登记。
+			if appearance_id == "c2_spirit_larva":
+				art = MonsterDirectionalPreviewArt.attach_preview(actor)
 		"chapter2_manifest":
 			art = ChapterTwoArt.attach(actor, String(spec.get("assetKey", "")))
 		"sample_atlas":

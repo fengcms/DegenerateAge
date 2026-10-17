@@ -1,4 +1,6 @@
-# 汲灵幼虫多方向试作（未接入）
+# 汲灵幼虫多方向试作（试玩稿已接入）
+
+2026-10-17：用户目视接受现有八方向候选作为个人项目试玩标准。七张逐方向候选与原东南向帧由 `tools/build_monster_directional_preview.gd` 缩放、统一脚底锚点，并生成 `assets/sprites/monsters/c2_spirit_larva/directional_preview_atlas.png`。游戏中按移动/攻击方向切换行，受击和死亡使用同方向的变色列。此稿没有独立步行、攻击动作，不占用 `animation_pack` 正式状态，待玩家实窗确认后再决定下一步。
 
 `direction_trial.png` 由内置 `image_gen` 以项目已有的 `art_source/chapter2/concepts/spirit_larva_keypose_source.png` 为参考生成，尝试一次得到 8 个方向。逐格查看发现下排所谓背向仍出现眼睛和正面口器，右侧视角与左侧也高度相似，因此不是合格的八向图集。`rear_trial.png` 是单独要求背面后生成的进一步试作，背面结构有所改善，但仍需统一等距视角、像素尺寸、脚底锚点和同一套动作。
 

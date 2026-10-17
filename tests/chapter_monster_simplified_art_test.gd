@@ -1,6 +1,6 @@
 extends Node
 ## 第二至六章临时怪物外观集成测试：逐 ID 装配真实实体，核对独立图集与三档脚底规格。
-## 仅验证表现资源及数据引用，不把单方向静态图误判为正式八向动画。
+## 另验证汲灵幼虫的八方向单帧试玩稿；不把它误判为正式五状态动画。
 
 const MONSTER_SCENE := preload("res://scenes/entities/Monster.tscn")
 const SIZES := {"normal": [80, 64], "elite": [112, 88], "boss": [192, 152]}
@@ -28,6 +28,27 @@ func _ready() -> void:
 		monster.monster_id = id
 		add_child(monster)
 		monster.set_physics_process(false)
+		if id == "c2_spirit_larva":
+			var preview := monster.sample_art as MonsterDirectionalPreviewArt
+			check(preview != null, "汲灵幼虫装配八方向试玩外观")
+			if preview != null:
+				check(preview.texture.get_size() == Vector2(240, 640), "试玩图集为 3 列 8 行，每格 80 像素")
+				check(preview.offset == Vector2(-40, -64), "试玩图保持原脚底锚点")
+				preview.face(Vector2.DOWN)
+				preview._process(0.0)
+				check(preview.frame_coords == Vector2i(0, 0), "向南显示正面")
+				preview.attack(Vector2.UP, 0.4)
+				preview._process(0.0)
+				check(preview.frame_coords == Vector2i(0, 4), "向北攻击显示背面，不改变伤害时序")
+				preview.hit()
+				preview._process(0.01)
+				check(preview.frame_coords == Vector2i(1, 4), "受击保持当前方向")
+				monster.is_dead = true
+				preview._process(0.01)
+				check(preview.frame_coords == Vector2i(2, 4), "死亡保持当前方向")
+			remove_child(monster)
+			monster.free()
+			continue
 		var art := monster.dummy_art
 		check(art != null, "%s 装配临时外观" % id)
 		if art != null:

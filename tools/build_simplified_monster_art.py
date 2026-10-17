@@ -101,6 +101,9 @@ def build_chapter(chapter: str) -> None:
     for monster in rows:
         key = monster["id"]
         record = records[key]
+        # 已升级为方向试玩或正式包的外观不再由临时三格构建器覆盖。
+        if record.get("integration") != "temporary_static":
+            continue
         side, foot_y, head_y = KINDS[monster["kind"]]
         source = ROOT / record["concept_art"]
         base = prepare_pose(source, side, foot_y)
