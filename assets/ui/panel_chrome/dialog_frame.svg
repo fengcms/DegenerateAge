@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="headerBand" gradientUnits="userSpaceOnUse" x1="0" y1="8" x2="0" y2="57">
+      <stop offset="0" stop-color="#30383b"/>
+      <stop offset="0.16327" stop-color="#293236"/>
+      <stop offset="0.51020" stop-color="#1b252a"/>
+      <stop offset="1" stop-color="#131a1e"/>
+    </linearGradient>
+  </defs>
+  <!-- 外框：切角底板 + 金色描边（对应 PanelChrome 的 outline 与 GOLD 描边） -->
+  <polygon points="13,0 115,0 128,13 128,115 115,128 13,128 0,115 0,13"
+           fill="#111a1f" stroke="#b99a5b" stroke-width="2" stroke-linejoin="miter"/>
+  <!-- 标题横带：三段渐变，贴合内层切角 -->
+  <polygon points="15,8 113,8 121,16 7,16" fill="url(#headerBand)"/>
+  <polygon points="7,16 121,16 121,33 7,33" fill="url(#headerBand)"/>
+  <polygon points="7,33 121,33 121,57 7,57" fill="url(#headerBand)"/>
+  <!-- 内层描边 -->
+  <polyline points="17,6 111,6 122,17 122,111 111,122 17,122 6,111 6,17 17,6"
+            fill="none" stroke="#594f3d" stroke-width="1" stroke-linejoin="miter"/>
+  <!-- 标题分隔线 -->
+  <line x1="25" y1="59" x2="103" y2="59" stroke="#776d59" stroke-width="1"/>
+  <!-- 左右角标 -->
+  <polyline points="12,37 12,24 18,18 40,18" fill="none" stroke="#b99a5b" stroke-width="1"/>
+  <polyline points="12,91 12,104 18,110 40,110" fill="none" stroke="#b99a5b" stroke-width="1"/>
+  <polyline points="116,37 116,24 110,18 88,18" fill="none" stroke="#b99a5b" stroke-width="1"/>
+  <polyline points="116,91 116,104 110,110 88,110" fill="none" stroke="#b99a5b" stroke-width="1"/>
+</svg>

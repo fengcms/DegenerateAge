@@ -231,6 +231,10 @@ static func style_option_button(button: OptionButton) -> void:
 	popup.add_theme_color_override("font_hover_color", GOLD_LIGHT)
 	popup.add_theme_color_override("font_disabled_color", MUTED)
 
+## 供 Theme 资源复用操作按钮九宫格样式的入口（存档文件选择器等非 PanelChrome 控件）。
+static func action_stylebox(texture: Texture2D) -> StyleBoxTexture:
+	return _action_style(texture)
+
 ## 为页签和内容卡片提供平面底框；操作按钮改用纹理，不再调用本函数。
 static func _button_style(bg: Color, border: Color, radius: int = 3) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()

@@ -29,6 +29,7 @@ func _ready() -> void:
 	_test_active_slot_untouched()
 	_test_name_clamped()
 	_test_export_empty_slot()
+	_test_dialog_theme()
 
 	SaveManager.active_slot = prev_active
 	_remove_export_file()
@@ -183,6 +184,20 @@ func _test_export_empty_slot() -> void:
 	_check(not bool(result.get("ok", false)), "空槽导出应失败")
 	_check(not FileAccess.file_exists(EXPORT_PATH), "导出失败不应生成文件")
 	_check(not FileAccess.file_exists(EXPORT_PATH + ".tmp"), "导出失败不应残留临时文件")
+
+## T10：文件选择器主题（外框九宫格 + 标题带 + 操作按钮素材）结构完整。
+func _test_dialog_theme() -> void:
+	var theme := SaveDialogTheme.build()
+	var frame := theme.get_stylebox("embedded_border", "Window")
+	_check(frame is StyleBoxTexture, "外框应为九宫格纹理样式")
+	if frame is StyleBoxTexture:
+		var texture_frame := frame as StyleBoxTexture
+		_check(texture_frame.texture != null, "外框纹理应已加载")
+		_check(texture_frame.expand_margin_top > 0.0, "标题带应外扩到窗口矩形之外")
+	_check(theme.has_stylebox("panel", "AcceptDialog"), "对话框底板应有样式")
+	_check(theme.has_stylebox("normal", "Button"), "操作按钮应有普通态样式")
+	_check(theme.has_icon("close", "Window"), "关闭钮应复用 PanelChrome 素材")
+	_check(theme.has_font_size("title_font_size", "Window"), "标题字号应显式设定")
 
 # ---- 夹具 ----
 

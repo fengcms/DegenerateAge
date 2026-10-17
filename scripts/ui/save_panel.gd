@@ -204,6 +204,7 @@ func _build() -> void:
 	_import_dialog.canceled.connect(func() -> void: _import_slot = -1)
 
 ## 建立只选 JSON 的内置文件选择器；默认目录取系统桌面（取不到时留空由 FileDialog 自定）。
+## 外观统一交给 SaveDialogTheme：外框、标题带与内部控件沿用游戏内面板素材。
 func _make_file_dialog(title: String, mode: FileDialog.FileMode, desktop: String) -> FileDialog:
 	var d := FileDialog.new()
 	d.title = title
@@ -213,6 +214,7 @@ func _make_file_dialog(title: String, mode: FileDialog.FileMode, desktop: String
 	d.add_filter("*.json", Localization.tr_key("ui.save_panel.p029"))
 	if not desktop.is_empty():
 		d.current_dir = desktop
+	d.theme = SaveDialogTheme.build()
 	add_child(d)
 	return d
 
