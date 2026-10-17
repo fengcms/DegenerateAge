@@ -4030,12 +4030,14 @@ func _test_boss_health_bar() -> void:
 	var scene := load("res://scenes/entities/Monster.tscn") as PackedScene
 	var container := Node2D.new()
 	add_child(container)
-	# ① 三档：普通 13 / 34×4、精英 19 / 64×6、Boss 36 / 100×8
+	# ① 三档：普通 13 / 34×4、精英 19 / 64×6、Boss 36 / 100×8；名字配色 白 / 金 / 红
 	var cases := [
-		["training_dummy", "normal", Monster.RADIUS, Vector2(34, 4)],
-		["elite_wolf_king", "elite", Monster.RADIUS_ELITE, Vector2(64, 6)],
-		["boss_corrupted_beast", "boss", Monster.RADIUS_BOSS, Vector2(100, 8)],
+		["training_dummy", "normal", Monster.RADIUS, Vector2(34, 4), Monster.COLOR_NAME_NORMAL],
+		["elite_wolf_king", "elite", Monster.RADIUS_ELITE, Vector2(64, 6), Monster.COLOR_ELITE_EDGE],
+		["boss_corrupted_beast", "boss", Monster.RADIUS_BOSS, Vector2(100, 8), Monster.COLOR_NAME_BOSS],
 	]
+	_expect(Monster.NAME_OUTLINE_SIZE == 2 and Monster.COLOR_NAME_OUTLINE.a > 0.5,
+		"头顶名字描边口径应为 Color(0,0,0,0.85) + size 2")
 	for c in cases:
 		var id := String(c[0])
 		var mon := scene.instantiate() as Monster
@@ -4046,6 +4048,11 @@ func _test_boss_health_bar() -> void:
 		_expect(is_equal_approx(mon.radius, float(c[2])), "%s 外观半径应为 %.0f" % [id, float(c[2])])
 		var want_size: Vector2 = c[3]
 		_expect(mon._head_hp_size().is_equal_approx(want_size), "%s 头顶血条尺寸应为 %s" % [id, str(want_size)])
+		# 名字：所有档次常显，配色按档次（普通白 / 精英金 / Boss 红），且取自模板而非默认占位
+		var want_name_color: Color = c[4]
+		_expect((mon._head_name_style()["color"] as Color).is_equal_approx(want_name_color),
+			"%s 头顶名字配色应为 %s" % [id, want_name_color.to_html()])
+		_expect(mon.display_name != "" and mon.display_name != "怪物", "%s 头顶名字应取自模板" % id)
 		mon.queue_free()
 	await get_tree().process_frame
 	container.queue_free()

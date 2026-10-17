@@ -35,6 +35,12 @@ const COLOR_BOSS_EDGE := Color("8f2020")
 const COLOR_BOSS_RING := Color("5a1414")
 const COLOR_HP_BG := Color(0.08, 0.08, 0.10, 0.85)
 const COLOR_HP_FG := Color("d2383c")
+## 头顶名字配色：普通白 / Boss 红；精英沿用金边色 COLOR_ELITE_EDGE，不另建同值常量以免配色漂移。
+const COLOR_NAME_NORMAL := Color(1.0, 1.0, 1.0)
+const COLOR_NAME_BOSS := Color("ff5252")
+## 自绘文字描边口径，与 item_slot / hud 世界飘字一致（压在场景上的文字须能读）。
+const COLOR_NAME_OUTLINE := Color(0, 0, 0, 0.85)
+const NAME_OUTLINE_SIZE := 2
 
 ## 等宽字体（M4-10）：自绘文字不经过主题，显式引用与 default_theme 相同的字体资源，
 ## 保证怪物名 / 倒计时里的数字与 UI 其余部分同样等宽对齐。
@@ -998,6 +1004,7 @@ func _draw() -> void:
 		draw_circle(Vector2.ZERO, radius if sample_art is MonsterActorArt else 17.0, Color(0, 0, 0, 0.28))
 		draw_set_transform(Vector2.ZERO)
 		_draw_head_hp_bar()
+		_draw_head_name()
 		return
 	match _kind():
 		"elite":
@@ -1007,6 +1014,7 @@ func _draw() -> void:
 		_:
 			_draw_normal()
 	_draw_head_hp_bar()
+	_draw_head_name()
 
 func _draw_chapter_boss_warn() -> void:
 	var red := Color(1.0, 0.18, 0.08, 0.24)
@@ -1040,13 +1048,13 @@ func _current_body(base: Color) -> Color:
 		return Color.WHITE
 	return COLOR_AGGRO if (state == State.CHASE or state == State.ATTACK) else base
 
-## 普通怪（创意 07 §4）：既有圆身 + 深描边，无名，血条 34×4。
+## 普通怪（创意 07 §4）：既有圆身 + 深描边，血条 34×4；名字统一为白字（见 _draw_head_name）。
 func _draw_normal() -> void:
 	var c := Vector2(0.0, -radius * 0.6)
 	draw_circle(c, radius, _current_body(COLOR_BODY))
 	draw_arc(c, radius, 0.0, TAU, 24, COLOR_EDGE, 2.0, true)
 
-## 精英（创意 07 §4）：双肩尖耳 + 单爪 + 金色双描边 + 金色菱形地面标识 + 常显名，血条 64×6。
+## 精英（创意 07 §4）：双肩尖耳 + 单爪 + 金色双描边 + 金色菱形地面标识，血条 64×6；名字为金字（见 _draw_head_name）。
 func _draw_elite() -> void:
 	var c := Vector2(0.0, -radius * 0.6)
 	var body := _current_body(COLOR_ELITE_BODY)
@@ -1063,10 +1071,8 @@ func _draw_elite() -> void:
 	draw_arc(c, radius, 0.0, TAU, 28, COLOR_ELITE_EDGE, 3.0, true)
 	draw_arc(c, radius - 3.5, 0.0, TAU, 28, Color(0.99, 0.87, 0.47, 0.6), 1.3, true)
 	draw_line(c + Vector2(radius * 0.70, radius * 0.30), c + Vector2(radius * 1.35, radius * 0.92), COLOR_ELITE_EDGE, 2.6, true)
-	draw_string(MONO_FONT, Vector2(c.x - 110.0, -radius * 2.4 - 6.0), display_name,
-		HORIZONTAL_ALIGNMENT_CENTER, 220.0, 13, COLOR_ELITE_EDGE)
 
-## Boss（创意 07 §4）：双角双爪 + 暗红封印环（四刻度）+ 常显名，血条 100×8。
+## Boss（创意 07 §4）：双角双爪 + 暗红封印环（四刻度），血条 100×8；名字为红字（见 _draw_head_name）。
 func _draw_boss() -> void:
 	var c := Vector2(0.0, -radius * 0.6)
 	var body := _current_body(COLOR_BOSS_BODY_ENRAGED if _boss_enraged else COLOR_BOSS_BODY)
@@ -1087,8 +1093,6 @@ func _draw_boss() -> void:
 	draw_arc(c, radius, 0.0, TAU, 40, COLOR_BOSS_EDGE, 3.2, true)
 	draw_line(c + Vector2(-radius * 0.68, radius * 0.42), c + Vector2(-radius * 1.24, radius * 1.00), COLOR_BOSS_EDGE, 3.0, true)
 	draw_line(c + Vector2(radius * 0.68, radius * 0.42), c + Vector2(radius * 1.24, radius * 1.00), COLOR_BOSS_EDGE, 3.0, true)
-	draw_string(MONO_FONT, Vector2(c.x - 150.0, -radius * 2.4 - 6.0), display_name,
-		HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, Color("f4c9c9"))
 
 ## 金色菱形地面标识（精英；创意 07 §4「地面标识」）。
 func _draw_ground_mark(color: Color, r: float) -> void:
@@ -1115,17 +1119,39 @@ func _head_hp_y() -> float:
 		return -46.0
 	return -radius * 2.4
 
+## 贴图怪的档次身份标识：Boss 封印环 / 其余档位金色地面标识。
+## 名字与血条改由 _draw_head_name() / _draw_head_hp_bar() 统一绘制，不再在本函数内重复。
 func _draw_sprite_identity() -> void:
 	if is_dead:
 		return
-	var boss := _kind() == "boss"
-	if boss:
+	if _kind() == "boss":
 		draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 48, COLOR_BOSS_RING, 2.2, true)
 	else:
 		_draw_ground_mark(Color(0.95, 0.78, 0.36, 0.30), radius * 0.75)
-	var width := 300.0 if boss else 220.0
-	draw_string(MONO_FONT, Vector2(-width * 0.5, _head_hp_y() - 8.0), display_name,
-		HORIZONTAL_ALIGNMENT_CENTER, width, 15 if boss else 13, Color("f4c9c9") if boss else COLOR_ELITE_EDGE)
+
+## 头顶名字（9.x）：所有档次常显，普通白 / 精英金 / Boss 红；锚点复用 _head_hp_y()，
+## 因此外观档案 headHpY 与正式动画包脚底锚点自动生效，无需新增档案字段。
+## 先画描边再画字，保证在草地 / 灰烬 / 洞壁等不同底色上都能读；死亡随节点 modulate 一起淡出。
+func _draw_head_name() -> void:
+	var style := _head_name_style()
+	var font_size := int(style["size"])
+	var width := float(style["width"])
+	var baseline := Vector2(-width * 0.5, _head_hp_y() - 8.0)
+	draw_string_outline(MONO_FONT, baseline, display_name, HORIZONTAL_ALIGNMENT_CENTER,
+		width, font_size, NAME_OUTLINE_SIZE, COLOR_NAME_OUTLINE)
+	draw_string(MONO_FONT, baseline, display_name, HORIZONTAL_ALIGNMENT_CENTER,
+		width, font_size, style["color"])
+
+## 头顶名字样式：按 _kind() 给出字色 / 字号 / 居中宽度，与血条档位一一对应。
+## 单一入口，避免三条绘制支路各写一套配色；普通怪字号略小以保持「简短」的视觉层级。
+func _head_name_style() -> Dictionary:
+	match _kind():
+		"elite":
+			return {"color": COLOR_ELITE_EDGE, "size": 13, "width": 220.0}
+		"boss":
+			return {"color": COLOR_NAME_BOSS, "size": 15, "width": 300.0}
+		_:
+			return {"color": COLOR_NAME_NORMAL, "size": 12, "width": 180.0}
 
 func _head_hp_size() -> Vector2:
 	match _kind():
