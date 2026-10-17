@@ -61,17 +61,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ---- 开关 ----
 
+## 优先按稳定 NPC ID 打开任务列表，同时兼容原有按显示名发出的对话请求。
 func _on_requested(npc_name: String) -> void:
 	_current_npc_id = ""
 	_current_npc_spec = {}
 	for spec in MapService.current_npcs():
-		if String(spec.get("npcName", "")) == npc_name:
+		if String(spec.get("npcId", "")) == npc_name or String(spec.get("npcName", "")) == npc_name:
 			_current_npc_id = String(spec.get("npcId", ""))
 			_current_npc_spec = spec
 			break
 	_service_button.visible = not _current_npc_spec.is_empty() and String(_current_npc_spec.get("role", "")) != "quest"
-	if not npc_name.is_empty():
-		_title.text = PanelChrome.title_text(Localization.tr_key("ui.quest_panel.p001") % npc_name)
+	var display_name := String(_current_npc_spec.get("npcName", npc_name))
+	if not display_name.is_empty():
+		_title.text = PanelChrome.title_text(Localization.tr_key("ui.quest_panel.p001") % display_name)
 	set_open(true)
 
 ## 其他面板打开时自动关闭（与背包 / 货郎面板互斥，I / E 键）。

@@ -72,6 +72,7 @@ func request_map_move(point: Vector2) -> bool:
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game.p001"), "info")
 	return true
 
+## 推进任务链接的跨图导航；抵达目标图后用稳定 NPC ID 找到真实交互对象。
 func _tick_quest_navigation() -> void:
 	if MapService.quest_nav_target.is_empty():
 		_quest_nav_issued = false
@@ -88,15 +89,12 @@ func _tick_quest_navigation() -> void:
 			return
 		if MapService.quest_nav_kind == "npc":
 			var npc_id := MapService.quest_nav_target
-			for spec in MapService.current_npcs():
-				if String(spec.get("npcId", "")) != npc_id:
-					continue
-				for child in _npcs.get_children():
-						var npc := child as Npc
-						if npc != null and npc.npc_name == String(spec.get("npcName", "")):
-							MapService.clear_quest_navigation()
-							_request_npc_interaction(npc)
-							return
+			for child in _npcs.get_children():
+				var npc := child as Npc
+				if npc != null and npc.npc_id == npc_id:
+					MapService.clear_quest_navigation()
+					_request_npc_interaction(npc)
+					return
 			MapService.clear_quest_navigation()
 			EventBus.toast_requested.emit(Localization.tr_key("msg.game.p002"), "danger")
 			return
@@ -142,6 +140,7 @@ func _tick_quest_navigation() -> void:
 		MapService.clear_quest_navigation()
 		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p006"), "danger")
 
+## 按当前地图装配世界，并在 NPC 生成后初始化和订阅任务标记刷新。
 func _ready() -> void:
 	# 出行事务只在目标地图地面与必要节点就绪后提交；失败则恢复源图。
 	if not MapService.pending_travel.is_empty() and (not MapService.exists(GameState.current_map)
@@ -187,6 +186,9 @@ func _ready() -> void:
 
 	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()
+	EventBus.quest_state_changed.connect(_refresh_npc_quest_markers)
+	EventBus.data_loaded.connect(_refresh_npc_quest_markers)
+	_refresh_npc_quest_markers()
 	_spawn_exits()
 
 	# M6-0c（创意 07 §11.2）：重建本图未领取战利品 —— 切图 / 读档后恢复，跨档不丢
@@ -207,12 +209,21 @@ func _spawn_npcs() -> void:
 		if not (spec is Dictionary):
 			continue
 		var npc: Npc = NPC_SCENE.instantiate()
+		npc.npc_id = String(spec.get("npcId", ""))
 		npc.shop_id = String(spec.get("shopId", ""))
 		npc.role = String(spec.get("role", "shop"))
 		npc.npc_name = String(spec.get("npcName", ""))
 		npc.greeting = String(spec.get("greeting", ""))
 		npc.position = Iso.grid_to_world(_cell_of(spec))
 		_npcs.add_child(npc)
+
+## 只在任务状态或数据变化、世界装配后重算可接标记；不在逐帧热路径扫描任务。
+func _refresh_npc_quest_markers() -> void:
+	var available := Quest.available_givers_on_map(GameState.current_map)
+	for child in _npcs.get_children():
+		var npc := child as Npc
+		if npc != null:
+			npc.set_quest_marker(available.has(npc.npc_id))
 
 func _spawn_exits() -> void:
 	for spec in MapService.current_exits():
@@ -451,18 +462,15 @@ func exit_at_screen(point: Vector2) -> TravelExit:
 			nearest = distance
 	return best
 
+## 使用 NPC 的稳定配置 ID 分流任务与服务交互，避免同名 NPC 被误认。
 func _interact_with(npc: Npc) -> bool:
-	var npc_id := ""
-	for spec in MapService.current_npcs():
-		if String(spec.get("npcName", "")) == npc.npc_name:
-			npc_id = String(spec.get("npcId", ""))
-			break
+	var npc_id := npc.npc_id
 	Quest.on_npc_talk(npc_id)
 	if not npc_id.is_empty() and Quest.has_actionable_at_npc(npc_id):
-		EventBus.quest_panel_requested.emit(npc.npc_name)
+		EventBus.quest_panel_requested.emit(npc_id)
 		return true
 	if npc.role == "quest":
-		EventBus.quest_panel_requested.emit(npc.npc_name)
+		EventBus.quest_panel_requested.emit(npc_id if not npc_id.is_empty() else npc.npc_name)
 		return true
 	if npc.role == "carter":
 		EventBus.carter_panel_requested.emit(npc.npc_name)

@@ -607,8 +607,10 @@ static func _target_name(kind: String, target_id: String) -> String:
 static func _record(quest_id: String) -> Variant:
 	return GameState.quest_states.get(quest_id)
 
+## 任务状态落账后通知世界刷新可接标记；此信号不替代原有接取/完成/领奖事件。
 static func _write(quest_id: String, state: String, progress: int) -> void:
 	GameState.quest_states[quest_id] = {"state": state, "progress": progress}
+	EventBus.quest_state_changed.emit()
 
 static func _complete(quest_id: String, cur: int) -> void:
 	_write(quest_id, STATE_COMPLETED, cur)

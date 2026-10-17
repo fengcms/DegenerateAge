@@ -59,6 +59,8 @@ signal quest_accepted(quest_id: String)
 signal quest_progressed(quest_id: String, current: int, required: int)
 signal quest_completed(quest_id: String)
 signal quest_rewarded(quest_id: String)
+## 任一任务状态落账后通知世界表现层；放弃也会触发，旧细分信号继续供业务使用。
+signal quest_state_changed()
 signal quest_panel_requested(npc_name: String)
 
 # ---- 地图 / 车夫（M3）----

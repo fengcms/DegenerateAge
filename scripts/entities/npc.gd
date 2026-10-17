@@ -1,6 +1,6 @@
 class_name Npc
 extends Node2D
-## 功能性 NPC 占位实体（产品文档 6.3 安全区与通用交互；M1-8 先实现货郎 6.4）。
+## 功能性 NPC 实体（产品文档 6.3 安全区与通用交互），负责角色表现和头顶状态显示。
 ##
 ## 占位素材（R5）：程序化绘制斗篷人形；头顶名称 / 提示用 Label（走项目主题的
 ## SystemFont CJK 字体，避免 draw_string 用引擎内置字体导致中文方框）。
@@ -23,6 +23,8 @@ const ART_SCALE := 1.5
 @export var role: String = "shop"
 ## 头顶名称；为空时从配置表取名。
 @export var npc_name: String = ""
+## 地图配置中的稳定身份；任务发布人和交付人按 ID 而非显示名匹配。
+@export var npc_id: String = ""
 ## 文本配置的自我介绍，功能面板打开时显示。
 @export var greeting: String = ""
 
@@ -33,7 +35,9 @@ var _art: Sprite2D
 
 @onready var _name_label: Label = $NameLabel
 @onready var _hint_label: Label = $HintLabel
+@onready var _quest_marker: Label = $QuestMarker
 
+## 装配职业外观、名称和交互提示，并为可接任务标记接入世界文字缩放。
 func _ready() -> void:
 	add_to_group("npcs")
 	if role in ["quest", "shop", "blacksmith", "warehouse", "carter"]:
@@ -57,15 +61,22 @@ func _ready() -> void:
 	if npc_name.is_empty():
 		npc_name = "NPC"
 	_name_label.text = npc_name
+	_quest_marker.visible = false
 	_hint_label.text = "[E] 交谈"
 	_hint_label.visible = false
 	# M5-9e（创意 09 §7）：头顶名称 / 交互提示是世界文字 —— 像素尺寸不随地图倍率变。
 	# 入组供改档位时统一重扫；此处自应用一次，覆盖生成与切图重建两种时刻。
 	_name_label.add_to_group("world_text")
 	_hint_label.add_to_group("world_text")
+	_quest_marker.add_to_group("world_text")
 	SettingsRuntime.apply_world_text_scale_to(_name_label)
 	SettingsRuntime.apply_world_text_scale_to(_hint_label)
+	SettingsRuntime.apply_world_text_scale_to(_quest_marker)
 	queue_redraw()
+
+## 世界按任务状态设置可接提示；标记不自行查询任务或改变交互状态。
+func set_quest_marker(available: bool) -> void:
+	_quest_marker.visible = available
 
 func _process(delta: float) -> void:
 	_phase += delta
@@ -90,13 +101,18 @@ func is_player_in_range() -> bool:
 		return false
 	return (p as Node2D).global_position.distance_to(global_position) <= INTERACT_RANGE
 
-## 屏幕点击命中：覆盖人物与头顶名称；由世界统一决定接近和交互。
+## 屏幕点击命中人物、头顶名称及可见任务标记；由世界统一决定接近和交互。
 func contains_screen_point(point: Vector2) -> bool:
 	var local := get_global_transform_with_canvas().affine_inverse() * point
 	if Rect2(Vector2(-32.0, -64.0) * ART_SCALE, Vector2(64.0, 80.0) * ART_SCALE).has_point(local):
 		return true
 	var label_local := _name_label.get_global_transform_with_canvas().affine_inverse() * point
-	return Rect2(Vector2.ZERO, _name_label.size).has_point(label_local)
+	if Rect2(Vector2.ZERO, _name_label.size).has_point(label_local):
+		return true
+	if _quest_marker.visible:
+		var marker_local := _quest_marker.get_global_transform_with_canvas().affine_inverse() * point
+		return Rect2(Vector2.ZERO, _quest_marker.size).has_point(marker_local)
+	return false
 
 func _draw() -> void:
 	var cloak_color := Color("956b4b") if role == "blacksmith" else (Color("547784") if role == "warehouse" else COLOR_CLOAK)
