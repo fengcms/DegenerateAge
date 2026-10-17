@@ -1,12 +1,8 @@
 {
   "id": "c2_purple_parasite",
-  "renderer": "static_atlas",
-  "texture": "res://assets/sprites/monsters/c2_purple_parasite/simplified_atlas.png",
-  "hframes": 3,
-  "offset": [
-    -40,
-    -64
-  ],
+  "renderer": "directional_preview",
+  "texture": "res://assets/sprites/monsters/c2_purple_parasite/directional_preview_atlas.png",
+  "offset": [-40, -64],
   "headHpY": -70,
-  "desc": "临时简化表现：单个东南向造型，受击与死亡变色；八向五状态动画待补。"
+  "desc": "八方向单帧试玩稿：紫晶肩刺、触须脸与不对称晶爪随移动和攻击朝向切换；逐帧动画待补。"
 }
