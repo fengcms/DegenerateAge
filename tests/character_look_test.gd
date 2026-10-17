@@ -42,8 +42,8 @@ func _test_resolution() -> void:
 	expect(default_entry.frame == Vector2i(64, 80) and default_entry.pivot == Vector2(32, 64),
 		"默认形象帧格与脚底锚点")
 	var panel_frame := CharacterLook.panel_texture("look_01")
-	expect(panel_frame.atlas == default_entry.main and panel_frame.region == Rect2(0, 0, 64, 80),
-		"面板纹理应裁出方向 0 的首帧")
+	expect(panel_frame == default_entry.panel and panel_frame.get_size() == Vector2(256, 400),
+		"初始形象应使用独立 256×400 高清面板图")
 	# 各 look 共用同一帧格与锚点，面板的 ×4 整数倍放大才成立；素材未到时按回退校验。
 	if CharacterLook.is_declared("look_02"):
 		var second := CharacterLook.definition("look_02")
@@ -66,10 +66,9 @@ func _test_weapon_switch() -> void:
 	var panel: Control = main.get_node("UI/CharacterPanel")
 	var avatar: TextureRect = main.get_node("UI/Hud/StatusPanel/Portrait/PortraitImage")
 	var fixed_avatar := preload("res://assets/ui/portraits/guardian.png")
-	var default_main: Texture2D = CharacterLook.definition("look_01").main
-
 	expect(player._look_id == "look_01", "初始武器应使用 look_01")
-	expect(player.sample_art.texture == default_main, "世界玩家应使用 look_01 主图集")
+	expect(player.sample_art.texture == CharacterLook.definition("look_01").animations.idle.texture,
+		"世界玩家应使用 look_01 逐帧待机图集")
 	expect(player.sample_art.offset == Vector2(-32, -64), "世界玩家应保持脚底锚点")
 
 	panel.set_open(true)
@@ -78,7 +77,7 @@ func _test_weapon_switch() -> void:
 	var frame := panel._portrait.get_parent() as Control
 	expect(frame.custom_minimum_size == Vector2(258, 410), "展示框应为 258×410")
 	expect(is_equal_approx(panel._portrait.size.x, 256.0), "展示框内宽应为 256 = 64 × 4")
-	expect((panel._portrait.texture as AtlasTexture).atlas == default_main, "面板初始形象应为 look_01")
+	expect(panel._portrait.texture == CharacterLook.definition("look_01").panel, "面板初始形象应为独立高清图")
 
 	GameState.inventory.append(ItemFactory.make_any("c2_road_blade"))
 	var result := GameState.equip_from_inventory(GameState.inventory.size() - 1, "weapon")

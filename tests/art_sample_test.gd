@@ -18,30 +18,30 @@ func _ready() -> void:
 	expect(GameState.inventory_used() == 3, "Sample must contain three item examples")
 	expect(SaveManager.active_slot == -1 and not SaveManager.autosave_enabled, "Sample must not autosave")
 	expect(ground.sample_camp_theme, "Sample ground theme must be active")
-	expect(player.sample_art.texture.get_size() == Vector2(512, 640), "Guardian frame atlas dimensions")
+	expect(player.sample_art.texture.get_size() == Vector2(512, 320), "Guardian idle atlas dimensions")
 	expect(player.sample_art.extra_texture.get_size() == Vector2(512, 160), "Guardian hit and sit atlas dimensions")
-	expect(player.sample_art.walk_texture.get_size() == Vector2(512, 320), "Guardian four-pose walk atlas dimensions")
+	expect(player.sample_art._animations.walk.texture.get_size() == Vector2(512, 640), "Guardian eight-pose walk atlas dimensions")
 	expect((player.get_node("CollisionShape2D").shape as CircleShape2D).radius == 12, "Art must not enlarge player collision")
 	var art := player.sample_art
 	player.set_physics_process(false)
 	art._process(0.01)
-	expect(is_equal_approx(art.scale.x, 1.25) and art.offset == Vector2(-32, -64), "Guardian display scale keeps foot pivot")
+	expect(is_equal_approx(art.scale.x, PlayerCharacter.ART_SCALE) and art.offset == Vector2(-32, -64), "Guardian display scale keeps foot pivot")
 	for i in range(8):
 		art.face(Vector2.from_angle(PI / 2 + i * PI / 4))
 		expect(art.facing == i, "Screen direction %d" % i)
 	player.set_sitting(true)
 	art._process(0.01)
-	expect(art.pose == "sit" and art.frame_coords.y == 1 and art.vframes == 2, "Resting should use independent eight-way seated art")
+	expect(art.pose == "sit" and art.vframes == 4, "Resting should use independent eight-way seated art")
 	player.set_sitting(false)
 	player.velocity = Vector2(100, 0)
 	art._process(0.1)
-	expect(art.pose == "walk" and art.facing == 6 and art.vframes == 4 and art.phase >= 0 and art.phase < 8, "East movement should use eight walk beats")
+	expect(art.pose == "walk" and art.facing == 6 and art.vframes == 8 and art.phase >= 0 and art.phase < 8, "East movement should use eight walk beats")
 	var walk_rows := {}
 	for i in range(8):
 		art._process(0.1)
 		walk_rows[art.frame_coords.y] = true
-		expect(art.position.y >= -1.0 and art.position.y <= 0.0, "Walk pivot bob stays within one world pixel")
-	expect(walk_rows.size() == 4, "Guardian walk should show all four distinct pose rows")
+		expect(art.position == Vector2.ZERO, "逐帧行走保持脚底锚点")
+	expect(walk_rows.size() == 8, "Guardian walk should show all eight distinct pose rows")
 	player.velocity = Vector2.ZERO
 	art.attack(Vector2.DOWN, 0.8)
 	art._process(0.01)
@@ -53,9 +53,9 @@ func _ready() -> void:
 	expect(art.pose == "hit" and art.vframes == 2, "Separate guardian hit should override attack visually")
 	player.is_dead = true
 	art._process(0.01)
-	expect(art.pose == "death" and art.vframes == 2 and art.frame_coords.y == 0, "Death should start with a brief recoil")
+	expect(art.pose == "death" and art.vframes == 6 and art.frame_coords.y == 0, "Death should start with a brief recoil")
 	art._process(0.61)
-	expect(art.phase == 5 and art.vframes == 8 and art.frame_coords.y == 7, "Death transition should finish prone and hold")
+	expect(art.phase == 5 and art.vframes == 6 and art.frame_coords.y == 5, "Death transition should finish prone and hold")
 	player.is_dead = false
 	var wolf: Monster
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -65,10 +65,11 @@ func _ready() -> void:
 	if wolf != null:
 		expect(wolf.sample_art.texture.get_size() == Vector2(640, 640), "Wolf atlas dimensions")
 		expect(wolf.sample_art.walk_texture.get_size() == Vector2(640, 320), "Wolf four-pose walk atlas dimensions")
-		for atlas in [art.walk_texture, wolf.sample_art.walk_texture]:
+		for atlas in [art._animations.walk.texture, wolf.sample_art.walk_texture]:
 			var sheet := (atlas as Texture2D).get_image()
 			var cell_w := sheet.get_width() / 8
-			for row in range(4):
+			var rows := 8 if atlas == art._animations.walk.texture else 4
+			for row in range(rows):
 				for col in range(8):
 					var frame_image := sheet.get_region(Rect2i(col * cell_w, row * 80, cell_w, 80))
 					var used := frame_image.get_used_rect()
@@ -86,8 +87,10 @@ func _ready() -> void:
 	for id in ["weapon_iron", "potion_hp_small", "spirit_shard"]:
 		var item := ItemFactory.make_any(id)
 		expect(SampleArt.icon_for(item).get_size() == Vector2(48, 48), "48px icon for " + id)
-		expect(SampleArt.ground_for(item).get_size() == Vector2(32, 32), "32px ground item for " + id)
-	expect(SampleArt.icon_for(ItemFactory.make_any("ring_basic")) == null, "Unmade icons must preserve fallback")
+		var expected_ground_size := Vector2(32, 32) if id == "weapon_iron" else Vector2(48, 48)
+		expect(SampleArt.ground_for(item).get_size() == expected_ground_size,
+			"Ground item uses its registered texture size for " + id)
+	expect(SampleArt.icon_for(ItemFactory.make_any("ring_basic")) != null, "已接入的戒指图标应可用")
 	var panel := sample.get_node("Main/UI/InventoryPanel")
 	panel.set_open(true)
 	await get_tree().process_frame

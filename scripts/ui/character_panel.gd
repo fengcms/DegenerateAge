@@ -137,7 +137,7 @@ func _build() -> void:
 	portrait_style.set_border_width_all(1)
 	portrait_style.set_corner_radius_all(6)
 	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
-	# 展示盒内宽 258 - 2（边框）= 256 = 64 × 4，固定 ×4 整数倍放大，避免像素粗细不均。
+	# 展示盒内宽 256 像素，与初始形象独立高清图同宽；其他形象按原规则等比放大。
 	portrait_frame.custom_minimum_size = Vector2(258, 410)
 	figure.add_child(portrait_frame)
 	_portrait = TextureRect.new()
