@@ -37,6 +37,10 @@ func _ready() -> void:
 				preview.face(Vector2.DOWN)
 				preview._process(0.0)
 				check(preview.frame_coords == Vector2i(0, 0), "向南显示正面")
+				monster.velocity = Vector2.LEFT * 40.0
+				preview._process(0.016)
+				check(preview.frame_coords == Vector2i(0, 2), "移动向西显示左侧面")
+				monster.velocity = Vector2.ZERO
 				preview.attack(Vector2.UP, 0.4)
 				preview._process(0.0)
 				check(preview.frame_coords == Vector2i(0, 4), "向北攻击显示背面，不改变伤害时序")
