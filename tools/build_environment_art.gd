@@ -1,11 +1,14 @@
 extends SceneTree
 ## Reproducibly packs the generated scene atlases into game-size PNGs.
+## cave 地砖不在此处打包：它由 tools/build_cave_tiles.gd 从 cave_base 快照确定性派生并横向拉平
+## （依据 docs/素材设计/41-地砖族扩充cave脚本派生小样与验收.md），避免覆盖已投产的 9 块产物。
 
 const SOURCE := "res://art_source/environment/"
 
 func _initialize() -> void:
-	for theme in ["wild", "ash", "cave"]:
+	for theme in ["wild", "ash"]:
 		_pack_tiles(theme)
+	for theme in ["wild", "ash", "cave"]:
 		_pack_props(theme)
 	quit()
 

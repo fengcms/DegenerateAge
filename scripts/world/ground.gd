@@ -29,6 +29,11 @@ const CAVE_TILES := [
 	preload("res://assets/tiles/cave/tile_1.png"),
 	preload("res://assets/tiles/cave/tile_2.png"),
 	preload("res://assets/tiles/cave/tile_3.png"),
+	preload("res://assets/tiles/cave/tile_4.png"),
+	preload("res://assets/tiles/cave/tile_5.png"),
+	preload("res://assets/tiles/cave/tile_6.png"),
+	preload("res://assets/tiles/cave/tile_7.png"),
+	preload("res://assets/tiles/cave/tile_8.png"),
 ]
 const CH1_CAMP_EDGES := [
 	preload("res://assets/tiles/chapter1_v2/camp/road_edge_n.png"), preload("res://assets/tiles/chapter1_v2/camp/road_edge_e.png"),
@@ -476,12 +481,11 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 			var cell := Vector2i(col, row)
 			if cave != null and not cave.is_walkable(cell):
 				continue
-			var variation := posmod(col * 73 + row * 37 + col * row * 11, 19)
-			var tile := 1 if variation < 4 else 2 if variation == 5 else 0
+			var tile := _pick_theme_tile(cell, tiles.size())
 			if not _chapter_one_road_rows.is_empty():
 				var road_tile := _chapter_one_road_tile_index(cell)
 				if road_tile >= 0:
-					tile = road_tile
+					tile = _road_atlas_index(road_tile, tiles.size())
 			elif not cave_style:
 				var road_center := 20 if sample_camp_theme else grid_size.y / 2
 				if camp_style and (absi(row - road_center) <= 1 or absi(col - road_center) <= 1):
@@ -497,6 +501,20 @@ func _draw_tile_floor(tiles: Array, cave_style: bool = false, camp_style: bool =
 	_tile_mesh = builder.build()
 	if _tile_mesh != null:
 		draw_mesh(_tile_mesh, _tile_atlas, Transform2D.IDENTITY, Color("a9aaae") if cave_style else Color.WHITE)
+
+## 地砖变体散列：4 变体沿用历史公式以保持既有地图画面不变；9 变体按 35 号 §8 加权表取值。
+func _pick_theme_tile(cell: Vector2i, theme_size: int) -> int:
+	var hash := posmod(cell.x * 73 + cell.y * 37 + cell.x * cell.y * 11, 19)
+	if theme_size <= 4:
+		return 1 if hash < 4 else 2 if hash == 5 else 0
+	hash = posmod(cell.x * 73 + cell.y * 37 + cell.x * cell.y * 11, 100)
+	return 0 if hash < 38 else 1 if hash < 62 else 2 if hash < 72 else 3 if hash < 79 \
+		else 4 if hash < 85 else 5 if hash < 90 else 6 if hash < 94 else 7 if hash < 97 else 8
+
+## 把道路索引（3 为中心、4..11 为八张边缘）映射为「本族砖 + 道路边缘」图集内的绝对下标：
+## 中心沿用第 3 号砖，八张边缘固定在族砖之后的槽位，因此与族变体数解耦。
+func _road_atlas_index(road_index: int, theme_size: int) -> int:
+	return 3 if road_index == 3 else theme_size + road_index - 4
 
 ## 返回本图八张 1×1 道路边缘/转角纹理；第二章不调用。
 func _chapter_one_road_edges() -> Array:
