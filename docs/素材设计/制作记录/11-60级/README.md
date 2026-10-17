@@ -67,3 +67,9 @@
 第六章 15 只的[运行尺寸深浅底拼版](ch06_monsters_runtime_preview.png)已复核。旧石、暖金和紫黑裂隙的层次在浅底仍可读，三名首领保持不同的盾誓、残响和空眼轮廓。至此五章怪物 **79/79** 已接入临时静态图，正式动画状态仍全部未完成。
 
 自动校验、逐 ID 实例化、资源体积与未通过的全量回归范围见[临时怪物接入验收](临时怪物接入验收.md)。
+
+## 正式动画制作矩阵
+
+新的 [`formal_animation_worklist.json`](formal_animation_worklist.json) 以 79 个稳定怪物 ID 单独记录主运动形体族、可移动性、实际攻击距离类型、必须制作的状态、首领视觉事件和正式动画进度。形体族是对现有概念稿的人工分型，用于复用运动规律，不表示视觉审核已完成；`moves`、`attack_kind` 与首领事件均从当前运行数据复核。个别模板的 `monsterType` 文案与 `attackRange.kind` 不同，动作时序以游戏实际读取的后者为准。
+
+原清单的 `status=reviewed` 和 `integration=temporary_static` 继续表示**临时图**已接入；新增 `formal_animation=pending` 专门表示**正式八方向动画**还未通过。正式进度只能按 `pending → source_ready → baked → reviewed → integrated` 推进，每次改动同时更新矩阵与原清单。执行 `python3 tools/check_formal_monster_animation.py` 核对 79 ID、41/22/16 档次、17 只远程、唯一不移动怪、状态、首领事件及两份进度是否一致。未标 `integrated` 的外观档案必须仍使用临时静态图；不能凭概念图、候选背面或导出的 PNG 数量提高正式状态。

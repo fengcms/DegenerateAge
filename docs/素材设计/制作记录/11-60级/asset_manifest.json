@@ -232,7 +232,8 @@
       "existing_partial": true,
       "concept_art": "art_source/chapters/ch02/monsters/c2_spirit_larva/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_spirit_larva/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_copper_worm",
@@ -252,7 +253,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_copper_worm/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_copper_worm/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_broken_guard",
@@ -272,7 +274,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_broken_guard/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_broken_guard/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_slag_leech",
@@ -292,7 +295,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_slag_leech/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_slag_leech/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_badge_wraith",
@@ -312,7 +316,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_badge_wraith/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_badge_wraith/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_ash_beast",
@@ -332,7 +337,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_ash_beast/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_ash_beast/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_spirit_attendant",
@@ -352,7 +358,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_spirit_attendant/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_spirit_attendant/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_purple_parasite",
@@ -372,7 +379,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_purple_parasite/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_purple_parasite/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_elite_copper_matriarch",
@@ -392,7 +400,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_copper_matriarch/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_copper_matriarch/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_elite_broken_inspector",
@@ -412,7 +421,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_broken_inspector/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_broken_inspector/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_elite_gray_scribe",
@@ -432,7 +442,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_gray_scribe/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_gray_scribe/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_elite_spirit_guard",
@@ -452,7 +463,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_spirit_guard/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_spirit_guard/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_elite_ash_leader",
@@ -472,7 +484,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_elite_ash_leader/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_elite_ash_leader/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_boss_iron_foreman",
@@ -492,7 +505,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_boss_iron_foreman/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_boss_iron_foreman/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_boss_slag_devourer",
@@ -512,7 +526,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_boss_slag_devourer/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_boss_slag_devourer/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c2_boss_hundred_arm_extractor",
@@ -532,7 +547,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_boss_hundred_arm_extractor/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_boss_hundred_arm_extractor/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_equip_weapon",
@@ -758,7 +774,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal02",
@@ -778,7 +795,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal03",
@@ -798,7 +816,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal04",
@@ -818,7 +837,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal05",
@@ -838,7 +858,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal05/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal05/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal06",
@@ -858,7 +879,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal06/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal06/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal07",
@@ -878,7 +900,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal07/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal07/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_normal08",
@@ -898,7 +921,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal08/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal08/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_elite01",
@@ -918,7 +942,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_elite01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_elite01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_elite02",
@@ -938,7 +963,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_elite02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_elite02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_elite03",
@@ -958,7 +984,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_elite03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_elite03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_elite04",
@@ -978,7 +1005,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_elite04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_elite04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_boss01",
@@ -998,7 +1026,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_boss01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_boss01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_boss02",
@@ -1018,7 +1047,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_boss02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_boss02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c3_boss03",
@@ -1038,7 +1068,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_boss03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_boss03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_equip_weapon",
@@ -1264,7 +1295,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal02",
@@ -1284,7 +1316,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal03",
@@ -1304,7 +1337,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal04",
@@ -1324,7 +1358,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal05",
@@ -1344,7 +1379,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal05/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal05/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal06",
@@ -1364,7 +1400,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal06/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal06/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal07",
@@ -1384,7 +1421,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal07/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal07/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_normal08",
@@ -1404,7 +1442,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_normal08/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_normal08/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_elite01",
@@ -1424,7 +1463,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_elite01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_elite01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_elite02",
@@ -1444,7 +1484,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_elite02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_elite02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_elite03",
@@ -1464,7 +1505,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_elite03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_elite03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_elite04",
@@ -1484,7 +1526,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_elite04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_elite04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_boss01",
@@ -1504,7 +1547,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_boss01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_boss01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_boss02",
@@ -1524,7 +1568,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_boss02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_boss02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c4_boss03",
@@ -1544,7 +1589,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch04/monsters/c4_boss03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c4_boss03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_equip_weapon",
@@ -1784,7 +1830,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal02",
@@ -1804,7 +1851,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal03",
@@ -1824,7 +1872,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal04",
@@ -1844,7 +1893,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal05",
@@ -1864,7 +1914,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal05/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal05/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal06",
@@ -1884,7 +1935,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal06/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal06/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal07",
@@ -1904,7 +1956,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal07/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal07/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal08",
@@ -1924,7 +1977,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal08/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal08/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_normal09",
@@ -1944,7 +1998,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_normal09/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_normal09/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_elite01",
@@ -1964,7 +2019,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_elite01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_elite01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_elite02",
@@ -1984,7 +2040,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_elite02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_elite02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_elite03",
@@ -2004,7 +2061,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_elite03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_elite03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_elite04",
@@ -2024,7 +2082,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_elite04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_elite04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_elite05",
@@ -2044,7 +2103,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_elite05/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_elite05/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_boss01",
@@ -2064,7 +2124,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_boss01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_boss01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_boss02",
@@ -2084,7 +2145,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_boss02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_boss02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_boss03",
@@ -2104,7 +2166,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_boss03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_boss03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c5_boss04",
@@ -2124,7 +2187,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch05/monsters/c5_boss04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c5_boss04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_equip_weapon",
@@ -2350,7 +2414,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal02",
@@ -2370,7 +2435,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal03",
@@ -2390,7 +2456,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal04",
@@ -2410,7 +2477,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal05",
@@ -2430,7 +2498,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal05/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal05/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal06",
@@ -2450,7 +2519,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal06/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal06/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal07",
@@ -2470,7 +2540,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal07/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal07/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_normal08",
@@ -2490,7 +2561,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_normal08/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_normal08/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_elite01",
@@ -2510,7 +2582,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_elite01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_elite01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_elite02",
@@ -2530,7 +2603,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_elite02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_elite02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_elite03",
@@ -2550,7 +2624,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_elite03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_elite03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_elite04",
@@ -2570,7 +2645,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_elite04/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_elite04/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_boss01",
@@ -2590,7 +2666,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_boss01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_boss01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_boss02",
@@ -2610,7 +2687,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_boss02/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_boss02/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     },
     {
       "data_id": "c6_boss03",
@@ -2630,7 +2708,8 @@
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch06/monsters/c6_boss03/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c6_boss03/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame"
+      "runtime_variant": "single_direction_three_frame",
+      "formal_animation": "pending"
     }
   ]
 }
