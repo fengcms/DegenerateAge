@@ -193,6 +193,7 @@ func default_settings() -> Dictionary:
 		"searchRadius": 12,           # 旧档兼容字段；搜怪改用当前可视区域
 		"allowBoss": false,           # 3.14 自动战斗是否允许 Boss
 		"dropFlyAnim": true,          # 10：拾取飞行动画（关 = 入包后立即消失）
+		"autoReviveOnDeath": false,   # 死亡后自动原地复活并恢复战斗（需背包有复活卷）
 		"masterVolume": 1.0,
 		"sfxVolume": 1.0,
 		"uiScale": 1.0,

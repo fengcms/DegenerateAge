@@ -57,6 +57,9 @@ var _stun: float = 0.0
 var _death_t: float = 0.0
 var is_dead: bool = false
 var is_sitting: bool = false
+## 死亡前是否处于自动战斗（F 挂机）。`_begin_death()` 会主动关掉挂机，故先记录原状态，
+## 供死亡界面的「自动原地复活」在复活后按原样恢复挂机（见 death_panel._try_auto_revive）。
+var auto_battle_before_death: bool = false
 var sample_art: SampleActorArt
 ## 当前阶段形象 id；换装后由 _refresh_look 重新解析。
 var _look_id := ""
@@ -340,6 +343,8 @@ func _begin_death() -> void:
 	_slow_remaining = 0.0
 	_slow_pct = 0.0
 	is_dead = true
+	# 先记录死亡前的挂机状态，再关自动战斗：自动原地复活需要按原样恢复（见 death_panel）。
+	auto_battle_before_death = GameState.auto_battle_on
 	GameState.set_auto_battle(false)
 	preload("res://scripts/systems/death_penalty.gd").drop_one(self)
 	_regen_elapsed = 0.0

@@ -58,16 +58,41 @@ func _show_after_death() -> void:
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 	if player == null or not player.is_dead:
 		return
+	if _try_auto_revive(player):
+		return
 	visible = true
 	GameState.set_panel_open("death", true)
 	_refresh()
 	get_tree().paused = true
 
-func _refresh() -> void:
+## 自动原地复活（设置项 `autoReviveOnDeath`）：开关开启且背包有复活卷时，死亡不弹面板、不暂停世界，
+## 直接消耗 1 张复活卷原地复活；若死亡前处于自动战斗，复活后按原样恢复挂机。
+## 任一条件不满足（开关关 / 无复活卷 / 复活失败）返回 false，交由下方手动死亡面板处理。
+## 复活与存档沿用 `revive_here()` 的既有入口，不新增第二条结算路径。
+func _try_auto_revive(player: PlayerCharacter) -> bool:
+	if not bool(GameState.settings.get("autoReviveOnDeath", false)):
+		return false
+	if _revive_scroll_count() <= 0:
+		return false
+	var resume_auto := player.auto_battle_before_death
+	if not revive_here():
+		return false
+	# 必须在 `_revive()`（is_dead=false）之后才能开启挂机，否则 AutoBattle 会立刻再次关掉。
+	if resume_auto:
+		GameState.set_auto_battle(true)
+	EventBus.toast_requested.emit(Localization.tr_key("msg.death_auto.p001"), "info")
+	return true
+
+## 背包中复活卷总数（`_refresh()` 显示与自动复活判定共用同一口径）。
+func _revive_scroll_count() -> int:
 	var count := 0
 	for item in GameState.inventory:
 		if item is Dictionary and String(item.get("itemId", "")) == "misc_revive_scroll":
 			count += int(item.get("count", 1))
+	return count
+
+func _refresh() -> void:
+	var count := _revive_scroll_count()
 	_revive_here.text = Localization.tr_key("ui.death_panel.p003") % count
 	_revive_here.disabled = count <= 0
 	_hint.text = Localization.tr_key("ui.death_panel.p004")

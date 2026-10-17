@@ -1,14 +1,18 @@
 extends Node
 ## 死亡选择隔离回归；验证暂停、复活卷、跨图回所属城镇及自动战斗边界，不写真实槽位。
+## 另含「自动原地复活」段：设置项开启且背包有复活卷时，死亡不弹面板、原地复活并恢复挂机。
 
 var failures: Array[String] = []
 
+## 记录一条断言结果；失败项在退出前统一输出，避免首个失败就中断后续校验。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
 
+## 依次执行自动复活段与手动复活段；全部通过则以退出码 0 结束，否则输出失败项并以 1 退出。
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	await _check_auto_revive()
 	GameState.reset_to_defaults()
 	GameState.current_map = "camp"
 	var player := PlayerCharacter.new()
@@ -74,3 +78,41 @@ func _ready() -> void:
 		for failure in failures:
 			push_error(failure)
 		get_tree().quit(1)
+
+## 自动原地复活段：先于手动复活断言执行，结束时清理节点并把状态交回 `_ready()` 的
+## `reset_to_defaults()`，避免残留的开关 / 暂停 / 背包数据影响后续断言。
+func _check_auto_revive() -> void:
+	GameState.reset_to_defaults()
+	GameState.current_map = "camp"
+	GameState.settings["autoReviveOnDeath"] = true
+	var player := PlayerCharacter.new()
+	add_child(player)
+	player.set_physics_process(false)
+	var panel: Control = load("res://scripts/ui/death_panel.gd").new()
+	add_child(panel)
+	GameState.inventory[0] = {"kind": "misc", "itemId": "misc_revive_scroll", "count": 2}
+	GameState.set_auto_battle(true)
+	GameState.damage_player(99999)
+	player._begin_death()
+	await get_tree().process_frame
+	check(not player.is_dead and not panel.visible and not get_tree().paused,
+		"自动复活：不弹面板、不暂停直接站起")
+	check(GameState.auto_battle_on, "自动复活：恢复死亡前的自动战斗")
+	check(int(GameState.inventory[0].get("count", 0)) == 1, "自动复活：只消耗一张复活卷")
+	# 死亡前未挂机 → 只自动复活，不代开自动战斗。
+	GameState.set_auto_battle(false)
+	GameState.damage_player(99999)
+	player._begin_death()
+	await get_tree().process_frame
+	check(not player.is_dead and not panel.visible and not GameState.auto_battle_on,
+		"自动复活：未挂机死亡时不代开自动战斗")
+	check(GameState.inventory[0] == null, "自动复活：最后一张复活卷就地扣除")
+	# 复活卷耗尽 → 回落手动死亡面板。
+	GameState.damage_player(99999)
+	player._begin_death()
+	await get_tree().process_frame
+	check(player.is_dead and panel.visible and get_tree().paused, "自动复活：无复活卷回落手动选择")
+	panel._close()
+	player.queue_free()
+	panel.queue_free()
+	await get_tree().process_frame

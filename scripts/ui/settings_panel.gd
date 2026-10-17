@@ -302,6 +302,12 @@ func _build_game(tabs: TabContainer) -> void:
 	_slider(box, Localization.tr_key("ui.settings_panel.p030"), "potionThreshold", 0.1, 0.9, 0.05)
 	_checkbox(box, Localization.tr_key("ui.settings_panel.p031"), "allowBoss")
 	_checkbox(box, Localization.tr_key("ui.settings_panel.p032"), "dropFlyAnim")
+	# G：死亡自动原地复活并恢复战斗（见 docs/工程文档/死亡自动原地复活与恢复战斗设计方案.md）
+	_checkbox(box, Localization.tr_key("ui.settings_panel.p033"), "autoReviveOnDeath")
+	var revive_hint := Label.new()
+	revive_hint.text = Localization.tr_key("ui.settings_panel.p034")
+	revive_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(revive_hint)
 	# 品质自动拾取过滤尚未接线，旧档字段保留兼容，避免展示不会生效的选项。
 
 func _build_controls(tabs: TabContainer) -> void:
