@@ -1,0 +1,16 @@
+{
+  "id": "c2_copper_worm",
+  "side": 80,
+  "foot_y": 64,
+  "max_width": 70,
+  "max_height": 58,
+  "directions": [
+    "south_candidate_v1.png",
+    "sw_candidate_v1.png",
+    "west_candidate_v1.png",
+    "nw_candidate_v1.png",
+    "north_candidate_v1.png",
+    "ne_candidate_v1.png",
+    "east_candidate_v1.png"
+  ]
+}

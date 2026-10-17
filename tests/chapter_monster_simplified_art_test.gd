@@ -28,9 +28,9 @@ func _ready() -> void:
 		monster.monster_id = id
 		add_child(monster)
 		monster.set_physics_process(false)
-		if id == "c2_spirit_larva":
+		if id in ["c2_spirit_larva", "c2_copper_worm"]:
 			var preview := monster.sample_art as MonsterDirectionalPreviewArt
-			check(preview != null, "汲灵幼虫装配八方向试玩外观")
+			check(preview != null, "%s 装配八方向试玩外观" % id)
 			if preview != null:
 				check(preview.texture.get_size() == Vector2(240, 640), "试玩图集为 3 列 8 行，每格 80 像素")
 				check(preview.offset == Vector2(-40, -64), "试玩图保持原脚底锚点")
