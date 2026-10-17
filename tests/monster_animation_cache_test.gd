@@ -39,6 +39,7 @@ func _ready() -> void:
 	check(MonsterAnimationCache.cached_preview_ids().is_empty(), "切图释放试玩图缓存")
 	MonsterAnimationCache.prepare_for_map("c2_old_well")
 	check(MonsterAnimationCache.cached_preview_ids().has("c2_slag_leech"), "旧汲灵井预取喷渣蛭试玩图")
+	check(MonsterAnimationCache.cached_preview_ids().has("c2_boss_iron_foreman"), "旧汲灵井预取镇井监工试玩图")
 	MonsterAnimationCache.release_for_map("c2_old_well")
 	MonsterAnimationCache.prepare_for_map("c2_lower_works")
 	check(MonsterAnimationCache.cached_preview_ids().has("c2_badge_wraith"), "工坊下层预取工牌游魂试玩图")
