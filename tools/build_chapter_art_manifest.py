@@ -148,7 +148,14 @@ def check_exported_icons(existing: dict) -> None:
 
 
 def check_designed_monsters(existing: dict) -> None:
-    """只核对已设计怪物概念源稿的覆盖；不把概念图误认成八向运行动画。"""
+    """核对概念稿与已接入的临时三帧静态图；后者不等于八向运行动画。"""
+    monster_rows = {}
+    for chapter in range(2, 7):
+        path = ROOT / f"data/monsters/ch{chapter:02d}/monsters.json"
+        monster_rows.update({row["id"]: row for row in read_json(path)})
+    appearance_index = set(read_json(ROOT / "data/monster_appearances/index.json"))
+    preloads = (ROOT / "scripts/entities/simplified_monster_library.gd").read_text(encoding="utf-8")
+    sides = {"normal": (80, 64), "elite": (112, 88), "boss": (192, 152)}
     for row in existing["assets"]:
         if row["type"] != "monster" or row["status"] == "planned":
             continue
@@ -161,6 +168,26 @@ def check_designed_monsters(existing: dict) -> None:
         with path.open("rb") as file:
             if file.read(8) != b"\x89PNG\r\n\x1a\n":
                 raise ValueError(f"怪物概念 PNG 签名无效: {row['data_id']}")
+        if row.get("integration") != "temporary_static":
+            continue
+        key = row["data_id"]
+        sprite = row.get("temporary_sprite", "")
+        if not sprite.startswith(row["runtime_art"]) or row.get("runtime_variant") != "single_direction_three_frame":
+            raise ValueError(f"临时怪物表现路径或类别错误: {key}")
+        image = ROOT / sprite
+        with image.open("rb") as file:
+            header = file.read(26)
+        side, foot_y = sides[row["tier"]]
+        if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR" or (*struct.unpack(">II", header[16:24]), header[25]) != (side * 3, side, 6):
+            raise ValueError(f"临时怪物图集尺寸或通道错误: {key}")
+        filename = f"{key}.json"
+        if filename not in appearance_index or monster_rows[key].get("appearanceId") != key:
+            raise ValueError(f"怪物档案或数据未接入: {key}")
+        spec = json.loads((ROOT / "data/monster_appearances" / filename).read_text(encoding="utf-8"))
+        if (spec.get("id"), spec.get("renderer"), spec.get("texture"), spec.get("hframes"), spec.get("offset")) != (key, "static_atlas", "res://" + sprite, 3, [-side // 2, -foot_y]):
+            raise ValueError(f"怪物静态档案元数据错误: {key}")
+        if f'preload("res://{sprite}")' not in preloads:
+            raise ValueError(f"怪物图集未进入导出预载表: {key}")
 
 
 def main() -> None:
