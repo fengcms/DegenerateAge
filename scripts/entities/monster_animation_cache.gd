@@ -4,6 +4,7 @@ extends RefCounted
 ## 纹理在装配阶段读取并由同 ID 实例共享；本类不处理帧推进、伤害或掉落。
 
 static var _loaded: Dictionary = {}
+static var _preview_loaded: Dictionary = {}
 static var _failed: Dictionary = {}
 static var _map_id := ""
 
@@ -11,6 +12,7 @@ static var _map_id := ""
 static func prepare_for_map(map_id: String) -> void:
 	if _map_id != map_id:
 		_loaded.clear()
+		_preview_loaded.clear()
 		_failed.clear()
 		_map_id = map_id
 	var map_data: Variant = DataLoader.get_entry("maps", map_id)
@@ -29,6 +31,7 @@ static func prepare_for_map(map_id: String) -> void:
 static func release_for_map(map_id: String) -> void:
 	if _map_id == map_id:
 		_loaded.clear()
+		_preview_loaded.clear()
 		_failed.clear()
 		_map_id = ""
 
@@ -59,9 +62,26 @@ static func get_pack(id: String) -> Dictionary:
 	_loaded[id] = pack
 	return pack
 
+## 八方向单帧试玩图按需加载；同地图同外观实例共用一张纹理。
+static func get_preview_texture(id: String, resource_path: String) -> Texture2D:
+	if _preview_loaded.has(id):
+		return _preview_loaded[id] as Texture2D
+	if resource_path.is_empty() or not ResourceLoader.exists(resource_path):
+		push_error("[MonsterAnimationCache] 试玩图缺失：%s" % resource_path)
+		return null
+	var atlas := load(resource_path) as Texture2D
+	if atlas == null or atlas.get_width() % 3 != 0 or atlas.get_height() != atlas.get_width() / 3 * 8:
+		push_error("[MonsterAnimationCache] 试玩图尺寸错误：%s" % resource_path)
+		return null
+	_preview_loaded[id] = atlas
+	return atlas
+
 ## 供缓存回归测试查看当前地图实际持有的包，不触发加载。
 static func cached_ids() -> Array:
 	return _loaded.keys()
+
+static func cached_preview_ids() -> Array:
+	return _preview_loaded.keys()
 
 ## 沿模板引用预取外观与召唤；避免首领技能或精英词缀首次召唤时现解码。
 static func _prefetch_monster(monster_id: String, seen: Dictionary) -> void:
@@ -76,6 +96,8 @@ static func _prefetch_monster(monster_id: String, seen: Dictionary) -> void:
 	var appearance: Variant = DataLoader.get_entry("monsterAppearances", appearance_id)
 	if appearance is Dictionary and String((appearance as Dictionary).get("renderer", "")) == "animation_pack":
 		get_pack(String((appearance as Dictionary).get("assetKey", "")))
+	elif appearance is Dictionary and String((appearance as Dictionary).get("renderer", "")) == "directional_preview":
+		get_preview_texture(appearance_id, String((appearance as Dictionary).get("texture", "")))
 	if monster_id == "c2_boss_iron_foreman":
 		_prefetch_monster("c2_broken_guard", seen)
 	elif monster_id == "c2_boss_hundred_arm_extractor":

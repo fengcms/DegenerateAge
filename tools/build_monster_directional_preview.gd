@@ -1,26 +1,28 @@
 extends SceneTree
-## 将汲灵幼虫的七张独立方向候选与原东南向贴图烘焙成试玩图集。
-## 图集：3 列（原姿、受击、死亡）× 8 行（s/sw/w/nw/n/ne/e/se），每格 80×80。
+## 按每只怪物的 directional_preview.json 烘焙八方向试玩图集。
+## 命令：godot --headless --path . --script tools/build_monster_directional_preview.gd -- --id=c2_spirit_larva
 
-const SIDE := 80
-const FOOT_Y := 64
-const MAX_WIDTH := 70
-const MAX_HEIGHT := 58
-const SOURCE := "res://art_source/chapters/ch02/monsters/c2_spirit_larva/"
-const OUTPUT := "res://assets/sprites/monsters/c2_spirit_larva/directional_preview_atlas.png"
-const DIRECTIONS := [
-	"south_candidate_v1.png", "sw_candidate_v1.png", "west_candidate_v1.png",
-	"nw_candidate_v1.png", "rear_candidate_v3.png", "ne_candidate_v1.png",
-	"east_candidate_v1.png", "",
-]
+var monster_id := "c2_spirit_larva"
+var side := 80
+var foot_y := 64
+var max_width := 70
+var max_height := 58
+var source_dir := ""
+var output_path := ""
+var directions: Array = []
 
 func _initialize() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--id="):
+			monster_id = arg.trim_prefix("--id=")
 	var result := _build()
 	quit(0 if result else 1)
 
 func _build() -> bool:
-	var atlas := Image.create_empty(SIDE * 3, SIDE * 8, false, Image.FORMAT_RGBA8)
-	for row in DIRECTIONS.size():
+	if not _read_config():
+		return false
+	var atlas := Image.create_empty(side * 3, side * 8, false, Image.FORMAT_RGBA8)
+	for row in 8:
 		var pose := _load_pose(row)
 		if pose == null:
 			return false
@@ -28,35 +30,63 @@ func _build() -> bool:
 			var frame := pose.duplicate()
 			if state > 0:
 				_tint(frame, state)
-			atlas.blit_rect(frame, Rect2i(Vector2i.ZERO, frame.get_size()), Vector2i(state * SIDE, row * SIDE))
-	var status := atlas.save_png(ProjectSettings.globalize_path(OUTPUT))
+			atlas.blit_rect(frame, Rect2i(Vector2i.ZERO, frame.get_size()), Vector2i(state * side, row * side))
+	var status := atlas.save_png(ProjectSettings.globalize_path(output_path))
 	if status != OK:
 		push_error("无法保存方向试玩图集：%s" % status)
 		return false
-	print("汲灵幼虫方向试玩图集：%s（%s×%s）" % [OUTPUT, atlas.get_width(), atlas.get_height()])
+	print("%s 方向试玩图集：%s（%s×%s）" % [monster_id, output_path, atlas.get_width(), atlas.get_height()])
+	return true
+
+func _read_config() -> bool:
+	if monster_id.length() < 4 or not monster_id.begins_with("c") or not monster_id[1].is_valid_int() or monster_id.contains("/") or monster_id.contains(".."):
+		push_error("无效怪物 ID：%s" % monster_id)
+		return false
+	source_dir = "res://art_source/chapters/ch%02d/monsters/%s/" % [int(monster_id[1]), monster_id]
+	output_path = "res://assets/sprites/monsters/%s/directional_preview_atlas.png" % monster_id
+	var file := FileAccess.open(source_dir + "directional_preview.json", FileAccess.READ)
+	if file == null:
+		push_error("缺少方向清单：%s" % source_dir)
+		return false
+	var config: Variant = JSON.parse_string(file.get_as_text())
+	if not config is Dictionary or String(config.get("id", "")) != monster_id:
+		push_error("方向清单 ID 错误：%s" % monster_id)
+		return false
+	side = int(config.get("side", 0))
+	foot_y = int(config.get("foot_y", 0))
+	max_width = int(config.get("max_width", 0))
+	max_height = int(config.get("max_height", 0))
+	directions = config.get("directions", [])
+	if not (side in [80, 112, 192]) or foot_y <= 0 or foot_y >= side or max_width <= 0 or max_width > side or max_height <= 0 or max_height > foot_y or directions.size() != 7:
+		push_error("方向清单尺寸或方向数量错误：%s" % monster_id)
+		return false
+	for filename in directions:
+		if not filename is String or not filename.ends_with(".png") or filename.contains("/") or filename.contains(".."):
+			push_error("方向文件名错误：%s" % filename)
+			return false
 	return true
 
 func _load_pose(row: int) -> Image:
 	if row == 7:
-		var old := Image.load_from_file("res://assets/sprites/monsters/c2_spirit_larva/simplified_atlas.png")
-		if old == null or old.get_width() < SIDE or old.get_height() != SIDE:
+		var old := Image.load_from_file("res://assets/sprites/monsters/%s/simplified_atlas.png" % monster_id)
+		if old == null or old.get_width() < side or old.get_height() != side:
 			push_error("东南向旧图缺失或尺寸错误")
 			return null
-		return old.get_region(Rect2i(0, 0, SIDE, SIDE))
-	var source := Image.load_from_file(SOURCE + DIRECTIONS[row])
+		return old.get_region(Rect2i(0, 0, side, side))
+	var source := Image.load_from_file(source_dir + String(directions[row]))
 	if source == null or source.is_empty():
-		push_error("方向候选缺失：%s" % DIRECTIONS[row])
+		push_error("方向候选缺失：%s" % directions[row])
 		return null
 	source.convert(Image.FORMAT_RGBA8)
 	var bounds := _visible_bounds(source)
 	if bounds.size == Vector2i.ZERO:
-		push_error("方向候选为空：%s" % DIRECTIONS[row])
+		push_error("方向候选为空：%s" % directions[row])
 		return null
 	var body := source.get_region(bounds)
-	var ratio: float = minf(float(MAX_WIDTH) / body.get_width(), float(MAX_HEIGHT) / body.get_height())
+	var ratio: float = minf(float(max_width) / body.get_width(), float(max_height) / body.get_height())
 	body.resize(maxi(1, roundi(body.get_width() * ratio)), maxi(1, roundi(body.get_height() * ratio)), Image.INTERPOLATE_LANCZOS)
-	var frame := Image.create_empty(SIDE, SIDE, false, Image.FORMAT_RGBA8)
-	frame.blit_rect(body, Rect2i(Vector2i.ZERO, body.get_size()), Vector2i((SIDE - body.get_width()) / 2, FOOT_Y - body.get_height()))
+	var frame := Image.create_empty(side, side, false, Image.FORMAT_RGBA8)
+	frame.blit_rect(body, Rect2i(Vector2i.ZERO, body.get_size()), Vector2i((side - body.get_width()) / 2, foot_y - body.get_height()))
 	return frame
 
 func _visible_bounds(source: Image) -> Rect2i:
@@ -77,8 +107,8 @@ func _visible_bounds(source: Image) -> Rect2i:
 	return Rect2i(left, top, right - left + 1, bottom - top + 1)
 
 func _tint(frame: Image, state: int) -> void:
-	for y in SIDE:
-		for x in SIDE:
+	for y in side:
+		for x in side:
 			var color := frame.get_pixel(x, y)
 			if color.a <= 0.0:
 				continue

@@ -198,7 +198,7 @@ func _validate_monster_appearance(spec: Dictionary) -> Array[String]:
 		report.append("[monsterAppearances] %s 的 headHpY 必须是数值" % id)
 	if spec.has("displayScale") and (not (spec.displayScale is float or spec.displayScale is int) or float(spec.displayScale) <= 0.0):
 		report.append("[monsterAppearances] %s 的 displayScale 必须大于 0" % id)
-	if renderer in ["sample_atlas", "static_atlas"]:
+	if renderer in ["sample_atlas", "static_atlas", "directional_preview"]:
 		var fields := ["main"] if renderer == "sample_atlas" else ["texture"]
 		if renderer == "sample_atlas":
 			fields.append_array(["walk", "extra"])
@@ -215,8 +215,6 @@ func _validate_monster_appearance(spec: Dictionary) -> Array[String]:
 			report.append("[monsterAppearances] %s 的 hframes 无效" % id)
 	if renderer == "animation_pack" and not MonsterAnimationLibrary.PACKS.has(String(spec.get("assetKey", ""))):
 		report.append("[monsterAppearances] %s 的 animation_pack 未在生成库登记" % id)
-	if renderer == "directional_preview" and id != "c2_spirit_larva":
-		report.append("[monsterAppearances] %s 未配置方向试玩表现" % id)
 	if renderer == "chapter2_manifest" and String(spec.get("assetKey", "")).is_empty():
 		report.append("[monsterAppearances] %s 缺少第二章清单 assetKey" % id)
 	return report

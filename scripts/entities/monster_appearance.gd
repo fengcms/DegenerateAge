@@ -19,9 +19,10 @@ static func attach(actor: Node2D, appearance_id: String) -> CanvasItem:
 		"animation_pack":
 			art = MonsterActorArt.attach_monster(actor, String(spec.get("assetKey", "")))
 		"directional_preview":
-			# 逐方向单帧试玩；与已审核的正式动画包分开登记。
-			if appearance_id == "c2_spirit_larva":
-				art = MonsterDirectionalPreviewArt.attach_preview(actor)
+			# 逐方向单帧试玩；同 ID 实例复用地图级缓存，与正式动画包分开登记。
+			var point: Array = spec.get("offset", [0, 0])
+			art = MonsterDirectionalPreviewArt.attach_preview(actor, appearance_id,
+				String(spec.get("texture", "")), Vector2(float(point[0]), float(point[1])))
 		"chapter2_manifest":
 			art = ChapterTwoArt.attach(actor, String(spec.get("assetKey", "")))
 		"sample_atlas":

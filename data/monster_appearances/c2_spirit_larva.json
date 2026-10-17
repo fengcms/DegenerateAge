@@ -1,6 +1,8 @@
 {
   "id": "c2_spirit_larva",
   "renderer": "directional_preview",
+  "texture": "res://assets/sprites/monsters/c2_spirit_larva/directional_preview_atlas.png",
+  "offset": [-40, -64],
   "headHpY": -70,
   "desc": "八方向单帧试玩稿：移动和攻击可转向，受击与死亡保留变色反馈；尚非正式五状态动画。"
 }
