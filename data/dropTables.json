@@ -363,7 +363,7 @@
   },
   {
     "id": "DT_C2_Boss",
-    "desc": "第二章 Boss，传说是独立追加品质槽。",
+    "desc": "第二章 Boss，传说是独立追加品质槽；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -437,6 +437,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       }
     ]
   },
@@ -543,7 +551,7 @@
   },
   {
     "id": "DT_C2_Boss_Final",
-    "desc": "第二章井心 Lv20 三轴掉落。",
+    "desc": "第二章井心 Lv20 三轴掉落；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -617,6 +625,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       },
       {
         "kind": "mount",
@@ -728,7 +744,7 @@
   },
   {
     "id": "DT_C2_Boss_Slag",
-    "desc": "炉渣吞噬者专属池，传说追加槽只掉吞噬者之心。",
+    "desc": "炉渣吞噬者专属池，传说追加槽只掉吞噬者之心；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -802,6 +818,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       }
     ]
   },
@@ -907,7 +931,7 @@
   },
   {
     "id": "DT_C3_Boss",
-    "desc": "第三章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加。",
+    "desc": "第三章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -981,6 +1005,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       }
     ]
   },
@@ -1086,7 +1118,7 @@
   },
   {
     "id": "DT_C4_Boss",
-    "desc": "第四章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加。",
+    "desc": "第四章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -1160,6 +1192,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       }
     ]
   },
@@ -1265,7 +1305,7 @@
   },
   {
     "id": "DT_C5_Boss",
-    "desc": "第五章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加。",
+    "desc": "第五章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -1339,6 +1379,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       }
     ]
   },
@@ -1444,7 +1492,7 @@
   },
   {
     "id": "DT_C6_Boss",
-    "desc": "第六章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加。",
+    "desc": "第六章 Boss；基础 5—8 + 好装 2 + 传说独立 5% 追加；含如意槽。",
     "entries": [
       {
         "kind": "coin",
@@ -1518,6 +1566,14 @@
         "chance": 1.0,
         "itemId": "potion_mp_large",
         "count": 2
+      },
+      {
+        "kind": "rune",
+        "chance": 0.3,
+        "itemIds": [
+          "rune_iron",
+          "rune_jade"
+        ]
       }
     ]
   }

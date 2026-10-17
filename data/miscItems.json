@@ -18,7 +18,7 @@
     "name": "回城卷",
     "useType": "townPortal",
     "animation": "",
-    "desc": "传送回安全区起始位置。"
+    "desc": "使用后回到最近的安全城镇。"
   },
   {
     "id": "misc_revive_scroll",

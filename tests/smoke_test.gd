@@ -446,20 +446,41 @@ func _test_warehouse() -> void:
 
 func _test_rune_loot() -> void:
 	# M6-0b（创意 07 §6）：如意口径收敛为「固定 1 份、30%、iron/jade 各 50%」。
-	var found := {}
-	var max_per_batch := 0
-	for seed_value in range(500):
-		var rng := RandomNumberGenerator.new()
-		rng.seed = seed_value
-		var n := 0
-		for item in Loot.roll("DT_Boss_L1", rng, "boss_corrupted_beast"):
-			if String(item.get("kind", "")) == "rune":
-				found[String(item.get("itemId", ""))] = true
-				n += 1
-		max_per_batch = maxi(max_per_batch, n)
-	_expect(found.size() == 2 and found.has("rune_iron") and found.has("rune_jade"),
-		"Boss 如意应只产 iron/jade 两种，实际 %s" % [found.keys()])
-	_expect(max_per_batch <= 1, "Boss 每批如意应不超过 1 份，实际 %d" % max_per_batch)
+	# 产品口径（产品需求梳理 §6.16.2 + M6-0 决策 A）：如意仅由 Boss 掉落；
+	# 第一～六章 Boss 表均须接入，否则离开第一章即断供。
+	var boss_by_table := {}
+	for row in DataLoader.get_table("monsters"):
+		if not row is Dictionary:
+			continue
+		var m: Dictionary = row
+		if String(m.get("kind", "")) != "boss":
+			continue
+		var table := String(m.get("dropTableId", ""))
+		if not table.is_empty() and not boss_by_table.has(table):
+			boss_by_table[table] = String(m.get("id", ""))
+	var boss_tables := [
+		"DT_Boss_L1", "DT_C2_Boss", "DT_C2_Boss_Final", "DT_C2_Boss_Slag",
+		"DT_C3_Boss", "DT_C4_Boss", "DT_C5_Boss", "DT_C6_Boss",
+	]
+	for table in boss_tables:
+		_expect(boss_by_table.has(table), "%s 应有 kind=boss 的怪物来源" % table)
+		if not boss_by_table.has(table):
+			continue
+		var monster_id: String = boss_by_table[table]
+		var found := {}
+		var max_per_batch := 0
+		for seed_value in range(200):
+			var rng := RandomNumberGenerator.new()
+			rng.seed = seed_value
+			var n := 0
+			for item in Loot.roll(table, rng, monster_id):
+				if String(item.get("kind", "")) == "rune":
+					found[String(item.get("itemId", ""))] = true
+					n += 1
+			max_per_batch = maxi(max_per_batch, n)
+		_expect(found.size() == 2 and found.has("rune_iron") and found.has("rune_jade"),
+			"%s 如意应只产 iron/jade 两种，实际 %s" % [table, found.keys()])
+		_expect(max_per_batch <= 1, "%s 每批如意应不超过 1 份，实际 %d" % [table, max_per_batch])
 	var other_rng := RandomNumberGenerator.new()
 	other_rng.seed = 42
 	for item in Loot.roll("DT_Boss_L1", other_rng, "wolf_corrupted"):
@@ -2664,6 +2685,22 @@ func _test_consumable() -> void:
 	_expect(tip.contains("双击使用"), "药水 tooltip 应提示「双击使用」：%s" % tip)
 	var tip2 := String(panel._bag_tooltip({"kind": "quest", "itemId": "spirit_shard", "count": 1}))
 	_expect(tip2.contains("不可使用"), "任务物品 tooltip 应说明不可使用：%s" % tip2)
+	# ⑬ 非装备 tooltip 按数据分流：如意说明为升星材料；杂项按 useType 给出说明，不得兜底成「暂未开放」
+	var rune_tip := String(panel._bag_tooltip({"kind": "rune", "itemId": "rune_iron", "count": 1}))
+	_expect(rune_tip.contains("升星"), "如意 tooltip 应说明为升星材料：%s" % rune_tip)
+	_expect(rune_tip.contains("+5%"), "铁如意 tooltip 应显示成功率加成 5%%：%s" % rune_tip)
+	var jade_tip := String(panel._bag_tooltip({"kind": "rune", "itemId": "rune_jade", "count": 1}))
+	_expect(jade_tip.contains("+10%"), "玉如意 tooltip 应显示成功率加成 10%%：%s" % jade_tip)
+	var ticket_tip := String(panel._bag_tooltip({"kind": "misc", "itemId": "misc_random_ticket", "count": 1}))
+	_expect(ticket_tip.contains("传送到本图"), "随机券 tooltip 应说明图内传送：%s" % ticket_tip)
+	var scroll_tip := String(panel._bag_tooltip({"kind": "misc", "itemId": "misc_town_scroll", "count": 1}))
+	_expect(scroll_tip.contains("最近的安全城镇"), "回城卷 tooltip 应说明回到最近城镇：%s" % scroll_tip)
+	var revive_tip := String(panel._bag_tooltip({"kind": "misc", "itemId": "misc_revive_scroll", "count": 1}))
+	_expect(revive_tip.contains("复活"), "复活卷 tooltip 应说明复活用途：%s" % revive_tip)
+	var quest_bag_tip := String(panel._bag_tooltip({"kind": "misc", "itemId": "c2_pressure_plate", "count": 1}))
+	_expect(quest_bag_tip.contains("不可使用"), "任务袋杂物 tooltip 应说明不可使用：%s" % quest_bag_tip)
+	var firework_tip := String(panel._bag_tooltip({"kind": "misc", "itemId": "misc_firework", "count": 1}))
+	_expect(not firework_tip.contains("M4"), "杂项兜底文案不应再出现内部里程碑字样：%s" % firework_tip)
 	panel.queue_free()
 
 	GameState.reset_to_defaults()

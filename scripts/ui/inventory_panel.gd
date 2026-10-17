@@ -407,7 +407,7 @@ func _bag_tooltip(item: Dictionary) -> String:
 	return "\n".join(PackedStringArray(lines))
 
 ## 非装备物品的 tooltip（M2.5）：药水显示恢复量 / 冷却 / 使用方式；
-## 任务物与杂项明确说明不可使用（不静默）。
+## 如意说明其为升星材料；任务物明确说明不可使用；杂项按其 useType 给出对应说明。
 func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	var kind := String(item.get("kind", ""))
@@ -434,13 +434,30 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 	if kind == "quest":
 		out.append(Localization.tr_key("ui.inventory_panel.p033"))
 		return out
-	if kind == "misc" and item.get("itemId") == HotbarConfig.TOWN_SCROLL:
-		out.append(Localization.tr_key("ui.inventory_panel.p034"))
+	if kind == "rune":
+		var rune_tpl: Variant = DataLoader.get_entry("runes", String(item.get("itemId", "")))
+		var bonus := 0.0
+		if rune_tpl is Dictionary:
+			bonus = float((rune_tpl as Dictionary).get("successBonus", 0.0))
+		out.append(Localization.tr_key("ui.inventory_panel.p038") % int(round(bonus * 100.0)))
 		return out
-	if kind == "misc" and item.get("itemId") == HotbarConfig.RANDOM_TICKET:
-		out.append(Localization.tr_key("ui.inventory_panel.p035"))
-		return out
-	out.append(Localization.tr_key("ui.inventory_panel.p036"))
+	# 杂项按数据表 useType 分流，而非按具体 id 硬编码；
+	# 这样新增/调整过用途的物品不会落到兜底文案上显示成「未实现」。
+	var use_type := ""
+	var misc_tpl = DataLoader.get_entry("miscItems", String(item.get("itemId", "")))
+	if misc_tpl is Dictionary:
+		use_type = String((misc_tpl as Dictionary).get("useType", ""))
+	match use_type:
+		"townPortal":
+			out.append(Localization.tr_key("ui.inventory_panel.p034"))
+		"randomTeleport":
+			out.append(Localization.tr_key("ui.inventory_panel.p035"))
+		"revive":
+			out.append(Localization.tr_key("ui.inventory_panel.p039"))
+		"quest":
+			out.append(Localization.tr_key("ui.inventory_panel.p033"))
+		_:
+			out.append(Localization.tr_key("ui.inventory_panel.p036"))
 	return out
 
 # ---- 交互 ----
