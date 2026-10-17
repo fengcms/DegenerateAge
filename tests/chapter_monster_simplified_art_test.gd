@@ -28,7 +28,7 @@ func _ready() -> void:
 		monster.monster_id = id
 		add_child(monster)
 		monster.set_physics_process(false)
-		if id in ["c2_spirit_larva", "c2_copper_worm"]:
+		if id in ["c2_spirit_larva", "c2_copper_worm", "c2_broken_guard"]:
 			var preview := monster.sample_art as MonsterDirectionalPreviewArt
 			check(preview != null, "%s 装配八方向试玩外观" % id)
 			if preview != null:

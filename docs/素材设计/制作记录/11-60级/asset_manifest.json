@@ -270,11 +270,11 @@
       "source_art": "art_source/chapters/ch02/monsters/c2_broken_guard/",
       "runtime_art": "assets/sprites/monsters/c2_broken_guard/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_broken_guard/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_broken_guard/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {
