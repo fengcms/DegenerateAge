@@ -105,7 +105,7 @@ Godot 的 `_draw()` 命令缓存只避免反复执行绘制脚本，不等于减
 
 ```bash
 # 地图、刷新、寻路、缓存与素材合批的定向回归
-python3 tools/run_isolated_tests.py MapCanvasCacheTest SpawnerBudgetTest CaveConnectivityTest MapLoadingCacheTest FlatTerrainMeshTest MapTextureBatchTest MapPerformanceTest
+python3 tools/run_isolated_tests.py MapCanvasCacheTest MapRouteOverlayTest SpawnerBudgetTest CaveConnectivityTest MapLoadingCacheTest FlatTerrainMeshTest MapTextureBatchTest MapPerformanceTest
 
 # 通行、实际移动与章节二场景行为
 python3 tools/run_isolated_tests.py CaveLayoutTest CaveNavigationTest CaveAutoBattleTest AutoControlAcceptance ChapterTwoEncountersTest ChapterTwoRoutesTest
@@ -120,7 +120,7 @@ python3 tools/run_isolated_tests.py SmokeTest
 python3 tools/run_isolated_tests.py --all
 ```
 
-上面的定向入口与默认集（`tools/run_isolated_tests.py` 的 `DEFAULT_TESTS`，当前 28 项）都只是 `tests/` 全量场景（当前 90 项）中的**常用子集**，不能当作全量覆盖；改动面大、跨域或发布前检查时用 `--all` 跑全量。
+上面的定向入口与默认集（`tools/run_isolated_tests.py` 的 `DEFAULT_TESTS`，当前 30 项）都只是 `tests/` 全量场景（当前 96 项）中的**常用子集**，不能当作全量覆盖；改动面大、跨域或发布前检查时用 `--all` 跑全量。
 
 按改动范围选择测试，不要求每个文案或低影响改动运行全部性能检查。物品/装备、技能、掉落和任务变更须补跑对应已有测试。性能热点修改需增加能发现真实回退的验证，例如移动不重建底图、同轮不突破预算、候选不批量构建路线；不要只复述实现写测试。
 

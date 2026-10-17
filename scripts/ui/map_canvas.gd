@@ -8,6 +8,8 @@ signal destination_selected(world_position: Vector2)
 var _map_id := ""
 var _player_position := Vector2.ZERO
 var _markers: Array[Dictionary] = []
+## 自动寻路的行进路线折线（世界坐标）；由 refresh() 从玩家侧读取，无寻路时为空。
+var _route: Array[Vector2] = []
 var _refresh_t := 0.0
 var _overlay: Node2D
 var _projection_map := ""
@@ -30,6 +32,18 @@ var background_draw_count := 0
 ## 等宽字体（M4-10）：小地图上的标记字母（N/B）不经主题，显式引用与 default_theme
 ## 相同的字体资源，保证数字 / 字母等宽对齐。
 const MONO_FONT := preload("res://assets/themes/mono_font.tres")
+
+## 自动寻路虚线路线：大地图与小地图共用同一套绘制（本文件是小/大地图唯一绘制源）。
+## 线色与玩家标记同系（"这是你的路线"），终点空心金环与任务目标标记同色。
+const ROUTE_COLOR := Color("6eebe6")
+const ROUTE_TARGET_COLOR := Color("f2cb5b")
+const ROUTE_WIDTH_MINIMAP := 2.0
+const ROUTE_WIDTH_BIG := 3.0
+const ROUTE_DASH_MINIMAP := 5.0
+const ROUTE_DASH_BIG := 8.0
+const ROUTE_TARGET_RADIUS_MINIMAP := 4.0
+const ROUTE_TARGET_RADIUS_BIG := 6.0
+const ROUTE_TARGET_WIDTH := 2.0
 
 ## 注册迷雾事件与标记层，首次显示时构建静态背景。
 func _ready() -> void:
@@ -67,8 +81,11 @@ func _invalidate_background() -> void:
 
 ## 读取玩家、导航版本与地图标记，按实际变化更新两层绘制缓存。
 func refresh() -> void:
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 	var position_now := player.global_position if player != null else MapService.entry_point(GameState.current_map)
+	var route: Array[Vector2] = []
+	if player != null:
+		route = player.map_move_route()
 	var world := get_tree().get_first_node_in_group("map_world")
 	var markers := MapMarkers.for_world(world)
 	var ground := world.get_node_or_null("Ground") as IsoGround if world != null else null
@@ -88,10 +105,12 @@ func refresh() -> void:
 		_background_revision = revision
 		_ensure_projection()
 		_invalidate_background()
-	if GameState.current_map != _map_id or position_now != _player_position or markers != _markers:
+	# 换图时该分支同样执行，路线缓存随之归零，不会残留上一张图的虚线。
+	if GameState.current_map != _map_id or position_now != _player_position or markers != _markers or route != _route:
 		_map_id = GameState.current_map
 		_player_position = position_now
 		_markers = markers
+		_route = route
 		_overlay.queue_redraw()
 
 ## 从地图配置重建世界到控件的投影；营地用屏幕矩形，其他图用等距外框。
@@ -124,6 +143,10 @@ func world_rect() -> Rect2:
 func map_scale() -> float:
 	_ensure_projection()
 	return _scale
+
+## 当前绘制的自动寻路路线折线（世界坐标）；无寻路时为空数组。供测试与外部查询。
+func route_points() -> Array[Vector2]:
+	return _route
 
 ## 将世界像素映射到当前地图控件坐标，供标记和点击使用。
 func world_to_canvas(world: Vector2) -> Vector2:
@@ -231,6 +254,8 @@ func _draw_markers() -> void:
 	_ensure_projection()
 	if not MapService.exists(GameState.current_map):
 		return
+	# 路线先画（压在标记之下），避免虚线遮挡 NPC / Boss / 出口的文字与图标。
+	_draw_route()
 	for marker in _markers:
 		if not _marker_visible(marker):
 			continue
@@ -253,3 +278,18 @@ func _draw_markers() -> void:
 			_overlay.draw_string(MONO_FONT, p + Vector2(7, 4), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
 	_overlay.draw_circle(world_to_canvas(_player_position), 4 if minimap else 6, Color("6eebe6"))
 	_overlay.draw_arc(world_to_canvas(_player_position), 6 if minimap else 9, 0, TAU, 24, Color.WHITE, 1, true)
+
+## 绘制自动寻路的行进路线：从人物当前坐标到目标的虚线，终点补一个空心金环。
+## 折线由 Player.map_move_route() 提供（洞穴地图为绕障路点，非洞穴为两点直线）；
+## 无寻路时为空数组，此时不画任何内容。
+func _draw_route() -> void:
+	if _route.size() < 2:
+		return
+	var width := ROUTE_WIDTH_MINIMAP if minimap else ROUTE_WIDTH_BIG
+	var dash := ROUTE_DASH_MINIMAP if minimap else ROUTE_DASH_BIG
+	for index in range(_route.size() - 1):
+		_overlay.draw_dashed_line(world_to_canvas(_route[index]), world_to_canvas(_route[index + 1]),
+			ROUTE_COLOR, width, dash, true, true)
+	var target := world_to_canvas(_route[_route.size() - 1])
+	var radius := ROUTE_TARGET_RADIUS_MINIMAP if minimap else ROUTE_TARGET_RADIUS_BIG
+	_overlay.draw_arc(target, radius, 0, TAU, 20, ROUTE_TARGET_COLOR, ROUTE_TARGET_WIDTH, true)

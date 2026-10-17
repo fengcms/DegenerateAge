@@ -3890,10 +3890,15 @@ func _test_fog_ui() -> void:
 	mouse.pressed = true
 	mouse.position = canvas_point
 	canvas._gui_input(mouse)
-	_expect(not panel.visible and not GameState.panel_open and player.map_move_active, "大地图点击未关闭面板并发起真实移动")
+	# 点击本图位置 = 下发真实自动寻路；面板**保留**，让玩家当场看到行进路线虚线。
+	_expect(panel.visible and GameState.panel_open and player.map_move_active, "大地图点击派发行进目标且保留面板供查看路线")
+	_expect(panel._hint.text == Localization.tr_key("ui.map_big_panel.p008"), "点击后提示应说明已下发行进路线")
 	var before := player.global_position
 	await get_tree().create_timer(0.5).timeout
 	_expect(player.global_position.distance_to(before) > 10 and player.global_position.distance_to(point) < before.distance_to(point), "地图点击后角色未接近目的地")
+	canvas.refresh()
+	var route := canvas.route_points()
+	_expect(route.size() >= 2 and route[route.size() - 1].is_equal_approx(point), "大地图虚线应连接角色与目标坐标")
 	var pilot: AutoBattle = player.get_node("AutoPilot")
 	_expect(pilot.get("_state") == AutoBattle.State.MANUAL_OVERRIDE, "地图行走被自动战斗抢占")
 	panel.set_open(true)

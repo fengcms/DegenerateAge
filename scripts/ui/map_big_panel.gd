@@ -1,8 +1,9 @@
 extends Control
 ## M3-3：沿用关闭式面板互斥/屏蔽指令规则，世界继续模拟。
 
-## 标题行与底部图例所需的逻辑高度；缩放时优先收紧地图画布，避免外框越界。
-const MAP_VERTICAL_CHROME_BUDGET := 250.0
+## 标题行、当前位置、图例、路线提示与目标说明所需的逻辑高度；缩放时优先收紧地图画布，
+## 避免外框越界（图例含路线/终点两项后需要多留一行，取 260）。
+const MAP_VERTICAL_CHROME_BUDGET := 260.0
 var _title: Label
 var _info: Label
 var _map: MapCanvas
@@ -55,7 +56,9 @@ func _on_destination(point: Vector2) -> void:
 		_hint.text = Localization.tr_key("ui.map_big_panel.p004")
 		EventBus.toast_requested.emit(_hint.text, "danger")
 		return
-	set_open(false)
+	# 面板**不关闭**：让玩家当场看到刚下发的行进路线（青色虚线 + 金色终点环）。
+	# 角色此时已开始自动行走，路线随人物实时推进；此后仍可继续点选别处改目标。
+	_hint.text = Localization.tr_key("ui.map_big_panel.p008")
 
 func _build() -> void:
 	var dim := ColorRect.new()

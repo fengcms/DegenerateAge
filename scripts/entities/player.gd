@@ -169,6 +169,27 @@ func request_map_move(point: Vector2) -> bool:
 	begin_manual_command()
 	return true
 
+## 自动寻路进行中时的行进路线折线（世界坐标；首点=人物当前坐标，末点=目标），供地图 UI 画虚线。
+## 无洞穴布局的地图为两点直线；洞穴地图为绕障路点序列，已走过的路点会被裁掉。
+## 路线尚未算出（洞穴内首帧）时返回空数组——宁可短暂不显示，也不画出穿墙直线。
+func map_move_route() -> Array[Vector2]:
+	if not map_move_active:
+		return []
+	var ground: IsoGround = null
+	var world := get_tree().get_first_node_in_group("map_world")
+	if world != null:
+		ground = world.get_node_or_null("Ground") as IsoGround
+	if ground == null or ground.cave == null:
+		var straight: Array[Vector2] = [global_position, _map_destination]
+		return straight
+	if _cave_path.is_empty():
+		return []
+	var points: Array[Vector2] = [global_position]
+	for index in range(_cave_path_index, _cave_path.size()):
+		points.append(_cave_path[index])
+	points.append(_map_destination)
+	return points
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		_map_background = true

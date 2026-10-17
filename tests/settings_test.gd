@@ -445,7 +445,7 @@ func _check_panels_matrix() -> void:
 					_check(largest != null and largest.global_position.x >= -1 and largest.global_position.y >= -1
 						and largest.global_position.x + largest.size.x <= logical.x + 1
 						and largest.global_position.y + largest.size.y <= logical.y + 1,
-						"%s 应完整落在可见区域（%.1f @ %s）" % [name, factor, viewport_size])
+						"%s 应完整落在可见区域（%.1f @ %s）：%s / 逻辑 %s" % [name, factor, viewport_size, largest.size, logical])
 					responsive.visible = false
 	await _check_extreme_scale(ui, embedded)
 	# 新增文字应在入树后自动获得同一倍率，不依赖再次打开设置。
