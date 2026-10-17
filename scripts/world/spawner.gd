@@ -132,7 +132,12 @@ func _process(_delta: float) -> void:
 			continue
 		var remaining := _remaining(p)
 		if remaining > 0.0:
-			if is_instance_valid(p.marker):
+			# M4-10 修复：等待期墓碑可能因装配时序缺失（未解锁 → 本图内解锁、
+			# 预算、旧档），这里幂等补建；已存在时 `_place_tombstone` 首行即返回，
+			# 只刷新剩余秒数，与原先的开销等价。
+			if bool(p.get("tombstone", false)):
+				_place_tombstone(p, remaining)
+			elif is_instance_valid(p.marker):
 				p.marker.set_remaining(remaining)
 			continue
 		if _spawn(p, active):
@@ -159,6 +164,15 @@ func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	var unlock := String(point.get("requires_unlock", ""))
 	if not unlock.is_empty() and not bool(GameState.unlocks.get(unlock, false)):
 		return false
+	# M4-10 修复（审阅 2026-10-17「Boss 墓碑跨地图消失」）：等待期先落墓碑。
+	# 墓碑是刷新状态的可视化，不能被「玩家当前距离」「本图生成预算」这类**生成**前置
+	# 条件挡住 —— 否则 fixed 点在远程装配时（跨图回来、从入口进图）永不显示墓碑。
+	var remaining := _remaining(point)
+	if remaining > 0.0:
+		if bool(point.get("tombstone", false)):
+			_place_tombstone(point, remaining)
+		point.entry = null
+		return false
 	if bool(point.get("fixed", false)) and _player != null \
 			and (point.position as Vector2).distance_to(_player.global_position) > ACTIVE_DISTANCE:
 		return false
@@ -168,13 +182,6 @@ func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	var kind := String(point.get("kind", "normal"))
 	var cap := _cap_for(kind)
 	if cap != UNLIMITED_CAP and int(counts.get(kind, 0)) >= cap:
-		return false
-	# M4-10：仍在刷新等待期 → 不生成怪物；「墓碑点」显示墓碑，其余静默等待。
-	var remaining := _remaining(point)
-	if remaining > 0.0:
-		if bool(point.get("tombstone", false)):
-			_place_tombstone(point, remaining)
-		point.entry = null
 		return false
 
 	var m: Monster = MONSTER_SCENE.instantiate()

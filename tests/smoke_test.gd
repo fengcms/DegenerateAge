@@ -71,6 +71,8 @@ func _ready() -> void:
 	await _test_world()
 	await _test_map_reload()
 	await _test_spawn_respawn_cross_map()
+	await _test_tombstone_fixed_remote_assembly()
+	await _test_tombstone_missing_marker_heals()
 	await _test_auto_hud_reload()
 	_test_fog()
 	await _test_fog_ui()
@@ -3584,6 +3586,92 @@ func _test_spawn_respawn_cross_map() -> void:
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
 
+## 审阅 2026-10-17「Boss 墓碑跨地图消失」回归 A（锁 S1）：fixed 点在**远程装配**时
+## 必须照样落墓碑。用真实地图 c6_map05（Boss cells:[[193,63]]，入口 [9,63]），
+## 装配时玩家在入口，距 Boss 6583px ≫ ACTIVE_DISTANCE —— 旧实现先被 fixed 距离
+## 检查挡掉，墓碑永不生成，跨图回来即「墓碑消失」。
+## ⚠ 断言必须在**装配后 0 帧**执行：S2 的 _process 补建会掩盖 S1 的回归。
+func _test_tombstone_fixed_remote_assembly() -> void:
+	GameState.reset_to_defaults()
+	var map_id := "c6_map05"
+	var boss_id := "c6_boss03"
+	var boss_pos := Iso.grid_to_world(Vector2i(193, 63))
+	var entry_pos := Iso.grid_to_world(Vector2i(9, 63))
+	var gap := boss_pos.distance_to(entry_pos)
+	_expect(gap > MonsterSpawner.ACTIVE_DISTANCE,
+		"前提：本图入口应距 Boss 超过 ACTIVE_DISTANCE（实际 %.1f）" % gap)
+	var spec: Dictionary = (DataLoader.get_entry("maps", map_id) as Dictionary).get("bossSpawn", {}).duplicate()
+	spec["ai"] = false
+	# 造出「刚被击杀、剩 600s」的刷新状态（等价于击杀后跨图返回）
+	GameState.mark_spawn_dead(map_id, boss_id, 0, 600.0, boss_pos)
+
+	var player := Node2D.new()
+	add_child(player)
+	player.global_position = entry_pos
+	var sp := MonsterSpawner.new()
+	add_child(sp)
+	sp.setup(null, player)
+	sp.spawn_from_specs([spec], map_id)
+
+	var tomb := _tombstone_of(sp)
+	_expect(tomb != null, "远程装配后应立刻重建墓碑（修复前此处为空）")
+	if tomb != null:
+		_expect(tomb.position.distance_to(boss_pos) < 1.0,
+			"墓碑应落在死亡记录位置（实际 %s vs %s）" % [str(tomb.position), str(boss_pos)])
+	_expect(_find_monster(sp, boss_id) == null, "未到点不应生成 Boss")
+
+	# 走近后跑若干帧：墓碑仍在（距离 / 预算变化不得误删墓碑）
+	player.global_position = boss_pos
+	for _i in range(10):
+		await get_tree().process_frame
+	_expect(_tombstone_of(sp) != null, "走近后墓碑应仍在")
+
+	# 到点：墓碑消失、Boss 重生、刷新状态清除
+	GameState.world_time += 601.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_expect(_find_monster(sp, boss_id) != null, "到点后 Boss 应重生")
+	_expect(_tombstone_count(sp) == 0, "到点后墓碑应消失（实际剩 %d 个）" % _tombstone_count(sp))
+	_expect(not GameState.spawn_respawn.has(GameState.spawn_key(map_id, boss_id, 0)),
+		"到点后刷新状态应被清除")
+
+	sp.queue_free()
+	player.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
+## 回归 B（锁 S2）：等待期墓碑若在装配期缺失（同会话解锁、旧档等），_process 必须补建。
+## 本用例不传玩家 ⇒ 距离检查全程不生效，专门隔离 S2。
+func _test_tombstone_missing_marker_heals() -> void:
+	GameState.reset_to_defaults()
+	var map_id := "c6_map05"
+	var boss_id := "c6_boss03"
+	var boss_pos := Iso.grid_to_world(Vector2i(193, 63))
+	var spec: Dictionary = (DataLoader.get_entry("maps", map_id) as Dictionary).get("bossSpawn", {}).duplicate()
+	spec["ai"] = false
+	GameState.mark_spawn_dead(map_id, boss_id, 0, 600.0, boss_pos)
+
+	var sp := MonsterSpawner.new()
+	add_child(sp)
+	sp.setup(null, null)
+	sp.spawn_from_specs([spec], map_id)
+	var first := _tombstone_of(sp)
+	_expect(first != null, "无玩家时也应有墓碑")
+	# 模拟「装配期未建成」：移除节点并清掉点上的引用
+	if first != null:
+		first.queue_free()
+	if not sp._points.is_empty():
+		var point: Dictionary = sp._points[0]
+		point["marker"] = null
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_expect(_tombstone_count(sp) == 1,
+		"缺失的墓碑应由 _process 补建且只留一个（实际 %d 个）" % _tombstone_count(sp))
+
+	sp.queue_free()
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
+
 ## 生成器下存活（未死）且 id 匹配的怪物；无 → null。
 func _find_monster(spawner: Node, monster_id: String) -> Monster:
 	for child in spawner.get_children():
@@ -3602,10 +3690,22 @@ func _count_monsters(spawner: Node, monster_id: String = "") -> int:
 
 ## 生成器下是否含墓碑节点。
 func _has_tombstone(spawner: Node) -> bool:
+	return _tombstone_of(spawner) != null
+
+## 生成器下的墓碑节点（无 → null）。
+func _tombstone_of(spawner: Node) -> BossTombstone:
 	for child in spawner.get_children():
 		if child is BossTombstone:
-			return true
-	return false
+			return child
+	return null
+
+## 生成器下的墓碑节点数。
+func _tombstone_count(spawner: Node) -> int:
+	var n := 0
+	for child in spawner.get_children():
+		if child is BossTombstone:
+			n += 1
+	return n
 
 # ---- 本地化：收尾闸门 + 缺 key 回退（F-P2-2 / H-P2-3）----
 func _test_localization() -> void:
