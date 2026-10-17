@@ -1,0 +1,8 @@
+{
+  "id": "c2_boss_hundred_arm_extractor",
+  "side": 192,
+  "foot_y": 152,
+  "max_width": 174,
+  "max_height": 144,
+  "directions": ["south_candidate_v1.png", "sw_candidate_v1.png", "west_candidate_v1.png", "nw_candidate_v2.png", "north_candidate_v2.png", "ne_candidate_v2.png", "east_candidate_v1.png"]
+}

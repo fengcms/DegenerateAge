@@ -522,11 +522,11 @@
       "source_art": "art_source/chapters/ch02/monsters/c2_boss_slag_devourer/",
       "runtime_art": "assets/sprites/monsters/c2_boss_slag_devourer/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_boss_slag_devourer/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_boss_slag_devourer/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {
@@ -543,11 +543,11 @@
       "source_art": "art_source/chapters/ch02/monsters/c2_boss_hundred_arm_extractor/",
       "runtime_art": "assets/sprites/monsters/c2_boss_hundred_arm_extractor/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch02/monsters/c2_boss_hundred_arm_extractor/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c2_boss_hundred_arm_extractor/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {

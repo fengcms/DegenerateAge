@@ -1,12 +1,8 @@
 {
   "id": "c2_boss_hundred_arm_extractor",
-  "renderer": "static_atlas",
-  "texture": "res://assets/sprites/monsters/c2_boss_hundred_arm_extractor/simplified_atlas.png",
-  "hframes": 3,
-  "offset": [
-    -96,
-    -152
-  ],
+  "renderer": "directional_preview",
+  "texture": "res://assets/sprites/monsters/c2_boss_hundred_arm_extractor/directional_preview_atlas.png",
+  "offset": [-96, -152],
   "headHpY": -160,
-  "desc": "临时简化表现：单个东南向造型，受击与死亡变色；八向五状态动画待补。"
+  "desc": "八方向单帧试玩稿：正面紫色封印核心、背面供灵筒和四条主机械臂随移动与攻击朝向切换；逐帧动画待补。"
 }
