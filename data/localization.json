@@ -149,6 +149,7 @@
   "ui.inventory_panel.p038": "升星材料：在锻造面板作为投入材料，可提升升星成功率（+%d%%）",
   "ui.inventory_panel.p039": "死亡后于死亡面板使用；原地复活（消耗 ×1）",
   "ui.inventory_panel.p040": "使用：打开%s",
+  "ui.inventory_panel.p041": "（60 级以上取固定值与上限 %d%% 中的较高者）",
   "ui.map_big_panel.p001": "%s　·　大地图",
   "ui.map_big_panel.p002": "当前位置 (%d, %d)　·　推荐 Lv%d",
   "ui.map_big_panel.p003": "点击本图位置步行前往 · WASD / 攻击可接管 · M / Esc 关闭",
