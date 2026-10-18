@@ -15,7 +15,6 @@ const TEXTURES := {
 	"c3_boss02": preload("res://assets/sprites/monsters/c3_boss02/simplified_atlas.png"),
 	"c3_boss03": preload("res://assets/sprites/monsters/c3_boss03/simplified_atlas.png"),
 	"c4_normal01": preload("res://assets/sprites/monsters/c4_normal01/simplified_atlas.png"),
-	"c4_normal02": preload("res://assets/sprites/monsters/c4_normal02/simplified_atlas.png"),
 	"c4_normal03": preload("res://assets/sprites/monsters/c4_normal03/simplified_atlas.png"),
 	"c4_normal04": preload("res://assets/sprites/monsters/c4_normal04/simplified_atlas.png"),
 	"c4_normal05": preload("res://assets/sprites/monsters/c4_normal05/simplified_atlas.png"),
