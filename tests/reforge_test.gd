@@ -8,7 +8,7 @@ extends Node
 ## 2. **用例 16 的分岔必须靠 `kind`** —— 真实数据里非装备都没有 `requiredLevel`，
 ##    所以「D-15 对全品类生效」这个错误在真实数据上看不出来（等级回退 1 ⇒ 倍率 1.0）。
 ##    必须注入一行带 `requiredLevel: 1000` 的药水作探针，才能证明分岔是结构性的。
-## 3. **用例 10/11 的拒绝必须有牙** —— 普通品质重铸一次就是 36,000 金打水漂。
+## 3. **用例 10/11 的拒绝必须有牙** —— 普通品质重铸一次就是 52,500 金打水漂。
 
 ## 随机流快照（重构前导出，20 行 × 固定种子 1000+序号）。
 ## 每行：{id, tier, quality, level, affixes: [[stat, value]…], pctAttrs: [[stat, value]…]}。
@@ -101,13 +101,13 @@ func _affix_pool(item_id: String) -> Array:
 	var tpl = DataLoader.get_entry("equipments", item_id)
 	return (tpl as Dictionary).get("affixPool", []) if tpl is Dictionary else []
 
-# ---- 1) 费用四个点（产品 D-17）----
+# ---- 1) 费用四个点（M10-9 调校后：500 × (60 + 0.75L)）----
 
 func _test_cost_points() -> void:
-	check(Reforge.cost(60) == 36000, "L60 重铸费应为 36,000，实际 %d" % Reforge.cost(60))
-	check(Reforge.cost(61) == 36200, "L61 重铸费应为 36,200，实际 %d" % Reforge.cost(61))
-	check(Reforge.cost(100) == 44000, "L100 重铸费应为 44,000，实际 %d" % Reforge.cost(100))
-	check(Reforge.cost(1000) == 224000, "L1000 重铸费应为 224,000，实际 %d" % Reforge.cost(1000))
+	check(Reforge.cost(60) == 52500, "L60 重铸费应为 52,500，实际 %d" % Reforge.cost(60))
+	check(Reforge.cost(61) == 52875, "L61 重铸费应为 52,875，实际 %d" % Reforge.cost(61))
+	check(Reforge.cost(100) == 67500, "L100 重铸费应为 67,500，实际 %d" % Reforge.cost(100))
+	check(Reforge.cost(1000) == 405000, "L1000 重铸费应为 405,000，实际 %d" % Reforge.cost(1000))
 
 # ---- 2) 参数必须真的接线（改了 json 立刻生效）----
 
@@ -117,12 +117,12 @@ func _test_cost_params_wired() -> void:
 	var original_base := int(reforge.get("baseGold", 0))
 	var original_factor := float(reforge.get("levelFactor", 0.0))
 	reforge["baseGold"] = 800
-	check(Reforge.cost(60) == 72000, "baseGold 改成 800 后 L60 应为 72,000（写死 400 即红）")
+	check(Reforge.cost(60) == 84000, "baseGold 改成 800 后 L60 应为 84,000（写死常量即红）")
 	reforge["baseGold"] = original_base
 	reforge["levelFactor"] = 0.0
-	check(Reforge.cost(100) == 24000, "levelFactor 归零后 L100 应等于 baseGold×levelBase（漏乘即红）")
+	check(Reforge.cost(100) == 30000, "levelFactor 归零后 L100 应等于 baseGold×levelBase（漏乘即红）")
 	reforge["levelFactor"] = original_factor
-	check(Reforge.cost(60) == 36000, "还原参数后应回到 36,000")
+	check(Reforge.cost(60) == 52500, "还原参数后应回到 52,500")
 
 # ---- 3) 配置缺失：返回 -1 并拒绝，不回退常量 ----
 
@@ -137,13 +137,13 @@ func _test_missing_config() -> void:
 	check(String(guard.get("reason", "")).contains("配置"),
 		"拒绝原因应说明配置缺失，实际「%s」" % String(guard.get("reason", "")))
 	cfg["reforge"] = saved
-	check(Reforge.cost(60) == 36000, "配置还原后应恢复 36,000")
+	check(Reforge.cost(60) == 52500, "配置还原后应恢复 52,500")
 
 # ---- 4) 除词条外逐键相等 ----
 
 func _test_fields_unchanged() -> void:
 	GameState.reset_to_defaults()
-	GameState.gold = 50000
+	GameState.gold = 100000
 	var item := _make("c6_equip_necklace", 60, "legendary", 11)
 	item["star"] = 3
 	var before := item.duplicate(true)
@@ -236,16 +236,16 @@ func _test_level_scale_follows_instance() -> void:
 
 func _test_gold_deducted() -> void:
 	GameState.reset_to_defaults()
-	GameState.gold = 50000
+	GameState.gold = 100000
 	var item := _make("c6_equip_necklace", 60, "legendary", 51)
 	GameState.inventory[0] = item
 	var first := GameState.reforge_equipment("bag", 0, String(item.get("instanceId", "")), _rng(1))
 	check(bool(first.get("ok", false)), "首次重铸应成功")
-	check(int(first.get("cost", 0)) == 36000, "L60 应扣 36,000，实际 %d" % int(first.get("cost", 0)))
-	check(GameState.gold == 14000, "重铸后金币应为 14,000，实际 %d" % GameState.gold)
+	check(int(first.get("cost", 0)) == 52500, "L60 应扣 52,500，实际 %d" % int(first.get("cost", 0)))
+	check(GameState.gold == 47500, "重铸后金币应为 47,500，实际 %d" % GameState.gold)
 	var second := GameState.reforge_equipment("bag", 0, String(item.get("instanceId", "")), _rng(2))
 	check(not bool(second.get("ok", false)), "金币不足时第二次应失败")
-	check(GameState.gold == 14000, "失败不得再扣费，实际 %d" % GameState.gold)
+	check(GameState.gold == 47500, "失败不得再扣费，实际 %d" % GameState.gold)
 
 # ---- 9) 金币不足：不扣钱、词条不变 ----
 
@@ -299,7 +299,7 @@ func _test_dirty_instance_rejected() -> void:
 
 func _test_worn_broadcast_and_bonus() -> void:
 	GameState.reset_to_defaults()
-	GameState.gold = 50000
+	GameState.gold = 100000
 	var item := _make("c6_equip_necklace", 60, "legendary", 91)
 	GameState.equipment["necklace"] = item
 	var old_atk := _fixed_sum(item, "atk")
@@ -321,7 +321,7 @@ func _test_worn_broadcast_and_bonus() -> void:
 
 func _test_bag_broadcast_and_slot() -> void:
 	GameState.reset_to_defaults()
-	GameState.gold = 50000
+	GameState.gold = 100000
 	var item := _make("c6_equip_necklace", 60, "legendary", 101)
 	GameState.inventory[5] = item
 	var counter := [0]
