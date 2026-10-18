@@ -1,13 +1,18 @@
 # 13 · 满级后循环玩法产品方案（循环装备 · 循环 Boss 图 · 随身三件套）
 
-> 日期：2026-10-18（v2 修订）　｜　性质：**产品方案（只定口径与公式，不改代码）**
+> 日期：2026-10-18（v3 修订）　｜　性质：**产品方案（只定口径与公式，不改代码）**
 > 触发：60 级后「不想让玩家继续做任务」的玩法设计诉求。
 >
 > **v2 修订说明**：v1 把「等级收口」与「怪物攻防缩放」留作 D-1 / D-3 待拍板；
 > 用户已拍板 **D-1＝无限等级 + 越往后越难**、**D-3＝怪物攻防随玩家等级同步提升**，并要求给出可复算的公式；
 > 其余建议（D-2、D-4～D-9）全部采纳。本版据此重写 §2 数值地基，并把 v1 的分段倍率方案整体替换为**单一缩放曲线 S(d)**。
 >
-> 本文不裁剪任何功能。所有公式均可手算复核，§10 给了复核命令。
+> **v3 修订说明**：Q-1～Q-3 全部采纳（升为 D-10～D-12，见 §9.1）。
+> 同时把 M10-1～M10-9 会真正改到的代码逐处复核，**新增 13 个问题（§7）——其中 5 个是硬阻断**：
+> 写错要么**启动校验直接失败**、要么**玩家装备静默消失**、要么**整套 S(d) 被一行 `clampi` 抵消**。
+> 这 13 条已并入 §8 排期，本节不是"风险提示"，是**开工前必须按顺序解决的前置条件**。
+>
+> 本文不裁剪任何功能。所有公式均可手算复核，§11 给了复核命令。
 
 ---
 
@@ -15,15 +20,19 @@
 
 | 你的设想 | 判定 | 关键前提 |
 |---|---|---|
-| 循环装备（60/70/…/1000 级复用同一批型号，属性按公式算） | 🟡 **可实现，有 1 处硬阻断** | 存档校验要求实例 `requiredLevel` **严格等于**模板值（`save_manager.gd:1371`）⇒ 动态等级装备**读档即被逐件剔除**。须开 `equipmentRuleVersion = 5` 分支 |
-| 循环 Boss 图（10 只、随玩家等级升、600s 复活） | 🟡 **可实现，4 处改造** | `bossSpawn` 是单字典；`bossCap` 需 10；**怪物攻/防不随等级缩放**；各章 Boss 基础数值差异达 8 倍，必须**归一化** |
+| 循环装备（60/70/…/1000 级复用同一批型号，属性按公式算） | 🟡 **可实现，有 3 处硬阻断** | ① 存档校验要求实例 `requiredLevel` **严格等于**模板值 ⇒ 读档即被逐件剔除；② 更早一层：`equipmentRuleVersion` 被**写死为 4**，写 5 就判坏；③ `make_equip_roll` 有三道断言 + `affixTierScale` 只有 6 个键（§7 P-1/P-3） |
+| 循环 Boss 图（10 只、随玩家等级升、600s 复活） | 🟡 **可实现，6 处改造** | `bossSpawn` 是单字典；**`tierRange` 会把等级夹回 60**；**复活不重算等级**；怪物攻/防不随等级缩放；各章 Boss 基础数值差 8 倍须归一化；血条与未领取上限都是单目标模型（§7 P-4/P-5/P-7/P-9） |
 | 无限等级 + 越往后越难 | 🟢 **可实现** | 现曲线 `100×L^1.6` 是多项式，只换「增速」不够——真正的难度旋钮是**每级击杀数**（§2.2） |
 | 怪物攻防随等级提升 | 🟢 **可实现，且能与玩家完全同步** | 用同一条 S(d) 同时作用于玩家与怪物 ⇒ **击杀次数恒定**，难度只在「时间」维度增长（§2.3） |
 | Boss 令牌 | 🟢 **成本最低** | **零新增存档状态**：由 `spawn_respawn` 反推存活/倒计时 |
 | 随身商店 | 🟢 **直接复用** | 实际范围 = 12 家店并集（药水 + 杂项，不含装备） |
 | 随身车夫 | 🟡 **需放开拓扑** | `links()` 只到同 hub，跨章节不可达 |
 
-一句话：**玩法的骨架是通的，难点全部集中在「一条缩放曲线」和「一层存档校验」上。**
+一句话：**玩法的骨架是通的，难点集中在「一条缩放曲线」和「三层硬卡口」（存档校验 / 掉落数据校验 / 生成器等级钳位）上。**
+v3 复核的 13 个问题全部在 §7，其中 P-1～P-5 是**不先解决就一定会翻车**的。
+
+> ⚠ 读这份文档的正确顺序：**§7（先看会炸哪） → §9（决策） → §2（数值） → §8（排期） → §3～§6（设计细节）**。
+> 直接看设计细节会低估实施难度——真正的时间不在"想法"上，在 §7 那 13 条上。
 
 ---
 
@@ -257,7 +266,9 @@ rawBaseAttrs  = tier51 基底 × S(requiredLevel − 60)
 | `L ≤ 60` | 现行为完全不变（`equipmentRuleVersion = 4`） | 无 |
 | `L > 60` | 生成时 `requiredLevel = level = L`；`rawBaseAttrs` 写入 `基底 × S(L−60)`；标记 `equipmentRuleVersion = 5` | **新增 v5 校验分支** |
 
-### 🔴 硬阻断：存档校验会静默吃掉这些装备
+### 🔴 硬阻断：存档校验会静默吃掉这些装备（**两个入口，不是一个**）
+
+**入口 ①（等级）**：
 
 ```gdscript
 # autoload/save_manager.gd:1370-1372
@@ -266,16 +277,27 @@ if bases.size() != 1 or not bases.has(tier_key) \
     return false
 ```
 
-后果：玩家打到 70 级武器 → 能穿、能打、能存 → **下次读档被 `_prune_unrecognized_equipment` 逐件剔除**，
-玩家只看到「装备没了」，无任何报错。这是全案唯一有数据丢失风险的点，必须最先做。
+**入口 ②（版本号，v2 漏掉的）**：
 
-**必须连带改的 3 处**
+```gdscript
+# autoload/save_manager.gd:1358
+if not _whole(item.get("equipmentRuleVersion"), 4, 4) or ...
+```
+
+`_whole` 的第三参是**上限**，写死 4 ⇒ 实例标 `equipmentRuleVersion = 5` 会在**读档第一步**就被判坏，
+根本走不到入口 ①。所以只改 ① 是无效的（这正是 §7 P-1）。
+
+后果：玩家打到 70 级武器 → 能穿、能打、能存 → **下次读档被 `_prune_unrecognized_equipment` 逐件剔除**，
+玩家只看到「装备没了」，无任何报错。**两个入口都要改，且两条负向验证要分别做**（§10 N-1 / N-4）。
+
+**必须连带改的 4 处**
 
 | # | 文件 | 改动 | 不改的后果 |
 |---|---|---|---|
-| 1 | `scripts/systems/item_factory.gd` | 新增 `make_equip_dynamic(item_id, level, quality, rng)`：允许 `level > tier_start + 9`，对 `rawBaseAttrs` 施加 `S(level−60)`，写 `equipmentRuleVersion = 5` | 生成即 `push_error` 返回空 |
-| 2 | `autoload/save_manager.gd` | `_valid_item` 装备分支按 `equipmentRuleVersion` 分流：v4 保持「严格等于模板等级」；**v5 改为「`requiredLevel ≥ tier_start` 且 `level == requiredLevel` 且 `rawBaseAttrs` 全为正数」** | **动态装备读档被逐件剔除** |
+| 1 | `scripts/systems/item_factory.gd` | 新增 `make_equip_dynamic(item_id, level, quality, rng)`：**独立路径**（不复用 `make_equip_roll` 的三道断言，见 §7 P-3），对 `rawBaseAttrs` 施加 `S(level−60)`，词条施加 `6.0 × S(level−60)`，写 `equipmentRuleVersion = 5` | 生成即 `push_error` 返回空 ⇒ 掉不出装备 |
+| 2 | `autoload/save_manager.gd` | ① `_whole(..., 4, 4)` → `4, 5`；② `_valid_item` 装备分支按版本分流：v4 保持「严格等于模板等级」；**v5 改为「`requiredLevel ≥ tier_start` 且 `level == requiredLevel` 且 `rawBaseAttrs` 全为正数」** | **动态装备读档被逐件剔除** |
 | 3 | `autoload/data_loader.gd` | 启动校验增加「v5 实例 `level ≥ 61`」等一致项（防手改档） | 无（防御性） |
+| 4 | `autoload/data_loader.gd:618-629` | 掉落表允许 `levelFromBoss` 与 `tierStart` 互斥（§7 P-2） | **启动校验直接失败，游戏起不来** |
 
 > **schema 不用升**：`equipmentRuleVersion` 是**实例字段**，不是存档版本号。`CURRENT_SCHEMA` 保持 14。
 
@@ -297,6 +319,9 @@ if bases.size() != 1 or not bases.has(tier_key) \
 | Boss 点 | **10 个**，分 5 区（每区 2 只），环形走廊串联，避免 10 只同时追人 |
 | 复活 | 全部 600s（与你的口径一致） |
 | 生成预算 | `bossCap: 10` |
+| 普通怪 | **不刷**（D-12）——`spawnPoints` 留空数组 |
+| ⚠ `tierRange` | **绝对不要写**。写了会把 Boss 等级夹回 60（§7 P-4） |
+| 其它必备字段 | `exits`（1 个，回 `c6_map00`）、`carterArrival`、小地图底图；`safeZone` 保持 `false`（与 `c6_map05` / `c6_map04` / `corruption_source` 现状一致） |
 
 ### 4.2 🔴 必须先解决：10 只 Boss 的基础数值差 8 倍
 
@@ -333,7 +358,7 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | 设计点 | 说明 |
 |---|---|
 | 为什么不分档 | 分档（60–69 都算 60）会让 65 级玩家打 60 级怪，触发 `LevelGap` 的 `1 − 5×0.04 = 0.8` 经验衰减 ⇒ **升级反而变慢**，是典型的负反馈陷阱 |
-| 生成时锁定 | Boss 等级在**生成那一刻**确定，玩家升级不会让已在场的 Boss 立刻变强；下一只刷新时才提升。既能避免「打一半变硬」，又天然奖励升级（当前这只更好打） |
+| 生成时锁定 | 等级只在**生成那一刻**求值，玩家升级不会让已在场的 Boss 立刻变强（避免「打一半变硬」），又天然奖励升级（当前这只更好打）。⚠ **但"下一次复活才提升"在现实现下不成立**：`point["level"]` 在装配期写入后固化，`_spawn` 只读不重算（`spawner.gd:85/200`）。必须按 §7 P-5 在 `_spawn` 内重算，否则 600s 复活出来的永远是**进图那天的等级** |
 | 掉落等级 | 跟 **Boss 的生成等级**走，不跟玩家当前等级走 ⇒ 等级与掉落永远自洽 |
 
 ### 4.4 数据结构（向后兼容）
@@ -348,8 +373,17 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 ```
 
 `game.gd:189` 改为：有 `bossSpawns` 就逐条 `spawn_from_specs([spec], map_id)`，否则走旧 `bossSpawn`（一个 `if`）。
+同时新增 `MapService.current_bosses()`，`current_boss()` 退化为它的第 0 项兼容壳（§7 P-8，旧测试零改动）。
 
 `scaleStats: true` 是 §2.2 里「怪物攻/防缩放」的开关，**默认 false ⇒ 存量 35 图一个字节都不动**。
+
+**三条必须同时落地的实现约定**（否则前面全是空转）：
+
+| 约定 | 原因 |
+|---|---|
+| `spec.norm = {hp, atk, def}` 由 `Monster` 在 `_init_stats` 里**替代**模板 `hpBase/attack/defense`，再乘 `S(d)` | §4.2 的「形象与数值解耦」需要一条数据通道；不改 `Monster` 就只能在 17 个模板上动手，会污染原章节 |
+| `spawn_from_specs` 在 `levelFromPlayer` 生效时**跳过 `clampi`** | §7 P-4 |
+| `_spawn()` **每次**按当前玩家等级重算 `m.spawn_level`，并回写 `point["level"]` | §7 P-5（墓碑与令牌要读 `point.level` 显示档位） |
 
 ### 4.5 差异化靠词缀，不靠数值
 
@@ -386,16 +420,16 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | 字段 | 作用 | 注意 |
 |---|---|---|
 | `questItem: true` | 不可贩卖（货郎拒收、无价校验跳过） | 现成机制 |
-| `bound: true` | 不可丢弃（未来丢弃功能必须拦） | 当前无丢弃功能，属预防性标记 |
-| `useType: "panel"` | 双击打开对应面板 | ⚠ **需扩展 `_validate_misc` 的 useType 白名单**（现仅 `playAnimation / randomTeleport / townPortal / revive / quest`），否则**启动校验直接报错** |
+| `bound: true` | 语义上「不可丢弃」 | ⚠ **这个字段当前根本不存在**——全库 `.gd` 零命中，写进 JSON 既不报错也不生效。丢弃防护必须由 M10-4 自己实现（或复用 `questItem` 判定），不能指望它 |
+| `useType: "panel"` | 双击打开对应面板 | 🔴 两件事：① `_validate_misc_items` 的白名单要加 `"panel"`，否则**启动校验直接报错**；② 更关键的是 **`useType` 全库没有任何分发器**（只有校验、没有执行），`GameState.use_item` 对 misc 是硬编码 itemId ⇒ 只加白名单的结果是「校验通过、双击无反应」（§7 P-6） |
 
 ### 5.2 随身商店
 
 | 项 | 口径 |
 |---|---|
 | 数据源 | 12 家店 `buyItems` 并集，按 `itemId` 去重 |
-| 价格 | 取各店最低价（D-8 已采纳） |
-| 范围 | 药水 + 杂项（**不含装备**；要卖装备需另立定价，不建议） |
+| 价格 | 取各店最低价（D-8 已采纳）；**杂项 +20%**（Q-5） |
+| 范围 | **基础药水 + 杂项**（**不含装备，也不含高级药水**）。高级药水仍需回城买 —— 否则 2,800 瓶/小时，生存压力归零（§7 P-10） |
 | 实现 | `Shop.aggregate_offers()`；面板标题「随身商队」 |
 
 ### 5.3 随身车夫（按你给的草图）
@@ -416,7 +450,10 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | 数据 | 遍历 35 图 `bossSpawn(s)` + `c7_arena` 的 `bossSpawns` |
 | 状态判定 | `spawn_respawn[key]` 存在且 `world_time < readyAt` → **冷却中**（显示 mm:ss）；否则 **存活** |
 | 过滤 | 只显示**已访问**的地图 |
-| 点击 | 同图 → `player.request_map_move(pos)`；跨图 → 确认扣金 → `travel_anywhere` + 落地自动走（一次性意图 D-6） |
+| 点击 | 同图 → `player.request_map_move(pos)`（已存在，`player.gd:162`）；跨图 → 确认扣金 → `travel_anywhere` + 落地自动走（一次性意图 D-6） |
+| 多 Boss | 一图 1–10 条，按地图分组；`c7_arena` 一行展开 10 条 |
+| 性能 | **只在面板打开时遍历一次并缓存**，不要在 `_process` 里重算 35 图 × 10 条 |
+| 与墓碑同源 | 倒计时一律读 `GameState.spawn_remaining()`，不要另算一套（Q-1 已定保留墓碑，两处必须一致） |
 | 新存档字段 | **不需要**（状态可反推） |
 
 > 令牌同时显示「档位」：`等级 L` + `预计掉落 L 级装备`。
@@ -444,9 +481,12 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | 项 | 数值 | 说明 |
 |---|---|---|
 | 单只 Boss 金币 | 3,000–3,400 | 固定，与等级无关 |
-| 6–8 件装备回收 | ≈ 400 | 装备回收比例 1.0 |
-| 产出速率 | ≈ 10.5 万金/小时 | 30 只/小时 |
-| 打满 `GOLD_CAP` | 需 ≈ 9,500 小时 | 不构成瓶颈 |
+| 6–8 件装备回收 | ≈ 400（L60） / **≈ 8,000（L1000）** | 装备回收比例 1.0 × 轻缩放 `1 + 0.02×(level−60)`（Q-6 / §7 P-11） |
+| 产出速率 | ≈ 10.5 万金/小时 | 30 只/小时（不含卖装备） |
+| 打满 `GOLD_CAP` | 需 ≈ 9,500 小时 | 不构成瓶颈（含卖装备也需 ≈ 4,700 小时） |
+
+> 注意区分**「产出不缩放」与「售价不缩放」**：单只 Boss 的金币产出必须固定（否则 `GOLD_CAP` 会被击穿），
+> 但**回收价**可以轻缩放——它只是把「已经产出的金币」换一种形式，不新增总量。这是 §7 P-11 的口径来源。
 
 ### 6.2 金币出口：装备重铸（D-4 已采纳）
 
@@ -463,28 +503,306 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 
 ---
 
-## 7. 分期落地（M10 系列）
+## 7. 实施前复核（v3 追加）：13 个新发现
+
+> v2 只做到「设计层算得通」。v3 把 M10-1～M10-9 真正会改到的每一行代码复核了一遍，
+> 发现 **5 个硬阻断**（写错＝启动失败 / 装备静默消失 / 整套 S(d) 失效）、**5 个结构性缺陷**、**3 个经济与体验漏洞**。
+> 这一节不是风险清单，是**开工顺序**：P-1～P-5 不解决，后面的工作全是白做。
+
+### 7.1 一览
+
+| # | 级别 | 问题 | 证据 | 后果一句话 | 归入 |
+|---|---|---|---|---|---|
+| **P-1** | 🔴 阻断 | `equipmentRuleVersion` 被**写死为 4** | `save_manager.gd:1358` | 写 5 ⇒ **读档判坏、装备逐件消失** | M10-1 |
+| **P-2** | 🔴 阻断 | 掉落表校验**禁止 `requiredLevel`**，且 `tierStart` 必须在 6 档内 | `data_loader.gd:618-629` | 循环掉落表 ⇒ **启动校验直接失败** | M10-2 |
+| **P-3** | 🔴 阻断 | `make_equip_roll` 三道断言 + `affixTierScale` 只有 6 个键 | `item_factory.gd:48/52/56` | L100 传档 ⇒ **三处全炸，掉不出装备** | M10-1/2 |
+| **P-4** | 🔴 阻断 | `tierRange` 会把 Boss 等级**夹回 60** | `spawner.gd:76-80` | 100 级玩家进图仍是 60 级 Boss ⇒ **S(d) 全废** | M10-3 |
+| **P-5** | 🔴 阻断 | 复活**不重算等级**（`point.level` 装配期固化） | `spawner.gd:88 / :190` | 复活出来永远是进图那天的等级 | M10-3 |
+| P-6 | 🟠 结构 | `useType` **全库没有分发器**，只有校验 | `game_state.gd:607-613` | 只加白名单 ⇒ **双击无反应** | M10-4 |
+| P-7 | 🟠 结构 | Boss 血条单信号单实例 | `event_bus.gd:32` | 同区 2 只 ⇒ **血条乱跳** | M10-3b |
+| P-8 | 🟠 结构 | `current_boss()` 是单点接口 | `map_service.gd:291` | 10 只塞不进，且旧测试依赖它 | M10-3b |
+| P-9 | 🟠 结构 | 未领取掉落上限 **20** | `game_state.gd:13` | 一轮 50–80 件 ⇒ **上一轮被挤掉** | M10-3b |
+| P-10 | 🟡 经济 | 随身商店 + 金币无限 ⇒ **药水无限** | — | 生存压力归零，打坐/恢复机制全废 | M10-6 |
+| P-11 | 🟡 经济 | 回收价与重铸价**脱钩 1000 倍** | — | 「卖装备」失去意义 | M10-8 |
+| P-12 | 🟡 体验 | Q-2 落地后 60 级热身**掉落全是废品** | — | 首轮体验即负反馈 | M10-2 |
+| P-13 | 🟠 结构 | 新图不是「只加 JSON」 | — | 少算出入口/小地图/地砖成本 | M10-3 |
+
+---
+
+### 7.2 五个硬阻断（不解决就一定会翻车）
+
+#### P-1 🔴 `equipmentRuleVersion` 的上下界被写死
+
+```gdscript
+# autoload/save_manager.gd:1358
+if not _whole(item.get("equipmentRuleVersion"), 4, 4) or ...
+```
+
+`_whole(value, minimum, maximum)` 的**上下界都是 4**。v2 只改了后面的「等级严格等于模板」那一行，
+**漏掉了版本号本身的边界** ⇒ 写 `equipmentRuleVersion = 5` 的实例在读档第一步就被判坏。
+
+**修法**：`_whole(..., 4, 5)`，随后按 `int(item.equipmentRuleVersion)` 分流（v4 走老严格校验，v5 走新校验）。
+
+> 这一条和 P-2 一起说明一件事：**存档的「拒收」有两个入口**（版本号边界、等级等于模板），
+> v2 只写了一个。这也是为什么 R-1 的负向验证必须**两处各做一次**。
+
+#### P-2 🔴 掉落表数据校验会挡在启动阶段
+
+```gdscript
+# autoload/data_loader.gd:618-629
+if en.has("requiredLevel") or not en.has("tierStart"):
+    report.append("[dropTables] %s equip 必须使用 tierStart，不能用 requiredLevel" % did)
+if en.has("tierStart"):
+    ...
+        report.append("[dropTables] %s 的 tierStart 未在装备套起点表中" % did)
+```
+
+⇒ 循环掉落表若写 `{"kind": "equip", "levelFromBoss": true}`（不带 `tierStart`），**不是运行时降级，是游戏起不来**：
+`--quit` 会打出「配置校验 ❌」并列出 id。
+
+**修法**：`levelFromBoss: true` 时豁免「必须有 `tierStart`」，并把这两个分支改成互斥（二者必居其一）。
+
+#### P-3 🔴 生成器有三道断言 + 词条倍率只有 6 档
+
+```gdscript
+# scripts/systems/item_factory.gd
+:48  if not raw_bases.get(str(tier_start)) is Dictionary:            push_error → return {}
+:52  if required_level < tier_start or required_level >= tier_start + 10:  push_error → return {}
+:56  if not scale_values.has(str(tier_start)):                        push_error → return {}
+```
+
+而 `data/equipmentRules.json` 的 `affixTierScale` 实值只有 **6 个键**：
+
+```json
+{"1": 1.0, "11": 2.0, "21": 3.0, "31": 4.0, "41": 5.0, "51": 6.0}
+```
+
+⇒ L=100 传 `tier_start = 100`，三处断言**全部命中**，返回空字典。玩家看到的现象是「Boss 不掉装备」，
+日志里只有 `push_error`——**这是最难查的那类 bug**。
+
+**修法（两条一起）**：
+
+1. `make_equip_dynamic()` 走**独立路径**，不复用 `make_equip_roll` 的这三道断言（它们是为「固定 6 档」设计的）。
+2. 词条倍率给一条连续公式，且**必须同乘 S**，否则高等级时词条占比萎缩会破坏 §2.0 的击杀次数不变量：
+
+```text
+affixScale(level) = 6.0 × S(max(0, level − 60))
+```
+
+L60 时 `S(0)=1` ⇒ 仍是 6.0，**存量语义零变化**；L1000 时 `6.0 × 2008` ⇒ 词条与基底同比例增长。
+
+> 词条是 **flat 加成**（`equipment_math.gd:26` 直接 `result[stat] += value × star_factor`），
+> 不吃品质/星级以外的任何倍率 ⇒ 上面这条不补，1000 级时词条等于不存在。
+
+#### P-4 🔴 `tierRange` 会把等级夹回去，一行 `clampi` 废掉整个 S(d)
+
+```gdscript
+# scripts/world/spawner.gd:76-80
+if tier_range.size() == 2:
+    if spawn_level <= 0:
+        spawn_level = int(template.get("level", 1))
+    spawn_level = clampi(spawn_level, int(tier_range[0]), int(tier_range[1]))
+```
+
+⇒ 循环图若照其它地图的习惯写 `"tierRange": [58, 60]`，玩家 100 级时 Boss 仍会被夹成 **60 级**：
+HP 24,300、攻击 420，玩家一击必杀。**S(d) 整套设计等于没上线**，而且不会报任何错。
+
+**修法**：`levelFromPlayer` 生效时**跳过 clamp**（`if not level_from_player:` 守卫），并且数据里**不要写 `tierRange`**——
+两层都做，因为将来有人「补全地图字段」时很自然会把它加回来。
+
+#### P-5 🔴 600s 复活不会重新读玩家等级
+
+```gdscript
+# spawner.gd:88  装配期写入 point
+"level": spawn_level,
+# spawner.gd:190 每次生成只读
+m.spawn_level = int(point.get("level", 0))
+```
+
+`point["level"]` 是**装配期快照**。角色在 60 级进图、打到 71 级，下一次复活出来的 Boss 仍是 **60 级**：
+经验按 `LevelGap` 的 `1 − 11×0.04 = 0.56` 衰减、掉落还是 60 级装备。玩家感受就是「越打越亏」。
+
+**修法**：`_spawn()` 内若点为 `level_from_player`，重算 `m.spawn_level = maxi(minLevel, GameState.player.level)`，
+并同步写回 `point["level"]`（墓碑与令牌的显示要读它）。
+
+---
+
+### 7.3 五个结构性缺陷
+
+#### P-6 🟠 `useType` 有校验、有文案，**就是没有执行**
+
+执行层（`game_state.gd:607-613`）是按 `kind` + **硬编码 itemId** 分流的：
+
+```gdscript
+"misc":
+    if String(it.get("itemId", "")) == HotbarConfig.TOWN_SCROLL:
+        return TravelItem.use_town_scroll(inv_index)
+    if String(it.get("itemId", "")) == HotbarConfig.RANDOM_TICKET:
+        return TravelItem.use_random_ticket(inv_index)
+_:
+    return _use_fail(...)
+```
+
+全库只有**两处**读 `useType`，都不是执行：
+
+| 位置 | 用途 | 影响 |
+|---|---|---|
+| `data_loader.gd:1203` | 白名单**校验**（`playAnimation / randomTeleport / townPortal / revive / quest`） | 加 `"panel"` 不进去 ⇒ **启动校验失败** |
+| `ui/inventory_panel.gd:449` | **物品说明文案**（`match use_type` → 显示「使用：回城」之类） | 不补分支 ⇒ 走到 `_` 兜底，显示「该物品不能直接使用」 |
+
+⇒ 只加白名单的话，玩家会看到**说明写着「可使用」、双击却弹「不能直接使用」**——
+比直接报错更难查，而且是**文案与行为互相打脸**。
+
+**修法（三处一起）**：① 校验白名单加 `"panel"`；② `inventory_panel` 的说明 `match` 加 `"panel"` 分支；
+③ `use_item` 的 misc 分支加 useType 分发，`panelId` 必须是白名单映射（`boss_token / shop / carter`），
+不能让数据里写任意面板 id。
+
+#### P-7 🟠 Boss 血条是单目标模型
+
+```gdscript
+# autoload/event_bus.gd:32
+signal boss_hp_changed(boss_name: String, hp: int, max_hp: int, phase: int)
+```
+
+`BossHealthBar` 单实例订阅。5 区各 2 只，同区两只同时进 `AGGRO_RANGE` 时血条会在两个 Boss 之间来回跳。
+
+**建议（不需拍板，直接写进 M10-3b 验收）**：信号增加一个 `instance_id` 参数，血条只在
+「当前目标」或「最近 3s 内受击」时更新。信号加参数要同步改**实际订阅方 2 处**
+（`ui/boss_health_bar.gd:37`、`autoload/audio_cues.gd:44`）+ 测试里的 2 处 `emit`（`smoke_test.gd:4334/4338`）
++ `monster.gd:498` 的发射点，共 5 处——`warnings_as_errors` 下漏一处就编译失败。
+
+#### P-8 🟠 `current_boss()` 是单点接口
+
+```gdscript
+# autoload/map_service.gd:291
+func current_boss() -> Dictionary:
+    var b = current_data().get("bossSpawn", null)
+    return b if b is Dictionary else {}
+```
+
+被 `game.gd:187` 与 `smoke_test.gd:3256/3258` 使用。10 只塞不进去。
+
+**修法**：新增 `current_bosses() -> Array`（有 `bossSpawns` 用数组，否则把单点包成 1 元素数组），
+`current_boss()` 保留为 `current_bosses()[0]` 的兼容壳 ⇒ **旧测试零改动**。
+
+#### P-9 🟠 未领取掉落上限只有 20 件
+
+```gdscript
+# autoload/game_state.gd:13
+const UNCLAIMED_LOOT_CAP := 20
+```
+
+超出按 FIFO 淘汰并 `push_warning`（`_evict_unclaimed_overflow`）。
+循环图一轮 10 只 × 5–8 件 = **50–80 件**，背包满时**上一轮的未领取会被下一轮挤掉**，
+玩家只看到「地上的东西变少了」，没有任何弹窗。
+
+**修法**：上限按地图分级（普通图保持 20，循环图 200），或 60 级后未领取装备按回收价自动折金。见 Q-4。
+
+#### P-13 🟠 新图不是「只加一个 JSON」
+
+`c7_arena` 需要：`index.json` 一条 + `maps/ch07/c7_arena/map.json`（`size / entrances / exits / carterArrival / spawnPoints / npcs`）
++ **小地图底图** + 地砖（可复用 ch06 的 cave/ash/wild/camp 族变体）+ 10 个 Boss 坐标 + 1 个出口。
+
+校对现状：`c6_map05` / `c6_map04` / `corruption_source` **都是 `safeZone: false` + 1 个 `exit` + 有 `carterArrival`**，
+所以循环图不需要 `safeArea`，与其它 Boss 图保持一致即可。
+
+**但下列 8 项一个都不能省**，否则切图 / 回城 / 令牌定位会出问题：
+`index.json` 条目、`size`、`entrances`、`exits`、`carterArrival`、`npcs`（若有）、小地图底图、地砖与碰撞。
+
+---
+
+### 7.4 三个经济与体验漏洞
+
+#### P-10 🟡 随身商店 + 金币无限 = 药水无限
+
+12 家店并集（药水 + 杂项），金币产出 10.5 万/小时，药水 37 金 ⇒ **约 2,800 瓶/小时**。
+生存压力直接归零，「未受击每 3s 回血」「`X` 打坐」两套机制全部作废。
+**建议**：随身商店只卖**基础药水**（低价档，原价），高级药水仍需回城；杂项上架但 **+20%**。见 Q-5。
+
+#### P-11 🟡 回收价与重铸价脱钩 1000 倍
+
+动态装备的 `price` 沿用模板（~50–200 金），回收比例 1.0；重铸价 `100 × (60 + level × 0.5)`，L1000 = 56,000。
+⇒ 卖 **1,000 件** L1000 装备才能重铸一次（8 件/只 ⇒ 125 只 Boss）。玩家会得出「卖装备没意义」的结论。
+**建议**：回收价按 `price × (1 + 0.02 × max(0, level − 60))` 轻缩放（L1000 ≈ 20.8 倍，单件约 1,000 金）。
+8 件 × 1,000 = 8,000/只，与 3,200 金币同量级，**不构成 `GOLD_CAP` 风险**（打满仍需 ~4,700 小时）。见 Q-6。
+
+#### P-12 🟡 Q-2 落地后，60 级的「热身」全是废品
+
+Q-2 定「60 级能打，但只掉 60 级装备」。而 60 级玩家身上穿的**正好就是 tier51**（§2.4）——
+一轮 10 只 Boss 掉 50–80 件与已穿完全相同的装备。首轮体验＝满屏垃圾。
+**建议**：60 级档位改为「只掉金币 + 升星材料 + 如意」，**不产装备**；61 级起才产装备。见 Q-7。
+
+---
+
+### 7.5 对排期的影响
+
+| 批次 | 原内容 | v3 追加 |
+|---|---|---|
+| M10-1 | `make_equip_dynamic` + `_valid_item` v5 分支 | **P-1**（版本号上下界）+ **P-3**（独立生成路径 / 词条倍率公式） |
+| M10-2 | 掉落支持动态等级 | **P-2**（启动校验豁免）+ **P-3**（`_roll_equip` 分支）+ **P-12**（60 级不产装备） |
+| M10-3 | `bossSpawns` + 归一化 + `scaleStats` | **P-4**（跳过 clamp）+ **P-5**（复活重算）+ **P-13**（新图四项配置） |
+| **M10-3b（新增）** | — | **P-7**（血条多目标）+ **P-8**（`current_bosses`）+ **P-9**（未领取上限） |
+| M10-4 | 任务与三件道具 | **P-6**（useType 分发器 + panelId 白名单） |
+| M10-6 | 随身商店 | **P-10**（分级供货 / 加价） |
+| M10-8 | 装备重铸 | **P-11**（回收价轻缩放） |
+
+> 排期只多加了一批（M10-3b），但**顺序不能变**：M10-1 若不先做 P-1/P-3，M10-2 一接上就会「掉不出装备 + 读档丢装备」同时发生，
+> 而且两个现象都很安静——不掉装备只有 `push_error`，丢装备连日志都没有。这就是把「数值地基」放在最前面的真正理由。
+
+---
+
+### 7.6 这 13 条的复核命令
+
+```bash
+# P-1：版本号上下界写死 4（应看到 :1358 的 _whole(..., 4, 4)）
+grep -n "equipmentRuleVersion" autoload/save_manager.gd
+
+# P-2：掉落表禁止 requiredLevel、tierStart 必须在 6 档内（:619 / :629）
+grep -nE "必须使用 tierStart|tierStart 未在装备套起点表中" autoload/data_loader.gd
+
+# P-3：三道断言（:48 / :52 / :56）+ 词条倍率只有 6 个键
+grep -nE "缺少第 %d 套|穿戴等级与所属套不符" scripts/systems/item_factory.gd
+python3 -c "import json;print(sorted(json.load(open('data/equipmentRules.json'))['affixTierScale'].keys()))"
+
+# P-4 / P-5：clampi 夹等级（:80）；等级只在装配期写一次（:88 写、:190 只读）
+grep -n "clampi(spawn_level" scripts/world/spawner.gd
+grep -nE '"level": spawn_level|m\.spawn_level' scripts/world/spawner.gd
+
+# P-6：useType 只有校验（:1203）与文案（inventory_panel:449），没有执行
+grep -rn "useType" --include="*.gd" scripts/ autoload/
+
+# P-9：未领取上限 = 20（:13）
+grep -n "UNCLAIMED_LOOT_CAP :=" autoload/game_state.gd
+```
+
+> 上面每条都在本机跑过，输出与括号里的行号一致。`grep` 一律用 `-E`：
+> macOS 自带的 BSD grep **不支持 `\|` 这种 BRE 交替**，写成 `grep "a\|b"` 会静默匹配不到（退出码 1）。
+
+---
+
+## 8. 分期落地（M10 系列）
 
 | 批次 | 内容 | 主要改动 | 验收 | 依赖 |
 |---|---|---|---|---|
 | **M10-0** | **数值地基** | 新增 `scripts/systems/balance.gd`（`S(d)` / `E(L)` / `K(L)` 三函数）；`game_state.xp_to_next` 换公式；`_level_up` 在 `L>60` 改乘算；首次进循环图的一次性对齐 | 单测：`E(60)/E(100)/E(1000)` 逐值匹配 §2.1；`S(0)/S(10)/S(940)` 匹配 §2.2；**存量 1–60 的 `xp_to_next` 与 `max_hp` 逐值不变** | 无 |
-| **M10-1** | 动态等级装备地基 | `make_equip_dynamic`、`_valid_item` v5 分支 | 生成 70/100 级实例 → 存 → 读 → 属性与等级一致；老 v4 档零影响 | M10-0 |
-| **M10-2** | 掉落支持动态等级 | `loot.gd` 支持 `levelFromBoss`；新增循环掉落表 | 60/70/100 档各出对应等级装备 | M10-1 |
-| **M10-3** | 循环 Boss 图 | `bossSpawns` + `levelFromPlayer` + `scaleStats` + `bossCap:10`；`endgame.json` 归一化；`game.gd` 装配分支 | 进图 10 只、等级=玩家等级、600s 复活、墓碑正常、**击杀次数 ≈ 124** | M10-1/2 |
-| **M10-4** | 任务与三件道具 | `requiresLevel`；3 条 `miscItems`；`useType:"panel"` 白名单；`unlocks` 权限位 | 59 级不可领、60 级可领、道具不可卖、入口随权限 | M10-1 |
+| **M10-1** | 动态等级装备地基 | `make_equip_dynamic`（**独立路径，不复用 `make_equip_roll` 的三道断言**）；`_valid_item`：**版本号上下界 4→5** + 按版本分流 + `affixScale = 6.0 × S(d)` | 生成 70/100/1000 级实例 → 存 → 读 → 属性/等级/词条一致；老 v4 档零影响；**负向：把 `_whole(...,4,5)` 改回 `4,4` ⇒ 「L100 装备读档后应仍在」精确失败** | M10-0 |
+| **M10-2** | 掉落支持动态等级 + **P-2/P-3/P-12** | `data_loader` 允许 `levelFromBoss` 与 `tierStart` 互斥；`loot.gd:_roll_equip` 动态分支；新增循环掉落表；**60 级档不产装备** | 60/70/100 档各出对应等级装备；**60 级档只出金币+材料**；**`--quit` 配置校验通过（掉落表不带 `tierStart` 也不报错）** | M10-1 |
+| **M10-3** | 循环 Boss 图 + **P-4/P-5/P-13** | `bossSpawns` + `levelFromPlayer`（**跳过 `clampi`**）+ `scaleStats` + `bossCap:10`；`_spawn` 内重算等级；`endgame.json` 归一化；`game.gd` 装配分支；新图四项配置（exit / carterArrival / 小地图底图 / 地砖） | 进图 10 只、等级=玩家等级、**复活后等级跟随当前玩家等级**、600s 复活、墓碑正常、**击杀次数 ≈ 124** | M10-1/2 |
+| **M10-3b（新增）** | 多目标收口 | `current_bosses()` + `current_boss()` 兼容壳（P-8）；`boss_hp_changed` 加 `instance_id`，血条「当前目标优先」（P-7）；未领取上限按图分级（P-9） | 两只 Boss 同时接战血条不跳；旧 `current_boss()` 断言零改动通过；循环图满包 3 轮后未领取不丢 | M10-3 |
+| **M10-4** | 任务与三件道具 + **P-6** | `requiresLevel`；3 条 `miscItems`；**`useType` 分发器（不只是白名单）**；`panelId` 白名单映射；`unlocks` 权限位 | 59 级不可领、60 级可领、道具不可卖、**双击真的能开面板**、脏 `panelId` 被拒 | M10-1/3b |
 | **M10-5** | Boss 令牌面板 | `boss_token_panel.gd` + `BossIndex`；`pending_walk` 一次性意图 | 全库状态/倒计时正确；同图自动走；跨图确认后送达并自动走 | M10-3/4 |
-| **M10-6** | 随身商店 | `Shop.aggregate_offers()` | 并集去重、最低价、可买可卖 | M10-4 |
+| **M10-6** | 随身商店 + **P-10** | `Shop.aggregate_offers()`；分级供货（基础药水随身、高级药水仍需回城）与加价口径 | 并集去重、最低价、可买可卖；**高级药水不出现在随身商店** | M10-4 |
 | **M10-7** | 随身车夫 | `MapService.travel_anywhere()`；`CarterPanel` 七分组 | 任意已解锁已访问图可达、扣费正确 | M10-4 |
-| **M10-8** | 装备重铸 | 新面板 + `Reforge` 系统 + 费用公式 | 扣费正确、词条重掷、品质/星级/基底不变 | M10-1 |
+| **M10-8** | 装备重铸 + **P-11** | 新面板 + `Reforge` 系统 + 费用公式；回收价按 `1 + 0.02×(level−60)` 轻缩放 | 扣费正确、词条重掷、品质/星级/基底不变；**L1000 单件回收价 ≈ 1,000 金**（不是 50） | M10-1 |
 | **M10-9** | 回归与调校 | 新增 4 个测试场景；四层回归；实机试玩 | 隔离集全绿；60→70 的实际击杀数与 §2.1 偏差 < 15% | 全部 |
 
 **每批通用验收**：`--import` / `SmokeTest` / `SettingsTest` / `--quit` 四层 + 0 SCRIPT ERROR + `md5(slot_1.json)` 不变。
 
 ---
 
-## 8. 决策台账
+## 9. 决策台账
 
-### 8.1 已拍板（本版落地）
+### 9.1 已拍板（本版落地）
 
 | 编号 | 决定 | 落地位置 |
 |---|---|---|
@@ -496,24 +814,33 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | D-7 | 三件道具占格 + `unlocks` 权限位 | §5.5 |
 | D-8 | 商店取全库最低价 | §5.2 |
 | D-9 | 60 级后只保留 1 条「开玩法」主线 | §5.5 |
+| **D-10** | **Q-1 采纳**：循环图**保留** Boss 墓碑倒计时，主动退出 / 跨图 / 跨档都保留 | §5.4、M10-3 |
+| **D-11** | **Q-2 采纳**：60 级可进图，但**只掉 60 级装备**（Q-2 原口径）；由此产生 P-12，建议改为「不产装备」，见 Q-7 | §4.6、M10-2 |
+| **D-12** | **Q-3 采纳**：循环图**不刷普通怪**，纯 Boss 场地 | §4.1、M10-3 |
 
-### 8.2 被吸收 / 失效
+### 9.2 被吸收 / 失效
 
 | 编号 | 原议题 | 现状 |
 |---|---|---|
 | **D-2** | 装备等级倍率（1.35 分段 / 100 级后降到 1.05） | **被 S(d) 吸收**。S 是多项式，`S(940) ≈ 2008` 无溢出风险，不再需要「分段降低倍率」。原 D-2 的顾虑已消除 |
 
-### 8.3 仍需你确认（实施时会挡路）
+### 9.3 Q 系列（Q-1～Q-3 已拍板，Q-4～Q-7 为 v3 新增待定）
 
-| 编号 | 问题 | 我的建议 |
+| 编号 | 问题 | 结论 / 建议 |
 |---|---|---|
-| **Q-1** | 循环图是否允许**主动退出后保留 Boss 墓碑倒计时**（现有机制已支持，跨图/跨档保留） | 保留。否则玩家只能原地干等 |
-| **Q-2** | 60 级玩家（未满 61）进循环图能打到什么 | 能打，但只掉 60 级装备（= 现有 tier51），等于「热身」；61 级起才有新档 |
-| **Q-3** | 循环图里是否也刷普通怪 | 建议**不刷**。纯 Boss 场地更能体现「打怪快感」，且避免刷小怪卡位 |
+| Q-1 | 循环图主动退出后是否保留墓碑倒计时 | ✅ **已拍板：保留**（D-10）。现有机制已支持，跨图 / 跨档都保留 |
+| Q-2 | 60 级（未满 61）进循环图能打到什么 | ✅ **已拍板：能打，只掉 60 级装备**（D-11）。⚠ 落地后出现 P-12，见 Q-7 |
+| Q-3 | 循环图里是否也刷普通怪 | ✅ **已拍板：不刷**（D-12）。纯 Boss 场地 |
+| **Q-4** | 未领取掉落上限（现 20，而一轮循环图 50–80 件） | 建议**按图分级**：普通图保持 20 / 循环图 200。折金方案更干净，但会改变现有「背包满则留地」的语义，不推荐 |
+| **Q-5** | 随身商店的供货与定价 | 建议**基础药水原价、高级药水不上架、杂项 +20%**。全量并集原价 ⇒ 2,800 瓶/小时，生存压力归零 |
+| **Q-6** | 装备回收价是否随等级轻缩放 | 建议 `×(1 + 0.02 × (level − 60))`。不缩放的话，100 级后「卖装备」相对重铸价差 1000 倍，等于失去意义 |
+| **Q-7** | 60 级热身档要不要产装备 | 建议**不产**（只出金币 + 升星材料 + 如意）。产出与身上完全相同的 tier51 只会变成满屏废品 |
+
+> P-7（Boss 血条多目标）不作为决策项：直接按「当前目标优先 + 信号带 `instance_id`」实现，写进 M10-3b 验收。
 
 ---
 
-## 9. 风险与负向验证
+## 10. 风险与负向验证
 
 | # | 风险 | 影响 | 处置 |
 |---|---|---|---|
@@ -527,18 +854,24 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | **R-8** | `max_hp` 里 `50 + 8×等级` 不缩放 | 「可挨打次数」8.2 → 6.4 | 接受；若不可接受，M10-9 再议（会影响 1–60） |
 | **R-9** | 重铸费用公式与产出速率未实测 | 可能过贵或过便宜 | M10-9 试玩，参数在 `endgame.json` 里可调 |
 | **R-10** | 10 只 Boss 同图可能被同时拉走 | 团灭 | 分 5 区 + 环形走廊；`AGGRO_RANGE = 200px` 天然隔离 |
+| **R-11** | `tierRange` 把等级夹回 60（P-4） | **S(d) 静默失效，不报错** | 双保险：代码跳过 clamp + 数据不写 `tierRange`；负向：给循环图补 `tierRange:[58,60]` ⇒ 「100 级 Boss HP 应为 182,853」必须精确失败 |
+| **R-12** | 复活不重算等级（P-5） | 越打越亏（经验衰减 + 低档掉落） | 负向：注释掉 `_spawn` 里的重算 ⇒ 「复活后 Boss 等级 = 当前玩家等级」必须精确失败 |
+| **R-13** | 版本号上下界写死 4（P-1） | **装备静默消失** | 与 R-1 是**两个独立入口**，两条负向都要做：① 版本号改回 `4,4`；② 等级改回「严格等于模板」 |
+| **R-14** | 未领取上限 20 被循环图打穿（P-9） | 掉落静默消失 | 按图分级并加断言：循环图满包 3 轮后 `unclaimed_total()` 不下降 |
 
-**三组必做的负向验证**（断言必须有牙）
+**五组必做的负向验证**（断言必须有牙）
 
 | 验证 | 操作 | 期望 |
 |---|---|---|
 | N-1 | v5 分支改回「严格等于模板等级」 | 「70 级装备读档后应仍在」精确失败 |
 | N-2 | 把 `S(d)` 的二次项系数改成 0 | 「100 级 Boss HP 应为 182,853」精确失败 |
 | N-3 | `scaleStats` 设为 false | 「100 级 Boss 攻击应为 3,160」精确失败（停在 420） |
+| **N-4** | `_whole(..., 4, 5)` 改回 `4, 4`（P-1） | 「L100 装备读档后应仍在」精确失败。**这一条与 N-1 必须分别做**：两个入口各挡一半，只验一个会漏 |
+| **N-5** | 给循环图补上 `"tierRange": [58, 60]`（P-4） | 「100 级 Boss HP 应为 182,853」精确失败（停在 24,300） |
 
 ---
 
-## 10. 复核方式
+## 11. 复核方式
 
 | 结论 | 位置 |
 |---|---|
@@ -553,6 +886,15 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 | 车夫不跨章 | `autoload/map_service.gd:181-204` |
 | `max_hp` 派生公式 | `autoload/game_state.gd:311-317` |
 | 金币上限 | `autoload/game_state.gd:10`（`GOLD_CAP`） |
+| **装备实例版本号上下界写死 4** | `autoload/save_manager.gd:1358`（`_whole(..., 4, 4)`） |
+| **掉落表禁止 `requiredLevel`** | `autoload/data_loader.gd:618-629` |
+| **`make_equip_roll` 三道断言** | `scripts/systems/item_factory.gd:48 / 52 / 56` |
+| **词条倍率只有 6 个键** | `data/equipmentRules.json` 的 `affixTierScale` |
+| **生成器用 `tierRange` 夹等级** | `scripts/world/spawner.gd:76-80` |
+| **等级只在装配期写一次** | `scripts/world/spawner.gd:88`（写）/ `:190`（只读） |
+| **`useType` 无执行分发** | 校验 `data_loader.gd:1203`；文案 `ui/inventory_panel.gd:449`；执行在 `game_state.gd:607-613` 且按 itemId 硬编码 |
+| **Boss 血条单信号单实例** | `autoload/event_bus.gd:32`、`scripts/ui/boss_health_bar.gd:37` |
+| **未领取掉落上限 20** | `autoload/game_state.gd:13`（`UNCLAIMED_LOOT_CAP`） |
 
 **公式复算**：
 
@@ -583,7 +925,7 @@ print('存量最大等级差 =', mx, '⇒ 二次项从 d=13 起，故存量 HP �
 
 ---
 
-## 11. 一句话总结
+## 12. 一句话总结
 
 **「无限等级」和「怪物跟着变强」这两件事，本质是同一个问题：给等级找一条不炸的曲线。**
 
@@ -591,4 +933,7 @@ print('存量最大等级差 =', mx, '⇒ 二次项从 d=13 起，故存量 HP �
 所以 1–60 一个字节都不用改；玩家和怪物走同一台电梯，击杀次数在 60→1000 全程恒定 123.7 次；
 真正的难度由 `K(L) = 12 + 0.18(L−60)` 承担——**越往后，同一级要打的 Boss 越多，而不是同一只 Boss 越来越厚**。
 
-唯一有数据丢失风险的是那层存档校验（`save_manager.gd:1370`），所以 M10 从「数值地基 + 动态装备」开始，不从 UI 开始。
+有数据丢失风险的**不是一处，是两处**：`save_manager.gd:1358` 的版本号上下界、`:1370` 的等级严格等于模板。
+加上 `data_loader.gd:618` 的掉落表校验（起不来）、`spawner.gd:76` 的 `clampi`（S(d) 静默失效）、`:190` 的等级固化（复活不更新）——
+**这五条才是 M10 的真正工作量。** 玩法的想法本身只占很小一部分，而它们全都不报错、只表现为「玩家觉得哪里不对」。
+所以 M10 从「数值地基 + 动态装备 + 存档两道口」开始，不从 UI 开始。
