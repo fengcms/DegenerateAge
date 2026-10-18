@@ -770,11 +770,11 @@
       "source_art": "art_source/chapters/ch03/monsters/c3_normal01/",
       "runtime_art": "assets/sprites/monsters/c3_normal01/",
       "status": "reviewed",
-      "integration": "temporary_static",
+      "integration": "directional_preview",
       "existing_partial": false,
       "concept_art": "art_source/chapters/ch03/monsters/c3_normal01/concept.png",
       "temporary_sprite": "assets/sprites/monsters/c3_normal01/simplified_atlas.png",
-      "runtime_variant": "single_direction_three_frame",
+      "runtime_variant": "eight_direction_three_state_preview",
       "formal_animation": "pending"
     },
     {

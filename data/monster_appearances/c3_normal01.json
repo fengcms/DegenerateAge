@@ -1,12 +1,11 @@
 {
   "id": "c3_normal01",
-  "renderer": "static_atlas",
-  "texture": "res://assets/sprites/monsters/c3_normal01/simplified_atlas.png",
-  "hframes": 3,
+  "renderer": "directional_preview",
+  "texture": "res://assets/sprites/monsters/c3_normal01/directional_preview_atlas.png",
   "offset": [
     -40,
     -64
   ],
   "headHpY": -70,
-  "desc": "临时简化表现：单个东南向造型，受击与死亡变色；八向五状态动画待补。"
+  "desc": "砂丘状背甲、渠铜立柱与双螯的八方向单帧试玩稿；受击与死亡变色，正式五状态逐帧动画待补。"
 }
