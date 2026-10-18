@@ -1,0 +1,16 @@
+{
+  "id": "c3_elite02",
+  "side": 112,
+  "foot_y": 88,
+  "max_width": 100,
+  "max_height": 84,
+  "directions": [
+    "south_candidate_v1.png",
+    "sw_candidate_v1.png",
+    "west_candidate_v1.png",
+    "nw_candidate_v1.png",
+    "north_candidate_v1.png",
+    "ne_candidate_v1.png",
+    "east_candidate_v1.png"
+  ]
+}
