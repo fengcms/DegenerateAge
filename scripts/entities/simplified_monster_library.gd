@@ -20,7 +20,6 @@ const TEXTURES := {
 	"c4_normal05": preload("res://assets/sprites/monsters/c4_normal05/simplified_atlas.png"),
 	"c4_normal06": preload("res://assets/sprites/monsters/c4_normal06/simplified_atlas.png"),
 	"c4_normal07": preload("res://assets/sprites/monsters/c4_normal07/simplified_atlas.png"),
-	"c4_normal08": preload("res://assets/sprites/monsters/c4_normal08/simplified_atlas.png"),
 	"c4_elite01": preload("res://assets/sprites/monsters/c4_elite01/simplified_atlas.png"),
 	"c4_elite02": preload("res://assets/sprites/monsters/c4_elite02/simplified_atlas.png"),
 	"c4_elite03": preload("res://assets/sprites/monsters/c4_elite03/simplified_atlas.png"),
