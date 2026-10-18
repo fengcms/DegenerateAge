@@ -287,20 +287,21 @@ func current_npcs() -> Array:
 	var n = current_data().get("npcs", [])
 	return n if n is Array else []
 
-## 当前图 Boss 点原始数据（`maps.json.bossSpawn`；无 → 空字典）。
-func current_boss() -> Dictionary:
-	var b = current_data().get("bossSpawn", null)
-	return b if b is Dictionary else {}
-
-## 当前图**全部** Boss 点规格（M10-3 / 工程文档 43 §5.4）：`bossSpawns` 数组优先，
-## 回退单点 `bossSpawn`。只返回配置规格（未实例化、无运行状态）——
-## 真正带状态的 `current_bosses()`（多目标血条）属 M10-3b，本批不塞半成品。
-func current_boss_specs() -> Array:
+## 当前图**全部** Boss 点规格（M10-3b / P-8，工程文档 44 §3.2）：`bossSpawns` 数组优先，
+## 回退单点 `bossSpawn`，都没有 → 空数组。只返回配置规格（未实例化、无运行状态）——
+## 运行态实例目前**零调用方**（血条走 `EventBus.boss_hp_changed`、小地图走
+## `Spawner.marker_points()`），真到需要时再加，避免养一个跟着切图/重生维护生命周期的 API。
+func current_bosses() -> Array:
 	var rows: Variant = current_data().get("bossSpawns", null)
 	if rows is Array and not (rows as Array).is_empty():
 		return rows
 	var single: Variant = current_data().get("bossSpawn", null)
 	return [single] if single is Dictionary else []
+
+## ⚠ 兼容壳：**只给单点图用**，多 Boss 图请用 `current_bosses()`（本函数只返回第 0 只）。
+func current_boss() -> Dictionary:
+	var rows := current_bosses()
+	return rows[0] if not rows.is_empty() else {}
 
 func current_exits() -> Array:
 	var exits = current_data().get("exits", [])

@@ -184,7 +184,7 @@ func _ready() -> void:
 	_ground.add_child(RestZoneOverlay.new())
 	_spawner.setup(_ground, _player)
 	_spawner.spawn_from_map(GameState.current_map)
-	var bosses := MapService.current_boss_specs()
+	var bosses := MapService.current_bosses()
 	if not bosses.is_empty():
 		_spawner.spawn_from_specs(bosses, GameState.current_map)
 
