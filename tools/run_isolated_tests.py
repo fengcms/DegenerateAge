@@ -41,6 +41,8 @@ DEFAULT_TESTS = [
     "BalanceTest",
     # M10-1 动态等级装备：61+ 实例生成数值 + v5 存读放行 + v4 等级校验不许被放宽。
     "DynamicEquipTest",
+    # M10-2 循环掉落：levelFromBoss 取等级 + source_level 透传 + 静态表逐字节不变。
+    "ArenaDropTest",
     "SmokeTest",
 ]
 

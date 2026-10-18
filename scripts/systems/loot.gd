@@ -23,7 +23,11 @@ const KIND_MOUNT := "mount"
 ##
 ## M6-0b 分组语义（创意 07 §12）：每个条目先判定 `chance` 一次，再按 `countRange`
 ## 抽取件数（缺省 1 件），各件独立抽品质与模板。旧「单条 = 单件」表沿用（countRange 缺省即 1）。
-static func roll(drop_table_id: String, rng: RandomNumberGenerator = null, source_monster_id: String = "") -> Array:
+##
+## M10-2：`source_level` 是击杀目标的实际等级，只有 `levelFromBoss` 条目会读它；
+## 静态条目（带 `tierStart`）走原分支，随机调用序列逐字不变。
+static func roll(drop_table_id: String, rng: RandomNumberGenerator = null, source_monster_id: String = "",
+		source_level: int = 0) -> Array:
 	var r := rng if rng != null else _default_rng()
 	var out: Array = []
 	var table = DataLoader.get_entry("dropTables", drop_table_id)
@@ -39,7 +43,7 @@ static func roll(drop_table_id: String, rng: RandomNumberGenerator = null, sourc
 			continue
 		var copies := _roll_count(e, r)
 		for _i in range(copies):
-			var item := _roll_entry(e, r, source_monster_id)
+			var item := _roll_entry(e, r, source_monster_id, source_level)
 			if not item.is_empty():
 				out.append(item)
 	return out
@@ -56,7 +60,8 @@ static func _roll_count(e: Dictionary, r: RandomNumberGenerator) -> int:
 	return r.randi_range(lo, hi)
 
 ## 生成单个掉落项。
-static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_id: String = "") -> Dictionary:
+static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_id: String = "",
+		source_level: int = 0) -> Dictionary:
 	match String(e.get("kind", "")):
 		KIND_COIN:
 			var gr = e.get("goldRange", [1, 1])
@@ -86,7 +91,7 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_
 					return {}
 			return {"kind": KIND_RUNE, "itemId": rid, "count": 1}
 		KIND_EQUIP:
-			return _roll_equip(e, r)
+			return _roll_equip(e, r, source_level)
 		KIND_MISC:
 			var mid := String(e.get("itemId", ""))
 			if mid.is_empty() or DataLoader.get_entry("miscItems", mid) == null:
@@ -100,15 +105,24 @@ static func _roll_entry(e: Dictionary, r: RandomNumberGenerator, source_monster_
 			return {"kind": KIND_MOUNT, "itemId": mount_id, "count": 1}
 	return {}
 
-## 掉落只选择品质、所属套和型号；实际穿戴等级由模板决定。
-static func _roll_equip(e: Dictionary, r: RandomNumberGenerator) -> Dictionary:
+## 掉落只选择品质、所属套和型号；静态条的穿戴等级由模板决定，
+## 动态条（`levelFromBoss`）的穿戴等级来自击杀目标的实际等级（M10-2）。
+static func _roll_equip(e: Dictionary, r: RandomNumberGenerator, source_level: int = 0) -> Dictionary:
 	var pool := String(e.get("templatePool", ""))
 	var quality: String = _weighted_quality(e.get("qualityWeight", {}), r)
+	# M10-2：分岔放在品质抽取之后、等级抽取之前 —— 静态条的随机流一步不挪。
+	# 未提供 source_level 时兜底 60 档（不产生 v5 实例），宁可掉旧装也不写出读不回的档。
+	if bool(e.get("levelFromBoss", false)):
+		var boss_level := source_level if source_level > 0 else Balance.SOFTCAP_LEVEL
+		var dynamic_tpl := _pick_equip_template(ItemFactory.DYNAMIC_BASE_TIER, r, pool)
+		if dynamic_tpl.is_empty():
+			return {}
+		return ItemFactory.make_equip_dynamic(String(dynamic_tpl.get("id", "")), boss_level, quality, r, "drop")
 	var lr = e.get("levelRange", [1, 1])
 	var lo := int(lr[0]) if lr is Array and lr.size() >= 1 else 1
 	var hi := int(lr[1]) if lr is Array and lr.size() >= 2 else lo
-	var source_level := r.randi_range(lo, maxi(lo, hi))
-	var tier_start := int(e.get("tierStart", ItemFactory.tier_for_level(source_level)))
+	var source_level_roll := r.randi_range(lo, maxi(lo, hi))
+	var tier_start := int(e.get("tierStart", ItemFactory.tier_for_level(source_level_roll)))
 	var tpl := _pick_equip_template(tier_start, r, pool)
 	if tpl.is_empty():
 		return {}

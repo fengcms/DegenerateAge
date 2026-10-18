@@ -824,7 +824,7 @@ func _settle_rewards() -> void:
 			EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p003") % [display_name, gold], "drop")
 		return
 
-	var rolled := Loot.roll(table_id, null, monster_id)
+	var rolled := Loot.roll(table_id, null, monster_id, level)
 	# M6-0c（创意 07 §8）：整批掉落一次抽取（随机结果只生成一次），批次带唯一 ID。
 	_batch_seq += 1
 	var batch_id := "b_%d_%d" % [Time.get_ticks_msec(), _batch_seq]

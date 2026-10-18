@@ -610,23 +610,39 @@ func _validate_drop_tables() -> Array[String]:
 						if not boss is Dictionary or String(boss.get("kind", "")) != "boss" or String(boss.get("dropTableId", "")) != did:
 							report.append("[mounts] %s 的 dropBossId 必须是使用 %s 的 Boss" % [mount_id, did])
 				"equip":
-					var level_range: Variant = en.get("levelRange", null)
-					if not level_range is Array or level_range.size() != 2 \
-							or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \
-							or int(level_range[0]) < 1 or int(level_range[1]) < int(level_range[0]):
-						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
-					if en.has("requiredLevel") or not en.has("tierStart"):
-						report.append("[dropTables] %s equip 必须使用 tierStart，不能用 requiredLevel" % did)
-					if en.has("tierStart"):
-						var required: Variant = en.get("tierStart")
-						var cfg: Variant = tables.get("equipmentRules")
-						var legal := false
-						if cfg is Dictionary and _is_whole_level(required):
-							for configured in cfg.get("tiers", []):
-								if int(configured) == int(required):
-									legal = true
-						if not legal:
-							report.append("[dropTables] %s 的 tierStart 未在装备套起点表中" % did)
+					# M10-2：两套互斥口径——静态档靠 levelRange + tierStart，
+					# 动态档（levelFromBoss）靠击杀目标的实际等级，所属套由 ItemFactory 锚定 51。
+					# ⚠ 必须两个方向都报错：写成「两个都可选」会让带齐两者的坏表静默走错分支。
+					var dynamic_flag: Variant = en.get("levelFromBoss", false)
+					if not (dynamic_flag is bool):
+						report.append("[dropTables] %s 的 levelFromBoss 必须为布尔值" % did)
+						dynamic_flag = false
+					var dynamic := bool(dynamic_flag)
+					if en.has("requiredLevel"):
+						report.append("[dropTables] %s equip 不能用 requiredLevel" % did)
+					if dynamic:
+						if en.has("tierStart"):
+							report.append("[dropTables] %s equip 的 levelFromBoss 与 tierStart 互斥" % did)
+						if en.has("levelRange"):
+							report.append("[dropTables] %s equip 的 levelFromBoss 条目不应带 levelRange" % did)
+					else:
+						var level_range: Variant = en.get("levelRange", null)
+						if not level_range is Array or level_range.size() != 2 \
+								or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \
+								or int(level_range[0]) < 1 or int(level_range[1]) < int(level_range[0]):
+							report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
+						if not en.has("tierStart"):
+							report.append("[dropTables] %s equip 必须使用 tierStart，不能用 requiredLevel" % did)
+						if en.has("tierStart"):
+							var required: Variant = en.get("tierStart")
+							var cfg: Variant = tables.get("equipmentRules")
+							var legal := false
+							if cfg is Dictionary and _is_whole_level(required):
+								for configured in cfg.get("tiers", []):
+									if int(configured) == int(required):
+										legal = true
+							if not legal:
+								report.append("[dropTables] %s 的 tierStart 未在装备套起点表中" % did)
 					# M6-0b：countRange 分组件数（[lo,hi] 整数，≥1，lo≤hi）。
 					if en.has("countRange"):
 						var cr = en.get("countRange")
