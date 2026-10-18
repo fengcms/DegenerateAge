@@ -513,10 +513,11 @@ static func radius_for_kind(kind: String) -> float:
 			return RADIUS
 
 ## M6-0a（创意 07 §4）：向 HUD 广播 Boss 血量，供顶部血条刷新。
+## M10-3b（P-7）：补实例标识 —— 循环图同区两只接战时血条才能各占一条、互不覆盖。
 func _announce_boss_hp() -> void:
 	if _kind() != "boss":
 		return
-	EventBus.boss_hp_changed.emit(display_name, hp, max_hp, boss_phase)
+	EventBus.boss_hp_changed.emit(get_instance_id(), display_name, hp, max_hp, boss_phase)
 
 # ---- 物理 / 状态机 ----
 

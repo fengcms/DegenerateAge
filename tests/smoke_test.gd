@@ -4331,13 +4331,19 @@ func _test_boss_health_bar() -> void:
 		return
 	_expect(int(bar.z_index) == 0, "Boss 顶部血条 z_index 应为 0（不压 Toast/DragLayer）")
 	_expect(not bar.visible, "Boss 顶部血条初始应隐藏")
-	EventBus.boss_hp_changed.emit("腐化巨兽", 1800, 3000, 1)
+	# M10-3b（P-7）：信号首参是 Boss 实例标识，血条按 id 分条显示。
+	var bar_id := 7001
+	EventBus.boss_hp_changed.emit(bar_id, "腐化巨兽", 1800, 3000, 1)
 	await get_tree().process_frame
-	_expect(bar.visible and int(bar._hp) == 1800 and int(bar._max_hp) == 3000 and int(bar._phase) == 1,
+	var state: Dictionary = bar.bar_state(bar_id)
+	_expect(bar.visible and bar.bar_count() == 1
+		and int(state.get("hp", -1)) == 1800 and int(state.get("max_hp", -1)) == 3000
+		and int(state.get("phase", -1)) == 1,
 		"广播后血条应显示并记录血量/阶段")
-	EventBus.boss_hp_changed.emit("腐化巨兽", 0, 3000, 2)
+	EventBus.boss_hp_changed.emit(bar_id, "腐化巨兽", 0, 3000, 2)
 	await get_tree().process_frame
-	_expect(bool(bar._dying) and int(bar._hp) == 0, "hp<=0 应进入死亡淡出")
+	_expect(bool(bar._dying) and int(bar.bar_state(bar_id).get("hp", -1)) == 0,
+		"hp<=0 应进入死亡淡出")
 	await get_tree().create_timer(1.2).timeout
 	_expect(not bar.visible, "淡出结束后血条应隐藏")
 	main.queue_free()

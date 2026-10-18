@@ -10,8 +10,9 @@ var _last_played: Dictionary = {}
 var cue_counts: Dictionary = {}
 var _music: AudioStreamPlayer
 var _last_hp := -1
-var _boss_name := ""
-var _boss_phase := -1
+## M10-3b（P-7）：按「Boss 实例」记状态 —— 单游标在多目标下会让不同 Boss 互相顶掉，
+## 每次心跳都判成「换 Boss / 升阶段」⇒ 每秒反复播 boss 音。
+var _boss_seen: Dictionary = {}
 var _ready_for_events := false
 
 func _ready() -> void:
@@ -75,12 +76,11 @@ func _on_player_hp_changed(current: int, _maximum: int) -> void:
 		play_cue("hurt")
 	_last_hp = current
 
-func _on_boss_hp_changed(name: String, hp: int, _maximum: int, phase: int) -> void:
+func _on_boss_hp_changed(boss_id: int, name: String, hp: int, _maximum: int, phase: int) -> void:
 	if hp <= 0:
-		_boss_name = ""
-		_boss_phase = -1
+		_boss_seen.erase(boss_id)
 		return
-	if name != _boss_name or phase > _boss_phase:
+	var prev: Dictionary = _boss_seen.get(boss_id, {})
+	if String(prev.get("name", "")) != name or phase > int(prev.get("phase", -1)):
 		play_cue("boss")
-	_boss_name = name
-	_boss_phase = phase
+	_boss_seen[boss_id] = {"name": name, "phase": phase}
