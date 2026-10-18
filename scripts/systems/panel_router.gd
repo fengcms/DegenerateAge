@@ -19,18 +19,23 @@ const PANELS := {
 	"carter": {"ready": true, "title": "ui.panel.portable_carter"},
 	# 追猎令牌：面板随 M10-5 交付（`boss_token_panel.gd`）。
 	"boss_token": {"ready": true, "title": "ui.panel.boss_token"},
-	# 随身商队：面板随 M10-6 交付；现在打开会是空店铺，故不点亮。
-	"shop": {"ready": false, "title": "ui.panel.portable_shop"},
+	# 随身商队：面板随 M10-6 交付（复用 `ShopPanel` + `Shop.PORTABLE_SHOP_ID` 聚合货单）。
+	"shop": {"ready": true, "title": "ui.panel.portable_shop"},
 }
 
 ## 该 panelId 是否已登记（启动期校验与运行时共用的唯一判据）。
 static func has(panel_id: String) -> bool:
 	return PANELS.has(panel_id)
 
+## 「这条登记项是否已到可打开的批次」的**唯一判定**（M10-6 抽成纯函数）。
+## 抽出来的理由不是洁癖：三个面板全部点亮后，测试里已没有真实数据能触发「未点亮」分支，
+## 只能靠合成 `{ready: false}` 覆盖。判定逻辑集中在这里，测试与运行时走的是同一段代码。
+static func is_openable(entry: Variant) -> bool:
+	return entry is Dictionary and bool((entry as Dictionary).get("ready", false))
+
 ## 该面板是否已到可打开的批次。
 static func is_ready(panel_id: String) -> bool:
-	var entry: Variant = PANELS.get(panel_id, null)
-	return entry is Dictionary and bool((entry as Dictionary).get("ready", false))
+	return is_openable(PANELS.get(panel_id, null))
 
 ## 打开面板。返回 {ok, reason}；失败文案由 `GameState._use_fail` 统一 toast（单一出口）。
 ## ⚠ 只打开面板，不触碰背包 —— 道具不消耗。
@@ -45,6 +50,11 @@ static func open(panel_id: String) -> Dictionary:
 			return {"ok": true, "reason": ""}
 		"boss_token":
 			EventBus.boss_token_panel_requested.emit(title(panel_id))
+			return {"ok": true, "reason": ""}
+		"shop":
+			# 复用既有货郎面板：只是把店铺 id 换成合成 id，货单与价格由 `Shop` 聚合推导。
+			# 交易会话（拉起背包并列、托盘退回）等语义全部沿用，面板侧零改造。
+			EventBus.shop_open_requested.emit(Shop.PORTABLE_SHOP_ID)
 			return {"ok": true, "reason": ""}
 	# 已登记但尚无实现 = 配置超前（`ready` 被提前改成 true 却忘了写分支）。
 	return {"ok": false, "reason": Localization.tr_key("msg.panel_router.p002")}

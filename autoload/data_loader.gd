@@ -46,6 +46,11 @@ const KEY_FIELDS := {
 ## `data_loader` 目前完全不引用 `GameState`，加引用会引入 autoload 初始化顺序耦合）。
 const MAX_QUEST_REQUIRES_LEVEL := 9999
 
+## M10-6：随身商队使用**合成店铺 id**（`Shop.PORTABLE_SHOP_ID`），它不写进 `shops.json`。
+## 这里写字面量而非引用 `Shop`，同样是为了不给 data_loader 引入反向依赖；
+## 真实店铺一旦占用这个 id，货单会被聚合力覆盖 → 启动期直接报错，不留给运行时猜。
+const RESERVED_SHOP_IDS := ["portable_shop"]
+
 ## 历史遗留图（第一、二章）：入口落点与反向出口存在既有错位，未按第三至六章的
 ## 「同格」口径对齐（属审阅明确范围外的遗留）。仅用于豁免 `_validate_walk_exits`
 ## 的**同格断言**，待后续统一口径时逐图归正并移出白名单。
@@ -442,7 +447,10 @@ func validate_all() -> Array[String]:
 	if shops is Array:
 		for s in shops:
 			if typeof(s) == TYPE_DICTIONARY:
-				shop_ids[s.get("npcId", "")] = true
+				var shop_npc_id := String(s.get("npcId", ""))
+				if RESERVED_SHOP_IDS.has(shop_npc_id):
+					report.append("[shops] npcId '%s' 是随身商队的保留 id，真实店铺不得占用" % shop_npc_id)
+				shop_ids[shop_npc_id] = true
 	if maps is Array:
 		for mp in maps:
 			if typeof(mp) != TYPE_DICTIONARY:

@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 39 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 40 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 
 默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
@@ -52,6 +52,8 @@ DEFAULT_TESTS = [
     # M10-5 追猎令牌：行集/过滤/倒计时同源 + ordinal 真进 key + 等级跟随 + 与 Spawner 序号一致
     # + _map_has_monster 认 bossSpawns + travel_anywhere / fee_anywhere + 落地意图。
     "BossTokenTest",
+    # M10-6 随身商店：14 种精确集合 + 逐项价格 + 三条排除规则 + 购买链路 + 面板点亮 + 如意说明。
+    "PortableShopTest",
     "SmokeTest",
 ]
 

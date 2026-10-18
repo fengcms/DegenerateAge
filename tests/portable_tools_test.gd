@@ -97,15 +97,17 @@ func _test_router_opens_carter() -> void:
 		check(token_titles[0] == "追猎令牌", "面板标题应为「追猎令牌」，实际「%s」" % token_titles[0])
 
 ## 用例 4：未点亮 / 未登记必须显式失败，且原因可读。
-## M10-5 起 `boss_token` 已点亮，只剩 `shop`（M10-6）承担「未点亮」这条断言 —— 断言一条没松。
+## ⚠ M10-6 起 `shop` 也点亮了 —— **真实数据里再没有「未点亮」可供断言**
+## （M10-5 时这条锚点由 `shop` 承接，这次没有下一个承接者）。
+## 该分支的覆盖改由 `is_openable` 纯函数 + 合成 `{ready:false}` 承担，
+## 放在 `portable_shop_test.gd` 的用例 11；这里改为断言「全部登记项都已点亮」+「未登记仍报错」。
+## **断言一条没松，只换了锚点。**
 func _test_router_unready() -> void:
-	for panel_id in ["shop"]:
-		check(PanelRouter.has(String(panel_id)), "%s 应已登记（只是未点亮）" % panel_id)
-		check(not PanelRouter.is_ready(String(panel_id)), "%s 本批应 ready=false" % panel_id)
-		var res: Dictionary = PanelRouter.open(String(panel_id))
-		check(not bool(res.get("ok", false)), "open(%s) 应失败" % panel_id)
-		check(String(res.get("reason", "")) == "该功能尚未开放",
-			"open(%s) 的原因应为「该功能尚未开放」，实际「%s」" % [panel_id, res.get("reason", "")])
+	check(PanelRouter.PANELS.size() >= 3, "PANELS 应至少登记三件套，实际 %d" % PanelRouter.PANELS.size())
+	for panel_id in PanelRouter.PANELS.keys():
+		var entry: Variant = PanelRouter.PANELS[panel_id]
+		check(PanelRouter.is_openable(entry), "%s 的登记项应可打开" % panel_id)
+		check(PanelRouter.is_ready(String(panel_id)), "%s 应 ready=true" % panel_id)
 	check(not PanelRouter.has("nonsense"), "未登记的 panelId 不应通过 has()")
 	var bad: Dictionary = PanelRouter.open("nonsense")
 	check(not bool(bad.get("ok", false)), "open(nonsense) 应失败")
@@ -131,22 +133,30 @@ func _test_double_click_opens_without_consuming() -> void:
 			"使用后数量应仍为 1，实际 %d" % int((slot as Dictionary).get("count", 0)))
 		check(String((slot as Dictionary).get("itemId", "")) == TOOL_CARTER, "使用后物品 id 不应变化")
 
-## 用例 6：未点亮的道具双击（M10-6 才交付的随身商队）—— 失败 + 有 toast + 不消耗。
+## 用例 6：随身商队（M10-6 交付）—— 双击真广播商店请求，且道具**不被消耗**。
+## 三件套里 `carter` / `boss_token` 已分别在用例 3、5 验过；这条补上最后一个，
+## 并顺带断言「不再弹『该功能尚未开放』」——否则面板亮着、双击还报未开放就是双轨。
 func _test_unready_toast_without_consuming() -> void:
 	GameState.reset_to_defaults()
 	GameState.inventory[0] = ItemFactory.make_any(TOOL_SHOP)
 	var toasts: Array[String] = []
 	var cb := func(text: String, _kind: String) -> void: toasts.append(text)
+	var shops: Array[String] = []
+	var shop_cb := func(shop_id: String) -> void: shops.append(shop_id)
 	EventBus.toast_requested.connect(cb)
+	EventBus.shop_open_requested.connect(shop_cb)
 	var res: Dictionary = GameState.use_item(0)
 	EventBus.toast_requested.disconnect(cb)
-	check(not bool(res.get("ok", false)), "未点亮的随身商队双击应失败")
-	check(String(res.get("reason", "")) == "该功能尚未开放",
-		"失败原因应为「该功能尚未开放」，实际「%s」" % res.get("reason", ""))
-	check(toasts.has("该功能尚未开放"), "失败必须弹 toast（不静默），实际 %s" % str(toasts))
+	EventBus.shop_open_requested.disconnect(shop_cb)
+	check(bool(res.get("ok", false)), "双击随身商队应成功，实际 reason=%s" % String(res.get("reason", "")))
+	check(shops.size() == 1, "随身商队应广播 1 次商店请求，实际 %d" % shops.size())
+	if shops.size() == 1:
+		check(shops[0] == Shop.PORTABLE_SHOP_ID,
+			"广播的店铺 id 应为合成 id，实际「%s」" % shops[0])
+	check(not toasts.has("该功能尚未开放"), "已点亮的面板不得再弹「该功能尚未开放」，实际 %s" % str(toasts))
 	var slot: Variant = GameState.inventory[0]
 	check(slot is Dictionary and int((slot as Dictionary).get("count", 0)) == 1,
-		"失败时道具不得被消耗")
+		"永久工具使用后不得被消耗")
 
 ## 用例 7：等级门槛本身（59 拒 / 60 过 / 无字段不拦 / 0 视同无门槛）。
 func _test_level_gate() -> void:
