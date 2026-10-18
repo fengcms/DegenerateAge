@@ -14,8 +14,13 @@ const UNCLAIMED_LOOT_CAP := 20
 
 ## 存档校验上界（C-P3-1）。战斗侧已有明确上界者直接引用 `Combat`（暴击率 / 暴伤 / 攻击间隔），
 ## 其余取宽松上限——目的仅为拦「明显异常或被篡改」的值，不作为数值调平口径。
-const PLAYER_LEVEL_CAP := 999
-const PLAYER_STAT_CAP := 999999.0
+## M10-0：等级上限 999 → 9999、属性上限 999,999 → 99,999,999（产品 13 §9.3 Q-9）。
+## 两者**必须同批抬**：`Balance.base_attack(9999) = 28,339,142`，若只抬等级，
+## 1915 级就会从属性校验口被判定为「被篡改」而整档拒收（P-16）。
+## 9999 的选型理由：E(9999) ≈ 7.5×10^10，仍在 int64 与 JSON 双精度（2^53）余量内；
+## 再往上 `pow` 返回的 float 先失真，护栏就不再可信。
+const PLAYER_LEVEL_CAP := 9999
+const PLAYER_STAT_CAP := 99999999.0
 const PLAYER_MOVE_SPEED_CAP := 100.0
 ## 冷却缩减上限（产品 03 §3.8 / 04 §4.2：≤50%）。结算按加法累加后截断到本上限（D7）。
 const PLAYER_CDR_CAP := 0.5
@@ -281,9 +286,9 @@ func swap_hotbar_entries(from_index: int, to_index: int) -> bool:
 	EventBus.hotbar_changed.emit()
 	return true
 
-## 经验升级所需（4.4 公式：round(100 × L^1.6)）。
+## 经验升级所需（M10-0 起走 Balance 曲线；L ≤ 60 与旧的 round(100 × L^1.6) 逐位一致）。
 func xp_to_next(level: int) -> int:
-	return int(round(100.0 * pow(float(level), 1.6)))
+	return Balance.xp_to_next(level)
 
 ## 装备提供的属性加成汇总（14 槽，见 Equipment / 5.1）。
 func equip_bonus() -> Dictionary:
@@ -1171,7 +1176,10 @@ func add_xp(amount: int) -> void:
 	if amount <= 0:
 		return
 	player.xp = int(player.xp) + amount
-	while int(player.xp) >= xp_to_next(int(player.level)):
+	# M10-0：等级护栏。`PLAYER_LEVEL_CAP` 同时是读档校验上界，若这里不拦，
+	# 一旦越过（改档 / 极端经验注入）就会写出「自己读不回来」的存档（P-14）。
+	# 到顶后经验照常累积、不再升级：不丢玩家的 xp，只是不再成长。
+	while int(player.level) < PLAYER_LEVEL_CAP and int(player.xp) >= xp_to_next(int(player.level)):
 		player.xp = int(player.xp) - xp_to_next(int(player.level))
 		_level_up()
 	EventBus.player_xp_changed.emit(int(player.xp), xp_to_next(int(player.level)))
@@ -1183,14 +1191,30 @@ func _level_up() -> void:
 	var hp_ratio := float(player.hp) / float(max(1, prev_hp))
 	var mp_ratio := float(player.mp) / float(max(1, prev_mp))
 	player.level = int(player.level) + 1
-	player.attack = int(player.attack) + 2   # 4.4：每级 攻 +2
-	player.defense = int(player.defense) + 1 # 4.4：每级 防 +1
+	# M10-0：L ≤ 60 走逐级成长（与 4.4 逐位等价，见工程 40 §4.4 的证明）；
+	# L > 60 抬到 `Balance` 曲线基线，与怪物同乘 S ⇒ 击杀次数恒定（产品 13 §2.3）。
+	# 用 maxi 而非直接赋值，避免覆盖将来可能出现的其他基线来源。
+	player.attack = maxi(int(player.attack) + 2, Balance.base_attack(int(player.level)))
+	player.defense = maxi(int(player.defense) + 1, Balance.base_defense(int(player.level)))
 	player.hp = int(round(float(max_hp()) * hp_ratio))
 	player.mp = int(round(float(max_mp()) * mp_ratio))
 	EventBus.player_leveled.emit(int(player.level))
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p053") % int(player.level), "levelup")
+
+## M10-0：把基础攻防幂等抬到 `Balance` 曲线基线。用于读档后对齐「旧档（线性成长）」与「新档（曲线）」。
+##
+## 不写任何标记位 —— 曲线值只由等级决定，`maxi` 只升不降，可无限次重复执行；
+## 也不能写 `unlocks` 标记（save_manager 会校验键必须在 `_known_unlock_ids` 内，自造键整档拒收）。
+## 新游戏（`reset_to_defaults`）不走这里：L1 的曲线值就是初始值，无需对齐。
+## ⚠ 调用前必须已恢复 `equipment` —— `max_hp()` 依赖装备加成，否则 HP 结转比例会算错。
+func align_baseline_stats() -> void:
+	var ratio := float(player.hp) / float(maxi(1, max_hp()))
+	player.attack = maxi(int(player.attack), Balance.base_attack(int(player.level)))
+	player.defense = maxi(int(player.defense), Balance.base_defense(int(player.level)))
+	# HP 按比例结转而不是补满：读档时玩家可能正在残血，补满等于白送一次治疗。
+	player.hp = clampi(int(round(float(max_hp()) * ratio)), 0, max_hp())
 
 ## 广播全部数值（HUD 初始化 / 读档后同步）。
 func emit_all() -> void:

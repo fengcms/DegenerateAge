@@ -783,6 +783,10 @@ func apply_to_game_state(data: Dictionary) -> void:
 	# 运行态开关不持久化：10.3 重启后自动战斗默认关闭
 	GameState.auto_battle_on = false
 	GameState.auto_pickup_on = false
+	# M10-0：旧档的基础攻防是线性成长的（每级 +2/+1），这里按曲线基线幂等抬一次。
+	# 必须放在 `GameState.equipment` 恢复**之后**（max_hp 依赖装备加成），且不落档、不写标记。
+	GameState.align_baseline_stats()
+
 	# C-P3-4：菜单流程态同属会话运行态（不落档）。成功读到存档即代表进入世界，
 	# 与 reset_to_defaults 的 "menu" 成对，避免残留上一会话的菜单态。
 	GameState.menu_mode = "world"

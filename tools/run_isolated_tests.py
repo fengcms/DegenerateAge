@@ -37,6 +37,8 @@ DEFAULT_TESTS = [
     "GroundTileThemeTest",
     # 第四/五/六章各 1 个地图契约场景，令默认回归覆盖 31—60 级交付核心契约。
     "ChapterFourMapTest", "ChapterFiveMapTest", "ChapterSixMapTest",
+    # M10-0 数值地基：三条曲线 + 1–60 逐位不变 + 1000 级存档可读 + 读档幂等对齐。
+    "BalanceTest",
     "SmokeTest",
 ]
 
