@@ -48,7 +48,10 @@ const NUMERIC_RANGES := {
 	"mapScale": [MAP_SCALE_MIN, MAP_SCALE_MAX],
 	"displayScale": [DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX],
 	"searchRadius": [1.0, 99.0],
-	"lowGearLevelLimit": [1.0, 100.0],
+	# 与 `GameState.LOW_GEAR_LEVEL_MAX` 必须相等（**同一口径**）。本常量表是 `const`，
+	# 无法跨 autoload 取常量，故此处写字面量，由 `smoke_test` 的逐键断言核对两者相等。
+	# ⚠ 只改 `GameState` 而不改这里 ⇒ 玩家把筛选设到 >100 后存档被 `_is_valid_save` 判「数值越界」= 存档损坏。
+	"lowGearLevelLimit": [1.0, 9999.0],
 }
 
 static func read_display_preferences() -> Dictionary:

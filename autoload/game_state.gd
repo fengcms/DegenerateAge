@@ -24,6 +24,9 @@ const UNCLAIMED_LOOT_CAP := 20
 ## 9999 的选型理由：E(9999) ≈ 7.5×10^10，仍在 int64 与 JSON 双精度（2^53）余量内；
 ## 再往上 `pow` 返回的 float 先失真，护栏就不再可信。
 const PLAYER_LEVEL_CAP := 9999
+## 一键出售等级筛选上限：与玩家等级上限对齐，避免「界面能设、后端拒收」的静默失败。
+## 选用 9999 而非更大值：等同 PLAYER_LEVEL_CAP 余量边界，超出即代表「不限制等级」。
+const LOW_GEAR_LEVEL_MAX := 9999
 const PLAYER_STAT_CAP := 99999999.0
 const PLAYER_MOVE_SPEED_CAP := 100.0
 ## 冷却缩减上限（产品 03 §3.8 / 04 §4.2：≤50%）。结算按加法累加后截断到本上限（D7）。
@@ -479,7 +482,7 @@ func move_inventory_item(source: int, target: int, token: String) -> bool:
 	return true
 
 func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
-	if level_limit < 1 or level_limit > 100 or not Shop.QUALITY_ORDER.has(max_quality):
+	if level_limit < 1 or level_limit > LOW_GEAR_LEVEL_MAX or not Shop.QUALITY_ORDER.has(max_quality):
 		return false
 	settings.lowGearLevelLimit = level_limit
 	settings.lowGearMaxQuality = max_quality

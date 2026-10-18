@@ -1853,6 +1853,19 @@ func _test_low_gear_filter_sale() -> void:
 	old.settings.erase("lowGearMaxQuality")
 	_expect(SaveManager._is_valid_save(old) and int(SaveManager._migrate(old).settings.lowGearLevelLimit) == 5,
 		"旧档缺筛选设置时应补默认值")
+	# 上限口径三处必须一致：界面 SpinBox / `set_low_gear_filter` / 存档校验 `NUMERIC_RANGES`。
+	# 只改前两处而漏第三处 ⇒ 筛选设到 >100 后**存档被判损坏**（`settings.lowGearLevelLimit 数值越界`）。
+	var bounds: Array = SettingsRuntime.NUMERIC_RANGES["lowGearLevelLimit"] as Array
+	_expect(float(bounds[1]) == float(GameState.LOW_GEAR_LEVEL_MAX),
+		"存档校验区间上限(%s)应与 LOW_GEAR_LEVEL_MAX(%s)同口径，否则高等级筛选会写坏存档"
+			% [str(bounds[1]), str(GameState.LOW_GEAR_LEVEL_MAX)])
+	_expect(GameState.set_low_gear_filter(GameState.LOW_GEAR_LEVEL_MAX, "common"),
+		"筛选等级上限应可达 LOW_GEAR_LEVEL_MAX（界面能设就必须能存）")
+	var top_saved := SaveManager._collect()
+	_expect(SaveManager._is_valid_save(top_saved),
+		"筛选设为上限值后存档必须仍通过校验")
+	_expect(not GameState.set_low_gear_filter(GameState.LOW_GEAR_LEVEL_MAX + 1, "common"),
+		"超出上限必须被拒")
 	GameState.reset_to_defaults()
 
 ## 交易界面（双面板 + 拖拽出售，M1-8 改造）：面板级不变量与 6.4 托盘流程。

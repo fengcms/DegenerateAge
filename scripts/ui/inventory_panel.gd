@@ -236,7 +236,7 @@ func _build() -> void:
 	_filter_row.add_child(level_label)
 	_filter_level = SpinBox.new()
 	_filter_level.min_value = 1
-	_filter_level.max_value = 100
+	_filter_level.max_value = GameState.LOW_GEAR_LEVEL_MAX
 	_filter_level.step = 1
 	_filter_level.custom_minimum_size.x = 78
 	_filter_level.value_changed.connect(_on_filter_level_changed)
