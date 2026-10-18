@@ -15,10 +15,10 @@ extends RefCounted
 ## panelId → {ready, title}。`title` 是本地化 key，说明文案与面板标题共用一份。
 const PANELS := {
 	# 随身车夫：面板本身已能独立打开（`carter_panel_requested` 只设标题 + 刷新）。
-	# M10-7 只把可达范围扩成「去任何走过的地图」，面板不需要重写。
+	# `travel_anywhere` 已随 M10-5 落地（追猎令牌复用），M10-7 只剩「七分组 UI + C6Q13」。
 	"carter": {"ready": true, "title": "ui.panel.portable_carter"},
-	# 追猎令牌：面板随 M10-5 交付。
-	"boss_token": {"ready": false, "title": "ui.panel.boss_token"},
+	# 追猎令牌：面板随 M10-5 交付（`boss_token_panel.gd`）。
+	"boss_token": {"ready": true, "title": "ui.panel.boss_token"},
 	# 随身商队：面板随 M10-6 交付；现在打开会是空店铺，故不点亮。
 	"shop": {"ready": false, "title": "ui.panel.portable_shop"},
 }
@@ -42,6 +42,9 @@ static func open(panel_id: String) -> Dictionary:
 	match panel_id:
 		"carter":
 			EventBus.carter_panel_requested.emit(title(panel_id))
+			return {"ok": true, "reason": ""}
+		"boss_token":
+			EventBus.boss_token_panel_requested.emit(title(panel_id))
 			return {"ok": true, "reason": ""}
 	# 已登记但尚无实现 = 配置超前（`ready` 被提前改成 true 却忘了写分支）。
 	return {"ok": false, "reason": Localization.tr_key("msg.panel_router.p002")}

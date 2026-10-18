@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://scripts/ui/death_panel.gd" id="20_death"]
 [ext_resource type="Script" path="res://scripts/ui/flow_feedback.gd" id="21_flow"]
 [ext_resource type="Script" path="res://scripts/ui/equipment_confirmation.gd" id="22_equip_confirm"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BossTokenPanel.tscn" id="23_boss_token"]
 
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
@@ -77,6 +78,9 @@ layout_mode = 3
 layout_mode = 3
 
 [node name="MenuPanel" parent="UI" unique_id=1099351891 instance=ExtResource("17_menu")]
+layout_mode = 3
+
+[node name="BossTokenPanel" parent="UI" instance=ExtResource("23_boss_token")]
 layout_mode = 3
 
 [node name="DeathPanel" type="Control" parent="UI"]

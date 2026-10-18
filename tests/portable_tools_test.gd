@@ -71,10 +71,10 @@ func _test_not_sellable() -> void:
 		check(not Shop.can_sell(item), "%s 不得可售（questItem 必须拒收）" % item_id)
 		check(Shop.sell_price(item) == 0, "%s 的出售价应为 0" % item_id)
 
-## 用例 3：`carter` 已点亮 —— 打开成功且真的广播了面板请求（标题取本地化）。
+## 用例 3：已点亮的面板（`carter` / `boss_token`）—— 打开成功且真的广播了面板请求。
 func _test_router_opens_carter() -> void:
 	check(PanelRouter.has("carter"), "carter 应登记在 PANELS")
-	check(PanelRouter.is_ready("carter"), "carter 本批应 ready=true")
+	check(PanelRouter.is_ready("carter"), "carter 应 ready=true")
 	var received: Array[String] = []
 	var cb := func(npc_name: String) -> void: received.append(npc_name)
 	EventBus.carter_panel_requested.connect(cb)
@@ -84,10 +84,22 @@ func _test_router_opens_carter() -> void:
 	check(received.size() == 1, "carter 面板请求应广播 1 次，实际 %d" % received.size())
 	if received.size() == 1:
 		check(received[0] == "随身车夫", "面板标题应为「随身车夫」，实际「%s」" % received[0])
+	# M10-5：追猎令牌已随本批点亮 —— 同样必须是「真广播」而不是静默成功。
+	check(PanelRouter.is_ready("boss_token"), "boss_token 随 M10-5 应 ready=true")
+	var token_titles: Array[String] = []
+	var token_cb := func(title: String) -> void: token_titles.append(title)
+	EventBus.boss_token_panel_requested.connect(token_cb)
+	var token_res: Dictionary = PanelRouter.open("boss_token")
+	EventBus.boss_token_panel_requested.disconnect(token_cb)
+	check(bool(token_res.get("ok", false)), "open(boss_token) 应成功，实际 reason=%s" % token_res.get("reason", ""))
+	check(token_titles.size() == 1, "追猎令牌面板请求应广播 1 次，实际 %d" % token_titles.size())
+	if token_titles.size() == 1:
+		check(token_titles[0] == "追猎令牌", "面板标题应为「追猎令牌」，实际「%s」" % token_titles[0])
 
 ## 用例 4：未点亮 / 未登记必须显式失败，且原因可读。
+## M10-5 起 `boss_token` 已点亮，只剩 `shop`（M10-6）承担「未点亮」这条断言 —— 断言一条没松。
 func _test_router_unready() -> void:
-	for panel_id in ["boss_token", "shop"]:
+	for panel_id in ["shop"]:
 		check(PanelRouter.has(String(panel_id)), "%s 应已登记（只是未点亮）" % panel_id)
 		check(not PanelRouter.is_ready(String(panel_id)), "%s 本批应 ready=false" % panel_id)
 		var res: Dictionary = PanelRouter.open(String(panel_id))
@@ -119,16 +131,16 @@ func _test_double_click_opens_without_consuming() -> void:
 			"使用后数量应仍为 1，实际 %d" % int((slot as Dictionary).get("count", 0)))
 		check(String((slot as Dictionary).get("itemId", "")) == TOOL_CARTER, "使用后物品 id 不应变化")
 
-## 用例 6：未点亮的道具双击 —— 失败 + 有 toast + 不消耗。
+## 用例 6：未点亮的道具双击（M10-6 才交付的随身商队）—— 失败 + 有 toast + 不消耗。
 func _test_unready_toast_without_consuming() -> void:
 	GameState.reset_to_defaults()
-	GameState.inventory[0] = ItemFactory.make_any(TOOL_BOSS_TOKEN)
+	GameState.inventory[0] = ItemFactory.make_any(TOOL_SHOP)
 	var toasts: Array[String] = []
 	var cb := func(text: String, _kind: String) -> void: toasts.append(text)
 	EventBus.toast_requested.connect(cb)
 	var res: Dictionary = GameState.use_item(0)
 	EventBus.toast_requested.disconnect(cb)
-	check(not bool(res.get("ok", false)), "未点亮的追猎令牌双击应失败")
+	check(not bool(res.get("ok", false)), "未点亮的随身商队双击应失败")
 	check(String(res.get("reason", "")) == "该功能尚未开放",
 		"失败原因应为「该功能尚未开放」，实际「%s」" % res.get("reason", ""))
 	check(toasts.has("该功能尚未开放"), "失败必须弹 toast（不静默），实际 %s" % str(toasts))

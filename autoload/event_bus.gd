@@ -67,6 +67,9 @@ signal quest_panel_requested(npc_name: String)
 
 # ---- 地图 / 车夫（M3）----
 signal carter_panel_requested(npc_name: String)
+## M10-5：追猎令牌面板请求（与 `carter_panel_requested` 同构 —— 只传标题，
+## 面板自己调 `BossToken.rows()` 取数据）。
+signal boss_token_panel_requested(title: String)
 signal map_traveled(from_id: String, to_id: String)
 
 # ---- 铁匠 / 升星（M4）----
