@@ -80,6 +80,44 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 	var affix_scale := float(scale_values[scale_key]) * scale_factor
 	var q: Dictionary = qualities[quality]
 	var r := rng if rng != null else _default_rng()
+	var rolled := _roll_affixes(item_id, quality, affix_scale, r)
+	if not bool(rolled.get("ok", false)):
+		return {}
+	var raw: Dictionary = (raw_bases[str(tier_start)] as Dictionary).duplicate(true)
+	if dynamic:
+		var scaled := {}
+		for stat in raw:
+			scaled[String(stat)] = maxi(1, int(round(float(raw[stat]) * scale_factor)))
+		raw = scaled
+	return {
+		"kind": "equip", "itemId": item_id,
+		"instanceId": "%s_%s" % [instance_prefix, Crypto.new().generate_random_bytes(16).hex_encode()],
+		"equipmentRuleVersion": RULE_VERSION_DYNAMIC if dynamic else RULE_VERSION_BASE,
+		"requiredLevel": required_level, "level": required_level,
+		"quality": quality, "star": 0,
+		"rawBaseAttrs": raw,
+		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
+		"starMultiplierSnapshot": float(cfg.get("starMult", 0.1)),
+		"affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs, "count": 1,
+	}
+
+## 掷词条的唯一实现（M10-8 抽取）：新品生成与装备重铸共用同一段逻辑。
+## 🔴 **随机数调用顺序必须逐字不变**：
+## `randf()`（百分比判定）→ `randi_range`（选百分比属性）→ `randf_range`（百分比数值）
+## → 循环 { `randi_range`（选固定属性）→ `randi_range`（固定数值） }。
+## 把 `randf()` 挪到循环后、或把「选属性」与「滚数值」调换，1—60 级所有掉落结果都会变；
+## `tests/ReforgeTest` 用例 14 用固定种子快照锁死这条顺序（唯一防线）。
+## `affix_scale` 由调用方按**实例等级**算好传入（见 `reroll_affixes`）。
+static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
+		rng: RandomNumberGenerator) -> Dictionary:
+	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
+	var cfg := rules()
+	var qualities: Variant = cfg.get("qualities", {})
+	if not tpl is Dictionary or not qualities is Dictionary or not qualities.has(quality):
+		push_error("[ItemFactory] %s 的品质 %s 未登记" % [item_id, quality])
+		return {"ok": false, "reason": "quality"}
+	var q: Dictionary = qualities[quality]
+	var r := rng if rng != null else _default_rng()
 	var affix_count := int(q.get("affixCount", 0))
 	var pool: Array = tpl.get("affixPool", [])
 	var fixed_cfg: Dictionary = cfg.get("fixedAffixes", {})
@@ -109,24 +147,36 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 		fixed.append({"stat": stat, "value": r.randi_range(lo, hi)})
 	if fixed.size() + percent.size() != affix_count:
 		push_error("[ItemFactory] %s 的 %s 品质词条池不足" % [item_id, quality])
-		return {}
-	var raw: Dictionary = (raw_bases[str(tier_start)] as Dictionary).duplicate(true)
-	if dynamic:
-		var scaled := {}
-		for stat in raw:
-			scaled[String(stat)] = maxi(1, int(round(float(raw[stat]) * scale_factor)))
-		raw = scaled
-	return {
-		"kind": "equip", "itemId": item_id,
-		"instanceId": "%s_%s" % [instance_prefix, Crypto.new().generate_random_bytes(16).hex_encode()],
-		"equipmentRuleVersion": RULE_VERSION_DYNAMIC if dynamic else RULE_VERSION_BASE,
-		"requiredLevel": required_level, "level": required_level,
-		"quality": quality, "star": 0,
-		"rawBaseAttrs": raw,
-		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
-		"starMultiplierSnapshot": float(cfg.get("starMult", 0.1)),
-		"affixes": fixed, "pctAttrs": percent, "count": 1,
-	}
+		return {"ok": false, "reason": "pool"}
+	return {"ok": true, "affixes": fixed, "pctAttrs": percent}
+
+## 重掷一件**既有实例**的词条（M10-8 装备重铸）：成功返回 `{ok, affixes, pctAttrs}`，
+## 失败返回 `{ok: false, reason}`。
+## 🔴 只读实例的 `itemId` / `quality` / `requiredLevel`，**不改 item**（由 `GameState` 写回）。
+## 🔴 词条倍率必须按**实例等级**算：`affixTierScale[51] × Balance.scale(L − 60)`。
+## 不能用 `tier_start_for_template(itemId)` 推 —— 循环套恒为 51，用它会把 L1000 的
+## 词条砸回 L60 数值（这就是负向 N-3）。判据用 `requiredLevel > 60` 而非
+## `equipmentRuleVersion`：老档实例可能缺这个字段，而等级是必有的。
+static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null) -> Dictionary:
+	var item_id := String(item.get("itemId", ""))
+	if item_id.is_empty():
+		return {"ok": false, "reason": "id"}
+	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
+	if not tpl is Dictionary:
+		return {"ok": false, "reason": "template"}
+	var quality := String(item.get("quality", ""))
+	if quality.is_empty():
+		quality = String((tpl as Dictionary).get("defaultQuality", "common"))
+	var level := int(item.get("requiredLevel", 1))
+	var dynamic := level > Balance.SOFTCAP_LEVEL
+	var scale_key := str(DYNAMIC_BASE_TIER) if dynamic else str(tier_for_level(level))
+	var scale_values: Variant = rules().get("affixTierScale", {})
+	if not scale_values is Dictionary or not (scale_values as Dictionary).has(scale_key):
+		push_error("[ItemFactory] 缺少第 %s 套词条倍率" % scale_key)
+		return {"ok": false, "reason": "scale"}
+	var factor := Balance.scale(level - Balance.SOFTCAP_LEVEL) if dynamic else 1.0
+	var affix_scale := float((scale_values as Dictionary)[scale_key]) * factor
+	return _roll_affixes(item_id, quality, affix_scale, rng)
 
 ## M10-1：循环装备实例门面。`level ≤ 60` 退回普通路径（60 级拿到的仍是 tier51 原版），
 ## 型号必须在循环套内，否则显式失败。掉落 / 任务 / 商店后续都走这里。

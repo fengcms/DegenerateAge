@@ -816,6 +816,59 @@ func _upgrade_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "success": false, "cost": 0, "reason": reason}
 
+# ---- 装备重铸（M10-8）----
+
+## 重铸一件装备的全部词条。`source` = "bag" / "worn"，`key` 是背包下标或装备槽 id
+## （与 `upgrade_equipment` 同构）；`expected_id` 防止选择后背包整理导致错误实例被扣费。
+##
+## 🔑 **先掷后扣**：`ItemFactory.reroll_affixes` 是纯函数、不改 item、无副作用，掷成功才扣钱。
+## 于是「扣了钱没重铸」这条错误路径根本不存在 —— 比「先扣、失败再退款」少一条分支。
+## 品质 / 星级 / 基底 / instanceId 一律不动，只写回 `affixes` / `pctAttrs`（无需改存档 schema）。
+func reforge_equipment(source: String, key: Variant, expected_id: String,
+		rng: RandomNumberGenerator = null) -> Dictionary:
+	var item: Dictionary = {}
+	if source == "bag" and key is int and key >= 0 and key < inventory.size():
+		var candidate = inventory[key]
+		if candidate is Dictionary:
+			item = candidate
+	elif source == "worn" and key is String:
+		var candidate = equipment.get(key)
+		if candidate is Dictionary:
+			item = candidate
+	if item.is_empty() or expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
+		return _reforge_fail(Localization.tr_key("msg.game_state.p032"))
+	var guard := Reforge.can_reforge(item)
+	if not bool(guard.get("ok", false)):
+		return _reforge_fail(String(guard.get("reason", Localization.tr_key("msg.reforge.p003"))))
+	var price := Reforge.cost(Equipment.level_req(item))
+	if price <= 0:
+		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
+	if gold < price:
+		return _reforge_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
+	var rolled := ItemFactory.reroll_affixes(item, rng)
+	if not bool(rolled.get("ok", false)):
+		return _reforge_fail(Localization.tr_key("msg.reforge.p003"))
+	var unchanged := ItemUtil.affix_lines(item) == ItemUtil.affix_lines({
+		"affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
+	})
+	add_gold(-price)
+	item["affixes"] = rolled.affixes
+	item["pctAttrs"] = rolled.pctAttrs
+	if source == "worn":
+		EventBus.equipment_changed.emit()
+		EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+		EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+	else:
+		EventBus.inventory_changed.emit()
+	var message := Localization.tr_key("msg.reforge.p005") % [ItemUtil.display_name(item), price]
+	EventBus.toast_requested.emit(message, "pickup")
+	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
+		"unchanged": unchanged, "reason": message}
+
+func _reforge_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "cost": 0, "unchanged": false, "reason": reason}
+
 # ---- 世界时钟与怪物点刷新状态（M4-10）----
 ## 契约：刷新倒计时由**世界时钟**（`world_time`）统一驱动，不再有第二套计时器。
 ## key 用 `map_id#monster_id#同种序号`（稳定），不用数组下标 —— 地图数据增减点不错位。
@@ -1077,7 +1130,7 @@ func toggle_auto_pickup() -> bool:
 ## 常驻浮窗面板（F-P3-1）：四者可彼此并开，其余面板打开时它们统一关闭。
 const FLOATING_PANEL_IDS := ["inventory", "character", "skill", "mount"]
 ## NPC 会话面板：打开期间暂停自动战斗挂机（普通可并开的信息面板不影响自动决策）。
-const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade"]
+const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade", "reforge"]
 ## 真正接管键盘的流程面板；普通信息与 NPC 面板可在操作角色时保持打开。
 const WORLD_INPUT_BLOCKING_PANEL_IDS := ["menu", "settings", "save", "death", "equipment_confirm"]
 

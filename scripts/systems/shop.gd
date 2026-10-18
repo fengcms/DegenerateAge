@@ -201,6 +201,9 @@ static func item_quality(item: Dictionary) -> String:
 ## 6.2 售价公式：round(baseValue × qualityMult × (1 + star×0.08))，非装备再 × 回收比例。
 ## 工程 39 G2：**整叠计价** —— 此前忽略 `count`，一叠 99 瓶只算 1 瓶钱（装备 count 恒 1，故未暴露）。
 ## 先取整单价再乘数量，保证「单价 × 数量 = 总价」可被玩家手算复核。
+## M10-8 D-15：**装备**额外乘等级轻缩放 `×(1 + 0.02 × (L − 60))`（参数见 `endgame.json` 的
+## `resale`）。只改这一个调用点，货郎 / 背包一键卖出 / 随身商店自动统一 —— 否则同一件装备
+## 在两处卖不同价。非装备不缩放（药水没有装备等级）。
 static func sell_price(item: Dictionary) -> int:
 	var base := base_value(item)
 	if base <= 0:
@@ -210,6 +213,8 @@ static func sell_price(item: Dictionary) -> int:
 	var unit := float(base) * mult * (1.0 + float(star) * STAR_SELL_BONUS)
 	if String(item.get("kind", "")) != "equip":
 		unit *= SELL_RATIO_NON_EQUIP
+	else:
+		unit *= Reforge.resale_scale(Equipment.level_req(item))
 	var count := maxi(1, int(item.get("count", 1)))
 	return int(round(unit)) * count
 

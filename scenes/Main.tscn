@@ -23,6 +23,7 @@
 [ext_resource type="Script" path="res://scripts/ui/flow_feedback.gd" id="21_flow"]
 [ext_resource type="Script" path="res://scripts/ui/equipment_confirmation.gd" id="22_equip_confirm"]
 [ext_resource type="PackedScene" path="res://scenes/ui/BossTokenPanel.tscn" id="23_boss_token"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ReforgePanel.tscn" id="24_reforge"]
 
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
@@ -60,6 +61,9 @@ layout_mode = 3
 layout_mode = 3
 
 [node name="BlacksmithPanel" parent="UI" unique_id=655326140 instance=ExtResource("11_blacksmith")]
+layout_mode = 3
+
+[node name="ReforgePanel" parent="UI" instance=ExtResource("24_reforge")]
 layout_mode = 3
 
 [node name="WarehousePanel" parent="UI" unique_id=8165928 instance=ExtResource("12_warehouse")]

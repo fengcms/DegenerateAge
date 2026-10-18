@@ -155,6 +155,20 @@ static func attr_lines(item: Dictionary) -> Array[String]:
 					lines.append(line)
 	return lines
 
+## 只列词条的文本（M10-8 重铸面板：新词条 / 旧词条对比）。
+## 与 `attr_lines()` 的区别：**不混基底、不掺升星增量** —— 重铸改的就是这两个数组，
+## 玩家需要看到的是「这一掷换来了什么」，掺进基底会让对比失去意义。
+static func affix_lines(item: Dictionary) -> Array[String]:
+	var lines: Array[String] = []
+	for key in ["affixes", "pctAttrs"]:
+		var arr = item.get(key, [])
+		if not arr is Array:
+			continue
+		for e in arr:
+			if e is Dictionary:
+				lines.append(stat_line(String(e.get("stat", "")), float(e.get("value", 0.0))))
+	return lines
+
 ## 单条属性文本，如「攻击 +5」「生命 +6.5%」。
 static func stat_line(stat: String, value: float) -> String:
 	var label := String(STAT_LABEL.get(stat, stat))

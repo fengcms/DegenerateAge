@@ -77,6 +77,8 @@ signal map_traveled(from_id: String, to_id: String)
 # ---- 铁匠 / 升星（M4）----
 signal blacksmith_panel_requested(npc_name: String, greeting: String)
 signal upgrade_panel_requested()
+## M10-8：铁匠服务菜单第二项（装备重铸）请求。
+signal reforge_panel_requested()
 
 # ---- 仓库（M4-3）----
 signal warehouse_panel_requested(npc_name: String)
