@@ -73,6 +73,7 @@ func _ready() -> void:
 	check(MonsterAnimationCache.cached_preview_ids().is_empty(), "倒根驿路切图释放试玩图缓存")
 	MonsterAnimationCache.prepare_for_map("c4_map02")
 	check(MonsterAnimationCache.cached_preview_ids().has("c4_normal08"), "失声哨林预取哨塔寄藤试玩图")
+	check(MonsterAnimationCache.cached_preview_ids().has("c4_elite03"), "失声哨林预取折光观测偶试玩图")
 	MonsterAnimationCache.release_for_map("c4_map02")
 	check(MonsterAnimationCache.cached_preview_ids().is_empty(), "失声哨林切图释放试玩图缓存")
 	print("[MonsterAnimationCacheTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
