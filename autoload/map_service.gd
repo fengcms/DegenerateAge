@@ -433,6 +433,70 @@ func destinations() -> Array:
 		})
 	return out
 
+# ---- 随身车夫（M10-7，产品 13 §5.3）----
+
+## 七个分组，顺序即 UI 顺序。**不要按数据动态生成**：
+## 空组也要按固定顺序占位，否则某章暂时无图时组序会塌。
+const LEVEL_GROUPS := ["1-10", "11-20", "21-30", "31-40", "41-50", "51-60", "60+"]
+
+## 地图 → 分组键。判据顺序不能反：
+## ① `levelFromPlayer.enabled`（循环图，现仅 c7_arena）→ "60+"；
+## ② 否则按 recommendedLevel 落到 10 级一档（60 → "51-60"）。
+## ⚠ 只按等级分桶会得到「60+ 组恒空」——c7_arena 与 c6_map05 的 recommendedLevel 都是 60（工程 48 C-2）。
+func level_group_of(map_id: String) -> String:
+	var lfp: Variant = data_for(map_id).get("levelFromPlayer", null)
+	if lfp is Dictionary and bool((lfp as Dictionary).get("enabled", false)):
+		return "60+"
+	var lv := clampi(recommended_level(map_id), 1, 60)
+	var start := int(floorf(float(lv - 1) / 10.0)) * 10 + 1
+	return "%d-%d" % [start, start + 9]
+
+## 跨章目的地（`travel_anywhere` 的镜像列表）。与 `destinations()` 的区别只有两点：
+## ① 遍历**全表**而不是 `links()`；② 报价用 `fee_anywhere`。
+## 放行判据与 `_travel_checks` 逐字同源（含 camp→wild_trial 教学例外），
+## 否则会出现「面板写着能去，点了报无法前往」的双轨（工程 48 R-2）。
+func anywhere_destinations() -> Array:
+	var out: Array = []
+	for entry in DataLoader.get_table("maps"):
+		if not entry is Dictionary:
+			continue
+		var id := String((entry as Dictionary).get("id", ""))
+		if id.is_empty() or id == GameState.current_map:
+			continue
+		var visited := GameState.is_visited(id)
+		var taught := GameState.current_map == DEFAULT_MAP and id == "wild_trial"
+		var open := is_unlocked(id) and (visited or taught)
+		var reason := ""
+		if not is_unlocked(id):
+			reason = Localization.tr_key("msg.map_service.p011")
+		elif not open:
+			reason = Localization.tr_key("msg.map_service.p012")
+		out.append({
+			"id": id,
+			"name": display_name(id),
+			"recommendedLevel": recommended_level(id),
+			"cost": fee_anywhere(id),
+			"unlocked": open,
+			"visited": visited,
+			"reason": reason,
+			"group": level_group_of(id),
+		})
+	out.sort_custom(_sort_anywhere)
+	return out
+
+## 稳定排序：组序 → 推荐等级 → id。给定同一份数据，结果必须逐条可复现
+## （测试对连续两次调用做逐条比对，字典序 / 随机序都会红）。
+func _sort_anywhere(a: Dictionary, b: Dictionary) -> bool:
+	var ga := LEVEL_GROUPS.find(String(a.get("group", "")))
+	var gb := LEVEL_GROUPS.find(String(b.get("group", "")))
+	if ga != gb:
+		return ga < gb
+	var la := int(a.get("recommendedLevel", 0))
+	var lb := int(b.get("recommendedLevel", 0))
+	if la != lb:
+		return la < lb
+	return String(a.get("id", "")) < String(b.get("id", ""))
+
 # ---- 出行 ----
 
 ## 车夫出行：校验 → 扣费 → 切换地图 → 写落点（**不改场景**）。

@@ -8,6 +8,11 @@ extends Control
 ## 前往成功 → `MapService.travel_to` 写入 `current_map` + `save_pos` 并重载场景，本面板随场景销毁。
 ##
 ## 形态与 QuestPanel 同构（拍板 D3-A）；6.3 的通用「对话 + 功能菜单」框架留 M4/M5-5。
+##
+## M10-7 起**一个节点两种模式**（`_portable`）：
+##   当地车夫（NPC 交互 / 任务面板）= `destinations()` 平铺 + `travel_to`，渲染与原实现逐字一致；
+##   随身车夫（`PanelRouter`）= `anywhere_destinations()` 七分组 + `travel_anywhere`。
+## 判据只有本文件的两处（`_refresh` / `_on_travel`），其余渲染函数两种模式共用。
 
 const PANEL_WIDTH := 560
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
@@ -24,6 +29,12 @@ var _center: CenterContainer
 var _box: PanelContainer
 var _scroll: ScrollContainer
 var _dim: ColorRect
+## M10-7：同一节点两种模式。`false` = 当地车夫（`destinations()` + `travel_to`），
+## `true` = 随身车夫（`anywhere_destinations()` 七分组 + `travel_anywhere`）。
+var _portable := false
+## 当前渲染的分组键（当地模式恒为空）与行数 —— 只读访问器供测试，不含业务分支。
+var _section_keys: Array[String] = []
+var _row_count := 0
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -47,7 +58,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ---- 开关 ----
 
-func _on_requested(npc_name: String) -> void:
+## `portable` 由信号第二参给出（M10-7）。同理 `PanelRouter` 传 `true`、NPC 交互传 `false`，
+## 两个来源语义不同但共用一个节点 —— 只传标题会让随身车夫列成当地列表（工程 48 C-1）。
+func _on_requested(npc_name: String, portable: bool = false) -> void:
+	_portable = portable
 	if not npc_name.is_empty():
 		_title.text = PanelChrome.title_text(Localization.tr_key("ui.carter_panel.p001") % npc_name)
 	set_open(true)
@@ -170,7 +184,12 @@ func _panel_style() -> StyleBoxFlat:
 # ---- 刷新 ----
 
 func _reset_hint() -> void:
-	_hint.text = Localization.tr_key("ui.carter_panel.p004") % GameState.gold
+	# 随身价（20 × 等级、下限 50）与当地 `carterFares` 是**两套价**：
+	# 同一目的地会出现两个数字，必须解释来源，否则玩家会当成 bug（工程 48 R-4）。
+	if _portable:
+		_hint.text = Localization.tr_key("ui.carter_panel.p011")
+	else:
+		_hint.text = Localization.tr_key("ui.carter_panel.p004") % GameState.gold
 	_hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 
 func _refresh() -> void:
@@ -179,15 +198,57 @@ func _refresh() -> void:
 	for c in _list.get_children():
 		_list.remove_child(c)
 		c.queue_free()
-	var dests: Array = MapService.destinations()
+	_section_keys.clear()
+	_row_count = 0
+	var dests: Array = MapService.anywhere_destinations() if _portable else MapService.destinations()
 	if dests.is_empty():
 		var l := Label.new()
 		l.text = Localization.tr_key("ui.carter_panel.p005")
 		l.add_theme_color_override("font_color", COL_TEXT_DIM)
 		_list.add_child(l)
 		return
+	if not _portable:
+		for d in dests:
+			_list.add_child(_make_row(d as Dictionary))
+			_row_count += 1
+		return
+	# 随身模式：按 LEVEL_GROUPS 的**固定顺序**分组渲染；空组整段跳过（不显示空标题）。
+	var by_group: Dictionary = {}
 	for d in dests:
-		_list.add_child(_make_row(d as Dictionary))
+		var key := String((d as Dictionary).get("group", ""))
+		if not by_group.has(key):
+			by_group[key] = []
+		(by_group[key] as Array).append(d)
+	for raw_key in MapService.LEVEL_GROUPS:
+		var key := String(raw_key)
+		if not by_group.has(key):
+			continue
+		_section_keys.append(key)
+		_list.add_child(_make_section(key))
+		for d in by_group[key]:
+			_list.add_child(_make_row(d as Dictionary))
+			_row_count += 1
+
+## 分组标题：循环图组用专名（等级对 60+ 无意义，c7_arena 与 51-60 组同为 60）。
+func _make_section(key: String) -> Control:
+	var l := Label.new()
+	l.text = Localization.tr_key("ui.carter_panel.p013") if key == "60+" \
+		else Localization.tr_key("ui.carter_panel.p012") % key
+	l.add_theme_font_size_override("font_size", 14)
+	l.add_theme_color_override("font_color", COL_TITLE)
+	return l
+
+## 只读访问器（同 `BossHealthBar.bar_count()` 规格）：测试用它确认模式串到了 UI。
+func section_keys() -> Array[String]:
+	return _section_keys.duplicate()
+
+func row_count() -> int:
+	return _row_count
+
+## 提示行文本（失败原因落在这里）。测试用它确认**选对了哪条出行 API**：
+## 金币不足时 `travel_anywhere` 报「金币不足」、`travel_to` 报「车夫无法直达」，两者不通用。
+func hint_text() -> String:
+	return _hint.text if _hint != null else ""
 
 func _make_row(d: Dictionary) -> Control:
 	var map_id := String(d.get("id", ""))
@@ -226,21 +287,19 @@ func _make_row(d: Dictionary) -> Control:
 	sub.add_theme_color_override("font_color", COL_GOLD if cost > 0 else COL_TEXT_DIM)
 	info.add_child(sub)
 
-	row.add_child(_make_travel_button(map_id, unlocked, afford))
+	row.add_child(_make_travel_button(d, unlocked, afford))
 	return panel
 
-func _make_travel_button(map_id: String, unlocked: bool, afford: bool) -> Button:
+## 目的地行由调用方传入：原本这里会**再调一次** `destinations()` 反查原因，
+## 随身模式下列表来自 `anywhere_destinations()`，反查会拿到错的一组（工程 48 C-1）。
+func _make_travel_button(d: Dictionary, unlocked: bool, afford: bool) -> Button:
+	var map_id := String(d.get("id", ""))
 	var b := Button.new()
 	b.text = Localization.tr_key("ui.carter_panel.p007")
 	b.custom_minimum_size = Vector2(84, 30)
 	if not unlocked:
 		b.disabled = true
-		var reason := Localization.tr_key("ui.carter.locked")
-		for destination in MapService.destinations():
-			if String(destination.get("id", "")) == map_id:
-				reason = String(destination.get("reason", reason))
-				break
-		b.tooltip_text = reason
+		b.tooltip_text = String(d.get("reason", Localization.tr_key("ui.carter.locked")))
 	elif not afford:
 		b.disabled = true
 		b.tooltip_text = Localization.tr_key("ui.carter_panel.p008") % GameState.gold
@@ -270,7 +329,8 @@ func _fee_text(cost: int) -> String:
 # ---- 交互 ----
 
 func _on_travel(map_id: String) -> void:
-	var res := MapService.travel_to(map_id)
+	# 随身车夫不要求拓扑相邻（M10-5 的 `travel_anywhere`；两者共用 `_travel_checks`）。
+	var res := MapService.travel_anywhere(map_id) if _portable else MapService.travel_to(map_id)
 	if bool(res.get("ok", false)):
 		set_open(false)
 		MapService.reload_world()   # 场景重载；抵达提示由 Game._ready 发出

@@ -500,7 +500,7 @@ func _interact_with(npc: Npc) -> bool:
 		EventBus.quest_panel_requested.emit(npc_id if not npc_id.is_empty() else npc.npc_name)
 		return true
 	if npc.role == "carter":
-		EventBus.carter_panel_requested.emit(npc.npc_name)
+		EventBus.carter_panel_requested.emit(npc.npc_name, false)
 		return true
 	if npc.role == "blacksmith":
 		EventBus.blacksmith_panel_requested.emit(npc.npc_name, npc.greeting)

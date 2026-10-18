@@ -14,8 +14,8 @@ extends RefCounted
 
 ## panelId → {ready, title}。`title` 是本地化 key，说明文案与面板标题共用一份。
 const PANELS := {
-	# 随身车夫：面板本身已能独立打开（`carter_panel_requested` 只设标题 + 刷新）。
-	# `travel_anywhere` 已随 M10-5 落地（追猎令牌复用），M10-7 只剩「七分组 UI + C6Q13」。
+	# 随身车夫：M10-7 起面板走「随身模式」（七分组 + `travel_anywhere`）。
+	# 打开方式是广播 `carter_panel_requested(title, true)`，当地车夫仍传 `false`。
 	"carter": {"ready": true, "title": "ui.panel.portable_carter"},
 	# 追猎令牌：面板随 M10-5 交付（`boss_token_panel.gd`）。
 	"boss_token": {"ready": true, "title": "ui.panel.boss_token"},
@@ -46,7 +46,9 @@ static func open(panel_id: String) -> Dictionary:
 		return {"ok": false, "reason": Localization.tr_key("msg.panel_router.p002")}
 	match panel_id:
 		"carter":
-			EventBus.carter_panel_requested.emit(title(panel_id))
+			# M10-7：第二参 `true` = 随身车夫（七分组全表 + travel_anywhere）。
+			# 只传标题会让面板走当地模式，列出同集群几张图 —— 「点亮 ≠ 能用」（工程 48 C-1）。
+			EventBus.carter_panel_requested.emit(title(panel_id), true)
 			return {"ok": true, "reason": ""}
 		"boss_token":
 			EventBus.boss_token_panel_requested.emit(title(panel_id))

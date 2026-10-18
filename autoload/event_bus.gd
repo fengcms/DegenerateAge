@@ -66,7 +66,9 @@ signal quest_state_changed()
 signal quest_panel_requested(npc_name: String)
 
 # ---- 地图 / 车夫（M3）----
-signal carter_panel_requested(npc_name: String)
+## M10-7：第二参区分两种语义 —— `false` 当地车夫（只列同集群 `destinations()`），
+## `true` 随身车夫（七分组全 36 图 + `travel_anywhere`）。同一个面板节点两种模式。
+signal carter_panel_requested(npc_name: String, portable: bool)
 ## M10-5：追猎令牌面板请求（与 `carter_panel_requested` 同构 —— 只传标题，
 ## 面板自己调 `BossToken.rows()` 取数据）。
 signal boss_token_panel_requested(title: String)

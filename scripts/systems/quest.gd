@@ -372,6 +372,10 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		parts.append(Localization.tr_key("msg.quest.p014") % xp)
 	if not item.is_empty():
 		parts.append(ItemUtil.display_name(item))
+	# M10-7：`reward.items` 此前**完全不进提示**（现库唯一用例 C2S01 的 2 瓶中药玩家看不到）。
+	# 顺序与背包入库顺序一致；不合并同名堆叠，逐条列出即可（本作最多 3 条）。
+	for bonus in bonus_items:
+		parts.append(ItemUtil.display_name(bonus))
 	if not unlock.is_empty():
 		parts.append(Localization.tr_key("msg.quest.p015") % unlock)
 	EventBus.toast_requested.emit(Localization.tr_key("msg.quest.p016") % [

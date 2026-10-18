@@ -76,7 +76,10 @@ func _test_router_opens_carter() -> void:
 	check(PanelRouter.has("carter"), "carter 应登记在 PANELS")
 	check(PanelRouter.is_ready("carter"), "carter 应 ready=true")
 	var received: Array[String] = []
-	var cb := func(npc_name: String) -> void: received.append(npc_name)
+	var flags: Array[bool] = []
+	var cb := func(npc_name: String, portable: bool) -> void:
+		received.append(npc_name)
+		flags.append(portable)
 	EventBus.carter_panel_requested.connect(cb)
 	var res: Dictionary = PanelRouter.open("carter")
 	EventBus.carter_panel_requested.disconnect(cb)
@@ -84,6 +87,8 @@ func _test_router_opens_carter() -> void:
 	check(received.size() == 1, "carter 面板请求应广播 1 次，实际 %d" % received.size())
 	if received.size() == 1:
 		check(received[0] == "随身车夫", "面板标题应为「随身车夫」，实际「%s」" % received[0])
+		# M10-7：第二参必须是 true —— 传 false 会让随身车夫列成同集群的当地线路。
+		check(flags.size() == 1 and flags[0], "经面板路由打开时必须标记为随身模式（portable=true）")
 	# M10-5：追猎令牌已随本批点亮 —— 同样必须是「真广播」而不是静默成功。
 	check(PanelRouter.is_ready("boss_token"), "boss_token 随 M10-5 应 ready=true")
 	var token_titles: Array[String] = []
@@ -120,12 +125,16 @@ func _test_double_click_opens_without_consuming() -> void:
 	GameState.reset_to_defaults()
 	GameState.inventory[0] = ItemFactory.make_any(TOOL_CARTER)
 	var received: Array[String] = []
-	var cb := func(npc_name: String) -> void: received.append(npc_name)
+	var flags: Array[bool] = []
+	var cb := func(npc_name: String, portable: bool) -> void:
+		received.append(npc_name)
+		flags.append(portable)
 	EventBus.carter_panel_requested.connect(cb)
 	var res: Dictionary = GameState.use_item(0)
 	EventBus.carter_panel_requested.disconnect(cb)
 	check(bool(res.get("ok", false)), "双击随身车夫应成功，实际 reason=%s" % res.get("reason", ""))
 	check(received.size() == 1, "双击应广播 1 次面板请求，实际 %d" % received.size())
+	check(flags.size() == 1 and flags[0], "双击道具打开必须是随身模式（portable=true）")
 	var slot: Variant = GameState.inventory[0]
 	check(slot is Dictionary, "使用后道具应仍在原格（永久工具不消耗）")
 	if slot is Dictionary:
