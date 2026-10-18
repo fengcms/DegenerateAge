@@ -1292,6 +1292,11 @@ func _validate_potions() -> Array[String]:
 			report.append("[potions] %s 的 tier 应为正整数" % pid)
 		if not _is_whole_level(entry.get("restoreAmount")) or int(entry.get("restoreAmount", 0)) < 1:
 			report.append("[potions] %s 的 restoreAmount 应为正整数" % pid)
+		# M10-10：`restorePercent` 缺省允许（退回固定值，向后兼容）；
+		# 存在时必须落在 (0, 1) —— `pct >= 1` 等于「一瓶回满」，属设计外；`pct <= 0` 是无意义脏数据。
+		var pct_value: Variant = entry.get("restorePercent", null)
+		if pct_value != null and (not _is_positive_number(pct_value) or float(pct_value) >= 1.0):
+			report.append("[potions] %s 的 restorePercent 应在 (0, 1) 内" % pid)
 		if not _is_nonnegative_number(entry.get("cooldown", null)):
 			report.append("[potions] %s 的 cooldown 应为非负数" % pid)
 		if not _is_whole_level(entry.get("price")) or int(entry.get("price", -1)) < 0:

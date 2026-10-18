@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 44 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 45 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 
 默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
@@ -64,6 +64,9 @@ DEFAULT_TESTS = [
     "PaceTest",
     # M10-9 经济节奏：单只产出 + D-15 比值 + **四档重铸频率落 5–9** + 参数真接线 + GOLD_CAP + 金币不缩放。
     "EconomyTest",
+    # M10-10 药水百分比：**L≤60 与装备品质无关**（方案 B 的等级守护）+ 三档比例 + use 真按比例回血
+    # + pick_index 用实际量（用固定值必选错档）+ 满值/截断两条 M2.5 回归。
+    "PotionRestoreTest",
     "SmokeTest",
 ]
 

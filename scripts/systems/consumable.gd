@@ -24,8 +24,39 @@ const KIND_BLUE := "blue"
 const STAT_HP_KEY := "msg.consumable.hp"
 const STAT_MP_KEY := "msg.consumable.mp"
 
+## 药水百分比生效的**最低等级 + 1**（M10-10 / R-21）：60 级及以下一律取固定值。
+## 产品原文靠「L60 的 `maxHp × pct` ≤ 固定值」来保证 1–60 不变，但那个 2390 只是
+## `common` 品质满装的数 —— 实测 L60 穿 `rare` 满装 `maxHp = 5051`，20% = 1010（越界 2 倍），
+## 而打过 Boss 的玩家 60 级身上至少有 2 件 `rare`。改为按等级硬切：
+## 1–60 恒固定值、**与装备品质无关** —— 把「不变」从数值巧合变成逻辑保证。
+const PCT_FROM_LEVEL := 60
+
 ## item_id -> 剩余冷却秒数（运行态，不落档）
 static var _cd: Dictionary = {}
+
+# ---- 恢复量公式（M10-10）----
+
+## 药水在「上限 cap、玩家等级 level」下的**实际恢复量**。
+## `level <= PCT_FROM_LEVEL` → 恒 `restoreAmount`；
+## 否则 → `max(restoreAmount, round(cap × restorePercent))`。
+## 纯函数（只吃参数、不读 GameState），便于逐档回归；`restorePercent` 缺省 / 非正 / `cap <= 0`
+## 一律退回固定值，保证旧数据与存档行为不变。
+static func restore_of(tpl: Dictionary, cap: int, level: int) -> int:
+	var fixed := int(tpl.get("restoreAmount", 0))
+	var pct := float(tpl.get("restorePercent", 0.0))
+	if level <= PCT_FROM_LEVEL or pct <= 0.0 or cap <= 0:
+		return fixed
+	return maxi(fixed, int(round(float(cap) * pct)))
+
+## 某药水在**当前**等级与当前上限下的实际恢复量（供 UI tooltip）。
+## 模板不存在返回 0，让调用方能区分「没这瓶药」与「回 0 点」。
+static func preview_restore(item_id: String) -> int:
+	var tpl: Variant = DataLoader.get_entry("potions", item_id)
+	if not (tpl is Dictionary):
+		return 0
+	var t: Dictionary = tpl
+	var kind := String(t.get("kind", KIND_RED))
+	return restore_of(t, max_of(kind), int(GameState.player.level))
 
 # ---- 冷却 ----
 
@@ -69,7 +100,6 @@ static func use(inv_index: int, silent: bool = false) -> Dictionary:
 		return _fail(Localization.tr_key("msg.consumable.p003") % item_id, silent)
 	var t: Dictionary = tpl
 	var kind := String(t.get("kind", KIND_RED))
-	var restore := int(t.get("restoreAmount", 0))
 	var cooldown := float(t.get("cooldown", 0.0))
 	var pname := String(t.get("name", item_id))
 
@@ -82,6 +112,8 @@ static func use(inv_index: int, silent: bool = false) -> Dictionary:
 	if cur >= cap:
 		return _fail(Localization.tr_key("msg.consumable.p005") % stat_label(kind), silent)
 
+	# M10-10：60 级以上按上限百分比放大（60 级及以下恒固定值，1–60 逐位不变）
+	var restore := restore_of(t, cap, int(GameState.player.level))
 	# 恢复量按缺口截断（5.11：恢复量不超过最大 HP / MP）
 	var restored := mini(restore, cap - cur)
 	_apply(kind, restored)
@@ -95,10 +127,14 @@ static func use(inv_index: int, silent: bool = false) -> Dictionary:
 
 ## 选出当前应使用的药水格下标（-1 = 无可用：没有该颜色药水 / 全在冷却 / 值已满）。
 ## 按 Q1 策略在**未冷却**的候选里挑选。
+## M10-10：候选的「恢复量」必须取**实际量**（`restore_of`），不能再用模板固定值 ——
+## 高等级下小药的回量远超模板的 80，按固定值挑会一直选中大药，"够用的最小档"策略失效。
 static func pick_index(kind: String) -> int:
-	var need := max_of(kind) - current_of(kind)
+	var cap := max_of(kind)
+	var need := cap - current_of(kind)
 	if need <= 0:
 		return -1
+	var level := int(GameState.player.level)
 	var inv: Array = GameState.inventory
 	var candidates: Array = []
 	for i in range(inv.size()):
@@ -116,7 +152,7 @@ static func pick_index(kind: String) -> int:
 		var t: Dictionary = tpl
 		if String(t.get("kind", "")).is_empty() or String(t.get("kind", "")) != kind:
 			continue
-		var amount := int(t.get("restoreAmount", 0))
+		var amount := restore_of(t, cap, level)
 		if amount <= 0:
 			continue
 		candidates.append({"index": i, "amount": amount})

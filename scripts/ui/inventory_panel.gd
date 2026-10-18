@@ -417,8 +417,12 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 		if tpl is Dictionary:
 			var t: Dictionary = tpl
 			var color := String(t.get("kind", Consumable.KIND_RED))
+			# M10-10：显示**实际**恢复量而不是模板固定值 —— 玩家看到的数必须和喝下去的一致
 			out.append(Localization.tr_key("ui.inventory_panel.p028") % [
-				int(t.get("restoreAmount", 0)), Consumable.stat_label(color)])
+				Consumable.preview_restore(item_id), Consumable.stat_label(color)])
+			var pct := float(t.get("restorePercent", 0.0))
+			if pct > 0.0:
+				out.append(Localization.tr_key("ui.inventory_panel.p041") % int(round(pct * 100.0)))
 			out.append(Localization.tr_key("ui.inventory_panel.p029") % int(t.get("cooldown", 0)))
 			var key := "1" if color == Consumable.KIND_RED else "2"
 			var left := Consumable.cd_of(item_id)
