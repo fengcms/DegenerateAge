@@ -1359,7 +1359,8 @@ func _valid_item(item: Variant) -> bool:
 	if kind == "equip":
 		if not DataLoader.get_entry("equipments", item.itemId) is Dictionary or not item.get("instanceId") is String or item.instanceId.is_empty():
 			return false
-		if not _whole(item.get("equipmentRuleVersion"), 4, 4) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
+		# M10-1：上限放进 5（v5 = 61+ 动态实例）；下限仍是 4，v3 及更早不走这条路。
+		if not _whole(item.get("equipmentRuleVersion"), 4, 5) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false
 		if item.rawBaseAttrs.is_empty() or not _whole(item.get("count", 1), 1, 1) \
 				or item.affixes.size() + item.pctAttrs.size() > 4 or item.pctAttrs.size() > 1:
@@ -1371,7 +1372,18 @@ func _valid_item(item: Variant) -> bool:
 		var bases: Dictionary = template.get("tierBases", {})
 		var tier_key := str(ItemFactory.tier_start_for_template(String(item.itemId)))
 		# 实例基底是生成时的数值快照；后续数值平衡不应让合法存档失效。
-		if bases.size() != 1 or not bases.has(tier_key) or int(item.requiredLevel) != int(template.get("requiredLevel", 0)):
+		# M10-1：v4 保持「严格等于模板等级」（改档抬等级这条路继续堵着）；
+		# v5 是动态实例，等级由生成时决定，只校验「> 60 且 ≤ 上限」+ 必须挂循环套。
+		var level_ok := false
+		if int(item.equipmentRuleVersion) == ItemFactory.RULE_VERSION_DYNAMIC:
+			level_ok = bases.size() == 1 and bases.has(tier_key) \
+					and tier_key == str(ItemFactory.DYNAMIC_BASE_TIER) \
+					and int(item.requiredLevel) > Balance.SOFTCAP_LEVEL \
+					and int(item.requiredLevel) <= GameState.PLAYER_LEVEL_CAP
+		else:
+			level_ok = bases.size() == 1 and bases.has(tier_key) \
+					and int(item.requiredLevel) == int(template.get("requiredLevel", 0))
+		if not level_ok:
 			return false
 		if not _number(item.get("qualityMultiplierSnapshot")) or float(item.qualityMultiplierSnapshot) <= 0.0 \
 				or float(item.qualityMultiplierSnapshot) > 100.0 or not _number(item.get("starMultiplierSnapshot")) \

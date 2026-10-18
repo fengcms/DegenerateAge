@@ -2,6 +2,12 @@ class_name ItemFactory
 extends RefCounted
 ## 装备实例唯一生成入口；任务、商店与怪物掉落共用档位/品质/词条规则。
 
+## M10-1：循环装备只复用第 51 套的十个型号；改这个常量等于改整套经济口径。
+const DYNAMIC_BASE_TIER := 51
+## 实例规则版本：4 = 1—60 存量（等级等于模板），5 = 61+ 动态（等级由生成时决定）。
+const RULE_VERSION_BASE := 4
+const RULE_VERSION_DYNAMIC := 5
+
 ## 返回装备规则；生成、掉落和售价共同读取这一份配置。
 static func rules() -> Dictionary:
 	var raw: Variant = DataLoader.get_table("equipmentRules")
@@ -36,8 +42,12 @@ static func make_equip(item_id: String, level: int = 0, instance_prefix: String 
 	return make_equip_roll(item_id, tier_start, String(tpl.get("defaultQuality", "common")), null, instance_prefix)
 
 ## 按型号所属套生成实例；传入其他套起点时显式失败。
+## `dynamic_level > 60` 时改走 M10-1 动态分支：等级取该值、基底 × S(level−60)、
+## 词条 × affixTierScale[51] × S(level−60)、版本标 5。默认 0 走原分支，
+## 随机数调用顺序**逐字不变**（1—60 的掉落结果不可能变）。
 static func make_equip_roll(item_id: String, tier_start: int, quality: String,
-		rng: RandomNumberGenerator = null, instance_prefix: String = "inst") -> Dictionary:
+		rng: RandomNumberGenerator = null, instance_prefix: String = "inst",
+		dynamic_level: int = 0) -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	var cfg := rules()
 	var qualities: Variant = cfg.get("qualities", {})
@@ -47,14 +57,27 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 	if not raw_bases is Dictionary or not raw_bases.get(str(tier_start)) is Dictionary:
 		push_error("[ItemFactory] %s 缺少第 %d 套装备基底" % [item_id, tier_start])
 		return {}
+	var dynamic := dynamic_level > Balance.SOFTCAP_LEVEL
+	if dynamic and tier_start != DYNAMIC_BASE_TIER:
+		# 动态实例的基底与词条倍率都锚在循环套上；混入其他套会让经济口径失真。
+		push_error("[ItemFactory] %s 的动态实例必须挂在第 %d 套" % [item_id, DYNAMIC_BASE_TIER])
+		return {}
 	var required_level := int(tpl.get("requiredLevel", 0))
-	if required_level < tier_start or required_level >= tier_start + 10:
+	if dynamic:
+		required_level = dynamic_level
+	elif required_level < tier_start or required_level >= tier_start + 10:
 		push_error("[ItemFactory] %s 穿戴等级与所属套不符" % item_id)
 		return {}
 	var scale_values: Variant = cfg.get("affixTierScale", {})
-	if not scale_values is Dictionary or not scale_values.has(str(tier_start)):
-		push_error("[ItemFactory] 缺少第 %d 套词条倍率" % tier_start)
+	# 动态分支只认循环套的词条倍率（tier_start 已校验等于 DYNAMIC_BASE_TIER）。
+	var scale_key := str(DYNAMIC_BASE_TIER if dynamic else tier_start)
+	if not scale_values is Dictionary or not scale_values.has(scale_key):
+		push_error("[ItemFactory] 缺少第 %s 套词条倍率" % scale_key)
 		return {}
+	var scale_factor := 1.0
+	if dynamic:
+		scale_factor = Balance.scale(required_level - Balance.SOFTCAP_LEVEL)
+	var affix_scale := float(scale_values[scale_key]) * scale_factor
 	var q: Dictionary = qualities[quality]
 	var r := rng if rng != null else _default_rng()
 	var affix_count := int(q.get("affixCount", 0))
@@ -81,23 +104,40 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 		var stat: String = available[index]
 		available.remove_at(index)
 		var bounds: Dictionary = fixed_cfg[stat]
-		var scale := float(scale_values[str(tier_start)])
-		var lo := maxi(1, int(round(float(bounds.min) * scale)))
-		var hi := maxi(lo, int(round(float(bounds.max) * scale)))
+		var lo := maxi(1, int(round(float(bounds.min) * affix_scale)))
+		var hi := maxi(lo, int(round(float(bounds.max) * affix_scale)))
 		fixed.append({"stat": stat, "value": r.randi_range(lo, hi)})
 	if fixed.size() + percent.size() != affix_count:
 		push_error("[ItemFactory] %s 的 %s 品质词条池不足" % [item_id, quality])
 		return {}
+	var raw: Dictionary = (raw_bases[str(tier_start)] as Dictionary).duplicate(true)
+	if dynamic:
+		var scaled := {}
+		for stat in raw:
+			scaled[String(stat)] = maxi(1, int(round(float(raw[stat]) * scale_factor)))
+		raw = scaled
 	return {
 		"kind": "equip", "itemId": item_id,
 		"instanceId": "%s_%s" % [instance_prefix, Crypto.new().generate_random_bytes(16).hex_encode()],
-		"equipmentRuleVersion": 4, "requiredLevel": required_level, "level": required_level,
+		"equipmentRuleVersion": RULE_VERSION_DYNAMIC if dynamic else RULE_VERSION_BASE,
+		"requiredLevel": required_level, "level": required_level,
 		"quality": quality, "star": 0,
-		"rawBaseAttrs": (raw_bases[str(tier_start)] as Dictionary).duplicate(true),
+		"rawBaseAttrs": raw,
 		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
 		"starMultiplierSnapshot": float(cfg.get("starMult", 0.1)),
 		"affixes": fixed, "pctAttrs": percent, "count": 1,
 	}
+
+## M10-1：循环装备实例门面。`level ≤ 60` 退回普通路径（60 级拿到的仍是 tier51 原版），
+## 型号必须在循环套内，否则显式失败。掉落 / 任务 / 商店后续都走这里。
+static func make_equip_dynamic(item_id: String, level: int, quality: String,
+		rng: RandomNumberGenerator = null, instance_prefix: String = "dyn") -> Dictionary:
+	if level <= Balance.SOFTCAP_LEVEL:
+		return make_equip_roll(item_id, tier_for_level(level), quality, rng, instance_prefix)
+	if tier_start_for_template(item_id) != DYNAMIC_BASE_TIER:
+		push_error("[ItemFactory] %s 不在循环装备型号表" % item_id)
+		return {}
+	return make_equip_roll(item_id, DYNAMIC_BASE_TIER, quality, rng, instance_prefix, level)
 
 ## 依 id 自动判类构造（装备 / 药水 / 杂项 / 如意）。找不到返回空字典。
 ## 装备不参与堆叠，count 被忽略（5.8）。

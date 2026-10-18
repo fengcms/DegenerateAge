@@ -39,6 +39,8 @@ DEFAULT_TESTS = [
     "ChapterFourMapTest", "ChapterFiveMapTest", "ChapterSixMapTest",
     # M10-0 数值地基：三条曲线 + 1–60 逐位不变 + 1000 级存档可读 + 读档幂等对齐。
     "BalanceTest",
+    # M10-1 动态等级装备：61+ 实例生成数值 + v5 存读放行 + v4 等级校验不许被放宽。
+    "DynamicEquipTest",
     "SmokeTest",
 ]
 
