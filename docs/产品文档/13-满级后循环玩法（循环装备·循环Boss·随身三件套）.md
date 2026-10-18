@@ -446,7 +446,7 @@ L_boss = max(60, playerLevel)      # 生成那一刻的玩家等级
 
 | 项 | 口径 |
 |---|---|
-| 数据源 | 12 家店 `buyItems` 并集，按 `itemId` 去重 |
+| 数据源 | **模板三表全品类**（`potions` + `miscItems` + `runes`，过滤「有价 + 非任务物 + `useType ≠ quest`」）。<br>⚠ 原文「12 家店 `buyItems` 并集」**实测只有 9 种**——12 家店都不卖 `misc_firework` 与 4 种如意，与下两行的「14 种」和 §8 验收冲突。勘误与取舍理由见工程 `47` §0 C-1；上架范围与价格口径**一个字没改** |
 | 上架范围 | **全部可出售品类，共 14 种**：药水 6（红/蓝 × 小中大）+ 杂项 4（`misc_firework` / `misc_random_ticket` / `misc_town_scroll` / `misc_revive_scroll`）+ 如意 4（铁/玉/金/钻） |
 | 价格 | **模板价 × 1.2，向上取整**。统一以 `potions/miscItems/runes` 的 `price` 为基准，不取各店最低价（现 12 家店报价与模板价完全一致，取最低是多余逻辑，且会在以后某店涨价时产生歧义） |
 | 不含 | **装备**（理由见下）+ 所有 `questItem: true` 的 21 条任务物 + **`spirit_shard`（灵能碎片，`useType: "quest"`）** —— 它是任务收集物，上架等于「花钱跳过收集任务」 |
