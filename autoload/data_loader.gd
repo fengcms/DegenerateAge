@@ -408,6 +408,28 @@ func validate_all() -> Array[String]:
 						var mdt: String = String(spec.get("dropTableId", ""))
 						if mdt.is_empty() or not dt_ids.has(mdt):
 							report.append("[maps] %s 的 bossSpawns 怪物 '%s' 的 dropTableId '%s' 未在 dropTables 中定义" % [map_id, mmid, mdt])
+			# M10-5：Boss 与普通点的 monsterId 不得重叠。
+			# 墓碑与追猎令牌共用 `spawn_key(map, monster_id, ordinal)`，而 ordinal 由 Spawner
+			# 跨 `spawnPoints` → boss 两次装配**连续累加**。一旦重叠，令牌按「boss 列表内序号」
+			# 算出的 ordinal 会错位 ⇒ 面板显示「存活」而实际在冷却（或反之）。
+			# 现在全库零重叠，这条校验把它从「巧合」变成「契约」。
+			var spawn_ids := {}
+			for sp in mp.get("spawnPoints", []):
+				if sp is Dictionary:
+					var sp_mid := String((sp as Dictionary).get("monsterId", ""))
+					if not sp_mid.is_empty() and int((sp as Dictionary).get("count", 1)) > 0:
+						spawn_ids[sp_mid] = true
+			var boss_specs_for_overlap: Array = []
+			if mp.get("bossSpawn", null) is Dictionary:
+				boss_specs_for_overlap.append(mp.bossSpawn)
+			if mp.get("bossSpawns", null) is Array:
+				boss_specs_for_overlap.append_array(mp.bossSpawns)
+			for spec in boss_specs_for_overlap:
+				if not spec is Dictionary:
+					continue
+				var omid := String((spec as Dictionary).get("monsterId", ""))
+				if spawn_ids.has(omid):
+					report.append("[maps] %s 的 Boss '%s' 同时出现在 spawnPoints，会让刷新状态序号错位" % [map_id, omid])
 
 	# 3b) 引用合法性：车夫拓扑与 NPC（M3-1 / M3-2 —— 车夫费用与 NPC 数据化后新增）
 	var map_ids := {}

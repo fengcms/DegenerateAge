@@ -203,6 +203,9 @@ func _ready() -> void:
 
 	# 抵达提示（切图 / 读档后给一次系统提示；延后一帧等 HUD 就绪）
 	_notify_arrival.call_deferred()
+	# M10-5（D-6）：跨图追猎的「落地自动走」。只在 `commit_arrival()` 成功之后消费 ——
+	# 上面的提前 return 已保证失败路径到不了这里；读档路径从不 arm，所以是空操作。
+	_consume_landing_move.call_deferred()
 
 	add_to_group("map_world")
 	Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(_player.global_position).round()))
@@ -305,6 +308,18 @@ func _cell_of(spec: Dictionary) -> Vector2i:
 ## 抵达提示（切图 / 读档 / 新游戏开局各一次）：延后一帧调用，确保 HUD 已就绪。
 func _notify_arrival() -> void:
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game.p007") % MapService.display_name(GameState.current_map), "levelup")
+
+## 消费一次落地意图：把玩家直接指挥向目标点（跨图追猎）。
+## 一次性语义由 `MapService.consume_landing_move()` 保证；无意图即什么都不做。
+func _consume_landing_move() -> void:
+	var target: Variant = MapService.consume_landing_move()
+	if not target is Vector2:
+		return
+	if _player == null or _player.is_dead:
+		return
+	if not request_map_move(target):
+		return
+	EventBus.toast_requested.emit(Localization.tr_key("ui.boss_token_panel.p010"), "info")
 
 ## 使用画布投影后的视口范围，随相机、缩放与窗口尺寸变化。
 func visible_enemies() -> Array[Node2D]:
