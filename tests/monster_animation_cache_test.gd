@@ -68,6 +68,7 @@ func _ready() -> void:
 	check(MonsterAnimationCache.cached_preview_ids().is_empty(), "旱井旧坊切图释放试玩图缓存")
 	MonsterAnimationCache.prepare_for_map("c4_map01")
 	check(MonsterAnimationCache.cached_preview_ids().has("c4_normal02"), "倒根驿路预取孢灯蛾试玩图")
+	check(MonsterAnimationCache.cached_preview_ids().has("c4_elite01"), "倒根驿路预取千结根牙试玩图")
 	MonsterAnimationCache.release_for_map("c4_map01")
 	check(MonsterAnimationCache.cached_preview_ids().is_empty(), "倒根驿路切图释放试玩图缓存")
 	MonsterAnimationCache.prepare_for_map("c4_map02")
