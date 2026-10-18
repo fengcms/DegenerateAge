@@ -292,6 +292,16 @@ func current_boss() -> Dictionary:
 	var b = current_data().get("bossSpawn", null)
 	return b if b is Dictionary else {}
 
+## 当前图**全部** Boss 点规格（M10-3 / 工程文档 43 §5.4）：`bossSpawns` 数组优先，
+## 回退单点 `bossSpawn`。只返回配置规格（未实例化、无运行状态）——
+## 真正带状态的 `current_bosses()`（多目标血条）属 M10-3b，本批不塞半成品。
+func current_boss_specs() -> Array:
+	var rows: Variant = current_data().get("bossSpawns", null)
+	if rows is Array and not (rows as Array).is_empty():
+		return rows
+	var single: Variant = current_data().get("bossSpawn", null)
+	return [single] if single is Dictionary else []
+
 func current_exits() -> Array:
 	var exits = current_data().get("exits", [])
 	return exits if exits is Array else []

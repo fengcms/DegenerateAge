@@ -57,6 +57,14 @@ var drop_table_override := ""
 ## 由生成器设置的锚点（巡逻 / 返回基准）；Zero 时取初始位置
 @export var spawn_position: Vector2 = Vector2.ZERO
 
+## M10-3（工程文档 43 §5.3）：循环图归一化基底 `{hp, atk, def}`（投影到 60 级）。
+## 空字典 ⇒ 走既有 `_derive_max_hp` + 模板攻防，存量图逐值不变。
+@export var stat_norm: Dictionary = {}
+## M10-3：攻/防随 `Balance.scale(等级 − 60)` 缩放（循环图开关；普通图不开）。
+@export var scale_stats: bool = false
+## M10-3：经验由 `Balance.boss_xp(等级)` 反推，忽略模板 `xpReward`。
+@export var xp_from_curve: bool = false
+
 signal died(id: String)
 
 var template: Dictionary = {}
@@ -158,13 +166,26 @@ func _load_template() -> void:
 	radius = radius_for_kind(_kind())
 	var tpl_level: int = int(template.get("level", 1))
 	level = spawn_level if spawn_level > 0 else tpl_level
-	max_hp = _derive_max_hp(tpl_level)
+	# M10-3：`stat_norm` 是「投影到 60 级」的基底，缩放锚点也是 60 级（与玩家同一条 S 曲线）。
+	# 不能与 `_derive_max_hp` 混用 —— 后者的锚点是**模板等级**（Lv10 模板在 60 级时 d=50），
+	# 混算会得到 24,300×7 = 17 万这类错值。`level ≤ 60` 时 S(d)=1，逐值等于 norm。
+	var scaled := Balance.scale(level - Balance.SOFTCAP_LEVEL)
+	if not stat_norm.is_empty():
+		max_hp = maxi(1, int(round(float(stat_norm.get("hp", 1)) * scaled)))
+	else:
+		max_hp = _derive_max_hp(tpl_level)
 	hp = max_hp
 	# AI 参数
 	move_speed_px = float(template.get("moveSpeed", 0.0)) * Iso.TILE_W
 	attack_interval = float(template.get("attackInterval", 1.2))
 	attack_power = float(template.get("attack", 0.0))
 	defense_power = float(template.get("defense", 0))
+	if not stat_norm.is_empty():
+		attack_power = float(stat_norm.get("atk", attack_power)) * scaled
+		defense_power = float(stat_norm.get("def", defense_power)) * scaled
+	elif scale_stats:
+		attack_power *= scaled
+		defense_power *= scaled
 	_roll_affixes()
 	var ar = template.get("attackRange", {})
 	if ar is Dictionary:
@@ -812,7 +833,10 @@ func _die() -> void:
 func _settle_rewards() -> void:
 	if suppress_rewards:
 		return
-	var xp := LevelGap.kill_xp(int(template.get("xpReward", 0)), int(GameState.player.get("level", 1)), level)
+	# M10-3：循环图的经验由曲线反推（产品 13 §2：E(L) 决定「升一级要杀几只」），
+	# 不再依赖各章模板手填的 xpReward。存量图 `xp_from_curve` 恒 false，取值不变。
+	var base_xp := Balance.boss_xp(level) if xp_from_curve else int(template.get("xpReward", 0))
+	var xp := LevelGap.kill_xp(base_xp, int(GameState.player.get("level", 1)), level)
 	if xp > 0:
 		GameState.add_xp(xp)
 

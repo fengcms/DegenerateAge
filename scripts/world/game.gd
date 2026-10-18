@@ -184,9 +184,9 @@ func _ready() -> void:
 	_ground.add_child(RestZoneOverlay.new())
 	_spawner.setup(_ground, _player)
 	_spawner.spawn_from_map(GameState.current_map)
-	var boss := MapService.current_boss()
-	if not boss.is_empty():
-		_spawner.spawn_from_specs([boss], GameState.current_map)
+	var bosses := MapService.current_boss_specs()
+	if not bosses.is_empty():
+		_spawner.spawn_from_specs(bosses, GameState.current_map)
 
 	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()

@@ -43,6 +43,8 @@ DEFAULT_TESTS = [
     "DynamicEquipTest",
     # M10-2 循环掉落：levelFromBoss 取等级 + source_level 透传 + 静态表逐字节不变。
     "ArenaDropTest",
+    # M10-3 循环 Boss 图：拓扑/布局连通 + 10 点装配 + 等级每次现算 + norm 数值 + 经验曲线。
+    "ArenaMapTest",
     "SmokeTest",
 ]
 

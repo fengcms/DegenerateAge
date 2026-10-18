@@ -1,0 +1,14 @@
+{
+  "arenaBosses": [
+    {"monsterId": "boss_corrupted_beast",          "norm": {"hp": 24300, "atk": 420, "def": 141}},
+    {"monsterId": "c2_boss_iron_foreman",          "norm": {"hp": 25000, "atk": 424, "def": 143}},
+    {"monsterId": "c2_boss_slag_devourer",         "norm": {"hp": 25500, "atk": 428, "def": 145}},
+    {"monsterId": "c2_boss_hundred_arm_extractor", "norm": {"hp": 26000, "atk": 432, "def": 147}},
+    {"monsterId": "c3_boss02",                     "norm": {"hp": 24600, "atk": 418, "def": 140}},
+    {"monsterId": "c4_boss02",                     "norm": {"hp": 24800, "atk": 420, "def": 141}},
+    {"monsterId": "c5_boss02",                     "norm": {"hp": 24700, "atk": 419, "def": 141}},
+    {"monsterId": "c5_boss04",                     "norm": {"hp": 25200, "atk": 426, "def": 143}},
+    {"monsterId": "c6_boss02",                     "norm": {"hp": 24400, "atk": 420, "def": 141}},
+    {"monsterId": "c6_boss03",                     "norm": {"hp": 24300, "atk": 420, "def": 141}}
+  ]
+}

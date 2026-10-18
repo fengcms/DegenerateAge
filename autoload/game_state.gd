@@ -10,6 +10,10 @@ const INVENTORY_SIZE := 40
 const GOLD_CAP := 999999999
 ## 未领取战利品件数上限（M6-0c 追加上限）。超限时按登记顺序丢弃最旧记录，
 ## 并广播事件令对应地面物销毁，避免长挂机下节点数与存档体积单调增长。
+## M10-3（P-9 / D-13）：改为**按图分级** —— 本值只是缺省，地图可在 `maps.json`
+## 用 `unclaimedLootCap` 覆盖（循环图配 200：一轮 10 只 × 7–10 件必须装得下）。
+## 注意：分流前是「跨全部地图总数 ≤ 20」，一张图刷满会把别的图的记录挤掉；
+## 改为逐图判定后，记录只受**本图**上限约束。
 const UNCLAIMED_LOOT_CAP := 20
 
 ## 存档校验上界（C-P3-1）。战斗侧已有明确上界者直接引用 `Combat`（暴击率 / 暴伤 / 攻击间隔），
@@ -902,27 +906,44 @@ func _unclaimed_seq_of(uid: String) -> int:
 		return int(parts[2])
 	return 1 << 62
 
-## 超出上限时按 FIFO（登记顺序）丢弃最旧记录，并广播 `unclaimed_loot_evicted`
+## 本图未领取上限（M10-3 / P-9 / D-13）：读 `maps.json` 的 `unclaimedLootCap`，
+## 未配置 → `UNCLAIMED_LOOT_CAP`（普通图 20）。循环图配 200。
+func unclaimed_loot_cap(map_id: String) -> int:
+	var m: Variant = DataLoader.get_entry("maps", map_id)
+	if m is Dictionary and (m as Dictionary).has("unclaimedLootCap"):
+		return maxi(1, int((m as Dictionary).get("unclaimedLootCap", UNCLAIMED_LOOT_CAP)))
+	return UNCLAIMED_LOOT_CAP
+
+## 超出**本图**上限时按 FIFO（登记顺序）丢弃该图最旧记录，并广播 `unclaimed_loot_evicted`
 ## 令仍在场的对应地面物销毁。返回被丢弃的 uid 列表。
+## M10-3：由「跨全部地图总数」改为逐图判定 —— 否则在循环图刷一轮就会把别的图的记录挤掉。
 func _evict_unclaimed_overflow() -> Array:
 	var evicted: Array = []
-	while unclaimed_total() > UNCLAIMED_LOOT_CAP:
-		var oldest_uid := ""
-		var oldest_seq := 1 << 62
-		for map_id in unclaimed_loot.keys():
-			for record in (unclaimed_loot[map_id] as Array):
-				var uid := String((record as Dictionary).get("uid", ""))
-				var seq := _unclaimed_seq_of(uid)
+	var evicted_map: Array = []
+	for map_id in unclaimed_loot.keys():
+		var rows: Array = unclaimed_loot[map_id]
+		var cap := unclaimed_loot_cap(String(map_id))
+		while rows.size() > cap:
+			var oldest_index := -1
+			var oldest_seq := 1 << 62
+			for i in range(rows.size()):
+				var seq := _unclaimed_seq_of(String((rows[i] as Dictionary).get("uid", "")))
 				if seq < oldest_seq:
 					oldest_seq = seq
-					oldest_uid = uid
-		# 无 uid 或注销失败时中断，避免死循环（防御异常数据）。
-		if oldest_uid.is_empty() or not remove_unclaimed_loot(oldest_uid):
-			break
-		evicted.append(oldest_uid)
-	for uid in evicted:
-		push_warning("[GameState] 未领取战利品超上限(%d)，丢弃最旧记录：%s" % [UNCLAIMED_LOOT_CAP, uid])
-		EventBus.unclaimed_loot_evicted.emit(uid)
+					oldest_index = i
+			if oldest_index < 0:
+				break
+			var uid := String((rows[oldest_index] as Dictionary).get("uid", ""))
+			# 无 uid 或注销失败时中断，避免死循环（防御异常数据）。
+			if uid.is_empty() or not remove_unclaimed_loot(uid):
+				break
+			evicted.append(uid)
+			evicted_map.append(String(map_id))
+	for i in range(evicted.size()):
+		var map_id := String(evicted_map[i])
+		push_warning("[GameState] 地图 %s 的未领取战利品超上限(%d)，丢弃最旧记录：%s"
+			% [map_id, unclaimed_loot_cap(map_id), evicted[i]])
+		EventBus.unclaimed_loot_evicted.emit(String(evicted[i]))
 	return evicted
 
 ## 注销某条未领取记录（领取成功后，§11.3）。uid 全局唯一，故跨图查找。返回是否命中。
