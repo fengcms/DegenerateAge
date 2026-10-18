@@ -456,6 +456,10 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 			out.append(Localization.tr_key("ui.inventory_panel.p039"))
 		"quest":
 			out.append(Localization.tr_key("ui.inventory_panel.p033"))
+		"panel":
+			# M10-4（P-6）：面板类道具必须说明「双击会用」，否则文案和实际行为对不上。
+			out.append(Localization.tr_key("ui.inventory_panel.p040") % PanelRouter.title(
+				String((misc_tpl as Dictionary).get("panelId", ""))))
 		_:
 			out.append(Localization.tr_key("ui.inventory_panel.p036"))
 	return out

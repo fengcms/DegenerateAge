@@ -41,6 +41,11 @@ const KEY_FIELDS := {
 	"shops": "npcId",
 }
 
+## M10-4：任务等级门槛 `requiresLevel` 的上界。
+## ⚠ 须与 `GameState.PLAYER_LEVEL_CAP` 保持一致（此处写字面量是刻意的：
+## `data_loader` 目前完全不引用 `GameState`，加引用会引入 autoload 初始化顺序耦合）。
+const MAX_QUEST_REQUIRES_LEVEL := 9999
+
 ## 历史遗留图（第一、二章）：入口落点与反向出口存在既有错位，未按第三至六章的
 ## 「同格」口径对齐（属审阅明确范围外的遗留）。仅用于豁免 `_validate_walk_exits`
 ## 的**同格断言**，待后续统一口径时逐图归正并移出白名单。
@@ -1159,6 +1164,12 @@ func _validate_quests() -> Array[String]:
 			report.append("[quests] %s 的 prev '%s' 未定义" % [qid, prev])
 		if not entry.get("abandonable", false) is bool:
 			report.append("[quests] %s 的 abandonable 必须为布尔" % qid)
+		# M10-4：等级门槛（可选字段）。0/缺失 = 无门槛；写在数据里就必须是合法等级。
+		if entry.has("requiresLevel"):
+			var need_level: Variant = entry.get("requiresLevel")
+			if not _is_whole_level(need_level) or int(need_level) < 1 \
+					or int(need_level) > MAX_QUEST_REQUIRES_LEVEL:
+				report.append("[quests] %s 的 requiresLevel 应为 1–%d 的整数" % [qid, MAX_QUEST_REQUIRES_LEVEL])
 		var scope: Variant = entry.get("mapScope", [])
 		if not (scope is Array):
 			report.append("[quests] %s 的 mapScope 应为数组" % qid)
@@ -1273,8 +1284,19 @@ func _validate_misc_items() -> Array[String]:
 		if String(entry.get("name", "")).is_empty():
 			report.append("[miscItems] %s 缺少 name" % mid)
 		var use_type := String(entry.get("useType", ""))
-		if not ["playAnimation", "randomTeleport", "townPortal", "revive", "quest"].has(use_type):
+		if not ["playAnimation", "randomTeleport", "townPortal", "revive", "quest", "panel"].has(use_type):
 			report.append("[miscItems] %s 的 useType '%s' 非法" % [mid, use_type])
+		# M10-4（P-6）：`panelId` 只在 useType=panel 时允许 —— 两个方向都报错。
+		# 只校验「非空」会让脏 id 活到运行时，双击才炸；只校验 panel 分支会让
+		# 非 panel 道具挂个无效 panelId 而无人发现（同 levelFromBoss / levelFromPlayer 的坑）。
+		var panel_id := String(entry.get("panelId", ""))
+		if use_type == "panel":
+			if panel_id.is_empty():
+				report.append("[miscItems] %s 的 useType=panel 必须带 panelId" % mid)
+			elif not PanelRouter.has(panel_id):
+				report.append("[miscItems] %s 的 panelId '%s' 未登记" % [mid, panel_id])
+		elif not panel_id.is_empty():
+			report.append("[miscItems] %s 的 useType '%s' 不应带 panelId" % [mid, use_type])
 		if not entry.get("animation", "") is String:
 			report.append("[miscItems] %s 的 animation 应为字符串" % mid)
 	return report

@@ -614,13 +614,30 @@ func use_item(inv_index: int) -> Dictionary:
 		"equip":
 			return equip_from_inventory(inv_index)
 		"misc":
-			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.TOWN_SCROLL:
-				return TravelItem.use_town_scroll(inv_index)
-			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.RANDOM_TICKET:
-				return TravelItem.use_random_ticket(inv_index)
+			return _use_misc(inv_index, it as Dictionary)
 		_:
 			return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(it))
 	return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(it))
+
+## M10-4（P-6）：杂项按数据表 `useType` 分发，不再按 itemId 硬编码 ——
+## 否则每加一件「面板道具」都要回来改这段，正是 P-6 的病根。
+## `townPortal / randomTeleport` 仍调原函数（内部自校验 itemId，行为零变化）；
+## `panel` 走 `PanelRouter`；其余用途（playAnimation / revive / quest / 空）保持原兜底提示。
+func _use_misc(inv_index: int, item: Dictionary) -> Dictionary:
+	var tpl: Variant = DataLoader.get_entry("miscItems", String(item.get("itemId", "")))
+	if not tpl is Dictionary:
+		return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(item))
+	match String((tpl as Dictionary).get("useType", "")):
+		"townPortal":
+			return TravelItem.use_town_scroll(inv_index)
+		"randomTeleport":
+			return TravelItem.use_random_ticket(inv_index)
+		"panel":
+			var res := PanelRouter.open(String((tpl as Dictionary).get("panelId", "")))
+			if not bool(res.get("ok", false)):
+				return _use_fail(String(res.get("reason", "")))
+			return {"ok": true, "reason": ""}
+	return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(item))
 
 func _use_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
