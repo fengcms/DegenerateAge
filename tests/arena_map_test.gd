@@ -65,7 +65,7 @@ func _test_topology() -> void:
 	if from_player is Dictionary:
 		check(int((from_player as Dictionary).get("minLevel", 0)) == 60, "levelFromPlayer.minLevel 应为 60")
 	check(int(data.get("unclaimedLootCap", 0)) == 200, "D-13：循环图未领取上限应为 200")
-	check(int(data.get("bossCap", 0)) == 10, "bossCap 应为 10")
+	check(int(data.get("bossCap", 0)) == 20, "bossCap 应为 20")
 	check(data.get("spawnPoints", []).is_empty(), "循环图不应有普通刷新区（否则会与 Boss 抢预算）")
 
 	# 出口双向同格（`_validate_walk_exits` 的契约）：目标图 entrances[X] 必须等于**目标图自己**
@@ -117,7 +117,7 @@ func _test_layout() -> void:
 	if rows.is_empty():
 		return
 
-	# 10 个 Boss 格 + 出口 + 车夫落点全部可走。
+	# 20 个 Boss 格 + 出口 + 车夫落点全部可走。
 	var cells: Array = []
 	for spec in map_data.get("bossSpawns", []):
 		cells.append((spec as Dictionary).get("cell", null))
@@ -139,7 +139,7 @@ func _test_layout() -> void:
 func _test_specs() -> void:
 	var map_data: Dictionary = DataLoader.get_entry("maps", MAP_ID)
 	var specs: Array = map_data.get("bossSpawns", [])
-	check(specs.size() == 10, "循环图应有 10 条 bossSpawns，实际 %d" % specs.size())
+	check(specs.size() == 20, "循环图应有 20 条 bossSpawns，实际 %d" % specs.size())
 	var groups := {}
 	for raw in specs:
 		if not raw is Dictionary:
@@ -160,9 +160,9 @@ func _test_specs() -> void:
 		var group := String(spec.get("group", ""))
 		check(not group.is_empty(), "%s 缺少 group 标注" % mid)
 		groups[group] = int(groups.get(group, 0)) + 1
-	check(groups.size() == 5, "五区各两只，实际区数 %d" % groups.size())
+	check(groups.size() == 5, "五区各四只，实际区数 %d" % groups.size())
 	for group in groups.keys():
-		check(int(groups[group]) == 2, "区 %s 应恰好 2 只 Boss，实际 %d" % [String(group), int(groups[group])])
+		check(int(groups[group]) == 4, "区 %s 应恰好 4 只 Boss，实际 %d" % [String(group), int(groups[group])])
 
 # ---- 4) 归一化基底 ----
 
@@ -199,9 +199,9 @@ func _test_assembly() -> void:
 	sp.setup(null, null)
 	sp.spawn_from_specs(_specs(), MAP_ID)
 	await get_tree().process_frame
-	check(sp.point_count() == 10, "装配后应登记 10 个 Boss 点，实际 %d" % sp.point_count())
-	# 验收口径（§3.2）：10 个**点**必须全部登记；实体按 760px 就近生成，
-	# 这里没有玩家 ⇒ 距离预算不生效，10 只全出。
+	check(sp.point_count() == 20, "装配后应登记 20 个 Boss 点，实际 %d" % sp.point_count())
+	# 验收口径（§3.2）：20 个**点**必须全部登记；实体按 760px 就近生成，
+	# 这里没有玩家 ⇒ 距离预算不生效，20 只全出。
 	check(sp.alive_count() >= 1, "装配后应至少有 1 只 Boss 实体，实际 %d" % sp.alive_count())
 	sp.queue_free()
 	await get_tree().process_frame

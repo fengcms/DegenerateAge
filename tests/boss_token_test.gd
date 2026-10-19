@@ -12,7 +12,7 @@ const ARENA := "c7_arena"
 const LEGACY_MAP := "c6_map05"
 const LEGACY_BOSS := "c6_boss03"
 const ARENA_BOSS := "c6_boss03"
-const TOTAL_BOSS_ROWS := 27
+const TOTAL_BOSS_ROWS := 37  # 17 单点 + c7_arena 20
 const LEGACY_UNLOCK := "c6_access_05"
 
 var failures: Array[String] = []
@@ -51,9 +51,9 @@ func _test_rows_complete() -> void:
 	_visit_all_boss_maps()
 	var rows := BossToken.rows()
 	check(rows.size() == TOTAL_BOSS_ROWS,
-		"走过全部 boss 图后应有 %d 行（17 单点 + c7_arena 10），实际 %d" % [TOTAL_BOSS_ROWS, rows.size()])
+		"走过全部 boss 图后应有 %d 行（17 单点 + c7_arena 20），实际 %d" % [TOTAL_BOSS_ROWS, rows.size()])
 	var arena := _rows_of(rows, ARENA)
-	check(arena.size() == 10, "c7_arena 应贡献 10 行（bossSpawns 形态），实际 %d" % arena.size())
+	check(arena.size() == 20, "c7_arena 应贡献 20 行（bossSpawns 形态），实际 %d" % arena.size())
 	var legacy := _rows_of(rows, LEGACY_MAP)
 	check(legacy.size() == 1, "%s 应贡献 1 行（bossSpawn 形态），实际 %d" % [LEGACY_MAP, legacy.size()])
 	# 当前图置顶：camp 没有 boss，所以这里先只断言「当前图的行全部在最前面」。
@@ -143,7 +143,7 @@ func _test_level_follows_player() -> void:
 	for level in [100, 60]:
 		GameState.player.level = level
 		var rows := _rows_of(BossToken.rows(), ARENA)
-		check(rows.size() == 10, "c7_arena 应有 10 行，实际 %d" % rows.size())
+		check(rows.size() == 20, "c7_arena 应有 20 行，实际 %d" % rows.size())
 		for row in rows:
 			check(int(row.get("level", 0)) == level,
 				"L%d 玩家：c7_arena 的 %s 等级应为 %d，实际 %d" % [level, String(row.get("monster_name", "")), level, int(row.get("level", 0))])
@@ -182,7 +182,7 @@ func _test_keys_match_spawner() -> void:
 		expected.append("%s#%d" % [String(pair.get("monster_id", "")), int(pair.get("ordinal", 0))])
 	check(actual == expected,
 		"令牌算出的 (monster_id, ordinal) 必须与 Spawner 装配逐个一致：Spawner=%s / 令牌=%s" % [str(actual), str(expected)])
-	check(actual.size() == 10, "Spawner 应装配 10 个 Boss 点，实际 %d" % actual.size())
+	check(actual.size() == 20, "Spawner 应装配 20 个 Boss 点，实际 %d" % actual.size())
 	sp.queue_free()
 	await get_tree().process_frame
 

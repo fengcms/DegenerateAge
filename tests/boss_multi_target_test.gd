@@ -162,7 +162,7 @@ func _test_dying_flag() -> void:
 func _test_current_bosses() -> void:
 	GameState.current_map = ARENA_MAP
 	var arena: Array = MapService.current_bosses()
-	check(arena.size() == 10, "循环图应有 10 个 Boss 点，实际 %d" % arena.size())
+	check(arena.size() == 20, "循环图应有 20 个 Boss 点，实际 %d" % arena.size())
 	GameState.current_map = SINGLE_BOSS_MAP
 	var single: Array = MapService.current_bosses()
 	check(single.size() == 1, "单点 Boss 图应返回 1 条，实际 %d" % single.size())
