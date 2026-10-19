@@ -34,6 +34,10 @@ signal item_dropped(tray_index: int, payload: Dictionary)
 var role: int = ROLE_BAG
 var index: int = -1              # 背包下标（ROLE_BAG）/ 托盘下标（ROLE_TRAY）
 var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交易装备 / 仓库存取）
+var fusion_selected := false:
+	set(value):
+		fusion_selected = value
+		_refresh_fusion_marker()
 ## 状态只影响格内提示，不参与装备穿戴判定或评分计算。
 var upgrade_badge_state: UpgradeBadge = UpgradeBadge.NONE:
 	set(value):
@@ -48,6 +52,7 @@ var item: Dictionary = {}:
 		_refresh_potion_marker()
 		_refresh_favorite_marker()
 		_refresh_quality_frame()
+		_refresh_fusion_marker()
 		_apply_sample_icon.call_deferred()
 		queue_redraw()
 
@@ -57,6 +62,7 @@ var _quality_frame: QualityFrameOverlay
 var _potion_marker: Label
 var _favorite_marker: Label
 var _upgrade_marker: Label
+var _fusion_marker: Label
 var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
@@ -155,6 +161,20 @@ func _ready() -> void:
 	_upgrade_marker.visible = false
 	add_child(_upgrade_marker)
 	_refresh_upgrade_marker()
+	_fusion_marker = Label.new()
+	_fusion_marker.text = "已选"
+	_fusion_marker.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_fusion_marker.offset_left = 3
+	_fusion_marker.offset_right = 35
+	_fusion_marker.offset_top = -19
+	_fusion_marker.offset_bottom = -2
+	_fusion_marker.add_theme_font_size_override("font_size", 12)
+	_fusion_marker.add_theme_constant_override("outline_size", 2)
+	_fusion_marker.add_theme_color_override("font_outline_color", Color(0.02, 0.08, 0.07))
+	_fusion_marker.add_theme_color_override("font_color", Color("8ae6c0"))
+	_fusion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_fusion_marker)
+	_refresh_fusion_marker()
 	EventBus.settings_changed.connect(_refresh_potion_marker)
 	_drag_cover = PanelContainer.new()
 	_drag_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -188,6 +208,11 @@ func _refresh_upgrade_marker() -> void:
 	_upgrade_marker.visible = upgrade_badge_state != UpgradeBadge.NONE
 	_upgrade_marker.add_theme_color_override("font_color",
 		UPGRADE_LOCKED_COLOR if upgrade_badge_state == UpgradeBadge.LEVEL_LOCKED else UPGRADE_READY_COLOR)
+
+## 背包中已放入合成预选的装备显示状态角标，材料仍在原格。
+func _refresh_fusion_marker() -> void:
+	if _fusion_marker != null:
+		_fusion_marker.visible = role == ROLE_BAG and fusion_selected and not item.is_empty()
 
 func _process(_delta: float) -> void:
 	if not get_viewport().gui_is_dragging():

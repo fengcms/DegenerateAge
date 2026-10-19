@@ -1,28 +1,30 @@
 extends Control
-## 铁匠三种装备合成的共用界面；只选材料和展示计划，结算交给 GameState。
-## 材料快照在选择时固定，背包变化后必须刷新，防止自动拾取或整理造成误耗。
+## 铁匠三种合成共用的材料工作台；背包物品只做预选引用，确认后才由 GameState 结算。
 
 const PANEL_ID := "equipment_fusion"
-const WIDTH := 540.0
+const WIDTH := 430.0
+const GAP := 12.0
+const SLOT_SIZE := Vector2(78, 78)
 
 var _mode := EquipmentFusion.GOLD_TO_PURPLE
 var _box: PanelChrome
 var _center: CenterContainer
 var _scroll: ScrollContainer
+var _grid: FusionMaterialGrid
 var _title: Label
 var _hint: Label
 var _summary: Label
 var _feedback: Label
 var _confirm: Button
+var _random: Button
 var _target_row: Control
 var _target: OptionButton
-var _pickers: Array[OptionButton] = []
-var _choice_ids: Array[Array] = []
+var _slots: Array[ItemSlot] = []
+var _remove_buttons: Array[Button] = []
 var _selected: Array[Dictionary] = []
-var _stale := false
 var _risk_confirmed := false
 
-## 初始化事件订阅和窗口；游戏世界输入由既有面板规则继续处理。
+## 接入工作台会话和背包更新，不进行逐帧背包扫描。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -38,13 +40,13 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_resize)
 	_resize.call_deferred()
 
-## E/Esc 关闭窗口，不改变材料或金币。
+## Esc/E 只关闭合成工作台；背包保持可见，输入事件不再传给背包。
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
-## 接收铁匠菜单选择；仅识别三种稳定服务 ID。
+## 铁匠菜单只能打开三种已登记的服务。
 func _on_requested(mode: String) -> void:
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_TARGET,
 			EquipmentFusion.STAR_TRANSFER]:
@@ -52,56 +54,89 @@ func _on_requested(mode: String) -> void:
 	_mode = mode
 	set_open(true)
 
-## 开关窗口并同步面板状态；每次打开都从真实背包重建选项。
+## 切换服务清空预选；关闭时释放引用，但不动背包中的真实装备。
 func set_open(open: bool) -> void:
 	if not open and not visible:
 		return
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
+	_reset_materials()
 	if open:
-		EventBus.fusion_mode_changed.emit(true)
 		_title.text = Localization.tr_key("ui.fusion.gold_title" if _mode == EquipmentFusion.GOLD_TO_PURPLE else
 			"ui.fusion.purple_title" if _mode == EquipmentFusion.PURPLE_TARGET else "ui.fusion.star_title")
 		_hint.text = Localization.tr_key("ui.fusion.gold_hint" if _mode == EquipmentFusion.GOLD_TO_PURPLE else
 			"ui.fusion.purple_hint" if _mode == EquipmentFusion.PURPLE_TARGET else "ui.fusion.star_hint")
 		_target_row.visible = _mode == EquipmentFusion.PURPLE_TARGET
-		for i in range(_pickers.size()):
-			_pickers[i].get_parent().visible = i < (2 if _mode == EquipmentFusion.STAR_TRANSFER else 4)
-		_refresh_choices()
+		_random.visible = _mode != EquipmentFusion.STAR_TRANSFER
+		_confirm.text = Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else
+			"ui.fusion.forge_action")
+		_refresh_slots()
+		EventBus.fusion_mode_changed.emit(true)
 		_resize.call_deferred()
 		EventBus.panel_opened.emit(PANEL_ID)
 	else:
 		EventBus.fusion_mode_changed.emit(false)
+		EventBus.fusion_selection_changed.emit(PackedStringArray())
 
-## 打开其他互斥 NPC 服务时关闭本窗口。
+## 背包是工作台的会话伙伴；其他互斥面板打开时退出。
 func _on_panel_opened(panel_id: String) -> void:
 	if visible and not GameState.panels_coexist(panel_id, PANEL_ID):
 		set_open(false)
 
-## 运行时背包变化使旧快照失效，须由玩家刷新后重新选择。
+## 背包整理可改变下标但不改变实例；物品本身变化则撤下对应预选。
 func _on_inventory_changed() -> void:
-	if visible:
-		_stale = true
-		_risk_confirmed = false
+	if not visible:
+		return
+	var invalid := false
+	for i in range(_selected.size()):
+		if _selected[i].is_empty():
+			continue
+		var found := _find_item(String(_selected[i].get("instanceId", "")))
+		if found.is_empty() or found != _selected[i]:
+			_selected[i] = {}
+			invalid = true
+	_risk_confirmed = false
+	_refresh_slots()
+	_refresh_preview()
+	if invalid:
 		_feedback.text = Localization.tr_key("ui.fusion.stale")
-		_confirm.disabled = true
 
-## 金币变化只重算可支付状态，不重选装备。
+## 金币变化重算可支付状态，并取消旧的风险确认。
 func _on_gold_changed(_amount: int) -> void:
-	if visible and not _stale:
+	if visible:
+		_risk_confirmed = false
 		_refresh_preview()
 
-## 使窗口在界面轴 100%～200% 下保持于逻辑视口内。
+## 宽屏并列、窄屏上下排列；所有尺寸以缩放后的逻辑视口为准。
 func _resize() -> void:
 	if _box == null:
 		return
 	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
-	var width := minf(WIDTH, logical.x * 0.86)
+	if logical.x <= 0.0 or logical.y <= 0.0:
+		return
+	var bag: Variant = get_node_or_null("../InventoryPanel")
+	var width := minf(WIDTH, logical.x * 0.9)
 	_box.custom_minimum_size.x = width
-	_scroll.custom_minimum_size = Vector2(0.0, clampf(logical.y * 0.54, 105.0, 360.0))
-	_center.size = logical
+	var region := Vector2(width, logical.y)
+	var bag_width := 540.0
+	if bag != null and bag._center != null:
+		bag_width = bag._center.panel_box.get_combined_minimum_size().x
+	if logical.x >= bag_width + width + GAP + 24.0:
+		var left := (logical.x - bag_width - width - GAP) * 0.5
+		if bag != null and bag.visible:
+			bag._center.set_docked(true, left / logical.x, (left + bag_width) / logical.x)
+		_center.position = Vector2(left + bag_width + GAP, 0.0)
+		region = Vector2(width, logical.y)
+	else:
+		if bag != null and bag.visible:
+			bag._center.set_docked(true, 0.0, 1.0, 0.0, 0.48)
+		_center.position = Vector2(0.0, logical.y * 0.48)
+		region = Vector2(logical.x, logical.y * 0.52)
+	_scroll.custom_minimum_size.y = clampf(region.y - 195.0, 32.0, 250.0)
+	FloatingWindow.fit_content(region, _box, _scroll)
+	_center.size = region
 
-## 构建可滚动材料选择和确认区域；窗口外不遮挡世界点击。
+## 构建两列材料格和可滚动目标类型，按钮始终留在滚动区之外。
 func _build() -> void:
 	_center = CenterContainer.new()
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -137,18 +172,34 @@ func _build() -> void:
 	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form.add_theme_constant_override("separation", 8)
 	_scroll.add_child(form)
+	_grid = FusionMaterialGrid.new()
+	_grid.columns = 2
+	_grid.add_theme_constant_override("h_separation", 10)
+	_grid.add_theme_constant_override("v_separation", 10)
+	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_grid.item_dropped.connect(_on_material_dropped)
+	form.add_child(_grid)
 	for i in range(4):
-		var row := VBoxContainer.new()
-		form.add_child(row)
-		var label := Label.new()
-		label.text = Localization.tr_key("ui.fusion.material", [i + 1])
-		row.add_child(label)
-		var picker := OptionButton.new()
-		picker.item_selected.connect(_on_item_selected.bind(i))
-		row.add_child(picker)
-		PanelChrome.style_action(picker)
-		_pickers.append(picker)
-		_choice_ids.append([])
+		var slot := ItemSlot.new()
+		slot.role = ItemSlot.ROLE_TRAY
+		slot.index = i
+		slot.apply_grid_base(SLOT_SIZE)
+		slot.item_dropped.connect(_on_material_dropped)
+		slot.pressed.connect(_clear_material.bind(i))
+		_grid.add_child(slot)
+		_slots.append(slot)
+		_selected.append({})
+		var remove := Button.new()
+		remove.text = "×"
+		remove.tooltip_text = Localization.tr_key("ui.fusion.remove")
+		remove.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		remove.offset_left = -23
+		remove.offset_right = -2
+		remove.offset_top = 2
+		remove.offset_bottom = 23
+		remove.pressed.connect(_clear_material.bind(i))
+		slot.add_child(remove)
+		_remove_buttons.append(remove)
 	_target_row = VBoxContainer.new()
 	form.add_child(_target_row)
 	var target_label := Label.new()
@@ -158,7 +209,9 @@ func _build() -> void:
 	_target.add_item(Localization.tr_key("ui.fusion.choose"))
 	for kind in Equipment.slot_kinds():
 		_target.add_item(Equipment.slot_label(Equipment.slots_for_kind(kind)[0]))
-	_target.item_selected.connect(func(_i: int) -> void: _refresh_preview())
+	_target.item_selected.connect(func(_i: int) -> void:
+		_risk_confirmed = false
+		_refresh_preview())
 	_target_row.add_child(_target)
 	PanelChrome.style_action(_target)
 	_summary = Label.new()
@@ -169,90 +222,176 @@ func _build() -> void:
 	_feedback.add_theme_color_override("font_color", Color("ffbd88"))
 	root.add_child(_feedback)
 	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
 	root.add_child(actions)
-	var refresh := Button.new()
-	refresh.text = Localization.tr_key("ui.fusion.refresh")
-	refresh.pressed.connect(_refresh_choices)
-	actions.add_child(refresh)
-	PanelChrome.style_action(refresh)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions.add_child(spacer)
 	_confirm = Button.new()
-	_confirm.text = Localization.tr_key("ui.fusion.confirm")
 	_confirm.pressed.connect(_on_confirm)
 	actions.add_child(_confirm)
 	PanelChrome.style_action(_confirm, true)
+	_random = Button.new()
+	_random.text = Localization.tr_key("ui.fusion.random_fill")
+	_random.tooltip_text = Localization.tr_key("ui.fusion.random_tip")
+	_random.pressed.connect(_on_random_fill)
+	actions.add_child(_random)
+	PanelChrome.style_action(_random)
+	_refresh_slots()
 
-## 按模式过滤背包装备；刷新会清空旧选择与风险确认状态。
-func _refresh_choices() -> void:
-	_stale = false
+## 用实际背包实例 ID 查找，不依赖可被整理改变的格子下标。
+func _find_item(id: String) -> Dictionary:
+	if id.is_empty():
+		return {}
+	for entry in GameState.inventory:
+		if entry is Dictionary and String(entry.get("instanceId", "")) == id:
+			return entry
+	return {}
+
+## 验证拖拽载荷仍指向原装备，防止拖动期间整理或变更后误选。
+func _source_item(payload: Dictionary) -> Dictionary:
+	if int(payload.get("from", -1)) != ItemSlot.ROLE_BAG:
+		return {}
+	var index := int(payload.get("index", -1))
+	if index < 0 or index >= GameState.inventory.size() or not GameState.inventory[index] is Dictionary:
+		return {}
+	var current: Dictionary = GameState.inventory[index]
+	if current != payload.get("item", {}) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+		return {}
+	return current
+
+## 单格检查品质、星级、收藏和已选档位；完整四件仍由 EquipmentFusion 终验。
+func _material_error(item: Dictionary, row: int) -> String:
+	if row < 0 or row >= (2 if _mode == EquipmentFusion.STAR_TRANSFER else 4):
+		return Localization.tr_key("ui.fusion.invalid_slot")
+	if String(item.get("kind", "")) != "equip" or EquipmentFusion.tier_start(item) == 0 \
+			or Equipment.item_kind(item).is_empty() or bool(item.get("favorite", false)):
+		return Localization.tr_key("ui.fusion.invalid_material")
+	var id := String(item.get("instanceId", ""))
+	if id.is_empty():
+		return Localization.tr_key("ui.fusion.invalid_material")
+	for i in range(_selected.size()):
+		if i != row and String(_selected[i].get("instanceId", "")) == id:
+			return Localization.tr_key("ui.fusion.duplicate")
+	var quality := String(item.get("quality", ""))
+	var star := int(item.get("star", -1))
+	if _mode == EquipmentFusion.GOLD_TO_PURPLE:
+		return "" if quality == "epic" and star >= 0 and star <= Upgrade.max_star() else \
+			Localization.tr_key("ui.fusion.gold_only")
+	if _mode == EquipmentFusion.PURPLE_TARGET:
+		if quality != "legendary" or star < 0 or star >= Upgrade.max_star():
+			return Localization.tr_key("ui.fusion.purple_only")
+		for i in range(4):
+			if i != row and not _selected[i].is_empty() \
+					and EquipmentFusion.tier_start(_selected[i]) != EquipmentFusion.tier_start(item):
+				return Localization.tr_key("ui.fusion.same_tier")
+		return ""
+	if quality != "legendary" or star != (12 if row == 0 else 0):
+		return Localization.tr_key("ui.fusion.old_role" if row == 0 else "ui.fusion.new_role")
+	var other := _selected[1 - row]
+	if not other.is_empty():
+		var old := item if row == 0 else other
+		var fresh := item if row == 1 else other
+		var plan := EquipmentFusion.plan_transfer(old, fresh)
+		if not bool(plan.get("ok", false)):
+			return String(plan.get("reason", ""))
+	return ""
+
+## 接收背包拖入；拒绝时说明原因，成功只保存快照并刷新预览。
+func _on_material_dropped(row: int, payload: Dictionary) -> void:
+	if not visible:
+		return
+	var item := _source_item(payload)
+	if item.is_empty():
+		_feedback.text = Localization.tr_key("ui.fusion.stale")
+		return
+	var error := _material_error(item, row)
+	if not error.is_empty():
+		_feedback.text = error
+		return
+	_selected[row] = item.duplicate(true)
 	_risk_confirmed = false
-	_selected.clear()
 	_feedback.text = ""
-	for i in range(_pickers.size()):
-		var picker := _pickers[i]
-		picker.clear()
-		picker.add_item(Localization.tr_key("ui.fusion.choose"))
-		_choice_ids[i] = [""]
-		if i >= (2 if _mode == EquipmentFusion.STAR_TRANSFER else 4):
-			continue
-		for index in range(GameState.inventory.size()):
-			var entry = GameState.inventory[index]
-			if not entry is Dictionary or String(entry.get("kind", "")) != "equip" \
-					or bool(entry.get("favorite", false)):
-				continue
-			var quality := String(entry.get("quality", ""))
-			var star := int(entry.get("star", -1))
-			if _mode == EquipmentFusion.GOLD_TO_PURPLE and quality != "epic":
-				continue
-			if _mode == EquipmentFusion.PURPLE_TARGET and (quality != "legendary" or star == Upgrade.max_star()):
-				continue
-			if _mode == EquipmentFusion.STAR_TRANSFER and (quality != "legendary" or star != (12 if i == 0 else 0)):
-				continue
-			picker.add_item("%d · %s" % [index + 1, ItemUtil.display_name(entry)])
-			_choice_ids[i].append(String(entry.get("instanceId", "")))
-		picker.select(0)
+	_refresh_slots()
 	_refresh_preview()
 
-## 保存选中装备的深拷贝快照；本次选择不能因后续整理指向别的实例。
-func _on_item_selected(choice: int, row: int) -> void:
-	while _selected.size() <= row:
-		_selected.append({})
-	var id := String(_choice_ids[row][choice]) if choice >= 0 and choice < _choice_ids[row].size() else ""
+## 清空某一材料格，原物品一直留在背包。
+func _clear_material(row: int) -> void:
+	if row < 0 or row >= _selected.size() or _selected[row].is_empty():
+		return
 	_selected[row] = {}
-	for item in GameState.inventory:
-		if item is Dictionary and String(item.get("instanceId", "")) == id and not id.is_empty():
-			_selected[row] = item.duplicate(true)
-			break
 	_risk_confirmed = false
+	_feedback.text = ""
+	_refresh_slots()
 	_refresh_preview()
 
-## 返回已选择的完整材料；有空格时返回空数组，供预览禁用确认。
+## 随机预选替换现有四格；无同档四件 0 星时不改变原选择。
+func _on_random_fill() -> void:
+	if _mode == EquipmentFusion.STAR_TRANSFER:
+		return
+	var picked := EquipmentFusion.random_materials(GameState.inventory, _mode)
+	if picked.size() != 4:
+		_feedback.text = Localization.tr_key("ui.fusion.random_empty")
+		return
+	for i in range(4):
+		_selected[i] = picked[i]
+	_risk_confirmed = false
+	_feedback.text = ""
+	_refresh_slots()
+	_refresh_preview()
+
+## 仅重置预选引用与风险状态，绝不扣除背包物品。
+func _reset_materials() -> void:
+	for i in range(_selected.size()):
+		_selected[i] = {}
+	_risk_confirmed = false
+	if _feedback != null:
+		_feedback.text = ""
+	if _slots.size() == 4:
+		_refresh_slots()
+		_refresh_preview()
+
+## 使用背包同款格子外观；向背包发出被选实例 ID 用于描边标记。
+func _refresh_slots() -> void:
+	var ids := PackedStringArray()
+	for i in range(_slots.size()):
+		var slot := _slots[i]
+		slot.visible = i < (2 if _mode == EquipmentFusion.STAR_TRANSFER else 4)
+		var item := _selected[i]
+		slot.item = item
+		slot.text = ItemUtil.display_name(item).substr(0, 2) if not item.is_empty() else \
+			(Localization.tr_key("ui.fusion.old_slot" if i == 0 else "ui.fusion.new_slot") if _mode == EquipmentFusion.STAR_TRANSFER else
+			Localization.tr_key("ui.fusion.empty_slot", [i + 1]))
+		slot.apply_grid_style(ItemUtil.quality_color(String(item.get("quality", "common"))) if not item.is_empty() else
+			ItemSlot.GRID_BORDER, not item.is_empty())
+		slot.tooltip_text = "%s\n%s" % [ItemUtil.display_name(item), "\n".join(PackedStringArray(ItemUtil.attr_lines(item)))] \
+			if not item.is_empty() else ""
+		_remove_buttons[i].visible = not item.is_empty() and slot.visible
+		SampleArt.decorate(slot, SampleArt.icon_for(item))
+		if not item.is_empty():
+			ids.append(String(item.get("instanceId", "")))
+	EventBus.fusion_selection_changed.emit(ids)
+
+## 返回完整预选快照；材料不足时禁用合成。
 func _material_snapshots() -> Array[Dictionary]:
-	var count := 2 if _mode == EquipmentFusion.STAR_TRANSFER else 4
 	var result: Array[Dictionary] = []
-	for i in range(count):
-		if i >= _selected.size() or _selected[i].is_empty():
+	for i in range(2 if _mode == EquipmentFusion.STAR_TRANSFER else 4):
+		if _selected[i].is_empty():
 			return []
 		result.append(_selected[i])
 	return result
 
-## 只读规则预览，显示输出档、费用和拒绝原因。
+## 预览只读规则层；金币与目标类型改变时同步更新按钮状态。
 func _refresh_preview() -> void:
-	_confirm.text = Localization.tr_key("ui.fusion.confirm_again" if _risk_confirmed else "ui.fusion.confirm")
-	_confirm.disabled = true
-	if _stale:
+	if _confirm == null:
 		return
+	_confirm.text = Localization.tr_key("ui.fusion.confirm_again") if _risk_confirmed else \
+		Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else "ui.fusion.forge_action")
+	_confirm.disabled = true
 	var items := _material_snapshots()
 	if items.is_empty():
 		_summary.text = Localization.tr_key("ui.fusion.pick")
 		return
-	var kind := ""
-	if _mode == EquipmentFusion.PURPLE_TARGET and _target.selected > 0:
-		kind = Equipment.slot_kinds()[_target.selected - 1]
-	var plan := EquipmentFusion.plan_transfer(items[0], items[1]) if _mode == EquipmentFusion.STAR_TRANSFER \
-		else EquipmentFusion.plan_four(items, _mode, kind)
+	var kind := Equipment.slot_kinds()[_target.selected - 1] if _mode == EquipmentFusion.PURPLE_TARGET and _target.selected > 0 else ""
+	var plan := EquipmentFusion.plan_transfer(items[0], items[1]) if _mode == EquipmentFusion.STAR_TRANSFER else \
+		EquipmentFusion.plan_four(items, _mode, kind)
 	if not bool(plan.get("ok", false)):
 		_summary.text = String(plan.get("reason", ""))
 		return
@@ -264,10 +403,9 @@ func _refresh_preview() -> void:
 		_summary.text += "\n" + Localization.tr_key("ui.fusion.cost", [int(plan.cost), GameState.gold])
 	_confirm.disabled = GameState.gold < int(plan.get("cost", 0))
 
-## 已升星材料和保星交易需二次确认；真正扣材由 GameState 重核快照。
+## 带星材料与保星交易二次确认，最终仍由 GameState 快照重核。
 func _on_confirm() -> void:
-	if _stale:
-		_feedback.text = Localization.tr_key("ui.fusion.stale")
+	if _confirm.disabled:
 		return
 	var items := _material_snapshots()
 	if items.is_empty():
@@ -288,7 +426,7 @@ func _on_confirm() -> void:
 	var result := GameState.forge_equipment(_mode, items, kind)
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.fusion.done", [ItemUtil.display_name(result.item)]), "pickup")
-		_refresh_choices()
+		_reset_materials()
 	else:
 		_feedback.text = String(result.get("reason", "合成失败"))
 		_risk_confirmed = false

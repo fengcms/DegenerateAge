@@ -39,6 +39,7 @@ var _last_click_ms: int = 0
 ## 交易会话（货郎开店中）：与货郎面板并列显示，背包格开放拖出（M1-8 改造）。
 var _trade_active: bool = false
 var _fusion_active: bool = false
+var _fusion_selected_ids := PackedStringArray()
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -53,6 +54,7 @@ func _ready() -> void:
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
 	EventBus.fusion_mode_changed.connect(_on_fusion_mode_changed)
+	EventBus.fusion_selection_changed.connect(_on_fusion_selection_changed)
 	_refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -64,7 +66,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			EventBus.shop_close_requested.emit()
 		elif _fusion_active:
 			set_open(false)
-			EventBus.equipment_fusion_close_requested.emit()
 		else:
 			set_open(not visible)
 		get_viewport().set_input_as_handled()
@@ -93,6 +94,8 @@ func set_open(open: bool) -> void:
 		_refresh()
 		_center.show_window()
 	else:
+		if _fusion_active:
+			EventBus.equipment_fusion_close_requested.emit()
 		var character := get_node_or_null("../CharacterPanel")
 		if character != null and character.visible:
 			character._refresh()
@@ -115,7 +118,7 @@ func _on_trade_mode_changed(active: bool) -> void:
 		if not visible:
 			set_open(true)
 	else:
-		_apply_trade_layout(false)
+		_apply_trade_layout(_fusion_active)
 		if visible:
 			_refresh()
 
@@ -127,9 +130,15 @@ func _on_fusion_mode_changed(active: bool) -> void:
 		if not visible:
 			set_open(true)
 	else:
-		_apply_trade_layout(false)
+		_apply_trade_layout(_trade_active)
 		if visible:
 			_refresh()
+
+## 仅材料选择变化时刷新背包已选角标，不改变装备实例。
+func _on_fusion_selection_changed(ids: PackedStringArray) -> void:
+	_fusion_selected_ids = ids
+	for button in _bag_buttons:
+		button.fusion_selected = _fusion_active and _fusion_selected_ids.has(String(button.item.get("instanceId", "")))
 
 ## 交易布局：左半屏居中 + 去遮罩（两层黑遮罩叠加会把对面面板压暗）；
 ## 普通布局：全屏居中 + 恢复遮罩。
@@ -305,6 +314,7 @@ func _refresh() -> void:
 		if it2 is Dictionary:
 			var col2 := _item_color(it2)
 			b2.item = it2          # 供拖拽载荷携带（ItemSlot._get_drag_data）
+			b2.fusion_selected = _fusion_active and _fusion_selected_ids.has(String(it2.get("instanceId", "")))
 			b2.draggable = true
 			b2.text = _short_name(it2)
 			b2.add_theme_color_override("font_color", col2)
@@ -317,6 +327,7 @@ func _refresh() -> void:
 					else ItemSlot.UpgradeBadge.LEVEL_LOCKED
 		else:
 			b2.item = {}
+			b2.fusion_selected = false
 			b2.draggable = false
 			b2.text = ""
 			_apply_slot_style(b2, COL_BORDER, false)

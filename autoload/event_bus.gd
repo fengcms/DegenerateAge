@@ -86,6 +86,8 @@ signal equipment_fusion_panel_requested(mode: String)
 ## 合成工作台与背包的并排会话开关；预选材料不进入背包以外的容器。
 signal fusion_mode_changed(active: bool)
 signal equipment_fusion_close_requested()
+## 合成格中的实例 ID，用于在背包原格显示“已选”角标。
+signal fusion_selection_changed(instance_ids: PackedStringArray)
 
 # ---- 仓库（M4-3）----
 signal warehouse_panel_requested(npc_name: String)
