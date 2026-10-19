@@ -44,11 +44,12 @@ var upgrade_badge_state: UpgradeBadge = UpgradeBadge.NONE:
 		upgrade_badge_state = value
 		_refresh_upgrade_marker()
 
-## 当前格内物品实例（由面板在刷新时写入）。**赋值即刷新右下角数量角标**（M4-10）。
+## 当前格内物品实例（由面板在刷新时写入）；数量与穿戴等级角标随之刷新。
 var item: Dictionary = {}:
 	set(value):
 		item = value
 		_refresh_count()
+		_refresh_level_badge()
 		_refresh_potion_marker()
 		_refresh_favorite_marker()
 		_refresh_quality_frame()
@@ -63,6 +64,8 @@ var _potion_marker: Label
 var _favorite_marker: Label
 var _upgrade_marker: Label
 var _fusion_marker: Label
+var _level_badge: Control
+var _level_badge_text := ""
 var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
@@ -112,6 +115,7 @@ func _grid_style(bg: Color, border: Color) -> StyleBoxFlat:
 	style.set_corner_radius_all(4)
 	return style
 
+## 格子入树时一次建立图标框、状态角标与拖拽遮罩；随后只刷新内容而不重建节点。
 func _ready() -> void:
 	_quality_frame = QualityFrameOverlay.new()
 	_quality_frame.name = "QualityFrame"
@@ -175,7 +179,15 @@ func _ready() -> void:
 	_fusion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fusion_marker)
 	_refresh_fusion_marker()
-	EventBus.settings_changed.connect(_refresh_potion_marker)
+	_level_badge = Control.new()
+	_level_badge.name = "EquipmentLevelBadge"
+	_level_badge.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_level_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level_badge.draw.connect(_draw_level_badge)
+	_level_badge.resized.connect(_level_badge.queue_redraw)
+	add_child(_level_badge)
+	_refresh_level_badge()
+	EventBus.settings_changed.connect(_refresh_slot_settings)
 	_drag_cover = PanelContainer.new()
 	_drag_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_drag_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -213,6 +225,54 @@ func _refresh_upgrade_marker() -> void:
 func _refresh_fusion_marker() -> void:
 	if _fusion_marker != null:
 		_fusion_marker.visible = role == ROLE_BAG and fusion_selected and not item.is_empty()
+
+## 设置改变时刷新既有药品符号和等级角标；等级字体使用文字/界面的相对倍率。
+func _refresh_slot_settings() -> void:
+	_refresh_potion_marker()
+	if _level_badge != null:
+		_level_badge.queue_redraw()
+
+## 从装备实例读取穿戴等级；非装备、空槽及非法等级不显示旧数字。
+func _refresh_level_badge() -> void:
+	if _level_badge == null:
+		return
+	_level_badge_text = ""
+	if String(item.get("kind", "")) == "equip":
+		var raw_level: Variant = item.get("requiredLevel")
+		if raw_level is int and int(raw_level) >= 1 and int(raw_level) <= ItemFactory.INSTANCE_LEVEL_CAP:
+			_level_badge_text = str(raw_level)
+	_level_badge.visible = not _level_badge_text.is_empty()
+	if _level_badge.visible:
+		_level_badge.queue_redraw()
+
+## 依据当前格子尺寸和文字倍率量测角标；四位数时缩小字体而不截断数字。
+func _level_badge_layout() -> Dictionary:
+	if _level_badge_text.is_empty() or _level_badge == null:
+		return {}
+	var font := get_theme_font("font")
+	var scale_factor := SettingsRuntime.text_scale_value() / SettingsRuntime.ui_scale_value()
+	var font_size := clampi(roundi(11.0 * scale_factor), 8, 20)
+	var max_width := maxf(12.0, _level_badge.size.x - 8.0)
+	var max_height := maxf(12.0, minf(19.0, _level_badge.size.y * 0.42))
+	while font_size > 8 and (font.get_string_size(_level_badge_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 4.0 > max_width \
+			or font.get_height(font_size) + 2.0 > max_height):
+		font_size -= 1
+	var text_width := font.get_string_size(_level_badge_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var badge_size := Vector2(ceilf(text_width + 4.0), ceilf(font.get_height(font_size) + 2.0))
+	var badge_rect := Rect2(_level_badge.size - badge_size - Vector2(2.0, 2.0), badge_size)
+	return {"rect": badge_rect, "font": font, "font_size": font_size}
+
+## 在图标上方绘制黑色半透明等级方块；子控件不拦截格子的悬停和拖放。
+func _draw_level_badge() -> void:
+	var layout := _level_badge_layout()
+	if layout.is_empty():
+		return
+	var rect: Rect2 = layout.rect
+	var font: Font = layout.font
+	var font_size: int = layout.font_size
+	_level_badge.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
+	_level_badge.draw_string(font, rect.position + Vector2(2.0, 1.0 + font.get_ascent(font_size)),
+		_level_badge_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(0.96, 0.96, 0.94))
 
 func _process(_delta: float) -> void:
 	if not get_viewport().gui_is_dragging():
