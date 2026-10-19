@@ -37,7 +37,7 @@
 | 你的设想 | 判定 | 关键前提 |
 |---|---|---|
 | 循环装备（60/70/…/1000 级复用同一批型号，属性按公式算） | 🟡 **可实现，有 3 处硬阻断** | ① 存档校验要求实例 `requiredLevel` **严格等于**模板值 ⇒ 读档即被逐件剔除；② 更早一层：`equipmentRuleVersion` 被**写死为 4**，写 5 就判坏；③ `make_equip_roll` 有三道断言 + `affixTierScale` 只有 6 个键（§7 P-1/P-3） |
-| 循环 Boss 图（10 只、随玩家等级升、600s 复活） | 🟡 **可实现，6 处改造** | `bossSpawn` 是单字典；**`tierRange` 会把等级夹回 60**；**复活不重算等级**；怪物攻/防不随等级缩放；各章 Boss 基础数值差 8 倍须归一化；血条与未领取上限都是单目标模型（§7 P-4/P-5/P-7/P-9） |
+| 循环 Boss 图（20 只、随玩家等级升、600s 复活） | 🟡 **可实现，6 处改造** | `bossSpawn` 是单字典；**`tierRange` 会把等级夹回 60**；**复活不重算等级**；怪物攻/防不随等级缩放；各章 Boss 基础数值差 8 倍须归一化；血条与未领取上限都是单目标模型（§7 P-4/P-5/P-7/P-9） |
 | 无限等级 + 越往后越难 | 🟡 **可实现，但有一处上限要抬** | 曲线本身没问题（§2.2）；但 `PLAYER_LEVEL_CAP = 999` ⇒ **1000 级整档读不进去**（§7 P-14，比装备消失更严重） |
 | 怪物攻防随等级提升 | 🟢 **可实现，且能与玩家完全同步** | 用同一条 S(d) 同时作用于玩家与怪物 ⇒ **击杀次数恒定**，难度只在「时间」维度增长（§2.3） |
 | Boss 令牌 | 🟢 **成本最低** | **零新增存档状态**：由 `spawn_respawn` 反推存活/倒计时 |
@@ -376,9 +376,9 @@ if not _whole(item.get("equipmentRuleVersion"), 4, 4) or ...
 | id / 名 | `c7_arena` / 「无尽回廊」 |
 | 类型 | `spoke`，`hubId = c6_map00`（镇脉前哨进入） |
 | 尺寸 | 建议 160×90（比 `c6_map05` 的 224×126 紧凑，10 只 Boss 的动线更好） |
-| Boss 点 | **10 个**，分 5 区（每区 2 只），环形走廊串联，避免 10 只同时追人 |
+| Boss 点 | **20 个**，分 5 组（每组 4 只），环形走廊串联，避免 20 只同时追人 |
 | 复活 | 全部 600s（与你的口径一致） |
-| 生成预算 | `bossCap: 10` |
+| 生成预算 | `bossCap: 20` |
 | 普通怪 | **不刷**（D-12）——`spawnPoints` 留空数组 |
 | ⚠ `tierRange` | **绝对不要写**。写了会把 Boss 等级夹回 60（§7 P-4） |
 | 其它必备字段 | `exits`（1 个，回 `c6_map00`）、`carterArrival`、小地图底图；`safeZone` 保持 `false`（与 `c6_map05` / `c6_map04` / `corruption_source` 现状一致） |
@@ -543,7 +543,7 @@ v3 的 P-10 担心"药水无限 ⇒ 生存压力归零"，实测不成立：
 | 状态判定 | `spawn_respawn[key]` 存在且 `world_time < readyAt` → **冷却中**（显示 mm:ss）；否则 **存活** |
 | 过滤 | 只显示**已访问**的地图 |
 | 点击 | 同图 → `player.request_map_move(pos)`（已存在，`player.gd:162`）；跨图 → 确认扣金 → `travel_anywhere` + 落地自动走（一次性意图 D-6） |
-| 多 Boss | 一图 1–10 条，按地图分组；`c7_arena` 一行展开 10 条 |
+| 多 Boss | 一图 1–20 条，按地图分组；`c7_arena` 一行展开 20 条 |
 | 性能 | **只在面板打开时遍历一次并缓存**，不要在 `_process` 里重算 35 图 × 10 条 |
 | 与墓碑同源 | 倒计时一律读 `GameState.spawn_remaining()`，不要另算一套（Q-1 已定保留墓碑，两处必须一致） |
 | 新存档字段 | **不需要**（状态可反推） |
@@ -1049,7 +1049,7 @@ grep -nE "含未登记键|_known_unlock_ids" autoload/save_manager.gd
 | **M10-0** | **数值地基 + P-14/P-15/P-16** | 新增 `scripts/systems/balance.gd`（`S(d)` / `E(L)` / `K(L)` / `base_attack` / `base_defense`）；`game_state.xp_to_next` 换公式；`_level_up` 在 `L>60` 改曲线值；**`PLAYER_LEVEL_CAP` 999 → 9999、`PLAYER_STAT_CAP` → 99,999,999**；读档后**幂等校正**基础攻防（不写 `unlocks`） | 单测：`E(60)=69,991 / E(100)=348,677 / E(1000)=184,239,545`；`S(0)=1 / S(10)=2.2 / S(940)=2008.4048`；**存量 1–60 的 `xp_to_next` 与 `max_hp` 逐值不变**；`Balance.base_attack(PLAYER_LEVEL_CAP) < PLAYER_STAT_CAP`；**负向：把 cap 改回 999 ⇒ 「1000 级存档应可读」精确失败** | 无 |
 | **M10-1** | 动态等级装备地基 | `make_equip_dynamic`（**独立路径，不复用 `make_equip_roll` 的三道断言**）；`_valid_item`：**版本号上下界 4→5** + 按版本分流 + `affixScale = 6.0 × S(d)` | 生成 70/100/1000 级实例 → 存 → 读 → 属性/等级/词条一致；老 v4 档零影响；**负向：把 `_whole(...,4,5)` 改回 `4,4` ⇒ 「L100 装备读档后应仍在」精确失败** | M10-0 |
 | **M10-2** | 掉落支持动态等级 + **P-2/P-3/P-12** | `data_loader` 允许 `levelFromBoss` 与 `tierStart` 互斥；`loot.gd:_roll_equip` 动态分支；新增循环掉落表；**60 级档照常产装备（D-16）** | 60/70/100 档各出对应等级装备；**60 级档一轮 50–80 件、可全部卖店**；**`--quit` 配置校验通过（掉落表不带 `tierStart` 也不报错）** | M10-1 |
-| **M10-3** | 循环 Boss 图 + **P-4/P-5/P-13** | `bossSpawns` + `levelFromPlayer`（**跳过 `clampi`**）+ `scaleStats` + `bossCap:10`；`_spawn` 内重算等级；`endgame.json` 归一化；`game.gd` 装配分支；新图四项配置（exit / carterArrival / 小地图底图 / 地砖） | 进图 10 只、等级=玩家等级、**复活后等级跟随当前玩家等级**、600s 复活、墓碑正常、**击杀次数 ≈ 124** | M10-1/2 |
+| **M10-3** | 循环 Boss 图 + **P-4/P-5/P-13** | `bossSpawns` + `levelFromPlayer`（**跳过 `clampi`**）+ `scaleStats` + `bossCap:20`；`_spawn` 内重算等级；`endgame.json` 归一化；`game.gd` 装配分支；新图四项配置（exit / carterArrival / 小地图底图 / 地砖） | 进图 20 只、等级=玩家等级、**复活后等级跟随当前玩家等级**、600s 复活、墓碑正常、**击杀次数 ≈ 124** | M10-1/2 |
 | **M10-3b（新增）** | 多目标收口 | `current_bosses()` + `current_boss()` 兼容壳（P-8）；`boss_hp_changed` 加 `instance_id`，血条「当前目标优先」（P-7）；**未领取上限按图分级：普通 20 / 循环 200（D-13）** | 两只 Boss 同时接战血条不跳；旧 `current_boss()` 断言零改动通过；循环图满包 3 轮后未领取不丢 | M10-3 |
 | **M10-4** | 任务与三件道具 + **P-6** | `requiresLevel`；3 条 `miscItems`；**`useType` 分发器（不只是白名单）**；`panelId` 白名单映射；`unlocks` 权限位 | 59 级不可领、60 级可领、道具不可卖、**双击真的能开面板**、脏 `panelId` 被拒 | M10-1/3b |
 | **M10-5** | Boss 令牌面板 | `boss_token_panel.gd` + `BossIndex`；`pending_walk` 一次性意图 | 全库状态/倒计时正确；同图自动走；跨图确认后送达并自动走 | M10-3/4 |
