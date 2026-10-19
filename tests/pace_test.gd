@@ -6,8 +6,10 @@ extends Node
 ##    `LevelGap` + 真实 `boss_xp`，从 60 级空经验一路打到 70 级，统计实际击杀数。
 ##    它同时盖住三件事：`boss_xp = round(E/K)` 的取整、升级余数结转、Boss 等级锁定
 ##    带来的经验衰减。任何一处改成「按公式反推」都会让这条失去意义。
-## 2. **用例 3 是产品 13 §2.3 的签收标准** —— 玩家与怪物同乘 S 后，击杀次数必须恒定。
-##    数据全部来自真实装备模板与真实聚合（`total_attack()` / `max_hp()`），不硬编码 123.7。
+## 2. **用例 3 是产品 13 §2.3 + D-21 的签收标准** —— 击杀次数不再是常数：
+##    「十级一套」下装备在套内不成长，曲线变成**锯齿**（套首最轻松、套末最肉、换套回弹）。
+##    数据全部来自真实装备模板与真实聚合（`total_attack()` / `max_hp()`），不硬编码推导值。
+##    这条同时防两个方向：**变肉失控**（> 基线 1.30 倍）与**锯齿消失**（= 有人把归一改回逐级）。
 ## 3. **用例 4 盯的是 `LevelGap` 真的生效** —— 循环图 Boss 等级在生成时锁定，玩家升级后
 ##    场上旧 Boss 经验 ×0.96。若有人「为了避免漂移」把它改成恒 1.0，这条必须红。
 
@@ -169,16 +171,60 @@ func _test_per_level_kills() -> void:
 		check(float(n) >= k - 1.0, "L%d 击杀数 %d 低于 K(%.2f)−1（经验被放大）" % [lv, n, k])
 		check(float(n) <= k + 2.0, "L%d 击杀数 %d 高于 K(%.2f)+2（经验衰减过头）" % [lv, n, k])
 
-# ---- 3) 战斗不变量：60 → 1000 恒定（产品 §2.3 签收标准）----
+# ---- 3) 战斗曲线：套内锯齿 + 换套回弹（产品 §2.3 / D-21）----
+
+## D-21 落地（2026-10-19）后的实测锚点。数值 = common 满装打归一化 Boss 的击杀次数。
+## 读法：**套首**（L61/71/81…）玩家整套管用、比基线轻 8%–20%；**套末**（L70/80/90…）
+## 装备没长而怪长了，落后 1%–27.5%；跨过套边界立刻回弹。
+## 高等级锯齿收敛（L1000 只差 0.8%），因为基线 `130×S(d)` 逐渐压过装备。
+const SAW_START := {61: 98.95, 71: 109.16, 81: 111.05, 91: 112.96}
+const SAW_END := {70: 157.75, 80: 146.24, 90: 142.58, 100: 140.06}
 
 func _test_combat_invariant() -> void:
-	for lv in [60, 61, 70, 80, 100, 200, 500, 1000]:
+	# ① 60 级基线一位不动（1—60 完全不受 D-21 影响）。
+	_setup(60)
+	var base := _kill_count(60)
+	var base_delta := absf(base - BASE_KILLS) / BASE_KILLS
+	check(base_delta < 0.015,
+		"L60 击杀次数应 ≈ %.1f（±1.5%%），实际 %.1f" % [BASE_KILLS, base])
+	# ② 八个采样点全部守住「不失控、不白送」：套末最差 +27.5%，套首最好 −20%。
+	for lv in [61, 67, 70, 71, 80, 100, 500, 1000]:
 		_setup(lv)
 		var kills := _kill_count(lv)
-		var delta := absf(kills - BASE_KILLS) / BASE_KILLS
-		check(delta < 0.015,
-			"L%d 击杀次数应 ≈ %.1f（±1.5%%），实际 %.1f（偏差 %.2f%%）" % [lv, BASE_KILLS, kills, delta * 100.0])
-		check(_hurt_count(lv) >= 6.0, "L%d 可挨打次数应 ≥ 6，实际 %.1f" % [lv, _hurt_count(lv)])
+		check(kills <= BASE_KILLS * 1.30,
+			"L%d 击杀 %.2f 超过基线的 1.30 倍（套内落后失控）" % [lv, kills])
+		check(kills >= BASE_KILLS * 0.75,
+			"L%d 击杀 %.2f 低于基线的 0.75 倍（等级/装备白送）" % [lv, kills])
+		# 可挨打次数：逐级装备时代最差 6.24；套末最差 5.60（D-21 的必然代价），下限取 5.5。
+		check(_hurt_count(lv) >= 5.5,
+			"L%d 可挨打次数应 ≥ 5.5，实际 %.2f" % [lv, _hurt_count(lv)])
+	# ③ 锯齿形状本身：四个采样点各自 ±2%（这条是「归一真的生效」的判据）。
+	for lv in SAW_START.keys():
+		_setup(lv)
+		var want := float(SAW_START[lv])
+		var got := _kill_count(lv)
+		check(absf(got - want) / want < 0.02,
+			"L%d 套首击杀应 ≈ %.1f，实际 %.1f（直接用 Boss 等级 ⇒ 回到 123.7 即红）" % [lv, want, got])
+	for lv in SAW_END.keys():
+		_setup(lv)
+		var want := float(SAW_END[lv])
+		var got := _kill_count(lv)
+		check(absf(got - want) / want < 0.02,
+			"L%d 套末击杀应 ≈ %.1f，实际 %.1f（归一被改回逐级即红）" % [lv, want, got])
+	# ④ 结构判据（不依赖具体数字）：套末必须明显比套首肉，换套必须明显回弹。
+	#    只对前四套断言 —— 191 套之后基线占主导，锯齿本就收敛到 ±8%，不该硬凑。
+	for start in [61, 71, 81, 91]:
+		_setup(start)
+		var head := _kill_count(start)
+		_setup(start + 9)
+		var tail := _kill_count(start + 9)
+		check(tail / head >= 1.20,
+			"%d—%d 套：套末/套首应 ≥ 1.20（装备在套内不成长），实际 %.2f" % [start, start + 9, tail / head])
+		if start < 91:
+			_setup(start + 10)
+			var next_head := _kill_count(start + 10)
+			check(next_head / tail <= 0.85,
+				"%d 套换套回弹不足：%.1f → %.1f（应 ≤ 0.85 倍）" % [start + 10, tail, next_head])
 
 # ---- 4) `LevelGap` 真实生效（循环图 Boss 等级锁定）----
 

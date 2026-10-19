@@ -81,10 +81,13 @@ func _rng(seed_value: int) -> RandomNumberGenerator:
 	return r
 
 ## 造一件合法实例：`level > 60` 走动态分支，否则挂模板所属套。
+## 🔴 这里用 `make_equip_exact`（精确等级）而不是门面：本文件测的是「重铸 / 回收按**实例等级**
+## 结算」这条规则，需要能稳定构造 60 / 100 / 1000 三个已知等级。走门面会被 D-21 归一到
+## 91 / 991，判据就得跟着改，反而盖不住 D-15 公式本身。
 func _make(item_id: String, level: int, quality: String, seed_value: int) -> Dictionary:
 	var rng := _rng(seed_value)
 	if level > Balance.SOFTCAP_LEVEL:
-		return ItemFactory.make_equip_dynamic(item_id, level, quality, rng)
+		return ItemFactory.make_equip_exact(item_id, level, quality, rng)
 	return ItemFactory.make_equip_roll(item_id, ItemFactory.tier_start_for_template(item_id),
 		quality, rng)
 
@@ -347,7 +350,10 @@ func _test_random_stream_unchanged() -> void:
 		var rng := _rng(1000 + index)
 		var item: Dictionary
 		if level > 0:
-			item = ItemFactory.make_equip_dynamic(item_id, level, quality, rng, "snap")
+			# 🔴 必须走 `make_equip_exact`：快照的 value 是按**该行记录的那个等级**算出来的。
+			# 走门面会被 D-21 的「十级一套」改写等级（甲 @100 → 93、戒 @1000 → 999），
+			# 词条数值随之变 ⇒ 快照全红，看起来像「随机流被改了」，实际只是等级变了。
+			item = ItemFactory.make_equip_exact(item_id, level, quality, rng, "snap")
 		else:
 			item = ItemFactory.make_equip_roll(item_id, int(row.get("tier", 0)), quality, rng, "snap")
 		var label := "%s@%d %s" % [item_id, level if level > 0 else int(row.get("tier", 0)), quality]

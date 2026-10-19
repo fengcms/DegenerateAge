@@ -24,6 +24,7 @@ func _rng(seed_value: int) -> RandomNumberGenerator:
 func _ready() -> void:
 	_test_table_contract()
 	_test_level_follows()
+	_test_tier_guard()
 	_test_count_range()
 	_test_sellable()
 	_test_default_fallback()
@@ -66,27 +67,66 @@ func _test_table_contract() -> void:
 		check(absf(qsum - 100.0) <= 0.5, "equip 条目品质权重应合计 100，实际 %.1f" % qsum)
 	check(equip_count == 3, "循环 Boss 表应有 3 个 equip 条目，实际 %d" % equip_count)
 
-## 等级跟随：v5 实例的 reqLv 与全部基底属性都要由 source_level 决定。
+## 等级跟随：v5 实例的 reqLv 与全部基底属性都由 source_level 决定的**档位**给出。
+## D-21 后「跟随」的含义是：Boss 等级 → 套起点 → 槽位等级（武器 61、鞋 62 … 项链 70）。
+## 🔴 旧断言 `requiredLevel == level` 是逐级装备的判据，正是用户反馈的那个 bug。
 func _test_level_follows() -> void:
 	for level in [61, 70, 100, 1000]:
 		var items := _roll_equips(level, 3)
 		check(not items.is_empty(), "%d 级档应能滚出装备" % level)
 		for item in items:
+			var item_id := String(item.get("itemId", ""))
+			var want := ItemFactory.dynamic_level_for(item_id, level)
 			check(int(item.get("equipmentRuleVersion", 0)) == ItemFactory.RULE_VERSION_DYNAMIC,
 				"%d 级档装备版本应为 5，实际 %d" % [level, int(item.get("equipmentRuleVersion", 0))])
-			check(int(item.get("requiredLevel", 0)) == level,
-				"%d 级档 requiredLevel 应为 %d，实际 %d" % [level, level, int(item.get("requiredLevel", 0))])
-			check(int(item.get("level", 0)) == level,
-				"%d 级档 level 字段应为 %d，实际 %d" % [level, level, int(item.get("level", 0))])
-			_check_raw_bases(item, level)
-		# 武器是唯一能一眼对表的口径：61 → 84、1000 → 150630。
-		var weapon_expect := {61: 84, 70: 165, 100: 564, 1000: 150630}
+			check(int(item.get("requiredLevel", 0)) == want,
+				"%d 级档的 %s requiredLevel 应为槽位等级 %d，实际 %d"
+					% [level, item_id, want, int(item.get("requiredLevel", 0))])
+			check(int(item.get("level", 0)) == want,
+				"%d 级档 level 字段应为 %d，实际 %d" % [level, want, int(item.get("level", 0))])
+			_check_raw_bases(item, want)
+		# 武器是唯一能一眼对表的口径：61—70 套恒 84 → 91 套 414 → 991 套 147807。
+		var weapon_expect := {61: 84, 70: 84, 100: 414, 1000: 147807}
 		for item in items:
 			if String(item.get("itemId", "")) != "c6_equip_weapon":
 				continue
 			var atk := int((item.get("rawBaseAttrs", {}) as Dictionary).get("atk", 0))
 			check(atk == int(weapon_expect[level]),
 				"%d 级武器基底 atk 应为 %d，实际 %d" % [level, int(weapon_expect[level]), atk])
+
+## Q-5 的长期守卫：掉落产物必须落在**十级档**上。
+## 判据是「等级 − 槽位偏移」恒为 `61 + 10k` —— 任何人把门面改回「直接用 Boss 等级」，
+## 这条立刻红；只断 `requiredLevel > 60` 是抓不到逐级回归的（那是逐级的合法区间）。
+func _test_tier_guard() -> void:
+	var levels := [61, 62, 67, 70, 71, 99, 100, 500, 999, 1000]
+	for level in levels:
+		var items := _roll_equips(level, 2)
+		check(not items.is_empty(), "%d 级档应能滚出装备" % level)
+		var seen := {}
+		for item in items:
+			var item_id := String(item.get("itemId", ""))
+			var offset := ItemFactory.slot_offset_for_template(item_id)
+			check(offset >= 0, "%s 必须在循环套内（偏移 %d）" % [item_id, offset])
+			if offset < 0:
+				continue
+			var req := int(item.get("requiredLevel", 0))
+			seen[req] = true
+			var tier_start := req - offset
+			check((tier_start - 61) % 10 == 0,
+				"%s @Boss%d 的档位起点应为 61+10k，实际 %d（逐级装备即红）"
+					% [item_id, level, tier_start])
+			check(ItemFactory.dynamic_tier_start(level) == tier_start,
+				"Boss %d 的套起点应为 %d，实际 %d"
+					% [level, ItemFactory.dynamic_tier_start(level), tier_start])
+		# 绝对判据（不依赖 `dynamic_level_for`）：同一套内十个槽位的等级**必须互不相同**，
+		# 且全部落在套起点之后的 10 级内。把偏移写死 0 会让这一段全塌成同一个数。
+		check(seen.size() >= 2,
+			"Boss %d 的一轮掉落应至少出现 2 个不同等级（槽位偏移生效），实际 %s" % [level, str(seen.keys())])
+		for req in seen.keys():
+			var offset_in_suit := int(req) - ItemFactory.dynamic_tier_start(level)
+			check(offset_in_suit >= 0 and offset_in_suit < ItemFactory.TIER_SPAN,
+				"Boss %d 掉落的 %d 级应落在套内（%d + 0…%d），实际偏移 %d"
+					% [level, int(req), ItemFactory.dynamic_tier_start(level), ItemFactory.TIER_SPAN - 1, offset_in_suit])
 
 ## 基底逐属性比对：maxi(1, round(tier51 原值 × S(level−60)))。
 func _check_raw_bases(item: Dictionary, level: int) -> void:
