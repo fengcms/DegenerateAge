@@ -15,6 +15,9 @@ const PATROL_RADIUS := 90.0    # 巡逻半径（px）
 const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
+## R4-c：破甲幅度。`skills.json` 只写 `debuff.type/duration`，没写幅度；
+## 取 −30% 与 `armor_break.defensePierce: 0.3` 同数，语义一致（Q-5）。
+const ARMOR_BREAK_SCALE := 0.7
 
 ## E1（工程文档 30 §4，创意 第三章/03）：首领场参考半径 18 格 / 脱战 5 秒归位回满。
 const BOSS_ARENA_TILES := 18.0
@@ -93,6 +96,8 @@ var attack_power: float = 0.0
 var move_speed_px: float = 0.0
 var is_ranged: bool = false
 var defense_power := 0.0
+## R4-c：破甲剩余时长（秒）。运行态，不落档；0 表示无减益（默认值 ⇒ 既有战斗不受影响）。
+var armor_break_left := 0.0
 var active_affixes: Array[Dictionary] = []
 var _life_steal_credit := 0.0
 ## M6-0a：当前外观半径（按 kind 决定），绘制与点击命中同源（见 game.gd::enemy_at_screen）。
@@ -489,7 +494,24 @@ func get_attack() -> float:
 	return attack_power
 
 func get_defense() -> float:
+	# R4-c：破甲期间防御打折；到期自然恢复，不写回 defense_power（模板值不可被污染）。
+	if armor_break_left > 0.0:
+		return defense_power * ARMOR_BREAK_SCALE
 	return defense_power
+
+## R4-c：施加 / 续期破甲。重复命中取**较长**剩余时长，而不是叠加或缩短。
+func apply_armor_break(duration: float) -> void:
+	if duration <= 0.0 or is_dead:
+		return
+	armor_break_left = maxf(armor_break_left, duration)
+
+func armor_break_remaining() -> float:
+	return armor_break_left
+
+## 状态计时集中一处：物理帧推进与测试直接调用走同一条实现，避免两套时钟。
+func tick_status(delta: float) -> void:
+	if armor_break_left > 0.0:
+		armor_break_left = maxf(0.0, armor_break_left - delta)
 
 func get_dodge() -> float:
 	return float(template.get("dodge", 0.0))
@@ -532,6 +554,10 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 	if dummy_art != null:
 		dummy_art.frame = 2 if is_dead else 1 if _flash_t > 0.0 else 0
+
+	# R4-c：破甲计时（死亡后不再推进，避免尸体上跑状态机）。
+	if not is_dead:
+		tick_status(delta)
 
 	if is_dead:
 		velocity = Vector2.ZERO

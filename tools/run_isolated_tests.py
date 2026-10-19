@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 45 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 47 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 
 默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
@@ -67,6 +67,12 @@ DEFAULT_TESTS = [
     # M10-10 药水百分比：**L≤60 与装备品质无关**（方案 B 的等级守护）+ 三档比例 + use 真按比例回血
     # + pick_index 用实际量（用固定值必选错档）+ 满值/截断两条 M2.5 回归。
     "PotionRestoreTest",
+    # E6-1 整链：主线 67 节点单链 + 第三～六章 50 个逐节点接取/交付 + campaign_complete
+    # + 无残留 + 支线零扰动。断的是「`prev` 被改坏 / 交付人换图 / 解锁字段写成单数」。
+    "CampaignChainTest",
+    # R4 Lv25/40 接线：穿防 ×0.7 防御 / 3 段独立结算 / 破甲状态机 / 单体语义 / 自动战斗评分
+    # + 可装备列表与 skills.json 全量一致。
+    "SkillCapabilityTest",
     "SmokeTest",
 ]
 

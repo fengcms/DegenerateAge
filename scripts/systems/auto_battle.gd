@@ -63,7 +63,10 @@ const DEFAULT_POTION_THRESHOLD := 0.35
 const DANGER_TOAST_CD := 4.0           # 「危险血量」提示节流（s）
 
 ## 已接线的自动施放范围技；普攻由攻击间隔单独驱动，不进此表。
-const WIRED_SKILLS: Array[String] = ["earth_cleave", "whirlwind"]
+## R4-d：`spirit_storm`（L40，circle × 3 段）在 `_best_area_skill` 里按「命中数 × 总系数」参评。
+const WIRED_SKILLS: Array[String] = ["earth_cleave", "whirlwind", "spirit_storm"]
+## R4-d：单体技能单独一条路径 —— 范围技要求 ≥2 只才放，单体技（破甲重击）正是用来打单个硬目标。
+const WIRED_SINGLE_SKILLS: Array[String] = ["armor_break"]
 
 var _player: PlayerCharacter = null
 var _state: int = State.OFF
@@ -301,6 +304,9 @@ func _tick(delta: float) -> void:
 	var skill := _best_area_skill(_target)
 	if not skill.is_empty() and _player.cast_skill(String(skill.id), _target):
 		return
+	var single := _best_single_skill(_target)
+	if not single.is_empty() and _player.cast_skill(String(single.id), _target):
+		return
 	_player.try_auto_attack(_target)
 
 ## 只在真实可攻击目标已进入近战范围时启动自身增益；巡游、追路和拾取阶段均不空放。
@@ -319,11 +325,13 @@ func _try_battle_focus(target: Node) -> bool:
 	return _player.cast_skill("battle_focus")
 
 ## 按实际命中集合选择范围技；只有至少两只怪在技能形状内才消耗法力。
+## R4-d：评分从「命中数优先」升级为「命中数 × 总系数」——否则 3 段的灵刃风暴
+## （总系数 3.0）会被 1.4 的裂地斩按便宜优先挤掉，多段能力等于没接线。
 func _best_area_skill(target: Node) -> Dictionary:
 	if not _player.is_attack_ready():
 		return {}
 	var chosen := {}
-	var best_count := 1
+	var best_value := 0.0
 	for skill_id in WIRED_SKILLS:
 		var skill = DataLoader.get_entry("skills", skill_id)
 		if not skill is Dictionary:
@@ -332,10 +340,29 @@ func _best_area_skill(target: Node) -> Dictionary:
 		if hit_count < 2 or choose_skill([skill], int(GameState.player.level),
 			int(GameState.player.mp), _player.skill_cooldowns, hit_count).is_empty():
 			continue
-		if hit_count > best_count or (hit_count == best_count and
+		var value := float(hit_count) * skill_value(skill)
+		if value > best_value or (is_equal_approx(value, best_value) and
 			int(skill.get("manaCost", 0)) < int(chosen.get("manaCost", 2147483647))):
 			chosen = skill
-			best_count = hit_count
+			best_value = value
+	return chosen
+
+## R4-d：单体技能只在真有目标时施放；评分口径与范围技共用 `skill_value`。
+func _best_single_skill(target: Node) -> Dictionary:
+	if not _player.is_attack_ready() or not _player.valid_target(target):
+		return {}
+	var chosen := {}
+	for skill_id in WIRED_SINGLE_SKILLS:
+		var skill = DataLoader.get_entry("skills", skill_id)
+		if not skill is Dictionary:
+			continue
+		if _player.skill_targets(skill, target).is_empty():
+			continue
+		if choose_skill([skill], int(GameState.player.level), int(GameState.player.mp),
+			_player.skill_cooldowns, 1).is_empty():
+			continue
+		if chosen.is_empty() or skill_value(skill) > skill_value(chosen):
+			chosen = skill
 	return chosen
 
 # ---- 自动喝药（M2.5；3.14「自动只调用与玩家相同的喝药接口」）----
@@ -665,6 +692,11 @@ func current_target() -> Node:
 ## T11：MP / 冷却 / 等级任一不足即**不施放**该技能。
 ## 返回选中的技能字典；`{}` = 不施放技能（回退普攻）。
 ## 纯静态函数，便于无头回归（不依赖场景与玩家节点）。
+## R4-d：技能价值 = 单段系数 × 段数（`hits` 缺省 1）。
+## 多段技能的实际输出来自段数，只比 `coefficient` 会把灵刃风暴（1.0×3）误判成比裂地斩（1.4）弱。
+static func skill_value(skill: Dictionary) -> float:
+	return float(skill.get("coefficient", 0.0)) * float(maxi(1, int(skill.get("hits", 1))))
+
 static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictionary,
 		target_count: int) -> Dictionary:
 	var aoe := {}
@@ -688,12 +720,13 @@ static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictiona
 			if aoe.is_empty() or int(s.get("manaCost", 0)) < int(aoe.get("manaCost", 0)):
 				aoe = s
 		elif String(s.get("shape", "single")) == "single":
-			if single.is_empty() or float(s.get("coefficient", 0.0)) > float(single.get("coefficient", 0.0)):
+			if single.is_empty() or skill_value(s) > skill_value(single):
 				single = s
 	if not aoe.is_empty():
 		return aoe
 	return single
 
 ## 自动战斗是否愿意施放该技能：必须已接线（M1 仅普攻）。
+## R4-d：单体技能走独立白名单，与范围技同名同权。
 func can_cast(skill_id: String) -> bool:
-	return WIRED_SKILLS.has(skill_id)
+	return WIRED_SKILLS.has(skill_id) or WIRED_SINGLE_SKILLS.has(skill_id)
