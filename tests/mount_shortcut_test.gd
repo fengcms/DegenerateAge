@@ -74,6 +74,27 @@ func _ready() -> void:
 		art.texture == CharacterLook.definition("look_01").animations.idle.texture,
 		"下马立即回到普通角色图集")
 	GameState.set_panel_open("inventory", false)
+	# 高级形象骑乘：51 级六章武器切到 look_06 后骑乘必须用本档登记的双翼图集，
+	# 而不是回退成步行形象（look_02—06 曾因缺骑乘美术在 20 级后回退）。
+	GameState.player.level = 51
+	GameState.inventory.append(ItemFactory.make_any("c6_equip_weapon"))
+	check(bool(GameState.equip_from_inventory(GameState.inventory.size() - 1, "weapon").get("ok", false)),
+		"51 级可装备六章制式长剑")
+	await get_tree().process_frame
+	check(player._look_id == "look_06", "六章武器把世界形象切换到 look_06")
+	# 上一段把姿势停在 walk；先让角色回到待机，才能校验骑乘待机图集。
+	art._process(0.01)
+	check(art.pose == "idle", "静止后回到待机姿势")
+	var stage_wing: Dictionary = CharacterLook.definition("look_06").mounts.mount_corrupted_wing
+	GameState.ride_mount("mount_corrupted_wing")
+	check(art.texture == stage_wing.idle and art.vframes == 4 and art.offset == -stage_wing.pivot,
+		"look_06 骑乘使用本档双翼待机图集与脚底锚点")
+	player.velocity = Vector2(100, 0)
+	art._process(0.11)
+	check(art.texture == stage_wing.walk and art.pose == "walk" and art.facing == 6,
+		"look_06 骑乘移动使用本档八向双翼行走图集")
+	player.velocity = Vector2.ZERO
+	GameState.dismount()
 	game.queue_free()
 	GameState.reset_to_defaults()
 	if failures.is_empty():

@@ -119,6 +119,14 @@ const LOOKS := {
 			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_death_atlas.png"), "frames": 6},
 			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_sit_atlas.png"), "frames": 4},
 		},
+		"mounts": {
+			"mount_corrupted_wing": {
+				"idle": preload("res://assets/sprites/player/stage_looks/look_06/mounts/corrupted_wing_idle_atlas.png"),
+				"walk": preload("res://assets/sprites/player/stage_looks/look_06/mounts/corrupted_wing_walk_atlas.png"),
+				"frame": Vector2i(128, 128),
+				"pivot": Vector2(64, 104),
+			},
+		},
 	},
 }
 

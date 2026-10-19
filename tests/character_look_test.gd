@@ -59,6 +59,14 @@ func _test_resolution() -> void:
 			var animation: Dictionary = stage.animations[state]
 			expect(animation.texture.get_size() == Vector2(512, 80 * int(animation.frames)),
 				"%s/%s 图集尺寸应与八向帧格匹配" % [look_id, state])
+		if stage.has("mounts"):
+			for mount_id in stage.mounts:
+				var mount: Dictionary = stage.mounts[mount_id]
+				expect(mount.frame == Vector2i(128, 128) and mount.pivot == Vector2(64, 104),
+					"%s/%s 坐骑应使用 128×128 帧格与 (64,104) 脚底锚点" % [look_id, mount_id])
+				for state in ["idle", "walk"]:
+					expect(mount[state].get_size() == Vector2(1024, 512),
+						"%s/%s 坐骑 %s 图集尺寸应为 1024×512" % [look_id, mount_id, state])
 	expect(CharacterLook.definition("look_missing").main == default_entry.main,
 		"未制作形象应回退默认图集")
 
