@@ -36,6 +36,17 @@
       ],
       "toMap": "c6_map01",
       "toEntrance": "from_c6_map00"
+    },
+    {
+      "id": "c6_map00_exit03",
+      "label": "往无尽回廊",
+      "cell": [
+        48,
+        50
+      ],
+      "toMap": "c7_arena",
+      "toEntrance": "from_c6_map00",
+      "requiresUnlock": "campaign_complete"
     }
   ],
   "entrances": {
@@ -46,6 +57,10 @@
     "from_c6_map01": [
       92,
       27
+    ],
+    "from_c7_arena": [
+      48,
+      50
     ]
   },
   "carterArrival": [

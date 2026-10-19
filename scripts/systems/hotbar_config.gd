@@ -5,7 +5,10 @@ extends RefCounted
 const SIZE := 12
 const TOWN_SCROLL := "misc_town_scroll"
 const RANDOM_TICKET := "misc_random_ticket"
-const ACTIVE_SKILLS := ["basic_slash", "earth_cleave", "whirlwind", "battle_focus"]
+## R4-d：可装备技能必须与「引擎真的实现了该能力」同步。
+## `armor_break`（L25，穿防 + 破甲）与 `spirit_storm`（L40，3 段）此前只存在于数据里，
+## 引擎不认识 `defensePierce` / `debuff` / `hits`，加 id 会造出「描述写了、行为没有」的假技能。
+const ACTIVE_SKILLS := ["basic_slash", "earth_cleave", "whirlwind", "battle_focus", "armor_break", "spirit_storm"]
 
 static func defaults() -> Array:
 	var slots: Array = [{"kind": "auto_potion", "id": "red"},

@@ -401,4 +401,4 @@ func _open_npc_service() -> void:
 		"warehouse":
 			EventBus.warehouse_panel_requested.emit(name)
 		"carter":
-			EventBus.carter_panel_requested.emit(name)
+			EventBus.carter_panel_requested.emit(name, false)

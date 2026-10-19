@@ -9,6 +9,7 @@ var _title: Label
 var _greeting: Label
 var _continue: Button
 var _upgrade: Button
+var _reforge: Button
 var _greeting_card: Control
 var _service_card: Control
 
@@ -41,6 +42,7 @@ func set_open(open: bool) -> void:
 	if open:
 		_continue.visible = true
 		_upgrade.visible = false
+		_reforge.visible = false
 		_greeting_card.visible = true
 		_service_card.visible = false
 		EventBus.panel_opened.emit(PANEL_ID)
@@ -121,7 +123,8 @@ func _build() -> void:
 	PanelChrome.style_section(service_title)
 	service_content.add_child(service_title)
 	var service_description := Label.new()
-	service_description.text = "◆  装备升星\n消耗材料与金币，查看本次成功率"
+	service_description.text = "%s\n\n%s" % [Localization.tr_key("ui.blacksmith_panel.p005"),
+		Localization.tr_key("ui.blacksmith_panel.p006")]
 	service_description.add_theme_color_override("font_color", PanelChrome.TEXT)
 	service_content.add_child(service_description)
 	var actions := HBoxContainer.new()
@@ -145,10 +148,16 @@ func _build() -> void:
 	_upgrade.pressed.connect(_open_upgrade)
 	actions.add_child(_upgrade)
 	PanelChrome.style_action(_upgrade, true)
+	_reforge = Button.new()
+	_reforge.text = Localization.tr_key("ui.reforge_panel.p002")
+	_reforge.pressed.connect(_open_reforge)
+	actions.add_child(_reforge)
+	PanelChrome.style_action(_reforge, true)
 
 func _show_menu() -> void:
 	_continue.visible = false
 	_upgrade.visible = true
+	_reforge.visible = true
 	_greeting_card.visible = false
 	_service_card.visible = true
 	_upgrade.grab_focus()
@@ -156,3 +165,8 @@ func _show_menu() -> void:
 func _open_upgrade() -> void:
 	set_open(false)
 	EventBus.upgrade_panel_requested.emit()
+
+## M10-8：铁匠服务菜单第二项。与升星同构 —— 先关铁匠再开重铸面板。
+func _open_reforge() -> void:
+	set_open(false)
+	EventBus.reforge_panel_requested.emit()

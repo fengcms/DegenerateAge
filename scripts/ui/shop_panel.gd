@@ -378,7 +378,7 @@ func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 func _refresh() -> void:
 	if not visible:
 		return
-	_title.text = PanelChrome.title_text(Localization.tr_key("ui.shop_panel.p010") % Shop.display_name(_shop_id))
+	_title.text = PanelChrome.title_text(Localization.tr_key("ui.shop_panel.p010") % _shop_title_name())
 	_refresh_gold()
 	_rebuild_buy()
 	_refresh_tray()
@@ -387,11 +387,26 @@ func _refresh_gold() -> void:
 	if _gold_label != null:
 		_gold_label.text = Localization.tr_key("ui.shop_panel.p011") % GameState.gold
 
+## 标题里的店名。随身商队是合成店铺（`shop_id` 不在 `shops.json` 里），
+## 名称走本地化 key；普通货郎继续读数据里的 `name`。`Shop` 因此保持零本地化依赖。
+func _shop_title_name() -> String:
+	if Shop.is_portable(_shop_id):
+		return Localization.tr_key("ui.panel.portable_shop")
+	return Shop.display_name(_shop_id)
+
 func _rebuild_buy() -> void:
 	for c in _buy_list.get_children():
 		_buy_list.remove_child(c)
 		c.queue_free()
 	var items := Shop.buy_items(_shop_id)
+	# 随身商队按模板价上浮 20%（D-14）：不写这一行，玩家只会看到「比营地贵」而无从判断。
+	if Shop.is_portable(_shop_id):
+		var hint := Label.new()
+		hint.text = Localization.tr_key("ui.shop_panel.p031")
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.add_theme_font_size_override("font_size", 12)
+		hint.add_theme_color_override("font_color", COL_TEXT_DIM)
+		_buy_list.add_child(hint)
 	if items.is_empty():
 		var l := Label.new()
 		l.text = Localization.tr_key("ui.shop_panel.p012")

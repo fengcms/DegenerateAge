@@ -517,6 +517,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	if targets.is_empty() or not GameState.spend_mp(mana_cost):
 		return false
 	skill_cooldowns[skill_id] = GameState.cooldown_after_cdr(float(skill.get("cooldown", 0.0)))
+	# R4-b：多段技能只在**施放时**设一次攻击间隔，段与段之间不重复等待。
 	_attack_cd = effective_attack_interval()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
@@ -525,13 +526,24 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
 	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if String(skill.get("shape", "")) == "cone" else Vector2.RIGHT
 	add_child(range_fx)
+	# R4-a：`defensePierce` 是**本击**减防，不进状态；`debuff` 才是持续状态（R4-c）。
+	var pierce := clampf(float(skill.get("defensePierce", 0.0)), 0.0, 1.0)
+	var hits := maxi(1, int(skill.get("hits", 1)))
+	var power := effective_attack_power()
 	for enemy in targets:
-		var result := Combat.resolve(effective_attack_power(), _target_defense(enemy),
-			float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
-			float(GameState.player.get("criticalMultiplier", 1.5)), _target_dodge(enemy))
-		Fx.damage_number(get_tree(), enemy, result)
-		EventBus.damage_dealt.emit(enemy, int(result.get("damage", 0)), bool(result.get("critical", false)))
-		enemy.take_hit(result, self)
+		for _hit in range(hits):
+			# 前置段已打死目标：后续段不再结算，避免死怪重复受击、飘字与事件计数虚高。
+			if _target_is_dead(enemy):
+				break
+			var result := Combat.resolve(power, _target_defense(enemy) * (1.0 - pierce),
+				float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
+				float(GameState.player.get("criticalMultiplier", 1.5)), _target_dodge(enemy))
+			Fx.damage_number(get_tree(), enemy, result)
+			EventBus.damage_dealt.emit(enemy, int(result.get("damage", 0)), bool(result.get("critical", false)))
+			enemy.take_hit(result, self)
+			# 闪避不附加减益：描述里的「附加破甲」以命中为前提，miss 时不该白赚。
+			if not bool(result.get("miss", false)):
+				_apply_skill_debuff(enemy, skill)
 	return true
 
 ## 按真实位置求命中集合；圆形以自身为中心，扇形面向锁定目标。
@@ -564,6 +576,17 @@ func skill_targets(skill: Dictionary, target: Node = null) -> Array[Node2D]:
 		result.push_front(target)
 	if shape == "cone" and result.size() > int(skill.get("maxTargets", 3)):
 		result.resize(int(skill.get("maxTargets", 3)))
+	# 单体技能（`shape=single`）在实现上曾是「半径内全员」—— 那与技能描述的单体语义相反，
+	# 会让 25 级的「单体穿透重击」变成隐形势 AoE。这里收敛为：有显式目标取目标，否则取最近一只。
+	if shape == "single":
+		var picked: Node2D = null
+		if target is Node2D and result.has(target):
+			picked = target as Node2D
+		elif not result.is_empty():
+			picked = result[0]
+		result.clear()
+		if picked != null:
+			result.append(picked)
 	return result
 
 ## 尝试普攻：优先锁定目标；无锁定时使用范围内最近敌人。
@@ -638,6 +661,24 @@ func find_nearest_enemy_in_range() -> Node:
 
 func _target_defense(t: Node) -> float:
 	return t.get_defense() if t.has_method("get_defense") else 0.0
+
+## R4-c：把技能配置里的 `debuff` 落到目标身上。
+## 能力尚未实现时**不静默跳过**：写入不了就在目标上留下可观测的缺失（测试直接断言状态），
+## 避免「描述写了、行为没有」的假技能。
+func _apply_skill_debuff(t: Node, skill: Dictionary) -> void:
+	var debuff: Variant = skill.get("debuff")
+	if not debuff is Dictionary:
+		return
+	var row: Dictionary = debuff
+	if String(row.get("type", "")) != "armorBreak":
+		return
+	if t.has_method("apply_armor_break"):
+		t.apply_armor_break(float(row.get("duration", 0.0)))
+
+## 多段结算的提前收手判据：目标已死就不再吃后续段。
+func _target_is_dead(t: Node) -> bool:
+	var dead: Variant = t.get("is_dead")
+	return dead is bool and bool(dead)
 
 func _target_dodge(t: Node) -> float:
 	return t.get_dodge() if t.has_method("get_dodge") else 0.0

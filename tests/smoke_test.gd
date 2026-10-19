@@ -1853,6 +1853,19 @@ func _test_low_gear_filter_sale() -> void:
 	old.settings.erase("lowGearMaxQuality")
 	_expect(SaveManager._is_valid_save(old) and int(SaveManager._migrate(old).settings.lowGearLevelLimit) == 5,
 		"旧档缺筛选设置时应补默认值")
+	# 上限口径三处必须一致：界面 SpinBox / `set_low_gear_filter` / 存档校验 `NUMERIC_RANGES`。
+	# 只改前两处而漏第三处 ⇒ 筛选设到 >100 后**存档被判损坏**（`settings.lowGearLevelLimit 数值越界`）。
+	var bounds: Array = SettingsRuntime.NUMERIC_RANGES["lowGearLevelLimit"] as Array
+	_expect(float(bounds[1]) == float(GameState.LOW_GEAR_LEVEL_MAX),
+		"存档校验区间上限(%s)应与 LOW_GEAR_LEVEL_MAX(%s)同口径，否则高等级筛选会写坏存档"
+			% [str(bounds[1]), str(GameState.LOW_GEAR_LEVEL_MAX)])
+	_expect(GameState.set_low_gear_filter(GameState.LOW_GEAR_LEVEL_MAX, "common"),
+		"筛选等级上限应可达 LOW_GEAR_LEVEL_MAX（界面能设就必须能存）")
+	var top_saved := SaveManager._collect()
+	_expect(SaveManager._is_valid_save(top_saved),
+		"筛选设为上限值后存档必须仍通过校验")
+	_expect(not GameState.set_low_gear_filter(GameState.LOW_GEAR_LEVEL_MAX + 1, "common"),
+		"超出上限必须被拒")
 	GameState.reset_to_defaults()
 
 ## 交易界面（双面板 + 拖拽出售，M1-8 改造）：面板级不变量与 6.4 托盘流程。
@@ -4331,13 +4344,19 @@ func _test_boss_health_bar() -> void:
 		return
 	_expect(int(bar.z_index) == 0, "Boss 顶部血条 z_index 应为 0（不压 Toast/DragLayer）")
 	_expect(not bar.visible, "Boss 顶部血条初始应隐藏")
-	EventBus.boss_hp_changed.emit("腐化巨兽", 1800, 3000, 1)
+	# M10-3b（P-7）：信号首参是 Boss 实例标识，血条按 id 分条显示。
+	var bar_id := 7001
+	EventBus.boss_hp_changed.emit(bar_id, "腐化巨兽", 1800, 3000, 1)
 	await get_tree().process_frame
-	_expect(bar.visible and int(bar._hp) == 1800 and int(bar._max_hp) == 3000 and int(bar._phase) == 1,
+	var state: Dictionary = bar.bar_state(bar_id)
+	_expect(bar.visible and bar.bar_count() == 1
+		and int(state.get("hp", -1)) == 1800 and int(state.get("max_hp", -1)) == 3000
+		and int(state.get("phase", -1)) == 1,
 		"广播后血条应显示并记录血量/阶段")
-	EventBus.boss_hp_changed.emit("腐化巨兽", 0, 3000, 2)
+	EventBus.boss_hp_changed.emit(bar_id, "腐化巨兽", 0, 3000, 2)
 	await get_tree().process_frame
-	_expect(bool(bar._dying) and int(bar._hp) == 0, "hp<=0 应进入死亡淡出")
+	_expect(bool(bar._dying) and int(bar.bar_state(bar_id).get("hp", -1)) == 0,
+		"hp<=0 应进入死亡淡出")
 	await get_tree().create_timer(1.2).timeout
 	_expect(not bar.visible, "淡出结束后血条应隐藏")
 	main.queue_free()

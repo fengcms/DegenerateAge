@@ -135,9 +135,27 @@ static func _accept_block_reason(quest_id: String, npc_id: String = "") -> Strin
 			return Localization.tr_key("msg.quest.p005")
 		_:
 			return Localization.tr_key("msg.quest.p002")
+	# M10-4：等级门槛先于「任务已满」报 —— 前者是数据契约、后者是临时状态，
+	# 先说清楚为什么这条任务现在接不了。
+	var gate := level_gate_reason(tpl)
+	if not gate.is_empty():
+		return gate
 	if active_count() >= MAX_ACTIVE:
 		return Localization.tr_key("msg.quest.p006") % MAX_ACTIVE
 	return ""
+
+## M10-4：任务等级门槛（`requiresLevel`，可选字段）。
+## 抽成公开纯函数：接取拦截与 UI / 测试共用同一判据，避免两处各写一遍比较。
+## 返回可读原因，空串表示通过。`0` / 缺失 = 无门槛。
+## `level` 传 -1 时取当前玩家等级（正常路径）；显式传入仅供测试，避免测门槛还要改全局状态。
+static func level_gate_reason(tpl: Dictionary, level: int = -1) -> String:
+	var need_level := int(tpl.get("requiresLevel", 0))
+	if need_level <= 0:
+		return ""
+	var current := int(GameState.player.level) if level < 0 else level
+	if current >= need_level:
+		return ""
+	return Localization.tr_key("msg.quest.p019") % need_level
 
 ## 查询当前地图上确实可以接取任务的 NPC ID；事件触发时扫描一次，不用于逐帧调用。
 static func available_givers_on_map(map_id: String) -> Dictionary:
@@ -354,6 +372,10 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		parts.append(Localization.tr_key("msg.quest.p014") % xp)
 	if not item.is_empty():
 		parts.append(ItemUtil.display_name(item))
+	# M10-7：`reward.items` 此前**完全不进提示**（现库唯一用例 C2S01 的 2 瓶中药玩家看不到）。
+	# 顺序与背包入库顺序一致；不合并同名堆叠，逐条列出即可（本作最多 3 条）。
+	for bonus in bonus_items:
+		parts.append(ItemUtil.display_name(bonus))
 	if not unlock.is_empty():
 		parts.append(Localization.tr_key("msg.quest.p015") % unlock)
 	EventBus.toast_requested.emit(Localization.tr_key("msg.quest.p016") % [

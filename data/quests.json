@@ -2608,5 +2608,50 @@
     "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc08}（{current}/{count}）。",
     "turnInText": "到 {npc:c6_npc08} 交付“把第一章的灯写进来”；不自动交付。",
     "talkOnAccept": true
+  },
+  {
+    "id": "C6S07",
+    "name": "轻装远行",
+    "type": "side",
+    "giver": "c6_npc01",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 0,
+      "xp": 0,
+      "items": [
+        {
+          "itemId": "tool_boss_token",
+          "count": 1
+        },
+        {
+          "itemId": "tool_portable_shop",
+          "count": 1
+        },
+        {
+          "itemId": "tool_portable_carter",
+          "count": 1
+        }
+      ],
+      "unlocks": [
+        "tool_boss_token",
+        "tool_portable_shop",
+        "tool_portable_carter"
+      ]
+    },
+    "requiresLevel": 60,
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C6Q12",
+    "abandonable": false,
+    "desc": "路已经走通了，把追猎、采买、赶路三件事收进随身的行囊再上路。",
+    "trackerText": "到 {map:c6_map00} 交谈 {npc:c6_npc01}（{current}/{count}）。",
+    "turnInText": "到 {npc:c6_npc01} 交付“轻装远行”；不自动交付。",
+    "talkOnAccept": true
   }
 ]

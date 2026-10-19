@@ -9,7 +9,7 @@ extends Node
 
 const C6_MAIN := ["C6Q01", "C6Q02", "C6Q03", "C6Q04", "C6Q05", "C6Q06",
 	"C6Q07", "C6Q08", "C6Q09", "C6Q10", "C6Q11", "C6Q12"]
-const C6_SIDE := ["C6S01", "C6S02", "C6S03", "C6S04", "C6S05", "C6S06"]
+const C6_SIDE := ["C6S01", "C6S02", "C6S03", "C6S04", "C6S05", "C6S06", "C6S07"]
 ## 门禁与产出任务的对应（34 §1 / §4）；镇脉前哨由第五章收尾任务产出。
 const GATES := {
 	"c6_map00": ["chapter6", "C5Q14", "c5_npc08"],
@@ -48,7 +48,7 @@ func _c6_quests() -> Array:
 	return out
 
 func _test_cross_refs() -> void:
-	check(_c6_quests().size() == 18, "本章登记 12 主线 + 6 支线")
+	check(_c6_quests().size() == 19, "本章登记 12 主线 + 7 支线（C6S07 随 M10-7 发放随身三件套）")
 	for tpl in _c6_quests():
 		var qid := String(tpl.get("id", ""))
 		var giver := String(tpl.get("giver", ""))

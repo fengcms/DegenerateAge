@@ -33,6 +33,10 @@ var _map_id: String = ""
 var _caps: Dictionary = {}
 ## 本图装配期的「同种怪物序号」计数（跨 spawnPoints / bossSpawn 两次调用累计）。
 var _ordinal: Dictionary = {}
+## M10-3（工程文档 43 §5.2）：本图怪物的**等级下限**。> 0 表示「等级跟随玩家」——
+## 装配期不再按 `tierRange` 夹紧，改在 `_spawn` 里每次生成时现算（P-5：600s 复活
+## 出来的不能永远是进图那天的等级）。存量图恒 0，整段是空操作。
+var _level_min := 0
 
 func setup(ground: IsoGround, player: Node2D) -> void:
 	_ground = ground
@@ -52,19 +56,27 @@ func spawn_from_map(map_id: String) -> void:
 	if pts is Array:
 		spawn_from_specs(pts, map_id)
 
-## 从怪物点规格批量生成。传入 map_id 时，怪物等级按该地图 tierRange 约束。
+## 从怪物点规格批量生成。传入 map_id 时，怪物等级按该地图 tierRange 约束；
+## 配了 `levelFromPlayer.enabled` 的图（M10-3 循环图）不夹紧，改用 `_level_min`。
 ## 无 map_id 的显式测试规格沿用原有等级，状态归入 LOCAL_MAP_ID 前缀。
 func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 	if not map_id.is_empty():
 		_map_id = map_id
 		_load_caps()
 	var tier_range: Array = []
+	var level_min := 0
 	if not _map_id.is_empty():
 		var map_data: Variant = DataLoader.get_entry("maps", _map_id)
 		if map_data is Dictionary:
-			var configured: Variant = (map_data as Dictionary).get("tierRange", [])
-			if configured is Array:
-				tier_range = configured
+			# M10-3：等级跟随玩家的图**不配 tierRange**（启动校验强制），等级在 _spawn 里现算。
+			var from_player: Variant = (map_data as Dictionary).get("levelFromPlayer", null)
+			if from_player is Dictionary and bool((from_player as Dictionary).get("enabled", false)):
+				level_min = maxi(1, int((from_player as Dictionary).get("minLevel", 1)))
+			else:
+				var configured: Variant = (map_data as Dictionary).get("tierRange", [])
+				if configured is Array:
+					tier_range = configured
+	_level_min = level_min
 	var active := _active_counts()
 	for s in specs:
 		if not (s is Dictionary):
@@ -79,6 +91,10 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 					spawn_level = int((template as Dictionary).get("level", 1))
 			spawn_level = clampi(spawn_level, int(tier_range[0]), int(tier_range[1]))
 		var count := int(spec.get("count", 1))
+		# M10-3：`scaleStats` 的图（循环图）用 endgame.json 的归一化基底替换模板数值；
+		# 未登记 norm 时留空字典，Monster 侧回退模板（不静默变成 1 血的纸 Boss）。
+		var scale_stats := bool(spec.get("scaleStats", false))
+		var norm: Dictionary = Endgame.norm(monster_id) if scale_stats else {}
 		for _i in range(count):
 			var ordinal := int(_ordinal.get(monster_id, 0))
 			_ordinal[monster_id] = ordinal + 1
@@ -91,6 +107,9 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				"kind": String(spec.get("kind", "normal")),
 				"requires_unlock": String(spec.get("requiresUnlock", "")),
 				"drop_table": String(spec.get("dropTableId", "")),
+				"stat_norm": norm,
+				"scale_stats": scale_stats,
+				"xp_from_curve": bool(spec.get("xpFromCurve", false)),
 				"entry": null,
 				"tombstone": bool(spec.get("tombstone", false)),
 				"marker": null,
@@ -184,11 +203,21 @@ func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	if cap != UNLIMITED_CAP and int(counts.get(kind, 0)) >= cap:
 		return false
 
+	# M10-3（P-5）：等级跟随玩家的图必须在**每次生成**时现算并回写。
+	# 600s 复活、跨图回来补建都走这里 ⇒ 不会固化成「进图那天的等级」。
+	# 顺序放在 cap 之后、实例化之前：不改变任何既有分支的判定结果（`_level_min` 恒 0 时是空操作）。
+	if _level_min > 0:
+		point["level"] = maxi(_level_min, int(GameState.player.level))
+
 	var m: Monster = MONSTER_SCENE.instantiate()
 	m.monster_id = String(point.get("monster_id", "wolf_corrupted"))
 	m.drop_table_override = String(point.get("drop_table", ""))
 	m.spawn_level = int(point.get("level", 0))
 	m.ai_enabled = bool(point.get("ai", true))
+	var norm: Variant = point.get("stat_norm", {})
+	m.stat_norm = norm if norm is Dictionary else {}
+	m.scale_stats = bool(point.get("scale_stats", false))
+	m.xp_from_curve = bool(point.get("xp_from_curve", false))
 	var pos := _spawn_position(point)
 	if is_instance_valid(point.marker):
 		point.marker.queue_free()

@@ -236,7 +236,7 @@ func _build() -> void:
 	_filter_row.add_child(level_label)
 	_filter_level = SpinBox.new()
 	_filter_level.min_value = 1
-	_filter_level.max_value = 100
+	_filter_level.max_value = GameState.LOW_GEAR_LEVEL_MAX
 	_filter_level.step = 1
 	_filter_level.custom_minimum_size.x = 78
 	_filter_level.value_changed.connect(_on_filter_level_changed)
@@ -417,8 +417,12 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 		if tpl is Dictionary:
 			var t: Dictionary = tpl
 			var color := String(t.get("kind", Consumable.KIND_RED))
+			# M10-10：显示**实际**恢复量而不是模板固定值 —— 玩家看到的数必须和喝下去的一致
 			out.append(Localization.tr_key("ui.inventory_panel.p028") % [
-				int(t.get("restoreAmount", 0)), Consumable.stat_label(color)])
+				Consumable.preview_restore(item_id), Consumable.stat_label(color)])
+			var pct := float(t.get("restorePercent", 0.0))
+			if pct > 0.0:
+				out.append(Localization.tr_key("ui.inventory_panel.p041") % int(round(pct * 100.0)))
 			out.append(Localization.tr_key("ui.inventory_panel.p029") % int(t.get("cooldown", 0)))
 			var key := "1" if color == Consumable.KIND_RED else "2"
 			var left := Consumable.cd_of(item_id)
@@ -456,6 +460,10 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 			out.append(Localization.tr_key("ui.inventory_panel.p039"))
 		"quest":
 			out.append(Localization.tr_key("ui.inventory_panel.p033"))
+		"panel":
+			# M10-4（P-6）：面板类道具必须说明「双击会用」，否则文案和实际行为对不上。
+			out.append(Localization.tr_key("ui.inventory_panel.p040") % PanelRouter.title(
+				String((misc_tpl as Dictionary).get("panelId", ""))))
 		_:
 			out.append(Localization.tr_key("ui.inventory_panel.p036"))
 	return out

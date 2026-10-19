@@ -26,6 +26,7 @@ const TABLES := {
 	"warehouse": "warehouse.json",
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",
+	"endgame": "endgame.json",
 }
 
 const MAP_INDEX := "res://data/maps/index.json"
@@ -39,6 +40,16 @@ const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "monst
 const KEY_FIELDS := {
 	"shops": "npcId",
 }
+
+## M10-4：任务等级门槛 `requiresLevel` 的上界。
+## ⚠ 须与 `GameState.PLAYER_LEVEL_CAP` 保持一致（此处写字面量是刻意的：
+## `data_loader` 目前完全不引用 `GameState`，加引用会引入 autoload 初始化顺序耦合）。
+const MAX_QUEST_REQUIRES_LEVEL := 9999
+
+## M10-6：随身商队使用**合成店铺 id**（`Shop.PORTABLE_SHOP_ID`），它不写进 `shops.json`。
+## 这里写字面量而非引用 `Shop`，同样是为了不给 data_loader 引入反向依赖；
+## 真实店铺一旦占用这个 id，货单会被聚合力覆盖 → 启动期直接报错，不留给运行时猜。
+const RESERVED_SHOP_IDS := ["portable_shop"]
 
 ## 历史遗留图（第一、二章）：入口落点与反向出口存在既有错位，未按第三至六章的
 ## 「同格」口径对齐（属审阅明确范围外的遗留）。仅用于豁免 `_validate_walk_exits`
@@ -325,22 +336,50 @@ func validate_all() -> Array[String]:
 			if typeof(mp) != TYPE_DICTIONARY:
 				continue
 			var map_id := String(mp.get("id", "?"))
-			var tier: Variant = mp.get("tierRange", [])
-			if not (tier is Array) or tier.size() != 2 or not _is_whole_level(tier[0]) or not _is_whole_level(tier[1]) or int(tier[0]) < 1 or int(tier[1]) < int(tier[0]):
-				report.append("[maps] %s 的 tierRange 应为有效的 [最低等级, 最高等级]" % map_id)
-			else:
-				var tier_min := int(tier[0])
-				var tier_max := int(tier[1])
+			# M10-3（工程文档 43 §3.1）：`levelFromPlayer.enabled` 的图（循环图）等级按玩家现算，
+			# **必须缺席 tierRange**；存量图仍必填。两个方向都报错 —— 写成「都可选」会让
+			# 既写 tierRange 又写 levelFromPlayer 的坏表静默走夹紧分支（症状就是「100 级进图
+			# 还是 60 级 Boss」）。
+			var from_player: Variant = mp.get("levelFromPlayer", null)
+			var dynamic_level := from_player is Dictionary and bool((from_player as Dictionary).get("enabled", false))
+			var level_min := 0
+			if from_player != null and not dynamic_level:
+				report.append("[maps] %s 的 levelFromPlayer 必须是含 enabled:true 的字典" % map_id)
+			if dynamic_level:
+				var raw_min: Variant = (from_player as Dictionary).get("minLevel", 1)
+				if not _is_whole_level(raw_min) or int(raw_min) < 1:
+					report.append("[maps] %s 的 levelFromPlayer.minLevel 应为正整数" % map_id)
+				else:
+					level_min = int(raw_min)
+				if mp.has("tierRange"):
+					report.append("[maps] %s 配了 levelFromPlayer，不能再写 tierRange（等级由玩家等级现算）" % map_id)
+			var tier_min := 0
+			var tier_max := 0
+			var tier_ok := dynamic_level
+			if not dynamic_level:
+				var tier: Variant = mp.get("tierRange", [])
+				if not (tier is Array) or tier.size() != 2 or not _is_whole_level(tier[0]) or not _is_whole_level(tier[1]) or int(tier[0]) < 1 or int(tier[1]) < int(tier[0]):
+					report.append("[maps] %s 的 tierRange 应为有效的 [最低等级, 最高等级]" % map_id)
+				else:
+					tier_ok = true
+					tier_min = int(tier[0])
+					tier_max = int(tier[1])
+			if tier_ok:
 				var spawn_specs: Array = mp.get("spawnPoints", []).duplicate()
 				if mp.get("bossSpawn", null) is Dictionary:
 					spawn_specs.append(mp.bossSpawn)
+				if mp.get("bossSpawns", null) is Array:
+					spawn_specs.append_array(mp.bossSpawns)
 				for spec in spawn_specs:
 					if spec is Dictionary and spec.has("level"):
 						if not _is_whole_level(spec.level):
 							report.append("[maps] %s 的 %s 刷新等级应为整数" % [map_id, spec.get("monsterId", "?")])
 						else:
 							var spec_level := int(spec.level)
-							if spec_level < 0 or (spec_level > 0 and (spec_level < tier_min or spec_level > tier_max)):
+							if dynamic_level:
+								if spec_level > 0 and spec_level < level_min:
+									report.append("[maps] %s 的 %s 刷新等级 %d 低于 levelFromPlayer.minLevel %d" % [map_id, spec.get("monsterId", "?"), spec_level, level_min])
+							elif spec_level < 0 or (spec_level > 0 and (spec_level < tier_min or spec_level > tier_max)):
 								report.append("[maps] %s 的 %s 刷新等级 %d 超出 tierRange %d～%d" % [map_id, spec.get("monsterId", "?"), spec_level, tier_min, tier_max])
 			for sp in mp.get("spawnPoints", []):
 				var mid: String = String(sp.get("monsterId", ""))
@@ -351,6 +390,51 @@ func validate_all() -> Array[String]:
 				var bmid: String = String(bs.get("monsterId", ""))
 				if not bmid.is_empty() and not monster_ids.has(bmid):
 					report.append("[maps] %s 的 bossSpawn 引用未定义怪物 '%s'" % [mp.get("id", "?"), bmid])
+			# M10-3：多 Boss 点（循环图）。缺省 null 合法；一旦出现就必须逐条完整，
+			# 否则「点没生成」与「点生成了但没掉落」都会沉到运行期才暴露。
+			var multi: Variant = mp.get("bossSpawns", null)
+			if multi != null:
+				if not multi is Array:
+					report.append("[maps] %s 的 bossSpawns 必须是数组" % map_id)
+				else:
+					for spec in (multi as Array):
+						if not spec is Dictionary:
+							report.append("[maps] %s 的 bossSpawns 条目必须是字典" % map_id)
+							continue
+						var mmid: String = String(spec.get("monsterId", ""))
+						if mmid.is_empty() or not monster_ids.has(mmid):
+							report.append("[maps] %s 的 bossSpawns 引用未定义怪物 '%s'" % [map_id, mmid])
+						else:
+							var m_tpl: Variant = get_entry("monsters", mmid)
+							if m_tpl is Dictionary and String((m_tpl as Dictionary).get("kind", "")) != "boss":
+								report.append("[maps] %s 的 bossSpawns 怪物 '%s' 的 kind 不是 boss" % [map_id, mmid])
+						if not _valid_walk_cell(spec.get("cell", null), mp):
+							report.append("[maps] %s 的 bossSpawns 怪物 '%s' 缺少合法的 cell" % [map_id, mmid])
+						var mdt: String = String(spec.get("dropTableId", ""))
+						if mdt.is_empty() or not dt_ids.has(mdt):
+							report.append("[maps] %s 的 bossSpawns 怪物 '%s' 的 dropTableId '%s' 未在 dropTables 中定义" % [map_id, mmid, mdt])
+			# M10-5：Boss 与普通点的 monsterId 不得重叠。
+			# 墓碑与追猎令牌共用 `spawn_key(map, monster_id, ordinal)`，而 ordinal 由 Spawner
+			# 跨 `spawnPoints` → boss 两次装配**连续累加**。一旦重叠，令牌按「boss 列表内序号」
+			# 算出的 ordinal 会错位 ⇒ 面板显示「存活」而实际在冷却（或反之）。
+			# 现在全库零重叠，这条校验把它从「巧合」变成「契约」。
+			var spawn_ids := {}
+			for sp in mp.get("spawnPoints", []):
+				if sp is Dictionary:
+					var sp_mid := String((sp as Dictionary).get("monsterId", ""))
+					if not sp_mid.is_empty() and int((sp as Dictionary).get("count", 1)) > 0:
+						spawn_ids[sp_mid] = true
+			var boss_specs_for_overlap: Array = []
+			if mp.get("bossSpawn", null) is Dictionary:
+				boss_specs_for_overlap.append(mp.bossSpawn)
+			if mp.get("bossSpawns", null) is Array:
+				boss_specs_for_overlap.append_array(mp.bossSpawns)
+			for spec in boss_specs_for_overlap:
+				if not spec is Dictionary:
+					continue
+				var omid := String((spec as Dictionary).get("monsterId", ""))
+				if spawn_ids.has(omid):
+					report.append("[maps] %s 的 Boss '%s' 同时出现在 spawnPoints，会让刷新状态序号错位" % [map_id, omid])
 
 	# 3b) 引用合法性：车夫拓扑与 NPC（M3-1 / M3-2 —— 车夫费用与 NPC 数据化后新增）
 	var map_ids := {}
@@ -363,7 +447,10 @@ func validate_all() -> Array[String]:
 	if shops is Array:
 		for s in shops:
 			if typeof(s) == TYPE_DICTIONARY:
-				shop_ids[s.get("npcId", "")] = true
+				var shop_npc_id := String(s.get("npcId", ""))
+				if RESERVED_SHOP_IDS.has(shop_npc_id):
+					report.append("[shops] npcId '%s' 是随身商队的保留 id，真实店铺不得占用" % shop_npc_id)
+				shop_ids[shop_npc_id] = true
 	if maps is Array:
 		for mp in maps:
 			if typeof(mp) != TYPE_DICTIONARY:
@@ -423,6 +510,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_misc_items())
 	report.append_array(_validate_sellable_prices())
 	report.append_array(_validate_upgrade())
+	report.append_array(_validate_endgame())
 
 	return report
 
@@ -610,23 +698,39 @@ func _validate_drop_tables() -> Array[String]:
 						if not boss is Dictionary or String(boss.get("kind", "")) != "boss" or String(boss.get("dropTableId", "")) != did:
 							report.append("[mounts] %s 的 dropBossId 必须是使用 %s 的 Boss" % [mount_id, did])
 				"equip":
-					var level_range: Variant = en.get("levelRange", null)
-					if not level_range is Array or level_range.size() != 2 \
-							or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \
-							or int(level_range[0]) < 1 or int(level_range[1]) < int(level_range[0]):
-						report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
-					if en.has("requiredLevel") or not en.has("tierStart"):
-						report.append("[dropTables] %s equip 必须使用 tierStart，不能用 requiredLevel" % did)
-					if en.has("tierStart"):
-						var required: Variant = en.get("tierStart")
-						var cfg: Variant = tables.get("equipmentRules")
-						var legal := false
-						if cfg is Dictionary and _is_whole_level(required):
-							for configured in cfg.get("tiers", []):
-								if int(configured) == int(required):
-									legal = true
-						if not legal:
-							report.append("[dropTables] %s 的 tierStart 未在装备套起点表中" % did)
+					# M10-2：两套互斥口径——静态档靠 levelRange + tierStart，
+					# 动态档（levelFromBoss）靠击杀目标的实际等级，所属套由 ItemFactory 锚定 51。
+					# ⚠ 必须两个方向都报错：写成「两个都可选」会让带齐两者的坏表静默走错分支。
+					var dynamic_flag: Variant = en.get("levelFromBoss", false)
+					if not (dynamic_flag is bool):
+						report.append("[dropTables] %s 的 levelFromBoss 必须为布尔值" % did)
+						dynamic_flag = false
+					var dynamic := bool(dynamic_flag)
+					if en.has("requiredLevel"):
+						report.append("[dropTables] %s equip 不能用 requiredLevel" % did)
+					if dynamic:
+						if en.has("tierStart"):
+							report.append("[dropTables] %s equip 的 levelFromBoss 与 tierStart 互斥" % did)
+						if en.has("levelRange"):
+							report.append("[dropTables] %s equip 的 levelFromBoss 条目不应带 levelRange" % did)
+					else:
+						var level_range: Variant = en.get("levelRange", null)
+						if not level_range is Array or level_range.size() != 2 \
+								or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \
+								or int(level_range[0]) < 1 or int(level_range[1]) < int(level_range[0]):
+							report.append("[dropTables] %s equip 条目缺少 levelRange" % did)
+						if not en.has("tierStart"):
+							report.append("[dropTables] %s equip 必须使用 tierStart，不能用 requiredLevel" % did)
+						if en.has("tierStart"):
+							var required: Variant = en.get("tierStart")
+							var cfg: Variant = tables.get("equipmentRules")
+							var legal := false
+							if cfg is Dictionary and _is_whole_level(required):
+								for configured in cfg.get("tiers", []):
+									if int(configured) == int(required):
+										legal = true
+							if not legal:
+								report.append("[dropTables] %s 的 tierStart 未在装备套起点表中" % did)
 					# M6-0b：countRange 分组件数（[lo,hi] 整数，≥1，lo≤hi）。
 					if en.has("countRange"):
 						var cr = en.get("countRange")
@@ -897,6 +1001,9 @@ func _validate_gate_flags(maps: Variant) -> Array[String]:
 			spawn_specs.assign(raw_spawns)
 		if entry.get("bossSpawn", null) is Dictionary:
 			spawn_specs.append(entry.bossSpawn)
+		# M10-3：多 Boss 点的门禁键同样必须有人产出，否则玩家永远进不去而不报错。
+		if entry.get("bossSpawns", null) is Array:
+			spawn_specs.append_array(entry.bossSpawns)
 		for spec in spawn_specs:
 			if spec is Dictionary:
 				report.append_array(_check_gate_flag("[maps] %s 的刷新区 %s requiresUnlock" % [map_id, spec.get("monsterId", "?")],
@@ -1087,6 +1194,12 @@ func _validate_quests() -> Array[String]:
 			report.append("[quests] %s 的 prev '%s' 未定义" % [qid, prev])
 		if not entry.get("abandonable", false) is bool:
 			report.append("[quests] %s 的 abandonable 必须为布尔" % qid)
+		# M10-4：等级门槛（可选字段）。0/缺失 = 无门槛；写在数据里就必须是合法等级。
+		if entry.has("requiresLevel"):
+			var need_level: Variant = entry.get("requiresLevel")
+			if not _is_whole_level(need_level) or int(need_level) < 1 \
+					or int(need_level) > MAX_QUEST_REQUIRES_LEVEL:
+				report.append("[quests] %s 的 requiresLevel 应为 1–%d 的整数" % [qid, MAX_QUEST_REQUIRES_LEVEL])
 		var scope: Variant = entry.get("mapScope", [])
 		if not (scope is Array):
 			report.append("[quests] %s 的 mapScope 应为数组" % qid)
@@ -1179,6 +1292,11 @@ func _validate_potions() -> Array[String]:
 			report.append("[potions] %s 的 tier 应为正整数" % pid)
 		if not _is_whole_level(entry.get("restoreAmount")) or int(entry.get("restoreAmount", 0)) < 1:
 			report.append("[potions] %s 的 restoreAmount 应为正整数" % pid)
+		# M10-10：`restorePercent` 缺省允许（退回固定值，向后兼容）；
+		# 存在时必须落在 (0, 1) —— `pct >= 1` 等于「一瓶回满」，属设计外；`pct <= 0` 是无意义脏数据。
+		var pct_value: Variant = entry.get("restorePercent", null)
+		if pct_value != null and (not _is_positive_number(pct_value) or float(pct_value) >= 1.0):
+			report.append("[potions] %s 的 restorePercent 应在 (0, 1) 内" % pid)
 		if not _is_nonnegative_number(entry.get("cooldown", null)):
 			report.append("[potions] %s 的 cooldown 应为非负数" % pid)
 		if not _is_whole_level(entry.get("price")) or int(entry.get("price", -1)) < 0:
@@ -1201,8 +1319,19 @@ func _validate_misc_items() -> Array[String]:
 		if String(entry.get("name", "")).is_empty():
 			report.append("[miscItems] %s 缺少 name" % mid)
 		var use_type := String(entry.get("useType", ""))
-		if not ["playAnimation", "randomTeleport", "townPortal", "revive", "quest"].has(use_type):
+		if not ["playAnimation", "randomTeleport", "townPortal", "revive", "quest", "panel"].has(use_type):
 			report.append("[miscItems] %s 的 useType '%s' 非法" % [mid, use_type])
+		# M10-4（P-6）：`panelId` 只在 useType=panel 时允许 —— 两个方向都报错。
+		# 只校验「非空」会让脏 id 活到运行时，双击才炸；只校验 panel 分支会让
+		# 非 panel 道具挂个无效 panelId 而无人发现（同 levelFromBoss / levelFromPlayer 的坑）。
+		var panel_id := String(entry.get("panelId", ""))
+		if use_type == "panel":
+			if panel_id.is_empty():
+				report.append("[miscItems] %s 的 useType=panel 必须带 panelId" % mid)
+			elif not PanelRouter.has(panel_id):
+				report.append("[miscItems] %s 的 panelId '%s' 未登记" % [mid, panel_id])
+		elif not panel_id.is_empty():
+			report.append("[miscItems] %s 的 useType '%s' 不应带 panelId" % [mid, use_type])
 		if not entry.get("animation", "") is String:
 			report.append("[miscItems] %s 的 animation 应为字符串" % mid)
 	return report
@@ -1228,6 +1357,43 @@ func _validate_sellable_prices() -> Array[String]:
 	return report
 
 ## upgrade.json：成功表长度 / 取值 / 费用参数（B 共性-5、E-P3-3）。
+## M10-3（工程文档 43 §5.5）：循环 Boss 的归一化基底（`data/endgame.json`）。
+## 十条登记必须指向真实 Boss 模板，且 `norm` 三键均为正整数 —— 写错会得到「1 血的纸 Boss」，
+## 而且只在实际进图时才暴露（启动期是最便宜的一次拦截机会）。
+func _validate_endgame() -> Array[String]:
+	var report: Array[String] = []
+	var cfg: Variant = tables.get("endgame")
+	if cfg == null:
+		return report
+	if not cfg is Dictionary:
+		return ["[endgame] 应为字典（含 arenaBosses 数组）"] as Array[String]
+	var rows: Variant = (cfg as Dictionary).get("arenaBosses", [])
+	if not rows is Array:
+		return ["[endgame] arenaBosses 必须是数组"] as Array[String]
+	var seen := {}
+	for entry in (rows as Array):
+		if not entry is Dictionary:
+			report.append("[endgame] arenaBosses 条目必须是字典")
+			continue
+		var mid := String((entry as Dictionary).get("monsterId", ""))
+		if mid.is_empty():
+			report.append("[endgame] arenaBosses 存在缺少 monsterId 的条目")
+			continue
+		if seen.has(mid):
+			report.append("[endgame] arenaBosses 重复 monsterId：%s" % mid)
+		seen[mid] = true
+		if not get_entry("monsters", mid) is Dictionary:
+			report.append("[endgame] arenaBosses 引用未定义怪物 '%s'" % mid)
+		var norm: Variant = (entry as Dictionary).get("norm", null)
+		if not norm is Dictionary:
+			report.append("[endgame] %s 缺少 norm 字典" % mid)
+			continue
+		for key in ["hp", "atk", "def"]:
+			var value: Variant = (norm as Dictionary).get(key, null)
+			if not _is_whole_level(value) or int(value) < 1:
+				report.append("[endgame] %s 的 norm.%s 应为正整数" % [mid, key])
+	return report
+
 func _validate_upgrade() -> Array[String]:
 	var report: Array[String] = []
 	var cfg = tables.get("upgrade")

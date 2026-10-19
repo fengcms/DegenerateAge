@@ -80,8 +80,12 @@ func _ready() -> void:
 		"旋风斩接通后可拖入")
 	_check(hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "battle_focus"}),
 		"战意觉醒接通后可拖入")
-	_check(not hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "armor_break"}),
-		"尚未接通技能不可拖入")
+	_check(hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "armor_break"}),
+		"破甲重击接通后可拖入")
+	_check(hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "spirit_storm"}),
+		"灵刃风暴接通后可拖入")
+	_check(HotbarConfig.ACTIVE_SKILLS.size() == 6,
+		"可装备技能共 6 条，与 skills.json 全量一致（无未接线残留）")
 	var right := InputEventMouseButton.new()
 	right.position = hud._hotbar_buttons[6].get_global_rect().get_center()
 	right.global_position = right.position

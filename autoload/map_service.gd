@@ -26,6 +26,10 @@ var walk_locked_until_msec: int = 0
 var walk_key_released: bool = true
 ## 请求与世界装配之间的运行态事务；绝不写入存档。
 var pending_travel: Dictionary = {}
+## M10-5（产品 13 §5.4 D-6）：**落地后自动走**的一次性意图（Vector2 或 null）。
+## 与 `save_pos` 同口径 —— 消费一次即清空、不写存档、读档路径不 arm 所以不启用。
+## 由追猎令牌跨图时 arm；`Game._ready` 提交抵达后消费，指挥玩家走向目标 Boss。
+var pending_landing_move: Variant = null
 var loading_active := false
 var loading_message := ""
 var _loading_token := 0
@@ -94,13 +98,17 @@ func quest_next_exit() -> Dictionary:
 			return exit_data
 	return {}
 
+## M10-5（F-1）：Boss 一侧必须走 `current_bosses_of()` —— 只查单点 `bossSpawn` 时，
+## `c7_arena` 这类只有 `bossSpawns` 的图恒 false，任务导航指不到、追猎令牌也哑火。
 func _map_has_monster(map_id: String, monster_id: String) -> bool:
 	var map_data := data_for(map_id)
 	for spec in map_data.get("spawnPoints", []):
 		if String(spec.get("monsterId", "")) == monster_id and int(spec.get("count", 1)) > 0:
 			return true
-	var boss: Variant = map_data.get("bossSpawn", null)
-	return boss is Dictionary and String(boss.get("monsterId", "")) == monster_id
+	for boss in current_bosses_of(map_id):
+		if boss is Dictionary and String((boss as Dictionary).get("monsterId", "")) == monster_id:
+			return true
+	return false
 
 func _map_has_quest_target(map_id: String, kind: String, target_id: String) -> bool:
 	match kind:
@@ -287,10 +295,27 @@ func current_npcs() -> Array:
 	var n = current_data().get("npcs", [])
 	return n if n is Array else []
 
-## 当前图 Boss 点原始数据（`maps.json.bossSpawn`；无 → 空字典）。
+## 当前图**全部** Boss 点规格（M10-3b / P-8，工程文档 44 §3.2）：`bossSpawns` 数组优先，
+## 回退单点 `bossSpawn`，都没有 → 空数组。只返回配置规格（未实例化、无运行状态）——
+## 运行态实例目前**零调用方**（血条走 `EventBus.boss_hp_changed`、小地图走
+## `Spawner.marker_points()`），真到需要时再加，避免养一个跟着切图/重生维护生命周期的 API。
+## 任意地图的**全部** Boss 点规格（M10-5）：`bossSpawns` 数组优先，回退单点 `bossSpawn`，
+## 都没有 → 空数组。`current_bosses()` 只是它的当前图转发 —— **不在两处各写一份同逻辑**，
+## 否则将来改一处漏一处（追猎令牌遍历全表时用的是本函数）。
+func current_bosses_of(map_id: String) -> Array:
+	var rows: Variant = data_for(map_id).get("bossSpawns", null)
+	if rows is Array and not (rows as Array).is_empty():
+		return rows
+	var single: Variant = data_for(map_id).get("bossSpawn", null)
+	return [single] if single is Dictionary else []
+
+func current_bosses() -> Array:
+	return current_bosses_of(GameState.current_map)
+
+## ⚠ 兼容壳：**只给单点图用**，多 Boss 图请用 `current_bosses()`（本函数只返回第 0 只）。
 func current_boss() -> Dictionary:
-	var b = current_data().get("bossSpawn", null)
-	return b if b is Dictionary else {}
+	var rows := current_bosses()
+	return rows[0] if not rows.is_empty() else {}
 
 func current_exits() -> Array:
 	var exits = current_data().get("exits", [])
@@ -408,6 +433,70 @@ func destinations() -> Array:
 		})
 	return out
 
+# ---- 随身车夫（M10-7，产品 13 §5.3）----
+
+## 七个分组，顺序即 UI 顺序。**不要按数据动态生成**：
+## 空组也要按固定顺序占位，否则某章暂时无图时组序会塌。
+const LEVEL_GROUPS := ["1-10", "11-20", "21-30", "31-40", "41-50", "51-60", "60+"]
+
+## 地图 → 分组键。判据顺序不能反：
+## ① `levelFromPlayer.enabled`（循环图，现仅 c7_arena）→ "60+"；
+## ② 否则按 recommendedLevel 落到 10 级一档（60 → "51-60"）。
+## ⚠ 只按等级分桶会得到「60+ 组恒空」——c7_arena 与 c6_map05 的 recommendedLevel 都是 60（工程 48 C-2）。
+func level_group_of(map_id: String) -> String:
+	var lfp: Variant = data_for(map_id).get("levelFromPlayer", null)
+	if lfp is Dictionary and bool((lfp as Dictionary).get("enabled", false)):
+		return "60+"
+	var lv := clampi(recommended_level(map_id), 1, 60)
+	var start := int(floorf(float(lv - 1) / 10.0)) * 10 + 1
+	return "%d-%d" % [start, start + 9]
+
+## 跨章目的地（`travel_anywhere` 的镜像列表）。与 `destinations()` 的区别只有两点：
+## ① 遍历**全表**而不是 `links()`；② 报价用 `fee_anywhere`。
+## 放行判据与 `_travel_checks` 逐字同源（含 camp→wild_trial 教学例外），
+## 否则会出现「面板写着能去，点了报无法前往」的双轨（工程 48 R-2）。
+func anywhere_destinations() -> Array:
+	var out: Array = []
+	for entry in DataLoader.get_table("maps"):
+		if not entry is Dictionary:
+			continue
+		var id := String((entry as Dictionary).get("id", ""))
+		if id.is_empty() or id == GameState.current_map:
+			continue
+		var visited := GameState.is_visited(id)
+		var taught := GameState.current_map == DEFAULT_MAP and id == "wild_trial"
+		var open := is_unlocked(id) and (visited or taught)
+		var reason := ""
+		if not is_unlocked(id):
+			reason = Localization.tr_key("msg.map_service.p011")
+		elif not open:
+			reason = Localization.tr_key("msg.map_service.p012")
+		out.append({
+			"id": id,
+			"name": display_name(id),
+			"recommendedLevel": recommended_level(id),
+			"cost": fee_anywhere(id),
+			"unlocked": open,
+			"visited": visited,
+			"reason": reason,
+			"group": level_group_of(id),
+		})
+	out.sort_custom(_sort_anywhere)
+	return out
+
+## 稳定排序：组序 → 推荐等级 → id。给定同一份数据，结果必须逐条可复现
+## （测试对连续两次调用做逐条比对，字典序 / 随机序都会红）。
+func _sort_anywhere(a: Dictionary, b: Dictionary) -> bool:
+	var ga := LEVEL_GROUPS.find(String(a.get("group", "")))
+	var gb := LEVEL_GROUPS.find(String(b.get("group", "")))
+	if ga != gb:
+		return ga < gb
+	var la := int(a.get("recommendedLevel", 0))
+	var lb := int(b.get("recommendedLevel", 0))
+	if la != lb:
+		return la < lb
+	return String(a.get("id", "")) < String(b.get("id", ""))
+
 # ---- 出行 ----
 
 ## 车夫出行：校验 → 扣费 → 切换地图 → 写落点（**不改场景**）。
@@ -417,25 +506,49 @@ func destinations() -> Array:
 ## 这样无头测试可以只验证「状态 + 扣费 + 落点」而不触发 `reload_current_scene`
 ## （否则在 SmokeTest 里调用会把测试场景本身重载掉）。
 func travel_to(map_id: String) -> Dictionary:
+	return _travel(map_id, true, fee_to(map_id))
+
+## M10-5（产品 13 §5.4）：随身车夫 —— 去**任何走过的地图**，不要求拓扑相邻。
+## 与 `travel_to` 共用 `_travel_checks` / `_travel` 同一段实现（只差一个 require_linked），
+## 复制整段会让两条 API 各自演化后静默分叉（工程 46 §6 R-2）。
+## 费用口径 `fee_anywhere`（20 × 推荐等级，下限 50），与当地车夫的 `carterFares` 并存：
+## 同一目的地可能存在两个价，这是产品定义的「便利溢价」，不是 bug。
+func travel_anywhere(map_id: String) -> Dictionary:
+	return _travel(map_id, false, fee_anywhere(map_id))
+
+## 任意地图的随身车夫报价：`max(50, 20 × 推荐进入等级)`；图不存在 → -1。
+func fee_anywhere(map_id: String) -> int:
+	if not exists(map_id):
+		return -1
+	return maxi(50, 20 * recommended_level(map_id))
+
+## 出行公共段：校验链 → 报价 → 扣费 → 写落点。`require_linked` 是两条 API 的**唯一**差异。
+func _travel(map_id: String, require_linked: bool, fee: int) -> Dictionary:
+	var verdict := _travel_checks(map_id, require_linked)
+	if not bool(verdict.get("ok", false)):
+		return verdict
+	if fee < 0:
+		return _fail(Localization.tr_key("msg.map_service.p018") % display_name(map_id))
+	if fee > 0 and GameState.gold < fee:
+		return _fail(Localization.tr_key("msg.map_service.p019") % [display_name(map_id), fee, GameState.gold])
+	return _prepare_travel(map_id, "carter", fee, carter_arrival(map_id))
+
+## 存在 → 非当前图 →（可选）拓扑可达 → 已解锁 → 已到访 的判定链。
+## 顺序与文案与原 `travel_to` 逐条一致（抽取不改语义）。
+func _travel_checks(map_id: String, require_linked: bool) -> Dictionary:
 	if not pending_travel.is_empty():
 		return _fail(Localization.tr_key("msg.map_service.p002"))
 	if not exists(map_id):
 		return _fail(Localization.tr_key("msg.map_service.p013") % map_id)
 	if map_id == GameState.current_map:
 		return _fail(Localization.tr_key("msg.map_service.p014") % display_name(map_id))
-	if not is_linked(map_id):
+	if require_linked and not is_linked(map_id):
 		return _fail(Localization.tr_key("msg.map_service.p015") % display_name(map_id))
 	if not is_unlocked(map_id):
 		return _fail(Localization.tr_key("msg.map_service.p016") % display_name(map_id))
 	if not GameState.is_visited(map_id) and not (GameState.current_map == DEFAULT_MAP and map_id == "wild_trial"):
 		return _fail(Localization.tr_key("msg.map_service.p017") % display_name(map_id))
-	var fee := fee_to(map_id)
-	if fee < 0:
-		return _fail(Localization.tr_key("msg.map_service.p018") % display_name(map_id))
-	if fee > 0 and GameState.gold < fee:
-		return _fail(Localization.tr_key("msg.map_service.p019") % [display_name(map_id), fee, GameState.gold])
-
-	return _prepare_travel(map_id, "carter", fee, carter_arrival(map_id))
+	return {"ok": true, "reason": ""}
 
 func _prepare_travel(to_id: String, mode: String, fee: int, arrival: Vector2) -> Dictionary:
 	if not pending_travel.is_empty():
@@ -452,6 +565,17 @@ func _prepare_travel(to_id: String, mode: String, fee: int, arrival: Vector2) ->
 	GameState.has_save_pos = true
 	GameState.close_all_panels()
 	return {"ok": true, "reason": ""}
+
+## 记录一条「落地后自动走」意图（M10-5）。只应在出行**成功之后**调用，
+## 否则会留下一条永不消费、却会作用于下一次抵达的幽灵指令。
+func arm_landing_move(world_pos: Vector2) -> void:
+	pending_landing_move = world_pos
+
+## 消费一次即清空；无意图 → null。
+func consume_landing_move() -> Variant:
+	var out: Variant = pending_landing_move
+	pending_landing_move = null
+	return out
 
 ## Game._ready 完成装配后调用；所有事件与到访标记只在此时生效。
 func commit_arrival() -> bool:
@@ -478,6 +602,9 @@ func rollback_travel() -> void:
 		return
 	var request := pending_travel.duplicate(true)
 	pending_travel.clear()
+	# M10-5（R-3）：切图失败必须把「落地自动走」一起撤掉。不清的话玩家回到源图，
+	# 却会被指挥走向另一个图的坐标 —— 这条只在失败路径出现，正常流程永远测不出来。
+	pending_landing_move = null
 	GameState.gold = int(request.gold)
 	GameState.current_map = String(request.from)
 	GameState.save_pos = request.save_pos

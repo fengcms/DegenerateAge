@@ -1,0 +1,1205 @@
+{
+	"activeMount": "",
+	"currentMap": "camp",
+	"equipment": {
+		"armor": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 40.0
+				},
+				{
+					"stat": "def",
+					"value": 21.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_dd7d5413197fc0274ba0adcd85af078c",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 53.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.062
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 40.0,
+				"hp": 110.0
+			},
+			"requiredLevel": 53.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracelet_1": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 27.0
+				},
+				{
+					"stat": "hp",
+					"value": 62.0
+				},
+				{
+					"stat": "mp",
+					"value": 40.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_4f089853651a522983712a264accbd99",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 58.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 18.0
+			},
+			"requiredLevel": 58.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracelet_2": {
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 87.0
+				},
+				{
+					"stat": "def",
+					"value": 17.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_8be7b2492f62fbe5097cfaec434b5a87",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 58.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.021
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 18.0
+			},
+			"requiredLevel": 58.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracer_1": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 69.0
+				},
+				{
+					"stat": "atk",
+					"value": 16.0
+				},
+				{
+					"stat": "def",
+					"value": 18.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_a0473884cb4bcd0c71004eb57f9611e3",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 55.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 18.0
+			},
+			"requiredLevel": 55.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracer_2": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 27.0
+				},
+				{
+					"stat": "def",
+					"value": 14.0
+				},
+				{
+					"stat": "mp",
+					"value": 53.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_c1ae3e63a5c46b8879f687c6be35cac2",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 55.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 18.0
+			},
+			"requiredLevel": 55.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"helmet": {
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 22.0
+				},
+				{
+					"stat": "mp",
+					"value": 61.0
+				},
+				{
+					"stat": "hp",
+					"value": 73.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_6c1a4b8a1332de3487444d672a286788",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 54.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 22.0
+			},
+			"requiredLevel": 54.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"knee_1": {
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 115.0
+				},
+				{
+					"stat": "def",
+					"value": 15.0
+				},
+				{
+					"stat": "atk",
+					"value": 28.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_201f43f69b45cd27eecc44be8cdc5528",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 56.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 18.0
+			},
+			"requiredLevel": 56.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"knee_2": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 34.0
+				},
+				{
+					"stat": "def",
+					"value": 28.0
+				},
+				{
+					"stat": "atk",
+					"value": 30.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_4c26852db334152c88de74badaa63228",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 56.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 18.0
+			},
+			"requiredLevel": 56.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"necklace": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 43.0
+				},
+				{
+					"stat": "hp",
+					"value": 60.0
+				},
+				{
+					"stat": "atk",
+					"value": 13.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_e78877ae88cefc01012feacbd6227fdd",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 60.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"hp": 110.0
+			},
+			"requiredLevel": 60.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"ring_1": {
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 28.0
+				},
+				{
+					"stat": "atk",
+					"value": 14.0
+				},
+				{
+					"stat": "hp",
+					"value": 99.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_a6c92add171db37bf5f3f0893e740b8b",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 59.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 13.0,
+				"mp": 35.0
+			},
+			"requiredLevel": 59.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"ring_2": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 36.0
+				},
+				{
+					"stat": "def",
+					"value": 16.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_78bde05eeda83a85ce4cf98959c31493",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 59.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.047
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 13.0,
+				"mp": 35.0
+			},
+			"requiredLevel": 59.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"shield": {
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 85.0
+				},
+				{
+					"stat": "mp",
+					"value": 61.0
+				},
+				{
+					"stat": "def",
+					"value": 29.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_58afb7171d65ead6bcadcea590554718",
+			"itemId": "c6_equip_shield",
+			"kind": "equip",
+			"level": 57.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 44.0,
+				"hp": 66.0
+			},
+			"requiredLevel": 57.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"shoes": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 30.0
+				},
+				{
+					"stat": "def",
+					"value": 23.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_8f4b9b8b1a5702303db24405ce8ecedc",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 52.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.044
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 18.0,
+				"mp": 44.0
+			},
+			"requiredLevel": 52.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"weapon": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 56.0
+				},
+				{
+					"stat": "hp",
+					"value": 107.0
+				},
+				{
+					"stat": "atk",
+					"value": 25.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 4.0,
+			"instanceId": "fixture_d3d7c9495ee4b76baa2abbc52ca4006e",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 51.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 75.0
+			},
+			"requiredLevel": 51.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		}
+	},
+	"exploredMaps": {
+		"camp": [
+			321.0,
+			322.0,
+			323.0,
+			348.0,
+			349.0,
+			350.0,
+			351.0,
+			352.0,
+			375.0,
+			376.0,
+			377.0,
+			378.0,
+			379.0,
+			380.0,
+			381.0,
+			404.0,
+			405.0,
+			406.0,
+			407.0,
+			408.0,
+			409.0,
+			410.0,
+			432.0,
+			433.0,
+			434.0,
+			435.0,
+			436.0,
+			437.0,
+			438.0,
+			439.0,
+			461.0,
+			462.0,
+			463.0,
+			464.0,
+			465.0,
+			466.0,
+			467.0,
+			490.0,
+			491.0,
+			492.0,
+			493.0,
+			494.0,
+			495.0,
+			496.0,
+			519.0,
+			520.0,
+			521.0,
+			522.0,
+			523.0,
+			524.0,
+			525.0,
+			548.0,
+			549.0,
+			550.0,
+			551.0,
+			552.0,
+			553.0,
+			554.0,
+			577.0,
+			578.0,
+			579.0,
+			580.0,
+			581.0,
+			582.0,
+			606.0,
+			607.0,
+			608.0,
+			609.0,
+			635.0,
+			636.0
+		]
+	},
+	"firstClear": {
+		"boss_corrupted_beast": true,
+		"c2_boss_hundred_arm_extractor": true,
+		"c2_boss_iron_foreman": true,
+		"c2_boss_slag_devourer": true,
+		"c3_boss01": true,
+		"c3_boss02": true,
+		"c3_boss03": true,
+		"c4_boss01": true,
+		"c4_boss02": true,
+		"c4_boss03": true,
+		"c5_boss01": true,
+		"c5_boss02": true,
+		"c5_boss03": true,
+		"c5_boss04": true,
+		"c6_boss01": true,
+		"c6_boss02": true,
+		"c6_boss03": true
+	},
+	"gold": 1000000.0,
+	"hotbar": [
+		{
+			"id": "red",
+			"kind": "auto_potion"
+		},
+		{
+			"id": "blue",
+			"kind": "auto_potion"
+		},
+		{
+			"id": "basic_slash",
+			"kind": "skill"
+		},
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null
+	],
+	"inventory": [
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 20.0,
+			"itemId": "misc_revive_scroll",
+			"kind": "misc"
+		},
+		{
+			"count": 20.0,
+			"itemId": "misc_town_scroll",
+			"kind": "misc"
+		},
+		{
+			"count": 10.0,
+			"itemId": "misc_random_ticket",
+			"kind": "misc"
+		},
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null
+	],
+	"inventoryExpansions": 0.0,
+	"mapLayoutVersion": "2026-10-16-camp-open-perimeter-v2",
+	"ownedMounts": [],
+	"player": {
+		"attack": 130.0,
+		"attackInterval": 0.8,
+		"block": 0.0,
+		"cdr": 0.0,
+		"criticalChance": 0.05,
+		"criticalMultiplier": 1.5,
+		"defense": 64.0,
+		"dodge": 0.0,
+		"hp": 8496.0,
+		"level": 60.0,
+		"movementSpeed": 4.0,
+		"mp": 1546.0,
+		"name": "测试·Lv60",
+		"xp": 0.0
+	},
+	"playerPos": [
+		14.2636823654175,
+		-2489.0
+	],
+	"questItems": {},
+	"questRewardPlans": {},
+	"questStates": {
+		"C2Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q02": {
+			"progress": 12.0,
+			"state": "rewarded"
+		},
+		"C2Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C2Q04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q05": {
+			"progress": 5.0,
+			"state": "rewarded"
+		},
+		"C2Q06": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C2Q07": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C2Q08": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q09": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C2Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C2S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C2S03": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q02": {
+			"progress": 12.0,
+			"state": "rewarded"
+		},
+		"C3Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C3Q04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C3Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C3Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C3S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C3S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C3S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C3S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q02": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C4Q03": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C4Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C4Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C4Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C4S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C4S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C4S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C4S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q02": {
+			"progress": 12.0,
+			"state": "rewarded"
+		},
+		"C5Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C5Q04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C5Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C5Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q13": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q14": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C5S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C5S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C5S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C5S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5S06": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C5S07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q02": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C6Q04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C6Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C6Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C6Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6S01": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C6S02": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C6S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C6S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C6S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6S07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"Q001": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"Q002": {
+			"progress": 5.0,
+			"state": "rewarded"
+		},
+		"Q003": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"Q004": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"Q005": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"S001": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"S002": {
+			"progress": 1.0,
+			"state": "rewarded"
+		}
+	},
+	"savedAt": "2026-10-19T12:56:00",
+	"schemaVersion": 14.0,
+	"settings": {
+		"allowBoss": false,
+		"autoBattleDefault": false,
+		"autoPickupDefault": false,
+		"autoReviveOnDeath": false,
+		"colorblindMode": "off",
+		"displayScale": 1,
+		"displayScaleMode": "auto",
+		"dropFlyAnim": true,
+		"firstBattleHintSeen": false,
+		"fullscreen": false,
+		"keyBindings": {},
+		"lowGearLevelLimit": 5,
+		"lowGearMaxQuality": "common",
+		"mapScale": 1,
+		"masterVolume": 1,
+		"musicVolume": 1,
+		"potionThreshold": 0.35,
+		"qualityFilter": "all",
+		"resolution": "auto",
+		"screenShake": true,
+		"searchRadius": 12,
+		"sfxVolume": 1,
+		"strongFlash": true,
+		"textScale": 1,
+		"tutorialSeen": false,
+		"uiScale": 1
+	},
+	"slotId": 3.0,
+	"spawnRespawn": {},
+	"unclaimedLoot": {},
+	"unlocks": {
+		"c2_backup_furnace": true,
+		"c2_core_access": true,
+		"c2_machine_stopped": true,
+		"c3_access_02": true,
+		"c3_access_03": true,
+		"c3_access_04": true,
+		"c3_access_05": true,
+		"c4_access_02": true,
+		"c4_access_03": true,
+		"c4_access_04": true,
+		"c4_access_05": true,
+		"c5_access_02": true,
+		"c5_access_03": true,
+		"c5_access_04": true,
+		"c5_access_05": true,
+		"c5_access_06": true,
+		"c6_access_02": true,
+		"c6_access_03": true,
+		"c6_access_04": true,
+		"c6_access_05": true,
+		"campaign_complete": true,
+		"chapter2": true,
+		"chapter3": true,
+		"chapter4": true,
+		"chapter5": true,
+		"chapter6": true,
+		"tool_boss_token": true,
+		"tool_portable_carter": true,
+		"tool_portable_shop": true
+	},
+	"visitedMaps": [
+		"camp",
+		"wild_trial",
+		"ash_land",
+		"corruption_source",
+		"c2_well_town",
+		"c2_pipe_slope",
+		"c2_old_well",
+		"c2_lower_works",
+		"c2_ember_furnace",
+		"c2_well_core",
+		"c3_map00",
+		"c3_map01",
+		"c3_map02",
+		"c3_map03",
+		"c3_map04",
+		"c3_map05",
+		"c4_map00",
+		"c4_map01",
+		"c4_map02",
+		"c4_map03",
+		"c4_map04",
+		"c4_map05",
+		"c5_map00",
+		"c5_map01",
+		"c5_map02",
+		"c5_map03",
+		"c5_map04",
+		"c5_map05",
+		"c5_map06",
+		"c6_map00",
+		"c6_map01",
+		"c6_map02",
+		"c6_map03",
+		"c6_map04",
+		"c6_map05",
+		"c7_arena"
+	],
+	"warehouse": [
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null
+	],
+	"warehouseExpansions": 0.0,
+	"worldTime": 24.7924826666665
+}

@@ -71,6 +71,13 @@ func _ready() -> void:
 		var tier := _tier_of(String(table.id))
 		for entry in table.entries:
 			if entry.get("kind") == "equip":
+				# M10-2：动态条目（levelFromBoss）没有固定档位——等级来自击杀目标、
+				# 套由 ItemFactory.DYNAMIC_BASE_TIER 锚定。它的契约由 ArenaDropTest 负责，
+				# 这里只反查「不许暗中又带固定档位」。
+				if bool(entry.get("levelFromBoss", false)):
+					check(not entry.has("tierStart") and not entry.has("levelRange"),
+						"%s 动态条目不得同时带固定档位" % table.id)
+					continue
 				check(int(entry.get("tierStart", 0)) == tier, "%s 来源固定档位" % table.id)
 				var weights: Dictionary = entry.get("qualityWeight", {})
 				var only_legendary := weights.size() == 1 and weights.has("legendary")
@@ -199,6 +206,9 @@ func _ready() -> void:
 
 ## 掉落表名前缀 → 套起点：DT_C6_* 第六档（51）、DT_C5_* 第五档（41）、DT_C4_* 第四档（31）、DT_C3_* 第三档（21）、DT_C2_* 第二档（11）、其余第一档（1）。
 func _tier_of(table_id: String) -> int:
+	# M10-2：循环图复刻第六章的循环装备套（动态条目本身不带档位，此映射供将来接静态表用）。
+	if table_id.begins_with("DT_C7_"):
+		return 51
 	if table_id.begins_with("DT_C6_"):
 		return 51
 	if table_id.begins_with("DT_C5_"):

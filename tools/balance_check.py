@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""末法纪元数值校准分析（依据 03/04/06/07 文档公式 + data/*.json 实配）。"""
+"""末法纪元数值校准分析（依据 03/04/06/07 文档公式 + data/*.json 实配）。
+
+⚠ 本工具是**离线估算**，权威实现是 `scripts/systems/balance.gd`。
+   M10-9 起 1–60 与 >60 分段：经验曲线 L>60 叠线性增速、玩家基础攻防 L>60 改走
+   `130/64 × S(d)`、怪物 HP 在 d>12 加二次项。三处都与 GDScript 同口径，改这里必须同步改那边。
+"""
 import json, math, os
 from map_catalog import load_maps
 from monster_catalog import load_monsters
@@ -17,7 +22,7 @@ drops    = {d["id"]: d for d in j("data/dropTables.json")}
 potions  = {p["id"]: p for p in j("data/potions.json")}
 upgrade  = j("data/upgrade.json")
 
-# ---- 玩家模型（4.3 / 4.4 / 3.2）----
+# ---- 玩家模型（4.3 / 4.4 / 3.2 + 产品 13 §2 的满级段）----
 BASE_HP, HP_LV, HP_ATK, HP_DEF = 50, 8, 2, 4
 BASE_MP, MP_LV = 30, 5
 ATK0, DEF0 = 12, 5
@@ -25,9 +30,28 @@ LV_ATK, LV_DEF = 2, 1
 ATK_INTERVAL = 0.8
 CRIT, CRIT_MULT = 0.05, 1.5
 
+# M10-9（= balance.gd）：L60 锚点 + 缩放曲线 S(d)
+SOFTCAP = 60
+BASE_ATK_60, BASE_DEF_60 = 130, 64
+
+def scale(d):
+    """S(d) = 1 + 0.12d + 0.0022·max(0, d−12)²（与 balance.gd 逐字同源）。"""
+    d = max(0, int(d))
+    return 1.0 + 0.12*d + 0.0022*max(0, d-12)**2
+
+def base_attack(L):
+    if L <= SOFTCAP:
+        return ATK0 + LV_ATK*(L-1)
+    return round(BASE_ATK_60*scale(L-SOFTCAP))
+
+def base_defense(L):
+    if L <= SOFTCAP:
+        return DEF0 + LV_DEF*(L-1)
+    return round(BASE_DEF_60*scale(L-SOFTCAP))
+
 def player(L, atk=0, df=0, hp=0):
-    atk_t = ATK0 + LV_ATK*(L-1) + atk
-    df_t  = DEF0 + LV_DEF*(L-1) + df
+    atk_t = base_attack(L) + atk
+    df_t  = base_defense(L) + df
     hp_t  = round(BASE_HP + HP_LV*L + HP_ATK*atk_t + HP_DEF*df_t + hp)
     mp    = round(BASE_MP + MP_LV*L)
     return dict(level=L, atk=atk_t, df=df_t, hp=hp_t, mp=mp)
@@ -42,9 +66,13 @@ def ttk(p, mon, hp=None):
     return math.ceil(hp/d)*ATK_INTERVAL, math.ceil(hp/d), d
 
 def monster_hp(mon, spawn_lv):
-    return max(1, round(mon["hpBase"]*(1+0.12*(spawn_lv-mon["level"]))))
+    d = spawn_lv - mon["level"]
+    s = 1 + 0.12*d + (0.0022*(d-12)**2 if d > 12 else 0)
+    return max(1, round(mon["hpBase"]*s))
 
-def xp_next(L): return round(100*(L**1.6))
+def xp_next(L):
+    # M10-9：L>60 在 L^1.6 上叠 (1 + 0.03·(L−60))，60 级处连续
+    return round(100*(L**1.6)*(1 + 0.03*max(0, L-SOFTCAP)))
 def xp_cum(L):  return sum(xp_next(i) for i in range(1, L))
 
 def kill_xp(player_lv, monster_lv, base_xp):

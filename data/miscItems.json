@@ -227,5 +227,35 @@
     "desc": "第六章任务袋物品，不占背包格。",
     "icon": "res://assets/sprites/items/c6_item_s03.png",
     "questItem": true
+  },
+  {
+    "id": "tool_boss_token",
+    "name": "追猎令牌",
+    "useType": "panel",
+    "panelId": "boss_token",
+    "animation": "",
+    "desc": "双击查看全部首领的位置与复活倒计时。",
+    "questItem": true,
+    "price": 0
+  },
+  {
+    "id": "tool_portable_shop",
+    "name": "随身商队",
+    "useType": "panel",
+    "panelId": "shop",
+    "animation": "",
+    "desc": "双击就地开张，价格比城里贵两成。",
+    "questItem": true,
+    "price": 0
+  },
+  {
+    "id": "tool_portable_carter",
+    "name": "随身车夫",
+    "useType": "panel",
+    "panelId": "carter",
+    "animation": "",
+    "desc": "双击出发，去任何走过的地图。",
+    "questItem": true,
+    "price": 0
   }
 ]

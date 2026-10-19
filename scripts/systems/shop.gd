@@ -23,6 +23,16 @@ const SELLABLE_KINDS := ["equip", "potion", "misc", "rune"]
 ## 非装备回收比例（工程 39 D-1 = 0.6 拍板）。装备保持 1.0 —— 现有售价断言数值不变。
 const SELL_RATIO_NON_EQUIP := 0.6
 
+## M10-6（D-14）：随身商队的**合成店铺 id**。
+## 刻意不写进 `data/shops.json`：那里每条都必须被某个 NPC 的 `shopId` 引用，
+## 凭空多一条会被启动校验判成孤立店铺；且它的货单与价格全部由模板表推导，不需要数据副本。
+## 副作用是 `entry()` 对它返回空字典 ⇒ `sell_enabled()` 走默认 true，正是「就地变现」所需。
+const PORTABLE_SHOP_ID := "portable_shop"
+
+## 随身商店加价（D-14：模板价 × 1.2），用整数分子分母表达，避免浮点。
+const PORTABLE_PRICE_NUM := 6
+const PORTABLE_PRICE_DEN := 5
+
 ## 一键移入的筛选语义**永远是装备**（工程 39 G4）：与收购范围解耦。
 ## 若沿用 `can_sell` 判定，放行药水后「< Lv5 且 ≤ 普通」会把保命药整批塞进托盘。
 static func matches_low_gear(item: Dictionary, level_limit: int, max_quality: String) -> bool:
@@ -52,8 +62,65 @@ static func display_name(shop_id: String) -> String:
 static func sell_enabled(shop_id: String) -> bool:
 	return bool(entry(shop_id).get("sellEnabled", true))
 
-## 货郎出售的商品列表（buyItems）。
+## 是否为随身商队（M10-6 的合成店铺）。普通货郎一律 false。
+## 供 UI 层决定标题文案 —— `Shop` 本身保持零本地化依赖，本地化留在面板里。
+static func is_portable(shop_id: String) -> bool:
+	return shop_id == PORTABLE_SHOP_ID
+
+## 随身价 = ceil(模板价 × 1.2)，**纯整数运算**。
+## 🔴 不要改写成 `ceil(base * 1.2)`：① `int / int` 会触发 `INTEGER_DIVISION` 警告，
+## 而本项目 `warnings_as_errors` 开着，直接编译失败；② 浮点 1.2 实际存的是 1.1999999…，
+## 某些基数乘出来会跨过整数边界多进 1。整数式对任意 base 精确，且能被测试直接传值验证。
+@warning_ignore("integer_division")
+static func portable_price(base: int) -> int:
+	if base <= 0:
+		return 0
+	return (base * PORTABLE_PRICE_NUM + (PORTABLE_PRICE_DEN - 1)) / PORTABLE_PRICE_DEN
+
+## 随身商队的全部货单（D-14：全部在售品类、模板价 × 1.2、不含装备）。
+## 返回 `[{itemId, kind, price, count}]`，`price` 已含加价。
+##
+## 🔑 取货口径＝**模板三表全品类**。产品 13 §5.2 原文写「12 家店 `buyItems` 并集」，
+## 但实测并集只有 9 种 —— 12 家店都不卖 `misc_firework` 与 4 种如意，而 §5.2 的清单
+## 与验收都要求它们上架（详见工程 47 §0 C-1）。按模板取货还能让以后新增药水/如意自动上架。
+## 过滤：有价 + 非任务物 + 用途不是 quest（挡 `spirit_shard` —— 上架等于花钱跳过收集）。
+## 顺序＝表序（potions → miscItems → runes，表内保持 json 原序），结果稳定可预期。
+## 零副作用：不读写 GameState、不缓存。
+static func aggregate_offers() -> Array:
+	var sources: Array = [
+		{"table": "potions", "kind": "potion"},
+		{"table": "miscItems", "kind": "misc"},
+		{"table": "runes", "kind": "rune"},
+	]
+	var offers: Array = []
+	for src in sources:
+		var rows = DataLoader.get_table(String((src as Dictionary).get("table", "")))
+		if not (rows is Array):
+			continue
+		for row in (rows as Array):
+			if not (row is Dictionary):
+				continue
+			var tpl: Dictionary = row
+			var base := int(tpl.get("price", 0))
+			if base <= 0:
+				continue
+			if bool(tpl.get("questItem", false)):
+				continue
+			if String(tpl.get("useType", "")) == "quest":
+				continue
+			offers.append({
+				"itemId": String(tpl.get("id", "")),
+				"kind": String((src as Dictionary).get("kind", "")),
+				"price": portable_price(base),
+				"count": 1,
+			})
+	return offers
+
+## 货郎出售的商品列表（buyItems）；随身商队走聚合货单（M10-6）。
+## 分岔**只对合成 id 生效**，普通货郎行为逐字不变。
 static func buy_items(shop_id: String) -> Array:
+	if is_portable(shop_id):
+		return aggregate_offers()
 	var arr = entry(shop_id).get("buyItems", [])
 	return arr if arr is Array else []
 
@@ -72,8 +139,9 @@ static func make_item(item_id: String) -> Dictionary:
 	return ItemFactory.make_any(item_id, 1)
 
 ## 商品简介（9.6 / 6.4 购买面板每项含介绍）。取配置 desc，缺省回退名称。
+## M10-6 补 `runes`：此前缺这张表，4 种如意的说明会退化成裸 id（工程 47 §1 F-1）。
 static func describe(item_id: String) -> String:
-	for tbl in ["potions", "miscItems", "equipments"]:
+	for tbl in ["potions", "miscItems", "runes", "equipments"]:
 		var e = DataLoader.get_entry(tbl, item_id)
 		if e is Dictionary:
 			var d := String(e.get("desc", ""))
@@ -133,6 +201,9 @@ static func item_quality(item: Dictionary) -> String:
 ## 6.2 售价公式：round(baseValue × qualityMult × (1 + star×0.08))，非装备再 × 回收比例。
 ## 工程 39 G2：**整叠计价** —— 此前忽略 `count`，一叠 99 瓶只算 1 瓶钱（装备 count 恒 1，故未暴露）。
 ## 先取整单价再乘数量，保证「单价 × 数量 = 总价」可被玩家手算复核。
+## M10-8 D-15：**装备**额外乘等级轻缩放 `×(1 + 0.02 × (L − 60))`（参数见 `endgame.json` 的
+## `resale`）。只改这一个调用点，货郎 / 背包一键卖出 / 随身商店自动统一 —— 否则同一件装备
+## 在两处卖不同价。非装备不缩放（药水没有装备等级）。
 static func sell_price(item: Dictionary) -> int:
 	var base := base_value(item)
 	if base <= 0:
@@ -142,6 +213,8 @@ static func sell_price(item: Dictionary) -> int:
 	var unit := float(base) * mult * (1.0 + float(star) * STAR_SELL_BONUS)
 	if String(item.get("kind", "")) != "equip":
 		unit *= SELL_RATIO_NON_EQUIP
+	else:
+		unit *= Reforge.resale_scale(Equipment.level_req(item))
 	var count := maxi(1, int(item.get("count", 1)))
 	return int(round(unit)) * count
 

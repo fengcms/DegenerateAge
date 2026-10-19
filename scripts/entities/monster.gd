@@ -15,6 +15,9 @@ const PATROL_RADIUS := 90.0    # 巡逻半径（px）
 const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
+## R4-c：破甲幅度。`skills.json` 只写 `debuff.type/duration`，没写幅度；
+## 取 −30% 与 `armor_break.defensePierce: 0.3` 同数，语义一致（Q-5）。
+const ARMOR_BREAK_SCALE := 0.7
 
 ## E1（工程文档 30 §4，创意 第三章/03）：首领场参考半径 18 格 / 脱战 5 秒归位回满。
 const BOSS_ARENA_TILES := 18.0
@@ -57,6 +60,14 @@ var drop_table_override := ""
 ## 由生成器设置的锚点（巡逻 / 返回基准）；Zero 时取初始位置
 @export var spawn_position: Vector2 = Vector2.ZERO
 
+## M10-3（工程文档 43 §5.3）：循环图归一化基底 `{hp, atk, def}`（投影到 60 级）。
+## 空字典 ⇒ 走既有 `_derive_max_hp` + 模板攻防，存量图逐值不变。
+@export var stat_norm: Dictionary = {}
+## M10-3：攻/防随 `Balance.scale(等级 − 60)` 缩放（循环图开关；普通图不开）。
+@export var scale_stats: bool = false
+## M10-3：经验由 `Balance.boss_xp(等级)` 反推，忽略模板 `xpReward`。
+@export var xp_from_curve: bool = false
+
 signal died(id: String)
 
 var template: Dictionary = {}
@@ -85,6 +96,8 @@ var attack_power: float = 0.0
 var move_speed_px: float = 0.0
 var is_ranged: bool = false
 var defense_power := 0.0
+## R4-c：破甲剩余时长（秒）。运行态，不落档；0 表示无减益（默认值 ⇒ 既有战斗不受影响）。
+var armor_break_left := 0.0
 var active_affixes: Array[Dictionary] = []
 var _life_steal_credit := 0.0
 ## M6-0a：当前外观半径（按 kind 决定），绘制与点击命中同源（见 game.gd::enemy_at_screen）。
@@ -158,13 +171,26 @@ func _load_template() -> void:
 	radius = radius_for_kind(_kind())
 	var tpl_level: int = int(template.get("level", 1))
 	level = spawn_level if spawn_level > 0 else tpl_level
-	max_hp = _derive_max_hp(tpl_level)
+	# M10-3：`stat_norm` 是「投影到 60 级」的基底，缩放锚点也是 60 级（与玩家同一条 S 曲线）。
+	# 不能与 `_derive_max_hp` 混用 —— 后者的锚点是**模板等级**（Lv10 模板在 60 级时 d=50），
+	# 混算会得到 24,300×7 = 17 万这类错值。`level ≤ 60` 时 S(d)=1，逐值等于 norm。
+	var scaled := Balance.scale(level - Balance.SOFTCAP_LEVEL)
+	if not stat_norm.is_empty():
+		max_hp = maxi(1, int(round(float(stat_norm.get("hp", 1)) * scaled)))
+	else:
+		max_hp = _derive_max_hp(tpl_level)
 	hp = max_hp
 	# AI 参数
 	move_speed_px = float(template.get("moveSpeed", 0.0)) * Iso.TILE_W
 	attack_interval = float(template.get("attackInterval", 1.2))
 	attack_power = float(template.get("attack", 0.0))
 	defense_power = float(template.get("defense", 0))
+	if not stat_norm.is_empty():
+		attack_power = float(stat_norm.get("atk", attack_power)) * scaled
+		defense_power = float(stat_norm.get("def", defense_power)) * scaled
+	elif scale_stats:
+		attack_power *= scaled
+		defense_power *= scaled
 	_roll_affixes()
 	var ar = template.get("attackRange", {})
 	if ar is Dictionary:
@@ -468,7 +494,24 @@ func get_attack() -> float:
 	return attack_power
 
 func get_defense() -> float:
+	# R4-c：破甲期间防御打折；到期自然恢复，不写回 defense_power（模板值不可被污染）。
+	if armor_break_left > 0.0:
+		return defense_power * ARMOR_BREAK_SCALE
 	return defense_power
+
+## R4-c：施加 / 续期破甲。重复命中取**较长**剩余时长，而不是叠加或缩短。
+func apply_armor_break(duration: float) -> void:
+	if duration <= 0.0 or is_dead:
+		return
+	armor_break_left = maxf(armor_break_left, duration)
+
+func armor_break_remaining() -> float:
+	return armor_break_left
+
+## 状态计时集中一处：物理帧推进与测试直接调用走同一条实现，避免两套时钟。
+func tick_status(delta: float) -> void:
+	if armor_break_left > 0.0:
+		armor_break_left = maxf(0.0, armor_break_left - delta)
 
 func get_dodge() -> float:
 	return float(template.get("dodge", 0.0))
@@ -492,10 +535,11 @@ static func radius_for_kind(kind: String) -> float:
 			return RADIUS
 
 ## M6-0a（创意 07 §4）：向 HUD 广播 Boss 血量，供顶部血条刷新。
+## M10-3b（P-7）：补实例标识 —— 循环图同区两只接战时血条才能各占一条、互不覆盖。
 func _announce_boss_hp() -> void:
 	if _kind() != "boss":
 		return
-	EventBus.boss_hp_changed.emit(display_name, hp, max_hp, boss_phase)
+	EventBus.boss_hp_changed.emit(get_instance_id(), display_name, hp, max_hp, boss_phase)
 
 # ---- 物理 / 状态机 ----
 
@@ -510,6 +554,10 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 	if dummy_art != null:
 		dummy_art.frame = 2 if is_dead else 1 if _flash_t > 0.0 else 0
+
+	# R4-c：破甲计时（死亡后不再推进，避免尸体上跑状态机）。
+	if not is_dead:
+		tick_status(delta)
 
 	if is_dead:
 		velocity = Vector2.ZERO
@@ -812,7 +860,10 @@ func _die() -> void:
 func _settle_rewards() -> void:
 	if suppress_rewards:
 		return
-	var xp := LevelGap.kill_xp(int(template.get("xpReward", 0)), int(GameState.player.get("level", 1)), level)
+	# M10-3：循环图的经验由曲线反推（产品 13 §2：E(L) 决定「升一级要杀几只」），
+	# 不再依赖各章模板手填的 xpReward。存量图 `xp_from_curve` 恒 false，取值不变。
+	var base_xp := Balance.boss_xp(level) if xp_from_curve else int(template.get("xpReward", 0))
+	var xp := LevelGap.kill_xp(base_xp, int(GameState.player.get("level", 1)), level)
 	if xp > 0:
 		GameState.add_xp(xp)
 
@@ -824,7 +875,7 @@ func _settle_rewards() -> void:
 			EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p003") % [display_name, gold], "drop")
 		return
 
-	var rolled := Loot.roll(table_id, null, monster_id)
+	var rolled := Loot.roll(table_id, null, monster_id, level)
 	# M6-0c（创意 07 §8）：整批掉落一次抽取（随机结果只生成一次），批次带唯一 ID。
 	_batch_seq += 1
 	var batch_id := "b_%d_%d" % [Time.get_ticks_msec(), _batch_seq]

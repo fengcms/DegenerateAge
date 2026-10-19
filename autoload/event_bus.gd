@@ -29,7 +29,9 @@ signal target_changed(target: Node)
 signal boss_first_clear(monster_id: String)
 ## Boss 顶部血条（M6-0a / 创意 07 §4）：Monster 在受击 / 阶段变更 / 进入仇恨 / 死亡时广播。
 ## `hp <= 0` 表示死亡，HUD 据此触发淡出。
-signal boss_hp_changed(boss_name: String, hp: int, max_hp: int, phase: int)
+## M10-3b（P-7）：首参 `boss_id` = `Monster.get_instance_id()`，多目标血条据此区分实例
+## （`monster_id` 同种可重复、`display_name` 可重名，都不能当身份）。
+signal boss_hp_changed(boss_id: int, boss_name: String, hp: int, max_hp: int, phase: int)
 
 # ---- 物品 / 经济 ----
 signal item_picked(item_id: String)
@@ -64,12 +66,19 @@ signal quest_state_changed()
 signal quest_panel_requested(npc_name: String)
 
 # ---- 地图 / 车夫（M3）----
-signal carter_panel_requested(npc_name: String)
+## M10-7：第二参区分两种语义 —— `false` 当地车夫（只列同集群 `destinations()`），
+## `true` 随身车夫（七分组全 36 图 + `travel_anywhere`）。同一个面板节点两种模式。
+signal carter_panel_requested(npc_name: String, portable: bool)
+## M10-5：追猎令牌面板请求（与 `carter_panel_requested` 同构 —— 只传标题，
+## 面板自己调 `BossToken.rows()` 取数据）。
+signal boss_token_panel_requested(title: String)
 signal map_traveled(from_id: String, to_id: String)
 
 # ---- 铁匠 / 升星（M4）----
 signal blacksmith_panel_requested(npc_name: String, greeting: String)
 signal upgrade_panel_requested()
+## M10-8：铁匠服务菜单第二项（装备重铸）请求。
+signal reforge_panel_requested()
 
 # ---- 仓库（M4-3）----
 signal warehouse_panel_requested(npc_name: String)

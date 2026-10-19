@@ -10,12 +10,24 @@ const INVENTORY_SIZE := 40
 const GOLD_CAP := 999999999
 ## 未领取战利品件数上限（M6-0c 追加上限）。超限时按登记顺序丢弃最旧记录，
 ## 并广播事件令对应地面物销毁，避免长挂机下节点数与存档体积单调增长。
+## M10-3（P-9 / D-13）：改为**按图分级** —— 本值只是缺省，地图可在 `maps.json`
+## 用 `unclaimedLootCap` 覆盖（循环图配 200：一轮 10 只 × 7–10 件必须装得下）。
+## 注意：分流前是「跨全部地图总数 ≤ 20」，一张图刷满会把别的图的记录挤掉；
+## 改为逐图判定后，记录只受**本图**上限约束。
 const UNCLAIMED_LOOT_CAP := 20
 
 ## 存档校验上界（C-P3-1）。战斗侧已有明确上界者直接引用 `Combat`（暴击率 / 暴伤 / 攻击间隔），
 ## 其余取宽松上限——目的仅为拦「明显异常或被篡改」的值，不作为数值调平口径。
-const PLAYER_LEVEL_CAP := 999
-const PLAYER_STAT_CAP := 999999.0
+## M10-0：等级上限 999 → 9999、属性上限 999,999 → 99,999,999（产品 13 §9.3 Q-9）。
+## 两者**必须同批抬**：`Balance.base_attack(9999) = 28,339,142`，若只抬等级，
+## 1915 级就会从属性校验口被判定为「被篡改」而整档拒收（P-16）。
+## 9999 的选型理由：E(9999) ≈ 7.5×10^10，仍在 int64 与 JSON 双精度（2^53）余量内；
+## 再往上 `pow` 返回的 float 先失真，护栏就不再可信。
+const PLAYER_LEVEL_CAP := 9999
+## 一键出售等级筛选上限：与玩家等级上限对齐，避免「界面能设、后端拒收」的静默失败。
+## 选用 9999 而非更大值：等同 PLAYER_LEVEL_CAP 余量边界，超出即代表「不限制等级」。
+const LOW_GEAR_LEVEL_MAX := 9999
+const PLAYER_STAT_CAP := 99999999.0
 const PLAYER_MOVE_SPEED_CAP := 100.0
 ## 冷却缩减上限（产品 03 §3.8 / 04 §4.2：≤50%）。结算按加法累加后截断到本上限（D7）。
 const PLAYER_CDR_CAP := 0.5
@@ -281,9 +293,9 @@ func swap_hotbar_entries(from_index: int, to_index: int) -> bool:
 	EventBus.hotbar_changed.emit()
 	return true
 
-## 经验升级所需（4.4 公式：round(100 × L^1.6)）。
+## 经验升级所需（M10-0 起走 Balance 曲线；L ≤ 60 与旧的 round(100 × L^1.6) 逐位一致）。
 func xp_to_next(level: int) -> int:
-	return int(round(100.0 * pow(float(level), 1.6)))
+	return Balance.xp_to_next(level)
 
 ## 装备提供的属性加成汇总（14 槽，见 Equipment / 5.1）。
 func equip_bonus() -> Dictionary:
@@ -470,7 +482,7 @@ func move_inventory_item(source: int, target: int, token: String) -> bool:
 	return true
 
 func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
-	if level_limit < 1 or level_limit > 100 or not Shop.QUALITY_ORDER.has(max_quality):
+	if level_limit < 1 or level_limit > LOW_GEAR_LEVEL_MAX or not Shop.QUALITY_ORDER.has(max_quality):
 		return false
 	settings.lowGearLevelLimit = level_limit
 	settings.lowGearMaxQuality = max_quality
@@ -605,13 +617,30 @@ func use_item(inv_index: int) -> Dictionary:
 		"equip":
 			return equip_from_inventory(inv_index)
 		"misc":
-			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.TOWN_SCROLL:
-				return TravelItem.use_town_scroll(inv_index)
-			if String((it as Dictionary).get("itemId", "")) == HotbarConfig.RANDOM_TICKET:
-				return TravelItem.use_random_ticket(inv_index)
+			return _use_misc(inv_index, it as Dictionary)
 		_:
 			return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(it))
 	return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(it))
+
+## M10-4（P-6）：杂项按数据表 `useType` 分发，不再按 itemId 硬编码 ——
+## 否则每加一件「面板道具」都要回来改这段，正是 P-6 的病根。
+## `townPortal / randomTeleport` 仍调原函数（内部自校验 itemId，行为零变化）；
+## `panel` 走 `PanelRouter`；其余用途（playAnimation / revive / quest / 空）保持原兜底提示。
+func _use_misc(inv_index: int, item: Dictionary) -> Dictionary:
+	var tpl: Variant = DataLoader.get_entry("miscItems", String(item.get("itemId", "")))
+	if not tpl is Dictionary:
+		return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(item))
+	match String((tpl as Dictionary).get("useType", "")):
+		"townPortal":
+			return TravelItem.use_town_scroll(inv_index)
+		"randomTeleport":
+			return TravelItem.use_random_ticket(inv_index)
+		"panel":
+			var res := PanelRouter.open(String((tpl as Dictionary).get("panelId", "")))
+			if not bool(res.get("ok", false)):
+				return _use_fail(String(res.get("reason", "")))
+			return {"ok": true, "reason": ""}
+	return _use_fail(Localization.tr_key("msg.game_state.p027") % ItemUtil.display_name(item))
 
 func _use_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
@@ -787,6 +816,59 @@ func _upgrade_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "success": false, "cost": 0, "reason": reason}
 
+# ---- 装备重铸（M10-8）----
+
+## 重铸一件装备的全部词条。`source` = "bag" / "worn"，`key` 是背包下标或装备槽 id
+## （与 `upgrade_equipment` 同构）；`expected_id` 防止选择后背包整理导致错误实例被扣费。
+##
+## 🔑 **先掷后扣**：`ItemFactory.reroll_affixes` 是纯函数、不改 item、无副作用，掷成功才扣钱。
+## 于是「扣了钱没重铸」这条错误路径根本不存在 —— 比「先扣、失败再退款」少一条分支。
+## 品质 / 星级 / 基底 / instanceId 一律不动，只写回 `affixes` / `pctAttrs`（无需改存档 schema）。
+func reforge_equipment(source: String, key: Variant, expected_id: String,
+		rng: RandomNumberGenerator = null) -> Dictionary:
+	var item: Dictionary = {}
+	if source == "bag" and key is int and key >= 0 and key < inventory.size():
+		var candidate = inventory[key]
+		if candidate is Dictionary:
+			item = candidate
+	elif source == "worn" and key is String:
+		var candidate = equipment.get(key)
+		if candidate is Dictionary:
+			item = candidate
+	if item.is_empty() or expected_id.is_empty() or String(item.get("instanceId", "")) != expected_id:
+		return _reforge_fail(Localization.tr_key("msg.game_state.p032"))
+	var guard := Reforge.can_reforge(item)
+	if not bool(guard.get("ok", false)):
+		return _reforge_fail(String(guard.get("reason", Localization.tr_key("msg.reforge.p003"))))
+	var price := Reforge.cost(Equipment.level_req(item))
+	if price <= 0:
+		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
+	if gold < price:
+		return _reforge_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
+	var rolled := ItemFactory.reroll_affixes(item, rng)
+	if not bool(rolled.get("ok", false)):
+		return _reforge_fail(Localization.tr_key("msg.reforge.p003"))
+	var unchanged := ItemUtil.affix_lines(item) == ItemUtil.affix_lines({
+		"affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
+	})
+	add_gold(-price)
+	item["affixes"] = rolled.affixes
+	item["pctAttrs"] = rolled.pctAttrs
+	if source == "worn":
+		EventBus.equipment_changed.emit()
+		EventBus.player_hp_changed.emit(int(player.hp), max_hp())
+		EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+	else:
+		EventBus.inventory_changed.emit()
+	var message := Localization.tr_key("msg.reforge.p005") % [ItemUtil.display_name(item), price]
+	EventBus.toast_requested.emit(message, "pickup")
+	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
+		"unchanged": unchanged, "reason": message}
+
+func _reforge_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "cost": 0, "unchanged": false, "reason": reason}
+
 # ---- 世界时钟与怪物点刷新状态（M4-10）----
 ## 契约：刷新倒计时由**世界时钟**（`world_time`）统一驱动，不再有第二套计时器。
 ## key 用 `map_id#monster_id#同种序号`（稳定），不用数组下标 —— 地图数据增减点不错位。
@@ -897,27 +979,44 @@ func _unclaimed_seq_of(uid: String) -> int:
 		return int(parts[2])
 	return 1 << 62
 
-## 超出上限时按 FIFO（登记顺序）丢弃最旧记录，并广播 `unclaimed_loot_evicted`
+## 本图未领取上限（M10-3 / P-9 / D-13）：读 `maps.json` 的 `unclaimedLootCap`，
+## 未配置 → `UNCLAIMED_LOOT_CAP`（普通图 20）。循环图配 200。
+func unclaimed_loot_cap(map_id: String) -> int:
+	var m: Variant = DataLoader.get_entry("maps", map_id)
+	if m is Dictionary and (m as Dictionary).has("unclaimedLootCap"):
+		return maxi(1, int((m as Dictionary).get("unclaimedLootCap", UNCLAIMED_LOOT_CAP)))
+	return UNCLAIMED_LOOT_CAP
+
+## 超出**本图**上限时按 FIFO（登记顺序）丢弃该图最旧记录，并广播 `unclaimed_loot_evicted`
 ## 令仍在场的对应地面物销毁。返回被丢弃的 uid 列表。
+## M10-3：由「跨全部地图总数」改为逐图判定 —— 否则在循环图刷一轮就会把别的图的记录挤掉。
 func _evict_unclaimed_overflow() -> Array:
 	var evicted: Array = []
-	while unclaimed_total() > UNCLAIMED_LOOT_CAP:
-		var oldest_uid := ""
-		var oldest_seq := 1 << 62
-		for map_id in unclaimed_loot.keys():
-			for record in (unclaimed_loot[map_id] as Array):
-				var uid := String((record as Dictionary).get("uid", ""))
-				var seq := _unclaimed_seq_of(uid)
+	var evicted_map: Array = []
+	for map_id in unclaimed_loot.keys():
+		var rows: Array = unclaimed_loot[map_id]
+		var cap := unclaimed_loot_cap(String(map_id))
+		while rows.size() > cap:
+			var oldest_index := -1
+			var oldest_seq := 1 << 62
+			for i in range(rows.size()):
+				var seq := _unclaimed_seq_of(String((rows[i] as Dictionary).get("uid", "")))
 				if seq < oldest_seq:
 					oldest_seq = seq
-					oldest_uid = uid
-		# 无 uid 或注销失败时中断，避免死循环（防御异常数据）。
-		if oldest_uid.is_empty() or not remove_unclaimed_loot(oldest_uid):
-			break
-		evicted.append(oldest_uid)
-	for uid in evicted:
-		push_warning("[GameState] 未领取战利品超上限(%d)，丢弃最旧记录：%s" % [UNCLAIMED_LOOT_CAP, uid])
-		EventBus.unclaimed_loot_evicted.emit(uid)
+					oldest_index = i
+			if oldest_index < 0:
+				break
+			var uid := String((rows[oldest_index] as Dictionary).get("uid", ""))
+			# 无 uid 或注销失败时中断，避免死循环（防御异常数据）。
+			if uid.is_empty() or not remove_unclaimed_loot(uid):
+				break
+			evicted.append(uid)
+			evicted_map.append(String(map_id))
+	for i in range(evicted.size()):
+		var map_id := String(evicted_map[i])
+		push_warning("[GameState] 地图 %s 的未领取战利品超上限(%d)，丢弃最旧记录：%s"
+			% [map_id, unclaimed_loot_cap(map_id), evicted[i]])
+		EventBus.unclaimed_loot_evicted.emit(String(evicted[i]))
 	return evicted
 
 ## 注销某条未领取记录（领取成功后，§11.3）。uid 全局唯一，故跨图查找。返回是否命中。
@@ -1031,7 +1130,7 @@ func toggle_auto_pickup() -> bool:
 ## 常驻浮窗面板（F-P3-1）：四者可彼此并开，其余面板打开时它们统一关闭。
 const FLOATING_PANEL_IDS := ["inventory", "character", "skill", "mount"]
 ## NPC 会话面板：打开期间暂停自动战斗挂机（普通可并开的信息面板不影响自动决策）。
-const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade"]
+const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade", "reforge"]
 ## 真正接管键盘的流程面板；普通信息与 NPC 面板可在操作角色时保持打开。
 const WORLD_INPUT_BLOCKING_PANEL_IDS := ["menu", "settings", "save", "death", "equipment_confirm"]
 
@@ -1171,7 +1270,10 @@ func add_xp(amount: int) -> void:
 	if amount <= 0:
 		return
 	player.xp = int(player.xp) + amount
-	while int(player.xp) >= xp_to_next(int(player.level)):
+	# M10-0：等级护栏。`PLAYER_LEVEL_CAP` 同时是读档校验上界，若这里不拦，
+	# 一旦越过（改档 / 极端经验注入）就会写出「自己读不回来」的存档（P-14）。
+	# 到顶后经验照常累积、不再升级：不丢玩家的 xp，只是不再成长。
+	while int(player.level) < PLAYER_LEVEL_CAP and int(player.xp) >= xp_to_next(int(player.level)):
 		player.xp = int(player.xp) - xp_to_next(int(player.level))
 		_level_up()
 	EventBus.player_xp_changed.emit(int(player.xp), xp_to_next(int(player.level)))
@@ -1183,14 +1285,30 @@ func _level_up() -> void:
 	var hp_ratio := float(player.hp) / float(max(1, prev_hp))
 	var mp_ratio := float(player.mp) / float(max(1, prev_mp))
 	player.level = int(player.level) + 1
-	player.attack = int(player.attack) + 2   # 4.4：每级 攻 +2
-	player.defense = int(player.defense) + 1 # 4.4：每级 防 +1
+	# M10-0：L ≤ 60 走逐级成长（与 4.4 逐位等价，见工程 40 §4.4 的证明）；
+	# L > 60 抬到 `Balance` 曲线基线，与怪物同乘 S ⇒ 击杀次数恒定（产品 13 §2.3）。
+	# 用 maxi 而非直接赋值，避免覆盖将来可能出现的其他基线来源。
+	player.attack = maxi(int(player.attack) + 2, Balance.base_attack(int(player.level)))
+	player.defense = maxi(int(player.defense) + 1, Balance.base_defense(int(player.level)))
 	player.hp = int(round(float(max_hp()) * hp_ratio))
 	player.mp = int(round(float(max_mp()) * mp_ratio))
 	EventBus.player_leveled.emit(int(player.level))
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p053") % int(player.level), "levelup")
+
+## M10-0：把基础攻防幂等抬到 `Balance` 曲线基线。用于读档后对齐「旧档（线性成长）」与「新档（曲线）」。
+##
+## 不写任何标记位 —— 曲线值只由等级决定，`maxi` 只升不降，可无限次重复执行；
+## 也不能写 `unlocks` 标记（save_manager 会校验键必须在 `_known_unlock_ids` 内，自造键整档拒收）。
+## 新游戏（`reset_to_defaults`）不走这里：L1 的曲线值就是初始值，无需对齐。
+## ⚠ 调用前必须已恢复 `equipment` —— `max_hp()` 依赖装备加成，否则 HP 结转比例会算错。
+func align_baseline_stats() -> void:
+	var ratio := float(player.hp) / float(maxi(1, max_hp()))
+	player.attack = maxi(int(player.attack), Balance.base_attack(int(player.level)))
+	player.defense = maxi(int(player.defense), Balance.base_defense(int(player.level)))
+	# HP 按比例结转而不是补满：读档时玩家可能正在残血，补满等于白送一次治疗。
+	player.hp = clampi(int(round(float(max_hp()) * ratio)), 0, max_hp())
 
 ## 广播全部数值（HUD 初始化 / 读档后同步）。
 func emit_all() -> void:

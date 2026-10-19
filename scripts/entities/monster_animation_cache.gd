@@ -22,6 +22,10 @@ static func prepare_for_map(map_id: String) -> void:
 	var boss: Variant = (map_data as Dictionary).get("bossSpawn", null)
 	if boss is Dictionary:
 		specs.append(boss)
+	# M10-3：循环图的 10 只 Boss 全在 `bossSpawns`；不预取就会在进图后逐个现解码（首次见面必卡）。
+	var multi: Variant = (map_data as Dictionary).get("bossSpawns", null)
+	if multi is Array:
+		specs.append_array(multi)
 	var seen := {}
 	for raw: Variant in specs:
 		if raw is Dictionary:
