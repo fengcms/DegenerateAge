@@ -550,6 +550,80 @@ func sell_low_gear() -> Dictionary:
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p009") % [indices.size(), total], "pickup")
 	return {"ok": true, "count": indices.size(), "gold": total}
 
+## 生成当前角色背包装备清单；只读，界面可据此勾选，交易时须再次重核。
+func preview_equipment_sale() -> Array[Dictionary]:
+	return SellGearPolicy.build_preview(inventory, int(player.get("level", 1)), equipment,
+		String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS)))
+
+## 确认前按实例 ID 重定位并核对快照、预设、装备比较、价格和收藏状态。
+## 返回 {ok, indices, items, total, reason}；无副作用，供直卖和货郎批量暂存复用。
+func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false) -> Dictionary:
+	if rows.is_empty():
+		return {"ok": false, "reason": "请选择要处理的装备"}
+	var by_id := {}
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary and String(inventory[i].get("kind", "")) == "equip":
+			by_id[String(inventory[i].get("instanceId", ""))] = i
+	var seen := {}
+	var indices: Array[int] = []
+	var items: Array[Dictionary] = []
+	var total := 0
+	var level := int(player.get("level", 1))
+	var preset := String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+	for row in rows:
+		var instance_id := String(row.get("instance_id", ""))
+		if instance_id.is_empty() or seen.has(instance_id) or not by_id.has(instance_id):
+			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
+		seen[instance_id] = true
+		var i: int = by_id[instance_id]
+		var item: Dictionary = inventory[i]
+		if item != row.get("item_snapshot", {}) or not Shop.can_sell(item) \
+				or level != int(row.get("player_level", -1)) or preset != String(row.get("preset", "")):
+			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
+		var current := SellGearPolicy.entry(item, i, level, equipment, preset)
+		if int(current.get("price", -1)) != int(row.get("price", -2)) \
+				or bool(current.get("protected_upgrade", false)) != bool(row.get("protected_upgrade", false)) \
+				or bool(current.get("default_selected", false)) != bool(row.get("default_selected", false)):
+			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
+		if not bool(current.get("default_selected", false)) and not allow_risky:
+			return {"ok": false, "reason": "所选装备需要再次确认"}
+		indices.append(i)
+		items.append(item)
+		total += Shop.sell_price(item)
+	return {"ok": true, "indices": indices, "items": items, "total": total, "reason": ""}
+
+## Lv15 后按玩家核对的实例清单整批直卖；任一前置条件失败则背包与金币均不变。
+func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false) -> Dictionary:
+	if int(player.get("level", 1)) < 15:
+		return {"ok": false, "reason": "达到 15 级后才可在背包直接出售装备"}
+	var checked := validate_equipment_sale(rows, allow_risky)
+	if not bool(checked.get("ok", false)):
+		return checked
+	var total := int(checked.total)
+	if total > GOLD_CAP - gold:
+		return {"ok": false, "reason": "金币已接近上限，请减少待售装备"}
+	for index in checked.indices:
+		inventory[index] = null
+	add_gold(total)
+	EventBus.inventory_changed.emit()
+	EventBus.trade_done.emit("sell", "", total)
+	return {"ok": true, "count": rows.size(), "gold": total, "reason": ""}
+
+## 货郎在托盘空格足够时整批取出已核对装备；先增暂存计数防止中途自动存档。
+## 托盘最终归属仍由 ShopPanel 负责；调用前须确认交易会话有效且托盘确有空格。
+func take_equipment_for_sale(rows: Array[Dictionary], available_slots: int,
+		allow_risky: bool = false) -> Dictionary:
+	if rows.size() > available_slots:
+		return {"ok": false, "reason": "出售托盘空位不足，请减少勾选"}
+	var checked := validate_equipment_sale(rows, allow_risky)
+	if not bool(checked.get("ok", false)):
+		return checked
+	trade_staged_count += rows.size()
+	for index in checked.indices:
+		inventory[index] = null
+	EventBus.inventory_changed.emit()
+	return {"ok": true, "items": checked.items, "count": rows.size(), "reason": ""}
+
 func inventory_expand() -> Dictionary:
 	var cost := Warehouse.next_cost(inventory_expansions)
 	if cost < 0:
@@ -1257,14 +1331,17 @@ func shop_sell_staged(items: Array) -> Dictionary:
 	var total := 0
 	var n := 0
 	for it in items:
-		if it is Dictionary and Shop.can_sell(it):
-			total += Shop.sell_price(it)
-			n += 1
+		if not it is Dictionary or not Shop.can_sell(it):
+			return {"ok": false, "count": 0, "gold": 0, "reason": "托盘内存在不可出售的物品"}
+		total += Shop.sell_price(it)
+		n += 1
 	if n == 0:
-		return {"count": 0, "gold": 0}
+		return {"ok": false, "count": 0, "gold": 0, "reason": "出售托盘为空"}
+	if total > GOLD_CAP - gold:
+		return {"ok": false, "count": 0, "gold": 0, "reason": "金币已接近上限，请减少待售物品"}
 	var gained := add_gold(total)
 	EventBus.trade_done.emit("sell", "", gained)
-	return {"count": n, "gold": gained}
+	return {"ok": true, "count": n, "gold": gained, "reason": ""}
 
 ## 把暂存装备退回背包（关闭面板未确认 / 点托盘格取回）。会就地移除已退回项。
 ## 返回实际退回件数；背包满的件保留在托盘由调用方提示（不静默丢失，6.4）。

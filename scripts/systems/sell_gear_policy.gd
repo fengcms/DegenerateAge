@@ -46,6 +46,7 @@ static func entry(item: Dictionary, bag_index: int, player_level: int,
 	var automatic := reasons.is_empty() and bool(preview.get("ok", false))
 	return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
 		"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),
+		"player_level": player_level, "preset": preset,
 		"score_delta": float(preview.get("score_delta", 0.0)),
 		"default_selected": automatic, "manual_selectable": sellable and not favorite,
 		"reasons": reasons, "protected_upgrade": stronger}
