@@ -11,38 +11,41 @@ func _ready() -> void:
 	for i in range(4):
 		GameState.inventory[i] = ItemFactory.make_equip_roll("c6_equip_weapon", 51, "epic", rng)
 	var dialogue := preload("res://scenes/ui/BlacksmithPanel.tscn").instantiate()
+	var bag := preload("res://scenes/ui/InventoryPanel.tscn").instantiate()
 	var panel := preload("res://scenes/ui/EquipmentFusionPanel.tscn").instantiate()
 	add_child(dialogue)
+	add_child(bag)
 	add_child(panel)
 	EventBus.blacksmith_panel_requested.emit("铁匠", "试试新服务")
 	dialogue._show_menu()
 	check(dialogue._fusion_buttons.size() == 3 and dialogue._upgrade.visible and dialogue._reforge.visible,
 		"铁匠对话提供三种合成及原有升星、重铸")
+	GameState.settings.uiScale = 2.0
+	dialogue._resize()
+	await get_tree().process_frame
+	check(dialogue._root.size.y <= dialogue._center.size.y + 1.0,
+		"200% 界面倍率下铁匠菜单保持在逻辑视口内")
 	dialogue._open_fusion(EquipmentFusion.GOLD_TO_PURPLE)
 	check(panel.visible and not dialogue.visible, "铁匠菜单可打开四金合紫窗口")
+	check(bag.visible and GameState.npc_dialog_open(), "合成会话并开背包并暂停自动战斗")
 	for i in range(4):
 		panel._pickers[i].select(i + 1)
 		panel._on_item_selected(i + 1, i)
 	check(not panel._confirm.disabled and panel._summary.text.contains("51—60"),
 		"材料选齐显示输出最低档并允许确认")
-	GameState.settings.uiScale = 2.0
 	panel._resize()
 	await get_tree().process_frame
 	panel._resize()
 	check(panel._box.size.x <= panel._center.size.x + 1.0
 		and panel._box.size.y <= panel._center.size.y + 1.0,
 		"200% 界面倍率下合成窗口保持在逻辑视口内")
-	dialogue.set_open(true)
-	dialogue._show_menu()
-	await get_tree().process_frame
-	check(dialogue._root.size.y <= dialogue._center.size.y + 1.0,
-		"200% 界面倍率下铁匠菜单保持在逻辑视口内")
-	dialogue.set_open(false)
 	panel._on_confirm()
 	check(GameState.inventory_used() == 1 and GameState.inventory[0] is Dictionary
 		and String(GameState.inventory[0].get("quality", "")) == "legendary",
 		"点击确认只产一件紫装并消耗四件金装")
 	panel.set_open(false)
+	check(bag.visible and not GameState.npc_dialog_open(), "关闭合成窗保留背包并结束 NPC 会话")
+	bag.set_open(false)
 	GameState.reset_to_defaults()
 	for i in range(4):
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)

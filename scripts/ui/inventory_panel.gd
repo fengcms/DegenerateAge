@@ -38,6 +38,7 @@ var _last_click_index: int = -1
 var _last_click_ms: int = 0
 ## 交易会话（货郎开店中）：与货郎面板并列显示，背包格开放拖出（M1-8 改造）。
 var _trade_active: bool = false
+var _fusion_active: bool = false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -51,17 +52,27 @@ func _ready() -> void:
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
+	EventBus.fusion_mode_changed.connect(_on_fusion_mode_changed)
 	_refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if get_viewport().is_input_handled():
+		return
 	if event.is_action_pressed("panel_inventory"):
 		# 交易会话中 I 键 = 结束整场交易（与货郎面板同步关闭），避免只关一半
 		if _trade_active:
 			EventBus.shop_close_requested.emit()
+		elif _fusion_active:
+			set_open(false)
+			EventBus.equipment_fusion_close_requested.emit()
 		else:
 			set_open(not visible)
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("pause"):
+		if _fusion_active:
+			EventBus.equipment_fusion_close_requested.emit()
+			get_viewport().set_input_as_handled()
+			return
 		if not _center.is_top_window():
 			return
 		if _trade_active:
@@ -99,6 +110,18 @@ func _on_panel_opened(panel_id: String) -> void:
 ## 进入 / 退出交易会话：切换布局、遮罩与背包格的拖出能力。
 func _on_trade_mode_changed(active: bool) -> void:
 	_trade_active = active
+	if active:
+		_apply_trade_layout(true)
+		if not visible:
+			set_open(true)
+	else:
+		_apply_trade_layout(false)
+		if visible:
+			_refresh()
+
+## 合成会话只改变布局与并开状态，材料始终留在背包。
+func _on_fusion_mode_changed(active: bool) -> void:
+	_fusion_active = active
 	if active:
 		_apply_trade_layout(true)
 		if not visible:

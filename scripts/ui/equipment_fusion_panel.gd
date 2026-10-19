@@ -29,6 +29,7 @@ func _ready() -> void:
 	_build()
 	visible = false
 	EventBus.equipment_fusion_panel_requested.connect(_on_requested)
+	EventBus.equipment_fusion_close_requested.connect(func() -> void: set_open(false))
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.inventory_changed.connect(_on_inventory_changed)
@@ -53,9 +54,12 @@ func _on_requested(mode: String) -> void:
 
 ## 开关窗口并同步面板状态；每次打开都从真实背包重建选项。
 func set_open(open: bool) -> void:
+	if not open and not visible:
+		return
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
+		EventBus.fusion_mode_changed.emit(true)
 		_title.text = Localization.tr_key("ui.fusion.gold_title" if _mode == EquipmentFusion.GOLD_TO_PURPLE else
 			"ui.fusion.purple_title" if _mode == EquipmentFusion.PURPLE_TARGET else "ui.fusion.star_title")
 		_hint.text = Localization.tr_key("ui.fusion.gold_hint" if _mode == EquipmentFusion.GOLD_TO_PURPLE else
@@ -66,10 +70,12 @@ func set_open(open: bool) -> void:
 		_refresh_choices()
 		_resize.call_deferred()
 		EventBus.panel_opened.emit(PANEL_ID)
+	else:
+		EventBus.fusion_mode_changed.emit(false)
 
 ## 打开其他互斥 NPC 服务时关闭本窗口。
 func _on_panel_opened(panel_id: String) -> void:
-	if visible and panel_id != PANEL_ID:
+	if visible and not GameState.panels_coexist(panel_id, PANEL_ID):
 		set_open(false)
 
 ## 运行时背包变化使旧快照失效，须由玩家刷新后重新选择。

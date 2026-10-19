@@ -17,6 +17,8 @@ var _drag_offset := Vector2.ZERO
 var _docked := false
 var _dock_left := 0.0
 var _dock_right := 1.0
+var _dock_top := 0.0
+var _dock_bottom := 1.0
 var _floating_position := Vector2.ZERO
 
 func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> void:
@@ -77,7 +79,8 @@ func is_top_window() -> bool:
 			return false
 	return true
 
-func set_docked(active: bool, left: float = 0.0, right: float = 1.0) -> void:
+func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
+		top: float = 0.0, bottom: float = 1.0) -> void:
 	if active:
 		_dragging = false
 	if active and not _docked:
@@ -89,14 +92,17 @@ func set_docked(active: bool, left: float = 0.0, right: float = 1.0) -> void:
 	_docked = active
 	_dock_left = left
 	_dock_right = right
+	_dock_top = top
+	_dock_bottom = bottom
 	_layout()
 
 func _layout() -> void:
 	if owner_panel == null or panel_box == null:
 		return
 	if _docked:
-		position = Vector2(owner_panel.size.x * _dock_left, 0.0)
-		size = Vector2(owner_panel.size.x * (_dock_right - _dock_left), owner_panel.size.y)
+		position = Vector2(owner_panel.size.x * _dock_left, owner_panel.size.y * _dock_top)
+		size = Vector2(owner_panel.size.x * (_dock_right - _dock_left),
+			owner_panel.size.y * (_dock_bottom - _dock_top))
 		fit_content(size, panel_box, content_scroll)
 		return
 	fit_content(owner_panel.size, panel_box, content_scroll)

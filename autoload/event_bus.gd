@@ -83,6 +83,9 @@ signal upgrade_panel_requested()
 signal reforge_panel_requested()
 ## 铁匠三种合成服务共用窗口，mode 为 EquipmentFusion 中的稳定服务 ID。
 signal equipment_fusion_panel_requested(mode: String)
+## 合成工作台与背包的并排会话开关；预选材料不进入背包以外的容器。
+signal fusion_mode_changed(active: bool)
+signal equipment_fusion_close_requested()
 
 # ---- 仓库（M4-3）----
 signal warehouse_panel_requested(npc_name: String)

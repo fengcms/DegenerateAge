@@ -1296,7 +1296,7 @@ func toggle_auto_pickup() -> bool:
 ## 常驻浮窗面板（F-P3-1）：四者可彼此并开，其余面板打开时它们统一关闭。
 const FLOATING_PANEL_IDS := ["inventory", "character", "skill", "mount"]
 ## NPC 会话面板：打开期间暂停自动战斗挂机（普通可并开的信息面板不影响自动决策）。
-const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade", "reforge"]
+const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade", "reforge", "equipment_fusion"]
 ## 真正接管键盘的流程面板；普通信息与 NPC 面板可在操作角色时保持打开。
 const WORLD_INPUT_BLOCKING_PANEL_IDS := ["menu", "settings", "save", "death", "equipment_confirm"]
 
@@ -1323,6 +1323,9 @@ func world_controls_blocked() -> bool:
 ## 仅「同一面板」或「同属常驻浮窗组」可并开；货郎交易会话中的背包例外由背包 / 货郎面板自身处理。
 func panels_coexist(opened_id: String, self_id: String) -> bool:
 	if opened_id == self_id:
+		return true
+	if (opened_id == "equipment_fusion" and self_id == "inventory") \
+			or (opened_id == "inventory" and self_id == "equipment_fusion"):
 		return true
 	return opened_id in FLOATING_PANEL_IDS and self_id in FLOATING_PANEL_IDS
 
