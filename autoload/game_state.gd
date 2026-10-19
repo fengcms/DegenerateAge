@@ -869,6 +869,59 @@ func _after_equip_change() -> void:
 
 # ---- 装备升星（M4-1）----
 
+## 按背包装备快照执行三种铁匠合成；任何校验失败都不改背包或金币。
+## UI 传入打开预览时的完整实例字典，确认时按 instanceId 重定位，避免整理后误耗。
+func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",
+		rng: RandomNumberGenerator = null) -> Dictionary:
+	var needed := 2 if mode == EquipmentFusion.STAR_TRANSFER else 4
+	if selected.size() != needed or mode not in [EquipmentFusion.GOLD_TO_PURPLE,
+			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.STAR_TRANSFER]:
+		return {"ok": false, "reason": "请选择正确数量的装备"}
+	var by_id := {}
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary:
+			by_id[String(inventory[i].get("instanceId", ""))] = i
+	var indices: Array[int] = []
+	var items: Array[Dictionary] = []
+	var seen := {}
+	for snapshot in selected:
+		var id := String(snapshot.get("instanceId", ""))
+		if id.is_empty() or seen.has(id) or not by_id.has(id):
+			return {"ok": false, "reason": "材料已变化，请重新选择"}
+		seen[id] = true
+		var index: int = by_id[id]
+		if inventory[index] != snapshot:
+			return {"ok": false, "reason": "材料已变化，请重新选择"}
+		indices.append(index)
+		items.append(inventory[index])
+	var plan := EquipmentFusion.plan_transfer(items[0], items[1]) if mode == EquipmentFusion.STAR_TRANSFER \
+		else EquipmentFusion.plan_four(items, mode, target_kind)
+	if not bool(plan.get("ok", false)):
+		return plan
+	var cost := int(plan.get("cost", 0))
+	if gold < cost:
+		return {"ok": false, "reason": "金币不足：需要 %d 金币" % cost}
+	var output_kind := String(plan.get("target_kind", ""))
+	if mode == EquipmentFusion.GOLD_TO_PURPLE:
+		var kinds := Equipment.slot_kinds()
+		output_kind = kinds[(rng.randi_range(0, kinds.size() - 1) if rng != null else randi_range(0, kinds.size() - 1))]
+	var output := EquipmentFusion.make_output(int(plan.tier), output_kind, rng)
+	if output.is_empty():
+		return {"ok": false, "reason": "目标装备生成失败，未消耗材料"}
+	if mode == EquipmentFusion.STAR_TRANSFER:
+		output.star = Upgrade.max_star()
+	if not SaveManager._valid_item(output):
+		return {"ok": false, "reason": "目标装备校验失败，未消耗材料"}
+	var output_index := indices[0]
+	for index in indices:
+		inventory[index] = null
+	inventory[output_index] = output
+	if cost > 0:
+		add_gold(-cost)
+	EventBus.inventory_changed.emit()
+	EventBus.trade_done.emit("forge", String(output.get("itemId", "")), cost)
+	return {"ok": true, "item": output, "index": output_index, "cost": cost, "reason": ""}
+
 ## source = "bag" / "worn"；key 是背包下标或装备槽 id。
 ## expected_id 防止选择后背包整理、穿脱导致错误实例被扣费。
 func upgrade_equipment(source: String, key: Variant, expected_id: String,
