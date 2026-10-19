@@ -1,0 +1,5435 @@
+{
+	"activeMount": "",
+	"currentMap": "c7_arena",
+	"equipment": {
+		"armor": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 57.0
+				},
+				{
+					"stat": "def",
+					"value": 61.0
+				},
+				{
+					"stat": "mp",
+					"value": 168.0
+				},
+				{
+					"stat": "hp",
+					"value": 233.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_2763874735c62ef5bf869af54886d2e9",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 73.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 102.0,
+				"hp": 282.0
+			},
+			"requiredLevel": 73.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracelet_1": {
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 294.0
+				},
+				{
+					"stat": "def",
+					"value": 135.0
+				},
+				{
+					"stat": "mp",
+					"value": 286.0
+				},
+				{
+					"stat": "atk",
+					"value": 112.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_5937f481d398d78c26678b77a6794c4e",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 88.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 89.0
+			},
+			"requiredLevel": 88.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracelet_2": {
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 136.0
+				},
+				{
+					"stat": "mp",
+					"value": 341.0
+				},
+				{
+					"stat": "atk",
+					"value": 76.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_f6fe459e65f1a055e7e6b2ee01ed8198",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 88.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.039
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 89.0
+			},
+			"requiredLevel": 88.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracer_1": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 112.0
+				},
+				{
+					"stat": "hp",
+					"value": 287.0
+				},
+				{
+					"stat": "atk",
+					"value": 47.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_564c8af80040637e960d08ebeb66ff44",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 75.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.022
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 51.0
+			},
+			"requiredLevel": 75.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"bracer_2": {
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 329.0
+				},
+				{
+					"stat": "atk",
+					"value": 116.0
+				},
+				{
+					"stat": "mp",
+					"value": 186.0
+				},
+				{
+					"stat": "def",
+					"value": 75.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_8adea5286edcbcae5fdcc0316af7c4a6",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 85.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 79.0
+			},
+			"requiredLevel": 85.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"helmet": {
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 57.0
+				},
+				{
+					"stat": "atk",
+					"value": 53.0
+				},
+				{
+					"stat": "hp",
+					"value": 252.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_5d7e962061b9af5ab256e970c9daa329",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 74.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.032
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 59.0
+			},
+			"requiredLevel": 74.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"knee_1": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 54.0
+				},
+				{
+					"stat": "def",
+					"value": 46.0
+				},
+				{
+					"stat": "hp",
+					"value": 209.0
+				},
+				{
+					"stat": "mp",
+					"value": 119.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_d5a64ebb5969b53c160de5031ecc4fd4",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 76.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 53.0
+			},
+			"requiredLevel": 76.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"knee_2": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 33.0
+				},
+				{
+					"stat": "def",
+					"value": 25.0
+				},
+				{
+					"stat": "hp",
+					"value": 146.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_3e4b1dfb5c9e540ba2c07d1d224af357",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 66.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.065
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 31.0
+			},
+			"requiredLevel": 66.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"necklace": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 96.0
+				},
+				{
+					"stat": "def",
+					"value": 104.0
+				},
+				{
+					"stat": "hp",
+					"value": 493.0
+				},
+				{
+					"stat": "mp",
+					"value": 381.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_1d40532f8a1977971b70ace621c1e0ac",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 90.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"hp": 584.0
+			},
+			"requiredLevel": 90.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"ring_1": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 312.0
+				},
+				{
+					"stat": "def",
+					"value": 119.0
+				},
+				{
+					"stat": "atk",
+					"value": 140.0
+				},
+				{
+					"stat": "hp",
+					"value": 246.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_d3b4800706b6cfd18943bc149337c833",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 89.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 67.0,
+				"mp": 179.0
+			},
+			"requiredLevel": 89.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"ring_2": {
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 109.0
+				},
+				{
+					"stat": "atk",
+					"value": 114.0
+				},
+				{
+					"stat": "hp",
+					"value": 283.0
+				},
+				{
+					"stat": "mp",
+					"value": 154.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_29bdf47a7d55bb6240d503029b8c736c",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 89.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 67.0,
+				"mp": 179.0
+			},
+			"requiredLevel": 89.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"shield": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 181.0
+				},
+				{
+					"stat": "hp",
+					"value": 427.0
+				},
+				{
+					"stat": "def",
+					"value": 58.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_3f66bf43ee7c93e42aae2a201efc1b62",
+			"itemId": "c6_equip_shield",
+			"kind": "equip",
+			"level": 87.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.04
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 208.0,
+				"hp": 313.0
+			},
+			"requiredLevel": 87.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"shoes": {
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 51.0
+				},
+				{
+					"stat": "hp",
+					"value": 124.0
+				},
+				{
+					"stat": "def",
+					"value": 65.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_89d05f4dab605895180cd2e233567782",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 72.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.034
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 44.0,
+				"mp": 107.0
+			},
+			"requiredLevel": 72.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		"weapon": {
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 117.0
+				},
+				{
+					"stat": "def",
+					"value": 109.0
+				},
+				{
+					"stat": "atk",
+					"value": 68.0
+				},
+				{
+					"stat": "hp",
+					"value": 269.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_36111d7fdb2d3abb3e91d57ce8e3e8a1",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 81.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 277.0
+			},
+			"requiredLevel": 81.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		}
+	},
+	"exploredMaps": {
+		"c2_well_town": [
+			34.0,
+			35.0,
+			52.0,
+			53.0,
+			54.0,
+			55.0,
+			56.0,
+			57.0,
+			58.0,
+			59.0,
+			60.0,
+			61.0,
+			72.0,
+			73.0,
+			74.0,
+			75.0,
+			76.0,
+			77.0,
+			78.0,
+			79.0,
+			80.0,
+			81.0,
+			82.0,
+			83.0,
+			84.0,
+			85.0,
+			86.0,
+			87.0,
+			96.0,
+			97.0,
+			98.0,
+			99.0,
+			100.0,
+			101.0,
+			102.0,
+			103.0,
+			104.0,
+			105.0,
+			106.0,
+			107.0,
+			108.0,
+			109.0,
+			110.0,
+			111.0,
+			112.0,
+			113.0,
+			115.0,
+			120.0,
+			121.0,
+			122.0,
+			123.0,
+			124.0,
+			125.0,
+			126.0,
+			127.0,
+			128.0,
+			129.0,
+			130.0,
+			131.0,
+			132.0,
+			133.0,
+			134.0,
+			135.0,
+			136.0,
+			137.0,
+			138.0,
+			139.0,
+			140.0,
+			141.0,
+			144.0,
+			145.0,
+			146.0,
+			147.0,
+			148.0,
+			149.0,
+			150.0,
+			151.0,
+			152.0,
+			153.0,
+			154.0,
+			155.0,
+			156.0,
+			157.0,
+			158.0,
+			159.0,
+			160.0,
+			161.0,
+			162.0,
+			163.0,
+			164.0,
+			165.0,
+			166.0,
+			168.0,
+			169.0,
+			170.0,
+			171.0,
+			172.0,
+			173.0,
+			180.0,
+			181.0,
+			182.0,
+			183.0,
+			184.0,
+			185.0,
+			186.0,
+			187.0,
+			188.0,
+			189.0,
+			190.0,
+			192.0,
+			193.0,
+			194.0,
+			195.0,
+			206.0,
+			207.0,
+			208.0,
+			209.0,
+			210.0,
+			211.0,
+			212.0,
+			213.0,
+			233.0,
+			234.0,
+			235.0,
+			236.0
+		],
+		"c3_map00": [
+			11.0,
+			12.0,
+			13.0,
+			14.0,
+			15.0,
+			34.0,
+			35.0,
+			36.0,
+			37.0,
+			38.0,
+			39.0,
+			52.0,
+			53.0,
+			54.0,
+			55.0,
+			56.0,
+			57.0,
+			58.0,
+			59.0,
+			60.0,
+			61.0,
+			62.0,
+			63.0,
+			64.0,
+			75.0,
+			76.0,
+			77.0,
+			78.0,
+			79.0,
+			80.0,
+			81.0,
+			82.0,
+			83.0,
+			84.0,
+			85.0,
+			86.0,
+			87.0,
+			97.0,
+			98.0,
+			99.0,
+			100.0,
+			101.0,
+			102.0,
+			103.0,
+			104.0,
+			105.0,
+			106.0,
+			107.0,
+			108.0,
+			109.0,
+			110.0,
+			111.0,
+			120.0,
+			121.0,
+			122.0,
+			123.0,
+			124.0,
+			125.0,
+			126.0,
+			127.0,
+			128.0,
+			129.0,
+			130.0,
+			131.0,
+			132.0,
+			133.0,
+			134.0,
+			144.0,
+			145.0,
+			146.0,
+			147.0,
+			148.0,
+			149.0,
+			150.0,
+			151.0,
+			152.0,
+			153.0,
+			154.0,
+			155.0,
+			156.0,
+			168.0,
+			169.0,
+			170.0,
+			171.0,
+			172.0,
+			173.0,
+			177.0,
+			192.0,
+			193.0,
+			194.0,
+			195.0,
+			196.0,
+			217.0,
+			218.0,
+			219.0
+		],
+		"c4_map00": [
+			6.0,
+			7.0,
+			8.0,
+			9.0,
+			10.0,
+			11.0,
+			12.0,
+			13.0,
+			14.0,
+			30.0,
+			31.0,
+			32.0,
+			33.0,
+			34.0,
+			35.0,
+			36.0,
+			37.0,
+			38.0,
+			53.0,
+			54.0,
+			55.0,
+			56.0,
+			57.0,
+			58.0,
+			59.0,
+			60.0,
+			61.0,
+			62.0,
+			74.0,
+			75.0,
+			76.0,
+			77.0,
+			78.0,
+			79.0,
+			80.0,
+			81.0,
+			82.0,
+			96.0,
+			97.0,
+			98.0,
+			99.0,
+			100.0,
+			101.0,
+			102.0,
+			103.0,
+			104.0,
+			105.0,
+			106.0,
+			120.0,
+			121.0,
+			122.0,
+			123.0,
+			124.0,
+			125.0,
+			126.0,
+			127.0,
+			128.0,
+			129.0,
+			144.0,
+			145.0,
+			146.0,
+			147.0,
+			148.0,
+			149.0,
+			150.0,
+			151.0,
+			152.0,
+			168.0,
+			169.0,
+			170.0,
+			171.0,
+			172.0,
+			173.0,
+			174.0,
+			175.0,
+			192.0,
+			193.0,
+			194.0,
+			195.0,
+			196.0,
+			197.0,
+			198.0
+		],
+		"c5_map00": [
+			7.0,
+			8.0,
+			9.0,
+			10.0,
+			11.0,
+			12.0,
+			13.0,
+			14.0,
+			15.0,
+			31.0,
+			32.0,
+			33.0,
+			34.0,
+			35.0,
+			36.0,
+			37.0,
+			38.0,
+			39.0,
+			54.0,
+			55.0,
+			56.0,
+			57.0,
+			58.0,
+			59.0,
+			60.0,
+			61.0,
+			62.0,
+			63.0,
+			78.0,
+			79.0,
+			80.0,
+			81.0,
+			82.0,
+			83.0,
+			97.0,
+			98.0,
+			99.0,
+			100.0,
+			101.0,
+			102.0,
+			103.0,
+			104.0,
+			105.0,
+			106.0,
+			120.0,
+			121.0,
+			122.0,
+			123.0,
+			124.0,
+			125.0,
+			126.0,
+			127.0,
+			128.0,
+			129.0,
+			130.0,
+			144.0,
+			145.0,
+			146.0,
+			147.0,
+			148.0,
+			149.0,
+			150.0,
+			151.0,
+			152.0,
+			153.0,
+			168.0,
+			169.0,
+			170.0,
+			171.0,
+			172.0,
+			173.0,
+			174.0,
+			175.0,
+			176.0,
+			192.0,
+			193.0,
+			194.0,
+			195.0,
+			196.0,
+			197.0,
+			198.0,
+			199.0,
+			217.0,
+			218.0,
+			219.0,
+			220.0,
+			221.0,
+			222.0
+		],
+		"c6_map00": [
+			3.0,
+			4.0,
+			5.0,
+			6.0,
+			7.0,
+			8.0,
+			9.0,
+			28.0,
+			29.0,
+			30.0,
+			31.0,
+			32.0,
+			33.0,
+			34.0,
+			52.0,
+			53.0,
+			54.0,
+			55.0,
+			56.0,
+			57.0,
+			58.0,
+			59.0,
+			60.0,
+			77.0,
+			78.0,
+			79.0,
+			80.0,
+			81.0,
+			82.0,
+			83.0,
+			84.0,
+			85.0,
+			97.0,
+			102.0,
+			103.0,
+			104.0,
+			105.0,
+			106.0,
+			107.0,
+			108.0,
+			109.0,
+			110.0,
+			120.0,
+			121.0,
+			122.0,
+			123.0,
+			126.0,
+			127.0,
+			128.0,
+			129.0,
+			130.0,
+			131.0,
+			132.0,
+			133.0,
+			134.0,
+			144.0,
+			145.0,
+			146.0,
+			147.0,
+			148.0,
+			149.0,
+			150.0,
+			151.0,
+			152.0,
+			153.0,
+			154.0,
+			155.0,
+			156.0,
+			157.0,
+			158.0,
+			168.0,
+			169.0,
+			170.0,
+			171.0,
+			172.0,
+			173.0,
+			174.0,
+			175.0,
+			176.0,
+			177.0,
+			178.0,
+			179.0,
+			180.0,
+			181.0,
+			182.0,
+			192.0,
+			193.0,
+			194.0,
+			195.0,
+			196.0,
+			197.0,
+			198.0,
+			199.0,
+			200.0,
+			201.0,
+			202.0,
+			203.0,
+			204.0,
+			205.0,
+			206.0,
+			216.0,
+			217.0,
+			218.0,
+			219.0,
+			220.0,
+			221.0,
+			222.0,
+			223.0,
+			224.0,
+			225.0,
+			226.0,
+			227.0,
+			228.0,
+			229.0,
+			230.0,
+			243.0,
+			244.0,
+			245.0,
+			246.0,
+			247.0,
+			248.0,
+			249.0,
+			250.0,
+			251.0,
+			252.0,
+			253.0,
+			254.0,
+			270.0,
+			271.0,
+			272.0,
+			273.0,
+			274.0,
+			275.0,
+			276.0,
+			277.0,
+			278.0,
+			297.0,
+			298.0,
+			299.0,
+			300.0,
+			301.0,
+			302.0,
+			321.0,
+			322.0,
+			323.0,
+			324.0,
+			325.0,
+			326.0
+		],
+		"c7_arena": [
+			12.0,
+			13.0,
+			14.0,
+			15.0,
+			16.0,
+			17.0,
+			18.0,
+			19.0,
+			20.0,
+			21.0,
+			22.0,
+			23.0,
+			24.0,
+			25.0,
+			26.0,
+			49.0,
+			50.0,
+			51.0,
+			52.0,
+			53.0,
+			54.0,
+			55.0,
+			56.0,
+			57.0,
+			58.0,
+			59.0,
+			60.0,
+			61.0,
+			62.0,
+			63.0,
+			64.0,
+			65.0,
+			66.0,
+			67.0,
+			68.0,
+			87.0,
+			88.0,
+			89.0,
+			90.0,
+			91.0,
+			92.0,
+			93.0,
+			94.0,
+			95.0,
+			96.0,
+			97.0,
+			98.0,
+			99.0,
+			100.0,
+			101.0,
+			102.0,
+			103.0,
+			104.0,
+			105.0,
+			106.0,
+			107.0,
+			108.0,
+			109.0,
+			110.0,
+			111.0,
+			112.0,
+			125.0,
+			126.0,
+			127.0,
+			128.0,
+			129.0,
+			130.0,
+			131.0,
+			132.0,
+			133.0,
+			134.0,
+			135.0,
+			136.0,
+			137.0,
+			138.0,
+			139.0,
+			140.0,
+			141.0,
+			142.0,
+			143.0,
+			144.0,
+			145.0,
+			146.0,
+			147.0,
+			148.0,
+			149.0,
+			150.0,
+			151.0,
+			152.0,
+			153.0,
+			154.0,
+			164.0,
+			165.0,
+			166.0,
+			167.0,
+			168.0,
+			169.0,
+			170.0,
+			171.0,
+			172.0,
+			173.0,
+			174.0,
+			175.0,
+			176.0,
+			177.0,
+			178.0,
+			179.0,
+			180.0,
+			181.0,
+			182.0,
+			183.0,
+			184.0,
+			185.0,
+			186.0,
+			187.0,
+			188.0,
+			189.0,
+			190.0,
+			191.0,
+			192.0,
+			193.0,
+			194.0,
+			195.0,
+			203.0,
+			204.0,
+			205.0,
+			206.0,
+			207.0,
+			208.0,
+			209.0,
+			210.0,
+			211.0,
+			212.0,
+			213.0,
+			214.0,
+			215.0,
+			216.0,
+			217.0,
+			218.0,
+			219.0,
+			220.0,
+			221.0,
+			222.0,
+			223.0,
+			224.0,
+			225.0,
+			226.0,
+			227.0,
+			228.0,
+			229.0,
+			230.0,
+			231.0,
+			232.0,
+			233.0,
+			234.0,
+			235.0,
+			236.0,
+			242.0,
+			243.0,
+			244.0,
+			245.0,
+			246.0,
+			247.0,
+			248.0,
+			249.0,
+			250.0,
+			251.0,
+			252.0,
+			253.0,
+			254.0,
+			255.0,
+			256.0,
+			257.0,
+			258.0,
+			259.0,
+			260.0,
+			261.0,
+			262.0,
+			263.0,
+			264.0,
+			265.0,
+			266.0,
+			267.0,
+			268.0,
+			269.0,
+			270.0,
+			271.0,
+			272.0,
+			273.0,
+			274.0,
+			275.0,
+			276.0,
+			277.0,
+			282.0,
+			283.0,
+			284.0,
+			285.0,
+			286.0,
+			287.0,
+			288.0,
+			289.0,
+			290.0,
+			291.0,
+			292.0,
+			293.0,
+			294.0,
+			295.0,
+			296.0,
+			297.0,
+			298.0,
+			299.0,
+			300.0,
+			301.0,
+			302.0,
+			303.0,
+			304.0,
+			305.0,
+			306.0,
+			307.0,
+			308.0,
+			309.0,
+			310.0,
+			311.0,
+			312.0,
+			313.0,
+			314.0,
+			315.0,
+			316.0,
+			317.0,
+			318.0,
+			321.0,
+			322.0,
+			323.0,
+			324.0,
+			325.0,
+			326.0,
+			327.0,
+			328.0,
+			329.0,
+			330.0,
+			331.0,
+			332.0,
+			333.0,
+			334.0,
+			335.0,
+			336.0,
+			337.0,
+			338.0,
+			339.0,
+			340.0,
+			341.0,
+			342.0,
+			343.0,
+			344.0,
+			345.0,
+			346.0,
+			347.0,
+			348.0,
+			349.0,
+			350.0,
+			351.0,
+			352.0,
+			353.0,
+			354.0,
+			355.0,
+			356.0,
+			357.0,
+			358.0,
+			359.0,
+			360.0,
+			361.0,
+			362.0,
+			363.0,
+			364.0,
+			365.0,
+			366.0,
+			367.0,
+			368.0,
+			369.0,
+			370.0,
+			371.0,
+			372.0,
+			373.0,
+			374.0,
+			375.0,
+			376.0,
+			377.0,
+			378.0,
+			379.0,
+			380.0,
+			381.0,
+			382.0,
+			383.0,
+			384.0,
+			385.0,
+			386.0,
+			387.0,
+			388.0,
+			389.0,
+			390.0,
+			391.0,
+			392.0,
+			393.0,
+			394.0,
+			395.0,
+			396.0,
+			397.0,
+			398.0,
+			399.0,
+			400.0,
+			401.0,
+			402.0,
+			403.0,
+			404.0,
+			405.0,
+			406.0,
+			407.0,
+			408.0,
+			409.0,
+			410.0,
+			411.0,
+			412.0,
+			413.0,
+			414.0,
+			415.0,
+			416.0,
+			417.0,
+			418.0,
+			419.0,
+			420.0,
+			421.0,
+			422.0,
+			423.0,
+			424.0,
+			425.0,
+			426.0,
+			427.0,
+			428.0,
+			429.0,
+			430.0,
+			431.0,
+			432.0,
+			433.0,
+			434.0,
+			435.0,
+			436.0,
+			437.0,
+			438.0,
+			439.0,
+			440.0,
+			441.0,
+			442.0,
+			443.0,
+			444.0,
+			445.0,
+			446.0,
+			447.0,
+			448.0,
+			449.0,
+			450.0,
+			451.0,
+			452.0,
+			453.0,
+			454.0,
+			455.0,
+			456.0,
+			457.0,
+			462.0,
+			463.0,
+			464.0,
+			465.0,
+			466.0,
+			467.0,
+			468.0,
+			469.0,
+			470.0,
+			471.0,
+			472.0,
+			473.0,
+			474.0,
+			475.0,
+			476.0,
+			477.0,
+			478.0,
+			479.0,
+			480.0,
+			481.0,
+			482.0,
+			483.0,
+			484.0,
+			485.0,
+			486.0,
+			487.0,
+			488.0,
+			489.0,
+			490.0,
+			491.0,
+			492.0,
+			493.0,
+			494.0,
+			495.0,
+			496.0,
+			497.0,
+			498.0,
+			499.0,
+			500.0,
+			501.0,
+			502.0,
+			503.0,
+			504.0,
+			505.0,
+			506.0,
+			507.0,
+			508.0,
+			509.0,
+			510.0,
+			511.0,
+			512.0,
+			513.0,
+			514.0,
+			515.0,
+			516.0,
+			517.0,
+			518.0,
+			519.0,
+			520.0,
+			521.0,
+			522.0,
+			523.0,
+			524.0,
+			525.0,
+			526.0,
+			527.0,
+			528.0,
+			529.0,
+			530.0,
+			531.0,
+			532.0,
+			533.0,
+			534.0,
+			535.0,
+			536.0,
+			537.0,
+			538.0,
+			539.0,
+			540.0,
+			541.0,
+			542.0,
+			543.0,
+			544.0,
+			545.0,
+			546.0,
+			547.0,
+			548.0,
+			549.0,
+			550.0,
+			551.0,
+			552.0,
+			553.0,
+			554.0,
+			555.0,
+			556.0,
+			557.0,
+			558.0,
+			559.0,
+			560.0,
+			561.0,
+			562.0,
+			563.0,
+			564.0,
+			565.0,
+			566.0,
+			567.0,
+			568.0,
+			569.0,
+			570.0,
+			571.0,
+			572.0,
+			573.0,
+			574.0,
+			575.0,
+			576.0,
+			577.0,
+			578.0,
+			579.0,
+			580.0,
+			581.0,
+			582.0,
+			583.0,
+			584.0,
+			585.0,
+			586.0,
+			587.0,
+			588.0,
+			589.0,
+			590.0,
+			591.0,
+			592.0,
+			593.0,
+			594.0,
+			595.0,
+			596.0,
+			597.0,
+			598.0,
+			601.0,
+			602.0,
+			603.0,
+			604.0,
+			605.0,
+			606.0,
+			607.0,
+			608.0,
+			609.0,
+			610.0,
+			611.0,
+			612.0,
+			613.0,
+			614.0,
+			615.0,
+			616.0,
+			617.0,
+			618.0,
+			619.0,
+			620.0,
+			621.0,
+			622.0,
+			623.0,
+			624.0,
+			625.0,
+			626.0,
+			627.0,
+			628.0,
+			629.0,
+			630.0,
+			631.0,
+			632.0,
+			633.0,
+			634.0,
+			635.0,
+			636.0,
+			637.0,
+			638.0,
+			642.0,
+			643.0,
+			644.0,
+			645.0,
+			646.0,
+			647.0,
+			648.0,
+			649.0,
+			650.0,
+			651.0,
+			652.0,
+			653.0,
+			654.0,
+			655.0,
+			656.0,
+			657.0,
+			658.0,
+			659.0,
+			660.0,
+			661.0,
+			662.0,
+			663.0,
+			664.0,
+			665.0,
+			666.0,
+			667.0,
+			668.0,
+			669.0,
+			670.0,
+			671.0,
+			672.0,
+			673.0,
+			674.0,
+			675.0,
+			676.0,
+			684.0,
+			685.0,
+			686.0,
+			687.0,
+			688.0,
+			689.0,
+			690.0,
+			691.0,
+			692.0,
+			693.0,
+			694.0,
+			695.0,
+			696.0,
+			697.0,
+			698.0,
+			699.0,
+			700.0,
+			701.0,
+			702.0,
+			703.0,
+			704.0,
+			705.0,
+			706.0,
+			707.0,
+			708.0,
+			709.0,
+			710.0,
+			711.0,
+			712.0,
+			713.0,
+			714.0,
+			715.0,
+			724.0,
+			725.0,
+			726.0,
+			727.0,
+			728.0,
+			729.0,
+			730.0,
+			731.0,
+			732.0,
+			733.0,
+			734.0,
+			735.0,
+			736.0,
+			737.0,
+			738.0,
+			739.0,
+			740.0,
+			741.0,
+			742.0,
+			743.0,
+			744.0,
+			745.0,
+			746.0,
+			747.0,
+			748.0,
+			749.0,
+			750.0,
+			751.0,
+			752.0,
+			753.0,
+			754.0,
+			765.0,
+			766.0,
+			767.0,
+			768.0,
+			769.0,
+			770.0,
+			771.0,
+			772.0,
+			773.0,
+			774.0,
+			775.0,
+			776.0,
+			777.0,
+			778.0,
+			779.0,
+			780.0,
+			781.0,
+			782.0,
+			783.0,
+			784.0,
+			785.0,
+			786.0,
+			787.0,
+			788.0,
+			789.0,
+			790.0,
+			791.0,
+			792.0,
+			793.0,
+			807.0,
+			808.0,
+			809.0,
+			810.0,
+			811.0,
+			812.0,
+			813.0,
+			814.0,
+			815.0,
+			816.0,
+			817.0,
+			818.0,
+			819.0,
+			820.0,
+			821.0,
+			822.0,
+			823.0,
+			824.0,
+			825.0,
+			826.0,
+			827.0,
+			828.0,
+			829.0,
+			830.0,
+			831.0,
+			832.0,
+			851.0,
+			852.0,
+			853.0,
+			854.0,
+			855.0,
+			856.0,
+			857.0,
+			858.0,
+			859.0,
+			860.0,
+			861.0,
+			862.0,
+			863.0,
+			864.0,
+			865.0,
+			866.0,
+			867.0,
+			868.0,
+			869.0
+		],
+		"camp": [
+			321.0,
+			322.0,
+			323.0,
+			348.0,
+			349.0,
+			350.0,
+			351.0,
+			352.0,
+			375.0,
+			376.0,
+			377.0,
+			378.0,
+			379.0,
+			380.0,
+			381.0,
+			404.0,
+			405.0,
+			406.0,
+			407.0,
+			408.0,
+			409.0,
+			410.0,
+			432.0,
+			433.0,
+			434.0,
+			435.0,
+			436.0,
+			437.0,
+			438.0,
+			439.0,
+			461.0,
+			462.0,
+			463.0,
+			464.0,
+			465.0,
+			466.0,
+			467.0,
+			490.0,
+			491.0,
+			492.0,
+			493.0,
+			494.0,
+			495.0,
+			496.0,
+			519.0,
+			520.0,
+			521.0,
+			522.0,
+			523.0,
+			524.0,
+			525.0,
+			548.0,
+			549.0,
+			550.0,
+			551.0,
+			552.0,
+			553.0,
+			554.0,
+			577.0,
+			578.0,
+			579.0,
+			580.0,
+			581.0,
+			582.0,
+			606.0,
+			607.0,
+			608.0,
+			609.0,
+			610.0,
+			635.0,
+			636.0,
+			637.0
+		]
+	},
+	"firstClear": {
+		"boss_corrupted_beast": true,
+		"c2_boss_hundred_arm_extractor": true,
+		"c2_boss_iron_foreman": true,
+		"c2_boss_slag_devourer": true,
+		"c3_boss01": true,
+		"c3_boss02": true,
+		"c3_boss03": true,
+		"c4_boss01": true,
+		"c4_boss02": true,
+		"c4_boss03": true,
+		"c5_boss01": true,
+		"c5_boss02": true,
+		"c5_boss03": true,
+		"c5_boss04": true,
+		"c6_boss01": true,
+		"c6_boss02": true,
+		"c6_boss03": true
+	},
+	"gold": 965295257.0,
+	"hotbar": [
+		{
+			"id": "red",
+			"kind": "auto_potion"
+		},
+		{
+			"id": "blue",
+			"kind": "auto_potion"
+		},
+		{
+			"id": "basic_slash",
+			"kind": "skill"
+		},
+		{
+			"id": "earth_cleave",
+			"kind": "skill"
+		},
+		{
+			"id": "battle_focus",
+			"kind": "skill"
+		},
+		{
+			"id": "battle_focus",
+			"kind": "skill"
+		},
+		{
+			"id": "armor_break",
+			"kind": "skill"
+		},
+		{
+			"id": "spirit_storm",
+			"kind": "skill"
+		},
+		null,
+		null,
+		{
+			"id": "misc_random_ticket",
+			"kind": "item"
+		},
+		{
+			"id": "misc_town_scroll",
+			"kind": "item"
+		}
+	],
+	"inventory": [
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 33.0
+				},
+				{
+					"stat": "atk",
+					"value": 25.0
+				},
+				{
+					"stat": "hp",
+					"value": 115.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_e393c9a79682fada82f111152deb0f37",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 63.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.072
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 54.0,
+				"hp": 150.0
+			},
+			"requiredLevel": 63.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 181.0
+				},
+				{
+					"stat": "atk",
+					"value": 88.0
+				},
+				{
+					"stat": "hp",
+					"value": 231.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_0a719beb026943357546ff960cd97020",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 83.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.046
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 161.0,
+				"hp": 443.0
+			},
+			"requiredLevel": 83.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 282.0
+				},
+				{
+					"stat": "atk",
+					"value": 86.0
+				},
+				{
+					"stat": "hp",
+					"value": 226.0
+				},
+				{
+					"stat": "def",
+					"value": 86.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_03e9a5e06bf6c9b5727854a9f08baace",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 83.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 161.0,
+				"hp": 443.0
+			},
+			"requiredLevel": 83.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 339.0
+				},
+				{
+					"stat": "def",
+					"value": 127.0
+				},
+				{
+					"stat": "mp",
+					"value": 301.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_82222347d0c2aa0286edf019af2c44bd",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 93.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 237.0,
+				"hp": 652.0
+			},
+			"requiredLevel": 93.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 99.0
+				},
+				{
+					"stat": "atk",
+					"value": 126.0
+				},
+				{
+					"stat": "hp",
+					"value": 671.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_22889309618cce0add63de1630297a9c",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 93.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 237.0,
+				"hp": 652.0
+			},
+			"requiredLevel": 93.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 311.0
+				},
+				{
+					"stat": "atk",
+					"value": 144.0
+				},
+				{
+					"stat": "hp",
+					"value": 290.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_7f0c34be9aecd40244f73f4bf6964558",
+			"itemId": "c6_equip_armor",
+			"kind": "equip",
+			"level": 93.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 237.0,
+				"hp": 652.0
+			},
+			"requiredLevel": 93.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 215.0
+				},
+				{
+					"stat": "mp",
+					"value": 106.0
+				},
+				{
+					"stat": "def",
+					"value": 28.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_cc85e3bffe1cb9671c986bf73d2a0346",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 68.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.059
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 35.0
+			},
+			"requiredLevel": 68.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 104.0
+				},
+				{
+					"stat": "atk",
+					"value": 186.0
+				},
+				{
+					"stat": "hp",
+					"value": 736.0
+				},
+				{
+					"stat": "mp",
+					"value": 507.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_b4a91891aa15333a519efd2c84f2ca7f",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 98.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 127.0
+			},
+			"requiredLevel": 98.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 170.0
+				},
+				{
+					"stat": "def",
+					"value": 51.0
+				},
+				{
+					"stat": "atk",
+					"value": 39.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_b6e6889ebd3199e1c84216428c9339e2",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 68.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 35.0
+			},
+			"requiredLevel": 68.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 497.0
+				},
+				{
+					"stat": "hp",
+					"value": 470.0
+				},
+				{
+					"stat": "def",
+					"value": 178.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_0a81aea5eabf80840f0758b2db6325f2",
+			"itemId": "c6_equip_bracelet",
+			"kind": "equip",
+			"level": 98.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 127.0
+			},
+			"requiredLevel": 98.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 113.0
+				},
+				{
+					"stat": "atk",
+					"value": 44.0
+				},
+				{
+					"stat": "hp",
+					"value": 168.0
+				},
+				{
+					"stat": "def",
+					"value": 43.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_cf115d7df2891ae9e30ffa6fbc2707b4",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 65.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 29.0
+			},
+			"requiredLevel": 65.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 77.0
+				},
+				{
+					"stat": "hp",
+					"value": 464.0
+				},
+				{
+					"stat": "def",
+					"value": 111.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_d267cdf8a700eccef1c63f1cb3e742fc",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 85.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 79.0
+			},
+			"requiredLevel": 85.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 286.0
+				},
+				{
+					"stat": "def",
+					"value": 176.0
+				},
+				{
+					"stat": "hp",
+					"value": 732.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_a1cf6f22102c52232a52957a78c25de6",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 143.0
+				},
+				{
+					"stat": "hp",
+					"value": 332.0
+				},
+				{
+					"stat": "atk",
+					"value": 168.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_65e046953d1ab372073ed9b1b80ba2c9",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 435.0
+				},
+				{
+					"stat": "def",
+					"value": 111.0
+				},
+				{
+					"stat": "mp",
+					"value": 249.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_804b6d96485c953a2ccb5452f5a57973",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 296.0
+				},
+				{
+					"stat": "hp",
+					"value": 394.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_bb59f946eb710e4cc06a1dcef4c418d1",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 143.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_e4b1de11cb9e4e02c9b71e84bde8c8b7",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.048
+				}
+			],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 718.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_9d5cf40d135459de3e7e48f5db34da75",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.031
+				}
+			],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 657.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_49b8c32ef7a7f345491d07caf03de594",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "uncommon",
+			"qualityMultiplierSnapshot": 1.2,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 164.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_ca356f8e0b9f557f3fab6d106afe0686",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "uncommon",
+			"qualityMultiplierSnapshot": 1.2,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 170.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_287353a35c6ab74c0a3b79c0e4c7dcb7",
+			"itemId": "c6_equip_bracer",
+			"kind": "equip",
+			"level": 95.0,
+			"pctAttrs": [],
+			"quality": "uncommon",
+			"qualityMultiplierSnapshot": 1.2,
+			"rawBaseAttrs": {
+				"def": 115.0
+			},
+			"requiredLevel": 95.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 237.0
+				},
+				{
+					"stat": "atk",
+					"value": 122.0
+				},
+				{
+					"stat": "def",
+					"value": 140.0
+				},
+				{
+					"stat": "hp",
+					"value": 609.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_2f62b3d714023fbc0b52c83882e9f11f",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 94.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 135.0
+			},
+			"requiredLevel": 94.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 78.0
+				},
+				{
+					"stat": "mp",
+					"value": 220.0
+				},
+				{
+					"stat": "def",
+					"value": 160.0
+				},
+				{
+					"stat": "hp",
+					"value": 466.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_cba4f40662245a16f6cb2554bff8be58",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 94.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 135.0
+			},
+			"requiredLevel": 94.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 71.0
+				},
+				{
+					"stat": "atk",
+					"value": 91.0
+				},
+				{
+					"stat": "mp",
+					"value": 264.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_92fc0dfd6e4d531e539b872bfcbc887e",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 84.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 92.0
+			},
+			"requiredLevel": 84.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 362.0
+				},
+				{
+					"stat": "hp",
+					"value": 709.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_ccf5eb38913aca27088a206f4afc425c",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 94.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.049
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 135.0
+			},
+			"requiredLevel": 94.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 298.0
+				},
+				{
+					"stat": "atk",
+					"value": 100.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_3c5c45438e13777e3942e15e8fe556a6",
+			"itemId": "c6_equip_helmet",
+			"kind": "equip",
+			"level": 94.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.022
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 135.0
+			},
+			"requiredLevel": 94.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 136.0
+				},
+				{
+					"stat": "mp",
+					"value": 312.0
+				},
+				{
+					"stat": "atk",
+					"value": 101.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_364a239d32460c9a7ab8c8c0cfa7ab60",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.023
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 462.0
+				},
+				{
+					"stat": "atk",
+					"value": 176.0
+				},
+				{
+					"stat": "hp",
+					"value": 560.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_b689d99a7b670bf995781da062cf7294",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 299.0
+				},
+				{
+					"stat": "atk",
+					"value": 149.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_3a2eef33f44a667c03b159a4650669c4",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.074
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 262.0
+				},
+				{
+					"stat": "atk",
+					"value": 120.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_76389cdc35b681721e8a188184bd90f8",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 86.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 82.0
+			},
+			"requiredLevel": 86.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 99.0
+				},
+				{
+					"stat": "hp",
+					"value": 294.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_7477d004a6c9997d9fdf5e5760353701",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 86.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 82.0
+			},
+			"requiredLevel": 86.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 323.0
+				},
+				{
+					"stat": "atk",
+					"value": 127.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_4ef8ecd4fcd6e130c47e0a4d86c16985",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 86.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 82.0
+			},
+			"requiredLevel": 86.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 197.0
+				},
+				{
+					"stat": "hp",
+					"value": 736.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_1d5a311fb193b361e57a58945aada87f",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 115.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_f8e2c9a58730de59f65bbd9a90636000",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.077
+				}
+			],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 142.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_9eb6b94e6a6668399c5de02fcfbec238",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.052
+				}
+			],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 425.0
+				},
+				{
+					"stat": "mp",
+					"value": 453.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_74938adc6cdd4997f14971f80a7be6ad",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 694.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_f4f8e6de57c8f776aaba36d03d221935",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.035
+				}
+			],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 187.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_ba68905a1156abfa2b82d546f370c8b1",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [],
+			"quality": "uncommon",
+			"qualityMultiplierSnapshot": 1.2,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 181.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_ec656e886726486853c78749c99dfd0c",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [],
+			"quality": "uncommon",
+			"qualityMultiplierSnapshot": 1.2,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 634.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_5f969c06087e8e808641280cdfa10f60",
+			"itemId": "c6_equip_knee",
+			"kind": "equip",
+			"level": 96.0,
+			"pctAttrs": [],
+			"quality": "uncommon",
+			"qualityMultiplierSnapshot": 1.2,
+			"rawBaseAttrs": {
+				"def": 119.0
+			},
+			"requiredLevel": 96.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 31.0
+				},
+				{
+					"stat": "def",
+					"value": 64.0
+				},
+				{
+					"stat": "hp",
+					"value": 175.0
+				},
+				{
+					"stat": "mp",
+					"value": 121.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_676930c3aa192b6a7797419ddd7a5811",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 70.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"hp": 242.0
+			},
+			"requiredLevel": 70.0,
+			"star": 12.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 66.0
+				},
+				{
+					"stat": "hp",
+					"value": 185.0
+				},
+				{
+					"stat": "atk",
+					"value": 55.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_325642b2f03bf3ae4970ce95b778f754",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 70.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.047
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"hp": 242.0
+			},
+			"requiredLevel": 70.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 144.0
+				},
+				{
+					"stat": "hp",
+					"value": 265.0
+				},
+				{
+					"stat": "def",
+					"value": 98.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_a8e8b8316530a1a0c1286e2e55343dc5",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 90.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.065
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"hp": 584.0
+			},
+			"requiredLevel": 90.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 607.0
+				},
+				{
+					"stat": "def",
+					"value": 220.0
+				},
+				{
+					"stat": "mp",
+					"value": 450.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_e8af10b32720c7cd806a1b3c3ad5a564",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 100.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.079
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"hp": 828.0
+			},
+			"requiredLevel": 100.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 560.0
+				},
+				{
+					"stat": "atk",
+					"value": 127.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_972a13b25fb12675ef26754d977623f9",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 100.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.041
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"hp": 828.0
+			},
+			"requiredLevel": 100.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 211.0
+				},
+				{
+					"stat": "hp",
+					"value": 896.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_c47074ea21355eec388733b737441737",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 100.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.059
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"hp": 828.0
+			},
+			"requiredLevel": 100.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 119.0
+				},
+				{
+					"stat": "hp",
+					"value": 687.0
+				},
+				{
+					"stat": "def",
+					"value": 149.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_057086460e5e75d9fea07749cac71690",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 100.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"hp": 828.0
+			},
+			"requiredLevel": 100.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 434.0
+				},
+				{
+					"stat": "atk",
+					"value": 164.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_1f2c5d3b2ab1dd04eec684c902b55d37",
+			"itemId": "c6_equip_necklace",
+			"kind": "equip",
+			"level": 100.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.032
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"hp": 828.0
+			},
+			"requiredLevel": 100.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 175.0
+				},
+				{
+					"stat": "atk",
+					"value": 48.0
+				},
+				{
+					"stat": "def",
+					"value": 50.0
+				},
+				{
+					"stat": "mp",
+					"value": 109.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_02b614d94f2612a45c596ce8a2bea10b",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 69.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 27.0,
+				"mp": 73.0
+			},
+			"requiredLevel": 69.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 144.0
+				},
+				{
+					"stat": "atk",
+					"value": 29.0
+				},
+				{
+					"stat": "def",
+					"value": 51.0
+				},
+				{
+					"stat": "mp",
+					"value": 140.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_be73ec529817bbe7ea1c1f45e33734e8",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 69.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 27.0,
+				"mp": 73.0
+			},
+			"requiredLevel": 69.0,
+			"star": 6.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 270.0
+				},
+				{
+					"stat": "def",
+					"value": 91.0
+				},
+				{
+					"stat": "atk",
+					"value": 68.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_5f1c07169ab36bb3712b6a29868a9264",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 89.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.024
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 67.0,
+				"mp": 179.0
+			},
+			"requiredLevel": 89.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 209.0
+				},
+				{
+					"stat": "def",
+					"value": 138.0
+				},
+				{
+					"stat": "atk",
+					"value": 142.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_a43dc8726aba841b20f2acd4b65b5668",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 89.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.046
+				}
+			],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 67.0,
+				"mp": 179.0
+			},
+			"requiredLevel": 89.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 98.0
+				},
+				{
+					"stat": "atk",
+					"value": 44.0
+				},
+				{
+					"stat": "mp",
+					"value": 207.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_44cbd5b2858160894ba054b148572ec2",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 79.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 44.0,
+				"mp": 119.0
+			},
+			"requiredLevel": 79.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 97.0
+				},
+				{
+					"stat": "hp",
+					"value": 475.0
+				},
+				{
+					"stat": "mp",
+					"value": 190.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_607ff33b2aa4a96f14aab0b6b3063e87",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 89.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 67.0,
+				"mp": 179.0
+			},
+			"requiredLevel": 89.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 284.0
+				},
+				{
+					"stat": "atk",
+					"value": 105.0
+				},
+				{
+					"stat": "def",
+					"value": 199.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_b5fa352c2cc280abb55109779520eb78",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 99.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 95.0,
+				"mp": 255.0
+			},
+			"requiredLevel": 99.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 360.0
+				},
+				{
+					"stat": "mp",
+					"value": 368.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_ad27cc352ee2fa37fa809702dcb7a4e9",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 99.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.042
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 95.0,
+				"mp": 255.0
+			},
+			"requiredLevel": 99.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 141.0
+				},
+				{
+					"stat": "hp",
+					"value": 486.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_7bea1b5a38ee468c165713dffc1697af",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 99.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.042
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 95.0,
+				"mp": 255.0
+			},
+			"requiredLevel": 99.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 194.0
+				},
+				{
+					"stat": "hp",
+					"value": 748.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_0a179c97065214e181a88915b69e0674",
+			"itemId": "c6_equip_ring",
+			"kind": "equip",
+			"level": 99.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"atk": 95.0,
+				"mp": 255.0
+			},
+			"requiredLevel": 99.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 91.0
+				},
+				{
+					"stat": "atk",
+					"value": 82.0
+				},
+				{
+					"stat": "hp",
+					"value": 307.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_595269dedc3e47a29be50b1c9fb82079",
+			"itemId": "c6_equip_shield",
+			"kind": "equip",
+			"level": 77.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 136.0,
+				"hp": 204.0
+			},
+			"requiredLevel": 77.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 161.0
+				},
+				{
+					"stat": "atk",
+					"value": 148.0
+				},
+				{
+					"stat": "hp",
+					"value": 709.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_0fb0187af9c029ef76ba0f0a1cc6881c",
+			"itemId": "c6_equip_shield",
+			"kind": "equip",
+			"level": 97.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 300.0,
+				"hp": 450.0
+			},
+			"requiredLevel": 97.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 191.0
+				},
+				{
+					"stat": "mp",
+					"value": 489.0
+				},
+				{
+					"stat": "atk",
+					"value": 173.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_159ac3044d42a0c24b913b41daea4a15",
+			"itemId": "c6_equip_shield",
+			"kind": "equip",
+			"level": 97.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 300.0,
+				"hp": 450.0
+			},
+			"requiredLevel": 97.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 201.0
+				},
+				{
+					"stat": "def",
+					"value": 185.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_05f4a1fe18572d7abf07a070b6afbd3e",
+			"itemId": "c6_equip_shield",
+			"kind": "equip",
+			"level": 97.0,
+			"pctAttrs": [],
+			"quality": "rare",
+			"qualityMultiplierSnapshot": 1.5,
+			"rawBaseAttrs": {
+				"def": 300.0,
+				"hp": 450.0
+			},
+			"requiredLevel": 97.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 274.0
+				},
+				{
+					"stat": "mp",
+					"value": 125.0
+				},
+				{
+					"stat": "def",
+					"value": 52.0
+				},
+				{
+					"stat": "atk",
+					"value": 49.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_8e870a08aed14040b05872b0df7160ae",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 72.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 44.0,
+				"mp": 107.0
+			},
+			"requiredLevel": 72.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 79.0
+				},
+				{
+					"stat": "hp",
+					"value": 337.0
+				},
+				{
+					"stat": "atk",
+					"value": 116.0
+				},
+				{
+					"stat": "mp",
+					"value": 211.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_7a99efe759aa79dacb05cc0d96cfb7c9",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 82.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"def": 69.0,
+				"mp": 170.0
+			},
+			"requiredLevel": 82.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 267.0
+				},
+				{
+					"stat": "hp",
+					"value": 300.0
+				},
+				{
+					"stat": "def",
+					"value": 107.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_dd262f6a872fe9203118e5d76a2b52a0",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 92.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 103.0,
+				"mp": 252.0
+			},
+			"requiredLevel": 92.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 401.0
+				},
+				{
+					"stat": "atk",
+					"value": 159.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_226c12942e24151e14bf37bb7b6615b0",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 92.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.023
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 103.0,
+				"mp": 252.0
+			},
+			"requiredLevel": 92.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 509.0
+				},
+				{
+					"stat": "mp",
+					"value": 215.0
+				},
+				{
+					"stat": "def",
+					"value": 71.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_9703a779bcc29e7d95da7602cf955a08",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 92.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 103.0,
+				"mp": 252.0
+			},
+			"requiredLevel": 92.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 100.0
+				},
+				{
+					"stat": "hp",
+					"value": 489.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_8093e293a47bca9700a9d1074e715b74",
+			"itemId": "c6_equip_shoes",
+			"kind": "equip",
+			"level": 92.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.032
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"def": 103.0,
+				"mp": 252.0
+			},
+			"requiredLevel": 92.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "atk",
+					"value": 84.0
+				},
+				{
+					"stat": "mp",
+					"value": 238.0
+				},
+				{
+					"stat": "hp",
+					"value": 274.0
+				},
+				{
+					"stat": "def",
+					"value": 55.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "fusion_74db51c62816083d7ab2bfda8df11cfe",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 81.0,
+			"pctAttrs": [],
+			"quality": "legendary",
+			"qualityMultiplierSnapshot": 2.4,
+			"rawBaseAttrs": {
+				"atk": 277.0
+			},
+			"requiredLevel": 81.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "mp",
+					"value": 104.0
+				},
+				{
+					"stat": "hp",
+					"value": 215.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"instanceId": "drop_42e4d88eff1ccf4e0be10bf63ab52d03",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 71.0,
+			"pctAttrs": [
+				{
+					"stat": "hpPercent",
+					"value": 0.077
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 174.0
+			},
+			"requiredLevel": 71.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 481.0
+				},
+				{
+					"stat": "mp",
+					"value": 247.0
+				},
+				{
+					"stat": "atk",
+					"value": 142.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_ed40537a716713f1645d1bd0eb22a895",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 91.0,
+			"pctAttrs": [],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 414.0
+			},
+			"requiredLevel": 91.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "def",
+					"value": 111.0
+				},
+				{
+					"stat": "hp",
+					"value": 291.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_aa0e75c07cd4b05a07e9786f0fd2e5bc",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 91.0,
+			"pctAttrs": [
+				{
+					"stat": "mpPercent",
+					"value": 0.068
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 414.0
+			},
+			"requiredLevel": 91.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"affixes": [
+				{
+					"stat": "hp",
+					"value": 407.0
+				},
+				{
+					"stat": "def",
+					"value": 141.0
+				}
+			],
+			"count": 1.0,
+			"equipmentRuleVersion": 5.0,
+			"favorite": false,
+			"instanceId": "drop_f350d5a9b660d2ecebfe43f19019db9e",
+			"itemId": "c6_equip_weapon",
+			"kind": "equip",
+			"level": 91.0,
+			"pctAttrs": [
+				{
+					"stat": "cdr",
+					"value": 0.04
+				}
+			],
+			"quality": "epic",
+			"qualityMultiplierSnapshot": 1.9,
+			"rawBaseAttrs": {
+				"atk": 414.0
+			},
+			"requiredLevel": 91.0,
+			"star": 0.0,
+			"starMultiplierSnapshot": 0.1
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 64.0,
+			"itemId": "potion_hp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 3.0,
+			"itemId": "potion_hp_small",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 99.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 27.0,
+			"itemId": "potion_mp_large",
+			"kind": "potion"
+		},
+		{
+			"count": 16.0,
+			"itemId": "potion_mp_small",
+			"kind": "potion"
+		},
+		{
+			"count": 68.0,
+			"itemId": "rune_iron",
+			"kind": "rune"
+		},
+		{
+			"count": 73.0,
+			"itemId": "rune_jade",
+			"kind": "rune"
+		},
+		{
+			"count": 10.0,
+			"itemId": "misc_random_ticket",
+			"kind": "misc"
+		},
+		{
+			"count": 18.0,
+			"itemId": "misc_revive_scroll",
+			"kind": "misc"
+		},
+		{
+			"count": 17.0,
+			"itemId": "misc_town_scroll",
+			"kind": "misc"
+		},
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null
+	],
+	"inventoryExpansions": 36.0,
+	"mapLayoutVersion": "2026-10-16-camp-open-perimeter-v2",
+	"ownedMounts": [],
+	"player": {
+		"attack": 799.0,
+		"attackInterval": 0.8,
+		"block": 0.0,
+		"cdr": 0.0,
+		"criticalChance": 0.05,
+		"criticalMultiplier": 1.5,
+		"defense": 393.0,
+		"dodge": 0.0,
+		"hp": 41580.0,
+		"level": 94.0,
+		"movementSpeed": 4.0,
+		"mp": 5570.0,
+		"name": "测试·Lv60",
+		"xp": 222216.0
+	},
+	"playerPos": [
+		1184.61645507812,
+		-3031.97680664062
+	],
+	"questItems": {},
+	"questRewardPlans": {},
+	"questStates": {
+		"C2Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q02": {
+			"progress": 12.0,
+			"state": "rewarded"
+		},
+		"C2Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C2Q04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q05": {
+			"progress": 5.0,
+			"state": "rewarded"
+		},
+		"C2Q06": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C2Q07": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C2Q08": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q09": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C2Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C2S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C2S03": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C2S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q02": {
+			"progress": 12.0,
+			"state": "rewarded"
+		},
+		"C3Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C3Q04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C3Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C3Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C3S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C3S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C3S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C3S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C3S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q02": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C4Q03": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C4Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C4Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C4Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C4S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C4S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C4S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C4S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C4S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q02": {
+			"progress": 12.0,
+			"state": "rewarded"
+		},
+		"C5Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C5Q04": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C5Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C5Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q13": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5Q14": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5S01": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C5S02": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C5S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C5S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C5S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C5S06": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C5S07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q01": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q02": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q03": {
+			"progress": 4.0,
+			"state": "rewarded"
+		},
+		"C6Q04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C6Q05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q06": {
+			"progress": 6.0,
+			"state": "rewarded"
+		},
+		"C6Q07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q08": {
+			"progress": 14.0,
+			"state": "rewarded"
+		},
+		"C6Q09": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q10": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q11": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6Q12": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6S01": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C6S02": {
+			"progress": 8.0,
+			"state": "rewarded"
+		},
+		"C6S03": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"C6S04": {
+			"progress": 10.0,
+			"state": "rewarded"
+		},
+		"C6S05": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6S06": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"C6S07": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"Q001": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"Q002": {
+			"progress": 5.0,
+			"state": "rewarded"
+		},
+		"Q003": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"Q004": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"Q005": {
+			"progress": 1.0,
+			"state": "rewarded"
+		},
+		"S001": {
+			"progress": 3.0,
+			"state": "rewarded"
+		},
+		"S002": {
+			"progress": 1.0,
+			"state": "rewarded"
+		}
+	},
+	"savedAt": "2026-10-19T22:30:43",
+	"schemaVersion": 14.0,
+	"settings": {
+		"allowBoss": true,
+		"autoBattleDefault": false,
+		"autoPickupDefault": false,
+		"autoReviveOnDeath": false,
+		"colorblindMode": "off",
+		"displayScale": 0.75,
+		"displayScaleMode": "auto",
+		"dropFlyAnim": true,
+		"firstBattleHintSeen": false,
+		"fullscreen": false,
+		"keyBindings": {
+			"panel_inventory": 66
+		},
+		"lowGearLevelLimit": 99,
+		"lowGearMaxQuality": "rare",
+		"mapScale": 2,
+		"masterVolume": 1,
+		"musicVolume": 1,
+		"potionThreshold": 0.75,
+		"qualityFilter": "all",
+		"resolution": "auto",
+		"screenShake": true,
+		"searchRadius": 12,
+		"sellGearPreset": "aggressive",
+		"sfxVolume": 1,
+		"strongFlash": true,
+		"textScale": 2,
+		"tutorialSeen": false,
+		"uiScale": 2
+	},
+	"slotId": 1.0,
+	"spawnRespawn": {
+		"c7_arena#boss_corrupted_beast#0": {
+			"pos": [
+				1.79713535308838,
+				-1984.34533691406
+			],
+			"readyAt": 28336.2141082658
+		},
+		"c7_arena#boss_corrupted_beast#1": {
+			"pos": [
+				1676.42651367188,
+				-3027.01513671875
+			],
+			"readyAt": 28041.2701749367
+		},
+		"c7_arena#c2_boss_hundred_arm_extractor#0": {
+			"pos": [
+				638.918090820312,
+				-1431.76330566406
+			],
+			"readyAt": 27833.4747926071
+		},
+		"c7_arena#c2_boss_hundred_arm_extractor#1": {
+			"pos": [
+				2965.50244140625,
+				-2981.41577148438
+			],
+			"readyAt": 28217.8861172675
+		},
+		"c7_arena#c2_boss_iron_foreman#0": {
+			"pos": [
+				-8.17848587036133,
+				-1972.11962890625
+			],
+			"readyAt": 28360.1518209322
+		},
+		"c7_arena#c2_boss_iron_foreman#1": {
+			"pos": [
+				2002.82824707031,
+				-2523.19409179688
+			],
+			"readyAt": 28000.1528309378
+		},
+		"c7_arena#c2_boss_slag_devourer#0": {
+			"pos": [
+				-0.273365616798401,
+				-2016.21081542969
+			],
+			"readyAt": 28337.8067442658
+		},
+		"c7_arena#c2_boss_slag_devourer#1": {
+			"pos": [
+				2701.47680664062,
+				-1858.19116210938
+			],
+			"readyAt": 28163.795961935
+		},
+		"c7_arena#c3_boss02#0": {
+			"pos": [
+				117.680854797363,
+				-842.346008300781
+			],
+			"readyAt": 27854.7822739398
+		},
+		"c7_arena#c3_boss02#1": {
+			"pos": [
+				2564.650390625,
+				-1749.43835449219
+			],
+			"readyAt": 28136.5221682687
+		},
+		"c7_arena#c4_boss02#0": {
+			"pos": [
+				-317.069641113281,
+				-1439.28625488281
+			],
+			"readyAt": 28305.6827685996
+		},
+		"c7_arena#c4_boss02#1": {
+			"pos": [
+				1476.98120117188,
+				-3014.68286132812
+			],
+			"readyAt": 28036.7324606034
+		},
+		"c7_arena#c5_boss02#0": {
+			"pos": [
+				973.0244140625,
+				-2465.1083984375
+			],
+			"readyAt": 28068.4770439363
+		},
+		"c7_arena#c5_boss02#1": {
+			"pos": [
+				3396.56103515625,
+				-2691.67895507812
+			],
+			"readyAt": 28191.3444112679
+		},
+		"c7_arena#c5_boss04#0": {
+			"pos": [
+				-995.49658203125,
+				-1639.04248046875
+			],
+			"readyAt": 28280.4214116
+		},
+		"c7_arena#c5_boss04#1": {
+			"pos": [
+				1885.25842285156,
+				-2495.13598632812
+			],
+			"readyAt": 27976.4059379382
+		},
+		"c7_arena#c6_boss02#0": {
+			"pos": [
+				-478.184936523438,
+				-1037.98645019531
+			],
+			"readyAt": 27876.5087449395
+		},
+		"c7_arena#c6_boss02#1": {
+			"pos": [
+				1732.57507324219,
+				-1766.91613769531
+			],
+			"readyAt": 27933.7244428277
+		},
+		"c7_arena#c6_boss03#0": {
+			"pos": [
+				-1149.93786621094,
+				-1147.1953125
+			],
+			"readyAt": 28257.6930206003
+		},
+		"c7_arena#c6_boss03#1": {
+			"pos": [
+				1317.58239746094,
+				-1263.45422363281
+			],
+			"readyAt": 27911.2354952724
+		}
+	},
+	"unclaimedLoot": {},
+	"unlocks": {
+		"c2_backup_furnace": true,
+		"c2_core_access": true,
+		"c2_machine_stopped": true,
+		"c3_access_02": true,
+		"c3_access_03": true,
+		"c3_access_04": true,
+		"c3_access_05": true,
+		"c4_access_02": true,
+		"c4_access_03": true,
+		"c4_access_04": true,
+		"c4_access_05": true,
+		"c5_access_02": true,
+		"c5_access_03": true,
+		"c5_access_04": true,
+		"c5_access_05": true,
+		"c5_access_06": true,
+		"c6_access_02": true,
+		"c6_access_03": true,
+		"c6_access_04": true,
+		"c6_access_05": true,
+		"campaign_complete": true,
+		"chapter2": true,
+		"chapter3": true,
+		"chapter4": true,
+		"chapter5": true,
+		"chapter6": true,
+		"tool_boss_token": true,
+		"tool_portable_carter": true,
+		"tool_portable_shop": true
+	},
+	"visitedMaps": [
+		"camp",
+		"wild_trial",
+		"ash_land",
+		"corruption_source",
+		"c2_well_town",
+		"c2_pipe_slope",
+		"c2_old_well",
+		"c2_lower_works",
+		"c2_ember_furnace",
+		"c2_well_core",
+		"c3_map00",
+		"c3_map01",
+		"c3_map02",
+		"c3_map03",
+		"c3_map04",
+		"c3_map05",
+		"c4_map00",
+		"c4_map01",
+		"c4_map02",
+		"c4_map03",
+		"c4_map04",
+		"c4_map05",
+		"c5_map00",
+		"c5_map01",
+		"c5_map02",
+		"c5_map03",
+		"c5_map04",
+		"c5_map05",
+		"c5_map06",
+		"c6_map00",
+		"c6_map01",
+		"c6_map02",
+		"c6_map03",
+		"c6_map04",
+		"c6_map05",
+		"c7_arena"
+	],
+	"warehouse": [
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		null
+	],
+	"warehouseExpansions": 0.0,
+	"worldTime": 27783.2859909319
+}
