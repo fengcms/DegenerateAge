@@ -66,21 +66,30 @@ func _test_group_keys() -> void:
 		check(EXPECTED_GROUPS.has(group),
 			"%s 的分组键「%s」不在固定七组内（会渲染出空标题/丢行）" % [map_id, group])
 
-# ---- 2) 行集：全表 36 图 − 当前图 = 35 行，每图恰好一次 ----
+# ---- 2) 行集：排除当前图与仅可从无尽回廊步行进入的循环图 ----
 
 func _test_row_set() -> void:
 	GameState.reset_to_defaults()
 	check(GameState.current_map == CAMP, "前置：新档应在营地，实际 %s" % GameState.current_map)
 	var rows := MapService.anywhere_destinations()
 	var all := _all_map_ids()
-	check(rows.size() == all.size() - 1,
-		"应列出除当前图外的全部地图：期望 %d 行，实际 %d" % [all.size() - 1, rows.size()])
+	var walk_only := 0
+	for id in all:
+		var gate: Variant = MapService.data_for(id).get("entryGate", {})
+		if gate is Dictionary and not String((gate as Dictionary).get("walkOnlyFrom", "")).is_empty():
+			walk_only += 1
+	check(rows.size() == all.size() - 1 - walk_only,
+		"应列出除当前图和步行限定图外的地图：期望 %d 行，实际 %d" % [all.size() - 1 - walk_only, rows.size()])
 	var seen := {}
 	for raw in rows:
 		var id := String((raw as Dictionary).get("id", ""))
 		check(not seen.has(id), "%s 在列表里出现了不止一次" % id)
 		seen[id] = true
 	for id in all:
+		var gate: Variant = MapService.data_for(id).get("entryGate", {})
+		if gate is Dictionary and not String((gate as Dictionary).get("walkOnlyFrom", "")).is_empty():
+			check(not seen.has(id), "步行限定图 %s 不得出现在车夫目的地" % id)
+			continue
 		if id == CAMP:
 			check(not seen.has(id), "当前图 %s 不应出现在目的地列表里" % CAMP)
 			continue

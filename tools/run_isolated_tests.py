@@ -45,6 +45,8 @@ DEFAULT_TESTS = [
     "ArenaDropTest",
     # M10-3 循环 Boss 图：拓扑/布局连通 + 10 点装配 + 等级每次现算 + norm 数值 + 经验曲线。
     "ArenaMapTest",
+    # 第七章双循环分支：动态门槛、96/100 席装配、收益和超软上限奖励保全。
+    "EndgameCycleMapTest",
     # M10-3b 多目标血条：实例分条 + 不重排 + 逐条过期/死亡 + current_bosses + 音频按实例。
     "BossMultiTargetTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。
