@@ -530,12 +530,15 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	var pierce := clampf(float(skill.get("defensePierce", 0.0)), 0.0, 1.0)
 	var hits := maxi(1, int(skill.get("hits", 1)))
 	var power := effective_attack_power()
+	var player_level := int(GameState.player.get("level", 1))
 	for enemy in targets:
+		# A2 越级伤害（03 §3.13）：逐目标取等级差放大攻击项——同一技能可同时打到不同等级的怪。
+		var gap_power := power * LevelGap.damage_multiplier(player_level, _target_level(enemy))
 		for _hit in range(hits):
 			# 前置段已打死目标：后续段不再结算，避免死怪重复受击、飘字与事件计数虚高。
 			if _target_is_dead(enemy):
 				break
-			var result := Combat.resolve(power, _target_defense(enemy) * (1.0 - pierce),
+			var result := Combat.resolve(gap_power, _target_defense(enemy) * (1.0 - pierce),
 				float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
 				float(GameState.player.get("criticalMultiplier", 1.5)), _target_dodge(enemy))
 			Fx.damage_number(get_tree(), enemy, result)
@@ -611,7 +614,8 @@ func perform_attack(target: Node) -> Dictionary:
 		add_child(slash)
 
 	var result := Combat.resolve(
-		effective_attack_power(),
+		effective_attack_power() * LevelGap.damage_multiplier(
+			int(GameState.player.get("level", 1)), _target_level(target)),
 		_target_defense(target),
 		float(_basic.get("coefficient", 1.0)),
 		float(GameState.player.get("criticalChance", 0.0)),
@@ -661,6 +665,12 @@ func find_nearest_enemy_in_range() -> Node:
 
 func _target_defense(t: Node) -> float:
 	return t.get_defense() if t.has_method("get_defense") else 0.0
+
+## A2 越级伤害（03 §3.13）：结算用的目标等级。测试桩等无 `level` 的目标按同级处理 ⇒
+## `dmgMult` 恒 1.0，不改变既有战斗用例的期望值。
+func _target_level(t: Node) -> int:
+	var value: Variant = t.get("level")
+	return int(value) if value is int or value is float else int(GameState.player.get("level", 1))
 
 ## R4-c：把技能配置里的 `debuff` 落到目标身上。
 ## 能力尚未实现时**不静默跳过**：写入不了就在目标上留下可观测的缺失（测试直接断言状态），

@@ -5,6 +5,7 @@ extends Node2D
 var source: Monster
 var direction := Vector2.RIGHT
 var speed := 340.0
+## 剩余飞行距离；由发射方按来源射程写入（见 `monster.gd::_fire_projectile`），默认值仅作兜底。
 var remaining := 520.0
 
 func _physics_process(delta: float) -> void:

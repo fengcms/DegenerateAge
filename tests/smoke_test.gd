@@ -22,6 +22,7 @@ func _ready() -> void:
 	await _test_single_resolution()
 	await _test_monster_chase()
 	await _test_monster_attacks_player()
+	await _test_ranged_projectile()
 	await _test_death_settles_once()
 	await _test_spawner()
 	await _test_level_gap()
@@ -719,9 +720,122 @@ func _test_monster_attacks_player() -> void:
 	player.apply_damage(5)   # 立即再打一次应被无敌帧挡下
 	_expect(int(GameState.player.hp) == hp_a, "无敌帧内不应再次扣血")
 
+	# A2 越级伤害（怪 → 玩家，03 §3.13 双向对称）：怪高 19 级 → dmgMult 封顶 1.3。
+	# floor(8×1.3 − 5×0.5) = 7（同级时是 5）；直接调 `_do_attack` 规避 AI 计时抖动。
+	var deep_wolf: Monster = load("res://scenes/entities/Monster.tscn").instantiate()
+	deep_wolf.monster_id = "wolf_corrupted"
+	deep_wolf.spawn_level = 20
+	deep_wolf.ai_enabled = false
+	deep_wolf.position = Vector2(40.0, 0.0)
+	deep_wolf.spawn_position = Vector2(40.0, 0.0)
+	add_child(deep_wolf)
+	await get_tree().physics_frame
+	player._invuln = 0.0
+	var hp_b: int = int(GameState.player.hp)
+	deep_wolf._do_attack(player)
+	_expect(int(GameState.player.hp) == hp_b - 7,
+		"越级 19 级的怪打玩家应为 7 点（dmgMult 1.3），实际 %d" % (hp_b - int(GameState.player.hp)))
+	deep_wolf.queue_free()
+	await get_tree().physics_frame
+
+	# A2 越级伤害（玩家 → 怪）：木桩防御 0，怪高 19 级 → 伤害 = floor(玩家攻击 × 1.3)。
+	# 暴击率置 0，保证取到的是同一随机流下的确定值。
+	var deep_dummy: Monster = load("res://scenes/entities/Monster.tscn").instantiate()
+	deep_dummy.monster_id = "training_dummy"
+	deep_dummy.spawn_level = 20
+	deep_dummy.ai_enabled = false
+	deep_dummy.position = Vector2(40.0, 0.0)
+	deep_dummy.spawn_position = Vector2(40.0, 0.0)
+	add_child(deep_dummy)
+	await get_tree().physics_frame
+	GameState.player.criticalChance = 0.0
+	var scaled: int = int(floorf(player.effective_attack_power() * 1.3))
+	var dummy_hp: int = int(deep_dummy.get("hp"))
+	var scaled_hit: Dictionary = player.perform_attack(deep_dummy)
+	_expect(int(scaled_hit.get("damage", 0)) == scaled,
+		"越级 19 级：玩家(攻 %.0f) 打木桩应为 %d 点，实际 %d" % [
+			player.effective_attack_power(), scaled, int(scaled_hit.get("damage", 0))])
+	_expect(int(deep_dummy.get("hp")) == dummy_hp - scaled, "木桩应按越级伤害扣血")
+	deep_dummy.queue_free()
+	await get_tree().physics_frame
+
 	player.queue_free()
 	wolf.queue_free()
 	await get_tree().physics_frame
+
+# ---- A3：远程怪走弹道（判定数据驱动，不再用 `c2_` 前缀门）----
+func _test_ranged_projectile() -> void:
+	GameState.reset_to_defaults()
+	var player = load("res://scenes/entities/Player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector2.ZERO
+
+	# 第一章 `ash_wraith` 数据即为 `attackRange.kind = ranged`，此前被前缀门拦成瞬发结算。
+	# 站位取 350px：在射程 384px 内、又足够远，蓄力期间生成的投射物不会提前打到玩家。
+	var wraith = load("res://scenes/entities/Monster.tscn").instantiate()
+	wraith.monster_id = "ash_wraith"
+	wraith.spawn_level = 6
+	wraith.ai_enabled = false
+	wraith.position = Vector2(350.0, 0.0)
+	wraith.spawn_position = Vector2(350.0, 0.0)
+	add_child(wraith)
+	await get_tree().physics_frame
+	_expect(wraith.is_ranged, "ash_wraith 应判定为远程（attackRange.kind=ranged）")
+
+	var hp0: int = int(GameState.player.hp)
+	wraith.state = Monster.State.ATTACK
+	wraith._attack_cd = 0.0
+	wraith._update_ai(0.016)
+	_expect(_projectile_count(wraith) == 0 and int(GameState.player.hp) == hp0,
+		"远程怪进入攻击态应先蓄力：不生成投射物、不扣血")
+
+	for _i in range(30):
+		await get_tree().physics_frame
+	var bolts := _projectiles(wraith)
+	_expect(bolts.size() == 1, "蓄力结束应生成 1 枚投射物，实际 %d" % bolts.size())
+	if bolts.size() == 1:
+		# 读断言时投射物已经飞了若干帧，故用「已飞 + 剩余 = 初始」这个不变量校验，
+		# 保证断言与读取时刻无关。
+		var bolt: MonsterProjectile = bolts[0]
+		var flown: float = (wraith.global_position + bolt.direction * 22.0).distance_to(bolt.global_position)
+		_expect(is_equal_approx(bolt.remaining + flown, wraith.attack_range_px * Monster.PROJECTILE_RANGE_MARGIN),
+			"投射物飞行距离应随来源射程（已飞 %.1f + 剩余 %.1f，期望 %.1f）" % [
+				flown, bolt.remaining, wraith.attack_range_px * Monster.PROJECTILE_RANGE_MARGIN])
+		bolt.queue_free()
+	await get_tree().physics_frame
+
+	# 反向：近战怪不得生成投射物（防止泛化过头）。
+	var wolf = load("res://scenes/entities/Monster.tscn").instantiate()
+	wolf.monster_id = "wolf_corrupted"
+	wolf.ai_enabled = false
+	wolf.position = Vector2(40.0, 0.0)
+	wolf.spawn_position = Vector2(40.0, 0.0)
+	add_child(wolf)
+	await get_tree().physics_frame
+	_expect(not wolf.is_ranged, "wolf_corrupted 应仍是近战")
+	wolf.state = Monster.State.ATTACK
+	wolf._attack_cd = 0.0
+	wolf._update_ai(0.016)
+	_expect(_projectile_count(wolf) == 0, "近战怪不应生成投射物")
+
+	player.queue_free()
+	wraith.queue_free()
+	wolf.queue_free()
+	await get_tree().physics_frame
+	GameState.reset_to_defaults()
+
+func _projectiles(from: Monster) -> Array:
+	var result: Array = []
+	var parent := from.get_parent()
+	if parent == null:
+		return result
+	for child in parent.get_children():
+		if child is MonsterProjectile:
+			result.append(child)
+	return result
+
+func _projectile_count(from: Monster) -> int:
+	return _projectiles(from).size()
 
 # ---- M1-5/M1-6：死亡结算仅一次 + 掉落生成 ----
 func _test_death_settles_once() -> void:
@@ -788,6 +902,13 @@ func _test_level_gap() -> void:
 	_expect(is_equal_approx(LevelGap.experience_multiplier(1, 10), 1.36), "越级经验应为 1.36 倍")
 	_expect(is_equal_approx(LevelGap.experience_multiplier(1, 30), 1.5), "越级经验应封顶 1.5 倍")
 	_expect(is_equal_approx(LevelGap.experience_multiplier(30, 1), 0.2), "回低图经验应保底 0.2 倍")
+
+	# A2 越级伤害（03 §3.13）：上限 1.3，下限 1.0（口径①「只奖不罚」）。
+	_expect(is_equal_approx(LevelGap.damage_multiplier(10, 10), 1.0), "同级越级伤害应为 1 倍")
+	_expect(is_equal_approx(LevelGap.damage_multiplier(10, 20), 1.2), "怪高 10 级伤害应为 1.2 倍")
+	_expect(is_equal_approx(LevelGap.damage_multiplier(10, 30), 1.3), "越级伤害应封顶 1.3 倍")
+	_expect(is_equal_approx(LevelGap.damage_multiplier(70, 10), 1.0),
+		"玩家高于怪 60 级时伤害不应衰减（下限锁在 1.0，防止倍率跌到 0/负数）")
 
 	var sp := MonsterSpawner.new()
 	add_child(sp)

@@ -23,6 +23,12 @@ const ARMOR_BREAK_SCALE := 0.7
 const BOSS_ARENA_TILES := 18.0
 const BOSS_RESET_DELAY := 5.0
 
+## A3：投射物飞行距离按**来源射程**派生（各章 `attackRange.range` 不同，不再写死单值）。
+## 1.1 是给走位留的一点余量：怪在射程边缘开火时，玩家后撤仍可能被追上一点。
+const PROJECTILE_RANGE_MARGIN := 1.1
+## A3：远程怪蓄力时长（s）。沿用 c2 的调校值，各章统一。
+const RANGED_WINDUP := 0.28
+
 ## M6-0a（创意 07 §4）：三档敌人外观。普通沿用既有半径；精英 / Boss 放大并加轮廓与地面标识。
 const RADIUS := 13.0          # 普通（兼容既有引用）
 const RADIUS_ELITE := 19.0
@@ -450,7 +456,7 @@ func _skill_hit(coeff: float) -> void:
 			or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
 	var res := Combat.resolve(
-		attack_power * coeff,
+		attack_power * coeff * _level_damage_multiplier(),
 		float(GameState.total_defense()),
 		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
 		float(GameState.player.get("dodge", 0.0)))
@@ -567,7 +573,7 @@ func _physics_process(delta: float) -> void:
 	if _ranged_windup > 0.0:
 		_ranged_windup -= delta
 		if _ranged_windup <= 0.0 and state == State.ATTACK:
-			_fire_chapter_projectile()
+			_fire_projectile()
 	if monster_id == "c2_spirit_attendant":
 		_update_support_heal(delta)
 	velocity = Vector2.ZERO
@@ -626,8 +632,9 @@ func _update_ai(delta: float) -> void:
 			elif dist > attack_range_px * 1.2:
 				_enter(State.CHASE)
 			elif _attack_cd <= 0.0:
-				if is_ranged and monster_id.begins_with("c2_"):
-					_begin_chapter_projectile(player)
+				# A3：判定完全数据驱动（`attackRange.kind == "ranged"`），不再额外加 `c2_` 前缀门。
+				if is_ranged:
+					_begin_projectile(player)
 				else:
 					_do_attack(player)
 		State.RETURN:
@@ -736,6 +743,11 @@ func _update_chapter_special(delta: float) -> bool:
 
 # ---- 攻击 ----
 
+## A2 越级伤害（03 §3.13，双向对称）：怪打玩家同样按「怪等级 − 玩家等级」加成，上限 1.3。
+## 下限 1.0（口径①「只奖不罚」）；运行态计算，不入档。
+func _level_damage_multiplier() -> float:
+	return LevelGap.damage_multiplier(int(GameState.player.get("level", 1)), level)
+
 func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
@@ -745,7 +757,7 @@ func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 	if attack_power <= 0.0:
 		return
 	var res := Combat.resolve(
-		attack_power,
+		attack_power * _level_damage_multiplier(),
 		float(GameState.total_defense()),
 		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
 		float(GameState.player.get("dodge", 0.0)))
@@ -754,14 +766,15 @@ func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
 		_apply_hit_effects(player, actual)
 
-func _begin_chapter_projectile(player: Node2D) -> void:
+## 远程攻击先蓄力再发射：蓄力期间玩家可走位躲避，命中结算仍复用 `_do_attack`（含越级伤害）。
+func _begin_projectile(player: Node2D) -> void:
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
-	_ranged_windup = 0.28
+	_ranged_windup = RANGED_WINDUP
 	_ranged_target = player.global_position
 	if sample_art != null:
 		sample_art.attack(_ranged_target - global_position, attack_interval)
 
-func _fire_chapter_projectile() -> void:
+func _fire_projectile() -> void:
 	if is_dead or not is_inside_tree() or get_parent() == null:
 		return
 	var facing := (_ranged_target - global_position).normalized()
@@ -772,6 +785,8 @@ func _fire_chapter_projectile() -> void:
 		var bolt := MonsterProjectile.new()
 		bolt.source = self
 		bolt.direction = facing.rotated(-0.10 if i == 0 and count == 2 else 0.10 if count == 2 else 0.0)
+		# A3：飞行距离随来源射程（不再用 `MonsterProjectile` 的写死默认值）。
+		bolt.remaining = attack_range_px * PROJECTILE_RANGE_MARGIN
 		get_parent().add_child(bolt)
 		bolt.global_position = global_position + bolt.direction * 22.0
 
