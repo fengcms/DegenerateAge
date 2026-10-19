@@ -46,6 +46,7 @@ var item: Dictionary = {}:
 		item = value
 		_refresh_count()
 		_refresh_potion_marker()
+		_refresh_favorite_marker()
 		_refresh_quality_frame()
 		_apply_sample_icon.call_deferred()
 		queue_redraw()
@@ -54,6 +55,7 @@ var item: Dictionary = {}:
 var _count: Label
 var _quality_frame: QualityFrameOverlay
 var _potion_marker: Label
+var _favorite_marker: Label
 var _upgrade_marker: Label
 var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
@@ -128,6 +130,15 @@ func _ready() -> void:
 	_potion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_potion_marker)
 	_refresh_potion_marker()
+	_favorite_marker = Label.new()
+	_favorite_marker.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_favorite_marker.offset_left = 2
+	_favorite_marker.offset_top = 0
+	_favorite_marker.add_theme_font_size_override("font_size", 16)
+	_favorite_marker.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
+	_favorite_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_favorite_marker)
+	_refresh_favorite_marker()
 	_upgrade_marker = Label.new()
 	_upgrade_marker.text = "↑"
 	_upgrade_marker.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -190,6 +201,12 @@ func _refresh_potion_marker() -> void:
 	var kind := ItemUtil.potion_kind(String(item.get("itemId", ""))) if String(item.get("kind", "")) == "potion" else ""
 	_potion_marker.text = ItemUtil.potion_marker(kind)
 	_potion_marker.add_theme_color_override("font_color", ItemUtil.potion_marker_color(kind))
+
+## 收藏装备始终在格内保留金色星标，随实例在背包、仓库和托盘间移动。
+func _refresh_favorite_marker() -> void:
+	if _favorite_marker == null:
+		return
+	_favorite_marker.text = "★" if String(item.get("kind", "")) == "equip" and bool(item.get("favorite", false)) else ""
 
 func _refresh_quality_frame() -> void:
 	if _quality_frame == null:

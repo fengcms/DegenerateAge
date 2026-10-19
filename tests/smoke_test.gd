@@ -2061,16 +2061,33 @@ func _test_trade_panel() -> void:
 	_expect(shop._tray.is_empty(), "取回后托盘应清空")
 	_expect(_index_of_instance("p_weak") >= 0, "取回的装备应回到背包")
 
-	# 一键移入：按等级与成色阈值移入，装备评分不参与。
+	# 新流程：货郎先展示本次装备清单；Lv1 可手选两件，评分可提升的装备保留。
 	shop._on_stage_all_pressed()
 	await get_tree().process_frame
-	_expect(shop._tray.size() == 2, "一键移入应移入 2 件可售装备，实际 %d" % shop._tray.size())
-	_expect(_index_of_instance("p_better") >= 0, "等级达到阈值的装备不应被一键移入")
+	var preview: EquipmentSalePreview = null
+	for child in get_children():
+		if child is EquipmentSalePreview:
+			preview = child
+	_expect(preview != null, "点击挑选装备应打开本次清单")
+	if preview != null:
+		_expect(shop._tray.is_empty(), "打开清单不应立即把装备移入托盘")
+		preview._selected["p_weak"] = true
+		preview._selected["p_helm"] = true
+		preview._refresh_footer()
+		preview._on_confirm()  # 预设外手选首次点击只显示风险提示
+		_expect(shop._tray.is_empty(), "风险提示阶段不得提前移入")
+		preview._on_confirm()
+	await get_tree().process_frame
+	_expect(shop._tray.size() == 2, "本次勾选应移入 2 件装备，实际 %d" % shop._tray.size())
+	_expect(_index_of_instance("p_better") >= 0, "未勾选的高分装备应留在背包")
 	_expect(_index_of_instance("p_weak") < 0 and _index_of_instance("p_helm") < 0,
 		"可售装备应已移入托盘")
 
 	# 确认出售 → 结算为金币
 	var gold_before: int = GameState.gold
+	shop._on_confirm_pressed()
+	_expect(not shop._tray.is_empty() and GameState.gold == gold_before,
+		"货郎最终出售预设外装备须二次确认")
 	shop._on_confirm_pressed()
 	await get_tree().process_frame
 	_expect(shop._tray.is_empty(), "确认出售后托盘应清空")

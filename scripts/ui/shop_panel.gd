@@ -6,7 +6,7 @@ extends Control
 ##   购买 —— 读 shops.json 的 buyItems，逐项显示名称 / 简介 / 已拥有 / 价格 + 购买按钮；
 ##   出售 —— **出售托盘**：从左侧背包面板把**物品**（装备 / 药水 / 杂项 / 如意）**拖入**托盘暂存
 ##          （一格一件，堆叠品整叠一格）；托盘内点一下取回；
-##          「一键移入」按等级与成色筛选**装备**、「一键移入材料」批量收药水 / 材料 / 如意；
+##          「挑选装备」按预设预选、逐件勾选后暂存，「一键移入材料」批量收药水 / 材料 / 如意；
 ##          「全部取回」清空托盘；「确认出售」才真正结算为金币。
 ## 收购口径（工程文档 39，2026-10-17 修订）：装备 / 药水 / 杂项 / 如意全部收购；
 ##          任务物品（`questItem`）与无价物品不收；非装备按 0.6 回收比例结算。
@@ -14,7 +14,7 @@ extends Control
 ## 交易会话：本面板打开时**同时拉起背包面板**并与之并列（本面板居中于右半屏，
 ##          背包面板居中于左半屏），不互斥——见 EventBus.trade_mode_changed。
 ## 占位素材（R5）：格子以模板名前 2 字 + 品质色描边表现，不加载图标。
-## 留待 M4：手拖优于已穿戴装备时的二次确认对话框（6.4）、仓库面板。
+## 手拖或批量暂存的高价值装备在最终结算前仍需二次确认。
 
 const SLOT_MIN := Vector2(46, 46)
 const BUY_ROW_MIN := Vector2(430, 0)
@@ -38,6 +38,7 @@ var _trade_active: bool = false
 ## 出售托盘：已从背包移出、尚未结算的物品实例（确认出售 / 取回 / 关闭退回见下）。
 ## 固定格位：键是 0..23 的格下标，值是物品实例；空格不占键。
 var _tray: Dictionary = {}
+var _sale_risk_confirmed := false
 
 var _title: Label
 var _gold_label: Label
@@ -475,6 +476,7 @@ func _make_buy_row(e: Dictionary) -> Control:
 	return row
 
 func _refresh_tray() -> void:
+	_sale_risk_confirmed = false
 	GameState.set_trade_staged_count(_tray.size())   # E-P3-4：供 SaveManager 挂起自动存档
 	if _tray_slots.is_empty():
 		return
@@ -590,30 +592,23 @@ func _on_tray_slot_pressed(tray_index: int) -> void:
 	_tray.erase(tray_index)
 	_refresh_tray()
 
-## 一键移入（6.4）：按背包筛选阈值批量移入托盘空格，穿戴评分不参与筛选。
+## 装备批量暂存先展示共用清单，避免旧数字阈值绕过逐件核对。
 func _on_stage_all_pressed() -> void:
-	var moved := 0
-	var full := false
-	var i := GameState.inventory.size() - 1
-	while i >= 0:
-		var it = GameState.inventory[i]
-		if not (it is Dictionary) or not GameState.is_low_gear(it):
-			i -= 1
-			continue
+	EquipmentSalePreview.open_for(self, EquipmentSalePreview.STAGE)
+
+## 清单最终确认后再同步移走背包装备，现有托盘物品和格位均不变。
+func _stage_selected_equipment(rows: Array[Dictionary], allow_risky: bool) -> Dictionary:
+	if not visible or not _trade_active or not Shop.sell_enabled(_shop_id):
+		return {"ok": false, "reason": "货郎交易已结束，请重新打开"}
+	var free_slots := _tray_slots.size() - _tray.size()
+	var result := GameState.take_equipment_for_sale(rows, free_slots, allow_risky)
+	if not bool(result.get("ok", false)):
+		return result
+	for item in result.items:
 		var free_slot := _first_free_tray_slot()
-		if free_slot < 0:
-			full = true
-			break
-		var taken := GameState.remove_item_at(i)
-		if not taken.is_empty():
-			_tray[free_slot] = taken
-			moved += 1
-		i -= 1
-	var msg := Localization.tr_key("ui.shop.staged_count") % moved
-	if full:
-		msg += Localization.tr_key("ui.shop.tray_full_suffix")
-	EventBus.toast_requested.emit(msg if moved > 0 else Localization.tr_key("ui.shop_panel.p023"), "pickup" if moved > 0 else "danger")
+		_tray[free_slot] = item
 	_refresh_tray()
+	return result
 
 ## 一键移入材料（工程 39 D-5-A）：药水 / 杂项 / 如意批量移入托盘空格，任务物品不收。
 ## 与「一键移入」互补 —— 后者只筛装备，避免放行非装备后把保命药误当低价值装备卖掉。
@@ -663,13 +658,35 @@ func _on_confirm_pressed() -> void:
 	if _tray.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p025"), "danger")
 		return
+	if not _sale_risk_confirmed:
+		var risky_names := _risky_sale_names()
+		if not risky_names.is_empty():
+			_sale_risk_confirmed = true
+			_tray_warn.text += "\n" + Localization.tr_key("ui.sale_preview.risk", [", ".join(PackedStringArray(risky_names))])
+			return
 	var res := GameState.shop_sell_staged(_tray.values())
+	if not bool(res.get("ok", false)):
+		EventBus.toast_requested.emit(String(res.get("reason", "出售失败，请重新核对")), "danger")
+		return
 	var n := int(res.get("count", 0))
 	var gold := int(res.get("gold", 0))
 	_tray.clear()
 	if n > 0:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p026") % [n, gold], "pickup")
 	_refresh_tray()
+
+## 货郎最终结算前重新检查托盘中预设不会自动选中的装备；手动拖入也适用。
+func _risky_sale_names() -> Array[String]:
+	var names: Array[String] = []
+	var preset := String(GameState.settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+	for item in _tray.values():
+		if not item is Dictionary or String(item.get("kind", "")) != "equip":
+			continue
+		var row := SellGearPolicy.entry(item, -1, int(GameState.player.get("level", 1)),
+			GameState.equipment, preset)
+		if not bool(row.get("default_selected", false)):
+			names.append(ItemUtil.display_name(item))
+	return names
 
 ## 把托盘内装备退回背包（关闭面板 / 全部取回）。返回退回件数；背包满的件保留在托盘。
 func _return_tray() -> int:

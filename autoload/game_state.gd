@@ -508,6 +508,7 @@ func set_equipment_favorite(instance_id: String, favorite: bool) -> bool:
 			item.favorite = favorite
 			inventory[i] = item
 			EventBus.inventory_changed.emit()
+			EventBus.equipment_favorite_changed.emit()
 			return true
 	for slot in equipment.keys():
 		if equipment[slot] is Dictionary and String(equipment[slot].get("instanceId", "")) == instance_id:
@@ -515,6 +516,7 @@ func set_equipment_favorite(instance_id: String, favorite: bool) -> bool:
 			item.favorite = favorite
 			equipment[slot] = item
 			EventBus.equipment_changed.emit()
+			EventBus.equipment_favorite_changed.emit()
 			return true
 	for i in range(warehouse.size()):
 		if warehouse[i] is Dictionary and String(warehouse[i].get("instanceId", "")) == instance_id:
@@ -522,6 +524,7 @@ func set_equipment_favorite(instance_id: String, favorite: bool) -> bool:
 			item.favorite = favorite
 			warehouse[i] = item
 			EventBus.warehouse_changed.emit()
+			EventBus.equipment_favorite_changed.emit()
 			return true
 	return false
 
@@ -622,7 +625,7 @@ func take_equipment_for_sale(rows: Array[Dictionary], available_slots: int,
 	for index in checked.indices:
 		inventory[index] = null
 	EventBus.inventory_changed.emit()
-	return {"ok": true, "items": checked.items, "count": rows.size(), "reason": ""}
+	return {"ok": true, "items": checked.items, "count": rows.size(), "gold": int(checked.total), "reason": ""}
 
 func inventory_expand() -> Dictionary:
 	var cost := Warehouse.next_cost(inventory_expansions)
@@ -1308,7 +1311,7 @@ func shop_buy(shop_id: String, item_id: String) -> Dictionary:
 
 ## 出售背包中指定格的装备（6.4：货郎只收购装备）。返回 {ok, reason, item, price}。
 ## silent = true 时不广播单件 toast（供面板批量出售后自行汇总，避免刷屏）。
-## E-P3-2：`price` 为**实际入账额**（`add_gold` 会在金币上限处截断），与提示文案同源。
+## 金币容量不足时不扣物；成功返回的 price 与实际入账同值。
 func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
 		return _trade_fail(Localization.tr_key("msg.game_state.p026"))
@@ -1316,6 +1319,8 @@ func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	if not Shop.can_sell(item):
 		return _trade_fail(Localization.tr_key("msg.game_state.p051"))
 	var price := Shop.sell_price(item)
+	if price > GOLD_CAP - gold:
+		return _trade_fail("金币已接近上限，请减少待售物品")
 	var label := ItemUtil.display_name(item)
 	remove_item_at(inv_index)
 	var gained := add_gold(price)
@@ -1325,8 +1330,7 @@ func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	return {"ok": true, "reason": "", "item": item, "price": gained}
 
 ## 结算一批暂存待售的装备（6.4「确认出售」）。托盘内容由出售界面持有，本函数只做算价与入账。
-## 返回 {count, gold}；无可售项时返回 {count: 0, gold: 0}（不扣物、不广播）。
-## E-P3-2：`gold` 为**实际入账额**（金币上限处会截断），面板提示以此为准。
+## 返回 {ok, count, gold, reason}；空托盘、不可售物或金币上限失败时不结算。
 func shop_sell_staged(items: Array) -> Dictionary:
 	var total := 0
 	var n := 0

@@ -30,9 +30,6 @@ var _bag_title: Label
 var _organize_button: Button
 var _expand_button: Button
 var _sell_low_button: Button
-var _filter_row: HBoxContainer
-var _filter_level: SpinBox
-var _filter_quality: OptionButton
 var _bag_grid: GridContainer
 var _summary: Label
 var _center: FloatingWindow
@@ -223,33 +220,6 @@ func _build() -> void:
 	_sell_low_button.pressed.connect(_on_sell_low_pressed)
 	action_row.add_child(_sell_low_button)
 	PanelChrome.style_action(_sell_low_button)
-	var filter_toggle := Button.new()
-	filter_toggle.text = Localization.tr_key("ui.inventory_panel.p005")
-	filter_toggle.pressed.connect(func() -> void: _filter_row.visible = not _filter_row.visible)
-	action_row.add_child(filter_toggle)
-	PanelChrome.style_action(filter_toggle)
-	_filter_row = HBoxContainer.new()
-	_filter_row.visible = false
-	right.add_child(_filter_row)
-	var level_label := Label.new()
-	level_label.text = Localization.tr_key("ui.inventory_panel.p006")
-	_filter_row.add_child(level_label)
-	_filter_level = SpinBox.new()
-	_filter_level.min_value = 1
-	_filter_level.max_value = GameState.LOW_GEAR_LEVEL_MAX
-	_filter_level.step = 1
-	_filter_level.custom_minimum_size.x = 78
-	_filter_level.value_changed.connect(_on_filter_level_changed)
-	_filter_row.add_child(_filter_level)
-	var quality_label := Label.new()
-	quality_label.text = Localization.tr_key("ui.inventory_panel.p007")
-	_filter_row.add_child(quality_label)
-	_filter_quality = OptionButton.new()
-	for label in [Localization.tr_key("ui.inventory_panel.p008"), Localization.tr_key("ui.inventory_panel.p009"), Localization.tr_key("ui.inventory_panel.p010"), Localization.tr_key("ui.inventory_panel.p011"), Localization.tr_key("ui.inventory_panel.p012")]:
-		_filter_quality.add_item(label)
-	_filter_quality.item_selected.connect(_on_filter_quality_changed)
-	_filter_row.add_child(_filter_quality)
-
 	var bag_scroll := ScrollContainer.new()
 	bag_scroll.custom_minimum_size = Vector2(460, 360)
 	bag_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -337,8 +307,6 @@ func _refresh() -> void:
 		Warehouse.capacity(GameState.inventory_expansions + 1) - GameState.inventory.size(), cost]
 	_sell_low_button.disabled = int(GameState.player.get("level", 1)) < 15
 	_sell_low_button.tooltip_text = Localization.tr_key("ui.inventory_panel.p017") if _sell_low_button.disabled else Localization.tr_key("ui.inventory_panel.p018")
-	_filter_level.set_value_no_signal(float(GameState.settings.get("lowGearLevelLimit", 5)))
-	_filter_quality.select(maxi(0, Shop.QUALITY_ORDER.find(String(GameState.settings.get("lowGearMaxQuality", "common")))))
 	_refresh_summary()
 
 func _ensure_bag_slots() -> void:
@@ -347,6 +315,7 @@ func _ensure_bag_slots() -> void:
 		var button := _make_item_slot(ItemSlot.ROLE_BAG, index)
 		button.pressed.connect(_on_bag_pressed.bind(index))
 		button.item_dropped.connect(_on_bag_item_dropped.bind(index))
+		button.gui_input.connect(_on_bag_slot_input.bind(index))
 		_bag_grid.add_child(button)
 		_bag_buttons.append(button)
 	while _bag_buttons.size() > GameState.inventory.size():
@@ -358,15 +327,17 @@ func _on_expand_pressed() -> void:
 	GameState.inventory_expand()
 
 func _on_sell_low_pressed() -> void:
-	GameState.sell_low_gear()
+	EquipmentSalePreview.open_for(self, EquipmentSalePreview.DIRECT)
 
-func _on_filter_level_changed(value: float) -> void:
-	GameState.set_low_gear_filter(int(value), String(GameState.settings.get("lowGearMaxQuality", "common")))
-
-func _on_filter_quality_changed(index: int) -> void:
-	GameState.set_low_gear_filter(int(GameState.settings.get("lowGearLevelLimit", 5)),
-		String(Shop.QUALITY_ORDER[index]))
-	_refresh_summary()
+## 背包装备右键切换收藏，不影响原有左键双击和拖放入口。
+func _on_bag_slot_input(event: InputEvent, index: int) -> void:
+	if not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_RIGHT or not event.pressed:
+		return
+	if index >= 0 and index < GameState.inventory.size() and GameState.inventory[index] is Dictionary:
+		var item: Dictionary = GameState.inventory[index]
+		if String(item.get("kind", "")) == "equip":
+			GameState.set_equipment_favorite(String(item.get("instanceId", "")), not bool(item.get("favorite", false)))
+			get_viewport().set_input_as_handled()
 
 func _refresh_summary() -> void:
 	if _summary == null:
