@@ -23,6 +23,10 @@ const GRID_FILLED := Color("1b282d")
 const GRID_EMPTY := Color("142025")
 const GRID_HOVER := Color("2b3a3d")
 const GRID_TEXT := Color(0.90, 0.92, 0.95)
+## 背包装备评分角标三态：可立即穿戴的高分件、等级未达的高分件和无提示。
+enum UpgradeBadge { NONE, READY, LEVEL_LOCKED }
+const UPGRADE_READY_COLOR := Color("78e5a5")
+const UPGRADE_LOCKED_COLOR := Color("aab5bf")
 
 ## 目标格收到投放时回传（target_index 为本格下标，payload 见文件头）。
 signal item_dropped(tray_index: int, payload: Dictionary)
@@ -30,11 +34,11 @@ signal item_dropped(tray_index: int, payload: Dictionary)
 var role: int = ROLE_BAG
 var index: int = -1              # 背包下标（ROLE_BAG）/ 托盘下标（ROLE_TRAY）
 var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交易装备 / 仓库存取）
-var upgrade_badge: bool = false:
+## 状态只影响格内提示，不参与装备穿戴判定或评分计算。
+var upgrade_badge_state: UpgradeBadge = UpgradeBadge.NONE:
 	set(value):
-		upgrade_badge = value
-		if _upgrade_marker != null:
-			_upgrade_marker.visible = value
+		upgrade_badge_state = value
+		_refresh_upgrade_marker()
 
 ## 当前格内物品实例（由面板在刷新时写入）。**赋值即刷新右下角数量角标**（M4-10）。
 var item: Dictionary = {}:
@@ -135,10 +139,11 @@ func _ready() -> void:
 	_upgrade_marker.add_theme_font_size_override("font_size", 19)
 	_upgrade_marker.add_theme_constant_override("outline_size", 3)
 	_upgrade_marker.add_theme_color_override("font_outline_color", Color(0.03, 0.10, 0.06))
-	_upgrade_marker.add_theme_color_override("font_color", Color("78e5a5"))
+	_upgrade_marker.add_theme_color_override("font_color", UPGRADE_READY_COLOR)
 	_upgrade_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_upgrade_marker.visible = upgrade_badge
+	_upgrade_marker.visible = false
 	add_child(_upgrade_marker)
+	_refresh_upgrade_marker()
 	EventBus.settings_changed.connect(_refresh_potion_marker)
 	_drag_cover = PanelContainer.new()
 	_drag_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -164,6 +169,14 @@ func _ready() -> void:
 		_press_grab_point = get_local_mouse_position()
 		_press_grab_valid = true)
 	set_process(false)
+
+## 在装备、等级或格子内容变化时同步箭头颜色与可见性，清除旧状态残留。
+func _refresh_upgrade_marker() -> void:
+	if _upgrade_marker == null:
+		return
+	_upgrade_marker.visible = upgrade_badge_state != UpgradeBadge.NONE
+	_upgrade_marker.add_theme_color_override("font_color",
+		UPGRADE_LOCKED_COLOR if upgrade_badge_state == UpgradeBadge.LEVEL_LOCKED else UPGRADE_READY_COLOR)
 
 func _process(_delta: float) -> void:
 	if not get_viewport().gui_is_dragging():
@@ -269,17 +282,24 @@ func _populate_equipment_tooltip(row: GridContainer) -> void:
 	var candidate_card := _equipment_tip_card(Localization.tr_key("ui.equip_tip.bag"), item)
 	row.add_child(candidate_card)
 	if bool(preview.get("ok", false)):
+		var can_wear := Equipment.meets_level(item, int(GameState.player.level))
+		var score_increase := bool(preview.get("score_increase", false))
 		var column: VBoxContainer = candidate_card.get_child(0)
 		var hint := Label.new()
 		# 原生 tooltip 根据最小尺寸放置；固定短行避免自动换行产生错误高度。
 		hint.autowrap_mode = TextServer.AUTOWRAP_OFF
 		hint.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))
 		var text := ""
+		if score_increase and not can_wear:
+			text = Localization.tr_key("ui.equip_tip.locked_stronger", [Equipment.level_req(item)]) + "\n"
+			hint.add_theme_color_override("font_color", UPGRADE_LOCKED_COLOR)
 		if bool(preview.empty):
-			text = Localization.tr_key("ui.equip_tip.empty", [String(preview.slot_label)])
+			text += Localization.tr_key("ui.equip_tip.empty", [String(preview.slot_label)]) if can_wear \
+				else Localization.tr_key("ui.equip_tip.empty_target", [String(preview.slot_label)])
+			text += Localization.tr_key("ui.equip_tip.empty_score", [float(preview.score_delta)])
 		else:
-			if bool(preview.stronger):
-				text = Localization.tr_key("ui.equip_tip.stronger") + "\n"
+			if bool(preview.stronger) and can_wear:
+				text += Localization.tr_key("ui.equip_tip.stronger") + "\n"
 				hint.add_theme_color_override("font_color", Color("78d8a4"))
 			text += Localization.tr_key("ui.equip_tip.target", [String(preview.slot_label)])
 			text += "\n" + Localization.tr_key("ui.equip_tip.delta", [float(preview.worn_score), float(preview.score_delta)])
@@ -288,7 +308,7 @@ func _populate_equipment_tooltip(row: GridContainer) -> void:
 		text += "\n" + Localization.tr_key("ui.equip_tip.score_note")
 		hint.text = text
 		column.add_child(hint)
-		if not Equipment.meets_level(item, int(GameState.player.level)):
+		if not can_wear and not score_increase:
 			var requirement := Label.new()
 			requirement.text = Localization.tr_key("ui.equip_tip.required", [Equipment.level_req(item)])
 			requirement.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))

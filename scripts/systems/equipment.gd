@@ -136,12 +136,13 @@ static func replacement_preview(slots: Dictionary, item: Dictionary, slot_id: St
 		return {"ok": false, "reason": Localization.tr_key("msg.equipment.invalid_quality")}
 	var candidate_score := score(item)
 	var worn_score := score(worn)
+	var score_delta := candidate_score - worn_score
+	var score_increase := score_delta > 0.0 and not is_zero_approx(score_delta)
 	return {"ok": true, "slot_id": target, "slot_label": slot_label(target),
 		"candidate": item.duplicate(true), "worn": worn.duplicate(true),
 		"candidate_score": candidate_score, "worn_score": worn_score,
-		"score_delta": candidate_score - worn_score, "empty": worn.is_empty(),
-		"stronger": not worn.is_empty() and candidate_score > worn_score
-			and not is_equal_approx(candidate_score, worn_score),
+		"score_delta": score_delta, "score_increase": score_increase, "empty": worn.is_empty(),
+		"stronger": not worn.is_empty() and score_increase,
 		"downgrade": not worn.is_empty() and candidate_score < worn_score
 			and not is_equal_approx(candidate_score, worn_score),
 		"lower_quality": not worn.is_empty() and quality_rank(item) < quality_rank(worn)}
