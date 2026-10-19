@@ -28,7 +28,7 @@ func set_remaining(seconds: float) -> void:
 func _draw() -> void:
 	draw_texture(TOMBSTONE_TEXTURE, Vector2(-32, -62))
 	var seconds := maxi(0, _shown_seconds)
-	var text := "Boss 刷新 %02d:%02d" % [seconds / 60, seconds % 60]
+	var text := Localization.tr_key("ui.boss_tombstone.p001", [seconds / 60, seconds % 60])
 	# 字号抵消地图倍率，再按玩家设定的最终文字倍率显示。
 	var font_size := 15.0 * SettingsRuntime.world_text_scale_value()
 	draw_string(MONO_FONT, Vector2(-100, -63), text, HORIZONTAL_ALIGNMENT_CENTER, 200, font_size, Color("f2cc71"))

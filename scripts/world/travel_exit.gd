@@ -40,7 +40,11 @@ func _update_label() -> void:
 		return
 	var name := MapService.display_name(to_map)
 	if player_near:
-		_label.text = "[E / 点击] 前往%s · 免费 · 推荐Lv%d" % [name, MapService.recommended_level(to_map)] if MapService.is_unlocked(to_map) else "道路封锁：%s尚未解锁" % name
+		if MapService.is_unlocked(to_map):
+			_label.text = Localization.tr_key("ui.travel_exit.p001",
+				[name, MapService.recommended_level(to_map)])
+		else:
+			_label.text = Localization.tr_key("msg.map_service.p008", [name])
 	else:
 		_label.text = "⇄ %s" % name
 

@@ -103,7 +103,7 @@ func _build() -> void:
 	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	greeting_row.add_child(speech)
 	var speaker := Label.new()
-	speaker.text = "铁匠"
+	speaker.text = Localization.tr_key("ui.blacksmith_panel.p002")
 	PanelChrome.style_section(speaker)
 	speech.add_child(speaker)
 	_greeting = Label.new()
@@ -119,7 +119,7 @@ func _build() -> void:
 	service_content.add_theme_constant_override("separation", 12)
 	_service_card.add_child(service_content)
 	var service_title := Label.new()
-	service_title.text = "可用服务"
+	service_title.text = Localization.tr_key("ui.blacksmith_panel.p007")
 	PanelChrome.style_section(service_title)
 	service_content.add_child(service_title)
 	var service_description := Label.new()
@@ -131,7 +131,7 @@ func _build() -> void:
 	actions.add_theme_constant_override("separation", 12)
 	root.add_child(actions)
 	var leave := Button.new()
-	leave.text = "离开"
+	leave.text = Localization.tr_key("ui.blacksmith_panel.p008")
 	leave.pressed.connect(func() -> void: set_open(false))
 	actions.add_child(leave)
 	PanelChrome.style_action(leave)

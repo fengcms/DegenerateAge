@@ -3728,6 +3728,17 @@ func _test_localization() -> void:
 	# 缺 key 且带参时不得因格式化崩溃，直接回退为 key 本身。
 	_expect(Localization.tr_key("__smoke_missing_key__", [1, 2]) == "__smoke_missing_key__",
 		"缺失 key 带参应回退为 key 本身，不做 % 填充")
+	# A1：4 处玩家可见硬编码文案外置后新增的 key。墓碑倒计时只在渲染帧的 `_draw()` 里取值、
+	# 路牌近距文案只在玩家靠近分支里取值，无头冒烟都走不到，故显式断言 key 命中补闸门盲区。
+	for key in ["ui.blacksmith_panel.p007", "ui.blacksmith_panel.p008",
+			"ui.travel_exit.p001", "ui.boss_tombstone.p001", "msg.game.p011"]:
+		_expect(Localization.has_key(key), "文案表应包含 key：%s" % key)
+	# 带参文案必须能正确填充（墓碑 %02d 零填充、路牌 %s/%d 不留残留占位符）。
+	var tombstone := Localization.tr_key("ui.boss_tombstone.p001", [5, 4])
+	_expect(tombstone.ends_with("05:04"), "墓碑倒计时应零填充分钟：%s" % tombstone)
+	var road_sign := Localization.tr_key("ui.travel_exit.p001", ["幸存者营地", 6])
+	_expect(road_sign.contains("幸存者营地") and not road_sign.contains("%"),
+		"路牌提示应填充参数且无残留占位符：%s" % road_sign)
 
 # ---- M4-10 / 反馈②：等宽字体（主题默认 + 自绘共用同一资源）----
 func _test_font_mono() -> void:
