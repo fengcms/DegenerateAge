@@ -110,6 +110,8 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				"stat_norm": norm,
 				"scale_stats": scale_stats,
 				"xp_from_curve": bool(spec.get("xpFromCurve", false)),
+				"xp_curve_divisor": maxi(1, int(spec.get("xpCurveDivisor", 1))),
+				"xp_multiplier": float(spec.get("xpMultiplier", 1.0)),
 				"entry": null,
 				"tombstone": bool(spec.get("tombstone", false)),
 				"marker": null,
@@ -218,6 +220,8 @@ func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	m.stat_norm = norm if norm is Dictionary else {}
 	m.scale_stats = bool(point.get("scale_stats", false))
 	m.xp_from_curve = bool(point.get("xp_from_curve", false))
+	m.xp_curve_divisor = int(point.get("xp_curve_divisor", 1))
+	m.xp_multiplier = float(point.get("xp_multiplier", 1.0))
 	var pos := _spawn_position(point)
 	if is_instance_valid(point.marker):
 		point.marker.queue_free()

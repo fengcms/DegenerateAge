@@ -80,6 +80,9 @@ var drop_table_override := ""
 @export var scale_stats: bool = false
 ## M10-3：经验由 `Balance.boss_xp(等级)` 反推，忽略模板 `xpReward`。
 @export var xp_from_curve: bool = false
+## 循环图经验先除以同级 Boss 基线比例，再乘以本图收益系数；仅刷新点显式设置。
+@export var xp_curve_divisor: int = 1
+@export var xp_multiplier: float = 1.0
 
 signal died(id: String)
 
@@ -912,7 +915,8 @@ func _settle_rewards() -> void:
 		return
 	# M10-3：循环图的经验由曲线反推（产品 13 §2：E(L) 决定「升一级要杀几只」），
 	# 不再依赖各章模板手填的 xpReward。存量图 `xp_from_curve` 恒 false，取值不变。
-	var base_xp := Balance.boss_xp(level) if xp_from_curve else int(template.get("xpReward", 0))
+	var base_xp := int(round(float(Balance.boss_xp(level)) / float(maxi(1, xp_curve_divisor)))) if xp_from_curve else int(template.get("xpReward", 0))
+	base_xp = int(round(float(base_xp) * maxf(0.0, xp_multiplier)))
 	var xp := LevelGap.kill_xp(base_xp, int(GameState.player.get("level", 1)), level)
 	if xp > 0:
 		GameState.add_xp(xp)

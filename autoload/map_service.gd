@@ -76,7 +76,8 @@ func _find_quest_route(kind: String, target_id: String, allowed_maps: Array) -> 
 			return {"ok": true, "map": map_id, "first_hop": first_hop[map_id]}
 		for exit_data in data_for(map_id).get("exits", []):
 			var next_id := String(exit_data.get("toMap", ""))
-			if next_id.is_empty() or visited.has(next_id) or not is_unlocked(next_id):
+			if next_id.is_empty() or visited.has(next_id) or not is_unlocked(next_id) \
+					or not entry_gate_reason(next_id, "walk", map_id).is_empty():
 				continue
 			# 正向锁未开的边不进导航路径：否则会指一条走到跟前打不开的路。
 			if not _exit_open(exit_data):
@@ -224,6 +225,31 @@ func is_unlocked(map_id: String) -> bool:
 	if need.is_empty():
 		return true
 	return bool(GameState.unlocks.get(need, false))
+
+## 动态入场条件按目的地图配置检查，供步行与快捷出行共用；空字符串表示允许。
+## `walkOnlyFrom` 只限制进入方向，图内返回出口不受限制。
+func entry_gate_reason(map_id: String, mode: String = "walk", from_map: String = "") -> String:
+	var gate: Variant = data_for(map_id).get("entryGate", null)
+	if not gate is Dictionary:
+		return ""
+	var origin := String((gate as Dictionary).get("walkOnlyFrom", ""))
+	var actual_from := from_map if not from_map.is_empty() else GameState.current_map
+	if not origin.is_empty() and (mode != "walk" or actual_from != origin):
+		return "只能从%s的入口进入" % display_name(origin)
+	var min_level := int((gate as Dictionary).get("minLevel", 0))
+	if int(GameState.player.get("level", 1)) < min_level:
+		return "需要达到 %d 级才能进入" % min_level
+	var required_quality := String((gate as Dictionary).get("allEquipmentQuality", ""))
+	if not required_quality.is_empty():
+		var missing: Array[String] = []
+		for slot_def in Equipment.SLOT_DEFS:
+			var slot_id := String(slot_def.id)
+			var equipped: Variant = GameState.equipment.get(slot_id)
+			if not equipped is Dictionary or String((equipped as Dictionary).get("quality", "")) != required_quality:
+				missing.append(String(slot_def.label))
+		if not missing.is_empty():
+			return "需要全身传说（紫色）装备；未达标：%s" % "、".join(PackedStringArray(missing))
+	return ""
 
 # ---- 门禁（E1；工程文档 30 §4，31 §4）----
 
@@ -392,6 +418,9 @@ func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
 		return _fail(_locked_by(exit_requirement(exit_data), to_id))
 	if not is_unlocked(to_id):
 		return _fail(locked_reason(to_id))
+	var entry_reason := entry_gate_reason(to_id)
+	if not entry_reason.is_empty():
+		return _fail(entry_reason)
 	var entrance_id := String(exit_data.get("toEntrance", ""))
 	var entrances: Variant = data_for(to_id).get("entrances", null)
 	if not entrances is Dictionary or not entrances.has(entrance_id):
@@ -413,6 +442,9 @@ func destinations() -> Array:
 	for lid in links():
 		var id := String(lid)
 		if not exists(id):
+			continue
+		var gate: Variant = data_for(id).get("entryGate", {})
+		if gate is Dictionary and not String((gate as Dictionary).get("walkOnlyFrom", "")).is_empty():
 			continue
 		var visited := GameState.is_visited(id)
 		var taught := GameState.current_map == DEFAULT_MAP and id == "wild_trial"
@@ -462,6 +494,9 @@ func anywhere_destinations() -> Array:
 			continue
 		var id := String((entry as Dictionary).get("id", ""))
 		if id.is_empty() or id == GameState.current_map:
+			continue
+		var gate: Variant = (entry as Dictionary).get("entryGate", {})
+		if gate is Dictionary and not String((gate as Dictionary).get("walkOnlyFrom", "")).is_empty():
 			continue
 		var visited := GameState.is_visited(id)
 		var taught := GameState.current_map == DEFAULT_MAP and id == "wild_trial"
@@ -546,6 +581,9 @@ func _travel_checks(map_id: String, require_linked: bool) -> Dictionary:
 		return _fail(Localization.tr_key("msg.map_service.p015") % display_name(map_id))
 	if not is_unlocked(map_id):
 		return _fail(Localization.tr_key("msg.map_service.p016") % display_name(map_id))
+	var entry_reason := entry_gate_reason(map_id, "carter")
+	if not entry_reason.is_empty():
+		return _fail(entry_reason)
 	if not GameState.is_visited(map_id) and not (GameState.current_map == DEFAULT_MAP and map_id == "wild_trial"):
 		return _fail(Localization.tr_key("msg.map_service.p017") % display_name(map_id))
 	return {"ok": true, "reason": ""}

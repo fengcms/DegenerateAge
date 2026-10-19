@@ -2,12 +2,14 @@
 
 本目录集中第 7 章各地图的独立配置；具体用途、参数与编辑规则见各地图目录的 README。修改地图时同步更新对应 README。
 
-本章只含满级后的循环内容，不设新的普通刷怪章节地图。
+本章是第六章结局后的循环内容。无尽回廊分出金币图与百 Boss 图，两图仅允许从回廊入口步行进入。
 
 | 地图 | ID | 用途 | 等级范围 |
 |---|---|---|---|
 | [无尽回廊](c7_arena/README.md) | `c7_arena` | 满级后循环 Boss 挑战场（车夫直达） | 60–60 |
+| [聚金地脉](c7_gold_field/README.md) | `c7_gold_field` | 96 席普通怪循环金币图 | 80 级起 |
+| [百首禁域](c7_boss_field/README.md) | `c7_boss_field` | 100 席 Boss 循环装备图，全身紫装门槛 | 100 级起 |
 
-`data/maps/index.json` 仅登记加载顺序与相对路径，`ch07/c7_arena/map.json` 排在其末尾，地图属性仍只写在各自 `map.json` 内。
+`data/maps/index.json` 仅登记加载顺序与相对路径，地图属性仍只写在各自 `map.json` 内。
 
-与相邻章节的衔接：`c7_arena` 是第 6 章城镇枢纽 `c6_map00`（镇脉前哨）的支线（`kind: spoke`、`hubId: c6_map00`），唯一出入口走 `c7_arena_exit01` / `c6_map00_exit03` 同格对开，解锁条件 `campaign_complete`（由 C6Q12 任务产出），因此本章不产出新的主线探索地图。
+与相邻章节的衔接：`c7_arena` 是第 6 章城镇枢纽 `c6_map00`（镇脉前哨）的支线，解锁条件 `campaign_complete`（由 C6Q12 任务产出）。回廊南北两个新增入口分别通向百首禁域和聚金地脉；其动态等级及装备门槛由目的地图 `entryGate` 管理。

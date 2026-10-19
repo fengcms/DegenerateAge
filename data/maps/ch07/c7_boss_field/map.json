@@ -1,0 +1,1557 @@
+{
+  "id": "c7_boss_field",
+  "name": "百首禁域",
+  "size": {
+    "w": 200,
+    "h": 120
+  },
+  "layoutVersion": "2026-10-20-cycle-v1",
+  "layoutPath": "res://data/layouts/c7_boss_field.json",
+  "recommendedLevel": 100,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c6_map00",
+  "requiresUnlock": "campaign_complete",
+  "entryGate": {
+    "walkOnlyFrom": "c7_arena",
+    "minLevel": 100,
+    "allEquipmentQuality": "legendary"
+  },
+  "levelFromPlayer": {
+    "enabled": true,
+    "minLevel": 100
+  },
+  "exits": [
+    {
+      "id": "c7_boss_field_exit01",
+      "label": "回无尽回廊",
+      "cell": [
+        6,
+        60
+      ],
+      "toMap": "c7_arena",
+      "toEntrance": "from_c7_boss_field"
+    }
+  ],
+  "entrances": {
+    "from_c7_arena": [
+      6,
+      60
+    ]
+  },
+  "carterArrival": [
+    8,
+    60
+  ],
+  "bossSpawn": null,
+  "npcs": [],
+  "eliteCap": 0,
+  "carterFares": {},
+  "spawnPoints": [],
+  "bossSpawns": [
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        10
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "A"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        21
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "B"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        32
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "C"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        43
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "D"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        54
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "E"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        65
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "F"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        76
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "G"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        87
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "H"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        98
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "I"
+    },
+    {
+      "monsterId": "c6_boss03",
+      "cell": [
+        20,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c4_boss02",
+      "cell": [
+        38,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c2_boss_slag_devourer",
+      "cell": [
+        56,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c6_boss02",
+      "cell": [
+        74,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c5_boss02",
+      "cell": [
+        92,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c2_boss_hundred_arm_extractor",
+      "cell": [
+        110,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        128,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c5_boss04",
+      "cell": [
+        146,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c3_boss02",
+      "cell": [
+        164,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    },
+    {
+      "monsterId": "c2_boss_iron_foreman",
+      "cell": [
+        182,
+        109
+      ],
+      "kind": "boss",
+      "respawnTime": 600,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Boss_Field",
+      "group": "J"
+    }
+  ],
+  "normalCap": 0,
+  "bossCap": 18,
+  "unclaimedLootCap": 2400,
+  "desc": "100级且全身紫装开放的百席循环首领战场。"
+}

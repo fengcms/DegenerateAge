@@ -2,7 +2,7 @@
   "id": "c7_arena",
   "name": "无尽回廊",
   "size": {"w": 160, "h": 90},
-  "layoutVersion": "2026-10-19-arena-20seats-v1",
+  "layoutVersion": "2026-10-20-arena-two-portals-v1",
   "layoutPath": "res://data/layouts/c7_arena.json",
   "recommendedLevel": 60,
   "safeZone": false,
@@ -18,10 +18,14 @@
       "cell": [8, 45],
       "toMap": "c6_map00",
       "toEntrance": "from_c7_arena"
-    }
+    },
+    {"id": "c7_arena_exit02", "label": "往聚金地脉（80级）", "cell": [80, 8], "toMap": "c7_gold_field", "toEntrance": "from_c7_arena"},
+    {"id": "c7_arena_exit03", "label": "往百首禁域（100级·全身紫装）", "cell": [80, 82], "toMap": "c7_boss_field", "toEntrance": "from_c7_arena"}
   ],
   "entrances": {
-    "from_c6_map00": [8, 45]
+    "from_c6_map00": [8, 45],
+    "from_c7_gold_field": [80, 8],
+    "from_c7_boss_field": [80, 82]
   },
   "carterArrival": [10, 45],
   "spawnPoints": [],

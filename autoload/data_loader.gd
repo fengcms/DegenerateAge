@@ -490,6 +490,7 @@ func validate_all() -> Array[String]:
 					report.append("[maps] %s 的 shop NPC 引用未定义 npcId '%s'" % [mid_map, sid])
 	report.append_array(_validate_carter_clusters(maps))
 	report.append_array(_validate_walk_exits(maps))
+	report.append_array(_validate_entry_gates(maps))
 	report.append_array(_validate_gate_flags(maps))
 	report.append_array(_validate_safe_areas(maps))
 
@@ -911,6 +912,35 @@ func _validate_safe_areas(maps: Variant) -> Array[String]:
 				report.append("[maps] %s 的 NPC 位于安全区外" % id)
 	return report
 
+## 校验动态入场门槛的类型和引用，防止配置失误让地图从快捷旅行绕过。
+func _validate_entry_gates(maps: Variant) -> Array[String]:
+	var report: Array[String] = []
+	if not maps is Array:
+		return report
+	var ids := {}
+	for entry in maps:
+		if entry is Dictionary:
+			ids[String(entry.get("id", ""))] = true
+	for entry in maps:
+		if not entry is Dictionary or not entry.has("entryGate"):
+			continue
+		var map_id := String(entry.get("id", ""))
+		var gate: Variant = entry.entryGate
+		if not gate is Dictionary:
+			report.append("[maps] %s 的 entryGate 必须是字典" % map_id)
+			continue
+		var origin := String((gate as Dictionary).get("walkOnlyFrom", ""))
+		if origin.is_empty() or not ids.has(origin):
+			report.append("[maps] %s 的 entryGate.walkOnlyFrom 必须引用已有地图" % map_id)
+		var level: Variant = (gate as Dictionary).get("minLevel", null)
+		if not _is_whole_level(level) or int(level) < 1:
+			report.append("[maps] %s 的 entryGate.minLevel 必须是正整数" % map_id)
+		var quality := String((gate as Dictionary).get("allEquipmentQuality", ""))
+		if not quality.is_empty() and quality != "legendary":
+			report.append("[maps] %s 的 entryGate.allEquipmentQuality 目前只支持 legendary" % map_id)
+	return report
+
+## 校验步行出口的双向拓扑与同格落点，避免进图后被困。
 func _validate_walk_exits(maps: Variant) -> Array[String]:
 	var report: Array[String] = []
 	if not maps is Array:
@@ -1411,6 +1441,22 @@ func _validate_endgame() -> Array[String]:
 			var value: Variant = (norm as Dictionary).get(key, null)
 			if not _is_whole_level(value) or int(value) < 1:
 				report.append("[endgame] %s 的 norm.%s 应为正整数" % [mid, key])
+	var normals: Variant = (cfg as Dictionary).get("goldFieldNormals", [])
+	if not normals is Array:
+		report.append("[endgame] goldFieldNormals 必须是数组")
+	else:
+		for entry in (normals as Array):
+			if not entry is Dictionary:
+				report.append("[endgame] goldFieldNormals 条目必须是字典")
+				continue
+			var mid := String((entry as Dictionary).get("monsterId", ""))
+			var template: Variant = get_entry("monsters", mid)
+			if not template is Dictionary or String((template as Dictionary).get("kind", "")) != "normal":
+				report.append("[endgame] goldFieldNormals 引用的 %s 不是普通怪" % mid)
+			var norm: Variant = (entry as Dictionary).get("norm", {})
+			for key in ["hp", "atk", "def"]:
+				if not norm is Dictionary or not _is_whole_level((norm as Dictionary).get(key, null)) or int((norm as Dictionary).get(key, 0)) < 1:
+					report.append("[endgame] %s 的 norm.%s 应为正整数" % [mid, key])
 	return report
 
 func _validate_upgrade() -> Array[String]:

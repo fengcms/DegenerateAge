@@ -1,0 +1,542 @@
+{
+  "id": "c7_gold_field",
+  "name": "聚金地脉",
+  "size": {
+    "w": 160,
+    "h": 90
+  },
+  "layoutVersion": "2026-10-20-cycle-v1",
+  "layoutPath": "res://data/layouts/c7_gold_field.json",
+  "recommendedLevel": 80,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c6_map00",
+  "requiresUnlock": "campaign_complete",
+  "entryGate": {
+    "walkOnlyFrom": "c7_arena",
+    "minLevel": 80
+  },
+  "levelFromPlayer": {
+    "enabled": true,
+    "minLevel": 80
+  },
+  "exits": [
+    {
+      "id": "c7_gold_field_exit01",
+      "label": "回无尽回廊",
+      "cell": [
+        6,
+        45
+      ],
+      "toMap": "c7_arena",
+      "toEntrance": "from_c7_gold_field"
+    }
+  ],
+  "entrances": {
+    "from_c7_arena": [
+      6,
+      45
+    ]
+  },
+  "carterArrival": [
+    8,
+    45
+  ],
+  "bossSpawn": null,
+  "npcs": [],
+  "eliteCap": 0,
+  "carterFares": {},
+  "spawnPoints": [
+    {
+      "monsterId": "c6_normal01",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          17,
+          9
+        ],
+        [
+          113,
+          9
+        ],
+        [
+          65,
+          19
+        ],
+        [
+          17,
+          29
+        ],
+        [
+          113,
+          29
+        ],
+        [
+          65,
+          39
+        ],
+        [
+          17,
+          49
+        ],
+        [
+          113,
+          49
+        ],
+        [
+          65,
+          59
+        ],
+        [
+          17,
+          69
+        ],
+        [
+          113,
+          69
+        ],
+        [
+          65,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal02",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          29,
+          9
+        ],
+        [
+          125,
+          9
+        ],
+        [
+          77,
+          19
+        ],
+        [
+          29,
+          29
+        ],
+        [
+          125,
+          29
+        ],
+        [
+          77,
+          39
+        ],
+        [
+          29,
+          49
+        ],
+        [
+          125,
+          49
+        ],
+        [
+          77,
+          59
+        ],
+        [
+          29,
+          69
+        ],
+        [
+          125,
+          69
+        ],
+        [
+          77,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal03",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          41,
+          9
+        ],
+        [
+          137,
+          9
+        ],
+        [
+          89,
+          19
+        ],
+        [
+          41,
+          29
+        ],
+        [
+          137,
+          29
+        ],
+        [
+          89,
+          39
+        ],
+        [
+          41,
+          49
+        ],
+        [
+          137,
+          49
+        ],
+        [
+          89,
+          59
+        ],
+        [
+          41,
+          69
+        ],
+        [
+          137,
+          69
+        ],
+        [
+          89,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal04",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          53,
+          9
+        ],
+        [
+          149,
+          9
+        ],
+        [
+          101,
+          19
+        ],
+        [
+          53,
+          29
+        ],
+        [
+          149,
+          29
+        ],
+        [
+          101,
+          39
+        ],
+        [
+          53,
+          49
+        ],
+        [
+          149,
+          49
+        ],
+        [
+          101,
+          59
+        ],
+        [
+          53,
+          69
+        ],
+        [
+          149,
+          69
+        ],
+        [
+          101,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal05",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          65,
+          9
+        ],
+        [
+          17,
+          19
+        ],
+        [
+          113,
+          19
+        ],
+        [
+          65,
+          29
+        ],
+        [
+          17,
+          39
+        ],
+        [
+          113,
+          39
+        ],
+        [
+          65,
+          49
+        ],
+        [
+          17,
+          59
+        ],
+        [
+          113,
+          59
+        ],
+        [
+          65,
+          69
+        ],
+        [
+          17,
+          79
+        ],
+        [
+          113,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal06",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          77,
+          9
+        ],
+        [
+          29,
+          19
+        ],
+        [
+          125,
+          19
+        ],
+        [
+          77,
+          29
+        ],
+        [
+          29,
+          39
+        ],
+        [
+          125,
+          39
+        ],
+        [
+          77,
+          49
+        ],
+        [
+          29,
+          59
+        ],
+        [
+          125,
+          59
+        ],
+        [
+          77,
+          69
+        ],
+        [
+          29,
+          79
+        ],
+        [
+          125,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal07",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          89,
+          9
+        ],
+        [
+          41,
+          19
+        ],
+        [
+          137,
+          19
+        ],
+        [
+          89,
+          29
+        ],
+        [
+          41,
+          39
+        ],
+        [
+          137,
+          39
+        ],
+        [
+          89,
+          49
+        ],
+        [
+          41,
+          59
+        ],
+        [
+          137,
+          59
+        ],
+        [
+          89,
+          69
+        ],
+        [
+          41,
+          79
+        ],
+        [
+          137,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    },
+    {
+      "monsterId": "c6_normal08",
+      "kind": "normal",
+      "respawnTime": 15,
+      "count": 12,
+      "cells": [
+        [
+          101,
+          9
+        ],
+        [
+          53,
+          19
+        ],
+        [
+          149,
+          19
+        ],
+        [
+          101,
+          29
+        ],
+        [
+          53,
+          39
+        ],
+        [
+          149,
+          39
+        ],
+        [
+          101,
+          49
+        ],
+        [
+          53,
+          59
+        ],
+        [
+          149,
+          59
+        ],
+        [
+          101,
+          69
+        ],
+        [
+          53,
+          79
+        ],
+        [
+          149,
+          79
+        ]
+      ],
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "xpCurveDivisor": 10,
+      "xpMultiplier": 0.5,
+      "dropTableId": "DT_C7_Gold_Normal"
+    }
+  ],
+  "normalCap": 28,
+  "bossCap": 0,
+  "desc": "80级开放的持续金币战场；第六章普通怪复用外观，等级随玩家成长。"
+}

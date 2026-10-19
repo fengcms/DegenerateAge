@@ -71,8 +71,8 @@ func _test_topology() -> void:
 	# 出口双向同格（`_validate_walk_exits` 的契约）：目标图 entrances[X] 必须等于**目标图自己**
 	# 通往 X 的那个出口格，否则落地会卡在墙里。
 	var exits: Array = data.get("exits", [])
-	check(exits.size() == 1, "循环图应有 1 个出口，实际 %d" % exits.size())
-	if exits.size() == 1:
+	check(exits.size() == 3, "循环图应有返回城镇与两张循环图共 3 个出口，实际 %d" % exits.size())
+	if exits.size() >= 1:
 		var exit_cell: Variant = (exits[0] as Dictionary).get("cell", null)
 		var entrances: Variant = data.get("entrances", {})
 		check(entrances is Dictionary and (entrances as Dictionary).get("from_%s" % HUB_ID) == exit_cell,

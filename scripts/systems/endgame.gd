@@ -20,7 +20,9 @@ static func arena_bosses() -> Array:
 static func norm(monster_id: String) -> Dictionary:
 	if monster_id.is_empty():
 		return {}
-	for entry in arena_bosses():
+	var cfg: Variant = DataLoader.get_table("endgame")
+	var normal_rows: Array = (cfg as Dictionary).get("goldFieldNormals", []) if cfg is Dictionary else []
+	for entry in arena_bosses() + normal_rows:
 		if not entry is Dictionary:
 			continue
 		if String((entry as Dictionary).get("monsterId", "")) != monster_id:

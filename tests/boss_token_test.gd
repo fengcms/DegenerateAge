@@ -12,7 +12,7 @@ const ARENA := "c7_arena"
 const LEGACY_MAP := "c6_map05"
 const LEGACY_BOSS := "c6_boss03"
 const ARENA_BOSS := "c6_boss03"
-const TOTAL_BOSS_ROWS := 37  # 17 单点 + c7_arena 20
+const TOTAL_BOSS_ROWS := 137  # 17 单点 + c7_arena 20 + 百首禁域 100
 const LEGACY_UNLOCK := "c6_access_05"
 
 var failures: Array[String] = []

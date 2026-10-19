@@ -471,6 +471,10 @@ func _request_exit_interaction(exit_node: TravelExit) -> void:
 	if not MapService.is_unlocked(exit_node.to_map):
 		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p010") % MapService.display_name(exit_node.to_map), "danger")
 		return
+	var entry_reason := MapService.entry_gate_reason(exit_node.to_map)
+	if not entry_reason.is_empty():
+		EventBus.toast_requested.emit(entry_reason, "danger")
+		return
 	if Iso.world_to_grid(_player.global_position).distance_to(Iso.world_to_grid(exit_node.global_position)) <= MapService.WALK_RANGE_CELLS:
 		_activate_exit(exit_node)
 	elif _player.request_map_move(_ground.clamp_to_map(exit_node.global_position)):
