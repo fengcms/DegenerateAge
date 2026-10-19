@@ -48,6 +48,7 @@ func _ready() -> void:
 	check(not output.is_empty() and EquipmentFusion.tier_start(output) == 61
 		and String(output.get("quality", "")) == "legendary" and SaveManager._valid_item(output),
 		"动态紫装产物经工厂生成且存档有效")
+	_test_random_materials()
 	if failures.is_empty():
 		print("[EquipmentFusionRuleTest] 全部通过 ✅")
 	else:
@@ -59,3 +60,39 @@ func _ready() -> void:
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
+
+## 验证随机预选不混档、不重选、只取 0 星未收藏件，且不改变原背包。
+func _test_random_materials() -> void:
+	var factory_rng := RandomNumberGenerator.new()
+	factory_rng.seed = 8024
+	var bag: Array = []
+	for tier in [51, 61]:
+		for _i in range(5):
+			bag.append(ItemFactory.make_equip_dynamic("c6_equip_weapon", tier, "epic", factory_rng))
+	bag[0].star = 4
+	bag[5].favorite = true
+	var before := bag.duplicate(true)
+	var pick_rng := RandomNumberGenerator.new()
+	pick_rng.seed = 42
+	var chosen := EquipmentFusion.random_materials(bag, EquipmentFusion.GOLD_TO_PURPLE, pick_rng)
+	var ids := {}
+	var valid := chosen.size() == 4
+	for item in chosen:
+		ids[String(item.instanceId)] = true
+		valid = valid and EquipmentFusion.tier_start(item) == EquipmentFusion.tier_start(chosen[0]) \
+			and int(item.get("star", -1)) == 0 and not bool(item.get("favorite", false))
+	check(valid and ids.size() == 4 and bag == before,
+		"随机四金只预选同档四件不同的 0 星未收藏装备")
+	pick_rng.seed = 42
+	var again := EquipmentFusion.random_materials(bag, EquipmentFusion.GOLD_TO_PURPLE, pick_rng)
+	check(chosen == again, "相同种子可复现随机预选")
+	for i in range(1, 5):
+		bag[i].star = 2
+	check(EquipmentFusion.random_materials(bag, EquipmentFusion.GOLD_TO_PURPLE, pick_rng).size() == 4,
+		"一档不足四件时仍可从另一档预选")
+	for i in range(6, 10):
+		bag[i].star = 2
+	check(EquipmentFusion.random_materials(bag, EquipmentFusion.GOLD_TO_PURPLE, pick_rng).is_empty(),
+		"没有四件同档 0 星装备时不产生预选")
+	check(EquipmentFusion.random_materials(bag, EquipmentFusion.STAR_TRANSFER, pick_rng).is_empty(),
+		"保星升级不提供随机放入")

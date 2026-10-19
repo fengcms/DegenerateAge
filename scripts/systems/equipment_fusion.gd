@@ -8,11 +8,9 @@ const PURPLE_TARGET := "purple_target"
 const STAR_TRANSFER := "star_transfer"
 
 ## 从实例穿戴等级计算十级档起点；无效等级返回 0。
+## 公式与出售预设共用 `ItemFactory.suit_start`，避免两处口径各自漂移。
 static func tier_start(item: Dictionary) -> int:
-	var level := int(item.get("requiredLevel", 0))
-	if level < 1 or level > ItemFactory.INSTANCE_LEVEL_CAP:
-		return 0
-	return floori(float(level - 1) / 10.0) * 10 + 1
+	return ItemFactory.suit_start(int(item.get("requiredLevel", 0)))
 
 ## 按十级档和装备类型找唯一正式型号；61+ 复用第 51 套型号。
 static func template_for(tier: int, kind: String) -> String:
@@ -77,6 +75,43 @@ static func plan_four(items: Array[Dictionary], mode: String, target_kind: Strin
 		if template_for(minimum, String(kind)).is_empty():
 			return {"ok": false, "reason": "目标等级档缺少装备型号"}
 	return {"ok": true, "tier": minimum, "target_kind": target_kind, "reason": ""}
+
+## 随机放入只预选同档四件 0 星未收藏装备；不修改背包与现有合成规则。
+## 先等概率抽合格档，再在该档无放回抽四件，避免容量大的档独占选择机会。
+static func random_materials(inventory: Array, mode: String, rng: RandomNumberGenerator = null) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if mode not in [GOLD_TO_PURPLE, PURPLE_TARGET]:
+		return result
+	var groups := {}
+	for entry in inventory:
+		if not entry is Dictionary or String(entry.get("kind", "")) != "equip" \
+				or bool(entry.get("favorite", false)) or int(entry.get("star", -1)) != 0 \
+				or String(entry.get("instanceId", "")).is_empty():
+			continue
+		var quality := String(entry.get("quality", ""))
+		if (mode == GOLD_TO_PURPLE and quality != "epic") \
+				or (mode == PURPLE_TARGET and quality != "legendary"):
+			continue
+		var tier := tier_start(entry)
+		if tier == 0 or Equipment.item_kind(entry).is_empty():
+			continue
+		if not groups.has(tier):
+			groups[tier] = []
+		(groups[tier] as Array).append(entry)
+	var tiers: Array[int] = []
+	for tier in groups:
+		if (groups[tier] as Array).size() >= 4:
+			tiers.append(int(tier))
+	if tiers.is_empty():
+		return result
+	tiers.sort()
+	var tier_index := rng.randi_range(0, tiers.size() - 1) if rng != null else randi_range(0, tiers.size() - 1)
+	var pool: Array = (groups[tiers[tier_index]] as Array).duplicate()
+	for _i in range(4):
+		var index := rng.randi_range(0, pool.size() - 1) if rng != null else randi_range(0, pool.size() - 1)
+		result.append((pool[index] as Dictionary).duplicate(true))
+		pool.remove_at(index)
+	return result
 
 ## 返回 0→12 连续成功时的金币和；费用只读现行 Upgrade 配置。
 static func full_star_cost() -> int:
