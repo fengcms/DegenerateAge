@@ -20,19 +20,26 @@ func _ready() -> void:
 		"谨慎预设不默认选择优秀")
 	check(bool(SellGearPolicy.entry(old_uncommon, 1, 15, GameState.equipment, SellGearPolicy.STANDARD).get("default_selected", false)),
 		"标准预设选择优秀旧装备")
-	check(not bool(SellGearPolicy.entry(old_rare, 2, 15, GameState.equipment, SellGearPolicy.AGGRESSIVE).get("default_selected", false)),
-		"积极预设仍不默认选择稀有")
-	check(not bool(SellGearPolicy.entry(old_common, 0, 6, GameState.equipment, SellGearPolicy.CAUTIOUS).get("default_selected", false))
-		and bool(SellGearPolicy.entry(old_common, 0, 7, GameState.equipment, SellGearPolicy.AGGRESSIVE).get("default_selected", false)),
-		"等级差边界采用至少十级或五级")
+	check(not bool(SellGearPolicy.entry(old_common, 0, 6, GameState.equipment, SellGearPolicy.CAUTIOUS).get("default_selected", false)),
+		"谨慎预设仍要求穿戴等级低至少十级")
+	GameState.equipment = Equipment.create()
+	check(bool(SellGearPolicy.entry(old_rare, 2, 15, GameState.equipment, SellGearPolicy.STANDARD).get("default_selected", false))
+		and bool(SellGearPolicy.entry(old_rare, 2, 15, GameState.equipment, SellGearPolicy.AGGRESSIVE).get("default_selected", false)),
+		"标准与积极预设均默认选择旧套稀有零星装备")
+	GameState.equipment.shoes = new_shoes
+	var same_suit := SellGearPolicy.entry(new_shoes, 0, 11, GameState.equipment, SellGearPolicy.STANDARD)
+	check(not bool(same_suit.get("default_selected", false))
+		and (same_suit.get("reasons") as Array).has("suit")
+		and bool(SellGearPolicy.entry(new_shoes, 0, 11, GameState.equipment, SellGearPolicy.AGGRESSIVE).get("default_selected", false)),
+		"同套装备：标准按旧套判据排除，积极不限等级默认勾选")
 	var starred := old_common.duplicate(true)
 	starred.star = 1
 	check(not bool(SellGearPolicy.entry(starred, 0, 15, GameState.equipment, SellGearPolicy.CAUTIOUS).get("default_selected", false)),
 		"已升星装备不被默认勾选")
 	GameState.equipment = Equipment.create()
-	var better := SellGearPolicy.entry(new_shoes, 0, 30, GameState.equipment, SellGearPolicy.AGGRESSIVE)
-	check(not bool(better.get("default_selected", false)) and bool(better.get("protected_upgrade", false)),
-		"空槽高分装备即使满足等级差也受保护")
+	var empty_slot := SellGearPolicy.entry(new_shoes, 0, 30, GameState.equipment, SellGearPolicy.AGGRESSIVE)
+	check(bool(empty_slot.get("default_selected", false)) and not bool(empty_slot.get("protected_upgrade", false)),
+		"空槽不再计入评分保护，积极预设可默认勾选该类装备")
 	GameState.inventory[0] = old_common
 	check(GameState.set_equipment_favorite(String(old_common.instanceId), true), "背包装备可收藏")
 	var locked := SellGearPolicy.entry(GameState.inventory[0], 0, 15, GameState.equipment, SellGearPolicy.CAUTIOUS)

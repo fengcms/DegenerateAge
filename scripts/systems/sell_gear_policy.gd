@@ -1,16 +1,19 @@
 class_name SellGearPolicy
 extends RefCounted
-## 装备批量出售的纯筛选规则：按角色等级、品质和保护状态生成本次清单。
+## 装备批量出售的纯筛选规则：按角色等级/档位、品质和保护状态生成本次清单。
 ## 不修改背包或金币；背包直卖与货郎暂存共用此预览，最终交易仍须重新校验。
 
 const CAUTIOUS := "cautious"
 const STANDARD := "standard"
 const AGGRESSIVE := "aggressive"
 const PRESETS := [CAUTIOUS, STANDARD, AGGRESSIVE]
+## `level_gap` 为**可选键**：不写该键即表示该预设不设等级门槛（积极）。
+## `require_older_suit` 为真时改用「旧套档」判据 —— 与「十级一套」模型对齐，见 `ItemFactory.suit_start`。
+## 三个预设的品质上限：谨慎只放行普通，标准/积极放行到稀有（白/蓝/绿）。
 const RULES := {
 	CAUTIOUS: {"level_gap": 10, "max_quality": "common"},
-	STANDARD: {"level_gap": 10, "max_quality": "uncommon"},
-	AGGRESSIVE: {"level_gap": 5, "max_quality": "uncommon"},
+	STANDARD: {"require_older_suit": true, "max_quality": "rare"},
+	AGGRESSIVE: {"max_quality": "rare"},
 }
 
 ## 返回预设是否合法，供设置入口和存档校验共用。
@@ -31,7 +34,8 @@ static func entry(item: Dictionary, bag_index: int, player_level: int,
 		reasons.append("favorite")
 	if not sellable and not favorite:
 		reasons.append("unsellable")
-	var stronger := bool(preview.get("score_increase", false))
+	# V1：空槽（评分基准 0）不计入保护 —— 该槽类还有空位时不再整类卖不掉。
+	var stronger := not bool(preview.get("empty", true)) and bool(preview.get("score_increase", false))
 	if stronger:
 		reasons.append("upgrade")
 	if int(item.get("star", 0)) > 0:
@@ -41,8 +45,12 @@ static func entry(item: Dictionary, bag_index: int, player_level: int,
 	var rule: Dictionary = RULES[preset]
 	if quality_rank > Shop.QUALITY_ORDER.find(String(rule.max_quality)):
 		reasons.append("quality")
-	if Equipment.level_req(item) > player_level - int(rule.level_gap):
+	if rule.has("level_gap") and Equipment.level_req(item) > player_level - int(rule.level_gap):
 		reasons.append("level")
+	if bool(rule.get("require_older_suit", false)):
+		var suit := ItemFactory.suit_start(Equipment.level_req(item))
+		if suit == 0 or suit >= ItemFactory.suit_start(player_level):
+			reasons.append("suit")
 	var automatic := reasons.is_empty() and bool(preview.get("ok", false))
 	return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
 		"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),

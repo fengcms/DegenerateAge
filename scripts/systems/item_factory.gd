@@ -47,6 +47,15 @@ static func dynamic_tier_start(level: int) -> int:
 	var tier := base + int(floor(float(level - base) / float(TIER_SPAN))) * TIER_SPAN
 	return mini(tier, INSTANCE_LEVEL_CAP - (TIER_SPAN - 1))
 
+## 十级套起点：1—10 → 1、11—20 → 11 …​、991—1000 → 991。
+## 🔴 与 `dynamic_tier_start` 的分工：后者在 ≤ 60 时**原样返回等级**（动态生成分支的入口），
+## 拿它当「这件装备属于哪一套」会让 L60 玩家的当前套变成 60，从而把当前第 51 套误判成旧套。
+## 本函数不看等级分区、一律按十级带宽归一，是套档判断的唯一口径（铁匠合成与出售预设共用）。
+static func suit_start(level: int) -> int:
+	if level < 1 or level > INSTANCE_LEVEL_CAP:
+		return 0
+	return floori(float(level - 1) / 10.0) * 10 + 1
+
 ## 槽位偏移 = 模板 `requiredLevel − 51`：武器 0、鞋 1、甲 2 …​、项链 9。
 ## 这不是新数据 —— 前 60 级每套的 10 件本来就是按这个顺序铺满 10 个槽位的。
 ## 非循环套返回 -1（`make_equip_dynamic` 据此显式失败）。
