@@ -4,6 +4,12 @@ extends RefCounted
 
 ## M10-1：循环装备只复用第 51 套的十个型号；改这个常量等于改整套经济口径。
 const DYNAMIC_BASE_TIER := 51
+## D-21「十级一套」：60 级后每 10 级一套（61—70 / 71—80 …），套内 10 件按槽位偏移依次解锁。
+## 改这个跨度等于改整套经济口径（`PaceTest` 与产品 13 §2.4 必须同步）。
+const TIER_SPAN := 10
+## 实例等级上界，与 `GameState.PLAYER_LEVEL_CAP` 同值（`DynamicEquipTest` 锁死两者相等）。
+## 这里写字面量是为了让本模块不依赖 autoload —— `Balance` 同类约定，可离线推演。
+const INSTANCE_LEVEL_CAP := 9999
 ## 实例规则版本：4 = 1—60 存量（等级等于模板），5 = 61+ 动态（等级由生成时决定）。
 const RULE_VERSION_BASE := 4
 const RULE_VERSION_DYNAMIC := 5
@@ -30,6 +36,36 @@ static func tier_start_for_template(item_id: String) -> int:
 	var bases: Variant = tpl.get("tierBases", {})
 	return int(bases.keys()[0]) if bases is Dictionary and bases.size() == 1 else 0
 
+## 60+ 的套起点：61—70 → 61、71—80 → 71、…​、991—1000 → 991。
+## ≤ 60 原样返回（前 60 级的分档仍由 `tier_for_level` 负责）。
+## 🔴 末档保护：最大槽位偏移是 9，套起点一旦越过「上限 − 9」就会造出等级 > `INSTANCE_LEVEL_CAP`
+## 的实例，而 `_valid_item` 会拒 ⇒ 下次读档整档作废。所以把套起点夹在 `上限 − 9`。
+static func dynamic_tier_start(level: int) -> int:
+	if level <= Balance.SOFTCAP_LEVEL:
+		return level
+	var base := DYNAMIC_BASE_TIER + TIER_SPAN
+	var tier := base + int(floor(float(level - base) / float(TIER_SPAN))) * TIER_SPAN
+	return mini(tier, INSTANCE_LEVEL_CAP - (TIER_SPAN - 1))
+
+## 槽位偏移 = 模板 `requiredLevel − 51`：武器 0、鞋 1、甲 2 …​、项链 9。
+## 这不是新数据 —— 前 60 级每套的 10 件本来就是按这个顺序铺满 10 个槽位的。
+## 非循环套返回 -1（`make_equip_dynamic` 据此显式失败）。
+static func slot_offset_for_template(item_id: String) -> int:
+	if tier_start_for_template(item_id) != DYNAMIC_BASE_TIER:
+		return -1
+	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
+	if not tpl is Dictionary:
+		return -1
+	return int((tpl as Dictionary).get("requiredLevel", 0)) - DYNAMIC_BASE_TIER
+
+## 这件装备在 `level` 这个档上应有的穿戴等级 = 套起点 + 槽位偏移。
+## 例：L67 的武器 61、鞋 62、甲 63 …​；L1099 的武器 1091。非循环套返回 0。
+static func dynamic_level_for(item_id: String, level: int) -> int:
+	var offset := slot_offset_for_template(item_id)
+	if offset < 0:
+		return 0
+	return dynamic_tier_start(level) + offset
+
 ## level 参数兼容来源等级调用；未指定时使用该型号所属套。
 static func make_equip(item_id: String, level: int = 0, instance_prefix: String = "inst") -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
@@ -45,6 +81,7 @@ static func make_equip(item_id: String, level: int = 0, instance_prefix: String 
 ## `dynamic_level > 60` 时改走 M10-1 动态分支：等级取该值、基底 × S(level−60)、
 ## 词条 × affixTierScale[51] × S(level−60)、版本标 5。默认 0 走原分支，
 ## 随机数调用顺序**逐字不变**（1—60 的掉落结果不可能变）。
+## 🔴 `dynamic_level` 必须是**已归一的槽位等级**（`dynamic_level_for`）。
 static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 		rng: RandomNumberGenerator = null, instance_prefix: String = "inst",
 		dynamic_level: int = 0) -> Dictionary:
@@ -178,9 +215,25 @@ static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null) 
 	var affix_scale := float((scale_values as Dictionary)[scale_key]) * factor
 	return _roll_affixes(item_id, quality, affix_scale, rng)
 
-## M10-1：循环装备实例门面。`level ≤ 60` 退回普通路径（60 级拿到的仍是 tier51 原版），
-## 型号必须在循环套内，否则显式失败。掉落 / 任务 / 商店后续都走这里。
+## M10-1 / D-21：循环装备实例门面，**生产代码的唯一入口**（`Loot` 只走这里）。
+## `level ≤ 60` 退回普通路径（60 级拿到的仍是 tier51 原版）；
+## `level > 60` **不直接用来源等级**，而是归一到「套起点 + 槽位偏移」——
+## 直接用来源等级就是逐级装备（61/62/63…），与「十级一套」的既有规律相悖。
+## 型号必须在循环套内，否则显式失败。
 static func make_equip_dynamic(item_id: String, level: int, quality: String,
+		rng: RandomNumberGenerator = null, instance_prefix: String = "dyn") -> Dictionary:
+	if level <= Balance.SOFTCAP_LEVEL:
+		return make_equip_roll(item_id, tier_for_level(level), quality, rng, instance_prefix)
+	var exact := dynamic_level_for(item_id, level)
+	if exact <= 0:
+		push_error("[ItemFactory] %s 不在循环装备型号表" % item_id)
+		return {}
+	return make_equip_exact(item_id, exact, quality, rng, instance_prefix)
+
+## 精确等级门面：把来源等级**原样**当实例等级用，不做「十级一套」归一。
+## 🔴 **只给测试与离线推演**（数值表 / 随机流快照 / 旧档语义复现）。生产路径走
+## `make_equip_dynamic`，绕过它就会重新造出逐级装备。
+static func make_equip_exact(item_id: String, level: int, quality: String,
 		rng: RandomNumberGenerator = null, instance_prefix: String = "dyn") -> Dictionary:
 	if level <= Balance.SOFTCAP_LEVEL:
 		return make_equip_roll(item_id, tier_for_level(level), quality, rng, instance_prefix)
