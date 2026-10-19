@@ -63,7 +63,7 @@ func _ready() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	print("[PERF] rendered viewport: ", get_viewport().get_visible_rect().size)
 	var map_ids := ["camp"] if OS.get_environment("DEGENERATEAGE_RENDER_ONLY_CAMP") == "1" \
-		else ["camp", "c2_lower_works", "wild_trial", "corruption_source"]
+		else ["camp", "c2_lower_works", "wild_trial", "corruption_source", "c7_arena"]
 	for map_id in map_ids:
 		GameState.reset_to_defaults()
 		GameState.current_map = map_id

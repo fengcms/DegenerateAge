@@ -50,7 +50,7 @@ def is_walkable(x, y):
 
 
 def fixed_cells(map_data):
-    """所有必须落在掩码 "1" 上的固定格：出口 / 车夫落点 / 10 个 Boss 位。"""
+    """所有必须落在掩码 "1" 上的固定格：出口 / 车夫落点 / 20 个 Boss 位。"""
     cells = {}
     for entry in map_data.get("exits", []):
         cells[entry["id"]] = entry["cell"]
