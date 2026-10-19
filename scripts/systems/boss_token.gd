@@ -97,6 +97,7 @@ static func _row(map_data: Dictionary, spec: Dictionary, monster_id: String, ord
 		"map_name": String(map_data.get("name", map_id)),
 		"monster_id": monster_id,
 		"monster_name": _monster_name(monster_id),
+		"group": String(spec.get("group", "")),
 		"ordinal": ordinal,
 		"level": level,
 		"drop_level": level,

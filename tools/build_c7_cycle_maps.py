@@ -100,7 +100,7 @@ def build_boss() -> dict:
                       "dropTableId": "DT_C7_Boss_Field", "group": chr(ord("A") + row)})
     # 7 与 10 互素，十个外观在每一行各出现一次。
     data.update({"spawnPoints": [], "bossSpawns": seats, "normalCap": 0,
-                 "bossCap": 18, "unclaimedLootCap": 2400,
+                 "bossCap": 18, "unclaimedLootCap": 2400, "preserveUnclaimedLoot": True,
                  "desc": "100级且全身紫装开放的百席循环首领战场。"})
     return data
 

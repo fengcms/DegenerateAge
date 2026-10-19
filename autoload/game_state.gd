@@ -1161,6 +1161,10 @@ func _evict_unclaimed_overflow() -> Array:
 	var evicted_map: Array = []
 	for map_id in unclaimed_loot.keys():
 		var rows: Array = unclaimed_loot[map_id]
+		# 高产循环图把上限作为自动停战阈值；手动继续时保全奖励，不执行 FIFO 淘汰。
+		var map_data: Variant = DataLoader.get_entry("maps", String(map_id))
+		if map_data is Dictionary and bool((map_data as Dictionary).get("preserveUnclaimedLoot", false)):
+			continue
 		var cap := unclaimed_loot_cap(String(map_id))
 		while rows.size() > cap:
 			var oldest_index := -1

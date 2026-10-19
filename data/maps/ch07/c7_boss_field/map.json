@@ -1553,5 +1553,6 @@
   "normalCap": 0,
   "bossCap": 18,
   "unclaimedLootCap": 2400,
+  "preserveUnclaimedLoot": true,
   "desc": "100级且全身紫装开放的百席循环首领战场。"
 }

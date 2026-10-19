@@ -55,11 +55,22 @@ func _test_maps() -> void:
 	check(equip_rows == 6, "Boss 装备三组各独立尝试两次")
 	check(DataLoader.validate_all().is_empty(), "地图和掉落引用通过全量校验")
 
+## 高产图越过自动停战阈值时仍保留已登记奖励，不执行旧的 FIFO 淘汰。
+func _test_reward_preservation() -> void:
+	var rows: Array = []
+	for i in range(2401):
+		rows.append({"uid": "u_1_%d" % i, "item": {"kind": "equip"}})
+	GameState.unclaimed_loot["c7_boss_field"] = rows
+	GameState._evict_unclaimed_overflow()
+	check(GameState.unclaimed_count("c7_boss_field") == 2401, "百 Boss 图超软上限不删除奖励")
+	GameState.unclaimed_loot.erase("c7_boss_field")
+
 ## 隔离测试入口，所有失败均以非零退出码传给运行器。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	_test_entry()
 	_test_maps()
+	_test_reward_preservation()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[EndgameCycleMapTest] 全部通过 ✅")

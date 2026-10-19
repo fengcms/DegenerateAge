@@ -61,6 +61,8 @@ const ROAM_ARRIVE_EPS := 12.0
 ## 本常量仅在该字段缺失时生效——避免「常量 + 设置」两个事实源（M2.5 收敛，见工程文档 12 §3.4）。
 const DEFAULT_POTION_THRESHOLD := 0.35
 const DANGER_TOAST_CD := 4.0           # 「危险血量」提示节流（s）
+## 百 Boss 图预留至少 32 件单次掉落空间；达到阈值时停自动战斗，手动击杀仍保全奖励。
+const BOSS_LOOT_RESERVE := 32
 
 ## 已接线的自动施放范围技；普攻由攻击间隔单独驱动，不进此表。
 ## R4-d：`spirit_storm`（L40，circle × 3 段）在 `_best_area_skill` 里按「命中数 × 总系数」参评。
@@ -167,6 +169,13 @@ func _physics_process(delta: float) -> void:
 		_player.set_auto_move(Vector2.ZERO)
 		_manual_t = 0.0
 		GameState.set_auto_battle(false)
+		_set_state(State.OFF)
+		return
+	if GameState.current_map == "c7_boss_field" and GameState.unclaimed_count("c7_boss_field") \
+			>= GameState.unclaimed_loot_cap("c7_boss_field") - BOSS_LOOT_RESERVE:
+		_player.set_auto_move(Vector2.ZERO)
+		GameState.set_auto_battle(false)
+		EventBus.toast_requested.emit("百首禁域未领取战利品已接近容量，请先清理后再开启自动战斗", "danger")
 		_set_state(State.OFF)
 		return
 	if _player.is_sitting:

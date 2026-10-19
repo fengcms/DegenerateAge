@@ -31,6 +31,8 @@ var _dim: ColorRect
 ## 行缓存：{row: Dictionary, status: Label}。倒计时只碰这里，不碰数据表。
 var _rows: Array[Dictionary] = []
 var _tick := 0.0
+## 百席图按十组折叠，只为展开组创建行和倒计时标签；状态在面板关闭后清空。
+var _expanded_groups: Dictionary = {}
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -93,6 +95,7 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open("boss_token", open)
 	if open:
 		_tick = 0.0
+		_expanded_groups.clear()
 		_reset_hint()
 		_rebuild()
 		EventBus.panel_opened.emit("boss_token")
@@ -196,6 +199,12 @@ func _rebuild() -> void:
 		_update_layout.call_deferred()
 		return
 	var separated := false
+	var group_counts := {}
+	for row in rows:
+		if String(row.get("map_id", "")) == "c7_boss_field":
+			var key := "c7_boss_field|" + String(row.get("group", ""))
+			group_counts[key] = int(group_counts.get(key, 0)) + 1
+	var seen_groups := {}
 	for row in rows:
 		# 当前图置顶后拉一条分隔线；之后的行按推荐等级升序。
 		if not separated and not bool(row.get("is_current_map", false)):
@@ -203,8 +212,24 @@ func _rebuild() -> void:
 			var divider := HSeparator.new()
 			PanelChrome.style_separator(divider)
 			_list.add_child(divider)
+		if String(row.get("map_id", "")) == "c7_boss_field":
+			var group_key := "c7_boss_field|" + String(row.get("group", ""))
+			if not seen_groups.has(group_key):
+				seen_groups[group_key] = true
+				var expanded := bool(_expanded_groups.get(group_key, bool(row.get("is_current_map", false)) and String(row.get("group", "")) == "A"))
+				var toggle := Button.new()
+				toggle.text = "%s · %s 组（%d 席）· %s" % [String(row.get("map_name", "")), String(row.get("group", "")), int(group_counts[group_key]), "收起" if expanded else "展开"]
+				toggle.pressed.connect(_toggle_group.bind(group_key))
+				_list.add_child(toggle)
+			if not bool(_expanded_groups.get(group_key, bool(row.get("is_current_map", false)) and String(row.get("group", "")) == "A")):
+				continue
 		_list.add_child(_make_row(row))
 	_update_layout.call_deferred()
+
+## 玩家展开或收起一组时才重建可见行；隐藏组不保留倒计时控件。
+func _toggle_group(key: String) -> void:
+	_expanded_groups[key] = not bool(_expanded_groups.get(key, GameState.current_map == "c7_boss_field" and key.ends_with("|A")))
+	_rebuild()
 
 func _make_row(row: Dictionary) -> Control:
 	var panel := PanelContainer.new()
@@ -276,6 +301,11 @@ func _make_action(row: Dictionary) -> Button:
 		b.pressed.connect(_on_action.bind(row))
 		return b
 	b.text = Localization.tr_key("ui.boss_token_panel.p006")
+	if not MapService.entry_gate_reason(String(row.get("map_id", "")), "carter").is_empty():
+		b.disabled = true
+		b.tooltip_text = "请从无尽回廊入口步行进入"
+		PanelChrome.style_action(b, false)
+		return b
 	if not bool(row.get("unlocked", true)) or cost < 0:
 		b.disabled = true
 		b.tooltip_text = Localization.tr_key("msg.map_service.p016") % String(row.get("map_name", ""))
