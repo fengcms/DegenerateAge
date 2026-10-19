@@ -483,42 +483,85 @@ func _test_warehouse() -> void:
 	GameState.reset_to_defaults()
 
 func _test_rune_loot() -> void:
-	# M6-0b（创意 07 §6）：如意口径收敛为「固定 1 份、30%、iron/jade 各 50%」。
-	# 产品口径（产品需求梳理 §6.16.2 + M6-0 决策 A）：如意仅由 Boss 掉落；
-	# 第一～六章 Boss 表均须接入，否则离开第一章即断供。
-	var boss_by_table := {}
-	for row in DataLoader.get_table("monsters"):
-		if not row is Dictionary:
-			continue
-		var m: Dictionary = row
-		if String(m.get("kind", "")) != "boss":
-			continue
-		var table := String(m.get("dropTableId", ""))
-		if not table.is_empty() and not boss_by_table.has(table):
-			boss_by_table[table] = String(m.get("id", ""))
-	var boss_tables := [
+	# M6-0b（创意 07 §6）：**基础如意**口径不变 —— 固定 1 份、30%、iron/jade 各 50%。
+	# 工程 56 §3.3：金 / 钻石如意按章节递进投放，每条独立 `randf()`，概率直接写在 `chance` 上。
+	# 不用「重复列 id 造假权重」—— 那种写法后来人一去重，权重就凭空消失。
+	#
+	# 🔑 期望表按**产品口径写死**，绝不从 data 反推：反推出来的断言在「把金/钻石两条 chance 对调」
+	# 时依然全绿，等于没牙。所以这里两道一起上：
+	#   ① 结构断言（读表）：咬「配错 / 漏配 / 提前投放」；
+	#   ② 采样断言（真 roll）：咬「配了但没生效」。
+	var expected := {
+		"DT_C2_Boss": {"rune_gold": 0.03},
+		"DT_C2_Boss_Final": {"rune_gold": 0.03},
+		"DT_C2_Boss_Slag": {"rune_gold": 0.03},
+		"DT_C3_Boss": {"rune_gold": 0.05},
+		"DT_C4_Boss": {"rune_gold": 0.05, "rune_diamond": 0.02},
+		"DT_C5_Boss": {"rune_gold": 0.06, "rune_diamond": 0.04},
+		"DT_C6_Boss": {"rune_gold": 0.08, "rune_diamond": 0.06},
+		"DT_C7_Arena_Boss": {"rune_gold": 0.10, "rune_diamond": 0.08},
+	}
+	var all_tables := [
 		"DT_Boss_L1", "DT_C2_Boss", "DT_C2_Boss_Final", "DT_C2_Boss_Slag",
-		"DT_C3_Boss", "DT_C4_Boss", "DT_C5_Boss", "DT_C6_Boss",
+		"DT_C3_Boss", "DT_C4_Boss", "DT_C5_Boss", "DT_C6_Boss", "DT_C7_Arena_Boss",
 	]
-	for table in boss_tables:
-		_expect(boss_by_table.has(table), "%s 应有 kind=boss 的怪物来源" % table)
-		if not boss_by_table.has(table):
+	for table in all_tables:
+		var tpl: Dictionary = DataLoader.get_entry("dropTables", table)
+		_expect(not tpl.is_empty(), "%s 应存在于 dropTables" % table)
+		if tpl.is_empty():
 			continue
-		var monster_id: String = boss_by_table[table]
-		var found := {}
+		var chances := {}
+		var base_rune := 0
+		for entry in tpl.get("entries", []):
+			if not entry is Dictionary or String((entry as Dictionary).get("kind", "")) != "rune":
+				continue
+			if (entry as Dictionary).has("itemIds"):
+				base_rune += 1
+				continue
+			chances[String((entry as Dictionary).get("itemId", ""))] = float((entry as Dictionary).get("chance", 0.0))
+		_expect(base_rune == 1, "%s 基础如意条目应恰好 1 条（iron/jade 各半），实际 %d" % [table, base_rune])
+		var want: Dictionary = expected.get(table, {})
+		for rune_id in want:
+			_expect(is_equal_approx(float(chances.get(rune_id, -1.0)), float(want[rune_id])),
+				"%s 的 %s 概率应为 %.2f，实际 %s" % [table, rune_id, float(want[rune_id]), chances.get(rune_id, "缺失")])
+		# 表里没写进期望的高级如意，一条都不许有（防「一章就掉钻石」与「全表一把梭」）。
+		for rune_id in ["rune_gold", "rune_diamond"]:
+			if not want.has(rune_id):
+				_expect(not chances.has(rune_id), "%s 不应投放 %s" % [table, rune_id])
+	# 采样：只挑四张有代表性的表 —— 起点（仅 iron/jade）、三章（接金）、四章（接钻石）、竞技场（最高档）。
+	# 竞技场表没有 kind=boss 的怪物直接引用它（Boss 由 endgame 循环生成），故显式给 source。
+	var sample := {
+		"DT_Boss_L1": {"source": "boss_corrupted_beast", "level": 10,
+			"pool": ["rune_iron", "rune_jade"]},
+		"DT_C3_Boss": {"source": "c3_boss01", "level": 30,
+			"pool": ["rune_iron", "rune_jade", "rune_gold"]},
+		"DT_C4_Boss": {"source": "c4_boss01", "level": 40,
+			"pool": ["rune_iron", "rune_jade", "rune_gold", "rune_diamond"]},
+		"DT_C7_Arena_Boss": {"source": "c6_boss01", "level": 60,
+			"pool": ["rune_iron", "rune_jade", "rune_gold", "rune_diamond"]},
+	}
+	for table in sample:
+		var source := String((sample[table] as Dictionary).get("source", ""))
+		var level := int((sample[table] as Dictionary).get("level", 1))
+		var pool: Array = (sample[table] as Dictionary).get("pool", [])
+		var seen := {}
 		var max_per_batch := 0
-		for seed_value in range(200):
+		# 500 次：最低概率档（2%）期望出现 10 次，采不到的概率约 4e-5，不会假红。
+		for seed_value in range(500):
 			var rng := RandomNumberGenerator.new()
 			rng.seed = seed_value
 			var n := 0
-			for item in Loot.roll(table, rng, monster_id):
+			for item in Loot.roll(table, rng, source, level):
 				if String(item.get("kind", "")) == "rune":
-					found[String(item.get("itemId", ""))] = true
+					seen[String(item.get("itemId", ""))] = true
 					n += 1
 			max_per_batch = maxi(max_per_batch, n)
-		_expect(found.size() == 2 and found.has("rune_iron") and found.has("rune_jade"),
-			"%s 如意应只产 iron/jade 两种，实际 %s" % [table, found.keys()])
-		_expect(max_per_batch <= 1, "%s 每批如意应不超过 1 份，实际 %d" % [table, max_per_batch])
+		for rune_id in pool:
+			_expect(seen.has(rune_id), "%s 500 次采样应至少出一次 %s，实际 %s" % [table, rune_id, seen.keys()])
+		for rune_id in seen:
+			_expect(pool.has(rune_id), "%s 出现了池外如意 %s" % [table, rune_id])
+		# 基础 1 条 + 金 1 条 + 钻石 1 条 = 一批最多 3 份（兜「复制粘贴把基础槽也变多条」）。
+		_expect(max_per_batch <= 3, "%s 每批如意应不超过 3 份，实际 %d" % [table, max_per_batch])
 	var other_rng := RandomNumberGenerator.new()
 	other_rng.seed = 42
 	for item in Loot.roll("DT_Boss_L1", other_rng, "wolf_corrupted"):

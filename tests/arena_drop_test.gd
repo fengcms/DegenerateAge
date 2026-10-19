@@ -47,7 +47,16 @@ func _test_table_contract() -> void:
 	if not table is Dictionary:
 		return
 	var entries: Array = table.get("entries", [])
-	check(entries.size() == 7, "循环 Boss 表应为 7 个条目，实际 %d" % entries.size())
+	# 不用裸条目数：它每加一条投放就要改，改的人只会把数字调大，什么也没守住。
+	# 按品类计数才是语义 —— 如意恰好 3 条（基础 iron/jade + 金 + 钻石，工程 56 §3.3）。
+	var by_kind := {}
+	for en in entries:
+		if en is Dictionary:
+			var kind := String((en as Dictionary).get("kind", ""))
+			by_kind[kind] = int(by_kind.get(kind, 0)) + 1
+	check(int(by_kind.get("coin", 0)) == 1 and int(by_kind.get("equip", 0)) == 3
+		and int(by_kind.get("potion", 0)) == 2 and int(by_kind.get("rune", 0)) == 3,
+		"循环 Boss 表品类构成应为 coin1 / equip3 / potion2 / rune3，实际 %s" % [by_kind])
 	var equip_count := 0
 	for en in entries:
 		if not (en is Dictionary):
