@@ -54,6 +54,20 @@ func _ready() -> void:
 		and String(output.get("instanceId", "")) != String(old.instanceId)
 		and String(output.get("instanceId", "")) != String(fresh.instanceId)
 		and SaveManager._valid_item(output), "保星消耗两件和全部金币，产出全新 61 档 12 星紫装")
+	check(SaveManager.save_slot(3, true), "保星结果可写入隔离槽 3")
+	var loaded: Dictionary = SaveManager.read_slot(3)
+	var inventory_loaded: Array = (loaded.get("data", {}) as Dictionary).get("inventory", [])
+	var saved_item: Dictionary = {}
+	for entry in inventory_loaded:
+		if entry is Dictionary and String(entry.get("instanceId", "")) == String(output.get("instanceId", "")):
+			saved_item = entry
+			break
+	check(bool(loaded.get("ok", false)) and not saved_item.is_empty()
+		and String(saved_item.get("instanceId", "")) == String(output.get("instanceId", ""))
+		and int(saved_item.get("requiredLevel", -1)) == int(output.get("requiredLevel", -2))
+		and int(saved_item.get("star", -1)) == 12
+		and _same_roll(saved_item, output), "读档后保星装备的档位、词条和星级完整保留")
+	SaveManager.delete_slot(3)
 	if failures.is_empty():
 		print("[EquipmentFusionTransactionTest] 全部通过 ✅")
 	else:
@@ -65,3 +79,16 @@ func _ready() -> void:
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
+
+## JSON 读回会把整数写成浮点数，词条按类型和值比较。
+func _same_roll(loaded: Dictionary, original: Dictionary) -> bool:
+	for key in ["affixes", "pctAttrs"]:
+		var actual: Array = loaded.get(key, [])
+		var expected: Array = original.get(key, [])
+		if actual.size() != expected.size():
+			return false
+		for i in range(actual.size()):
+			if String(actual[i].get("stat", "")) != String(expected[i].get("stat", "")) \
+					or not is_equal_approx(float(actual[i].get("value", 0)), float(expected[i].get("value", 0))):
+				return false
+	return true
