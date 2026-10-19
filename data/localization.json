@@ -550,6 +550,7 @@
   "msg.game_state.p051": "该物品无法出售",
   "msg.game_state.p052": "出售：%s（+%d 金币）",
   "msg.game_state.p053": "升级！Lv%d",
+  "msg.game_state.p054": "金币已达上限，超出部分未计入",
   "msg.map_service.p001": "没有前往任务怪物刷新地图的已解锁道路",
   "msg.map_service.p002": "正在切换地图",
   "msg.map_service.p003": "请松开交互键，稍后再走",

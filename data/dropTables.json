@@ -445,6 +445,11 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.03,
+        "itemId": "rune_gold"
       }
     ]
   },
@@ -633,6 +638,11 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.03,
+        "itemId": "rune_gold"
       },
       {
         "kind": "mount",
@@ -826,6 +836,11 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.03,
+        "itemId": "rune_gold"
       }
     ]
   },
@@ -1013,6 +1028,11 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.05,
+        "itemId": "rune_gold"
       }
     ]
   },
@@ -1200,6 +1220,16 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.05,
+        "itemId": "rune_gold"
+      },
+      {
+        "kind": "rune",
+        "chance": 0.02,
+        "itemId": "rune_diamond"
       }
     ]
   },
@@ -1387,6 +1417,16 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.06,
+        "itemId": "rune_gold"
+      },
+      {
+        "kind": "rune",
+        "chance": 0.04,
+        "itemId": "rune_diamond"
       }
     ]
   },
@@ -1574,6 +1614,16 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.08,
+        "itemId": "rune_gold"
+      },
+      {
+        "kind": "rune",
+        "chance": 0.06,
+        "itemId": "rune_diamond"
       }
     ]
   },
@@ -1649,6 +1699,16 @@
           "rune_iron",
           "rune_jade"
         ]
+      },
+      {
+        "kind": "rune",
+        "chance": 0.1,
+        "itemId": "rune_gold"
+      },
+      {
+        "kind": "rune",
+        "chance": 0.08,
+        "itemId": "rune_diamond"
       }
     ]
   }

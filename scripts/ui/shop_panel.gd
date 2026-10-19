@@ -673,6 +673,9 @@ func _on_confirm_pressed() -> void:
 	_tray.clear()
 	if n > 0:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p026") % [n, gold], "pickup")
+		# 工程 56 口径 A：金币满额照卖不拒，差额在这里补一句（先报件数与入账，再报缺口）。
+		if bool(res.get("capped", false)):
+			EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p054"), "danger")
 	_refresh_tray()
 
 ## 货郎最终结算前重新检查托盘中预设不会自动选中的装备；手动拖入也适用。

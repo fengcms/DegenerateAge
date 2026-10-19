@@ -309,6 +309,9 @@ func _on_confirm() -> void:
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.sale_preview.done_stage" if mode == STAGE else "ui.sale_preview.done_direct",
 			[int(result.get("count", 0)), int(result.get("gold", 0))]), "pickup")
+		# 工程 56 口径 A：直卖时金币满额不再拒绝，入账差额在汇总提示之后补一句。
+		if bool(result.get("capped", false)):
+			EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p054"), "danger")
 		queue_free()
 	else:
 		_reload_entries()

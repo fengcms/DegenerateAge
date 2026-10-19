@@ -543,15 +543,15 @@ func sell_low_gear() -> Dictionary:
 			total += Shop.sell_price(inventory[i])
 	if indices.is_empty():
 		return _trade_fail(Localization.tr_key("msg.game_state.p007"))
-	if gold + total > GOLD_CAP:
-		return _trade_fail(Localization.tr_key("msg.game_state.p008"))
+	# 工程 56 / 口径 A：金币满额不再拒绝出售（物品已选定、玩家已确认，退回去只是卡住他）。
 	for index in indices:
 		inventory[index] = null
-	add_gold(total)
+	var gained := _gold_gain(total)
 	EventBus.inventory_changed.emit()
-	EventBus.trade_done.emit("sell", "", total)
-	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p009") % [indices.size(), total], "pickup")
-	return {"ok": true, "count": indices.size(), "gold": total}
+	EventBus.trade_done.emit("sell", "", gained)
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p009") % [indices.size(), gained], "pickup")
+	_notify_gold_gap(total, gained)
+	return {"ok": true, "count": indices.size(), "gold": gained}
 
 ## 生成当前角色背包装备清单；只读，界面可据此勾选，交易时须再次重核。
 func preview_equipment_sale() -> Array[Dictionary]:
@@ -603,14 +603,13 @@ func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false)
 	if not bool(checked.get("ok", false)):
 		return checked
 	var total := int(checked.total)
-	if total > GOLD_CAP - gold:
-		return {"ok": false, "reason": "金币已接近上限，请减少待售装备"}
+	# 工程 56 / 口径 A：不再因金币上限整批拒绝；入账由 add_gold 夹取。
 	for index in checked.indices:
 		inventory[index] = null
-	add_gold(total)
+	var gained := _gold_gain(total)
 	EventBus.inventory_changed.emit()
-	EventBus.trade_done.emit("sell", "", total)
-	return {"ok": true, "count": rows.size(), "gold": total, "reason": ""}
+	EventBus.trade_done.emit("sell", "", gained)
+	return {"ok": true, "count": rows.size(), "gold": gained, "reason": "", "capped": gained < total}
 
 ## 货郎在托盘空格足够时整批取出已核对装备；先增暂存计数防止中途自动存档。
 ## 托盘最终归属仍由 ShopPanel 负责；调用前须确认交易会话有效且托盘确有空格。
@@ -1375,15 +1374,14 @@ func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	if not Shop.can_sell(item):
 		return _trade_fail(Localization.tr_key("msg.game_state.p051"))
 	var price := Shop.sell_price(item)
-	if price > GOLD_CAP - gold:
-		return _trade_fail("金币已接近上限，请减少待售物品")
 	var label := ItemUtil.display_name(item)
 	remove_item_at(inv_index)
-	var gained := add_gold(price)
+	var gained := _gold_gain(price)
 	if not silent:
 		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p052") % [label, gained], "pickup")
+		_notify_gold_gap(price, gained)
 	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), gained)
-	return {"ok": true, "reason": "", "item": item, "price": gained}
+	return {"ok": true, "reason": "", "item": item, "price": gained, "capped": gained < price}
 
 ## 结算一批暂存待售的装备（6.4「确认出售」）。托盘内容由出售界面持有，本函数只做算价与入账。
 ## 返回 {ok, count, gold, reason}；空托盘、不可售物或金币上限失败时不结算。
@@ -1397,11 +1395,10 @@ func shop_sell_staged(items: Array) -> Dictionary:
 		n += 1
 	if n == 0:
 		return {"ok": false, "count": 0, "gold": 0, "reason": "出售托盘为空"}
-	if total > GOLD_CAP - gold:
-		return {"ok": false, "count": 0, "gold": 0, "reason": "金币已接近上限，请减少待售物品"}
-	var gained := add_gold(total)
+	# 工程 56 / 口径 A：不再因金币上限整批拒绝。托盘内容由界面持有，本函数只算价与入账。
+	var gained := _gold_gain(total)
 	EventBus.trade_done.emit("sell", "", gained)
-	return {"ok": true, "count": n, "gold": gained, "reason": ""}
+	return {"ok": true, "count": n, "gold": gained, "reason": "", "capped": gained < total}
 
 ## 把暂存装备退回背包（关闭面板未确认 / 点托盘格取回）。会就地移除已退回项。
 ## 返回实际退回件数；背包满的件保留在托盘由调用方提示（不静默丢失，6.4）。
@@ -1437,6 +1434,27 @@ func is_upgrade_over_worn(item: Dictionary) -> bool:
 func _trade_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "reason": reason, "item": {}, "price": 0}
+
+## 出售入账统一门面（工程 56 / 口径 A：金币满额**不拒绝**，只是拿不满）。
+## `add_gold` 内部已 `clampi` 到 `GOLD_CAP` 并返回**实际入账额**，因此四个出售出口
+## 一律走这里、并用返回值做 `gold` / `price` 字段，**不得回填挂牌价**。
+## 🔴 禁止在任何出售出口里再加「装不下就别卖」的前置判断：物品已在玩家手里、
+## 确认也已点过，退回只会变成「有钱反而卖不掉」。差额用 `_notify_gold_gap` 告知。
+func _gold_gain(listed: int) -> int:
+	return add_gold(listed)
+
+## 出售后补一句「超出上限未计入」。返回是否发生了截断。
+## 单独成函数是为了让调用方先报「卖了几件、进多少钱」，再报「为什么钱少了」，
+## 而不是让两句提示反过来。
+##
+## 分工：`sell_low_gear` / `shop_sell` 由 GameState 自己负责弹提示，因此在这里调用；
+## `shop_sell_staged` / `sell_selected_equipment` 的成功提示在界面侧（托盘汇总 / 直卖汇总），
+## 故它们只返回 `capped` 字段，由界面在成功提示之后补一条——**同一笔交易绝不能弹两条**。
+func _notify_gold_gap(listed: int, gained: int) -> bool:
+	if gained >= listed:
+		return false
+	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p054"), "danger")
+	return true
 
 ## 增加经验，并按 4.4 处理（多级连升、剩余结转）。
 func add_xp(amount: int) -> void:
