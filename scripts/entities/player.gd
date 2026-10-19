@@ -755,11 +755,12 @@ func _target_dodge(t: Node) -> float:
 
 func _draw() -> void:
 	if sample_art != null:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1, 0.45))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, Iso.GROUND_SQUASH))
 		draw_circle(Vector2.ZERO, 14 * ART_SCALE, Color(0, 0, 0, 0.3))
-		draw_set_transform(Vector2.ZERO)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		if is_sitting:
-			draw_arc(Vector2.ZERO, 19, 0, TAU, 24, Color("78d8d0"), 1.0)
+			# 打坐圈画在地面，必须是贴地的等距椭圆
+			GroundFx.outline(self, Vector2.ZERO, 19.0, Color("78d8d0"), 1.0, 24)
 		_draw_overhead_name(-119.0)
 		_draw_overhead_hp(-112.0)
 		return

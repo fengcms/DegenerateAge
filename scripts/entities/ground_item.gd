@@ -386,17 +386,17 @@ func _draw() -> void:
 	var col := ItemUtil.kind_color(kind)
 	if kind == "equip":
 		col = ItemUtil.quality_color(quality)
-	# 地面阴影：空中时更小更淡，落地后还原
+	# 地面阴影：空中时更小更淡，落地后还原（纵向比走 Iso.GROUND_SQUASH 唯一来源）
 	var air := _air_ratio()
-	draw_set_transform(Vector2(0, 8), 0.0, Vector2(1.0, 0.5))
+	draw_set_transform(Vector2(0, 8), 0.0, Vector2(1.0, Iso.GROUND_SQUASH))
 	draw_circle(Vector2.ZERO, 11.0 * (1.0 - 0.45 * air), Color(0, 0, 0, 0.28 * (1.0 - 0.5 * air)))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# M6-0d（创意 07 §9）：稀有以上光柱 + 底座（在物品之下绘制）
 	_draw_quality_augment(kind, quality, col)
 	# M6-0d（§10 / §11）：未领取战利品仍须有可见地面标记（与动画开关无关）
 	if persistent and not _claimed:
-		draw_arc(Vector2(0, 8), 26.0, 0.0, TAU, 32, Color(1.0, 0.62, 0.30, 0.85), 2.0, true)
-		draw_arc(Vector2(0, 8), 30.0, 0.0, TAU, 32, Color(1.0, 0.62, 0.30, 0.45), 1.2, true)
+		GroundFx.outline(self, Vector2(0, 8), 26.0, Color(1.0, 0.62, 0.30, 0.85), 2.0)
+		GroundFx.outline(self, Vector2(0, 8), 30.0, Color(1.0, 0.62, 0.30, 0.45), 1.2)
 	# 高亮圈：地面阶段＝保护期渐隐；停驻阶段＝停驻期渐隐（帮助玩家第一时间注意到掉落）
 	var guard := 0.0
 	if _stage == Stage.GROUND:
@@ -405,7 +405,8 @@ func _draw() -> void:
 		guard = 1.0 - clampf(_stage_t / maxf(0.001, _hold_until), 0.0, 1.0)
 	if guard > 0.0:
 		var rr := 20.0 + 18.0 * (1.0 - guard)
-		draw_arc(Vector2(0, 4), rr, 0.0, TAU, 30, Color(1.0, 0.94, 0.70, 0.6 * guard * guard), 2.0, true)
+		# 圆心与阴影圆心（y=8）对齐，压扁后才不会错位（工程 53 D-3）
+		GroundFx.outline(self, Vector2(0, 8), rr, Color(1.0, 0.94, 0.70, 0.6 * guard * guard), 2.0, 30)
 	# 物品图形（上下浮动 + 出场弧线）：已接入图标等比显示为 32 像素，缺图继续回退图形。
 	var lift := sin(_phase) * 2.0 + _drop_offset()
 	var c := Vector2(0, -16 + lift)
@@ -456,15 +457,15 @@ func _draw_quality_augment(kind: String, quality: String, col: Color) -> void:
 	draw_line(foot, foot + Vector2(0.0, -h), Color(tint.r, tint.g, tint.b, 0.85), 1.5, true)
 	if quality == "epic":
 		# 双圈底座
-		draw_arc(Vector2(0, 8), 16.0, 0.0, TAU, 28, Color(tint.r, tint.g, tint.b, 0.60), 1.8, true)
-		draw_arc(Vector2(0, 8), 23.0, 0.0, TAU, 28, Color(tint.r, tint.g, tint.b, 0.35), 1.3, true)
+		GroundFx.outline(self, Vector2(0, 8), 16.0, Color(tint.r, tint.g, tint.b, 0.60), 1.8, 28)
+		GroundFx.outline(self, Vector2(0, 8), 23.0, Color(tint.r, tint.g, tint.b, 0.35), 1.3, 28)
 	elif quality == "legendary":
 		# 星形底座
 		var star := PackedVector2Array()
 		for i in range(10):
 			var ang := -PI * 0.5 + PI * float(i) / 5.0
 			var rr := 20.0 if i % 2 == 0 else 9.0
-			star.append(Vector2(0, 8) + Vector2(cos(ang), sin(ang) * 0.5) * rr)
+			star.append(Vector2(0, 8) + Vector2(cos(ang), sin(ang) * Iso.GROUND_SQUASH) * rr)
 		draw_colored_polygon(star, Color(tint.r, tint.g, tint.b, 0.38))
 		var loop := PackedVector2Array(star)
 		loop.append(star[0])
