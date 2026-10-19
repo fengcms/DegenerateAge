@@ -1294,6 +1294,8 @@ func _validate_potions() -> Array[String]:
 			report.append("[potions] %s 的 restoreAmount 应为正整数" % pid)
 		# M10-10：`restorePercent` 缺省允许（退回固定值，向后兼容）；
 		# 存在时必须落在 (0, 1) —— `pct >= 1` 等于「一瓶回满」，属设计外；`pct <= 0` 是无意义脏数据。
+		# ⚠ 新增档位必须同步写 `restorePercent`：缺省不报错，该档在 61 级以上会静默退回固定量
+		# （`potions.json` 是纯 JSON 数组、写不了注释，故约定落在本处与 08 §11.5）。
 		var pct_value: Variant = entry.get("restorePercent", null)
 		if pct_value != null and (not _is_positive_number(pct_value) or float(pct_value) >= 1.0):
 			report.append("[potions] %s 的 restorePercent 应在 (0, 1) 内" % pid)

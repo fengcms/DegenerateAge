@@ -6,6 +6,9 @@ extends RefCounted
 ## 升级攻 +2 / 防 +1），任何改动都要过 tests/BalanceTest 的 1–60 全量比对。
 ## 本类**不引用 GameState**：`--check-only` 单脚本检查时 autoload 不可见会出假阳性，
 ## 上限截断交给调用方。
+##
+## ⚠ 离线估算工具 `tools/balance_check.py` 与本类**同源但不是权威**：权威只有本类，
+##   改一边必须同步另一边（否则下一个人会按错表算数值）。
 
 ## 60 级及以下沿用 4.4 的逐级成长；> 60 改走曲线。
 const SOFTCAP_LEVEL := 60
