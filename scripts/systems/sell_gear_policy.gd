@@ -6,14 +6,24 @@ extends RefCounted
 const CAUTIOUS := "cautious"
 const STANDARD := "standard"
 const AGGRESSIVE := "aggressive"
-const PRESETS := [CAUTIOUS, STANDARD, AGGRESSIVE]
+## 暴力：跳过全部「价值判断」，背包内所有可售装备一次性打包出售（工程 61）。
+## 「可售」仍是硬门槛 —— 任务物品与无价物品回收价为 0，卖了等于白扔，
+## 且任务装备消失会让主线节点指向不存在的物品。收藏同样不卖（玩家亲手打的保护标记）。
+const BRUTAL := "brutal"
+const PRESETS := [CAUTIOUS, STANDARD, AGGRESSIVE, BRUTAL]
+## 可写进存档的预设。**暴力不在其中**，两理由：
+##   ① 存档里出现 `brutal` 而 `SettingsRuntime.CHOICE_VALUES` 漏登记 ⇒ 整档判损坏（M5-9c 同款事故）；
+##   ② 持久化会让「下次打开面板时 40 格装备已经全部勾好」，一次手滑清空背包。
+const PERSISTABLE := [CAUTIOUS, STANDARD, AGGRESSIVE]
 ## `level_gap` 为**可选键**：不写该键即表示该预设不设等级门槛（积极）。
 ## `require_older_suit` 为真时改用「旧套档」判据 —— 与「十级一套」模型对齐，见 `ItemFactory.suit_start`。
 ## 三个预设的品质上限：谨慎只放行普通，标准/积极放行到稀有（白/蓝/绿）。
+## 暴力走 `entry()` 里的独立分支，不读本表；登记空字典只为防止误用 `RULES[preset]` 时崩。
 const RULES := {
 	CAUTIOUS: {"level_gap": 10, "max_quality": "common"},
 	STANDARD: {"require_older_suit": true, "max_quality": "rare"},
 	AGGRESSIVE: {"max_quality": "rare"},
+	BRUTAL: {},
 }
 
 ## 返回预设是否合法，供设置入口和存档校验共用。
@@ -26,6 +36,21 @@ static func entry(item: Dictionary, bag_index: int, player_level: int,
 		equipment: Dictionary, preset: String) -> Dictionary:
 	if String(item.get("kind", "")) != "equip" or not valid_preset(preset):
 		return {}
+	# 暴力预设（工程 61）：只保留「能不能卖」这一条硬门槛，其余价值判断全部跳过。
+	# 不调用 `Equipment.replacement_preview` —— 玩家已明确不看评分，算了也不展示。
+	if preset == BRUTAL:
+		var brutal_sellable := Shop.can_sell(item)
+		var brutal_reasons: Array[String] = []
+		# 理由只用于 tooltip 说明「为什么它没被勾上」；收藏与无价是仅剩的两个拦截原因。
+		if bool(item.get("favorite", false)):
+			brutal_reasons.append("favorite")
+		elif not brutal_sellable:
+			brutal_reasons.append("unsellable")
+		return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
+			"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),
+			"player_level": player_level, "preset": preset, "score_delta": 0.0,
+			"default_selected": brutal_sellable, "manual_selectable": brutal_sellable,
+			"reasons": brutal_reasons, "protected_upgrade": false}
 	var preview := Equipment.replacement_preview(equipment, item)
 	var favorite := bool(item.get("favorite", false))
 	var sellable := Shop.can_sell(item)

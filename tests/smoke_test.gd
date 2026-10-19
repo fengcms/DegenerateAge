@@ -2360,20 +2360,32 @@ func _test_trade_panel_materials() -> void:
 	_expect(potion_tip.contains("× 37") and potion_tip.contains("36"),
 		"药水 tooltip 应含「单价 36 金币 × 37 件」，实际「%s」" % potion_tip)
 
-	# ③ 一键移入材料：只搬药水 / 杂项 / 如意（不搬装备、不搬任务物品）
+	# ③ 一键移入药品（工程 61）：只搬药水；如意 / 卷轴 / 杂项都不再自动进托盘
 	shop._on_return_all_pressed()
 	await get_tree().process_frame
 	_expect(shop._tray.is_empty(), "全部取回后托盘应清空")
-	shop._on_stage_materials_pressed()
+	shop._on_stage_potions_pressed()
 	await get_tree().process_frame
-	_expect(shop._tray.size() == 2, "一键移入材料应只搬药水与如意 2 件，实际 %d" % shop._tray.size())
+	_expect(shop._tray.size() == 1, "一键移入药品应只搬 1 件（整叠药水），实际 %d" % shop._tray.size())
+	_expect(String((shop._tray.get(0, {}) as Dictionary).get("kind", "")) == "potion",
+		"自动移入的那件必须是药水，实际 %s" % String((shop._tray.get(0, {}) as Dictionary).get("kind", "")))
+	_expect(GameState.inventory[2] is Dictionary and GameState.inventory[3] is Dictionary,
+		"如意与杂项必须留在背包 —— 旧「一键移入材料」会把它们一起搬走")
+
+	# ④ 如意仍可手动移入：借真实拖拽路径补回「升星材料」告警覆盖，不靠删断言过关
+	var rune_still_in_bag: bool = GameState.inventory[2] is Dictionary
+	_expect(rune_still_in_bag, "如意应仍留在背包（旧「一键移入材料」会把它一起搬走）")
+	if rune_still_in_bag:
+		shop._on_tray_drop(1, {"index": 2, "item": (GameState.inventory[2] as Dictionary).duplicate(true)})
+		await get_tree().process_frame
+	_expect(shop._tray.size() == 2, "手动拖入如意后托盘应为 2 件，实际 %d" % shop._tray.size())
 	var kinds: Array[String] = []
 	for it in shop._tray.values():
 		kinds.append(String((it as Dictionary).get("kind", "")))
 	_expect(kinds.has("potion") and kinds.has("rune"),
 		"托盘应含药水与如意，实际 %s" % [kinds])
 	_expect(not kinds.has("equip") and not kinds.has("misc"),
-		"一键移入材料不得搬装备与任务物品，实际 %s" % [kinds])
+		"托盘不得含装备与任务物品，实际 %s" % [kinds])
 
 	# ④ 告警行：含如意时提示升星材料（与「优于已穿戴」互不覆盖）
 	_expect(shop._tray_warn.text.contains("升星材料"),

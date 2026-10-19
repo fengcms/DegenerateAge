@@ -490,13 +490,21 @@ func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
 	EventBus.settings_changed.emit()
 	return true
 
-## 保存装备清包预设；旧数字阈值仅留作旧档读取，不影响新清单。
+## 保存装备清包预设。**暴力是一次性动作，不落档**（见 `SellGearPolicy.PERSISTABLE`）：
+## 它若进了存档，①会被 `SettingsRuntime.CHOICE_VALUES` 漏登记判整档损坏，
+## ②下次打开面板就是「40 格全勾好」的默认态。两条都不可接受，故这里直接拒绝。
 func set_sell_gear_preset(preset: String) -> bool:
-	if not SellGearPolicy.valid_preset(preset):
+	if not SellGearPolicy.PERSISTABLE.has(preset):
 		return false
 	settings.sellGearPreset = preset
 	EventBus.settings_changed.emit()
 	return true
+
+## 本次清单实际生效的预设。`preset_override` 供不落档的预设（暴力）使用；空串 = 读存档设置。
+func _active_preset(preset_override: String) -> String:
+	if not preset_override.is_empty() and SellGearPolicy.valid_preset(preset_override):
+		return preset_override
+	return String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
 
 ## 按稳定实例 ID 切换装备收藏；可覆盖背包、穿戴与仓库，成功后只广播所在容器变化。
 func set_equipment_favorite(instance_id: String, favorite: bool) -> bool:
@@ -554,13 +562,15 @@ func sell_low_gear() -> Dictionary:
 	return {"ok": true, "count": indices.size(), "gold": gained}
 
 ## 生成当前角色背包装备清单；只读，界面可据此勾选，交易时须再次重核。
-func preview_equipment_sale() -> Array[Dictionary]:
+## `preset_override` 非空时覆盖存档里的预设（暴力一次性动作走这条路，不落档）。
+func preview_equipment_sale(preset_override: String = "") -> Array[Dictionary]:
 	return SellGearPolicy.build_preview(inventory, int(player.get("level", 1)), equipment,
-		String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS)))
+		_active_preset(preset_override))
 
 ## 确认前按实例 ID 重定位并核对快照、预设、装备比较、价格和收藏状态。
 ## 返回 {ok, indices, items, total, reason}；无副作用，供直卖和货郎批量暂存复用。
-func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false) -> Dictionary:
+func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false,
+		preset_override: String = "") -> Dictionary:
 	if rows.is_empty():
 		return {"ok": false, "reason": "请选择要处理的装备"}
 	var by_id := {}
@@ -572,7 +582,7 @@ func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false)
 	var items: Array[Dictionary] = []
 	var total := 0
 	var level := int(player.get("level", 1))
-	var preset := String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+	var preset := _active_preset(preset_override)
 	for row in rows:
 		var instance_id := String(row.get("instance_id", ""))
 		if instance_id.is_empty() or seen.has(instance_id) or not by_id.has(instance_id):
@@ -596,10 +606,11 @@ func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false)
 	return {"ok": true, "indices": indices, "items": items, "total": total, "reason": ""}
 
 ## Lv15 后按玩家核对的实例清单整批直卖；任一前置条件失败则背包与金币均不变。
-func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false) -> Dictionary:
+func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false,
+		preset_override: String = "") -> Dictionary:
 	if int(player.get("level", 1)) < 15:
 		return {"ok": false, "reason": "达到 15 级后才可在背包直接出售装备"}
-	var checked := validate_equipment_sale(rows, allow_risky)
+	var checked := validate_equipment_sale(rows, allow_risky, preset_override)
 	if not bool(checked.get("ok", false)):
 		return checked
 	var total := int(checked.total)
@@ -614,10 +625,10 @@ func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false)
 ## 货郎在托盘空格足够时整批取出已核对装备；先增暂存计数防止中途自动存档。
 ## 托盘最终归属仍由 ShopPanel 负责；调用前须确认交易会话有效且托盘确有空格。
 func take_equipment_for_sale(rows: Array[Dictionary], available_slots: int,
-		allow_risky: bool = false) -> Dictionary:
+		allow_risky: bool = false, preset_override: String = "") -> Dictionary:
 	if rows.size() > available_slots:
 		return {"ok": false, "reason": "出售托盘空位不足，请减少勾选"}
-	var checked := validate_equipment_sale(rows, allow_risky)
+	var checked := validate_equipment_sale(rows, allow_risky, preset_override)
 	if not bool(checked.get("ok", false)):
 		return checked
 	trade_staged_count += rows.size()

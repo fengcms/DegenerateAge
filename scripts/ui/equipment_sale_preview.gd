@@ -7,9 +7,14 @@ const DIRECT := "direct"
 const STAGE := "stage"
 const PANEL_WIDTH := 680.0
 const PANEL_HEIGHT := 570.0
+## 工程 60：风险名单只列前 N 件，其余折成「等 M 件」。
+## 货郎托盘上限 24 件，全传奇时整份名单约 500 字；只靠换行仍会把底部按钮顶出滚动区。
+const RISK_LIST_LIMIT := 5
 
 var mode := DIRECT
 var source_panel: WeakRef
+## 本窗口实际生效的预设。暴力的「一次性」语义靠它承载：只存在这里，从不写进 settings。
+var _active_preset: String = ""
 var _rows: Array[Dictionary] = []
 var _selected := {}
 var _stale := false
@@ -23,6 +28,16 @@ var _summary: Label
 var _warning: Label
 var _confirm: Button
 var _preset: OptionButton
+
+## 工程 60：风险名单收成一行可读文本；超过 `RISK_LIST_LIMIT` 件时折叠成「等 N 件」。
+## 背包直卖与货郎托盘共用，避免同一条文案两处各写一份折叠口径。
+static func risk_names_text(names: Array[String]) -> String:
+	if names.size() <= RISK_LIST_LIMIT:
+		return ", ".join(PackedStringArray(names))
+	var head := PackedStringArray()
+	for i in range(RISK_LIST_LIMIT):
+		head.append(names[i])
+	return ", ".join(head) + Localization.tr_key("ui.sale_preview.risk_more") % names.size()
 
 ## 供背包或货郎调用；挂在同一 UI CanvasLayer，保持高缩放坐标口径一致。
 static func open_for(source: Control, sale_mode: String) -> EquipmentSalePreview:
@@ -159,25 +174,30 @@ func _on_state_changed() -> void:
 	_refresh_footer()
 	_resize.call_deferred()
 
-## 切换预设后重置本次勾选，并持久化角色所选的预设。
+## 切换预设后重置本次勾选。暴力**不写存档**（`PERSISTABLE` 之外的预设一律只留在本窗口），
+## 其余预设照旧持久化 —— 下次打开仍是玩家上次选的谨慎/标准/积极。
 func _on_preset_selected(index: int) -> void:
 	if index < 0 or index >= SellGearPolicy.PRESETS.size():
 		return
+	var preset_id := String(SellGearPolicy.PRESETS[index])
 	for row in _rows:
 		if bool(_selected.get(String(row.instance_id), false)) != bool(row.default_selected):
 			EventBus.toast_requested.emit(Localization.tr_key("ui.sale_preview.preset_reset"), "info")
 			break
-	GameState.set_sell_gear_preset(String(SellGearPolicy.PRESETS[index]))
+	if SellGearPolicy.PERSISTABLE.has(preset_id):
+		GameState.set_sell_gear_preset(preset_id)
+	_active_preset = preset_id
 	_reload_entries()
 
 ## 依据当前背包重新生成清单；既有逐件勾选不跨预设或过期快照保留。
 func _reload_entries() -> void:
 	_stale = false
 	_risk_confirmed = false
-	_rows = GameState.preview_equipment_sale()
+	if _active_preset.is_empty():
+		_active_preset = String(GameState.settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+	_rows = GameState.preview_equipment_sale(_active_preset)
 	_selected.clear()
-	var preset_id := String(GameState.settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
-	_preset.select(maxi(0, SellGearPolicy.PRESETS.find(preset_id)))
+	_preset.select(maxi(0, SellGearPolicy.PRESETS.find(_active_preset)))
 	for row in _rows:
 		_selected[String(row.instance_id)] = bool(row.default_selected)
 	for child in _list.get_children():
@@ -263,6 +283,7 @@ func _refresh_footer() -> void:
 		if not bool(row.default_selected):
 			risky.append(ItemUtil.display_name(row.item_snapshot))
 	_summary.text = Localization.tr_key("ui.sale_preview.summary", [chosen.size(), total])
+	var brutal := _active_preset == SellGearPolicy.BRUTAL
 	var free_slots := 9999
 	var source: Control = source_panel.get_ref() if source_panel != null else null
 	if mode == STAGE and source != null:
@@ -271,12 +292,12 @@ func _refresh_footer() -> void:
 		_warning.text = Localization.tr_key("ui.sale_preview.stale")
 	elif mode == STAGE and chosen.size() > free_slots:
 		_warning.text = Localization.tr_key("ui.sale_preview.capacity", [free_slots, chosen.size() - free_slots])
-	elif _risk_confirmed:
-		_warning.text = Localization.tr_key("ui.sale_preview.risk", [", ".join(PackedStringArray(risky))])
+	elif _risk_confirmed and not brutal:
+		_warning.text = Localization.tr_key("ui.sale_preview.risk", [risk_names_text(risky)])
 	else:
 		_warning.text = ""
 	_confirm.disabled = chosen.is_empty() or (mode == STAGE and chosen.size() > free_slots)
-	_confirm.text = Localization.tr_key("ui.sale_preview.confirm_risk") if _risk_confirmed else \
+	_confirm.text = Localization.tr_key("ui.sale_preview.confirm_risk") if _risk_confirmed and not brutal else \
 		Localization.tr_key("ui.sale_preview.confirm_stage" if mode == STAGE else "ui.sale_preview.confirm_direct")
 
 ## 首次确认预设外装备只展示风险；再次确认才交给事务层，失败则刷新重新核对。
@@ -288,24 +309,32 @@ func _on_confirm() -> void:
 	var chosen := _selected_rows()
 	if chosen.is_empty():
 		return
+	# 暴力预设（工程 61）：玩家明确要求「不提示、不确认」，故跳过风险确认这一层。
+	# 但**不能**跳过事务层的快照校验 —— 那不是保护装备，是保证「你点的内容和你以为的一样」。
+	#
+	# 这层判断是**显式护栏**，不是唯一防线：暴力下每件可售装备本来就 `default_selected`，
+	# `risky` 天然为 false（负向验证也证实拆掉它测试仍全绿）。
+	# 留着的理由：①读代码一眼能看出「暴力不走风险层」；②将来若出现「默认不选但可手选」的条目，
+	# 不至于让暴力突然开始要二次确认。
 	var risky := false
-	for row in chosen:
-		if not bool(row.default_selected):
-			risky = true
-			break
-	if risky and not _risk_confirmed:
-		_risk_confirmed = true
-		_refresh_footer()
-		return
+	if _active_preset != SellGearPolicy.BRUTAL:
+		for row in chosen:
+			if not bool(row.default_selected):
+				risky = true
+				break
+		if risky and not _risk_confirmed:
+			_risk_confirmed = true
+			_refresh_footer()
+			return
 	var result := {}
 	if mode == STAGE:
 		var source: Control = source_panel.get_ref() if source_panel != null else null
 		if source == null or not source.visible:
 			queue_free()
 			return
-		result = source.call("_stage_selected_equipment", chosen, risky)
+		result = source.call("_stage_selected_equipment", chosen, risky, _active_preset)
 	else:
-		result = GameState.sell_selected_equipment(chosen, risky)
+		result = GameState.sell_selected_equipment(chosen, risky, _active_preset)
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.sale_preview.done_stage" if mode == STAGE else "ui.sale_preview.done_direct",
 			[int(result.get("count", 0)), int(result.get("gold", 0))]), "pickup")

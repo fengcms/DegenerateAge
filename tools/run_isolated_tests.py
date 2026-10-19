@@ -54,6 +54,12 @@ DEFAULT_TESTS = [
     "BossTokenTest",
     # M10-6 随身商店：14 种精确集合 + 逐项价格 + 三条排除规则 + 购买链路 + 面板点亮 + 如意说明。
     "PortableShopTest",
+    # 工程 60 出售页布局：长名单必须换行、不得出现横向滚动条、托盘必须仍居中。
+    # 断的是「内容最小宽 ≤ 视口宽」——只看 size 会被父容器钳住，那是假绿。
+    "PortableShopLayoutTest",
+    # 工程 61 暴力预设：全选可售装备 / 收藏与任务物品仍不卖 / 一次点击成交 / 暴力不落档
+    # + CHOICE_VALUES 不得收编（那会让「40 格全勾」的默认态回到玩家面前）。
+    "SellPresetBrutalTest",
     # M10-7 随身车夫：七分组（c7_arena 落 60+ 而非 51-60）+ 跨章 35 行 + 面板双模式
     # + C6S07 等级门槛 60 与三件发奖 + 三件全能用与存档往返（unlocks 白名单）。
     "PortableCarterTest",

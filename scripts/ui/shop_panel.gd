@@ -38,6 +38,9 @@ var _trade_active: bool = false
 ## 出售托盘：已从背包移出、尚未结算的物品实例（确认出售 / 取回 / 关闭退回见下）。
 ## 固定格位：键是 0..23 的格下标，值是物品实例；空格不占键。
 var _tray: Dictionary = {}
+## 托盘内物品是用哪个预设暂存的（空 = 读存档设置）。「暴力」一次性预设靠它一路传到结算，
+## 结算前的风险确认据此跳过 —— 否则刚从暴力清单搬进来的装备会被再拦一次。
+var _tray_preset: String = ""
 var _sale_risk_confirmed := false
 
 var _title: Label
@@ -49,7 +52,7 @@ var _tray_summary: Label
 var _tray_warn: Label
 var _confirm_btn: Button
 var _stage_all_btn: Button
-var _stage_materials_btn: Button
+var _stage_potions_btn: Button
 var _return_all_btn: Button
 var _center: CenterContainer
 var _box: PanelContainer
@@ -216,8 +219,11 @@ func _build() -> void:
 	root.add_child(PanelChrome.make_title_gap())
 
 	# F-P2-3：标题行留在外框渐变带内，页签与提示整体可滚动。
+	# 工程 60：内容只允许纵向滚动。横向滚动在本面板里是**纯破坏性**的 ——
+	# 托盘靠两侧弹性空白居中，一旦内容比视口宽，网格就会整体右移、右侧列被裁到视口外
+	# （出售页暂存多件装备时的「界面变形」就是这么来的）。内容宽度必须由换行保证，不靠滚动兜底。
 	_scroll = ScrollContainer.new()
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(_scroll)
 	var content := VBoxContainer.new()
@@ -237,6 +243,9 @@ func _build() -> void:
 	_tabs.add_child(_build_sell_page())
 	_tabs.set_tab_title(0, Localization.tr_key("ui.shop_panel.p002"))
 	_tabs.set_tab_title(1, Localization.tr_key("ui.shop_panel.p003"))
+	# 工程 60：`TabContainer` 的最小尺寸只统计**当前可见页**，切页会改变整块内容的最小宽高；
+	# 不接这支信号，切到出售页后外层既不会重算滚动区、也不会重排并列窗口。
+	_tabs.tab_changed.connect(func(_tab: int) -> void: _update_layout.call_deferred())
 
 	var hint := Label.new()
 	hint.text = Localization.tr_key("ui.shop_panel.p004")
@@ -273,11 +282,17 @@ func _build_sell_page() -> Control:
 
 	page.add_child(HSeparator.new())
 
+	# 工程 60：这两行是**唯一会随件数线性变长**的文本（件数 + 金币位数 + 装备名单）。
+	# 不换行时 Label 的最小宽度等于整行宽度，会把出售页撑到视口之外 —— 必须换行并撑满。
 	_tray_summary = Label.new()
+	_tray_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tray_summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tray_summary.add_theme_font_size_override("font_size", 14)
 	page.add_child(_tray_summary)
 
 	_tray_warn = Label.new()
+	_tray_warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tray_warn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tray_warn.add_theme_font_size_override("font_size", 12)
 	_tray_warn.add_theme_color_override("font_color", COL_WARN)
 	page.add_child(_tray_warn)
@@ -305,14 +320,14 @@ func _build_sell_page() -> Control:
 	_stage_all_btn.pressed.connect(_on_stage_all_pressed)
 	bar.add_child(_stage_all_btn)
 	PanelChrome.style_action(_stage_all_btn)
-	_stage_materials_btn = Button.new()
-	_stage_materials_btn.text = Localization.tr_key("ui.shop_panel.stage_materials")
-	_stage_materials_btn.tooltip_text = Localization.tr_key("ui.shop_panel.stage_materials_tip")
-	_stage_materials_btn.custom_minimum_size = Vector2(92, 32)
-	_stage_materials_btn.add_theme_font_size_override("font_size", 13)
-	_stage_materials_btn.pressed.connect(_on_stage_materials_pressed)
-	bar.add_child(_stage_materials_btn)
-	PanelChrome.style_action(_stage_materials_btn)
+	_stage_potions_btn = Button.new()
+	_stage_potions_btn.text = Localization.tr_key("ui.shop_panel.stage_potions")
+	_stage_potions_btn.tooltip_text = Localization.tr_key("ui.shop_panel.stage_potions_tip")
+	_stage_potions_btn.custom_minimum_size = Vector2(92, 32)
+	_stage_potions_btn.add_theme_font_size_override("font_size", 13)
+	_stage_potions_btn.pressed.connect(_on_stage_potions_pressed)
+	bar.add_child(_stage_potions_btn)
+	PanelChrome.style_action(_stage_potions_btn)
 	_confirm_btn = Button.new()
 	_confirm_btn.text = Localization.tr_key("ui.shop_panel.p009")
 	_confirm_btn.custom_minimum_size = Vector2(92, 32)
@@ -515,7 +530,7 @@ func _refresh_tray() -> void:
 	_tray_warn.text = "\n".join(PackedStringArray(warns))
 	_confirm_btn.disabled = _tray.is_empty()
 	_stage_all_btn.disabled = GameState.inventory_used() == 0
-	_stage_materials_btn.disabled = not _has_stageable_material()
+	_stage_potions_btn.disabled = not _has_stageable_potion()
 	_return_all_btn.disabled = _tray.is_empty()
 
 ## 托盘格描边 / 文字色：装备按品质，其余按品类（药水红 / 如意青 / 材料土黄）。
@@ -558,6 +573,8 @@ func _on_tray_drop(tray_index: int, payload: Dictionary) -> void:
 		_refresh()
 		return
 	_tray[tray_index] = taken
+	# 手动拖入的装备不来自任何预设清单；混入后整批按存档预设重新判风险。
+	_tray_preset = ""
 	_refresh_tray()
 
 ## 反查拖入源在背包中的实时下标（-1 = 已不在背包）。
@@ -597,28 +614,32 @@ func _on_stage_all_pressed() -> void:
 	EquipmentSalePreview.open_for(self, EquipmentSalePreview.STAGE)
 
 ## 清单最终确认后再同步移走背包装备，现有托盘物品和格位均不变。
-func _stage_selected_equipment(rows: Array[Dictionary], allow_risky: bool) -> Dictionary:
+## `preset_override` 来自出售预览窗：暴力是一次性预设，不写存档，只能随这次调用传进来。
+func _stage_selected_equipment(rows: Array[Dictionary], allow_risky: bool,
+		preset_override: String = "") -> Dictionary:
 	if not visible or not _trade_active or not Shop.sell_enabled(_shop_id):
 		return {"ok": false, "reason": "货郎交易已结束，请重新打开"}
 	var free_slots := _tray_slots.size() - _tray.size()
-	var result := GameState.take_equipment_for_sale(rows, free_slots, allow_risky)
+	var result := GameState.take_equipment_for_sale(rows, free_slots, allow_risky, preset_override)
 	if not bool(result.get("ok", false)):
 		return result
+	_tray_preset = preset_override
 	for item in result.items:
 		var free_slot := _first_free_tray_slot()
 		_tray[free_slot] = item
 	_refresh_tray()
 	return result
 
-## 一键移入材料（工程 39 D-5-A）：药水 / 杂项 / 如意批量移入托盘空格，任务物品不收。
-## 与「一键移入」互补 —— 后者只筛装备，避免放行非装备后把保命药误当低价值装备卖掉。
-func _on_stage_materials_pressed() -> void:
+## 一键移入药品（工程 61）：只搬**药水**，任务物品不收。
+## 原「一键移入材料」会把杂项（卷轴、传送符）与如意一起搬走 —— 卷轴随时可能要用，
+## 如意是升星材料，误卖的代价远高于药水，故一并退出自动勾选。
+func _on_stage_potions_pressed() -> void:
 	var moved := 0
 	var full := false
 	var i := GameState.inventory.size() - 1
 	while i >= 0:
 		var it = GameState.inventory[i]
-		if not (it is Dictionary) or not _is_material(it):
+		if not (it is Dictionary) or not _is_stageable_potion(it):
 			i -= 1
 			continue
 		var free_slot := _first_free_tray_slot()
@@ -633,17 +654,17 @@ func _on_stage_materials_pressed() -> void:
 	var msg := Localization.tr_key("ui.shop.staged_count") % moved
 	if full:
 		msg += Localization.tr_key("ui.shop.tray_full_suffix")
-	EventBus.toast_requested.emit(msg if moved > 0 else Localization.tr_key("ui.shop_panel.no_materials"),
+	EventBus.toast_requested.emit(msg if moved > 0 else Localization.tr_key("ui.shop_panel.no_potions"),
 		"pickup" if moved > 0 else "danger")
 	_refresh_tray()
 
-## 可批量移入的「材料」：药水 / 杂项 / 如意，且当前可售（排除任务物品与无价物品）。
-func _is_material(item: Dictionary) -> bool:
-	return ["potion", "misc", "rune"].has(String(item.get("kind", ""))) and Shop.can_sell(item)
+## 可批量移入的「药品」：只有药水，且当前可售（排除任务物品与无价物品）。
+func _is_stageable_potion(item: Dictionary) -> bool:
+	return String(item.get("kind", "")) == "potion" and Shop.can_sell(item)
 
-func _has_stageable_material() -> bool:
+func _has_stageable_potion() -> bool:
 	for it in GameState.inventory:
-		if it is Dictionary and _is_material(it):
+		if it is Dictionary and _is_stageable_potion(it):
 			return true
 	return false
 
@@ -662,7 +683,8 @@ func _on_confirm_pressed() -> void:
 		var risky_names := _risky_sale_names()
 		if not risky_names.is_empty():
 			_sale_risk_confirmed = true
-			_tray_warn.text += "\n" + Localization.tr_key("ui.sale_preview.risk", [", ".join(PackedStringArray(risky_names))])
+			_append_warn_line(Localization.tr_key("ui.sale_preview.risk",
+				[EquipmentSalePreview.risk_names_text(risky_names)]))
 			return
 	var res := GameState.shop_sell_staged(_tray.values())
 	if not bool(res.get("ok", false)):
@@ -671,6 +693,7 @@ func _on_confirm_pressed() -> void:
 	var n := int(res.get("count", 0))
 	var gold := int(res.get("gold", 0))
 	_tray.clear()
+	_tray_preset = ""
 	if n > 0:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p026") % [n, gold], "pickup")
 		# 工程 56 口径 A：金币满额照卖不拒，差额在这里补一句（先报件数与入账，再报缺口）。
@@ -678,9 +701,19 @@ func _on_confirm_pressed() -> void:
 			EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p054"), "danger")
 	_refresh_tray()
 
+## 向告警区追加一行。工程 60：原先直接 `+= "\n" + line`，告警区为空时会留下一个开头空行。
+func _append_warn_line(line: String) -> void:
+	if _tray_warn.text.is_empty():
+		_tray_warn.text = line
+	else:
+		_tray_warn.text += "\n" + line
+
 ## 货郎最终结算前重新检查托盘中预设不会自动选中的装备；手动拖入也适用。
+## 暴力预设下整批本来就是玩家一次性清包的结果，不再逐件拦（与「不提示不确认」一致）。
 func _risky_sale_names() -> Array[String]:
 	var names: Array[String] = []
+	if _tray_preset == SellGearPolicy.BRUTAL:
+		return names
 	var preset := String(GameState.settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
 	for item in _tray.values():
 		if not item is Dictionary or String(item.get("kind", "")) != "equip":
@@ -704,6 +737,8 @@ func _return_tray() -> int:
 	# E-P3-4：关闭面板走的是「退回但不刷新 UI」这条路，必须在此同步暂存件数，
 	# 否则托盘已空而计数滞留 > 0，自动存档会被永久挂起。
 	GameState.set_trade_staged_count(_tray.size())
+	if _tray.is_empty():
+		_tray_preset = ""
 	if not _tray.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p027") % _tray.size(), "danger")
 	return back
