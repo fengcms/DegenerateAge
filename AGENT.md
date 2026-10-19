@@ -25,6 +25,7 @@
 | 动态门禁 | 通行变化更新导航版本，路线、巡游与地图显示缓存随之失效 | `scripts/world/cave_navigator.gd`、`scripts/world/cave_layout.gd` |
 | 默认落点 | 查询布局掩码并缓存，不为一个坐标重复建立完整 A* | `autoload/map_service.gd` |
 | 静态碰撞 | 相同且不再修改的几何复用 Shape 资源，维持正确轮廓 | `scripts/world/ground.gd` |
+| 地面圆 / 预警形状 | 地面是 64×32 等距投影，**地面上的正圆在屏幕上必须是 2:1 椭圆**；一律走 `GroundFx`，禁止裸 `draw_circle` / `draw_arc` 表示地面圆（那是屏幕空间的圆片）。参与伤害判定的形状必须「画与判同源」 | `scripts/systems/ground_fx.gd`、`scripts/systems/iso.gd` |
 
 Godot 的 `_draw()` 命令缓存只避免反复执行绘制脚本，不等于减少每帧渲染成本。已有优化不得退回逐格 `draw_colored_polygon()` 或逐瓦片切换纹理的实现。替代现有架构时，必须提供同场景的行为验证和性能对照。
 
