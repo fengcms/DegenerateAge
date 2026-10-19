@@ -3,6 +3,8 @@
   "expandSlots": 10,
   "expandBase": 1000,
   "expandRate": 1.6,
-  "cap": 200,
-  "_comment": "每次扩容 expandSlots 格；expandCost(k) = round(expandBase × expandRate^k)。仓库内装备不占背包、不计入死亡掉落。"
+  "geoCap": 200,
+  "tailStep": 0,
+  "cap": 400,
+  "_comment": "每次扩容 expandSlots 格。前 geoCap 格沿用几何价：expandCost(k)=round(expandBase × expandRate^k)（k < geoSteps）；超过 geoCap 的尾段改为平价/线性：tailCost(j)=round(expandBase × expandRate^(geoSteps-1)) + tailStep × j（j 为尾段第几档，从 1 起）。geoSteps=(geoCap − baseSlots)/expandSlots=16。仓库内装备不占背包、不计入死亡掉落。"
 }

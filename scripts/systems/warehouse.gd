@@ -29,11 +29,23 @@ static func max_expansions() -> int:
 static func capacity(expansions: int) -> int:
 	return mini(cap(), base_slots() + maxi(0, expansions) * expand_slots())
 
+## 几何段档数：前 geoCap 格沿用几何价（工程 57）。缺省 geoCap=cap 时全段几何，与旧行为一致。
+static func geo_steps() -> int:
+	var geo_cap := int(config().get("geoCap", cap()))
+	return maxi(1, (geo_cap - base_slots()) / maxi(1, expand_slots()))
+
 static func next_cost(expansions: int) -> int:
 	if capacity(expansions) >= cap():
 		return -1
 	var params := config()
-	return int(round(float(params.get("expandBase", 0)) * pow(float(params.get("expandRate", 1.0)), expansions)))
+	var base := float(params.get("expandBase", 0))
+	var rate := float(params.get("expandRate", 1.0))
+	var steps := geo_steps()
+	if expansions < steps:
+		return int(round(base * pow(rate, expansions)))
+	# 尾段（超出 geoCap）：以几何段末档为锚点，按 tailStep 平价 / 线性递增（工程 57 §5.2）。
+	var anchor := int(round(base * pow(rate, steps - 1)))
+	return anchor + int(params.get("tailStep", 0)) * (expansions - (steps - 1))
 
 static func create(expansions: int = 0) -> Array:
 	return Inventory.create(capacity(expansions))
@@ -52,6 +64,16 @@ static func validate_config() -> Array[String]:
 	var data := config()
 	if base_slots() <= 0 or expand_slots() <= 0 or cap() < base_slots():
 		issues.append("[warehouse] baseSlots / expandSlots / cap 需为有效正数且 cap ≥ baseSlots")
-	if float(data.get("expandBase", 0)) <= 0 or float(data.get("expandRate", 0)) < 1.0:
+	if float(data.get("expandBase", 0)) <= 0 or float(data.get("expandRate", 1.0)) < 1.0:
 		issues.append("[warehouse] expandBase 应大于 0，expandRate 应不小于 1")
+	# 分段定价（工程 57）：geoCap 是几何段与尾段的分界容量，tailStep 是尾段每档线性增量。
+	var geo_cap := int(data.get("geoCap", cap()))
+	if geo_cap < base_slots() or geo_cap > cap():
+		issues.append("[warehouse] geoCap 需落在 baseSlots..cap 之间")
+	elif (geo_cap - base_slots()) % maxi(1, expand_slots()) != 0:
+		issues.append("[warehouse] geoCap 与 baseSlots 之差应为 expandSlots 的整数倍")
+	elif geo_cap - base_slots() < expand_slots():
+		issues.append("[warehouse] geoCap 至少应比 baseSlots 大一个 expandSlots（否则几何段为空）")
+	if float(data.get("tailStep", 0)) < 0.0:
+		issues.append("[warehouse] tailStep 不得为负")
 	return issues

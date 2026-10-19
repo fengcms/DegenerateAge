@@ -262,6 +262,20 @@ func _test_inventory_expansion() -> void:
 	_expect(GameState.inventory_expansions == 2 and GameState.inventory.size() == 60
 		and GameState.inventory[59] is Dictionary,
 		"读档后应保留扩容次数与新增格中的物品")
+	# 扩容上限可达性（工程 57）：推到最大次数后应得 400 格、面板能完整呈现、存档可通过校验。
+	GameState.inventory_expansions = Warehouse.max_expansions()
+	GameState.inventory = Warehouse.create(GameState.inventory_expansions)
+	var full_panel := preload("res://scenes/ui/InventoryPanel.tscn").instantiate()
+	add_child(full_panel)
+	full_panel.set_open(true)
+	_expect(GameState.inventory.size() == 400 and full_panel._bag_buttons.size() == 400
+		and full_panel._bag_title.text.contains("/ 400"),
+		"扩容上限应为 400 格并可在背包面板完整呈现")
+	full_panel.set_open(false)
+	remove_child(full_panel)
+	full_panel.free()
+	_expect(SaveManager._is_valid_save(SaveManager._collect()),
+		"400 格背包的存档应通过完整校验")
 	GameState.reset_to_defaults()
 	var old := SaveManager._collect()
 	old.schemaVersion = 9
@@ -403,9 +417,28 @@ func _test_warehouse() -> void:
 	var expanded := GameState.warehouse_expand()
 	_expect(expanded.ok and expanded.cost == 1000 and GameState.warehouse.size() == 50 and GameState.gold == 0,
 		"首次扩容应扣 1000 金币并加 10 格")
-	_expect(Warehouse.next_cost(1) == 1600 and Warehouse.capacity(Warehouse.max_expansions()) == 200
+	_expect(Warehouse.next_cost(1) == 1600 and Warehouse.capacity(Warehouse.max_expansions()) == 400
 		and Warehouse.next_cost(Warehouse.max_expansions()) == -1,
-		"后续扩容费应按几何公式递增且 200 格封顶")
+		"后续扩容费应按几何公式递增且 400 格封顶")
+	_expect(Warehouse.capacity(0) == 40 and Warehouse.geo_steps() == 16
+		and Warehouse.next_cost(15) == 1152922,
+		"几何段应覆盖前 16 档（40→200），末档 1152922")
+	_expect(Warehouse.next_cost(16) == Warehouse.next_cost(15)
+		and Warehouse.next_cost(35) == 1152922,
+		"尾段按 tailStep=0 平价，200→400 的 20 档同为几何段末档价")
+	var previous := -1
+	var monotonic := true
+	var under_cap := true
+	for k in range(Warehouse.max_expansions()):
+		var c := Warehouse.next_cost(k)
+		if c < previous:
+			monotonic = false
+		if c >= GameState.GOLD_CAP:
+			under_cap = false
+		previous = c
+	_expect(monotonic, "扩容费应逐档单调不减")
+	_expect(under_cap and previous < GameState.GOLD_CAP,
+		"任一档扩容费都必须低于金币上限，否则该档实际不可购买")
 	var invalid_save := SaveManager._collect()
 	invalid_save.warehouse.resize(49)
 	_expect(not SaveManager._is_valid_save(invalid_save), "存档应拒绝仓库格数与扩容次数不一致")
