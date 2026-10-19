@@ -34,6 +34,7 @@ const CHOICE_VALUES := {
 	"qualityFilter": ["all", "rare", "epic", "legendary"],
 	"resolution": ["auto", "1280x800", "1440x900", "1600x900", "1920x1200"],
 	"displayScaleMode": ["auto", "manual"],
+	"sellGearPreset": ["cautious", "standard", "aggressive"],
 }
 
 ## 数值型设置键的合法区间（**单一来源**，C-P2-3）。未登记键仅要求「有限数且非负」。

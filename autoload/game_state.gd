@@ -224,6 +224,7 @@ func default_settings() -> Dictionary:
 		"colorblindMode": "off",
 		"lowGearLevelLimit": 5,
 		"lowGearMaxQuality": "common",
+		"sellGearPreset": SellGearPolicy.CAUTIOUS,
 		"keyBindings": {},
 	}
 
@@ -488,6 +489,41 @@ func set_low_gear_filter(level_limit: int, max_quality: String) -> bool:
 	settings.lowGearMaxQuality = max_quality
 	EventBus.settings_changed.emit()
 	return true
+
+## 保存装备清包预设；旧数字阈值仅留作旧档读取，不影响新清单。
+func set_sell_gear_preset(preset: String) -> bool:
+	if not SellGearPolicy.valid_preset(preset):
+		return false
+	settings.sellGearPreset = preset
+	EventBus.settings_changed.emit()
+	return true
+
+## 按稳定实例 ID 切换装备收藏；可覆盖背包、穿戴与仓库，成功后只广播所在容器变化。
+func set_equipment_favorite(instance_id: String, favorite: bool) -> bool:
+	if instance_id.is_empty():
+		return false
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary and String(inventory[i].get("instanceId", "")) == instance_id:
+			var item: Dictionary = inventory[i]
+			item.favorite = favorite
+			inventory[i] = item
+			EventBus.inventory_changed.emit()
+			return true
+	for slot in equipment.keys():
+		if equipment[slot] is Dictionary and String(equipment[slot].get("instanceId", "")) == instance_id:
+			var item: Dictionary = equipment[slot]
+			item.favorite = favorite
+			equipment[slot] = item
+			EventBus.equipment_changed.emit()
+			return true
+	for i in range(warehouse.size()):
+		if warehouse[i] is Dictionary and String(warehouse[i].get("instanceId", "")) == instance_id:
+			var item: Dictionary = warehouse[i]
+			item.favorite = favorite
+			warehouse[i] = item
+			EventBus.warehouse_changed.emit()
+			return true
+	return false
 
 func is_low_gear(item: Dictionary) -> bool:
 	return Shop.matches_low_gear(item, int(settings.get("lowGearLevelLimit", 5)),

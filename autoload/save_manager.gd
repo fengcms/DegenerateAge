@@ -1359,6 +1359,8 @@ func _valid_item(item: Variant) -> bool:
 	if kind == "equip":
 		if not DataLoader.get_entry("equipments", item.itemId) is Dictionary or not item.get("instanceId") is String or item.instanceId.is_empty():
 			return false
+		if item.has("favorite") and not item.favorite is bool:
+			return false
 		# M10-1：上限放进 5（v5 = 61+ 动态实例）；下限仍是 4，v3 及更早不走这条路。
 		if not _whole(item.get("equipmentRuleVersion"), 4, 5) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false

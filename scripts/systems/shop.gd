@@ -223,6 +223,8 @@ static func sell_price(item: Dictionary) -> int:
 static func can_sell(item: Dictionary) -> bool:
 	if not SELLABLE_KINDS.has(String(item.get("kind", ""))):
 		return false
+	if bool(item.get("favorite", false)):
+		return false
 	if is_quest_item(item):
 		return false
 	return base_value(item) > 0
