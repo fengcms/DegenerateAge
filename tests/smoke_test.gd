@@ -23,6 +23,7 @@ func _ready() -> void:
 	await _test_monster_chase()
 	await _test_monster_attacks_player()
 	await _test_ranged_projectile()
+	await _test_knockback()
 	await _test_death_settles_once()
 	await _test_spawner()
 	await _test_level_gap()
@@ -836,6 +837,124 @@ func _projectiles(from: Monster) -> Array:
 
 func _projectile_count(from: Monster) -> int:
 	return _projectiles(from).size()
+
+# ---- A4：Boss 技能击退 / 击倒（03 §3.4 / 工程文档 56 §2）----
+func _test_knockback() -> void:
+	GameState.reset_to_defaults()
+	var player: PlayerCharacter = load("res://scenes/entities/Player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector2.ZERO
+	await get_tree().physics_frame
+
+	# ① 位移口径：沿「来源 → 玩家」反向推满 48px；倒地 0.5s 期间不可行动。
+	var start: Vector2 = player.global_position
+	player.apply_knockback(start - Vector2(40.0, 0.0), Monster.SKILL_KNOCKBACK_DISTANCE,
+		Monster.SKILL_KNOCKBACK_DURATION, Monster.SKILL_KNOCKDOWN_DURATION)
+	_expect(player._stun >= Monster.SKILL_KNOCKDOWN_DURATION,
+		"倒地应把控制丢失延长到 %.2fs，实际 %.2f" % [Monster.SKILL_KNOCKDOWN_DURATION, player._stun])
+	_expect(not player.is_attack_ready(), "倒地期间不可行动（攻击未就绪）")
+	for _i in range(40):
+		await get_tree().physics_frame
+	var moved: Vector2 = player.global_position - start
+	_expect(absf(moved.x - Monster.SKILL_KNOCKBACK_DISTANCE) <= 1.0 and absf(moved.y) <= 1.0,
+		"击退位移应恰为 %.0fpx 且沿来源反向，实际 %s" % [Monster.SKILL_KNOCKBACK_DISTANCE, moved])
+	_expect(player._knockback_t == 0.0, "击退计时应在时长用尽后归零")
+
+	# ② 接线点：只有 Boss 技能路径触发击退；普攻（`from_skill=false`）不触发（56 §2.3）。
+	var boss: Monster = load("res://scenes/entities/Monster.tscn").instantiate()
+	boss.monster_id = "c3_boss01"
+	boss.ai_enabled = false
+	add_child(boss)
+	await get_tree().physics_frame
+	boss.attack_power = 1.0   # 压低攻击力：本段只验证接线，避免一击打死玩家
+	boss.global_position = player.global_position - Vector2(40.0, 0.0)
+	player._invuln = 0.0
+	player._stun = 0.0
+	var hp0: int = int(GameState.player.hp)
+	boss._do_attack(player, false)
+	_expect(int(GameState.player.hp) < hp0 and player._knockback_t == 0.0,
+		"普攻路径不应触发击退（触发来源仅 Boss 技能）")
+	player._invuln = 0.0
+	player._stun = 0.0
+	boss._do_attack(player, false, true)
+	_expect(player._knockback_t > 0.0, "Boss 技能命中应写入击退位移")
+	_expect(player._stun >= Monster.SKILL_KNOCKDOWN_DURATION, "Boss 技能应附带倒地")
+	# 无敌帧内再次命中：不扣血、不叠加击退 / 硬直（56 §2.5 定向断言）。
+	var hp1: int = int(GameState.player.hp)
+	var frozen: Vector2 = player.global_position
+	player._knockback_t = 0.0
+	boss._do_attack(player, false, true)
+	_expect(int(GameState.player.hp) == hp1 and player._knockback_t == 0.0,
+		"无敌帧内不应再次扣血或叠加击退")
+	_expect(player.global_position.is_equal_approx(frozen), "无敌帧内不应被再次推动")
+	player.queue_free()
+	boss.queue_free()
+	await get_tree().physics_frame
+	GameState.reset_to_defaults()
+	await _test_knockback_walkable()
+
+## A4 地图断言：击退位移必须过可行走掩码截断，任何一帧都不得落在不可走格。
+func _test_knockback_walkable() -> void:
+	GameState.reset_to_defaults()
+	GameState.current_map = "ash_land"
+	GameState.save_pos = Iso.grid_to_world(Vector2i(9, 54))
+	GameState.has_save_pos = true
+	var game: Node = load("res://scenes/Game.tscn").instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	var ground: IsoGround = game.get_node_or_null("Ground") as IsoGround
+	var player: PlayerCharacter = game.get_node_or_null("Entities/Player") as PlayerCharacter
+	var spawner: Node = game.get_node_or_null("Spawner")
+	_expect(ground != null and player != null and ground.cave != null, "ash_land 世界应装配可走掩码")
+	if ground == null or player == null or ground.cave == null:
+		game.queue_free()
+		return
+	# 关掉 AI：本断言只测位移截断，不许被怪物打断。
+	if spawner != null:
+		spawner.set_process(false)
+		for child in spawner.get_children():
+			if child is Monster:
+				child.queue_free()
+	GameState.set_auto_battle(false)
+	await get_tree().physics_frame
+
+	# 找「可走 → 可走 → 墙」三连格：朝墙推 200px 必然撞上掩码边界。
+	var from_cell := Vector2i(-1, -1)
+	var dims: Vector2i = ground.cave.size
+	for y in range(dims.y):
+		for x in range(dims.x):
+			if ground.is_walkable_cell(Vector2i(x, y)) and ground.is_walkable_cell(Vector2i(x + 1, y)) \
+				and not ground.is_walkable_cell(Vector2i(x + 2, y)):
+				from_cell = Vector2i(x, y)
+				break
+		if from_cell.x >= 0:
+			break
+	_expect(from_cell.x >= 0, "ash_land 掩码应存在「可走 → 可走 → 墙」三连格")
+	if from_cell.x < 0:
+		game.queue_free()
+		return
+	var wall_dir := (Iso.grid_to_world(from_cell + Vector2i(2, 0)) - Iso.grid_to_world(from_cell)).normalized()
+	player.global_position = Iso.grid_to_world(from_cell)
+	await get_tree().physics_frame
+	var wall_start: Vector2 = player.global_position
+	player._invuln = 0.0
+	player._stun = 0.0
+	player.apply_knockback(wall_start - wall_dir * 40.0, 200.0, 0.3, Monster.SKILL_KNOCKDOWN_DURATION)
+	var off_mask := false
+	for _i in range(30):
+		await get_tree().physics_frame
+		if not ground.is_walkable_cell(Vector2i(Iso.world_to_grid(player.global_position).round())):
+			off_mask = true
+	_expect(not off_mask, "击退期间任一帧都不得把玩家推出可行走格")
+	_expect(ground.is_walkable_cell(Vector2i(Iso.world_to_grid(player.global_position).round())),
+		"击退结束后玩家仍应在可行走格内")
+	var travel: float = wall_start.distance_to(player.global_position)
+	_expect(travel > 0.0 and travel < 199.0,
+		"朝墙超距击退应被掩码边界截停（应远小于 200px，实际 %.1f）" % travel)
+	game.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	GameState.reset_to_defaults()
 
 # ---- M1-5/M1-6：死亡结算仅一次 + 掉落生成 ----
 func _test_death_settles_once() -> void:

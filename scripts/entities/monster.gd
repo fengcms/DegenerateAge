@@ -29,6 +29,13 @@ const PROJECTILE_RANGE_MARGIN := 1.1
 ## A3：远程怪蓄力时长（s）。沿用 c2 的调校值，各章统一。
 const RANGED_WINDUP := 0.28
 
+## A4（03 §3.4 / 工程文档 56 §2.3 已拍板参数）：**Boss 技能**命中附加击退与倒地；
+## 普通普攻与精英特殊招式不触发（56 §2.3「触发来源：仅 Boss 技能」）。
+## 缺省值在代码，可被该怪的 `bossSkill.knockback` / `bossSkill.knockdown` 逐只覆盖。
+const SKILL_KNOCKBACK_DISTANCE := 48.0   # 击退距离（px，0.75 格）
+const SKILL_KNOCKBACK_DURATION := 0.18   # 击退时长（s）
+const SKILL_KNOCKDOWN_DURATION := 0.5    # 倒地时长（s，期间不可行动、沿用无敌帧）
+
 ## M6-0a（创意 07 §4）：三档敌人外观。普通沿用既有半径；精英 / Boss 放大并加轮廓与地面标识。
 const RADIUS := 13.0          # 普通（兼容既有引用）
 const RADIUS_ELITE := 19.0
@@ -323,7 +330,7 @@ func _update_boss(delta: float) -> bool:
 				(sample_art as MonsterActorArt).finish_stomp()
 			var target := _get_player()
 			if target != null and target.global_position.distance_to(_stomp_center) <= _stomp_radius:
-				_do_attack(target, false)
+				_do_attack(target, false, true)
 		return true
 	var player := _get_player()
 	if player == null or boss_phase < 1:
@@ -418,7 +425,7 @@ func _resolve_chapter_boss_warn() -> void:
 					hit = true
 					break
 	if hit:
-		_do_attack(player, false)
+		_do_attack(player, false, true)
 
 ## E1（创意 第三章/03）：共享动作组件驱动的新章首领。
 ## 脱战判据：玩家离场 / 死亡，或首领离场心超过 18 格 → 锁存脱战态，5 秒后归位回满。
@@ -464,6 +471,7 @@ func _skill_hit(coeff: float) -> void:
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
 		_apply_hit_effects(player, actual)
+		_apply_skill_knockback(player, actual)
 
 ## 脱战归位：回场心、回满血、清二阶段与动作状态（已结算战利品不回退）。
 func _reset_boss_to_arena() -> void:
@@ -748,7 +756,7 @@ func _update_chapter_special(delta: float) -> bool:
 func _level_damage_multiplier() -> float:
 	return LevelGap.damage_multiplier(int(GameState.player.get("level", 1)), level)
 
-func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
+func _do_attack(player: Node2D, play_attack_art: bool = true, from_skill: bool = false) -> void:
 	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
 	_attack_cd = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval)
@@ -765,6 +773,33 @@ func _do_attack(player: Node2D, play_attack_art: bool = true) -> void:
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
 		_apply_hit_effects(player, actual)
+		if from_skill:
+			_apply_skill_knockback(player, actual)
+
+## A4：Boss 技能命中后的击退 / 击倒参数。缺省走常量，可按该怪 `bossSkill` 逐只覆盖。
+func _skill_knockback_params() -> Dictionary:
+	var distance := SKILL_KNOCKBACK_DISTANCE
+	var duration := SKILL_KNOCKBACK_DURATION
+	var knockdown := SKILL_KNOCKDOWN_DURATION
+	var skill: Variant = template.get("bossSkill", null)
+	if skill is Dictionary:
+		var kb: Variant = (skill as Dictionary).get("knockback", null)
+		if kb is Dictionary:
+			distance = float((kb as Dictionary).get("distance", distance))
+			duration = float((kb as Dictionary).get("duration", duration))
+		var kd: Variant = (skill as Dictionary).get("knockdown", null)
+		if kd is Dictionary:
+			knockdown = float((kd as Dictionary).get("duration", knockdown))
+	return {"distance": distance, "duration": duration, "knockdown": knockdown}
+
+## A4：仅在真正扣到血（`actual > 0`，即未被无敌帧 / 死亡 / 休息区拦下）时追加击退，
+## 因此无敌帧内不会叠加第二次击退与硬直。方向由玩家侧按来源坐标现算（56 §2.5）。
+func _apply_skill_knockback(player: Node2D, actual: int) -> void:
+	if actual <= 0 or not player.has_method("apply_knockback"):
+		return
+	var params := _skill_knockback_params()
+	player.call("apply_knockback", global_position, float(params.distance),
+		float(params.duration), float(params.knockdown))
 
 ## 远程攻击先蓄力再发射：蓄力期间玩家可走位躲避，命中结算仍复用 `_do_attack`（含越级伤害）。
 func _begin_projectile(player: Node2D) -> void:

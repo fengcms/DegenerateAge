@@ -53,6 +53,11 @@ var _basic: Dictionary = {}
 ## 受击保护计时
 var _invuln: float = 0.0
 var _stun: float = 0.0
+## A4（03 §3.4 / 工程文档 56 §2）：Boss 技能击退位移。运行态，死亡 / 复活清除，不入档。
+var _knockback_dir := Vector2.ZERO
+var _knockback_distance := 0.0   # 本段击退总位移（px）
+var _knockback_duration := 1.0
+var _knockback_t := 0.0          # 剩余时长（s），归零即位移结束
 ## 死亡占位计时
 var _death_t: float = 0.0
 var is_dead: bool = false
@@ -338,6 +343,7 @@ func _physics_process(delta: float) -> void:
 		dir = Vector2.ZERO   # 硬直期间无法主动移动（3.4）
 	velocity = dir * _speed * movement_multiplier() * GameState.mount_speed_multiplier()
 	move_and_slide()
+	_tick_knockback(delta)
 
 	# 普攻：按住攻击键，冷却结束即发动一次（每次发动 = 一次结算）
 	if not world_controls_blocked and not manual_attack_active and _stun <= 0.0 and Input.is_action_pressed("attack") and _attack_cd <= 0.0:
@@ -362,6 +368,58 @@ func apply_damage(amount: int) -> int:
 		_begin_death()
 	return actual
 
+## A4（03 §3.4）：Boss 技能命中后由来源调用，施加击退位移与倒地。
+## 只在 `apply_damage` 真正扣到血（返回 > 0）时才该被调用 —— 无敌帧 / 死亡 / 休息区
+## 已由受击入口拦掉，因此这里天然不会叠加第二次击退或硬直。
+## `origin` 为攻击来源位置：击退方向取「来源 → 玩家」射线（56 §2.5）。
+func apply_knockback(origin: Vector2, distance: float, duration: float, knockdown: float) -> void:
+	if is_dead:
+		return
+	if knockdown > 0.0:
+		_stun = maxf(_stun, knockdown)   # 倒地沿用既有 `_stun` 抑制路径：期间不寻路、不决策、不普攻
+	if distance <= 0.0 or duration <= 0.0:
+		return
+	var away := global_position - origin
+	_knockback_dir = away.normalized() if away.length_squared() > 0.000001 else Vector2.DOWN
+	_knockback_distance = distance
+	_knockback_duration = duration
+	_knockback_t = duration
+	# 位移会改变当前位置，洞穴图旧路点随即失效：清掉让下一帧按新位置重规划。
+	_cave_path.clear()
+	_cave_path_index = 0
+	_cave_target_cell = Vector2i(-1, -1)
+
+## 剩余时长 `t` 对应的累计位移：`D × (1 − (t/T)²)`，导数即「线性衰减速度」。
+func _knockback_offset(t: float) -> float:
+	var ratio := t / _knockback_duration
+	return _knockback_distance * (1.0 - ratio * ratio)
+
+## 击退位移：按上式解析积分推进，离散帧叠加后**总位移恰为配置值**；落位前经可行走掩码截断。
+## 仅当目标格可走才落位，不做 `nearest_walkable` 吸附 —— 否则一格薄墙会把玩家弹到墙后。
+func _tick_knockback(delta: float) -> void:
+	if _knockback_t <= 0.0:
+		return
+	var before := _knockback_offset(_knockback_t)
+	_knockback_t = maxf(0.0, _knockback_t - delta)
+	var motion := _knockback_dir * (_knockback_offset(_knockback_t) - before)
+	if motion == Vector2.ZERO:
+		return
+	var ground := _map_ground()
+	var guess := global_position + motion
+	if ground == null:
+		global_position = guess
+		return
+	if not ground.is_walkable_cell(Vector2i(Iso.world_to_grid(guess).round())):
+		_knockback_t = 0.0   # 撞墙即截停
+		return
+	global_position = ground.clamp_to_map(guess)
+
+func _map_ground() -> IsoGround:
+	var world := get_tree().get_first_node_in_group("map_world")
+	if world == null:
+		return null
+	return world.get_node_or_null("Ground") as IsoGround
+
 func _begin_death() -> void:
 	if is_dead:
 		return
@@ -373,6 +431,7 @@ func _begin_death() -> void:
 	select_target(null)
 	_slow_remaining = 0.0
 	_slow_pct = 0.0
+	_knockback_t = 0.0
 	is_dead = true
 	# 先记录死亡前的挂机状态，再关自动战斗：自动原地复活需要按原样恢复（见 death_panel）。
 	auto_battle_before_death = GameState.auto_battle_on
@@ -390,6 +449,7 @@ func _revive() -> void:
 	_death_t = 0.0
 	_invuln = 1.0
 	_stun = 0.0
+	_knockback_t = 0.0
 	GameState.player.hp = GameState.max_hp()
 	GameState.player.mp = GameState.max_mp()
 	GameState.emit_all()

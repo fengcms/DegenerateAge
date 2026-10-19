@@ -230,6 +230,22 @@ func _validate_monster_appearance(spec: Dictionary) -> Array[String]:
 		report.append("[monsterAppearances] %s 缺少第二章清单 assetKey" % id)
 	return report
 
+## A4（工程文档 56 §2.4）：`bossSkill.knockback / knockdown` 是可选字段（缺省走代码常量）。
+## 一旦写了就必须形状合法 —— 否则会出现「配了字段却不生效」的静默失效。
+func _validate_skill_knockback(id: String, skill: Variant) -> Array[String]:
+	var report: Array[String] = []
+	if not skill is Dictionary:
+		return report
+	var kb: Variant = (skill as Dictionary).get("knockback", null)
+	if kb != null and (not kb is Dictionary
+			or not _is_nonnegative_number((kb as Dictionary).get("distance"))
+			or not _is_nonnegative_number((kb as Dictionary).get("duration"))):
+		report.append("[monsters] %s 的 bossSkill.knockback 需含非负 distance / duration" % id)
+	var kd: Variant = (skill as Dictionary).get("knockdown", null)
+	if kd != null and (not kd is Dictionary or not _is_nonnegative_number((kd as Dictionary).get("duration"))):
+		report.append("[monsters] %s 的 bossSkill.knockdown 需含非负 duration" % id)
+	return report
+
 ## 取整表。
 func get_table(table_name: String) -> Variant:
 	return tables.get(table_name)
@@ -318,6 +334,7 @@ func validate_all() -> Array[String]:
 			var appearance_id := String(m.get("appearanceId", ""))
 			if appearance_id.is_empty() or get_entry("monsterAppearances", appearance_id) == null:
 				report.append("[monsters] %s 引用未登记的 appearanceId '%s'" % [m.get("id", "?"), appearance_id])
+			report.append_array(_validate_skill_knockback(String(m.get("id", "?")), m.get("bossSkill")))
 	var appearances = tables.get("monsterAppearances")
 	if appearances is Array:
 		for appearance in appearances:
