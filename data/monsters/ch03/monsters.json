@@ -335,7 +335,7 @@
     "goldReward": 0,
     "dropTableId": "DT_C3_Elite",
     "kind": "elite",
-    "monsterType": "ranged",
+    "monsterType": "melee",
     "specialAttack": "",
     "bossSkill": null,
     "spawnWeight": 1.0,
