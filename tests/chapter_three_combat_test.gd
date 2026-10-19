@@ -176,11 +176,16 @@ func _run_boss_until(boss: Monster, predicate: Callable, limit: float) -> void:
 
 ## 在当前预警几何内取一点（line 取线段中点 / circle 取圆心 / fan 取朝向半程）。
 func _point_inside(geo: Dictionary) -> Vector2:
+	# `BossAction.geometry()` 自工程 55 起返回**地面空间**（纵向 ×2）；
+	# 这里的返回值要喂给 `global_position`，必须先投影回屏幕坐标，否则玩家会被摆到两倍远的位置。
+	var g := Vector2.ZERO
 	match String(geo.get("kind", "")):
 		"line":
-			return ((geo["from"] as Vector2) + (geo["to"] as Vector2)) * 0.5
+			g = ((geo["from"] as Vector2) + (geo["to"] as Vector2)) * 0.5
 		"circle":
-			return geo["center"] as Vector2
+			g = geo["center"] as Vector2
 		"fan":
-			return (geo["center"] as Vector2) + (geo["dir"] as Vector2) * float(geo["radius"]) * 0.5
-	return ORIGIN
+			g = (geo["center"] as Vector2) + (geo["dir"] as Vector2) * float(geo["radius"]) * 0.5
+		_:
+			return ORIGIN
+	return Iso.from_ground(g)

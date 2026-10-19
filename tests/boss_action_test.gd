@@ -54,6 +54,7 @@ func _count_move(log: Array, move: int) -> int:
 
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	_test_iso_ground_primitive()
 	_test_line_boss()
 	_test_circle_boss()
 	_test_fan_boss()
@@ -61,6 +62,37 @@ func _ready() -> void:
 	_test_retreat_and_no_damage()
 	print("[BossAction] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 地面几何原语（工程 53 R1）：2:1 椭圆比例、包含判定、环带、投影往返。
+## 这里刻意**不引用** `BossAction.COMPENSATE`，用 `sqrt(2.0)` 直写 —— 常量写错时本组必须红。
+func _test_iso_ground_primitive() -> void:
+	var c := Vector2(100.0, 200.0)
+	var r := 100.0
+	var pts := Iso.ground_ellipse(c, r, 32)
+	var max_dx := 0.0
+	var max_dy := 0.0
+	for p in pts:
+		max_dx = maxf(max_dx, absf(p.x - c.x))
+		max_dy = maxf(max_dy, absf(p.y - c.y))
+	check(pts.size() == 32, "椭圆点集 32 点")
+	check(absf(max_dx / max_dy - 2.0) < 0.01, "地面圆投影为 2:1 椭圆")
+	check(is_equal_approx(Iso.GROUND_SQUASH, 0.5), "GROUND_SQUASH = 0.5（与 64×32 瓦片一致）")
+	# 包含判定：横向 99 在内、纵向 99 在外 —— 漏掉 `to_ground` 这条必红
+	check(Iso.ground_contains(c, r, c + Vector2(99.0, 0.0)), "横向 99 在地面圆内")
+	check(not Iso.ground_contains(c, r, c + Vector2(0.0, 99.0)), "纵向 99 在地面圆外")
+	check(is_equal_approx(Iso.ground_distance(c, c + Vector2(0.0, 99.0)), 198.0),
+		"纵向屏幕距离 99 = 地面距离 198")
+	# 环带：圆心不在、环中间在、纵向 60px（地面 120）已在环外
+	check(not Iso.ground_ring_contains(c, 50.0, 100.0, c), "圆心不在环带内")
+	check(Iso.ground_ring_contains(c, 50.0, 100.0, c + Vector2(75.0, 0.0)), "环带中段在内")
+	check(not Iso.ground_ring_contains(c, 50.0, 100.0, c + Vector2(0.0, 60.0)),
+		"纵向 60px = 地面 120 已在环外")
+	check(Iso.to_ground(Iso.from_ground(Vector2(3.0, 7.0))).is_equal_approx(Vector2(3.0, 7.0)),
+		"地面坐标往返无损")
+	# 2:1 菱形：横向对角线是纵向的两倍
+	var diamond := Iso.ground_diamond(c, 40.0)
+	check(is_equal_approx(absf(diamond[1].x - diamond[3].x), 80.0), "菱形横向对角线 80")
+	check(is_equal_approx(absf(diamond[2].y - diamond[0].y), 40.0), "菱形纵向对角线 40（2:1）")
 
 ## c3_boss01：双平行线，先左后右。
 func _test_line_boss() -> void:
@@ -119,12 +151,18 @@ func _test_fan_boss() -> void:
 	_run_until(action, func() -> bool: return action.is_busy(), 10.0, log)
 	var geo := action.geometry()
 	check(String(geo.get("kind", "")) == "fan", "扇阵几何为扇")
-	check(is_equal_approx(float(geo.get("radius", 0.0)), 384.0), "扇半径 6 格")
+	check(is_equal_approx(float(geo.get("radius", 0.0)), 384.0 * sqrt(2.0)),
+		"扇半径 6 格（地面半径 = 屏幕半径 ×√2，等面积）")
 	check(action.hits(ORIGIN + Vector2(192.0, 0.0)), "首扇正前方命中")
 	check(not action.hits(ORIGIN + Vector2(-192.0, 0.0)), "扇外不命中")
 	_run_until(action, func() -> bool: return log.size() == 1 and action.is_warning(), 1.5, log)
+	# `dir` 在地面空间；`from_ground` 还原成屏幕指向后才与设计角度可比。
 	var dir2: Vector2 = action.geometry().get("dir", Vector2.ZERO)
-	check(absf(dir2.angle_to(Vector2.from_angle(deg_to_rad(120.0)))) < 0.01, "第二扇转到 120 度")
+	var screen_dir := Iso.from_ground(dir2).normalized()
+	check(absf(screen_dir.angle_to(Vector2.from_angle(deg_to_rad(120.0)))) < 0.01,
+		"第二扇屏幕朝向转到 120 度")
+	check(action.hits(ORIGIN + screen_dir * 100.0), "第二扇中线命中")
+	check(not action.hits(ORIGIN + Vector2(100.0, 0.0)), "第二扇不再覆盖 0 度方向")
 	_run_until(action, func() -> bool: return log.size() == 3, 3.0, log)
 	check(log.size() == 3, "一轮 A 招恰好三段")
 
@@ -137,11 +175,22 @@ func _test_phase_b() -> void:
 	check(action.move == BossAction.Move.B and action.is_warning(), "50% 血进入环击预警")
 	var geo := action.geometry()
 	check(String(geo.get("kind", "")) == "ring", "B 招几何为环击")
-	check(is_equal_approx(float(geo.get("inner", 0.0)), 128.0), "内圈 2 格可避")
-	check(is_equal_approx(float(geo.get("radius", 0.0)), 320.0), "外半径 5 格")
+	var inner := float(geo.get("inner", 0.0))
+	var outer := float(geo.get("radius", 0.0))
+	# 等面积补偿：内 128×√2 = 181.02、外 320×√2 = 452.55（椭圆面积仍 = πr²）
+	check(is_equal_approx(inner, 128.0 * sqrt(2.0)), "内圈 2 格可避（×√2）")
+	check(is_equal_approx(outer, 320.0 * sqrt(2.0)), "外半径 5 格（×√2）")
 	check(action.hits(ORIGIN + Vector2(0.0, 192.0)), "环带内结算")
 	check(not action.hits(ORIGIN), "圆心安全")
-	check(not action.hits(ORIGIN + Vector2(384.0, 0.0)), "圈外安全")
+	# 边界两侧各 1px 双向断言：防「恒真」/「恒假」的假绿
+	check(action.hits(ORIGIN + Vector2(inner + 1.0, 0.0)), "内圈外侧 1px 命中")
+	check(not action.hits(ORIGIN + Vector2(inner - 1.0, 0.0)), "内圈内侧 1px 不命中")
+	check(action.hits(ORIGIN + Vector2(outer - 1.0, 0.0)), "外圈内侧 1px 命中")
+	check(not action.hits(ORIGIN + Vector2(outer + 1.0, 0.0)), "圈外 1px 不命中")
+	# 纵向：地面距离是屏幕距离的 2 倍，椭圆的纵向半轴只有 outer×0.5。
+	# 站在这条「看得见的边界」外侧必须不命中 —— 这条专门咬「只改画、不改判」的假修。
+	check(not action.hits(ORIGIN + Vector2(0.0, outer * 0.5 + 2.0)), "纵向可见圈外 2px 不命中")
+	check(action.hits(ORIGIN + Vector2(0.0, outer * 0.5 - 2.0)), "纵向可见圈内 2px 命中")
 	_run_until(action, func() -> bool: return _count_move(log, BossAction.Move.B) == 1, 0.5, log)
 	check(_count_move(log, BossAction.Move.A) == 0, "B 率先进场，与 A 互斥不同时")
 	check(is_equal_approx(float((log[0] as Dictionary).c), 1.3), "B 招系数 1.3")
