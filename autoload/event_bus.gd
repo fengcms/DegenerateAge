@@ -81,6 +81,8 @@ signal blacksmith_panel_requested(npc_name: String, greeting: String)
 signal upgrade_panel_requested()
 ## M10-8：铁匠服务菜单第二项（装备重铸）请求。
 signal reforge_panel_requested()
+## 铁匠三种合成服务共用窗口，mode 为 EquipmentFusion 中的稳定服务 ID。
+signal equipment_fusion_panel_requested(mode: String)
 
 # ---- 仓库（M4-3）----
 signal warehouse_panel_requested(npc_name: String)
