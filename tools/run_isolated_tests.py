@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 56 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 57 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 
 默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
@@ -100,6 +100,10 @@ DEFAULT_TESTS = [
     # 工程 79 随身工具补领：**解锁键未置不补（新档不白送）** / 已拥有不补（防重复刷）
     # / 背包满走仓库 / 两处都满记 failed / 读档自愈端到端（物品真进 GameState）/ 齐全时不打扰。
     "ToolReclaimTest",
+    # 工程 80 随身三件套：**放行口径与执行层同源（未实现 useType 不放行）** / 三件工具格内简称互不相同
+    # / panel 类不显示角标 / 缺件提示区分背包与仓库 / 车夫折叠**只改可见性不改 row_count**
+    # / 默认展开组跟着等级走 / 令牌过滤与折叠**不回写 BossToken.rows()** / 手风琴同时最多一组。
+    "PortableToolsHotbarTest",
     "SmokeTest",
 ]
 
