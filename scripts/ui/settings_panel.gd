@@ -15,6 +15,9 @@ var _conflict: PanelConfirmDialog
 var _pending_action := ""
 var _pending_code := 0
 var _layout_root: VBoxContainer
+## 工程 63：拾取自动出售的两件控件，打开面板时按等级重算可用性（见 `_refresh_auto_sell_gate`）。
+var _auto_sell_check: CheckBox
+var _auto_sell_preset: OptionButton
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -63,6 +66,7 @@ func set_open(open: bool) -> void:
 	if open:
 		_update_layout()
 		_refresh_keys()
+		_refresh_auto_sell_gate()
 		EventBus.panel_opened.emit("settings")
 	else:
 		_capture_action = ""
@@ -309,6 +313,55 @@ func _build_game(tabs: TabContainer) -> void:
 	revive_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(revive_hint)
 	# 品质自动拾取过滤尚未接线，旧档字段保留兼容，避免展示不会生效的选项。
+	_build_auto_sell(box)
+
+## 工程 63：拾取装备自动出售。勾选后拾取装备即换成金币（判定见 `SellGearPolicy.auto_sell`）。
+## 预设复用 `settings.sellGearPreset`（与背包装备出售面板同一键、三档、天然不含「暴力」），
+## 勾选本身受 `SellGearPolicy.AUTO_SELL_MIN_LEVEL` 约束。
+func _build_auto_sell(box: VBoxContainer) -> void:
+	_auto_sell_check = CheckBox.new()
+	_auto_sell_check.button_pressed = bool(GameState.settings.get("autoSellEquipOnPickup", false))
+	_auto_sell_check.toggled.connect(func(v: bool) -> void:
+		GameState.settings["autoSellEquipOnPickup"] = v
+		_changed())
+	box.add_child(_auto_sell_check)
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	var caption := Label.new()
+	caption.text = Localization.tr_key("ui.settings_panel.p048")
+	caption.custom_minimum_size.x = 160
+	row.add_child(caption)
+	_auto_sell_preset = OptionButton.new()
+	for preset_id in SellGearPolicy.PERSISTABLE:
+		_auto_sell_preset.add_item(Localization.tr_key("ui.sale_preview.preset_" + String(preset_id)))
+		_auto_sell_preset.set_item_metadata(_auto_sell_preset.item_count - 1, String(preset_id))
+	_auto_sell_preset.item_selected.connect(func(index: int) -> void:
+		GameState.set_sell_gear_preset(String(_auto_sell_preset.get_item_metadata(index)))
+		_changed())
+	row.add_child(_auto_sell_preset)
+	var hint := Label.new()
+	# D2/D3 的口径写进玩家可见文案 —— 这两条是「不可撤销操作」的边界，不能只写在文档里。
+	hint.text = Localization.tr_key("ui.settings_panel.p049")
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(hint)
+	_refresh_auto_sell_gate()
+
+## 等级门槛只在**打开面板时**重算：等级只升不降，但读档 / 切角色 / 导入档都会变，
+## 不能只在 `_build()` 里算一次。
+func _refresh_auto_sell_gate() -> void:
+	if _auto_sell_check == null:
+		return
+	var level := int(GameState.player.get("level", 1))
+	var allowed := level >= SellGearPolicy.AUTO_SELL_MIN_LEVEL
+	_auto_sell_check.disabled = not allowed
+	var base := Localization.tr_key("ui.settings_panel.p046")
+	var gate := Localization.tr_key("ui.settings_panel.p047") % SellGearPolicy.AUTO_SELL_MIN_LEVEL
+	_auto_sell_check.text = base if allowed else base + gate
+	_auto_sell_check.tooltip_text = "" if allowed else gate
+	if _auto_sell_preset != null:
+		var current := String(GameState.settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+		_auto_sell_preset.select(maxi(0, SellGearPolicy.PERSISTABLE.find(current)))
+		_auto_sell_preset.disabled = not allowed
 
 func _build_controls(tabs: TabContainer) -> void:
 	var root := _tab(tabs, Localization.tr_key("ui.settings_panel.p038"))

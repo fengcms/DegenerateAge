@@ -951,15 +951,23 @@ func _settle_rewards() -> void:
 	# 认领序（§8，仅决定背包空间分配）与展示序（§9）解耦：高品质优先入包，展示按 plan 自带时序。
 	# 认领在 `add_child` 时同步判定，故循环结束时「未领取装备数」已可确定（§11.1）。
 	var unclaimed_equip := 0
+	# 工程 63：被「拾取自动出售」当场变现的装备件数与金币（已认领 ⇒ 不计入未领取）。
+	var auto_sold := 0
+	var auto_sold_gold := 0
 	for row in _order_rows_by_claim(plan):
 		var gi := _spawn_drop(row, batch_id, persistent, anim)
-		if gi == null or gi.is_claimed():
+		if gi == null:
+			continue
+		if gi.is_claimed():
+			if gi.auto_sold_gold > 0:
+				auto_sold += 1
+				auto_sold_gold += gi.auto_sold_gold
 			continue
 		var it_v: Variant = row.get("item", {})
 		if it_v is Dictionary and String((it_v as Dictionary).get("kind", "")) == "equip":
 			unclaimed_equip += 1
 	# M6-0e（创意 07 §10）：精英 / Boss 批次摘要（延迟到装备雨结束）+ 传说单独提示
-	_announce_batch_summary(rolled, kind, plan, unclaimed_equip, anim)
+	_announce_batch_summary(rolled, kind, plan, unclaimed_equip, anim, auto_sold, auto_sold_gold)
 
 ## 入包认领序（创意 07 §8）：传说→史诗→稀有→优秀→普通；同品质按生成序号。
 ## 药水 / 如意 / 杂项排在装备之后，金币最后（独立入账）。分桶实现以保持**稳定次序**。
@@ -1022,12 +1030,14 @@ func _announce_drops(items: Array) -> void:
 ## M6-0e（创意 07 §10）：批次摘要 + 传说提示。
 ## 精英 / Boss 用**批次摘要**替代旧逐件聚合提示（延迟到装备雨全部落地，§10「最后一份出场完成时」）；
 ## 普通怪沿用旧即时聚合提示（§1 普通怪沿用现有规则）。
-func _announce_batch_summary(rolled: Array, kind: String, plan: Array, unclaimed_equip: int, anim: bool) -> void:
+func _announce_batch_summary(rolled: Array, kind: String, plan: Array, unclaimed_equip: int, anim: bool,
+		auto_sold: int = 0, auto_sold_gold: int = 0) -> void:
 	if not (kind in ["elite", "boss"]):
 		_announce_drops(rolled)
 		return
 	var delay := LootNotify.summary_delay(plan, anim)
-	_emit_toast_delayed(LootNotify.summary_text(display_name, rolled, unclaimed_equip, not GameState.auto_pickup_on), "drop", delay)
+	_emit_toast_delayed(LootNotify.summary_text(display_name, rolled, unclaimed_equip,
+		not GameState.auto_pickup_on, auto_sold, auto_sold_gold), "drop", delay)
 	var legend := LootNotify.legendary_text(rolled)
 	if not legend.is_empty():
 		_emit_toast_delayed(legend, "legendary", delay)

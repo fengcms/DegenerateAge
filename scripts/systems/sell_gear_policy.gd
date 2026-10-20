@@ -15,6 +15,9 @@ const PRESETS := [CAUTIOUS, STANDARD, AGGRESSIVE, BRUTAL]
 ##   ① 存档里出现 `brutal` 而 `SettingsRuntime.CHOICE_VALUES` 漏登记 ⇒ 整档判损坏（M5-9c 同款事故）；
 ##   ② 持久化会让「下次打开面板时 40 格装备已经全部勾好」，一次手滑清空背包。
 const PERSISTABLE := [CAUTIOUS, STANDARD, AGGRESSIVE]
+## 拾取自动出售的等级门槛（产品决策：60 级才允许开启）。
+## 放这里而不是散在 UI 里 —— 设置界面与运行时校验都读它，改数字只需改一处。
+const AUTO_SELL_MIN_LEVEL := 60
 ## `level_gap` 为**可选键**：不写该键即表示该预设不设等级门槛（积极）。
 ## `require_older_suit` 为真时改用「旧套档」判据 —— 与「十级一套」模型对齐，见 `ItemFactory.suit_start`。
 ## 三个预设的品质上限：谨慎只放行普通，标准/积极放行到稀有（白/蓝/绿）。
@@ -30,27 +33,11 @@ const RULES := {
 static func valid_preset(preset: String) -> bool:
 	return PRESETS.has(preset)
 
-## 给一件背包装备生成稳定的预览条目；非装备返回空字典。
-## `bag_index` 只用于展示，成交按 instanceId 重定位；实例快照供确认时防止误卖。
-static func entry(item: Dictionary, bag_index: int, player_level: int,
-		equipment: Dictionary, preset: String) -> Dictionary:
-	if String(item.get("kind", "")) != "equip" or not valid_preset(preset):
-		return {}
-	# 暴力预设（工程 61）：只保留「能不能卖」这一条硬门槛，其余价值判断全部跳过。
-	# 不调用 `Equipment.replacement_preview` —— 玩家已明确不看评分，算了也不展示。
-	if preset == BRUTAL:
-		var brutal_sellable := Shop.can_sell(item)
-		var brutal_reasons: Array[String] = []
-		# 理由只用于 tooltip 说明「为什么它没被勾上」；收藏与无价是仅剩的两个拦截原因。
-		if bool(item.get("favorite", false)):
-			brutal_reasons.append("favorite")
-		elif not brutal_sellable:
-			brutal_reasons.append("unsellable")
-		return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
-			"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),
-			"player_level": player_level, "preset": preset, "score_delta": 0.0,
-			"default_selected": brutal_sellable, "manual_selectable": brutal_sellable,
-			"reasons": brutal_reasons, "protected_upgrade": false}
+## 价值判断的**唯一实现**：拆出 reasons / preview / sellable / favorite / stronger。
+## `entry()`（手动清单）与 `auto_sell()`（拾取瞬间）共用 —— 两处若各写一套，规则必然漂移。
+## ⚠ 调用方必须已确认 `preset` 不是 BRUTAL：暴力档的 `RULES` 是空字典，没有 `max_quality` 键。
+static func _judge(item: Dictionary, player_level: int, equipment: Dictionary,
+		preset: String) -> Dictionary:
 	var preview := Equipment.replacement_preview(equipment, item)
 	var favorite := bool(item.get("favorite", false))
 	var sellable := Shop.can_sell(item)
@@ -76,13 +63,72 @@ static func entry(item: Dictionary, bag_index: int, player_level: int,
 		var suit := ItemFactory.suit_start(Equipment.level_req(item))
 		if suit == 0 or suit >= ItemFactory.suit_start(player_level):
 			reasons.append("suit")
+	return {"preview": preview, "favorite": favorite, "sellable": sellable,
+		"reasons": reasons, "stronger": stronger}
+
+## 给一件背包装备生成稳定的预览条目；非装备返回空字典。
+## `bag_index` 只用于展示，成交按 instanceId 重定位；实例快照供确认时防止误卖。
+static func entry(item: Dictionary, bag_index: int, player_level: int,
+		equipment: Dictionary, preset: String) -> Dictionary:
+	if String(item.get("kind", "")) != "equip" or not valid_preset(preset):
+		return {}
+	# 暴力预设（工程 61）：只保留「能不能卖」这一条硬门槛，其余价值判断全部跳过。
+	# 不调用 `Equipment.replacement_preview` —— 玩家已明确不看评分，算了也不展示。
+	if preset == BRUTAL:
+		var brutal_sellable := Shop.can_sell(item)
+		var brutal_reasons: Array[String] = []
+		# 理由只用于 tooltip 说明「为什么它没被勾上」；收藏与无价是仅剩的两个拦截原因。
+		if bool(item.get("favorite", false)):
+			brutal_reasons.append("favorite")
+		elif not brutal_sellable:
+			brutal_reasons.append("unsellable")
+		return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
+			"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),
+			"player_level": player_level, "preset": preset, "score_delta": 0.0,
+			"default_selected": brutal_sellable, "manual_selectable": brutal_sellable,
+			"reasons": brutal_reasons, "protected_upgrade": false}
+	var judged := _judge(item, player_level, equipment, preset)
+	var preview: Dictionary = judged["preview"]
+	var reasons: Array[String] = judged["reasons"]
 	var automatic := reasons.is_empty() and bool(preview.get("ok", false))
 	return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
 		"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),
 		"player_level": player_level, "preset": preset,
 		"score_delta": float(preview.get("score_delta", 0.0)),
-		"default_selected": automatic, "manual_selectable": sellable and not favorite,
-		"reasons": reasons, "protected_upgrade": stronger}
+		"default_selected": automatic,
+		"manual_selectable": bool(judged["sellable"]) and not bool(judged["favorite"]),
+		"reasons": reasons, "protected_upgrade": bool(judged["stronger"])}
+
+## 拾取瞬间的自动出售判定（工程 63）。返回 {sell, reason, price}；`reason` 仅供排查，不面向玩家。
+##
+## 与 `entry()` 共用 `_judge()` 的理由集，另加三条**自动出售专属否决**：
+##   ① 等级门槛（60 级）：运行时再拦一次，不能只靠界面灰显（改档 / 导入档 / 将来降级都可能带 true）；
+##   ② 金币已满：卖出等于白扔装备，宁可留在背包让玩家自己处理；
+##   ③ **该槽为空**：`_judge()` 的 V1 规则刻意不给空槽加保护（手动清单里玩家能取消勾选），
+##      但自动出售没有「取消勾选」这一步 —— 不否决的话，某槽捡到的第一件会被当场卖掉，
+##      玩家永远穿不上那一件（工程 63 §2.3）。
+static func auto_sell(item: Dictionary, player_level: int, equipment: Dictionary,
+		preset: String, gold_capped: bool) -> Dictionary:
+	if String(item.get("kind", "")) != "equip":
+		return {"sell": false, "reason": "not_equip", "price": 0}
+	# 暴力不进设置（`PERSISTABLE`），这里再挡一次：双保险，防止将来有人绕开设置直接调本函数。
+	if not PERSISTABLE.has(preset):
+		return {"sell": false, "reason": "preset_locked", "price": 0}
+	if player_level < AUTO_SELL_MIN_LEVEL:
+		return {"sell": false, "reason": "level_gate", "price": 0}
+	if gold_capped:
+		return {"sell": false, "reason": "gold_capped", "price": 0}
+	var judged := _judge(item, player_level, equipment, preset)
+	var reasons: Array[String] = judged["reasons"]
+	if not reasons.is_empty():
+		return {"sell": false, "reason": reasons[0], "price": 0}
+	var preview: Dictionary = judged["preview"]
+	if bool(preview.get("empty", true)):
+		return {"sell": false, "reason": "empty_slot", "price": 0}
+	var price := Shop.sell_price(item)
+	if price <= 0:
+		return {"sell": false, "reason": "unsellable", "price": 0}
+	return {"sell": true, "reason": "", "price": price}
 
 ## 按当前背包格顺序构建一次性清单；最多扫描背包容量，不在逐帧入口调用。
 static func build_preview(inventory: Array, player_level: int,

@@ -72,6 +72,9 @@ enum Stage { GROUND, HOLD, FLY }
 
 ## M6-0c：登记后的未领取记录 uid（空 = 未登记）；领取成功时据此注销（§11.3）。
 var claim_uid: String = ""
+## 工程 63：本件装备被「拾取自动出售」换成的金币（0 = 未自动出售）。
+## 只读快照，供 `Monster._settle_rewards` 统计批次摘要里的「· 自动出售 N 件 +X 金币」。
+var auto_sold_gold: int = 0
 
 var _life: float = LIFETIME
 var _blocked_cd: float = 0.0
@@ -329,10 +332,23 @@ func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 		_clear_unclaimed_record()
 		return true
 
-	if Inventory.add(GameState.inventory, item):
-		EventBus.item_picked.emit(String(item.get("itemId", "")))
-		EventBus.inventory_changed.emit()
-		if not silent_pickup:
+	# 工程 63：装备可能被「拾取自动出售」当场变现 —— 判定在 `GameState.pickup_loot()` 里，
+	# 本节点只负责时机与文案。`auto_sold_gold` 会被掉落方读走做批次摘要。
+	var res := GameState.pickup_loot(item)
+	if bool(res.get("ok", false)):
+		if bool(res.get("auto_sold", false)):
+			auto_sold_gold = int(res.get("gold", 0))
+			if not silent_pickup:
+				_pickup_msg = Localization.tr_key("msg.game_state.p055") % [
+					ItemUtil.display_name(item), auto_sold_gold]
+		elif String(res.get("reason", "")) == "gold_capped":
+			# 金币满 ⇒ 按设计不卖（装备留在背包）。必须说一句，否则玩家会以为功能坏了。
+			# 与「背包已满」共用 `_blocked_cd` 节流：同一时刻只提示一条。
+			if _blocked_cd <= 0.0:
+				_blocked_cd = BLOCK_TOAST_CD
+				EventBus.toast_requested.emit(
+					Localization.tr_key("msg.game_state.p056") % ItemUtil.display_name(item), "danger")
+		elif not silent_pickup:
 			_pickup_msg = Localization.tr_key("msg.ground_item.p005") + ItemUtil.display_name(item)
 		if announce:
 			_announce_pickup()

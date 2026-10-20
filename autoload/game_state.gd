@@ -206,6 +206,9 @@ func default_settings() -> Dictionary:
 		"allowBoss": false,           # 3.14 自动战斗是否允许 Boss
 		"dropFlyAnim": true,          # 10：拾取飞行动画（关 = 入包后立即消失）
 		"autoReviveOnDeath": false,   # 死亡后自动原地复活并恢复战斗（需背包有复活卷）
+		# 工程 63：拾取装备自动出售。判定口径复用 `sellGearPreset`（不带暴力），
+		# 等级门槛见 `SellGearPolicy.AUTO_SELL_MIN_LEVEL`。加键**不 bump schema**。
+		"autoSellEquipOnPickup": false,
 		"masterVolume": 1.0,
 		"sfxVolume": 1.0,
 		"uiScale": 1.0,
@@ -399,6 +402,42 @@ func remove_item_at(index: int) -> Dictionary:
 	if not it.is_empty():
 		EventBus.inventory_changed.emit()
 	return it
+
+## 拾取自动出售是否生效（工程 63）。**等级在这里再拦一次**，不能只靠设置界面灰显：
+## `settings` 随存档走，改档 / 导入别人的档 / 将来出现降级机制，都可能出现「等级不足但开关为真」。
+func auto_sell_enabled() -> bool:
+	return bool(settings.get("autoSellEquipOnPickup", false)) \
+		and int(player.get("level", 1)) >= SellGearPolicy.AUTO_SELL_MIN_LEVEL
+
+## 拾取一件地面物的**唯一门面**（工程 63）。装备在自动出售生效且判定通过时直接换成金币，不入背包。
+##
+## 为什么必须新开一个门面，而不是改 `add_item()`：`add_item` 的调用方是 `shop_buy`（买货）与
+## `quest.gd`（任务奖励），那些装备**必须留在背包里**；在 `add_item` 上做拦截等于「商店买的装备
+## 当场被卖」。拾取这条路由 `GroundItem` 单独走这里。
+##
+## 返回 {ok, auto_sold, gold, listed, reason}；`ok=false` 表示入包失败（背包满，沿用旧语义）。
+func pickup_loot(item: Dictionary) -> Dictionary:
+	var sellable_now := String(item.get("kind", "")) == "equip" and auto_sell_enabled()
+	if not sellable_now:
+		var placed := add_item(item)
+		if placed:
+			EventBus.item_picked.emit(String(item.get("itemId", "")))
+		return {"ok": placed, "auto_sold": false, "gold": 0, "listed": 0, "reason": ""}
+	var preset := String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+	var decision := SellGearPolicy.auto_sell(item, int(player.get("level", 1)), equipment,
+		preset, gold_is_capped())
+	if not bool(decision.get("sell", false)):
+		var kept := add_item(item)
+		if kept:
+			EventBus.item_picked.emit(String(item.get("itemId", "")))
+		return {"ok": kept, "auto_sold": false, "gold": 0, "listed": 0,
+			"reason": String(decision.get("reason", ""))}
+	var listed := int(decision.get("price", 0))
+	var gained := _gold_gain(listed)
+	# 视同「捡到了」：拾取音效与收集类任务都挂在 item_picked 上，不能因为没进背包就吞掉。
+	EventBus.item_picked.emit(String(item.get("itemId", "")))
+	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), gained)
+	return {"ok": true, "auto_sold": true, "gold": gained, "listed": listed, "reason": ""}
 
 ## 背包已占用格数。
 func inventory_used() -> int:

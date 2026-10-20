@@ -19,7 +19,10 @@ const LISTED_QUALITIES := ["rare", "epic", "legendary"]
 const LEGENDARY_PREFIX_KEY := "msg.loot_notify.legendary_prefix"
 
 ## 批次摘要文本。`rolled` = `Loot.roll` 产出数组；`unclaimed_equip` = 本批未入包的装备件数。
-static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: int, manual_pickup: bool = false) -> String:
+## 工程 63：`auto_sold` / `auto_sold_gold` 为「拾取自动出售」的件数与金币，>0 时追加一段。
+## 两者**必须带默认值** —— `smoke_test` 有四处按 3–4 个参数直接调用，加必填参数会编译失败。
+static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: int, manual_pickup: bool = false,
+		auto_sold: int = 0, auto_sold_gold: int = 0) -> String:
 	var equip := 0
 	var q_count := {}
 	var gold := 0
@@ -49,6 +52,10 @@ static func summary_text(monster_name: String, rolled: Array, unclaimed_equip: i
 	if rune > 0:
 		parts.append(Localization.tr_key("msg.loot_notify.p003") % rune)
 	var text := Localization.tr_key("msg.loot_notify.p004") % [monster_name, " · ".join(parts)]
+	# 工程 63：自动出售的件数与金币单独成段 —— 摘要里的「装备 N 件」仍按掉落总数说，
+	# 不能因为装备被变现就少报产出（玩家需要知道「掉了什么」，也需要知道「钱从哪来」）。
+	if auto_sold > 0:
+		text += Localization.tr_key("msg.loot_notify.p007") % [auto_sold, auto_sold_gold]
 	if unclaimed_equip > 0:
 		text += (Localization.tr_key("msg.loot_notify.p005") if manual_pickup else Localization.tr_key("msg.loot_notify.p006")) % unclaimed_equip
 	return text
