@@ -1,5 +1,5 @@
 extends Control
-## 铁匠对话与功能菜单。NPC 的自我介绍来自地图配置，菜单打开升星、重铸及三种合成服务。
+## 铁匠对话与功能菜单。NPC 的自我介绍来自地图配置，菜单打开升星、重铸及四种合成服务。
 
 const PANEL_ID := "blacksmith"
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
@@ -39,7 +39,7 @@ func _resize() -> void:
 	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
 	_center.size = logical
 	_root.custom_minimum_size = Vector2(minf(500.0, logical.x * 0.84), 0.0)
-	_service_scroll.custom_minimum_size.y = clampf(logical.y - 250.0, 54.0, 320.0)
+	_service_scroll.custom_minimum_size.y = clampf(logical.y - 250.0, 54.0, 380.0)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
@@ -155,7 +155,7 @@ func _build() -> void:
 	_upgrade.pressed.connect(_open_upgrade)
 	_reforge = _make_service(enhance_grid, "ui.reforge_panel.p002", true)
 	_reforge.pressed.connect(_open_reforge)
-	# 合成组：两种四合一服务并排，各自一句话说清材料口径。
+	# 合成组：原有两种服务并排；升档随机合成独占下一行，避免两列留下孤格。
 	var forge_grid := _build_group(service_content, "ui.blacksmith_panel.group_forge",
 		"ui.blacksmith_panel.hint_forge")
 	for service in [
@@ -165,6 +165,11 @@ func _build() -> void:
 		var button := _make_service(forge_grid, String(service.key), false)
 		button.pressed.connect(_open_fusion.bind(String(service.mode)))
 		_fusion_buttons.append(button)
+	var purple_up_row := VBoxContainer.new()
+	forge_grid.get_parent().add_child(purple_up_row)
+	var purple_up := _make_service(purple_up_row, "ui.fusion.purple_up_title", false)
+	purple_up.pressed.connect(_open_fusion.bind(EquipmentFusion.PURPLE_UP_TIER))
+	_fusion_buttons.append(purple_up)
 	# 保星升级有跨档扣费规则，独占整行才放得下说明。
 	var transfer_row := VBoxContainer.new()
 	transfer_row.add_theme_constant_override("separation", 4)

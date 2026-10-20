@@ -1,5 +1,5 @@
 extends Control
-## 铁匠三种合成共用的材料工作台；背包物品只做预选引用，确认后才由 GameState 结算。
+## 铁匠四种合成共用的材料工作台；背包物品只做预选引用，确认后才由 GameState 结算。
 
 const PANEL_ID := "equipment_fusion"
 const WIDTH := 430.0
@@ -48,10 +48,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
-## 铁匠菜单只能打开三种已登记的服务。
+## 铁匠菜单只能打开已登记的服务。
 func _on_requested(mode: String) -> void:
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_TARGET,
-			EquipmentFusion.STAR_TRANSFER]:
+			EquipmentFusion.PURPLE_UP_TIER, EquipmentFusion.STAR_TRANSFER]:
 		return
 	_mode = mode
 	set_open(true)
@@ -64,10 +64,20 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open(PANEL_ID, open)
 	_reset_materials()
 	if open:
-		_title.text = Localization.tr_key("ui.fusion.gold_title" if _mode == EquipmentFusion.GOLD_TO_PURPLE else
-			"ui.fusion.purple_title" if _mode == EquipmentFusion.PURPLE_TARGET else "ui.fusion.star_title")
-		_hint.text = Localization.tr_key("ui.fusion.gold_hint" if _mode == EquipmentFusion.GOLD_TO_PURPLE else
-			"ui.fusion.purple_hint" if _mode == EquipmentFusion.PURPLE_TARGET else "ui.fusion.star_hint")
+		var title_key := "ui.fusion.gold_title"
+		var hint_key := "ui.fusion.gold_hint"
+		match _mode:
+			EquipmentFusion.PURPLE_TARGET:
+				title_key = "ui.fusion.purple_title"
+				hint_key = "ui.fusion.purple_hint"
+			EquipmentFusion.PURPLE_UP_TIER:
+				title_key = "ui.fusion.purple_up_title"
+				hint_key = "ui.fusion.purple_up_hint"
+			EquipmentFusion.STAR_TRANSFER:
+				title_key = "ui.fusion.star_title"
+				hint_key = "ui.fusion.star_hint"
+		_title.text = Localization.tr_key(title_key)
+		_hint.text = Localization.tr_key(hint_key)
 		_target_row.visible = _mode == EquipmentFusion.PURPLE_TARGET
 		_random.visible = _mode != EquipmentFusion.STAR_TRANSFER
 		_confirm.text = Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else
@@ -294,9 +304,10 @@ func _material_error(item: Dictionary, row: int) -> String:
 	if _mode == EquipmentFusion.GOLD_TO_PURPLE:
 		return "" if quality == "epic" and star >= 0 and star <= Upgrade.max_star() else \
 			Localization.tr_key("ui.fusion.gold_only")
-	if _mode == EquipmentFusion.PURPLE_TARGET:
+	if _mode in [EquipmentFusion.PURPLE_TARGET, EquipmentFusion.PURPLE_UP_TIER]:
 		if quality != "legendary" or star < 0 or star >= Upgrade.max_star():
-			return Localization.tr_key("ui.fusion.purple_only")
+			return Localization.tr_key("ui.fusion.purple_only" if _mode == EquipmentFusion.PURPLE_TARGET else
+				"ui.fusion.purple_up_only")
 		for i in range(4):
 			if i != row and not _selected[i].is_empty() \
 					and EquipmentFusion.tier_start(_selected[i]) != EquipmentFusion.tier_start(item):
@@ -422,10 +433,19 @@ func _refresh_preview() -> void:
 	if not bool(plan.get("ok", false)):
 		_summary.text = String(plan.get("reason", ""))
 		return
-	var label := Localization.tr_key("ui.fusion.random_kind") if _mode == EquipmentFusion.GOLD_TO_PURPLE else \
+	var label := Localization.tr_key("ui.fusion.random_kind") if _mode in [
+		EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_UP_TIER] else \
 		Equipment.slot_label(Equipment.slots_for_kind(String(plan.target_kind))[0])
 	_summary.text = Localization.tr_key("ui.fusion.preview", ["%d—%d" % [int(plan.tier), int(plan.tier) + 9],
 		label, " ★12" if _mode == EquipmentFusion.STAR_TRANSFER else " ★0"])
+	if _mode == EquipmentFusion.PURPLE_UP_TIER:
+		_summary.text = Localization.tr_key("ui.fusion.purple_up_preview", [
+			int(plan.tier) - ItemFactory.TIER_SPAN,
+			int(plan.tier) - ItemFactory.TIER_SPAN + 9,
+			int(plan.tier), int(plan.tier) + 9])
+		if int(GameState.player.get("level", 1)) < int(plan.tier) + 9:
+			_summary.text += "\n" + Localization.tr_key("ui.fusion.purple_up_level",
+				[int(GameState.player.get("level", 1))])
 	if _mode == EquipmentFusion.STAR_TRANSFER:
 		var gap := int(plan.get("gap", 1))
 		if gap > 1:

@@ -20,7 +20,7 @@ func _ready() -> void:
 	add_child(character)
 	EventBus.blacksmith_panel_requested.emit("铁匠", "试试新服务")
 	dialogue._show_menu()
-	check(dialogue._fusion_buttons.size() == 3, "铁匠菜单保留三种服务")
+	check(dialogue._fusion_buttons.size() == 4, "铁匠菜单提供四种合成服务")
 	check(dialogue._leave.get_parent() == dialogue._footer
 		and not dialogue._service_scroll.is_ancestor_of(dialogue._leave),
 		"离开按钮在底部固定行，不再混进服务网格")
@@ -102,6 +102,44 @@ func _ready() -> void:
 	check(GameState.inventory_used() == 1 and not purple_output.is_empty()
 		and Equipment.item_kind(purple_output) == "weapon",
 		"四紫界面产出指定武器")
+	panel.set_open(false)
+	bag.set_open(false)
+	GameState.reset_to_defaults()
+	for i in range(4):
+		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	check(panel.visible and panel._random.visible and not panel._target_row.visible
+		and panel._title.text == Localization.tr_key("ui.fusion.purple_up_title"),
+		"四紫升紫沿用四格与随机按钮，不显示指定部位")
+	GameState.inventory[0].star = 12
+	panel._on_material_dropped(0, _payload(0))
+	check(panel._selected[0].is_empty(), "12 星紫装不能拖进升档格")
+	GameState.inventory[0].star = 0
+	EventBus.inventory_changed.emit()
+	panel._on_random_fill()
+	check(panel._material_snapshots().size() == 4 and not panel._confirm.disabled
+		and panel._summary.text.contains("61—70") and panel._summary.text.contains("71—80")
+		and panel._summary.text.contains("随机部位"), "四紫随机放入只预选四件并显示升档预览")
+	panel._on_confirm()
+	var up_output := _only_item()
+	check(GameState.inventory_used() == 1 and EquipmentFusion.tier_start(up_output) == 71
+		and int(up_output.get("star", -1)) == 0, "四紫升紫界面结算为下一档 0 星紫装")
+	panel.set_open(false)
+	bag.set_open(false)
+	GameState.reset_to_defaults()
+	for i in range(4):
+		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+	GameState.inventory[0].star = 11
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	for i in range(4):
+		panel._on_material_dropped(i, _payload(i))
+	check(not panel._confirm.disabled, "手动可放入 11 星紫装")
+	panel._on_confirm()
+	check(GameState.inventory_used() == 4 and panel._feedback.text.contains("星级会消失"),
+		"升档首次确认只提示材料星级损失")
+	panel._on_confirm()
+	check(GameState.inventory_used() == 1 and EquipmentFusion.tier_start(_only_item()) == 71,
+		"再次确认才消耗带星紫装")
 	panel.set_open(false)
 	bag.set_open(false)
 	GameState.reset_to_defaults()
