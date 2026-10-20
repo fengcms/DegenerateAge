@@ -940,7 +940,8 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		rng: RandomNumberGenerator = null) -> Dictionary:
 	var needed := 2 if mode == EquipmentFusion.STAR_TRANSFER else 4
 	if selected.size() != needed or mode not in [EquipmentFusion.GOLD_TO_PURPLE,
-			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.STAR_TRANSFER]:
+			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.PURPLE_UP_TIER,
+			EquipmentFusion.STAR_TRANSFER]:
 		return {"ok": false, "reason": "请选择正确数量的装备"}
 	var bag_indices: Array[int] = []
 	var worn_slots: Array[String] = []
@@ -954,6 +955,8 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		var found := find_owned_item(id)
 		if found.is_empty() or found.item != snapshot:
 			return {"ok": false, "reason": "材料已变化，请重新选择"}
+		if mode == EquipmentFusion.PURPLE_UP_TIER and String(found.loc) != "bag":
+			return {"ok": false, "reason": "四紫升紫只能使用背包装备"}
 		if String(found.loc) == "bag":
 			bag_indices.append(int(found.index))
 		else:
@@ -967,7 +970,7 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	if gold < cost:
 		return {"ok": false, "reason": "金币不足：需要 %d 金币" % cost}
 	var output_kind := String(plan.get("target_kind", ""))
-	if mode == EquipmentFusion.GOLD_TO_PURPLE:
+	if mode in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_UP_TIER]:
 		var kinds := Equipment.slot_kinds()
 		output_kind = kinds[(rng.randi_range(0, kinds.size() - 1) if rng != null else randi_range(0, kinds.size() - 1))]
 	var output := EquipmentFusion.make_output(int(plan.tier), output_kind, rng)
