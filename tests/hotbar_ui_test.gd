@@ -18,20 +18,19 @@ func _ready() -> void:
 		await get_tree().process_frame
 	var from: Vector2 = inventory._bag_buttons[0].get_global_rect().get_center()
 	var to: Vector2 = hud._hotbar_buttons[7].get_global_rect().get_center()
-	_send_move(from, Vector2.ZERO)
-	await get_tree().process_frame
-	_send_mouse(from, true)
-	await get_tree().process_frame
-	var previous := from
-	for step in range(1, 9):
-		var point: Vector2 = from.lerp(to, float(step) / 8.0)
-		_send_move(point, point - previous)
-		previous = point
-		await get_tree().process_frame
-	_send_mouse(to, false)
-	await get_tree().process_frame
+	await _drag_real(from, to)
 	_check(GameState.hotbar[7] is Dictionary and GameState.hotbar[7].id == "potion_hp_small",
 		"真实鼠标拖拽从背包落到快捷格")
+	# 工程 71 §2.2 实证：拖放**落到已绑定药品的格子**时只应替换绑定，不得顺带触发一次点击把药吃掉。
+	# 目标格 hotbar[0] 默认绑的是自动红药，若拖放真会发出 pressed，这里就会消耗库存并让下一条断言变红。
+	GameState.player.hp = GameState.max_hp() - 50
+	var stock_before := int(GameState.inventory[0].count)
+	await _drag_real(inventory._bag_buttons[0].get_global_rect().get_center(),
+		hud._hotbar_buttons[0].get_global_rect().get_center())
+	_check(GameState.hotbar[0] is Dictionary and GameState.hotbar[0].id == "potion_hp_small",
+		"拖放落到已绑定药品的格子应完成替换绑定")
+	_check(int(GameState.inventory[0].count) == stock_before,
+		"拖放替换绑定不得顺带消耗药品（拖放不产生 pressed）")
 	inventory.set_open(false)
 	var skills: Control = main.get_node("UI/SkillPanel")
 	skills.set_open(true)
@@ -40,18 +39,7 @@ func _ready() -> void:
 	var skill_button: Control = skills._list.get_child(0).get_child(0)
 	from = skill_button.get_global_rect().get_center()
 	to = hud._hotbar_buttons[8].get_global_rect().get_center()
-	_send_move(from, Vector2.ZERO)
-	await get_tree().process_frame
-	_send_mouse(from, true)
-	await get_tree().process_frame
-	previous = from
-	for step in range(1, 9):
-		var point: Vector2 = from.lerp(to, float(step) / 8.0)
-		_send_move(point, point - previous)
-		previous = point
-		await get_tree().process_frame
-	_send_mouse(to, false)
-	await get_tree().process_frame
+	await _drag_real(from, to)
 	_check(GameState.hotbar[8] is Dictionary and GameState.hotbar[8].id == "basic_slash",
 		"真实鼠标拖拽从技能面板落到快捷格")
 	skills.set_open(false)
@@ -183,3 +171,18 @@ func _send_move(point: Vector2, relative: Vector2) -> void:
 	event.relative = relative
 	event.button_mask = MOUSE_BUTTON_MASK_LEFT
 	get_viewport().push_input(event, true)
+
+## 真实鼠标拖放：按下 → 分 8 步移动到目标 → 松开（与原内联写法同一路径）。
+func _drag_real(from: Vector2, to: Vector2) -> void:
+	_send_move(from, Vector2.ZERO)
+	await get_tree().process_frame
+	_send_mouse(from, true)
+	await get_tree().process_frame
+	var previous := from
+	for step in range(1, 9):
+		var point: Vector2 = from.lerp(to, float(step) / 8.0)
+		_send_move(point, point - previous)
+		previous = point
+		await get_tree().process_frame
+	_send_mouse(to, false)
+	await get_tree().process_frame
