@@ -836,6 +836,18 @@ func _test_monster_attacks_player() -> void:
 	deep_dummy.queue_free()
 	await get_tree().physics_frame
 
+	# 怪物 → 玩家伤害下限（产品 03 §3.2 补充）：把攻压到不破防（攻 1.02 < 防 5×0.5），
+	# 仍应按最大生命比例扣血（≥10），否则自动喝药与药水经济空转。这不改任何状态，
+	# 只把攻击下调（实例级，随后的 queue_free 一并丢弃）。
+	player._invuln = 0.0
+	var min_hit: int = wolf._min_hit_on_player()
+	var hp_c: int = int(GameState.player.hp)
+	wolf.attack_power = 1.0
+	wolf._do_attack(player)
+	_expect(min_hit >= 10 and min_hit <= 60, "怪物 → 玩家伤害下限应落在 [10, 60]，实际 %d" % min_hit)
+	_expect(int(GameState.player.hp) == hp_c - min_hit,
+		"不破防时怪物应按下限 %d 扣血，实际扣 %d" % [min_hit, hp_c - int(GameState.player.hp)])
+
 	player.queue_free()
 	wolf.queue_free()
 	await get_tree().physics_frame

@@ -234,8 +234,9 @@ func _test_level_follows() -> void:
 	if second != null:
 		check(second.level == 100,
 			"L100 玩家重生成后实例等级应为 100，实际 %d（P-5：等级不许固化成进图那天的值）" % second.level)
-		check(second.max_hp == int(EXPECT_STATS[100]["hp"]),
-			"L100 重生成后 max_hp 应为 %d，实际 %d" % [int(EXPECT_STATS[100]["hp"]), second.max_hp])
+		check(second.max_hp == int(EXPECT_STATS[100]["hp"]) * 2,
+			"L100 重生成后 max_hp 应为基准 %d × 回廊 hpMultiplier 2.0 = %d，实际 %d" % [
+				int(EXPECT_STATS[100]["hp"]), int(EXPECT_STATS[100]["hp"]) * 2, second.max_hp])
 	sp.queue_free()
 	await get_tree().process_frame
 
