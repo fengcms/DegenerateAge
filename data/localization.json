@@ -782,5 +782,8 @@
   "ui.equip_tip.score_note": "按装备评分比较",
   "ui.equip_tip.worn": "已穿着 · %s",
   "ui.equip_tip.default": "默认替换目标",
-  "ui.equip_tip.unworn": "未穿着"
+  "ui.equip_tip.unworn": "未穿着",
+  "msg.save_manager.reclaim_tools": "已补发缺失的随身工具 %d 件",
+  "msg.save_manager.reclaim_warehouse": "（%d 件因背包已满放入仓库）",
+  "msg.save_manager.reclaim_failed": "随身工具补发失败：背包与仓库已满"
 }

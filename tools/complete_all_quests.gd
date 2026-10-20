@@ -2,8 +2,13 @@ extends Node
 ## 把指定存档槽补成「任务全通」状态：任务全 rewarded + 解锁键全开 + 全图已到访 + Boss 全首通。
 ##
 ## 用途：Lv60 测试档要进 61+ 高级图，而入口由主线 `reward.unlocks` / Boss `firstClearReward.unlock` 把关。
-## 边界：只改任务与解锁相关字段，**不动等级 / 装备 / 金币 / 背包**；写入走 `SaveManager.import_to_slot`
+## 边界：只改任务与解锁相关字段，**不动等级 / 装备 / 金币**；写入走 `SaveManager.import_to_slot`
 ## （同一套 `_is_valid_save` → 备份 → 原子写），非法字段会当场被拒、不落盘。
+##
+## ⚠ 工程 79 起**背包会动**：本工具此前只置 `rewarded` + 解锁键、从不发 `reward.items`，
+## 造出的档必然缺 C6S07 的三件随身工具（随身车夫 / 随身商队 / 追猎令牌），而三个面板的
+## 入口**只认背包里的物品、不认解锁键** ⇒ 工具永久打不开。现按「尚缺才补」补齐任务物品奖励
+## （`_grant_quest_items`），造出来的档自洽；已拥有的一律跳过，绝不重复堆叠。
 ##
 ## 🔴 解锁键**只能**取 `reward.unlocks` 数组 + Boss `firstClearReward.unlock` 单数 ——
 ## 这正是 `SaveManager._ensure_legal_keys()` 的白名单口径。任务单数 `reward.unlock`（如 Q005 的
@@ -47,11 +52,14 @@ func _ready() -> void:
 	data["firstClear"] = first_clear
 	data["visitedMaps"] = map_ids.keys()
 
+	# 工程 79：任务物品奖励必须真发（见文件头边界说明），否则三件随身工具永久缺失。
+	var granted := _grant_quest_items(data)
+
 	var written := SaveManager.import_to_slot(SLOT, _ints(data) as Dictionary)
 	if not bool(written.get("ok", false)):
 		_fail("import_to_slot 拒绝写入：%s" % String(written.get("message", "")))
 		return
-	_verify(states, unlocks, first_clear, map_ids)
+	_verify(states, unlocks, first_clear, map_ids, granted)
 
 # ---- 数据侧 ----
 
@@ -104,6 +112,48 @@ func _legal_unlocks() -> Dictionary:
 				out[single] = true
 	return out
 
+## 工程 79：按 quests 表的 `reward.items` 补齐**尚缺**的任务物品（背包优先，满则仓库）。
+## 「尚缺才补」是关键：本工具可重复跑，重复跑不得把药水堆成 4 瓶、工具堆成两件。
+## 只补「背包与仓库都没有」的，已拥有的一律跳过。
+func _grant_quest_items(data: Dictionary) -> int:
+	if not data.get("inventory") is Array:
+		data["inventory"] = []
+	if not data.get("warehouse") is Array:
+		data["warehouse"] = []
+	var inventory: Array = data["inventory"]
+	var warehouse: Array = data["warehouse"]
+	var quests: Variant = DataLoader.get_table("quests")
+	if not quests is Array:
+		return 0
+	var granted := 0
+	for row in (quests as Array):
+		if not row is Dictionary:
+			continue
+		var reward: Variant = (row as Dictionary).get("reward", {})
+		if not reward is Dictionary:
+			continue
+		var items: Variant = (reward as Dictionary).get("items", [])
+		if not items is Array:
+			continue
+		for spec in (items as Array):
+			if not spec is Dictionary:
+				continue
+			var entry := spec as Dictionary
+			var item_id := String(entry.get("itemId", ""))
+			if item_id.is_empty():
+				continue
+			if ToolReclaim.holds(inventory, item_id) or ToolReclaim.holds(warehouse, item_id):
+				continue
+			var made := ItemFactory.make_any(item_id, int(entry.get("count", 1)))
+			if made.is_empty():
+				problems.append("任务奖励物品造不出来：" + item_id)
+				continue
+			if Inventory.add(inventory, made) or Inventory.add(warehouse, made):
+				granted += 1
+			else:
+				problems.append("背包与仓库已满，任务物品未发：" + item_id)
+	return granted
+
 ## 纯 Boss id 集合（firstClear 的合法键域，不含任何解锁键）。
 func _boss_ids() -> Dictionary:
 	var out := {}
@@ -154,7 +204,8 @@ func _ints(value: Variant) -> Variant:
 	return value
 
 ## 三重校验：落盘内容、运行态视图（`state_of`）、以及真实传送门槛（`MapService.is_unlocked`）。
-func _verify(states: Dictionary, unlocks: Dictionary, first_clear: Dictionary, map_ids: Dictionary) -> void:
+func _verify(states: Dictionary, unlocks: Dictionary, first_clear: Dictionary, map_ids: Dictionary,
+		granted_tools: int = 0) -> void:
 	var read := SaveManager.read_slot(SLOT)
 	if not bool(read.get("ok", false)):
 		_fail("写后回读失败：%s" % String(read.get("message", "")))
@@ -199,8 +250,16 @@ func _verify(states: Dictionary, unlocks: Dictionary, first_clear: Dictionary, m
 	if not unvisited.is_empty():
 		problems.append("仍未到访的地图：%s" % str(unvisited))
 
-	print("[CompleteAll] 任务 %d 个 → rewarded；解锁键 %d 个；Boss 首通 %d 个；到访地图 %d 张" % [
-		saved_states.size(), saved_unlocks.size(), first_clear.size(), saved_visited.size()])
+	# 工程 79：造出的档必须自带三件随身工具 —— 面板入口只认背包物品、不认解锁键，
+	# 缺一件就永久打不开。这里用与读档自愈**同一套判据**验收，缺了当场报红。
+	var inv: Array = data.get("inventory", []) if data.get("inventory") is Array else []
+	var wh: Array = data.get("warehouse", []) if data.get("warehouse") is Array else []
+	var missing_tools := ToolReclaim.missing_tools(saved_unlocks, inv, wh)
+	if not missing_tools.is_empty():
+		problems.append("随身工具仍缺失：%s" % str(missing_tools))
+
+	print("[CompleteAll] 任务 %d 个 → rewarded；解锁键 %d 个；Boss 首通 %d 个；到访地图 %d 张；补发任务物品 %d 件" % [
+		saved_states.size(), saved_unlocks.size(), first_clear.size(), saved_visited.size(), granted_tools])
 	print("[CompleteAll] 传送门槛：%d 张图全部 is_unlocked=true，locked_reason 全空" % map_ids.size())
 	if not problems.is_empty():
 		_fail("回读校验未通过")

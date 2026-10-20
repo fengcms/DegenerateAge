@@ -70,6 +70,14 @@ var _suppress_autosave: bool = false
 ## 启动续档提示：autoload 就绪时 HUD 尚未创建，故延后一帧广播（10.3）。
 var _resume_toast: String = ""
 
+## 工程 79：最近一次读档的「随身工具补领」提示（`ToolReclaim`）。
+## 与 `_resume_toast` 同源——补领发生在 `apply_to_game_state` 内，此时 HUD 尚未就绪，
+## 必须延后到 `load_into_game` / `_emit_resume_toast` 再广播，否则 toast 丢在空中。
+var _last_reclaim_notice: String = ""
+var _last_reclaim_danger: bool = false
+## 续档提示是否为 danger 级（续档失败 / 工程 79 补领失败）。
+var _resume_toast_danger: bool = false
+
 ## 最近一次 `_is_valid_save` 失败的原因（字段级，G-P2-1）；通过时清空。
 var _last_invalid_reason: String = ""
 
@@ -364,10 +372,12 @@ func load_into_game(slot: int) -> Dictionary:
 	apply_to_game_state(res.get("data", {}))
 	active_slot = slot
 	_write_last_slot(slot)
-	var msg := String(res.get("message", ""))
+	# 工程 79：补领提示并到读档提示后；补领失败（背包与仓库都满）按 danger 呈现。
+	var reclaim_danger := _take_reclaim_danger()
+	var msg := _with_reclaim_notice(String(res.get("message", "")))
 	EventBus.toast_requested.emit(
 		msg if not msg.is_empty() else Localization.tr_key("msg.save_manager.p014") % slot,
-		"danger" if res.get("source", "main") == "backup" else "pickup")
+		"danger" if res.get("source", "main") == "backup" or reclaim_danger else "pickup")
 	res["applied"] = true
 	return res
 
@@ -384,7 +394,9 @@ func resume_last() -> bool:
 		return false
 	apply_to_game_state(res.get("data", {}))
 	active_slot = slot
-	_resume_toast = String(res.get("message", ""))
+	# 工程 79：补领提示并入续档提示（延后到 `_emit_resume_toast` 广播，此刻 HUD 尚未就绪）。
+	_resume_toast_danger = _take_reclaim_danger()
+	_resume_toast = _with_reclaim_notice(String(res.get("message", "")))
 	if _resume_toast.is_empty():
 		_resume_toast = Localization.tr_key("msg.save_manager.p017") % slot
 	return true
@@ -395,9 +407,12 @@ func _emit_resume_toast() -> void:
 	print("[SaveManager] 续档完成（槽 %d，地图 %s）" % [active_slot, GameState.current_map])
 	if _resume_toast.is_empty():
 		return
-	var kind := "danger" if _resume_toast.begins_with(Localization.tr_key("msg.save_manager.p018")) else "info"
+	var kind := "info"
+	if _resume_toast.begins_with(Localization.tr_key("msg.save_manager.p018")) or _resume_toast_danger:
+		kind = "danger"
 	EventBus.toast_requested.emit(_resume_toast, kind)
 	_resume_toast = ""
+	_resume_toast_danger = false
 
 ## 版本迁移：为旧档补齐新增字段的默认值（10.3 / 04 §4.5 版本化内容 + 旧档导入）。
 func _migrate(source: Dictionary) -> Dictionary:
@@ -797,7 +812,51 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.player.hp = mini(int(GameState.player.hp), GameState.max_hp())
 	GameState.player.mp = mini(int(GameState.player.mp), GameState.max_mp())
 
+	# 工程 79：永久工具补领（读档自愈）。必须在 `_suppress_autosave = false` **之前** ——
+	# 补发会广播 inventory_changed，留在抑制期内可避免「读档过程中额外落一次盘」。
+	# 补发结果本身随下一次自然保存（退出存 / 拾取等）固化；即便没固化，下次读档仍会补（幂等）。
+	_set_reclaim_notice(ToolReclaim.reclaim_into_game())
+
 	_suppress_autosave = false
+
+# ---- 工程 79：随身工具补领提示 ----
+
+## 把补领结果翻成一条读档提示（空串 = 没补，不打扰玩家）。
+## 提示不在这里广播：`apply_to_game_state` 运行时 HUD 尚未就绪，toast 会丢在空中。
+func _set_reclaim_notice(result: Dictionary) -> void:
+	_last_reclaim_notice = ""
+	_last_reclaim_danger = false
+	var given := result.get("given", []) as Array
+	var to_warehouse := result.get("to_warehouse", []) as Array
+	var failed := result.get("failed", []) as Array
+	if given.is_empty() and failed.is_empty():
+		return
+	var parts: Array[String] = []
+	if not given.is_empty():
+		var line := Localization.tr_key("msg.save_manager.reclaim_tools") % given.size()
+		if not to_warehouse.is_empty():
+			line += Localization.tr_key("msg.save_manager.reclaim_warehouse") % to_warehouse.size()
+		parts.append(line)
+	if not failed.is_empty():
+		# 补不进去是实打实的阻断（面板仍打不开），用 danger 让玩家看见。
+		parts.append(Localization.tr_key("msg.save_manager.reclaim_failed"))
+		_last_reclaim_danger = true
+	_last_reclaim_notice = "；".join(PackedStringArray(parts))
+
+## 取走「补领失败」标记（danger 级），取用即清空。须在 `_with_reclaim_notice` 之前调用
+## —— 后者在提示为空时会提前返回，不会捎带清这个标记。
+func _take_reclaim_danger() -> bool:
+	var value := _last_reclaim_danger
+	_last_reclaim_danger = false
+	return value
+
+## 把补领提示并到读档提示后（前置提示为空时直接采用）。取用即清空，避免跨次读档串台。
+func _with_reclaim_notice(base: String) -> String:
+	if _last_reclaim_notice.is_empty():
+		return base
+	var notice := _last_reclaim_notice
+	_last_reclaim_notice = ""
+	return notice if base.is_empty() else base + "；" + notice
 
 # ---- 字段迁移 ----
 
