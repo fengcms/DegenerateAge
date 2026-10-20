@@ -84,6 +84,10 @@ DEFAULT_TESTS = [
     # R4 Lv25/40 接线：穿防 ×0.7 防御 / 3 段独立结算 / 破甲状态机 / 单体语义 / 自动战斗评分
     # + 可装备列表与 skills.json 全量一致。
     "SkillCapabilityTest",
+    # 工程 66 套装加成：全 common 恒 0（PaceTest 的守护）/ 品质与星级四档 / 最低档决定
+    # / 空槽不成套 / **加法得 40% 而非乘法的 44%** / **max_hp 只放大一次不是 1.96 倍**
+    # / 反向属性（攻击间隔）用除法。
+    "SetBonusTest",
     "SmokeTest",
 ]
 
