@@ -11,7 +11,7 @@ extends Node
 ##   SEARCH_LOOT / PATH_TO_LOOT / PICK_UP / RECOVER / MANUAL_OVERRIDE / BLOCKED
 ##
 ## 硬性异常规则（3.14「必须实现」）逐条落地：
-##   ① 连续 3 次不推进 → 目标短期黑名单重搜（T08 不可达改选）；
+##   ① 连续 5 次「角色无位移」→ 目标短期黑名单重搜（T08 不可达改选；口径见工程文档 69 §5 P1）；
 ##   ② 目标消失 / 死亡 / 切图 → 停旧指令（每帧校验目标有效性）；
 ##   ③ 手动接管 → 立即取消、松手后 1.5 秒恢复（4.6）；
 ##   ④ 背包满 → 不走向该掉落物、不循环重试（T10，靠节流 + 目标剔除，不做每帧重试）；
@@ -47,8 +47,13 @@ enum State {
 const SEARCH_INTERVAL := 0.35          # 搜怪节流（s）：无目标待机时不得每帧搜索
 const REPATH_INTERVAL := 0.25          # 接近方向重算节流（s）
 const STUCK_INTERVAL := 0.3            # 卡住检测间隔（s）
+## P1（工程文档 69 §5）：追击期的卡住判据是「角色本间隔内的**自身位移**」，
+## 不再是「与目标的直线距离」——绕障时直线距离可能不降甚至变大，被 Boss 技能击退 / 倒地时同样如此，
+## 用距离判据会把这两种**正常**情况误判成「不推进」并把 Boss 拉黑改选。
+const STUCK_MOVE_EPS := 4.0            # 单次检测内角色自身的最小位移（px）；低于它才算一次「没动」
+## 巡游（`_tick_roam`）与手动点击行走（`player.gd::_map_direction`）仍用**折线推进量**判据。
 const STUCK_PROGRESS_EPS := 6.0        # 两次检测间的最小接近量（px）
-const STUCK_LIMIT := 3                 # 连续不推进次数上限 → 黑名单（3.14 ①）
+const STUCK_LIMIT := 5                 # 连续「没动」次数上限 → 黑名单（3.14 ①，约 1.5s）
 const BLACKLIST_TIME := 8.0            # 目标黑名单时长（s）
 const MANUAL_RESUME_DELAY := 1.5       # 手动接管后恢复延迟（s，4.6）
 const BLOCKED_TIME := 1.0             # 受阻停留（s）
@@ -81,7 +86,6 @@ var _loot: Node = null
 var _search_t: float = 0.0
 var _repath_t: float = 0.0
 var _stuck_t: float = 0.0
-var _last_dist: float = INF
 var _stuck_count: int = 0
 var _blocked_t: float = 0.0
 var _manual_t: float = 0.0
@@ -115,7 +119,6 @@ func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 		_search_t = 0.0
 		_repath_t = 0.0
 		_stuck_count = 0
-		_last_dist = INF
 		_last_position = Vector2.INF
 		_cave_nav.clear()
 		_blacklist.clear()
@@ -258,7 +261,6 @@ func _tick(delta: float) -> void:
 	if _target != null and (not is_instance_valid(_target)
 			or _target.get("is_dead") == true or _is_blacklisted(_target)):
 		_target = null
-		_last_dist = INF
 		_stuck_count = 0
 
 	# F/G 同开时优先捡可收取的地面物；背包无空间时 _can_pick 会将其排除。
@@ -277,7 +279,6 @@ func _tick(delta: float) -> void:
 				_repath_t = 0.0
 				_player.set_auto_move(Vector2.ZERO)
 				_player.select_target(_target as Node2D, _player.target_is_manual and _player.locked_target == _target)
-				_last_dist = INF
 				_stuck_count = 0
 				_last_position = Vector2.INF
 				_cave_nav.clear()
@@ -295,7 +296,7 @@ func _tick(delta: float) -> void:
 		if _cave_ground() != null and _direction_to(target2d.global_position) == Vector2.ZERO:
 			_blacklist_target(_target)
 			return
-		_tick_stuck(delta, dist)
+		_tick_stuck(delta)
 		if _blocked_t > 0.0:
 			return
 		_repath_t = maxf(0.0, _repath_t - delta)
@@ -577,31 +578,25 @@ func _can_pick(gi: GroundItem) -> bool:
 
 # ---- 卡住检测与黑名单（3.14 ①，T08）----
 
-func _tick_stuck(delta: float, dist: float) -> void:
+## 追击期的卡住判据 = **角色自身位移**（P1，见工程文档 69 §3.1 / §5）。
+## 旧口径拿「与目标的**直线距离**每 0.3s 是否下降 6px」当判据，会把两类**正常**行为误判成不可达：
+##   ① 绕障：路径要求先侧向甚至反向绕过悬崖/墙体，头 0.9s 内直线距离几乎不变；
+##   ② 被击退 / 倒地：距离不降反增（`monster.gd` 的 SKILL_KNOCKBACK_DISTANCE / SKILL_KNOCKDOWN_DURATION）。
+## 现在只对「角色本间隔内一步都没挪动（< STUCK_MOVE_EPS）」计数，连续 STUCK_LIMIT 次才拉黑改选——
+## 这才是 3.14 ①「不可达」的本意：角色确实走不动，而不是「走得绕」。
+func _tick_stuck(delta: float) -> void:
 	_stuck_t += delta
 	if _stuck_t < STUCK_INTERVAL:
 		return
 	_stuck_t = 0.0
-	if GameState.current_map == "corruption_source":
-		var moved := _player.global_position.distance_to(_last_position) if _last_position.is_finite() else INF
-		_last_position = _player.global_position
-		if moved >= 2.0:
-			_stuck_count = 0
-			_last_dist = dist
-			return
-		_stuck_count += 1
-		if _stuck_count == STUCK_LIMIT:
-			_cave_nav.clear()
-		if _stuck_count >= STUCK_LIMIT * 2:
-			_blacklist_target(_target)
+	var moved := _player.global_position.distance_to(_last_position) if _last_position.is_finite() else INF
+	_last_position = _player.global_position
+	if moved >= STUCK_MOVE_EPS:
+		_stuck_count = 0
 		return
-	if _last_dist - dist < STUCK_PROGRESS_EPS:
-		_stuck_count += 1
-		if _stuck_count >= STUCK_LIMIT:
-			_blacklist_target(_target)
-		return
-	_stuck_count = 0
-	_last_dist = dist
+	_stuck_count += 1
+	if _stuck_count >= STUCK_LIMIT:
+		_blacklist_target(_target)
 
 ## 目标短期拉黑并改选（寻路空 / 终点占位 / 连续不推进 → 3.14 ①）。
 func _blacklist_target(t: Node) -> void:
@@ -611,7 +606,6 @@ func _blacklist_target(t: Node) -> void:
 	_target = null
 	_cave_nav.clear()
 	_last_position = Vector2.INF
-	_last_dist = INF
 	_stuck_count = 0
 	_blocked_t = BLOCKED_TIME
 	_set_state(State.BLOCKED)
