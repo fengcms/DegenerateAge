@@ -8,6 +8,22 @@ const PURPLE_TARGET := "purple_target"
 const PURPLE_UP_TIER := "purple_up_tier"
 const STAR_TRANSFER := "star_transfer"
 
+## 一次合成允许的材料件数区间（含端点）。
+## 只有四紫升紫用「件数换成功率」：4 件必成、3 件 75%、2 件 50%；
+## 四金与四紫定向的产物更值钱（品质跃迁 / 可指定部位），固定四件不打折。
+static func material_range(mode: String) -> Vector2i:
+	if mode == STAR_TRANSFER:
+		return Vector2i(2, 2)
+	if mode == PURPLE_UP_TIER:
+		return Vector2i(2, 4)
+	return Vector2i(4, 4)
+
+## 投入件数决定成功率：4 件必成，3 件 75%，2 件 50%。
+## 🔑 期望材料消耗恒为 4 件（n ÷ (n/4) ≡ 4）：件数少只是方差大，**不会更便宜**。
+## 所以这个阶梯不是「打折」，是「用波动换出手速度」，界面必须写明失败全损。
+static func success_rate(count: int) -> float:
+	return clampf(float(count) / 4.0, 0.0, 1.0)
+
 ## 从实例穿戴等级计算十级档起点；无效等级返回 0。
 ## 公式与出售预设共用 `ItemFactory.suit_start`，避免两处口径各自漂移。
 static func tier_start(item: Dictionary) -> int:
@@ -41,10 +57,15 @@ static func make_output(tier: int, kind: String, rng: RandomNumberGenerator = nu
 		return ItemFactory.make_equip_dynamic(template_id, tier, "legendary", rng, "fusion")
 	return ItemFactory.make_equip_roll(template_id, tier, "legendary", rng, "fusion")
 
-## 校验四件背包材料并返回输出档；目标部位仅在四紫模式使用。
+## 校验 2—4 件材料并返回输出档；目标部位仅在四紫定向使用。
+## 件数区间由 `material_range()` 决定；四紫升紫额外返回 `count` 与 `rate`（成功率）。
 static func plan_four(items: Array[Dictionary], mode: String, target_kind: String = "") -> Dictionary:
-	if items.size() != 4 or mode not in [GOLD_TO_PURPLE, PURPLE_TARGET, PURPLE_UP_TIER]:
-		return {"ok": false, "reason": "请选择四件合规装备"}
+	if mode not in [GOLD_TO_PURPLE, PURPLE_TARGET, PURPLE_UP_TIER]:
+		return {"ok": false, "reason": "未知的合成模式"}
+	var limits := material_range(mode)
+	if items.size() < limits.x or items.size() > limits.y:
+		return {"ok": false, "reason": "四紫升紫需要 2—4 件同档紫装" if mode == PURPLE_UP_TIER
+			else "请选择四件合规装备"}
 	var seen := {}
 	var minimum := ItemFactory.INSTANCE_LEVEL_CAP
 	var first_tier := 0
@@ -66,7 +87,7 @@ static func plan_four(items: Array[Dictionary], mode: String, target_kind: Strin
 			if star == Upgrade.max_star():
 				return {"ok": false, "reason": "12 星紫装不能用于四紫合成"}
 			if first_tier > 0 and tier != first_tier:
-				return {"ok": false, "reason": "四件紫装必须属于同一等级档"}
+				return {"ok": false, "reason": "紫装材料必须属于同一等级档"}
 		first_tier = tier
 		minimum = mini(minimum, tier)
 	if mode == PURPLE_TARGET and not Equipment.slot_kinds().has(target_kind):
@@ -78,14 +99,19 @@ static func plan_four(items: Array[Dictionary], mode: String, target_kind: Strin
 	for kind in kinds:
 		if template_for(output_tier, String(kind)).is_empty():
 			return {"ok": false, "reason": "目标等级档缺少装备型号"}
-	return {"ok": true, "tier": output_tier, "target_kind": target_kind, "reason": ""}
+	return {"ok": true, "tier": output_tier, "target_kind": target_kind,
+		"count": items.size(),
+		"rate": success_rate(items.size()) if mode == PURPLE_UP_TIER else 1.0, "reason": ""}
 
-## 随机放入只预选同档四件 0 星未收藏装备；不修改背包与现有合成规则。
-## 先等概率抽合格档，再在该档无放回抽四件，避免容量大的档独占选择机会。
+## 随机放入只预选**最低合格档**的 0 星未收藏装备；不修改背包与现有合成规则。
+## 🔑 严格最低档：低档料就是肥料，高档紫装要留给穿戴与保星升级，不该被「省事」按钮吃掉。
+## 旧实现是「筛出够件的档再等概率抽一个」，会把背包里存着的 71 档当 51 档一起吃；
+## 那条注释已作废，别再照它改回去。
 static func random_materials(inventory: Array, mode: String, rng: RandomNumberGenerator = null) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if mode not in [GOLD_TO_PURPLE, PURPLE_TARGET, PURPLE_UP_TIER]:
 		return result
+	var limits := material_range(mode)
 	var groups := {}
 	for entry in inventory:
 		if not entry is Dictionary or String(entry.get("kind", "")) != "equip" \
@@ -105,14 +131,15 @@ static func random_materials(inventory: Array, mode: String, rng: RandomNumberGe
 		(groups[tier] as Array).append(entry)
 	var tiers: Array[int] = []
 	for tier in groups:
-		if (groups[tier] as Array).size() >= 4:
+		if (groups[tier] as Array).size() >= limits.x:
 			tiers.append(int(tier))
 	if tiers.is_empty():
 		return result
+	# 最低档优先：四紫升紫最低档可能只有 2—3 件，那就只填 2—3 格（成功率由件数决定）。
 	tiers.sort()
-	var tier_index := rng.randi_range(0, tiers.size() - 1) if rng != null else randi_range(0, tiers.size() - 1)
-	var pool: Array = (groups[tiers[tier_index]] as Array).duplicate()
-	for _i in range(4):
+	var pool: Array = (groups[tiers[0]] as Array).duplicate()
+	var take := mini(limits.y, pool.size())
+	for _i in range(take):
 		var index := rng.randi_range(0, pool.size() - 1) if rng != null else randi_range(0, pool.size() - 1)
 		result.append((pool[index] as Dictionary).duplicate(true))
 		pool.remove_at(index)

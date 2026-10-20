@@ -160,13 +160,76 @@ func _test_purple_up_tier() -> void:
 	for _i in range(4):
 		bag.append(ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng))
 	var before := bag.duplicate(true)
-	var chosen := EquipmentFusion.random_materials(bag, EquipmentFusion.PURPLE_UP_TIER, rng)
-	check(chosen.size() == 4 and chosen.all(func(item: Dictionary) -> bool:
-		return int(item.get("star", -1)) == 0 and EquipmentFusion.tier_start(item) == EquipmentFusion.tier_start(chosen[0]))
-		and bag == before, "随机放入只预选同档 0 星紫装且不改背包")
+	# 51 档 3 件、61 档 4 件，两档都合格 —— 任何一次调用都必须给 51 档。
+	# 单次调用抓不住「等概率抽档」（它可能恰好抽中最低档），所以扫 32 个种子：
+	# 等概率实现在 32 次里次次都抽中 51 档的概率是 2⁻³²，实际必然被抓。
+	var lowest_only := true
+	for candidate in range(32):
+		var pick := RandomNumberGenerator.new()
+		pick.seed = 1000 + candidate
+		var picked := EquipmentFusion.random_materials(bag, EquipmentFusion.PURPLE_UP_TIER, pick)
+		if picked.size() != 3:
+			lowest_only = false
+			continue
+		for item in picked:
+			if int(item.get("star", -1)) != 0 or EquipmentFusion.tier_start(item) != 51:
+				lowest_only = false
+	check(lowest_only and bag == before,
+		"随机放入 32 次采样都只取最低合格档 3 件，从不去动 61 档那 4 件")
+	# 最低档凑不满 2 件时跳到下一档；旧实现是「不够四件的档直接不算」，会漏掉 2—3 件的档。
+	bag[1].star = 3
+	bag[2].star = 3
+	var fallback := EquipmentFusion.random_materials(bag, EquipmentFusion.PURPLE_UP_TIER, rng)
+	check(fallback.size() == 4 and fallback.all(func(item: Dictionary) -> bool:
+		return EquipmentFusion.tier_start(item) == 61 and int(item.get("star", -1)) == 0),
+		"最低档只剩 1 件时跳到下一档并取满四件")
 	items.clear()
 	for _i in range(4):
 		items.append(ItemFactory.make_equip_dynamic("c6_equip_weapon", 9981, "legendary", rng))
 	check(not bool(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("ok", false))
 		and EquipmentFusion.random_materials(items, EquipmentFusion.PURPLE_UP_TIER, rng).is_empty(),
 		"最高可用档不再继续升档，随机放入也不选不可合成档")
+	# ---- 工程 75：件数换成功率，期望材料消耗恒为 4 件 ----
+	check(EquipmentFusion.material_range(EquipmentFusion.PURPLE_UP_TIER) == Vector2i(2, 4)
+		and EquipmentFusion.material_range(EquipmentFusion.GOLD_TO_PURPLE) == Vector2i(4, 4)
+		and EquipmentFusion.material_range(EquipmentFusion.PURPLE_TARGET) == Vector2i(4, 4)
+		and EquipmentFusion.material_range(EquipmentFusion.STAR_TRANSFER) == Vector2i(2, 2),
+		"只有四紫升紫允许 2—4 件，其余服务件数固定")
+	check(is_equal_approx(EquipmentFusion.success_rate(4), 1.0)
+		and is_equal_approx(EquipmentFusion.success_rate(3), 0.75)
+		and is_equal_approx(EquipmentFusion.success_rate(2), 0.5)
+		and is_equal_approx(EquipmentFusion.success_rate(1), 0.25)
+		and is_equal_approx(EquipmentFusion.success_rate(0), 0.0)
+		and is_equal_approx(EquipmentFusion.success_rate(9), 1.0),
+		"成功率按件数线性且越界被夹取")
+	var expectation_ok := true
+	for count in [2, 3, 4]:
+		if not is_equal_approx(float(count) / EquipmentFusion.success_rate(count), 4.0):
+			expectation_ok = false
+	check(expectation_ok, "2 / 3 / 4 件的期望材料消耗都等于 4 件（不是打折，只是方差不同）")
+	var two: Array[Dictionary] = []
+	var three: Array[Dictionary] = []
+	for i in range(4):
+		var fresh := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		if i < 2:
+			two.append(fresh)
+		if i < 3:
+			three.append(fresh)
+	var plan_two := EquipmentFusion.plan_four(two, EquipmentFusion.PURPLE_UP_TIER)
+	var plan_three := EquipmentFusion.plan_four(three, EquipmentFusion.PURPLE_UP_TIER)
+	check(bool(plan_two.get("ok", false)) and is_equal_approx(float(plan_two.get("rate", 0.0)), 0.5)
+		and int(plan_two.get("tier", 0)) == 71,
+		"两件同档紫装可升档，成功率 50%")
+	check(bool(plan_three.get("ok", false)) and is_equal_approx(float(plan_three.get("rate", 0.0)), 0.75)
+		and int(plan_three.get("tier", 0)) == 71,
+		"三件同档紫装可升档，成功率 75%")
+	var mixed := three.duplicate()
+	mixed.append(ItemFactory.make_equip_dynamic("c6_equip_ring", 71, "legendary", rng))
+	check(not bool(EquipmentFusion.plan_four(mixed, EquipmentFusion.PURPLE_UP_TIER).get("ok", false)),
+		"件数放宽后仍然禁止跨档混用")
+	var single: Array[Dictionary] = [ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)]
+	check(not bool(EquipmentFusion.plan_four(single, EquipmentFusion.PURPLE_UP_TIER).get("ok", false)),
+		"一件紫装不能合成")
+	check(not bool(EquipmentFusion.plan_four(two, EquipmentFusion.GOLD_TO_PURPLE).get("ok", false))
+		and not bool(EquipmentFusion.plan_four(two, EquipmentFusion.PURPLE_TARGET, "weapon").get("ok", false)),
+		"四金与四紫定向仍然必须四件")
