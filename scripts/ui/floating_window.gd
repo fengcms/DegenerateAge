@@ -24,6 +24,8 @@ var _user_moved := false
 var _dragging := false
 var _drag_offset := Vector2.ZERO
 var _docked := false
+var _pinned := false
+var _pinned_rect := Rect2()
 var _dock_left := 0.0
 var _dock_right := 1.0
 var _dock_top := 0.0
@@ -118,9 +120,32 @@ static func _sync_z_order(parent: Node) -> void:
 			rank += 1
 			sibling.z_index = rank
 
+## 指定「未被玩家拖动过」时的默认落点（按可用空间比例 0..1）。并排会话用它把窗口放到
+## 伙伴旁边；玩家拖过之后（`_user_moved`）以实际位置为准，不再回落到默认落点。
+## `reset` 为真时把「玩家拖动过」一并清掉（窄屏分区钉住 → 宽屏并排这类重排必须回到默认落点，
+## 否则会停在分区时代的旧坐标上）。
+func set_origin(start: Vector2, reset := false) -> void:
+	origin = start
+	if reset:
+		_user_moved = false
+	_layout()
+
+## 按**逻辑视口绝对坐标**把浮窗钉在固定分区（窄屏分裂布局）：位置与尺寸由调用方给定，
+## 不参与拖动、不随内容最小尺寸浮动。与 `set_docked` 的差别：后者的比例是「占父容器多少」，
+## 而这里直接吃绝对矩形，便于调用方按逻辑视口一次性算准。
+func set_pinned(active: bool, rect := Rect2()) -> void:
+	_pinned = active
+	if active:
+		_docked = false
+		_dragging = false
+		_pinned_rect = rect
+	_user_moved = false
+	_layout()
+
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 		top: float = 0.0, bottom: float = 1.0) -> void:
 	if active:
+		_pinned = false
 		_dragging = false
 	if active and not _docked:
 		_floating_position = position
@@ -135,19 +160,34 @@ func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 	_dock_bottom = bottom
 	_layout()
 
+## 浮窗的可用空间：常态下就是宿主面板自身的矩形（游戏内面板根控件由界面倍率撑成逻辑视口）。
+## 宿主尺寸为 0 时（独立测试里的根控件没有那份尺寸）退回逻辑视口，避免落点与分区被夹成 0 而失真。
+func layout_space() -> Vector2:
+	if owner_panel == null:
+		return Vector2.ZERO
+	if owner_panel.size.x > 0.0 and owner_panel.size.y > 0.0:
+		return owner_panel.size
+	return owner_panel.get_viewport_rect().size / SettingsRuntime.ui_scale_value()
+
 func _layout() -> void:
 	if owner_panel == null or panel_box == null:
 		return
-	if _docked:
-		position = Vector2(owner_panel.size.x * _dock_left, owner_panel.size.y * _dock_top)
-		size = Vector2(owner_panel.size.x * (_dock_right - _dock_left),
-			owner_panel.size.y * (_dock_bottom - _dock_top))
+	var area := layout_space()
+	if _pinned:
+		position = _pinned_rect.position
+		size = _pinned_rect.size
 		fit_content(size, panel_box, content_scroll)
 		return
-	fit_content(owner_panel.size, panel_box, content_scroll)
+	if _docked:
+		position = Vector2(area.x * _dock_left, area.y * _dock_top)
+		size = Vector2(area.x * (_dock_right - _dock_left),
+			area.y * (_dock_bottom - _dock_top))
+		fit_content(size, panel_box, content_scroll)
+		return
+	fit_content(area, panel_box, content_scroll)
 	size = panel_box.get_combined_minimum_size()
 	if not _placed or not _user_moved:
-		position = (owner_panel.size - size) * origin
+		position = (area - size) * origin
 		_placed = true
 	else:
 		position = _floating_position
@@ -181,8 +221,9 @@ static func fit_content(available: Vector2, box: Control, scroll: ScrollContaine
 		scroll.custom_minimum_size = wanted
 
 func _clamp() -> void:
-	position = Vector2(clampf(position.x, 0.0, maxf(0.0, owner_panel.size.x - size.x)),
-		clampf(position.y, 0.0, maxf(0.0, owner_panel.size.y - size.y)))
+	var area := layout_space()
+	position = Vector2(clampf(position.x, 0.0, maxf(0.0, area.x - size.x)),
+		clampf(position.y, 0.0, maxf(0.0, area.y - size.y)))
 	_floating_position = position
 
 func _on_box_input(event: InputEvent) -> void:

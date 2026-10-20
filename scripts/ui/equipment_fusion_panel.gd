@@ -8,7 +8,7 @@ const SLOT_SIZE := Vector2(78, 78)
 
 var _mode := EquipmentFusion.GOLD_TO_PURPLE
 var _box: PanelChrome
-var _center: CenterContainer
+var _center: FloatingWindow
 var _scroll: ScrollContainer
 var _grid: FusionMaterialGrid
 var _title: Label
@@ -86,6 +86,7 @@ func set_open(open: bool) -> void:
 		EventBus.fusion_mode_changed.emit(true)
 		_resize.call_deferred()
 		EventBus.panel_opened.emit(PANEL_ID)
+		_center.show_window()
 	else:
 		EventBus.fusion_mode_changed.emit(false)
 		EventBus.fusion_selection_changed.emit(PackedStringArray())
@@ -127,7 +128,11 @@ func _on_gold_changed(_amount: int) -> void:
 		_risk_confirmed = false
 		_refresh_preview()
 
-## 宽屏并列、窄屏上下排列；所有尺寸以缩放后的逻辑视口为准。
+## 宽屏并列、窄屏上下排列；分区比例一律按**缩放后的逻辑视口**折算。
+## 并列分支把工作台做成**可拖动浮窗**，默认落在背包右侧（工程 74 §7）；玩家拖走后以实际位置为准。
+## 窄屏退化时左右 / 上下按分区钉住，此时不可拖（拖动会与分区伙伴错位），与货郎并列布局同口径。
+## 注意：面板根控件在游戏内由 `SettingsRuntime.apply_ui_scale_to` 撑成逻辑视口，故下述比例
+## 与绝对坐标在游戏内逐像素一致；独立测试里的根控件没有那份尺寸，但它们本就不参与断言。
 func _resize() -> void:
 	if _box == null:
 		return
@@ -145,26 +150,26 @@ func _resize() -> void:
 		var left := (logical.x - bag_width - width - GAP) * 0.5
 		if bag != null and bag.visible:
 			bag._center.set_docked(true, left / logical.x, (left + bag_width) / logical.x)
-		_center.position = Vector2(left + bag_width + GAP, 0.0)
+		_center.set_pinned(false)
+		var panel_width := _box.get_combined_minimum_size().x
+		_center.set_origin(Vector2((left + bag_width + GAP) / maxf(1.0, logical.x - panel_width), 0.5), true)
 		region = Vector2(width, logical.y)
 	else:
 		if bag != null and bag.visible:
 			bag._center.set_docked(true, 0.0, 1.0, 0.0, 0.48)
-		_center.position = Vector2(0.0, logical.y * 0.48)
+		_center.set_pinned(true, Rect2(0.0, logical.y * 0.48, logical.x, logical.y * 0.52))
 		region = Vector2(logical.x, logical.y * 0.52)
 	_scroll.custom_minimum_size.y = clampf(region.y - 195.0, 32.0, 250.0)
 	FloatingWindow.fit_content(region, _box, _scroll)
-	_center.size = region
 
 ## 构建两列材料格和可滚动目标类型，按钮始终留在滚动区之外。
 func _build() -> void:
-	_center = CenterContainer.new()
+	_center = FloatingWindow.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 	_box = PanelChrome.new()
 	_center.add_child(_box)
-	# 与背包 / 人物并开时点谁谁到前面来（工程 74）。
-	FloatingWindow.enable_click_to_front(self, _box)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 14)
@@ -184,6 +189,8 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	header.add_child(close)
 	PanelChrome.style_close(close)
+	# 与其余浮窗同构：标题行拖动、点击置前、越界夹紧（工程 74 §7）。
+	_center.setup(self, _box, header, Vector2(0.5, 0.5))
 	_hint = Label.new()
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_hint)
