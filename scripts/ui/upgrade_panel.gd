@@ -185,12 +185,23 @@ func _refresh_choices() -> void:
 	_refresh_runes()
 	_refresh_details()
 
+## 背包变动后先按库存核销四格预选：保留前面的有效选择，清空已耗尽或超额的格子。
+## 只同步面板状态，不补选、不消耗；升星结算仍由 Upgrade.rune_plan 终验。
 func _refresh_runes() -> void:
 	var counts := {}
 	for item in GameState.inventory:
 		if item is Dictionary and String(item.get("kind", "")) == "rune":
 			var rune_id := String(item.get("itemId", ""))
-			counts[rune_id] = int(counts.get(rune_id, 0)) + int(item.get("count", 1))
+			counts[rune_id] = int(counts.get(rune_id, 0)) + maxi(0, int(item.get("count", 0)))
+	var remaining := counts.duplicate()
+	for slot in range(_rune_choices.size()):
+		var rune_id := _rune_choices[slot]
+		if rune_id.is_empty():
+			continue
+		if int(remaining.get(rune_id, 0)) <= 0 or not DataLoader.get_entry("runes", rune_id) is Dictionary:
+			_rune_choices[slot] = ""
+		else:
+			remaining[rune_id] = int(remaining[rune_id]) - 1
 	var templates = DataLoader.get_table("runes")
 	for slot in range(_rune_pickers.size()):
 		var picker := _rune_pickers[slot]

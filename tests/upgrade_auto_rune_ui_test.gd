@@ -35,9 +35,12 @@ func _ready() -> void:
 	panel._on_auto_runes()
 	_check(panel._rune_choices == ["rune_diamond", "rune_diamond", "rune_diamond", "rune_diamond"]
 		and panel._price.text.contains("100%"), "切换星级后再次点击按新成功率重选")
+	GameState.gold = Upgrade.cost(8)
 	GameState.inventory[3].count = 1
 	EventBus.inventory_changed.emit()
-	_check(panel._upgrade_button.disabled, "预选材料不足时仍由既有库存校验禁止升星")
+	_check(panel._rune_choices == ["rune_diamond", "", "", ""]
+		and not panel._upgrade_button.disabled and panel._price.text.contains("40%"),
+		"库存只剩一枚时保留最早一格，自动清空超额预选并允许继续升星")
 	weapon.star = 0
 	EventBus.inventory_changed.emit()
 	panel._on_auto_runes()
@@ -52,6 +55,24 @@ func _ready() -> void:
 	weapon.star = Upgrade.max_star()
 	EventBus.inventory_changed.emit()
 	_check(panel._auto_rune_button.disabled, "满星装备即使有如意也不允许自动填充")
+	# 实际结算吃完最后四枚后，下一次升星应直接使用空如意槽，不必关面板重开。
+	GameState.reset_to_defaults()
+	var last_weapon := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	last_weapon.star = 8
+	GameState.inventory[0] = last_weapon
+	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 4}
+	GameState.gold = Upgrade.cost(8) + Upgrade.cost(9)
+	EventBus.inventory_changed.emit()
+	panel._on_auto_runes()
+	panel._on_upgrade()
+	_check(GameState.inventory[1] == null and panel._rune_choices == ["", "", "", ""]
+		and panel._rune_pickers.all(func(picker: OptionButton) -> bool: return picker.selected == 0)
+		and panel._auto_rune_button.disabled and not panel._upgrade_button.disabled,
+		"消耗最后四枚如意后选项自动变空，升星仍可不放如意继续")
+	var gold_before_second := GameState.gold
+	panel._on_upgrade()
+	_check(GameState.gold == gold_before_second - Upgrade.cost(9),
+		"如意耗尽后可直接继续下一次升星")
 	await get_tree().process_frame
 	_check(panel._auto_rune_button.get_parent().get_combined_minimum_size().x <= 560.0,
 		"双按钮操作行未超出升星面板的设计宽度")
