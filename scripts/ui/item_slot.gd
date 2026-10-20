@@ -55,6 +55,7 @@ var item: Dictionary = {}:
 		_refresh_level_badge()
 		_refresh_potion_marker()
 		_refresh_favorite_marker()
+		_refresh_star_badge()
 		_refresh_quality_frame()
 		_refresh_fusion_marker()
 		_apply_sample_icon.call_deferred()
@@ -65,6 +66,8 @@ var _count: Label
 var _quality_frame: QualityFrameOverlay
 var _potion_marker: Label
 var _favorite_marker: Label
+## 星级角标（左上角，工程 76）：0 星不显示，满星用 emoji 太阳。
+var _star_marker: Label
 var _upgrade_marker: Label
 var _fusion_marker: Label
 var _level_badge: Control
@@ -143,15 +146,30 @@ func _ready() -> void:
 	_potion_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_potion_marker)
 	_refresh_potion_marker()
+	# 收藏标记让出左上角给星级（工程 76）：改成 ◆ 并移到右上，避开升级箭头 ↑。
+	# 实测字符宽：★11@11px = 24、◆@10px = 8、↑@19px 字符 13（右对齐）。
+	# 52px 格三件套 [2,26] / [26,36] / [37,50] 不重叠；46px 格由 _refresh_star_badge 再缩 2px。
 	_favorite_marker = Label.new()
-	_favorite_marker.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	_favorite_marker.offset_left = 2
+	_favorite_marker.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_favorite_marker.offset_left = -26
+	_favorite_marker.offset_right = -16
 	_favorite_marker.offset_top = 0
-	_favorite_marker.add_theme_font_size_override("font_size", 16)
+	_favorite_marker.offset_bottom = 20
+	_favorite_marker.add_theme_font_size_override("font_size", 10)
 	_favorite_marker.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
 	_favorite_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_favorite_marker)
 	_refresh_favorite_marker()
+	_star_marker = Label.new()
+	_star_marker.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_star_marker.offset_left = 2
+	_star_marker.offset_top = 0
+	_star_marker.offset_bottom = 20
+	_star_marker.add_theme_constant_override("outline_size", 2)
+	_star_marker.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.88))
+	_star_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_star_marker)
+	_refresh_star_badge()
 	_upgrade_marker = Label.new()
 	_upgrade_marker.text = "↑"
 	_upgrade_marker.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -290,11 +308,29 @@ func _refresh_potion_marker() -> void:
 	_potion_marker.text = ItemUtil.potion_marker(kind)
 	_potion_marker.add_theme_color_override("font_color", ItemUtil.potion_marker_color(kind))
 
-## 收藏装备始终在格内保留金色星标，随实例在背包、仓库和托盘间移动。
+## 收藏装备以 ◆ 标记在右上角（工程 76：★ 让给星级），随实例在背包、仓库和托盘间移动。
 func _refresh_favorite_marker() -> void:
 	if _favorite_marker == null:
 		return
-	_favorite_marker.text = "★" if String(item.get("kind", "")) == "equip" and bool(item.get("favorite", false)) else ""
+	_favorite_marker.text = "◆" if String(item.get("kind", "")) == "equip" and bool(item.get("favorite", false)) else ""
+
+## 星级角标：0 星不显示；文案、分档配色与字号统一由 ItemUtil 提供（工程 76），
+## 此处不写颜色字面量 —— 否则品质色与星级色会各自漂移。
+## 窄格（仓库/商店 46px）再缩 2px，保证 ★N 与右上收藏 ◆ 不咬字（见 _ready 的量测注释）。
+func _refresh_star_badge() -> void:
+	if _star_marker == null:
+		return
+	var star := int(item.get("star", 0)) if String(item.get("kind", "")) == "equip" else 0
+	var text := ItemUtil.star_badge_text(star)
+	_star_marker.text = text
+	_star_marker.visible = not text.is_empty()
+	if not _star_marker.visible:
+		return
+	_star_marker.add_theme_color_override("font_color", ItemUtil.star_badge_color(star))
+	var font_size := ItemUtil.star_badge_font_size(star)
+	if custom_minimum_size.x < 50.0:
+		font_size = maxi(8, font_size - 2)
+	_star_marker.add_theme_font_size_override("font_size", font_size)
 
 func _refresh_quality_frame() -> void:
 	if _quality_frame == null:

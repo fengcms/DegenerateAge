@@ -70,6 +70,43 @@ static func quality_name(q: String) -> String:
 static func kind_color(kind: String) -> Color:
 	return KIND_COLOR.get(kind, Color("cccccc"))
 
+## ---- 星级角标（工程 76） ----
+## 颜色取「亮化版」品质色：品质框本身是 蓝/绿/金/紫，星级若用同色会出现
+## 「金角标 + 绿边框」的误读，故各提亮一档拉开明度差（见工程 76 §5.1）。
+const STAR_BADGE_COLOR := {
+	"low": Color("5ac8fa"),    # 1—5 星：亮蓝（uncommon #4aa3e0 的提亮版）
+	"mid": Color("7bee8c"),    # 6—8 星：亮绿（rare #46c46a 的提亮版）
+	"high": Color("ffd24a"),   # 9—11 星：亮金（epic #e0c04a 的提亮版）
+	"max": Color("ffb347"),    # 12 星：暖橙占位（emoji 太阳不认 font_color，仅供断言与兜底）
+}
+const STAR_BADGE_SIZE := 11
+## 满星 13px：emoji 太阳在小字号下射线会糊成一团橙点，加 2px 才认得出。
+const STAR_BADGE_SIZE_MAX := 13
+
+## 0 星返回空串（不显示）；满星返回 **彩色 emoji 太阳**，其余 `★N`。
+## 必须用 ★(U+2605) 而不是 ⭐(U+2B50)：后者是彩色 emoji，font_color 无效，
+## 做不出「1—5 蓝 / 6—8 绿 / 9—11 金」的颜色分档（实测见工程 76 §2）。
+static func star_badge_text(star: int) -> String:
+	if star <= 0:
+		return ""
+	if star >= Upgrade.max_star():
+		return "☀️"
+	return "★%d" % star
+
+static func star_badge_color(star: int) -> Color:
+	if star <= 0:
+		return Color.TRANSPARENT
+	if star >= Upgrade.max_star():
+		return STAR_BADGE_COLOR["max"]
+	if star >= 9:
+		return STAR_BADGE_COLOR["high"]
+	if star >= 6:
+		return STAR_BADGE_COLOR["mid"]
+	return STAR_BADGE_COLOR["low"]
+
+static func star_badge_font_size(star: int) -> int:
+	return STAR_BADGE_SIZE_MAX if star >= Upgrade.max_star() else STAR_BADGE_SIZE
+
 static func is_stackable(item: Dictionary) -> bool:
 	return STACKABLE_KINDS.has(String(item.get("kind", "")))
 
