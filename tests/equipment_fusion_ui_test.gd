@@ -19,6 +19,16 @@ func _ready() -> void:
 	EventBus.blacksmith_panel_requested.emit("铁匠", "试试新服务")
 	dialogue._show_menu()
 	check(dialogue._fusion_buttons.size() == 3, "铁匠菜单保留三种服务")
+	check(dialogue._leave.get_parent() == dialogue._footer
+		and not dialogue._service_scroll.is_ancestor_of(dialogue._leave),
+		"离开按钮在底部固定行，不再混进服务网格")
+	check(dialogue._service_grids.size() == 2 and dialogue._service_grids.all(
+		func(grid: GridContainer) -> bool: return grid.get_child_count() % 2 == 0),
+		"两组服务网格各自成对，没有孤格")
+	GameState.settings.uiScale = 1.0
+	dialogue._resize()
+	await get_tree().process_frame
+	check(not dialogue._service_scroll.get_v_scroll_bar().visible, "100% 缩放下服务说明无需滚动")
 	GameState.settings.uiScale = 2.0
 	dialogue._resize()
 	await get_tree().process_frame
@@ -111,6 +121,25 @@ func _ready() -> void:
 	panel._on_confirm()
 	check(GameState.inventory_used() == 1 and GameState.inventory[0] is Dictionary and GameState.gold == 0
 		and int(GameState.inventory[0].get("star", -1)) == 12, "保星再次确认才结算")
+	# 跨档保星：51 档 12★ 升到 71 档，费用按档数翻倍，产物穿不上时明确提示。
+	GameState.reset_to_defaults()
+	var far_old := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	far_old.star = 12
+	GameState.inventory[0] = far_old
+	GameState.inventory[1] = ItemFactory.make_equip_dynamic("c6_equip_weapon", 71, "legendary", rng)
+	GameState.gold = EquipmentFusion.full_star_cost() * 2
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER)
+	panel._on_material_dropped(0, _payload(0))
+	panel._on_material_dropped(1, _payload(1))
+	check(not panel._confirm.disabled and panel._summary.text.contains("跨 2 档")
+		and panel._summary.text.contains("257494"), "跨两档预览标明倍数与双倍费用")
+	check(panel._summary.text.contains("暂时无法穿戴"), "产物高出玩家等级时提示暂时穿不上")
+	panel._on_confirm()
+	panel._on_confirm()
+	var far_output := _only_item()
+	check(GameState.inventory_used() == 1 and GameState.gold == 0
+		and EquipmentFusion.tier_start(far_output) == 71 and int(far_output.get("star", 0)) == 12,
+		"跨两档保星扣双倍金币并产出 71 档 12 星紫装")
 	if failures.is_empty():
 		print("[EquipmentFusionUiTest] 全部通过 ✅")
 	else:

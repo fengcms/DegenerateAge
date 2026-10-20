@@ -39,9 +39,39 @@ func _ready() -> void:
 	var new_weapon := ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
 	var transfer := EquipmentFusion.plan_transfer(old, new_weapon)
 	check(bool(transfer.get("ok", false)) and int(transfer.get("tier", 0)) == 61
-		and int(transfer.get("cost", 0)) == 128747, "51→61 同类型保星与金币和")
-	var too_far := ItemFactory.make_equip_dynamic("c6_equip_weapon", 71, "legendary", rng)
-	check(not bool(EquipmentFusion.plan_transfer(old, too_far).get("ok", false)), "51→71 跨两档拒绝")
+		and int(transfer.get("cost", 0)) == 128747 and int(transfer.get("gap", 0)) == 1,
+		"51→61 同类型保星与金币和")
+	# 跨档：每多跨一档就多收一份基准价（100→110 是 x，100→130 是 3x）。
+	var two_tier := ItemFactory.make_equip_dynamic("c6_equip_weapon", 71, "legendary", rng)
+	var up_two := EquipmentFusion.plan_transfer(old, two_tier)
+	check(bool(up_two.get("ok", false)) and int(up_two.get("tier", 0)) == 71
+		and int(up_two.get("cost", 0)) == 257494 and int(up_two.get("gap", 0)) == 2,
+		"51→71 跨两档允许且收 2 倍金币")
+	var three_tier := ItemFactory.make_equip_dynamic("c6_equip_weapon", 81, "legendary", rng)
+	var up_three := EquipmentFusion.plan_transfer(old, three_tier)
+	check(bool(up_three.get("ok", false)) and int(up_three.get("tier", 0)) == 81
+		and int(up_three.get("cost", 0)) == 386241 and int(up_three.get("gap", 0)) == 3,
+		"51→81 跨三档收 3 倍金币")
+	# 同档、降档、非整档都不构成跨档，必须仍然拒绝。
+	var same_tier := ItemFactory.make_equip_dynamic("c6_equip_weapon", 51, "legendary", rng)
+	check(EquipmentFusion.transfer_gap(51, 51) == 0
+		and not bool(EquipmentFusion.plan_transfer(old, same_tier).get("ok", false)),
+		"同档不算跨档，仍然拒绝保星")
+	var lower_old := two_tier.duplicate(true)
+	lower_old.star = 12
+	check(EquipmentFusion.transfer_gap(71, 61) == 0
+		and not bool(EquipmentFusion.plan_transfer(lower_old, new_weapon).get("ok", false)),
+		"降档不算跨档，仍然拒绝保星")
+	check(EquipmentFusion.transfer_gap(51, 65) == 0 and EquipmentFusion.transfer_gap(0, 61) == 0,
+		"档差非十级整数倍或旧档无效时不算跨档")
+	# 上限前置：真正的失败点在 make_output，规则层必须先把话说清楚。
+	var beyond := ItemFactory.make_equip_dynamic("c6_equip_weapon", 991, "legendary", rng)
+	beyond.requiredLevel = 9991
+	check(EquipmentFusion.transfer_max_tier() == 9990
+		and not bool(EquipmentFusion.plan_transfer(old, beyond).get("ok", false)),
+		"目标档超过实例等级上限时拒绝保星")
+	check(EquipmentFusion.make_output(9991, "weapon", rng).is_empty(),
+		"超过上限的档位产物确实无法生成，规则层必须前置拦截")
 	var other_kind := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
 	check(not bool(EquipmentFusion.plan_transfer(old, other_kind).get("ok", false)), "不同类型拒绝保星")
 	var output := EquipmentFusion.make_output(61, "weapon", rng)
