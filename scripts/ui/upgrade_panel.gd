@@ -6,12 +6,14 @@ const WIDTH := 560.0
 const COL_WARN := Color(0.88, 0.42, 0.36)
 
 var _picker: OptionButton
-var _center: Label
+## 十字阵列中心格（当前选中装备与星级）。
+var _center_cell: Label
 var _preview: Label
 var _price: Label
 var _feedback: Label
 var _auto_rune_button: Button
 var _upgrade_button: Button
+var _center: FloatingWindow
 var _choices: Array[Dictionary] = []
 var _selected_id := ""
 var _rune_pickers: Array[OptionButton] = []
@@ -44,6 +46,7 @@ func set_open(open: bool) -> void:
 		_feedback.text = Localization.tr_key("ui.upgrade_panel.p001")
 		_refresh_choices()
 		EventBus.panel_opened.emit(PANEL_ID)
+		_center.show_window()
 
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id != PANEL_ID and visible:
@@ -63,12 +66,12 @@ func _build() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = FloatingWindow.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 	var panel := PanelChrome.new()
-	center.add_child(panel)
+	_center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
@@ -91,6 +94,8 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
+	# 与其余浮窗同构：标题行拖动、点击置前、越界夹紧（工程 74 §7）。
+	_center.setup(self, panel, head, Vector2(0.5, 0.5))
 	root.add_child(PanelChrome.make_title_gap())
 	_picker = OptionButton.new()
 	_picker.custom_minimum_size.y = 36
@@ -104,12 +109,12 @@ func _build() -> void:
 	for index in range(9):
 		var cell: Control
 		if index == 4:
-			_center = Label.new()
-			_center.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			_center.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			_center.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			cell = _center
-			PanelChrome.style_section(_center)
+			_center_cell = Label.new()
+			_center_cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			_center_cell.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			_center_cell.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cell = _center_cell
+			PanelChrome.style_section(_center_cell)
 		elif [1, 3, 5, 7].has(index):
 			var rune_cell := VBoxContainer.new()
 			var title_label := Label.new()
@@ -253,14 +258,14 @@ func _selected_item() -> Dictionary:
 func _refresh_details() -> void:
 	var item := _selected_item()
 	if item.is_empty():
-		_center.text = Localization.tr_key("ui.upgrade_panel.p007")
+		_center_cell.text = Localization.tr_key("ui.upgrade_panel.p007")
 		_preview.text = ""
 		_price.text = ""
 		_auto_rune_button.disabled = true
 		_upgrade_button.disabled = true
 		return
 	var star := int(item.get("star", 0))
-	_center.text = "%s\n+%d" % [ItemUtil.template_name(item), star]
+	_center_cell.text = "%s\n+%d" % [ItemUtil.template_name(item), star]
 	if star >= Upgrade.max_star():
 		_preview.text = Localization.tr_key("ui.upgrade_panel.p008")
 		_price.text = Localization.tr_key("ui.upgrade_panel.p009") % GameState.gold

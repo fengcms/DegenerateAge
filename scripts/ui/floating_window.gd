@@ -1,8 +1,17 @@
 class_name FloatingWindow
 extends CenterContainer
-## 四个常驻面板共用的标题栏拖动、置顶和窗口边界约束。
+## 浮窗共用的标题栏拖动、窗口边界约束，以及**统一浮窗层级服务**（工程 74 §4 P1）。
+##
+## 层级服务的唯一事实源是「分组自登记」，不再把面板名写死成一份名单：
+##   - `GROUP`：可被点击置前的浮窗面板；`setup()` 会为宿主自动登记，新面板零成本纳入；
+##   - `TOP_LAYER`：必须始终位于浮窗之上的层级锚点（Toast / 拖拽幽灵 / 模态确认罩 / 模态面板），
+##     与 `scenes/Main.tscn` 的 UI 子节点名一一对应，只当天花板，本身不参与置前。
+## 置前 = `move_child` 改兄弟节点顺序（Godot 的 GUI 命中看树序，不看 z_index），
+## 并把可见浮窗的 z_index 按树序重排为 1..N，保证视觉序与鼠标命中序同源。
 
-const PEERS := ["inventory", "character", "skill", "mount"]
+const GROUP := "floating_window"
+const TOP_LAYER := ["FlowFeedback", "DragLayer", "EquipmentConfirmation",
+	"SettingsPanel", "MenuPanel", "SavePanel", "DeathPanel"]
 
 var owner_panel: Control
 var panel_box: PanelContainer
@@ -15,6 +24,8 @@ var _user_moved := false
 var _dragging := false
 var _drag_offset := Vector2.ZERO
 var _docked := false
+var _pinned := false
+var _pinned_rect := Rect2()
 var _dock_left := 0.0
 var _dock_right := 1.0
 var _dock_top := 0.0
@@ -26,6 +37,7 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 	panel_box = box
 	header = bar
 	origin = start
+	owner_panel.add_to_group(GROUP)
 	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -52,36 +64,88 @@ func set_content_scroll(scroll: ScrollContainer) -> void:
 	_layout.call_deferred()
 
 func bring_forward() -> void:
-	var peers: Array[Control] = []
-	var last_peer_index := -1
-	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling.visible \
-				and String(sibling.name).to_lower().replace("panel", "") in PEERS:
-			peers.append(sibling)
-			last_peer_index = sibling.get_index()
-	# Godot 的 GUI 命中看兄弟节点顺序，不能只提高 z_index。
-	# 仅移到最后一个常驻浮窗的位置，避免越过后面的设置/模态层。
-	if owner_panel.get_index() != last_peer_index:
-		owner_panel.get_parent().move_child(owner_panel, last_peer_index)
-	peers.clear()
-	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling.visible \
-				and String(sibling.name).to_lower().replace("panel", "") in PEERS:
-			peers.append(sibling)
-	for i in range(peers.size()):
-		peers[i].z_index = i + 1
+	raise_panel(owner_panel)
 
 func is_top_window() -> bool:
-	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling != owner_panel and sibling.visible \
-				and String(sibling.name).to_lower().replace("panel", "") in PEERS \
-				and sibling.z_index > owner_panel.z_index:
+	return is_top_panel(owner_panel)
+
+# ---- 统一浮窗层级服务（工程 74 §4 P1）----
+
+## 把 `panel` 抬到「层级锚点之下、其余可见浮窗之上」；未登记的面板在此自动纳入浮窗组。
+static func raise_panel(panel: Control) -> void:
+	if panel == null or not is_instance_valid(panel) or panel.get_parent() == null:
+		return
+	var parent := panel.get_parent()
+	panel.add_to_group(GROUP)
+	var ceiling := _ceiling_index(panel)
+	# 锚点不存在时退化为「浮窗层末尾」；存在时移到锚点之前（自身已越过锚点则贴到锚点前一位）。
+	var target := parent.get_child_count() - 1 if ceiling < 0 \
+		else (ceiling - 1 if panel.get_index() < ceiling else ceiling)
+	if panel.get_index() != target:
+		parent.move_child(panel, target)
+	_sync_z_order(parent)
+
+## `panel` 是否已是可见浮窗里最靠前的那扇（Esc 关闭目标与视觉 / 鼠标命中同源）。
+static func is_top_panel(panel: Control) -> bool:
+	if panel == null or not is_instance_valid(panel) or panel.get_parent() == null:
+		return true
+	for sibling in panel.get_parent().get_children():
+		if sibling is Control and sibling != panel and sibling.visible \
+				and sibling.is_in_group(GROUP) and sibling.z_index > panel.z_index:
 			return false
 	return true
+
+## 给非 `FloatingWindow` 宿主的面板挂上点击置前（铁匠系 / 货郎等裸 `CenterContainer` 面板）。
+static func enable_click_to_front(panel: Control, box: Control) -> void:
+	panel.add_to_group(GROUP)
+	box.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			raise_panel(panel))
+
+## 层级锚点里最靠前的那个下标（改树序**前**的位置）；无锚点时为 -1。
+static func _ceiling_index(panel: Control) -> int:
+	var ceiling := -1
+	for sibling in panel.get_parent().get_children():
+		if not sibling is Control or sibling == panel or not sibling.visible:
+			continue
+		if String(sibling.name) in TOP_LAYER:
+			ceiling = sibling.get_index() if ceiling < 0 else mini(ceiling, sibling.get_index())
+	return ceiling
+
+## 可见浮窗按树序重排 z_index，保证「看到的」与「点到的」是同一扇窗。
+static func _sync_z_order(parent: Node) -> void:
+	var rank := 0
+	for sibling in parent.get_children():
+		if sibling is Control and sibling.visible and sibling.is_in_group(GROUP):
+			rank += 1
+			sibling.z_index = rank
+
+## 指定「未被玩家拖动过」时的默认落点（按可用空间比例 0..1）。并排会话用它把窗口放到
+## 伙伴旁边；玩家拖过之后（`_user_moved`）以实际位置为准，不再回落到默认落点。
+## `reset` 为真时把「玩家拖动过」一并清掉（窄屏分区钉住 → 宽屏并排这类重排必须回到默认落点，
+## 否则会停在分区时代的旧坐标上）。
+func set_origin(start: Vector2, reset := false) -> void:
+	origin = start
+	if reset:
+		_user_moved = false
+	_layout()
+
+## 按**逻辑视口绝对坐标**把浮窗钉在固定分区（窄屏分裂布局）：位置与尺寸由调用方给定，
+## 不参与拖动、不随内容最小尺寸浮动。与 `set_docked` 的差别：后者的比例是「占父容器多少」，
+## 而这里直接吃绝对矩形，便于调用方按逻辑视口一次性算准。
+func set_pinned(active: bool, rect := Rect2()) -> void:
+	_pinned = active
+	if active:
+		_docked = false
+		_dragging = false
+		_pinned_rect = rect
+	_user_moved = false
+	_layout()
 
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 		top: float = 0.0, bottom: float = 1.0) -> void:
 	if active:
+		_pinned = false
 		_dragging = false
 	if active and not _docked:
 		_floating_position = position
@@ -96,19 +160,34 @@ func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 	_dock_bottom = bottom
 	_layout()
 
+## 浮窗的可用空间：常态下就是宿主面板自身的矩形（游戏内面板根控件由界面倍率撑成逻辑视口）。
+## 宿主尺寸为 0 时（独立测试里的根控件没有那份尺寸）退回逻辑视口，避免落点与分区被夹成 0 而失真。
+func layout_space() -> Vector2:
+	if owner_panel == null:
+		return Vector2.ZERO
+	if owner_panel.size.x > 0.0 and owner_panel.size.y > 0.0:
+		return owner_panel.size
+	return owner_panel.get_viewport_rect().size / SettingsRuntime.ui_scale_value()
+
 func _layout() -> void:
 	if owner_panel == null or panel_box == null:
 		return
-	if _docked:
-		position = Vector2(owner_panel.size.x * _dock_left, owner_panel.size.y * _dock_top)
-		size = Vector2(owner_panel.size.x * (_dock_right - _dock_left),
-			owner_panel.size.y * (_dock_bottom - _dock_top))
+	var area := layout_space()
+	if _pinned:
+		position = _pinned_rect.position
+		size = _pinned_rect.size
 		fit_content(size, panel_box, content_scroll)
 		return
-	fit_content(owner_panel.size, panel_box, content_scroll)
+	if _docked:
+		position = Vector2(area.x * _dock_left, area.y * _dock_top)
+		size = Vector2(area.x * (_dock_right - _dock_left),
+			area.y * (_dock_bottom - _dock_top))
+		fit_content(size, panel_box, content_scroll)
+		return
+	fit_content(area, panel_box, content_scroll)
 	size = panel_box.get_combined_minimum_size()
 	if not _placed or not _user_moved:
-		position = (owner_panel.size - size) * origin
+		position = (area - size) * origin
 		_placed = true
 	else:
 		position = _floating_position
@@ -142,8 +221,9 @@ static func fit_content(available: Vector2, box: Control, scroll: ScrollContaine
 		scroll.custom_minimum_size = wanted
 
 func _clamp() -> void:
-	position = Vector2(clampf(position.x, 0.0, maxf(0.0, owner_panel.size.x - size.x)),
-		clampf(position.y, 0.0, maxf(0.0, owner_panel.size.y - size.y)))
+	var area := layout_space()
+	position = Vector2(clampf(position.x, 0.0, maxf(0.0, area.x - size.x)),
+		clampf(position.y, 0.0, maxf(0.0, area.y - size.y)))
 	_floating_position = position
 
 func _on_box_input(event: InputEvent) -> void:

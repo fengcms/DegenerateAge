@@ -62,6 +62,9 @@ func _show_after_death() -> void:
 		return
 	visible = true
 	GameState.set_panel_open("death", true)
+	# 死亡面板是「冻结一切」的模态（产品文档 09）；先让其余面板自行关闭，
+	# 避免浮窗图层的 z_index 高于本面板遮罩、又抢走复活按钮的鼠标命中（工程 74 §5.2）。
+	EventBus.panel_opened.emit("death")
 	_refresh()
 	get_tree().paused = true
 

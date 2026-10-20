@@ -16,6 +16,7 @@ var _affixes: Label
 var _price: Label
 var _feedback: Label
 var _button: Button
+var _center: FloatingWindow
 var _choices: Array[Dictionary] = []
 var _selected_id := ""
 
@@ -46,6 +47,7 @@ func set_open(open: bool) -> void:
 		_feedback.text = ""
 		_refresh_choices()
 		EventBus.panel_opened.emit(PANEL_ID)
+		_center.show_window()
 
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id != PANEL_ID and visible:
@@ -65,12 +67,12 @@ func _build() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	_center = FloatingWindow.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_center)
 	var panel := PanelChrome.new()
-	center.add_child(panel)
+	_center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
@@ -93,6 +95,8 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
+	# 与其余浮窗同构：标题行拖动、点击置前、越界夹紧（工程 74 §7）。
+	_center.setup(self, panel, head, Vector2(0.5, 0.5))
 	root.add_child(PanelChrome.make_title_gap())
 	_hint = Label.new()
 	_hint.text = Localization.tr_key("ui.reforge_panel.p001")

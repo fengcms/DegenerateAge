@@ -15,7 +15,7 @@ var _fusion_buttons: Array[Button] = []
 var _service_grids: Array[GridContainer] = []
 var _greeting_card: Control
 var _service_card: Control
-var _center: CenterContainer
+var _center: FloatingWindow
 var _root: VBoxContainer
 var _footer: HBoxContainer
 var _service_scroll: ScrollContainer
@@ -33,11 +33,11 @@ func _ready() -> void:
 	_resize.call_deferred()
 
 ## 根据逻辑视口限制菜单尺寸；100% 下说明整体放得下，只在窄窗口保留滚动兜底。
+## 窗口自身的尺寸与落点由 FloatingWindow 按内容与可见区结算，不再强制撑满逻辑视口。
 func _resize() -> void:
 	if _root == null:
 		return
 	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
-	_center.size = logical
 	_root.custom_minimum_size = Vector2(minf(500.0, logical.x * 0.84), 0.0)
 	_service_scroll.custom_minimum_size.y = clampf(logical.y - 250.0, 54.0, 380.0)
 
@@ -67,6 +67,7 @@ func set_open(open: bool) -> void:
 		_greeting_card.visible = true
 		_service_card.visible = false
 		EventBus.panel_opened.emit(PANEL_ID)
+		_center.show_window()
 
 func _build() -> void:
 	var dim := ColorRect.new()
@@ -74,7 +75,7 @@ func _build() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
-	_center = CenterContainer.new()
+	_center = FloatingWindow.new()
 	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
@@ -103,6 +104,8 @@ func _build() -> void:
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
+	# 与其余浮窗同构：标题行拖动、点击置前、越界夹紧（工程 74 §7）。
+	_center.setup(self, panel, head, Vector2(0.5, 0.5))
 	root.add_child(PanelChrome.make_title_gap())
 	_greeting_card = PanelContainer.new()
 	PanelChrome.style_card(_greeting_card as PanelContainer)
