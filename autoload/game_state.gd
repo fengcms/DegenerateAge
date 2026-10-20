@@ -991,12 +991,15 @@ func find_owned_item(instance_id: String) -> Dictionary:
 ## 按背包装备快照执行三种铁匠合成；任何校验失败都不改背包或金币。
 ## UI 传入打开预览时的完整实例字典，确认时按 instanceId 重定位，避免整理后误耗。
 ## 材料可来自背包或身上穿戴（工程 65）；产物**永远进背包**（D3：跨档后产物可能高于玩家等级）。
+## 四紫升紫接受 2—4 件：件数换成功率，**期望材料消耗恒为 4 件**（见 `EquipmentFusion.success_rate`）。
 func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",
 		rng: RandomNumberGenerator = null) -> Dictionary:
-	var needed := 2 if mode == EquipmentFusion.STAR_TRANSFER else 4
-	if selected.size() != needed or mode not in [EquipmentFusion.GOLD_TO_PURPLE,
+	if mode not in [EquipmentFusion.GOLD_TO_PURPLE,
 			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.PURPLE_UP_TIER,
 			EquipmentFusion.STAR_TRANSFER]:
+		return {"ok": false, "reason": "不支持的合成服务"}
+	var limits := EquipmentFusion.material_range(mode)
+	if selected.size() < limits.x or selected.size() > limits.y:
 		return {"ok": false, "reason": "请选择正确数量的装备"}
 	var bag_indices: Array[int] = []
 	var worn_slots: Array[String] = []
@@ -1024,6 +1027,26 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	var cost := int(plan.get("cost", 0))
 	if gold < cost:
 		return {"ok": false, "reason": "金币不足：需要 %d 金币" % cost}
+	# ★ 掷骰必须在造产物与落点判定**之前**：失败时不该留下「产物生成了又被丢掉」的中间态，
+	# 也不该白吃一段 RNG 影响后续随机。rate == 1.0（4 件、四金、四紫定向、保星）完全不碰 rng，
+	# 既有路径逐字节不变。
+	# 🔑 只有「掷骰失败」这一个新出口会扣材料；造产物失败 / 背包满仍然一件不扣
+	#    —— 产品 05 §5.13「失败不消耗资源」指的是那一类校验失败，不能因为引入概率就放宽。
+	var rate := float(plan.get("rate", 1.0))
+	if rate < 1.0:
+		var roll := rng.randf() if rng != null else randf()
+		if roll >= rate:
+			for index in bag_indices:
+				inventory[index] = null
+			for slot_id in worn_slots:
+				equipment[slot_id] = null
+			if worn_slots.is_empty():
+				EventBus.inventory_changed.emit()
+			else:
+				_after_equip_change()
+			# 概率模式当前只有四紫升紫（cost 恒 0）；不另收手续费，材料已经是最重的惩罚。
+			return {"ok": false, "lost": true, "consumed": selected.size(),
+				"reason": "合成失败，%d 件材料已消耗" % selected.size()}
 	var output_kind := String(plan.get("target_kind", ""))
 	if mode in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_UP_TIER]:
 		var kinds := Equipment.slot_kinds()

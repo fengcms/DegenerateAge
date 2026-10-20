@@ -152,6 +152,101 @@ func _ready() -> void:
 	check(not bool(ghost_result.get("ok", false))
 		and String(ghost_result.get("reason", "")).contains("材料已变化"),
 		"背包与身上都找不到的实例不能当材料")
+	# ---- 工程 75：四紫升紫 2—4 件，件数换成功率，失败全损 ----
+	# 用「同 seed 探针」取第一次 randf 的值：掷骰是该 rng 在 forge_equipment 里的第一次调用，
+	# 所以探针与真实调用必然一致 —— 断言不依赖具体概率实现，也不会随引擎版本漂移。
+	var win_seed := -1
+	var lose_seed := -1
+	var three_lose_seed := -1
+	for candidate in range(1, 400):
+		var probe := RandomNumberGenerator.new()
+		probe.seed = candidate
+		var roll := probe.randf()
+		if roll < 0.5 and win_seed < 0:
+			win_seed = candidate
+		if roll >= 0.5 and lose_seed < 0:
+			lose_seed = candidate
+		if roll >= 0.75 and three_lose_seed < 0:
+			three_lose_seed = candidate
+		if win_seed >= 0 and lose_seed >= 0 and three_lose_seed >= 0:
+			break
+	check(win_seed >= 0 and lose_seed >= 0 and three_lose_seed >= 0,
+		"能找到分别落在成功 / 50% 失败 / 75% 失败区间的随机种子")
+	GameState.reset_to_defaults()
+	var lose_mats: Array[Dictionary] = []
+	for i in range(2):
+		var material := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		GameState.inventory[i] = material
+		lose_mats.append(material.duplicate(true))
+	var lose_rng := RandomNumberGenerator.new()
+	lose_rng.seed = lose_seed
+	var lost_result := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, lose_mats, "", lose_rng)
+	check(not bool(lost_result.get("ok", true)) and bool(lost_result.get("lost", false))
+		and int(lost_result.get("consumed", 0)) == 2 and GameState.inventory_used() == 0
+		and String(lost_result.get("reason", "")).contains("消耗"),
+		"两件掷骰失败：投入的两件被消耗、不产生产物")
+	check(SaveManager.save_slot(3, true) and bool(SaveManager.read_slot(3).get("ok", false)),
+		"掷骰失败后存档仍未被判毁")
+	SaveManager.delete_slot(3)
+	GameState.reset_to_defaults()
+	var win_mats: Array[Dictionary] = []
+	for i in range(2):
+		var material := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		GameState.inventory[i] = material
+		win_mats.append(material.duplicate(true))
+	var win_rng := RandomNumberGenerator.new()
+	win_rng.seed = win_seed
+	var win_result := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, win_mats, "", win_rng)
+	check(bool(win_result.get("ok", false)) and GameState.inventory_used() == 1
+		and EquipmentFusion.tier_start(win_result.get("item", {})) == 71
+		and SaveManager._valid_item(win_result.get("item", {})),
+		"两件掷骰成功：产出与四件同档的 71 档紫装")
+	GameState.reset_to_defaults()
+	var three_mats: Array[Dictionary] = []
+	for i in range(3):
+		var material := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		GameState.inventory[i] = material
+		three_mats.append(material.duplicate(true))
+	var three_rng := RandomNumberGenerator.new()
+	three_rng.seed = win_seed
+	var three_result := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, three_mats, "", three_rng)
+	check(bool(three_result.get("ok", false)) and GameState.inventory_used() == 1,
+		"三件同样可以结算，不再要求四件")
+	# 3 件 75% 的失败线：只有 roll ≥ 0.75 才失败，用它守住「门槛是按件数算的、不是常量 0.5」。
+	GameState.reset_to_defaults()
+	var three_fail: Array[Dictionary] = []
+	for i in range(3):
+		var material := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		GameState.inventory[i] = material
+		three_fail.append(material.duplicate(true))
+	var three_lose_rng := RandomNumberGenerator.new()
+	three_lose_rng.seed = three_lose_seed
+	var three_lost := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, three_fail, "", three_lose_rng)
+	check(not bool(three_lost.get("ok", true)) and bool(three_lost.get("lost", false))
+		and int(three_lost.get("consumed", 0)) == 3 and GameState.inventory_used() == 0,
+		"三件掷骰失败：三件全损，成功率门槛按件数而非常量")
+	# 同一颗骰子（在 2 件档必定失败的那颗）到 3 件档可能成功：门槛按件数算，不是常量 0.5。
+	GameState.reset_to_defaults()
+	var same_die: Array[Dictionary] = []
+	for i in range(3):
+		var material := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		GameState.inventory[i] = material
+		same_die.append(material.duplicate(true))
+	var same_probe := RandomNumberGenerator.new()
+	same_probe.seed = lose_seed
+	var same_roll := same_probe.randf()
+	var same_rng := RandomNumberGenerator.new()
+	same_rng.seed = lose_seed
+	var same_result := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, same_die, "", same_rng)
+	check(bool(same_result.get("ok", false)) == (same_roll < 0.75),
+		"同一颗骰子：两件必失败，三件是否成功取决于是否低于 75% 门槛")
+	GameState.reset_to_defaults()
+	var one := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+	GameState.inventory[0] = one
+	var one_bag := GameState.inventory.duplicate(true)
+	var one_result := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, [one.duplicate(true)], "", rng)
+	check(not bool(one_result.get("ok", true)) and GameState.inventory == one_bag,
+		"一件材料在数量门禁处被拒，背包原样不动")
 	if failures.is_empty():
 		print("[EquipmentFusionTransactionTest] 全部通过 ✅")
 	else:
