@@ -46,6 +46,7 @@ func _ready() -> void:
 	_test_hp_clamped_after_set_break()
 	_test_inverse_attr()
 	_test_speed_follows_equipment()
+	_test_panel_text()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[SetBonusTest] 全部通过 ✅")
@@ -312,3 +313,31 @@ func _test_speed_follows_equipment() -> void:
 	check(player._speed < boosted,
 		"套装失效后移速必须回落（只在 _ready 算一次会永远停在 %0.1f）" % boosted)
 	player.queue_free()
+
+# ---- 14) 面板文案真的渲染出来了（不是只有逻辑对）----
+## 文案走 `%` 格式化，参数个数错了不会崩、只会输出原串或 `%!` 垃圾 ——
+## 所以必须断言「成品文本里出现预期片段」，不能只断言 `set_bonus()` 的返回值。
+
+func _test_panel_text() -> void:
+	_setup(60)
+	_dress("legendary", 12)
+	var panel := preload("res://scenes/ui/CharacterPanel.tscn").instantiate()
+	add_child(panel)
+	panel._refresh()
+	var text := String(panel._stats.text)
+	check(text.contains("套装  "), "面板应含套装行，实际末段：%s" % text.substr(maxi(0, text.length() - 90)))
+	check(text.contains("套装  传说  +20.0%"), "全紫应显示「套装  传说  +20.0%」")
+	check(text.contains("全 +12 星"), "全 12 星应显示强化行")
+	check(text.contains("已达最高档"), "顶档应显示已达最高档")
+	# 占位符没被替换是最典型的「逻辑对、界面坏」：`%s` 残留说明参数个数对不上。
+	check(not text.contains("%s") and not text.contains("%d"),
+		"文案不得残留未替换的占位符")
+	check(not text.contains("%!"), "文案格式化不得留下 %! 占位错误")
+	# 卸一件后同一面板重刷：必须切成「未成套」
+	GameState.equipment["ring_2"] = null
+	panel._refresh()
+	var broken := String(panel._stats.text)
+	check(broken.contains("未成套（13/14）"), "卸一件应显示未成套（13/14），实际末段：%s"
+		% broken.substr(maxi(0, broken.length() - 60)))
+	check(broken.contains("穿满 14 个槽位后生效"), "未成套应给出生效条件")
+	panel.queue_free()
