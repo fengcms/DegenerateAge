@@ -1362,6 +1362,11 @@ func _valid_item(item: Variant) -> bool:
 			return false
 		if item.has("favorite") and not item.favorite is bool:
 			return false
+		# 工程 77：`durability` 是**可选字段**（`favorite` 先例）——缺失 = 满耐久，旧档零迁移。
+		# 字段存在时宽松上界 10000（**不写死 800**，上限在 durability.json 可调），
+		# 写死会让调高上限后旧档逐件判毁档（D-21 静默毁档教训）。
+		if item.has("durability") and not _whole(item.get("durability"), 0, 10000):
+			return false
 		# M10-1：上限放进 5（v5 = 61+ 动态实例）；下限仍是 4，v3 及更早不走这条路。
 		if not _whole(item.get("equipmentRuleVersion"), 4, 5) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false

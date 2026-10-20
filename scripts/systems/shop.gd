@@ -38,6 +38,9 @@ const PORTABLE_PRICE_DEN := 5
 static func matches_low_gear(item: Dictionary, level_limit: int, max_quality: String) -> bool:
 	if String(item.get("kind", "")) != "equip" or not can_sell(item) or level_limit < 1:
 		return false
+	# 工程 77：破损件不进一键出售（修好还是好装备，卖了等于白扔）。
+	if Durability.is_broken(item):
+		return false
 	var quality_rank := QUALITY_ORDER.find(item_quality(item))
 	var maximum_rank := QUALITY_ORDER.find(max_quality)
 	return quality_rank >= 0 and maximum_rank >= 0 \

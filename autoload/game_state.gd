@@ -971,6 +971,82 @@ func _after_equip_change() -> void:
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
 
+# ---- 装备耐久（工程 77）----
+
+## 预警节流：每件每档只提示一次（`instanceId -> 已提示档位集合`），修理后清空复位。
+## 只存运行时、不落档 —— 重启后重新预警一次远比漏预警安全。
+var _durability_warned := {}
+
+## 击杀磨损：已穿戴 14 件按怪物档次各自扣点（normal 1 / elite 4 / boss 12）。
+## 挂在 `_settle_rewards` 顶部，与经验/掉落同口径（`suppress_rewards` 时不磨损）。
+func wear_equipment(monster_kind: String) -> void:
+	var points := Durability.wear_per_kill(monster_kind)
+	if points <= 0:
+		return
+	var changed := false
+	for slot_id in equipment.keys():
+		var it = equipment[slot_id]
+		if not it is Dictionary:
+			continue
+		var before := Durability.current(it)
+		if before <= 0:
+			continue
+		var after := maxi(0, before - points)
+		it["durability"] = after
+		changed = true
+		_warn_durability(it, before, after)
+	if changed:
+		_after_equip_change()
+
+## 预警 toast：首次跌破 20% 与归零各提示一次（每档一辈子一次，修理后复位）。
+## 14 件同时破损时合并成两条 toast，避免刷屏。
+func _warn_durability(item: Dictionary, before: int, after: int) -> void:
+	var id := String(item.get("instanceId", ""))
+	if id.is_empty():
+		return
+	var max_dur := Durability.max_durability()
+	var warned: Dictionary = _durability_warned.get(id, {})
+	var name := ItemUtil.display_name(item)
+	if before > 0 and after <= 0 and not bool(warned.get("zero", false)):
+		warned["zero"] = true
+		EventBus.toast_requested.emit(Localization.tr_key("ui.durability.warn_zero", [name]), "danger")
+	elif before > max_dur * 0.2 and after <= max_dur * 0.2 and after > 0 and not bool(warned.get("low", false)):
+		warned["low"] = true
+		EventBus.toast_requested.emit(Localization.tr_key("ui.durability.warn_low", [name]), "info")
+	_durability_warned[id] = warned
+
+## 一键修理：只修**身上** 14 件（背包破损件可能是留卖/留合成的料，修了白花钱）。
+## `rate_multiplier` 供随身商店收 1.5× 便利费（铁匠 1.0× 是回城最优解）。
+## 金币不足时**一件不修**（与合成「校验失败不消耗」口径一致）。
+## 返回 `{ok, cost, repaired, reason}`；`cost` 已含倍率。
+func repair_equipment(rate_multiplier: float = 1.0) -> Dictionary:
+	var maximum := Durability.max_durability()
+	var total := 0
+	var repaired := 0
+	for slot_id in equipment.keys():
+		var it = equipment[slot_id]
+		if not it is Dictionary:
+			continue
+		var missing := maximum - Durability.current(it)
+		if missing <= 0:
+			continue
+		var piece := int(ceil(float(Durability.repair_full_price(it)) * float(missing) / float(maximum)))
+		total += maxi(1, piece)
+		repaired += 1
+	if repaired == 0:
+		return {"ok": false, "cost": 0, "repaired": 0, "reason": "装备完好"}
+	total = maxi(1, int(round(float(total) * maxf(1.0, rate_multiplier))))
+	if gold < total:
+		return {"ok": false, "cost": total, "repaired": 0, "reason": "金币不足：需要 %d 金币" % total}
+	gold -= total
+	for slot_id in equipment.keys():
+		var it = equipment[slot_id]
+		if it is Dictionary:
+			Durability.repair(it)
+	_durability_warned.clear()
+	_after_equip_change()
+	return {"ok": true, "cost": total, "repaired": repaired, "reason": ""}
+
 # ---- 装备升星（M4-1）----
 
 ## 按实例 ID 定位玩家拥有的装备（工程 65）：**先背包、后穿戴**。

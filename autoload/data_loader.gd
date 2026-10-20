@@ -27,6 +27,7 @@ const TABLES := {
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",
 	"endgame": "endgame.json",
+	"durability": "durability.json",
 }
 
 const MAP_INDEX := "res://data/maps/index.json"
@@ -529,6 +530,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_sellable_prices())
 	report.append_array(_validate_upgrade())
 	report.append_array(_validate_endgame())
+	report.append_array(_validate_durability())
 
 	return report
 
@@ -1457,6 +1459,40 @@ func _validate_endgame() -> Array[String]:
 			for key in ["hp", "atk", "def"]:
 				if not norm is Dictionary or not _is_whole_level((norm as Dictionary).get(key, null)) or int((norm as Dictionary).get(key, 0)) < 1:
 					report.append("[endgame] %s 的 norm.%s 应为正整数" % [mid, key])
+	return report
+
+## 工程 77 耐久配置：上限为正整数、损耗分档非负整数、修理费参数为正数。
+## 损耗分档必须登记 normal / elite / boss 三档（`Monster._kind()` 的全部取值），
+## 少一档会让该类怪物击杀不磨损 —— 修理出口静默消失，比报错更难发现。
+func _validate_durability() -> Array[String]:
+	var report: Array[String] = []
+	var cfg: Variant = tables.get("durability")
+	if cfg == null:
+		return ["[durability] 缺少配置文件"] as Array[String]
+	if not cfg is Dictionary:
+		return ["[durability] 应为字典"] as Array[String]
+	var maximum: Variant = (cfg as Dictionary).get("maxDurability", null)
+	if not _is_whole_level(maximum) or int(maximum) < 1:
+		report.append("[durability] maxDurability 应为正整数")
+	var wear: Variant = (cfg as Dictionary).get("wearPerKill", null)
+	if not wear is Dictionary:
+		report.append("[durability] wearPerKill 应为字典")
+	else:
+		for kind in ["normal", "elite", "boss"]:
+			var points: Variant = (wear as Dictionary).get(kind, null)
+			if not _is_whole_level(points) or int(points) < 0:
+				report.append("[durability] wearPerKill.%s 应为非负整数" % kind)
+	var repair: Variant = (cfg as Dictionary).get("repairCost", null)
+	if not repair is Dictionary:
+		report.append("[durability] repairCost 应为字典")
+	else:
+		for key in ["earlyPerLevel", "reforgeShare"]:
+			var value: Variant = (repair as Dictionary).get(key, null)
+			if not (typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT) or float(value) <= 0.0:
+				report.append("[durability] repairCost.%s 应为正数" % key)
+		var early_max: Variant = (repair as Dictionary).get("earlyMaxLevel", null)
+		if not _is_whole_level(early_max) or int(early_max) < 1:
+			report.append("[durability] repairCost.earlyMaxLevel 应为正整数")
 	return report
 
 func _validate_upgrade() -> Array[String]:

@@ -52,6 +52,10 @@ static func _judge(item: Dictionary, player_level: int, equipment: Dictionary,
 		reasons.append("upgrade")
 	if int(item.get("star", 0)) > 0:
 		reasons.append("starred")
+	# 工程 77：破损件**不参与自动出售**（score() 归 0 会失去「属性更高」保护，
+	# 不拦就会静默卖掉可修的稀有件 —— 破损 ≠ 垃圾，修好还是好装备）。
+	if Durability.is_broken(item):
+		reasons.append("damaged")
 	var quality := Shop.item_quality(item)
 	var quality_rank := Shop.QUALITY_ORDER.find(quality)
 	var rule: Dictionary = RULES[preset]

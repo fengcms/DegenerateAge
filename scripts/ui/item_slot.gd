@@ -58,6 +58,7 @@ var item: Dictionary = {}:
 		_refresh_star_badge()
 		_refresh_quality_frame()
 		_refresh_fusion_marker()
+		_refresh_durability_bar()
 		_apply_sample_icon.call_deferred()
 		queue_redraw()
 
@@ -72,6 +73,8 @@ var _upgrade_marker: Label
 var _fusion_marker: Label
 var _level_badge: Control
 var _level_badge_text := ""
+## 耐久细条（工程 77）：槽位底边 2px，< 100% 才显示；四角已被工程 76 占满，不进角标。
+var _durability_bar: Control
 var _drag_cover: PanelContainer
 var _press_grab_point := Vector2.ZERO
 var _press_grab_valid := false
@@ -208,6 +211,20 @@ func _ready() -> void:
 	_level_badge.resized.connect(_level_badge.queue_redraw)
 	add_child(_level_badge)
 	_refresh_level_badge()
+	# 工程 77：耐久细条在最底层（允许右段被等级角标黑底压住）。
+	_durability_bar = Control.new()
+	_durability_bar.name = "DurabilityBar"
+	_durability_bar.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_durability_bar.offset_top = -2
+	_durability_bar.offset_bottom = 0
+	_durability_bar.offset_left = 0
+	_durability_bar.offset_right = 0
+	_durability_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_durability_bar.draw.connect(_draw_durability_bar)
+	_durability_bar.resized.connect(_durability_bar.queue_redraw)
+	add_child(_durability_bar)
+	move_child(_durability_bar, 0)
+	_refresh_durability_bar()
 	EventBus.settings_changed.connect(_refresh_slot_settings)
 	_drag_cover = PanelContainer.new()
 	_drag_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -282,6 +299,42 @@ func _level_badge_layout() -> Dictionary:
 	var badge_size := Vector2(ceilf(text_width + 4.0), ceilf(font.get_height(font_size) + 2.0))
 	var badge_rect := Rect2(_level_badge.size - badge_size - Vector2(2.0, 2.0), badge_size)
 	return {"rect": badge_rect, "font": font, "font_size": font_size}
+
+## 耐久细条（工程 77）：< 100% 才显示，绿（>50%）→ 黄（20—50%）→ 红（<20%）。
+## 破损（0）时整格灰显 —— 一眼可辨，不用读数字。
+func _refresh_durability_bar() -> void:
+	if _durability_bar == null:
+		return
+	var is_equip := String(item.get("kind", "")) == "equip"
+	var has_durability := is_equip and item.has("durability")
+	_durability_bar.visible = has_durability and Durability.current(item) < Durability.max_durability()
+	if _durability_bar.visible:
+		_durability_bar.queue_redraw()
+	# 破损灰显：只压暗格子本体的 modulate，不动角标文字（角标仍在，只是格子「死」了）。
+	var broken := is_equip and Durability.is_broken(item)
+	var dim := Color(0.45, 0.45, 0.48, 1.0) if broken else Color.WHITE
+	if _count != null:
+		_count.modulate = dim
+	if _quality_frame != null:
+		_quality_frame.modulate = dim
+
+func _draw_durability_bar() -> void:
+	if item.is_empty() or String(item.get("kind", "")) != "equip":
+		return
+	var maximum := Durability.max_durability()
+	var current := Durability.current(item)
+	if current >= maximum:
+		return
+	var ratio := clampf(float(current) / float(maxi(1, maximum)), 0.0, 1.0)
+	var color := Color("7bee8c")
+	if ratio < 0.2:
+		color = Color("ff6b6b")
+	elif ratio < 0.5:
+		color = Color("ffd24a")
+	var width := _durability_bar.size.x * ratio
+	if width <= 0.0:
+		return
+	_durability_bar.draw_rect(Rect2(0, 0, width, _durability_bar.size.y), color)
 
 ## 在图标上方绘制黑色半透明等级方块；子控件不拦截格子的悬停和拖放。
 func _draw_level_badge() -> void:
@@ -494,6 +547,11 @@ func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
 		detail.text = Localization.tr_key("ui.equip_tip.unworn")
 	else:
 		var lines: Array[String] = [ItemUtil.display_name(shown)]
+		if shown.has("durability"):
+			lines.append(Localization.tr_key("ui.durability.line",
+				[Durability.current(shown), Durability.max_durability()]))
+		if Durability.is_broken(shown):
+			lines.append(Localization.tr_key("ui.durability.broken"))
 		lines.append_array(ItemUtil.attr_lines(shown))
 		lines.append(Localization.tr_key("ui.equip_tip.score", [Equipment.score(shown)]))
 		detail.text = "\n".join(PackedStringArray(lines))

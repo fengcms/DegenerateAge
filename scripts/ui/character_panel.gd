@@ -294,5 +294,10 @@ func _on_equipment_dropped(_index: int, payload: Dictionary, slot_id: String) ->
 
 func _equipment_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = [ItemUtil.display_name(item)]
+	if item.has("durability"):
+		lines.append(Localization.tr_key("ui.durability.line",
+			[Durability.current(item), Durability.max_durability()]))
+	if Durability.is_broken(item):
+		lines.append(Localization.tr_key("ui.durability.broken"))
 	lines.append_array(ItemUtil.attr_lines(item))
 	return "\n".join(PackedStringArray(lines))

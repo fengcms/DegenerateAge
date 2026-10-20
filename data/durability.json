@@ -1,0 +1,14 @@
+{
+  "maxDurability": 800,
+  "wearPerKill": {
+    "normal": 1,
+    "elite": 4,
+    "boss": 12
+  },
+  "warnThresholds": [0.2, 0.0],
+  "repairCost": {
+    "earlyPerLevel": 5,
+    "earlyMaxLevel": 60,
+    "reforgeShare": 0.075
+  }
+}

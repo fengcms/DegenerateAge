@@ -406,6 +406,12 @@ func _bag_tooltip(item: Dictionary) -> String:
 		lines.append(Localization.tr_key("ui.inventory_panel.p020") % req)
 	else:
 		lines.append(Localization.tr_key("ui.inventory_panel.p021") % [req, level])
+	# 工程 77：耐久行 + 破损红字；属性行照常列出（展示与生效分离，玩家能看见修好后拿回什么）。
+	if item.has("durability"):
+		lines.append(Localization.tr_key("ui.durability.line",
+			[Durability.current(item), Durability.max_durability()]))
+	if Durability.is_broken(item):
+		lines.append(Localization.tr_key("ui.durability.broken"))
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
 	lines.append((Localization.tr_key("ui.inventory_panel.p025") if _character_visible() else Localization.tr_key("ui.inventory_panel.p026")) if ok else Localization.tr_key("ui.inventory_panel.p027"))

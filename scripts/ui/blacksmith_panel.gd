@@ -11,6 +11,7 @@ var _continue: Button
 var _leave: Button
 var _upgrade: Button
 var _reforge: Button
+var _repair: Button
 var _fusion_buttons: Array[Button] = []
 var _service_grids: Array[GridContainer] = []
 var _greeting_card: Control
@@ -181,6 +182,11 @@ func _build() -> void:
 	transfer.pressed.connect(_open_fusion.bind(EquipmentFusion.STAR_TRANSFER))
 	_fusion_buttons.append(transfer)
 	transfer_row.add_child(_make_hint("ui.blacksmith_panel.hint_transfer"))
+	# 维护组（工程 77）：一键修理身上 14 件，价格写在按钮上、点击即修不再二次确认。
+	var repair_grid := _build_group(service_content, "ui.blacksmith_panel.group_maintain",
+		"ui.blacksmith_panel.hint_maintain")
+	_repair = _make_service(repair_grid, "ui.blacksmith_panel.repair", true)
+	_repair.pressed.connect(_on_repair)
 	# 离开与继续固定在底部操作行，不再混进服务网格。
 	_footer = HBoxContainer.new()
 	_footer.add_theme_constant_override("separation", 8)
@@ -242,11 +248,52 @@ func _show_menu() -> void:
 	_continue.visible = false
 	_upgrade.visible = true
 	_reforge.visible = true
+	_refresh_repair_button()
+	_repair.visible = true
 	for button in _fusion_buttons:
 		button.visible = true
 	_greeting_card.visible = false
 	_service_card.visible = true
 	_upgrade.grab_focus()
+
+## 修理按钮：价格直接写在按钮上（点击即修，多一层确认就是纯摩擦）。
+## 全身无破损置灰「装备完好」；重铸配置缺失时也置灰（费用算不出来）。
+func _refresh_repair_button() -> void:
+	if _repair == null:
+		return
+	var maximum := Durability.max_durability()
+	var total := 0
+	var damaged := 0
+	for slot_id in GameState.equipment.keys():
+		var it = GameState.equipment[slot_id]
+		if not it is Dictionary:
+			continue
+		var missing := maximum - Durability.current(it)
+		if missing <= 0:
+			continue
+		damaged += 1
+		var full := Durability.repair_full_price(it)
+		if full < 0:
+			_repair.text = Localization.tr_key("ui.blacksmith_panel.repair")
+			_repair.disabled = true
+			return
+		total += maxi(1, int(ceil(float(full) * float(missing) / float(maximum))))
+	if damaged == 0:
+		_repair.text = Localization.tr_key("ui.blacksmith_panel.repair_full")
+		_repair.disabled = true
+	else:
+		_repair.text = Localization.tr_key("ui.blacksmith_panel.repair_cost", [total])
+		_repair.disabled = false
+
+## 一键修理（工程 77）：只修身上 14 件；金币不足一件不修，与合成「校验失败不消耗」同口径。
+func _on_repair() -> void:
+	var result := GameState.repair_equipment(1.0)
+	if bool(result.get("ok", false)):
+		EventBus.toast_requested.emit(Localization.tr_key("ui.durability.repair_done",
+			[int(result.get("repaired", 0)), int(result.get("cost", 0))]), "pickup")
+		_refresh_repair_button()
+	else:
+		EventBus.toast_requested.emit(String(result.get("reason", "修理失败")), "danger")
 
 func _open_upgrade() -> void:
 	set_open(false)

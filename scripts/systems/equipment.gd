@@ -214,6 +214,8 @@ static func unequip_to_index(slots: Dictionary, inv: Array, slot_id: String, inv
 
 ## 汇总已穿戴装备的属性加成（固定值累加、百分比累加）。
 ## 返回含 BONUS_KEYS 全键的字典（未出现的键为 0）。
+## 🔴 工程 77：耐久归零的破损件**跳过**（自身属性失效）；套装加成不受影响 ——
+## `SetBonus.evaluate` 数的是槽位而非属性，破损件仍穿戴仍计数，零改动天然成立。
 static func bonus(slots: Dictionary) -> Dictionary:
 	var b := {}
 	for k in BONUS_KEYS:
@@ -221,6 +223,8 @@ static func bonus(slots: Dictionary) -> Dictionary:
 	for sid in slots.keys():
 		var it = slots[sid]
 		if not (it is Dictionary):
+			continue
+		if Durability.is_broken(it):
 			continue
 		accumulate(b, EquipmentMath.effective_attrs(it))
 	return b
@@ -241,8 +245,10 @@ static func accumulate(target: Dictionary, src) -> void:
 					target[key] = float(target[key]) + float(e.get("value", 0.0))
 
 ## 5.9 「属性更高」评分（用于替换提示 / 一键出售排除）。
+## 🔴 工程 77：破损件按 **0 分**计（与生效属性同源掐断）—— 否则两个反常：
+## 对比时残值虚高、或反向被自动出售卖掉可修的好装备。
 static func score(item: Dictionary) -> float:
-	if item.is_empty():
+	if item.is_empty() or Durability.is_broken(item):
 		return 0.0
 	var b := {}
 	for k in BONUS_KEYS:

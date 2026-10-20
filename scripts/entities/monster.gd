@@ -937,6 +937,9 @@ func _die() -> void:
 func _settle_rewards() -> void:
 	if suppress_rewards:
 		return
+	# 工程 77：击杀磨损与经验/掉落同口径 —— 有奖励结算 = 一次磨损（判定无歧义）。
+	# `suppress_rewards`（训练木桩）在上面已短路，天然不磨损。
+	GameState.wear_equipment(_kind())
 	# M10-3：循环图的经验由曲线反推（产品 13 §2：E(L) 决定「升一级要杀几只」），
 	# 不再依赖各章模板手填的 xpReward。存量图 `xp_from_curve` 恒 false，取值不变。
 	var base_xp := int(round(float(Balance.boss_xp(level)) / float(maxi(1, xp_curve_divisor)))) if xp_from_curve else int(template.get("xpReward", 0))

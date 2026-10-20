@@ -142,6 +142,9 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 		"requiredLevel": required_level, "level": required_level,
 		"quality": quality, "star": 0,
 		"favorite": false,
+		# 工程 77：耐久写在**固定字段区**，不得插进 `_roll_affixes` 的 rng 调用序列
+		# （随机数顺序红线，ReforgeTest 用例 14 锁死）。新实例恒满耐久。
+		"durability": Durability.max_durability(),
 		"rawBaseAttrs": raw,
 		"qualityMultiplierSnapshot": float(q.get("baseMultiplier", 1.0)),
 		"starMultiplierSnapshot": float(cfg.get("starMult", 0.1)),

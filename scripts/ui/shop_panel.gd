@@ -425,6 +425,7 @@ func _rebuild_buy() -> void:
 		hint.add_theme_font_size_override("font_size", 12)
 		hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 		_buy_list.add_child(hint)
+		_buy_list.add_child(_make_repair_row())
 	if items.is_empty():
 		var l := Label.new()
 		l.text = Localization.tr_key("ui.shop_panel.p012")
@@ -446,6 +447,50 @@ func _refresh_buy_prices() -> void:
 				c.add_theme_color_override("font_color", COL_GOLD if GameState.gold >= price else COL_TEXT_DIM)
 
 ## 商品名称、价格和按钮同排；较长说明单独占下一行，避免把购买按钮挤出滚动视口。
+## 随身商店修理行（工程 77）：1.5× 便利费，铁匠 1.0× 仍是回城最优解。
+func _make_repair_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var desc := Label.new()
+	desc.text = Localization.tr_key("ui.shop_panel.repair_desc")
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc.add_theme_font_size_override("font_size", 13)
+	row.add_child(desc)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(120, 32)
+	btn.add_theme_font_size_override("font_size", 13)
+	var maximum := Durability.max_durability()
+	var total := 0
+	var damaged := 0
+	for slot_id in GameState.equipment.keys():
+		var it = GameState.equipment[slot_id]
+		if not it is Dictionary:
+			continue
+		var missing := maximum - Durability.current(it)
+		if missing <= 0:
+			continue
+		damaged += 1
+		var full := Durability.repair_full_price(it)
+		if full >= 0:
+			total += maxi(1, int(ceil(float(full) * float(missing) / float(maximum))))
+	total = maxi(1, int(round(float(total) * 1.5))) if damaged > 0 else 0
+	if damaged == 0:
+		btn.text = Localization.tr_key("ui.blacksmith_panel.repair_full")
+		btn.disabled = true
+	else:
+		btn.text = Localization.tr_key("ui.shop_panel.repair_cost", [total])
+		btn.pressed.connect(func() -> void:
+			var result := GameState.repair_equipment(1.5)
+			if bool(result.get("ok", false)):
+				EventBus.toast_requested.emit(Localization.tr_key("ui.durability.repair_done",
+					[int(result.get("repaired", 0)), int(result.get("cost", 0))]), "pickup")
+			else:
+				EventBus.toast_requested.emit(String(result.get("reason", "修理失败")), "danger")
+			_rebuild_buy())
+	row.add_child(btn)
+	return row
+
 func _make_buy_row(e: Dictionary) -> Control:
 	var item_id := String(e.get("itemId", ""))
 	var price := int(e.get("price", 0))
