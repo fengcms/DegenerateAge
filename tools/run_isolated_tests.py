@@ -62,6 +62,9 @@ DEFAULT_TESTS = [
     # 工程 61 暴力预设：全选可售装备 / 收藏与任务物品仍不卖 / 一次点击成交 / 暴力不落档
     # + CHOICE_VALUES 不得收编（那会让「40 格全勾」的默认态回到玩家面前）。
     "SellPresetBrutalTest",
+    # 工程 63 拾取自动出售：只对拾取生效（add_item 不受影响）/ 60 级运行时门槛 / 收藏与更好装备不卖
+    # / **金币满与空槽位两条专属否决** / 积极档不卖史诗 / 新键不 bump schema / 摘要追加段。
+    "AutoSellPickupTest",
     # M10-7 随身车夫：七分组（c7_arena 落 60+ 而非 51-60）+ 跨章 35 行 + 面板双模式
     # + C6S07 等级门槛 60 与三件发奖 + 三件全能用与存档往返（unlocks 白名单）。
     "PortableCarterTest",

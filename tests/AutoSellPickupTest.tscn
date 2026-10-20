@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/auto_sell_pickup_test.gd" id="1_autosell"]
+
+[node name="AutoSellPickupTest" type="Node"]
+script = ExtResource("1_autosell")
