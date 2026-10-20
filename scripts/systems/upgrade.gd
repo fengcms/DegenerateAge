@@ -20,6 +20,88 @@ static func success_rate(star: int) -> float:
 static func final_rate(star: int, bonus_points: float = 0.0) -> float:
 	return clampf(success_rate(star) + maxf(0.0, bonus_points), 0.0, 100.0)
 
+## 如意如意：只选择四格 ID，不修改背包。先凑满 100%，再按高等级用量最少排序；
+## 凑不满时取加成最高的至多四枚。和 rune_plan 共用模板 ID、背包数量口径。
+static func auto_runes(base_rate: float, inv: Array) -> Dictionary:
+	var types: Array[Dictionary] = []
+	var templates: Variant = DataLoader.get_table("runes")
+	if templates is Array:
+		for raw in templates:
+			if not raw is Dictionary:
+				continue
+			var rune_id := String(raw.get("id", ""))
+			var bonus := float(raw.get("successBonus", 0.0)) * 100.0
+			if rune_id.is_empty() or bonus <= 0.0:
+				continue
+			var count := 0
+			for entry in inv:
+				if entry is Dictionary and String(entry.get("kind", "")) == "rune" \
+						and String(entry.get("itemId", "")) == rune_id:
+					count += maxi(0, int(entry.get("count", 0)))
+			if count > 0:
+				types.append({"id": rune_id, "bonus": bonus, "count": mini(count, 4)})
+	types.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.bonus) < float(b.bonus) if not is_equal_approx(float(a.bonus), float(b.bonus)) \
+			else String(a.id) < String(b.id))
+	var empty: Array[String] = ["", "", "", ""]
+	if types.is_empty() or base_rate >= 100.0 - 0.0001:
+		return {"ids": empty, "rate": clampf(base_rate, 0.0, 100.0),
+			"reached": base_rate >= 100.0 - 0.0001, "available": not types.is_empty()}
+	var needed := 100.0 - base_rate
+	var combinations: Array[Dictionary] = [{"counts": [], "bonus": 0.0, "total": 0}]
+	for rune in types:
+		var next: Array[Dictionary] = []
+		for candidate in combinations:
+			for amount in range(mini(int(rune.count), 4 - int(candidate.total)) + 1):
+				var counts: Array[int] = []
+				counts.assign(candidate.counts)
+				counts.append(amount)
+				next.append({"counts": counts, "bonus": float(candidate.bonus) + amount * float(rune.bonus),
+					"total": int(candidate.total) + amount})
+		combinations = next
+	var best: Dictionary = {}
+	for candidate in combinations:
+		if float(candidate.bonus) + 0.0001 < needed:
+			continue
+		if best.is_empty() or _prefer_low_runes(candidate, best, types.size(), needed):
+			best = candidate
+	var ids: Array[String] = []
+	var bonus_points := 0.0
+	if not best.is_empty():
+		for i in range(types.size()):
+			for _j in range(int(best.counts[i])):
+				ids.append(String(types[i].id))
+		bonus_points = float(best.bonus)
+	else:
+		for i in range(types.size() - 1, -1, -1):
+			for _j in range(mini(int(types[i].count), 4 - ids.size())):
+				ids.append(String(types[i].id))
+				bonus_points += float(types[i].bonus)
+	while ids.size() < 4:
+		ids.append("")
+	return {"ids": ids, "rate": clampf(base_rate + bonus_points, 0.0, 100.0),
+		"reached": not best.is_empty(), "available": true}
+
+## 候选都能到 100%：高等级枚数先比较，随后比较溢出量、总枚数。
+static func _prefer_low_runes(a: Dictionary, b: Dictionary, type_count: int, needed: float) -> bool:
+	for i in range(type_count - 1, -1, -1):
+		if int(a.counts[i]) != int(b.counts[i]):
+			return int(a.counts[i]) < int(b.counts[i])
+	var excess_a := float(a.bonus) - needed
+	var excess_b := float(b.bonus) - needed
+	if absf(excess_a - excess_b) > 0.0001:
+		return excess_a < excess_b
+	return int(a.total) < int(b.total)
+
+## 仅供按钮禁用状态；不枚举组合，也不改变当前四格预选。
+static func has_usable_runes(inv: Array) -> bool:
+	for entry in inv:
+		if entry is Dictionary and String(entry.get("kind", "")) == "rune" \
+				and int(entry.get("count", 0)) > 0 \
+				and DataLoader.get_entry("runes", String(entry.get("itemId", ""))) is Dictionary:
+			return true
+	return false
+
 ## 先计算四格如意的总需求及从背包扣除的具体堆叠；失败时不修改背包。
 static func rune_plan(inv: Array, rune_ids: Array) -> Dictionary:
 	if rune_ids.size() > 4:
