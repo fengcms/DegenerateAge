@@ -918,31 +918,47 @@ func _after_equip_change() -> void:
 
 # ---- 装备升星（M4-1）----
 
+## 按实例 ID 定位玩家拥有的装备（工程 65）：**先背包、后穿戴**。
+## 背包优先是为了让同一 instanceId 同时出现在两处（脏档）时保持旧行为，不会突然改吃身上的那件。
+## 返回 `{loc: "bag"|"worn", index: int, slot: String, item: Dictionary}`；找不到返回 `{}`。
+func find_owned_item(instance_id: String) -> Dictionary:
+	if instance_id.is_empty():
+		return {}
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary and String(inventory[i].get("instanceId", "")) == instance_id:
+			return {"loc": "bag", "index": i, "slot": "", "item": inventory[i]}
+	for slot_id in equipment.keys():
+		var worn: Variant = equipment.get(slot_id)
+		if worn is Dictionary and String(worn.get("instanceId", "")) == instance_id:
+			return {"loc": "worn", "index": -1, "slot": String(slot_id), "item": worn}
+	return {}
+
 ## 按背包装备快照执行三种铁匠合成；任何校验失败都不改背包或金币。
 ## UI 传入打开预览时的完整实例字典，确认时按 instanceId 重定位，避免整理后误耗。
+## 材料可来自背包或身上穿戴（工程 65）；产物**永远进背包**（D3：跨档后产物可能高于玩家等级）。
 func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",
 		rng: RandomNumberGenerator = null) -> Dictionary:
 	var needed := 2 if mode == EquipmentFusion.STAR_TRANSFER else 4
 	if selected.size() != needed or mode not in [EquipmentFusion.GOLD_TO_PURPLE,
 			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.STAR_TRANSFER]:
 		return {"ok": false, "reason": "请选择正确数量的装备"}
-	var by_id := {}
-	for i in range(inventory.size()):
-		if inventory[i] is Dictionary:
-			by_id[String(inventory[i].get("instanceId", ""))] = i
-	var indices: Array[int] = []
+	var bag_indices: Array[int] = []
+	var worn_slots: Array[String] = []
 	var items: Array[Dictionary] = []
 	var seen := {}
 	for snapshot in selected:
 		var id := String(snapshot.get("instanceId", ""))
-		if id.is_empty() or seen.has(id) or not by_id.has(id):
+		if id.is_empty() or seen.has(id):
 			return {"ok": false, "reason": "材料已变化，请重新选择"}
 		seen[id] = true
-		var index: int = by_id[id]
-		if inventory[index] != snapshot:
+		var found := find_owned_item(id)
+		if found.is_empty() or found.item != snapshot:
 			return {"ok": false, "reason": "材料已变化，请重新选择"}
-		indices.append(index)
-		items.append(inventory[index])
+		if String(found.loc) == "bag":
+			bag_indices.append(int(found.index))
+		else:
+			worn_slots.append(String(found.slot))
+		items.append(found.item)
 	var plan := EquipmentFusion.plan_transfer(items[0], items[1]) if mode == EquipmentFusion.STAR_TRANSFER \
 		else EquipmentFusion.plan_four(items, mode, target_kind)
 	if not bool(plan.get("ok", false)):
@@ -961,13 +977,30 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		output.star = Upgrade.max_star()
 	if not SaveManager._valid_item(output):
 		return {"ok": false, "reason": "目标装备校验失败，未消耗材料"}
-	var output_index := indices[0]
-	for index in indices:
+	# 产物落点：优先复用背包里被消耗的第一个格子，其次第一个空位；两处都没有就是背包满。
+	# 必须在扣费与消耗之前判定，否则会出现「钱花了、材料没了、东西没地方放」。
+	var output_index := -1
+	if not bag_indices.is_empty():
+		output_index = bag_indices[0]
+	else:
+		for i in range(inventory.size()):
+			if inventory[i] == null:
+				output_index = i
+				break
+	if output_index < 0:
+		return {"ok": false, "reason": "背包已满，产物没有空位，未消耗材料"}
+	for index in bag_indices:
 		inventory[index] = null
+	for slot_id in worn_slots:
+		equipment[slot_id] = null
 	inventory[output_index] = output
 	if cost > 0:
 		add_gold(-cost)
-	EventBus.inventory_changed.emit()
+	if worn_slots.is_empty():
+		EventBus.inventory_changed.emit()
+	else:
+		# 吃掉身上的件后走完整收尾：广播装备变更，并把当前 HP / MP 收敛到降低后的上限。
+		_after_equip_change()
 	EventBus.trade_done.emit("forge", String(output.get("itemId", "")), cost)
 	return {"ok": true, "item": output, "index": output_index, "cost": cost, "reason": ""}
 
@@ -1374,11 +1407,12 @@ func world_controls_blocked() -> bool:
 
 ## 面板互斥查询（F-P3-1）：`opened_id` 打开时，本面板 `self_id` 是否应保持打开。
 ## 仅「同一面板」或「同属常驻浮窗组」可并开；货郎交易会话中的背包例外由背包 / 货郎面板自身处理。
+## 铁匠合成工作台额外与背包、人物面板并开（工程 65）：材料既可能来自背包，也可能来自身上穿戴。
 func panels_coexist(opened_id: String, self_id: String) -> bool:
 	if opened_id == self_id:
 		return true
-	if (opened_id == "equipment_fusion" and self_id == "inventory") \
-			or (opened_id == "inventory" and self_id == "equipment_fusion"):
+	if (opened_id == "equipment_fusion" and self_id in ["inventory", "character"]) \
+			or (opened_id in ["inventory", "character"] and self_id == "equipment_fusion"):
 		return true
 	return opened_id in FLOATING_PANEL_IDS and self_id in FLOATING_PANEL_IDS
 

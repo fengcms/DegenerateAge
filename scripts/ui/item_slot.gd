@@ -34,6 +34,9 @@ signal item_dropped(tray_index: int, payload: Dictionary)
 var role: int = ROLE_BAG
 var index: int = -1              # 背包下标（ROLE_BAG）/ 托盘下标（ROLE_TRAY）
 var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交易装备 / 仓库存取）
+## 是否额外接收「身上穿戴」来源（工程 65）。默认 false —— `ROLE_TRAY` 同时被合成材料格
+## 和货郎出售托盘复用，全局放开会让出售托盘也开始接收身上装备。只有保星第一格打开它。
+var accept_equip_source: bool = false
 var fusion_selected := false:
 	set(value):
 		fusion_selected = value
@@ -353,6 +356,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 		return false
 	var source := int((data as Dictionary).get("from", -1))
 	return (role == ROLE_TRAY and source == ROLE_BAG) \
+		or (role == ROLE_TRAY and source == ROLE_EQUIP and accept_equip_source) \
 		or (role == ROLE_WAREHOUSE and source == ROLE_BAG) \
 		or (role == ROLE_BAG and source == ROLE_BAG) \
 		or (role == ROLE_BAG and source == ROLE_WAREHOUSE) \

@@ -35,6 +35,8 @@ func _ready() -> void:
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.inventory_changed.connect(_on_inventory_changed)
+	# 换装 / 卸下也走同一次失效检查（工程 65）：第一格可能来自穿戴槽。
+	EventBus.equipment_changed.connect(_on_equipment_changed)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.settings_changed.connect(_resize)
 	get_viewport().size_changed.connect(_resize)
@@ -84,7 +86,15 @@ func _on_panel_opened(panel_id: String) -> void:
 		set_open(false)
 
 ## 背包整理可改变下标但不改变实例；物品本身变化则撤下对应预选。
+## 身上那件被换下 / 被消耗也走同一次检查（工程 65）—— 第一格可能来自穿戴槽。
 func _on_inventory_changed() -> void:
+	_revalidate_selection()
+
+func _on_equipment_changed() -> void:
+	_revalidate_selection()
+
+## 按实例 ID（先背包、后穿戴）核对每个预选是否仍原样存在；任一失效即整体提示。
+func _revalidate_selection() -> void:
 	if not visible:
 		return
 	var invalid := false
@@ -236,16 +246,12 @@ func _build() -> void:
 	PanelChrome.style_action(_random)
 	_refresh_slots()
 
-## 用实际背包实例 ID 查找，不依赖可被整理改变的格子下标。
+## 用实际实例 ID 定位玩家拥有的那件（先背包、后身上穿戴，口径见 `GameState.find_owned_item`），
+## 不依赖可被整理改变的格子下标。
 func _find_item(id: String) -> Dictionary:
-	if id.is_empty():
-		return {}
-	for entry in GameState.inventory:
-		if entry is Dictionary and String(entry.get("instanceId", "")) == id:
-			return entry
-	return {}
+	return GameState.find_owned_item(id).get("item", {})
 
-## 验证拖拽载荷仍指向原装备，防止拖动期间整理或变更后误选。
+## 验证拖拽载荷仍指向原背包装备，防止拖动期间整理或变更后误选。
 func _source_item(payload: Dictionary) -> Dictionary:
 	if int(payload.get("from", -1)) != ItemSlot.ROLE_BAG:
 		return {}
@@ -253,6 +259,19 @@ func _source_item(payload: Dictionary) -> Dictionary:
 	if index < 0 or index >= GameState.inventory.size() or not GameState.inventory[index] is Dictionary:
 		return {}
 	var current: Dictionary = GameState.inventory[index]
+	if current != payload.get("item", {}) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+		return {}
+	return current
+
+## 验证载荷仍指向身上那件装备（工程 65）；拖动期间换装或卸下即失效。
+func _source_equipped(payload: Dictionary) -> Dictionary:
+	var slot_id := String(payload.get("slot_id", ""))
+	if slot_id.is_empty():
+		return {}
+	var worn: Variant = GameState.equipment.get(slot_id)
+	if not worn is Dictionary:
+		return {}
+	var current: Dictionary = worn
 	if current != payload.get("item", {}) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
 		return {}
 	return current
@@ -294,11 +313,16 @@ func _material_error(item: Dictionary, row: int) -> String:
 			return String(plan.get("reason", ""))
 	return ""
 
-## 接收背包拖入；拒绝时说明原因，成功只保存快照并刷新预览。
+## 接收背包或身上穿戴拖入（后者仅限打开了 `accept_equip_source` 的格）；
+## 拒绝时说明原因，成功只保存快照并刷新预览。
 func _on_material_dropped(row: int, payload: Dictionary) -> void:
 	if not visible:
 		return
-	var item := _source_item(payload)
+	var from_equip := int(payload.get("from", -1)) == ItemSlot.ROLE_EQUIP
+	if from_equip and (row < 0 or row >= _slots.size() or not _slots[row].accept_equip_source):
+		_feedback.text = Localization.tr_key("ui.fusion.bag_only")
+		return
+	var item := _source_equipped(payload) if from_equip else _source_item(payload)
 	if item.is_empty():
 		_feedback.text = Localization.tr_key("ui.fusion.stale")
 		return
@@ -354,6 +378,9 @@ func _refresh_slots() -> void:
 	for i in range(_slots.size()):
 		var slot := _slots[i]
 		slot.visible = i < (2 if _mode == EquipmentFusion.STAR_TRANSFER else 4)
+		# 只有保星第一格（旧 12★）接收身上穿戴：第二格要的是 0★ 新料，
+		# 从身上拖等于「先脱下来再当肥料」，收益不对等（工程 65 D1）。
+		slot.accept_equip_source = _mode == EquipmentFusion.STAR_TRANSFER and i == 0
 		var item := _selected[i]
 		slot.item = item
 		slot.text = ItemUtil.display_name(item).substr(0, 2) if not item.is_empty() else \
@@ -423,10 +450,18 @@ func _on_confirm() -> void:
 		if int(item.get("star", 0)) > 0:
 			stars.append(ItemUtil.display_name(item))
 			risk = true
+	# 材料可能正穿在身上（工程 65）：必须显式告知，否则玩家会以为战力凭空掉了。
+	var worn_names: Array[String] = []
+	for item in items:
+		if String(GameState.find_owned_item(String(item.get("instanceId", ""))).get("loc", "")) == "worn":
+			worn_names.append(ItemUtil.display_name(item))
 	if risk and not _risk_confirmed:
 		_risk_confirmed = true
 		_feedback.text = Localization.tr_key("ui.fusion.star_warning") if _mode == EquipmentFusion.STAR_TRANSFER else \
 			Localization.tr_key("ui.fusion.star_loss", [", ".join(PackedStringArray(stars))])
+		if not worn_names.is_empty():
+			_feedback.text += "\n" + Localization.tr_key("ui.fusion.worn_warning",
+				[", ".join(PackedStringArray(worn_names))])
 		_refresh_preview()
 		return
 	var kind := Equipment.slot_kinds()[_target.selected - 1] if _mode == EquipmentFusion.PURPLE_TARGET else ""
