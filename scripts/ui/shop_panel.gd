@@ -544,6 +544,8 @@ func _refresh_tray() -> void:
 		return
 	for i in range(_tray_slots.size()):
 		var b: ItemSlot = _tray_slots[i]
+		# 工程 78：托盘浮层必须保留售价/单价/提示行 —— 装备也走文案卡，不走结构化卡。
+		b.tooltip_as_text = true
 		if _tray.has(i):
 			var it: Dictionary = _tray[i]
 			var tint := _item_tint(it)

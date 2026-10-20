@@ -37,6 +37,10 @@ var draggable: bool = false      # 是否允许拖出（背包可用物品 / 交
 ## 是否额外接收「身上穿戴」来源（工程 65）。默认 false —— `ROLE_TRAY` 同时被合成材料格
 ## 和货郎出售托盘复用，全局放开会让出售托盘也开始接收身上装备。只有保星第一格打开它。
 var accept_equip_source: bool = false
+## 工程 78：单卡浮层的可选标题（如人物面板的槽位名）；为空则省略标题行。
+var tooltip_heading := ""
+## 工程 78：面板特有文案优先（出售托盘的售价/单价行），装备也走文案卡而非结构化卡。
+var tooltip_as_text := false
 var fusion_selected := false:
 	set(value):
 		fusion_selected = value
@@ -457,17 +461,26 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 func _apply_sample_icon() -> void:
 	SampleArt.decorate(self, SampleArt.icon_for(item))
 
-## 背包装备对比：每个穿戴槽各占一张卡，空槽也保留位置。
-func _make_custom_tooltip(_for_text: String) -> Object:
-	if role != ROLE_BAG or String(item.get("kind", "")) != "equip":
+## 浮层三档（工程 78）：
+##   ROLE_BAG + 装备 → 对比多卡（用户满意基准，结构不动）；
+##   其余有物品      → 单卡（装备走结构化卡，面板文案走文案卡）；
+##   空格            → null（原生提示，工程 78 已换壳）。
+## 门卫曾只放行「背包装备」，人物面板装备槽（ROLE_EQUIP）被挡掉才回退成黑半透明原生浮层。
+func _make_custom_tooltip(for_text: String) -> Object:
+	if item.is_empty():
 		return null
-	var row := preload("res://scripts/ui/equipment_comparison_tooltip.gd").new()
-	row.source_slot = weakref(self)
-	row.add_theme_constant_override("h_separation", 6)
-	row.add_theme_constant_override("v_separation", 6)
-	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_populate_equipment_tooltip(row)
-	return row
+	var kind := String(item.get("kind", ""))
+	if role == ROLE_BAG and kind == "equip":
+		var row := preload("res://scripts/ui/equipment_comparison_tooltip.gd").new()
+		row.source_slot = weakref(self)
+		row.add_theme_constant_override("h_separation", 6)
+		row.add_theme_constant_override("v_separation", 6)
+		row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		_populate_equipment_tooltip(row)
+		return row
+	if kind == "equip" and not tooltip_as_text:
+		return _equipment_tip_card(tooltip_heading, item)
+	return _text_tip_card(for_text, item)
 
 func _populate_equipment_tooltip(row: GridContainer) -> void:
 	var card_count := 1 + Equipment.slots_for_kind(Equipment.item_kind(item)).size()
@@ -516,7 +529,8 @@ func _populate_equipment_tooltip(row: GridContainer) -> void:
 			heading += "\n" + Localization.tr_key("ui.equip_tip.default")
 		row.add_child(_equipment_tip_card(heading, worn if worn is Dictionary else {}))
 
-func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
+## 单卡壳（工程 78）：与背包对比卡同款 —— 深底 + 品质色描边 + 内衬，无圆角（卡片本体保持原样）。
+func _card_shell(shown: Dictionary) -> PanelContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("111820")
@@ -529,15 +543,20 @@ func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
 	panel.add_theme_stylebox_override("panel", style)
 	panel.custom_minimum_size.x = 210
 	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	return panel
+
+func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
+	var panel := _card_shell(shown)
 	var column := VBoxContainer.new()
 	column.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	panel.add_child(column)
-	var heading_label := Label.new()
-	heading_label.text = heading
-	heading_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	heading_label.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))
-	heading_label.add_theme_color_override("font_color", Color("9baebc"))
-	column.add_child(heading_label)
+	if not heading.is_empty():
+		var heading_label := Label.new()
+		heading_label.text = heading
+		heading_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		heading_label.add_theme_font_size_override("font_size", maxi(9, roundi(14.0 * SettingsRuntime.text_scale_value())))
+		heading_label.add_theme_color_override("font_color", Color("9baebc"))
+		column.add_child(heading_label)
 	var detail := Label.new()
 	# 自定义 tooltip 在独立弹窗中；无宽度约束时自动换行会把最小高度算成整屏。
 	detail.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -556,5 +575,22 @@ func _equipment_tip_card(heading: String, shown: Dictionary) -> Control:
 		lines.append(Localization.tr_key("ui.equip_tip.score", [Equipment.score(shown)]))
 		detail.text = "\n".join(PackedStringArray(lines))
 		detail.add_theme_color_override("font_color", ItemUtil.quality_color(String(shown.get("quality", "common"))))
+	column.add_child(detail)
+	return panel
+
+## 工程 78 档 B 文案卡：面板特有信息（托盘售价/单价、药水说明）。
+## 壳与结构化卡同款，内容零改动沿用面板拼好的 tooltip_text（面板已手动换行）。
+func _text_tip_card(text: String, shown: Dictionary) -> Control:
+	var panel := _card_shell(shown)
+	var column := VBoxContainer.new()
+	column.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	panel.add_child(column)
+	var detail := Label.new()
+	# 自定义 tooltip 在独立弹窗中；无宽度约束时自动换行会把最小高度算成整屏。
+	detail.autowrap_mode = TextServer.AUTOWRAP_OFF
+	detail.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	detail.add_theme_font_size_override("font_size", maxi(9, roundi(16.0 * SettingsRuntime.text_scale_value())))
+	detail.add_theme_color_override("font_color", Color("e1e7ee"))
+	detail.text = text
 	column.add_child(detail)
 	return panel

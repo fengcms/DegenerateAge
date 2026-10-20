@@ -303,10 +303,29 @@ static func _apply_text_scale() -> void:
 	var theme := ThemeDB.get_project_theme()
 	if theme != null:
 		theme.set_font_size("font_size", "TooltipLabel", maxi(9, roundi(16.0 * text_scale_value())))
+		_apply_tooltip_shell(theme)
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or tree.current_scene == null:
 		return
 	apply_text_scale_to(tree.current_scene.get_node_or_null("UI"))
+
+## 工程 78：原生悬浮提示换壳 —— 与 panel_help_button 同款（深底 + 灰边 + 圆角 + 内衬）。
+## 引擎默认 TooltipPanel 是「黑半透明」的唯一来源；换壳后全部 tooltip_text 原生提示一次换装。
+## 注意：自定义浮层（_make_custom_tooltip）同样被 TooltipPanel 包裹，且 PopupPanel::_update_child_rects
+## 会把内容内缩到 content margin 内 ⇒ 外壳对自定义卡片是可见的「容器框」，
+## 卡片本体（品质描边）不动，背包对比多卡的卡片结构零改动。
+static func _apply_tooltip_shell(theme: Theme) -> void:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("111820")
+	style.border_color = Color("74818a")
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	theme.set_stylebox("panel", "TooltipPanel", style)
+	theme.set_color("font_color", "TooltipLabel", Color("e1e7ee"))
 
 ## M5-9c：文字轴最终倍率 = clamp(textScale) × display_scale_factor()。
 static func text_scale_value() -> float:

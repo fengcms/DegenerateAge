@@ -185,6 +185,8 @@ func _refresh() -> void:
 		button.item = item if item is Dictionary else {}
 		button.draggable = item is Dictionary and _bag_visible()
 		button.text = ItemUtil.template_name(item).substr(0, 2) if item is Dictionary else String(def.label)
+		# 工程 78：单卡标题用槽位名；有物品时走结构化卡（tooltip_text 仅作原生回退）。
+		button.tooltip_heading = String(def.label)
 		button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)] if item is Dictionary else Localization.tr_key("ui.character_panel.p004") % String(def.label)
 		SampleArt.decorate(button, SampleArt.icon_for(item))
 		_style_equipment_slot(button, item)
@@ -300,4 +302,6 @@ func _equipment_tooltip(item: Dictionary) -> String:
 	if Durability.is_broken(item):
 		lines.append(Localization.tr_key("ui.durability.broken"))
 	lines.append_array(ItemUtil.attr_lines(item))
+	# 工程 78 Q3：与背包卡片信息对等 —— 身上装备也带评分行（复用 ui.equip_tip.score）。
+	lines.append(Localization.tr_key("ui.equip_tip.score", [Equipment.score(item)]))
 	return "\n".join(PackedStringArray(lines))
