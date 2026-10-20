@@ -308,7 +308,7 @@ func _material_error(item: Dictionary, row: int) -> String:
 		if quality != "legendary" or star < 0 or star >= Upgrade.max_star():
 			return Localization.tr_key("ui.fusion.purple_only" if _mode == EquipmentFusion.PURPLE_TARGET else
 				"ui.fusion.purple_up_only")
-		for i in range(4):
+		for i in range(_selected.size()):
 			if i != row and not _selected[i].is_empty() \
 					and EquipmentFusion.tier_start(_selected[i]) != EquipmentFusion.tier_start(item):
 				return Localization.tr_key("ui.fusion.same_tier")
@@ -357,16 +357,16 @@ func _clear_material(row: int) -> void:
 	_refresh_slots()
 	_refresh_preview()
 
-## 随机预选替换现有四格；无同档四件 0 星时不改变原选择。
+## 随机预选替换全部材料格；只从最低合格档取，该档不足四件时空出余格（成功率随件数下降）。
 func _on_random_fill() -> void:
 	if _mode == EquipmentFusion.STAR_TRANSFER:
 		return
 	var picked := EquipmentFusion.random_materials(GameState.inventory, _mode)
-	if picked.size() != 4:
+	if picked.size() < EquipmentFusion.material_range(_mode).x:
 		_feedback.text = Localization.tr_key("ui.fusion.random_empty")
 		return
-	for i in range(4):
-		_selected[i] = picked[i]
+	for i in range(_selected.size()):
+		_selected[i] = picked[i] if i < picked.size() else {}
 	_risk_confirmed = false
 	_feedback.text = ""
 	_refresh_slots()
@@ -407,13 +407,17 @@ func _refresh_slots() -> void:
 			ids.append(String(item.get("instanceId", "")))
 	EventBus.fusion_selection_changed.emit(ids)
 
-## 返回完整预选快照；材料不足时禁用合成。
+## 返回已放入的材料快照（**允许空槽**，四紫升紫 2 件即可）；件数不在
+## `EquipmentFusion.material_range()` 区间内时返回空数组，确认按钮随即禁用。
 func _material_snapshots() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for i in range(2 if _mode == EquipmentFusion.STAR_TRANSFER else 4):
+	for i in range(2 if _mode == EquipmentFusion.STAR_TRANSFER else _slots.size()):
 		if _selected[i].is_empty():
-			return []
+			continue
 		result.append(_selected[i])
+	var limits := EquipmentFusion.material_range(_mode)
+	if result.size() < limits.x or result.size() > limits.y:
+		return []
 	return result
 
 ## 预览只读规则层；金币与目标类型改变时同步更新按钮状态。
@@ -443,6 +447,10 @@ func _refresh_preview() -> void:
 			int(plan.tier) - ItemFactory.TIER_SPAN,
 			int(plan.tier) - ItemFactory.TIER_SPAN + 9,
 			int(plan.tier), int(plan.tier) + 9])
+		var rate := float(plan.get("rate", 1.0))
+		_summary.text += "\n" + Localization.tr_key("ui.fusion.rate", [int(round(rate * 100.0))])
+		if rate < 1.0:
+			_summary.text += "\n" + Localization.tr_key("ui.fusion.rate_risk")
 		if int(GameState.player.get("level", 1)) < int(plan.tier) + 9:
 			_summary.text += "\n" + Localization.tr_key("ui.fusion.purple_up_level",
 				[int(GameState.player.get("level", 1))])
@@ -457,7 +465,7 @@ func _refresh_preview() -> void:
 				[required, int(GameState.player.get("level", 1))])
 	_confirm.disabled = GameState.gold < int(plan.get("cost", 0))
 
-## 带星材料与保星交易二次确认，最终仍由 GameState 快照重核。
+## 带星材料、少于四件的赌局与保星交易都要二次确认，最终仍由 GameState 快照重核。
 func _on_confirm() -> void:
 	if _confirm.disabled:
 		return
@@ -470,6 +478,11 @@ func _on_confirm() -> void:
 		if int(item.get("star", 0)) > 0:
 			stars.append(ItemUtil.display_name(item))
 			risk = true
+	# 2—3 件是赌局：失败全损，必须显式说清成功率与「材料全没」，不能只靠预览里那行小字。
+	var rate := 1.0 if _mode == EquipmentFusion.STAR_TRANSFER \
+		else float(EquipmentFusion.success_rate(items.size()))
+	if rate < 1.0:
+		risk = true
 	# 材料可能正穿在身上（工程 65）：必须显式告知，否则玩家会以为战力凭空掉了。
 	var worn_names: Array[String] = []
 	for item in items:
@@ -477,17 +490,29 @@ func _on_confirm() -> void:
 			worn_names.append(ItemUtil.display_name(item))
 	if risk and not _risk_confirmed:
 		_risk_confirmed = true
-		_feedback.text = Localization.tr_key("ui.fusion.star_warning") if _mode == EquipmentFusion.STAR_TRANSFER else \
-			Localization.tr_key("ui.fusion.star_loss", [", ".join(PackedStringArray(stars))])
+		var lines: Array[String] = []
+		if _mode == EquipmentFusion.STAR_TRANSFER:
+			lines.append(Localization.tr_key("ui.fusion.star_warning"))
+		else:
+			if rate < 1.0:
+				lines.append(Localization.tr_key("ui.fusion.rate_loss",
+					[int(round(rate * 100.0)), items.size()]))
+			if not stars.is_empty():
+				lines.append(Localization.tr_key("ui.fusion.star_loss", [", ".join(PackedStringArray(stars))]))
 		if not worn_names.is_empty():
-			_feedback.text += "\n" + Localization.tr_key("ui.fusion.worn_warning",
-				[", ".join(PackedStringArray(worn_names))])
+			lines.append(Localization.tr_key("ui.fusion.worn_warning",
+				[", ".join(PackedStringArray(worn_names))]))
+		_feedback.text = "\n".join(PackedStringArray(lines))
 		_refresh_preview()
 		return
 	var kind := Equipment.slot_kinds()[_target.selected - 1] if _mode == EquipmentFusion.PURPLE_TARGET else ""
 	var result := GameState.forge_equipment(_mode, items, kind)
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.fusion.done", [ItemUtil.display_name(result.item)]), "pickup")
+		_reset_materials()
+	elif bool(result.get("lost", false)):
+		# 掷骰失败：材料已经被吃掉。只写小字会被当成「装备静默消失」，必须走 toast。
+		EventBus.toast_requested.emit(String(result.get("reason", "")), "danger")
 		_reset_materials()
 	else:
 		_feedback.text = String(result.get("reason", "合成失败"))

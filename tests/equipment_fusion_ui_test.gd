@@ -224,6 +224,41 @@ func _ready() -> void:
 	check(GameState.equipment.get("weapon") == null and GameState.gold == 0
 		and GameState.inventory_used() == 1 and panel.visible and character.visible,
 		"结算后穿戴槽清空、金币扣一次、产物进背包，两面板都还开着")
+	# ---- 工程 75：两件即可开赌，成功率与失败全损必须写在界面上 ----
+	panel.set_open(false)
+	bag.set_open(false)
+	character.set_open(false)
+	GameState.reset_to_defaults()
+	for i in range(2):
+		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	panel._on_material_dropped(0, _payload(0))
+	panel._on_material_dropped(1, _payload(1))
+	check(panel._material_snapshots().size() == 2 and not panel._confirm.disabled,
+		"四紫升紫放入两件即可确认，不再强制四件")
+	check(panel._summary.text.contains("成功率 50%")
+		and panel._summary.text.contains("失败将消耗投入的全部材料"),
+		"两件时预览写明 50% 成功率与失败全损")
+	var before_two := GameState.inventory.duplicate(true)
+	panel._on_confirm()
+	check(GameState.inventory == before_two and panel._feedback.text.contains("成功率 50%")
+		and panel._feedback.text.contains("全部消耗"),
+		"两件首次点击只警告成功率与失败全损，不消耗材料")
+	# 随机放入改取最低档：先把 71 档四件塞满，再点随机，必须整组换掉并清空多余格。
+	GameState.reset_to_defaults()
+	for i in range(2):
+		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+	for i in range(2, 6):
+		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 71, "legendary", rng)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	for i in range(4):
+		panel._on_material_dropped(i, _payload(i + 2))
+	check(panel._material_snapshots().size() == 4, "手动放满四件 71 档可确认")
+	panel._on_random_fill()
+	check(panel._material_snapshots().size() == 2
+		and EquipmentFusion.tier_start(panel._selected[0]) == 61
+		and panel._selected[2].is_empty() and panel._selected[3].is_empty(),
+		"随机放入改取最低档两件，并清空多出来的两格")
 	if failures.is_empty():
 		print("[EquipmentFusionUiTest] 全部通过 ✅")
 	else:
