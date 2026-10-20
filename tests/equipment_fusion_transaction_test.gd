@@ -68,6 +68,60 @@ func _ready() -> void:
 		and int(saved_item.get("star", -1)) == 12
 		and _same_roll(saved_item, output), "读档后保星装备的档位、词条和星级完整保留")
 	SaveManager.delete_slot(3)
+	# ---- 工程 65：材料来自身上穿戴 ----
+	GameState.reset_to_defaults()
+	var worn_old := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	worn_old.star = 12
+	var bag_fresh := ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
+	GameState.equipment["weapon"] = worn_old
+	GameState.inventory[0] = bag_fresh
+	GameState.gold = EquipmentFusion.full_star_cost()
+	check(String(GameState.find_owned_item(String(worn_old.instanceId)).get("loc", "")) == "worn"
+		and int(GameState.find_owned_item(String(worn_old.instanceId)).get("index", 0)) == -1,
+		"find_owned_item 能定位身上穿戴的那件")
+	var worn_pair: Array[Dictionary] = [worn_old.duplicate(true), bag_fresh.duplicate(true)]
+	var worn_result := GameState.forge_equipment(EquipmentFusion.STAR_TRANSFER, worn_pair, "", rng)
+	var worn_output: Dictionary = worn_result.get("item", {})
+	check(bool(worn_result.get("ok", false)) and GameState.equipment.get("weapon") == null
+		and GameState.gold == 0 and GameState.inventory_used() == 1
+		and String(GameState.inventory[0].get("instanceId", "")) == String(worn_output.get("instanceId", ""))
+		and int(worn_output.get("star", -1)) == 12,
+		"身上旧件被消耗、该槽清空、产物进背包且金币只扣一次")
+	check(String(GameState.find_owned_item(String(worn_old.instanceId)).get("loc", "")) == "",
+		"被消耗的穿戴件不再能被定位")
+	check(SaveManager.save_slot(3, true), "穿戴件被消耗后仍可写入隔离槽 3")
+	var worn_loaded: Dictionary = SaveManager.read_slot(3)
+	var worn_slots_loaded: Dictionary = (worn_loaded.get("data", {}) as Dictionary).get("equipment", {})
+	check(bool(worn_loaded.get("ok", false)) and worn_slots_loaded.get("weapon", "missing") == null,
+		"读档后穿戴槽为空且整档未被判毁")
+	SaveManager.delete_slot(3)
+	# 背包已满 + 两件材料都在身上：正常玩法不可达（保星两件同部位、第二格只收背包），
+	# 这条守的是「先判落点、再扣费」的顺序，属于防御性分支，用构造状态验证。
+	GameState.reset_to_defaults()
+	var full_a := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	full_a.star = 12
+	var full_b := ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
+	GameState.equipment["weapon"] = full_a
+	GameState.equipment["weapon_bak"] = full_b
+	for i in range(GameState.inventory.size()):
+		GameState.inventory[i] = {"kind": "misc", "itemId": "filler", "count": 1}
+	GameState.gold = EquipmentFusion.full_star_cost()
+	var blocked: Array[Dictionary] = [full_a.duplicate(true), full_b.duplicate(true)]
+	var full_result := GameState.forge_equipment(EquipmentFusion.STAR_TRANSFER, blocked, "", rng)
+	check(not bool(full_result.get("ok", false)) and String(full_result.get("reason", "")).contains("背包已满")
+		and GameState.gold == EquipmentFusion.full_star_cost()
+		and GameState.equipment.get("weapon") == full_a and GameState.equipment.get("weapon_bak") == full_b,
+		"背包无空位时在扣费前拒绝，材料与金币原样不动")
+	# 既不在背包也不在身上：必须报「材料已变化」，不能悄悄当成背包件处理。
+	GameState.reset_to_defaults()
+	var ghost_a := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	ghost_a.star = 12
+	var ghost_b := ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
+	var ghosts: Array[Dictionary] = [ghost_a.duplicate(true), ghost_b.duplicate(true)]
+	var ghost_result := GameState.forge_equipment(EquipmentFusion.STAR_TRANSFER, ghosts, "", rng)
+	check(not bool(ghost_result.get("ok", false))
+		and String(ghost_result.get("reason", "")).contains("材料已变化"),
+		"背包与身上都找不到的实例不能当材料")
 	if failures.is_empty():
 		print("[EquipmentFusionTransactionTest] 全部通过 ✅")
 	else:

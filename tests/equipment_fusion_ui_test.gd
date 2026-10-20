@@ -13,9 +13,11 @@ func _ready() -> void:
 	var dialogue := preload("res://scenes/ui/BlacksmithPanel.tscn").instantiate()
 	var bag := preload("res://scenes/ui/InventoryPanel.tscn").instantiate()
 	var panel := preload("res://scenes/ui/EquipmentFusionPanel.tscn").instantiate()
+	var character := preload("res://scenes/ui/CharacterPanel.tscn").instantiate()
 	add_child(dialogue)
 	add_child(bag)
 	add_child(panel)
+	add_child(character)
 	EventBus.blacksmith_panel_requested.emit("铁匠", "试试新服务")
 	dialogue._show_menu()
 	check(dialogue._fusion_buttons.size() == 3, "铁匠菜单保留三种服务")
@@ -140,6 +142,50 @@ func _ready() -> void:
 	check(GameState.inventory_used() == 1 and GameState.gold == 0
 		and EquipmentFusion.tier_start(far_output) == 71 and int(far_output.get("star", 0)) == 12,
 		"跨两档保星扣双倍金币并产出 71 档 12 星紫装")
+	# ---- 工程 65：并开人物面板 + 从身上把旧件拖进第一格 ----
+	GameState.reset_to_defaults()
+	var worn_old := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	worn_old.star = 12
+	GameState.equipment["weapon"] = worn_old
+	GameState.inventory[0] = ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
+	GameState.gold = EquipmentFusion.full_star_cost()
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER)
+	check(panel._slots[0].accept_equip_source and not panel._slots[1].accept_equip_source,
+		"只有保星第一格接收穿戴载荷")
+	var worn_payload := {"from": ItemSlot.ROLE_EQUIP, "slot_id": "weapon",
+		"item": worn_old.duplicate(true), "token": Warehouse.item_token(worn_old)}
+	check(panel._grid._can_drop_data(panel._slots[0].position + panel._slots[0].size * 0.5, worn_payload)
+		and not panel._grid._can_drop_data(panel._slots[1].position + panel._slots[1].size * 0.5, worn_payload),
+		"格网只对第一格放行穿戴载荷")
+	character.set_open(true)
+	check(panel.visible and character.visible, "按 C 打开人物面板不再关闭保星面板")
+	panel._on_material_dropped(1, worn_payload)
+	check(panel._selected[1].is_empty() and panel._feedback.text.contains("只能从背包拖入"),
+		"第二格拒收身上那件并说明原因")
+	panel._on_material_dropped(0, worn_payload)
+	check(String(panel._selected[0].get("instanceId", "")) == String(worn_old.instanceId),
+		"第一格接收身上那件")
+	GameState.equipment["weapon"] = null
+	EventBus.equipment_changed.emit()
+	check(panel._selected[0].is_empty(), "身上那件被换下后预选自动失效")
+	var swapped := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
+	swapped.star = 12
+	GameState.equipment["weapon"] = swapped
+	EventBus.equipment_changed.emit()
+	panel._on_material_dropped(0, worn_payload)
+	check(panel._selected[0].is_empty() and panel._feedback.text.contains("材料已变化"),
+		"拖动期间换了身，旧载荷不能再被选入")
+	GameState.equipment["weapon"] = worn_old
+	EventBus.equipment_changed.emit()
+	panel._on_material_dropped(0, worn_payload)
+	panel._on_material_dropped(1, _payload(0))
+	check(not panel._confirm.disabled, "身上 + 背包两件凑齐后可确认保星")
+	panel._on_confirm()
+	check(panel._feedback.text.contains("穿在身上"), "首次确认明确提示该部位将空出")
+	panel._on_confirm()
+	check(GameState.equipment.get("weapon") == null and GameState.gold == 0
+		and GameState.inventory_used() == 1 and panel.visible and character.visible,
+		"结算后穿戴槽清空、金币扣一次、产物进背包，两面板都还开着")
 	if failures.is_empty():
 		print("[EquipmentFusionUiTest] 全部通过 ✅")
 	else:
