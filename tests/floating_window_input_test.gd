@@ -85,6 +85,48 @@ func _ready() -> void:
 	_check(not bag._dragging, "帮助按钮不会启动窗口拖动")
 	_mouse(help_point, false)
 
+	# 铁匠系面板（裸 `CenterContainer` 宿主）与常驻浮窗并开：点谁谁到前面来（工程 74 §4 P1）。
+	for panel in panels:
+		panel.set_open(false)
+	var fusion: Control = load("res://scenes/ui/EquipmentFusionPanel.tscn").instantiate()
+	layer.add_child(fusion)
+	fusion.set_open(true)
+	var character: Control = panels[2]
+	character.set_open(true)
+	await get_tree().process_frame
+	var character_window: FloatingWindow = character.get("_center")
+	_check(character.get_index() > fusion.get_index(), "后开的人物面板先压住保星升级面板")
+	# 人物面板连同遮罩整体挪出可视区，保证下面的点击点只可能落在保星升级面板本体上。
+	character_window._user_moved = true
+	character_window._layout()
+	character_window.position = character_window.position + Vector2(2000, 2000)
+	var fusion_box: Control = fusion.get("_box")
+	var fusion_hits := {}
+	fusion_box.gui_input.connect(_record_box_hit.bind(fusion.name, fusion_hits))
+	var point := fusion_box.get_global_rect().position + Vector2(20, 4)
+	_check(fusion_box.get_global_rect().has_point(point)
+		and not character_window.panel_box.get_global_rect().has_point(point),
+		"点击点落在保星升级面板上且未被人物面板覆盖")
+	_mouse(point, true)
+	_mouse(point, false)
+	await get_tree().process_frame
+	_check(fusion_hits.get(fusion.name, 0) == 1, "鼠标命中绕后那扇面板本体")
+	_check(fusion.get_index() > character.get_index(), "点击后保星升级升到人物面板之前")
+	_check(fusion.z_index > character.z_index, "点击后视觉层级同步升到人物面板之前")
+	_check(FloatingWindow.is_top_panel(fusion) and not FloatingWindow.is_top_panel(character),
+		"Esc 目标随点击同源切到保星升级")
+
+	# 层级锚点（模态 / 覆盖层）不可被浮窗越过（工程 74 §5.1 / §5.2）。
+	var modal := Control.new()
+	modal.name = "SettingsPanel"
+	modal.visible = true
+	layer.add_child(modal)
+	layer.move_child(modal, 1)
+	FloatingWindow.raise_panel(fusion)
+	_check(fusion.get_index() < modal.get_index(), "置前止步于打开中的模态面板之下")
+	modal.queue_free()
+	fusion.set_open(false)
+
 	if _failures.is_empty():
 		print("[FloatingWindowInputTest] 全部通过 ✅")
 	else:

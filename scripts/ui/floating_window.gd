@@ -1,8 +1,17 @@
 class_name FloatingWindow
 extends CenterContainer
-## 四个常驻面板共用的标题栏拖动、置顶和窗口边界约束。
+## 浮窗共用的标题栏拖动、窗口边界约束，以及**统一浮窗层级服务**（工程 74 §4 P1）。
+##
+## 层级服务的唯一事实源是「分组自登记」，不再把面板名写死成一份名单：
+##   - `GROUP`：可被点击置前的浮窗面板；`setup()` 会为宿主自动登记，新面板零成本纳入；
+##   - `TOP_LAYER`：必须始终位于浮窗之上的层级锚点（Toast / 拖拽幽灵 / 模态确认罩 / 模态面板），
+##     与 `scenes/Main.tscn` 的 UI 子节点名一一对应，只当天花板，本身不参与置前。
+## 置前 = `move_child` 改兄弟节点顺序（Godot 的 GUI 命中看树序，不看 z_index），
+## 并把可见浮窗的 z_index 按树序重排为 1..N，保证视觉序与鼠标命中序同源。
 
-const PEERS := ["inventory", "character", "skill", "mount"]
+const GROUP := "floating_window"
+const TOP_LAYER := ["FlowFeedback", "DragLayer", "EquipmentConfirmation",
+	"SettingsPanel", "MenuPanel", "SavePanel", "DeathPanel"]
 
 var owner_panel: Control
 var panel_box: PanelContainer
@@ -26,6 +35,7 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 	panel_box = box
 	header = bar
 	origin = start
+	owner_panel.add_to_group(GROUP)
 	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -52,32 +62,61 @@ func set_content_scroll(scroll: ScrollContainer) -> void:
 	_layout.call_deferred()
 
 func bring_forward() -> void:
-	var peers: Array[Control] = []
-	var last_peer_index := -1
-	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling.visible \
-				and String(sibling.name).to_lower().replace("panel", "") in PEERS:
-			peers.append(sibling)
-			last_peer_index = sibling.get_index()
-	# Godot 的 GUI 命中看兄弟节点顺序，不能只提高 z_index。
-	# 仅移到最后一个常驻浮窗的位置，避免越过后面的设置/模态层。
-	if owner_panel.get_index() != last_peer_index:
-		owner_panel.get_parent().move_child(owner_panel, last_peer_index)
-	peers.clear()
-	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling.visible \
-				and String(sibling.name).to_lower().replace("panel", "") in PEERS:
-			peers.append(sibling)
-	for i in range(peers.size()):
-		peers[i].z_index = i + 1
+	raise_panel(owner_panel)
 
 func is_top_window() -> bool:
-	for sibling in owner_panel.get_parent().get_children():
-		if sibling is Control and sibling != owner_panel and sibling.visible \
-				and String(sibling.name).to_lower().replace("panel", "") in PEERS \
-				and sibling.z_index > owner_panel.z_index:
+	return is_top_panel(owner_panel)
+
+# ---- 统一浮窗层级服务（工程 74 §4 P1）----
+
+## 把 `panel` 抬到「层级锚点之下、其余可见浮窗之上」；未登记的面板在此自动纳入浮窗组。
+static func raise_panel(panel: Control) -> void:
+	if panel == null or not is_instance_valid(panel) or panel.get_parent() == null:
+		return
+	var parent := panel.get_parent()
+	panel.add_to_group(GROUP)
+	var ceiling := _ceiling_index(panel)
+	# 锚点不存在时退化为「浮窗层末尾」；存在时移到锚点之前（自身已越过锚点则贴到锚点前一位）。
+	var target := parent.get_child_count() - 1 if ceiling < 0 \
+		else (ceiling - 1 if panel.get_index() < ceiling else ceiling)
+	if panel.get_index() != target:
+		parent.move_child(panel, target)
+	_sync_z_order(parent)
+
+## `panel` 是否已是可见浮窗里最靠前的那扇（Esc 关闭目标与视觉 / 鼠标命中同源）。
+static func is_top_panel(panel: Control) -> bool:
+	if panel == null or not is_instance_valid(panel) or panel.get_parent() == null:
+		return true
+	for sibling in panel.get_parent().get_children():
+		if sibling is Control and sibling != panel and sibling.visible \
+				and sibling.is_in_group(GROUP) and sibling.z_index > panel.z_index:
 			return false
 	return true
+
+## 给非 `FloatingWindow` 宿主的面板挂上点击置前（铁匠系 / 货郎等裸 `CenterContainer` 面板）。
+static func enable_click_to_front(panel: Control, box: Control) -> void:
+	panel.add_to_group(GROUP)
+	box.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			raise_panel(panel))
+
+## 层级锚点里最靠前的那个下标（改树序**前**的位置）；无锚点时为 -1。
+static func _ceiling_index(panel: Control) -> int:
+	var ceiling := -1
+	for sibling in panel.get_parent().get_children():
+		if not sibling is Control or sibling == panel or not sibling.visible:
+			continue
+		if String(sibling.name) in TOP_LAYER:
+			ceiling = sibling.get_index() if ceiling < 0 else mini(ceiling, sibling.get_index())
+	return ceiling
+
+## 可见浮窗按树序重排 z_index，保证「看到的」与「点到的」是同一扇窗。
+static func _sync_z_order(parent: Node) -> void:
+	var rank := 0
+	for sibling in parent.get_children():
+		if sibling is Control and sibling.visible and sibling.is_in_group(GROUP):
+			rank += 1
+			sibling.z_index = rank
 
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 		top: float = 0.0, bottom: float = 1.0) -> void:

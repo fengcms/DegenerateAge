@@ -181,6 +181,8 @@ func _build() -> void:
 	var box := PanelChrome.new()
 	_box = box
 	_center.add_child(box)
+	# 与背包并排的「窗口」语义：点谁谁到前面来（工程 74）。
+	FloatingWindow.enable_click_to_front(self, box)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)

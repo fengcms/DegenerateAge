@@ -163,6 +163,8 @@ func _build() -> void:
 	add_child(_center)
 	_box = PanelChrome.new()
 	_center.add_child(_box)
+	# 与背包 / 人物并开时点谁谁到前面来（工程 74）。
+	FloatingWindow.enable_click_to_front(self, _box)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 14)
