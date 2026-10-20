@@ -400,7 +400,14 @@ func _refresh_preview() -> void:
 	_summary.text = Localization.tr_key("ui.fusion.preview", ["%d—%d" % [int(plan.tier), int(plan.tier) + 9],
 		label, " ★12" if _mode == EquipmentFusion.STAR_TRANSFER else " ★0"])
 	if _mode == EquipmentFusion.STAR_TRANSFER:
+		var gap := int(plan.get("gap", 1))
+		if gap > 1:
+			_summary.text += "\n" + Localization.tr_key("ui.fusion.gap", [gap, gap])
 		_summary.text += "\n" + Localization.tr_key("ui.fusion.cost", [int(plan.cost), GameState.gold])
+		var required := int(plan.get("required", 0))
+		if required > int(GameState.player.get("level", 1)):
+			_summary.text += "\n" + Localization.tr_key("ui.fusion.out_level",
+				[required, int(GameState.player.get("level", 1))])
 	_confirm.disabled = GameState.gold < int(plan.get("cost", 0))
 
 ## 带星材料与保星交易二次确认，最终仍由 GameState 快照重核。

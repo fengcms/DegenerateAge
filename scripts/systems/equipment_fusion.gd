@@ -120,7 +120,21 @@ static func full_star_cost() -> int:
 		total += Upgrade.cost(star)
 	return total
 
-## 校验低档 12 星与相邻高档 0 星紫装；两件均消耗并重随机产物词条。
+## 保星跨档数：档差必须是十级的整数倍；同档、降档、非整档或旧档无效一律返回 0。
+## 费用与档位无关，只按这个倍数放大「跨 1 档」的基准价。
+static func transfer_gap(old_tier: int, new_tier: int) -> int:
+	var diff := new_tier - old_tier
+	if old_tier <= 0 or diff <= 0 or diff % ItemFactory.TIER_SPAN != 0:
+		return 0
+	return int(round(float(diff) / float(ItemFactory.TIER_SPAN)))
+
+## 保星可选的最高套起点。再往上 `make_output` 会造出超过实例等级上限的产物，
+## 那时只剩「目标装备生成失败」这种玩家看不懂的兜底文案。
+static func transfer_max_tier() -> int:
+	return ItemFactory.INSTANCE_LEVEL_CAP - (ItemFactory.TIER_SPAN - 1)
+
+## 校验低档 12 星与更高档 0 星紫装；两件均消耗并重随机产物词条。
+## 跨档数只放大金币，不改变星级 / 品质 / 部位规则。
 static func plan_transfer(old_item: Dictionary, new_item: Dictionary) -> Dictionary:
 	if String(old_item.get("instanceId", "")).is_empty() or String(new_item.get("instanceId", "")).is_empty() \
 			or String(old_item.instanceId) == String(new_item.instanceId):
@@ -135,9 +149,13 @@ static func plan_transfer(old_item: Dictionary, new_item: Dictionary) -> Diction
 	var old_tier := tier_start(old_item)
 	var new_tier := tier_start(new_item)
 	var kind := Equipment.item_kind(old_item)
-	if old_tier == 0 or new_tier != old_tier + ItemFactory.TIER_SPAN or kind.is_empty() \
-			or Equipment.item_kind(new_item) != kind:
-		return {"ok": false, "reason": "只能向相邻高一档的同类型紫装保星升级"}
+	var gap := transfer_gap(old_tier, new_tier)
+	if gap == 0 or kind.is_empty() or Equipment.item_kind(new_item) != kind:
+		return {"ok": false, "reason": "只能向更高档的同类型紫装保星升级"}
+	if new_tier > transfer_max_tier():
+		return {"ok": false, "reason": "目标档已超出装备等级上限"}
 	if template_for(new_tier, kind).is_empty():
 		return {"ok": false, "reason": "目标等级档缺少装备型号"}
-	return {"ok": true, "tier": new_tier, "target_kind": kind, "cost": full_star_cost(), "reason": ""}
+	return {"ok": true, "tier": new_tier, "target_kind": kind, "gap": gap,
+		"required": int(new_item.get("requiredLevel", 0)),
+		"cost": full_star_cost() * gap, "reason": ""}

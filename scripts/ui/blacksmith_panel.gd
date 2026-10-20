@@ -8,13 +8,16 @@ const COL_BORDER := Color(0.36, 0.31, 0.26)
 var _title: Label
 var _greeting: Label
 var _continue: Button
+var _leave: Button
 var _upgrade: Button
 var _reforge: Button
 var _fusion_buttons: Array[Button] = []
+var _service_grids: Array[GridContainer] = []
 var _greeting_card: Control
 var _service_card: Control
 var _center: CenterContainer
 var _root: VBoxContainer
+var _footer: HBoxContainer
 var _service_scroll: ScrollContainer
 
 func _ready() -> void:
@@ -29,14 +32,14 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_resize)
 	_resize.call_deferred()
 
-## 根据逻辑视口限制菜单尺寸，小窗口时服务说明可滚动查看。
+## 根据逻辑视口限制菜单尺寸；100% 下说明整体放得下，只在窄窗口保留滚动兜底。
 func _resize() -> void:
 	if _root == null:
 		return
 	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
 	_center.size = logical
 	_root.custom_minimum_size = Vector2(minf(500.0, logical.x * 0.84), 0.0)
-	_service_scroll.custom_minimum_size.y = clampf(logical.y * 0.18, 54.0, 150.0)
+	_service_scroll.custom_minimum_size.y = clampf(logical.y - 250.0, 54.0, 320.0)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
@@ -138,57 +141,94 @@ func _build() -> void:
 	_service_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_service_card.add_child(_service_scroll)
 	var service_content := VBoxContainer.new()
-	service_content.add_theme_constant_override("separation", 12)
+	service_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	service_content.add_theme_constant_override("separation", 10)
 	_service_scroll.add_child(service_content)
 	var service_title := Label.new()
 	service_title.text = Localization.tr_key("ui.blacksmith_panel.p007")
 	PanelChrome.style_section(service_title)
 	service_content.add_child(service_title)
-	var service_description := Label.new()
-	service_description.text = "%s\n\n%s\n\n%s" % [Localization.tr_key("ui.blacksmith_panel.p005"),
-		Localization.tr_key("ui.blacksmith_panel.p006"), Localization.tr_key("ui.blacksmith_panel.p009")]
-	service_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	service_description.add_theme_color_override("font_color", PanelChrome.TEXT)
-	service_content.add_child(service_description)
-	var actions := GridContainer.new()
-	actions.columns = 2
-	actions.add_theme_constant_override("h_separation", 12)
-	actions.add_theme_constant_override("v_separation", 8)
-	root.add_child(actions)
-	var leave := Button.new()
-	leave.text = Localization.tr_key("ui.blacksmith_panel.p008")
-	leave.pressed.connect(func() -> void: set_open(false))
-	actions.add_child(leave)
-	PanelChrome.style_action(leave)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions.add_child(spacer)
-	_continue = Button.new()
-	_continue.text = Localization.tr_key("ui.blacksmith_panel.p003")
-	_continue.pressed.connect(_show_menu)
-	actions.add_child(_continue)
-	PanelChrome.style_action(_continue, true)
-	_upgrade = Button.new()
-	_upgrade.text = Localization.tr_key("ui.blacksmith_panel.p004")
+	# 强化组：升星与重铸都改单件装备，放在一起并共用一句说明。
+	var enhance_grid := _build_group(service_content, "ui.blacksmith_panel.group_enhance",
+		"ui.blacksmith_panel.hint_enhance")
+	_upgrade = _make_service(enhance_grid, "ui.blacksmith_panel.p004", true)
 	_upgrade.pressed.connect(_open_upgrade)
-	actions.add_child(_upgrade)
-	PanelChrome.style_action(_upgrade, true)
-	_reforge = Button.new()
-	_reforge.text = Localization.tr_key("ui.reforge_panel.p002")
+	_reforge = _make_service(enhance_grid, "ui.reforge_panel.p002", true)
 	_reforge.pressed.connect(_open_reforge)
-	actions.add_child(_reforge)
-	PanelChrome.style_action(_reforge, true)
+	# 合成组：两种四合一服务并排，各自一句话说清材料口径。
+	var forge_grid := _build_group(service_content, "ui.blacksmith_panel.group_forge",
+		"ui.blacksmith_panel.hint_forge")
 	for service in [
 		{"mode": EquipmentFusion.GOLD_TO_PURPLE, "key": "ui.fusion.gold_title"},
 		{"mode": EquipmentFusion.PURPLE_TARGET, "key": "ui.fusion.purple_title"},
-		{"mode": EquipmentFusion.STAR_TRANSFER, "key": "ui.fusion.star_title"},
 	]:
-		var button := Button.new()
-		button.text = Localization.tr_key(String(service.key))
+		var button := _make_service(forge_grid, String(service.key), false)
 		button.pressed.connect(_open_fusion.bind(String(service.mode)))
-		actions.add_child(button)
-		PanelChrome.style_action(button)
 		_fusion_buttons.append(button)
+	# 保星升级有跨档扣费规则，独占整行才放得下说明。
+	var transfer_row := VBoxContainer.new()
+	transfer_row.add_theme_constant_override("separation", 4)
+	service_content.add_child(transfer_row)
+	var transfer := _make_service(transfer_row, "ui.fusion.star_title", true)
+	transfer.pressed.connect(_open_fusion.bind(EquipmentFusion.STAR_TRANSFER))
+	_fusion_buttons.append(transfer)
+	transfer_row.add_child(_make_hint("ui.blacksmith_panel.hint_transfer"))
+	# 离开与继续固定在底部操作行，不再混进服务网格。
+	_footer = HBoxContainer.new()
+	_footer.add_theme_constant_override("separation", 8)
+	root.add_child(_footer)
+	_leave = _make_footer_action("ui.blacksmith_panel.p008", false)
+	_leave.pressed.connect(func() -> void: set_open(false))
+	var footer_spacer := Control.new()
+	footer_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_footer.add_child(footer_spacer)
+	_continue = _make_footer_action("ui.blacksmith_panel.p003", true)
+	_continue.pressed.connect(_show_menu)
+
+## 服务分组：小标题 + 一句话说明 + 两列按钮，替代原来挤在滚动区里的三段长文。
+func _build_group(parent: VBoxContainer, title_key: String, hint_key: String) -> GridContainer:
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", 4)
+	parent.add_child(group)
+	var title := Label.new()
+	title.text = Localization.tr_key(title_key)
+	PanelChrome.style_section(title)
+	group.add_child(title)
+	group.add_child(_make_hint(hint_key))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 6)
+	group.add_child(grid)
+	_service_grids.append(grid)
+	return grid
+
+## 12px 灰字一句话说明；允许折行，避免窄面板被长句撑宽。
+func _make_hint(key: String) -> Label:
+	var hint := Label.new()
+	hint.text = Localization.tr_key(key)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	return hint
+
+## 服务按钮填满所在列，保证同一横排宽度一致。
+func _make_service(parent: Control, key: String, primary: bool) -> Button:
+	var button := Button.new()
+	button.text = Localization.tr_key(key)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(button)
+	PanelChrome.style_action(button, primary)
+	return button
+
+## 底部固定行按钮：等宽，避免贴两端显得单薄。
+func _make_footer_action(key: String, primary: bool) -> Button:
+	var button := Button.new()
+	button.text = Localization.tr_key(key)
+	button.custom_minimum_size.x = 140.0
+	_footer.add_child(button)
+	PanelChrome.style_action(button, primary)
+	return button
 
 func _show_menu() -> void:
 	_continue.visible = false
