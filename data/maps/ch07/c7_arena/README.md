@@ -20,7 +20,7 @@
 - 尺寸 160×90 格；`normalCap: 0`、`eliteCap: 0`、`bossCap: 20`。
 - 不写 `tierRange`：`levelFromPlayer.enabled: true` + `minLevel: 60`，Boss 等级随玩家当前等级每次现算。
 - `unclaimedLootCap: 200`（循环图未领取空投上限，高于普通图的 20）。
-- 二十席统一为 `kind: boss`、`respawnTime: 600`、`tombstone: true`（墓碑跨图可见重生倒计时）、`scaleStats: true`、`xpFromCurve: true`、`dropTableId: DT_C7_Arena_Boss`。
+- 二十席统一为 `kind: boss`、`respawnTime: 600`、`tombstone: true`（墓碑跨图可见重生倒计时）、`scaleStats: true`、`xpFromCurve: true`、`hpMultiplier: 2.0`（血量翻倍）、`xpMultiplier: 0.5`（经验减半）、`dropTableId: DT_C7_Arena_Boss`。
 - 形象沿用 `data/endgame.json` 现有 10 条 `arenaBosses`，每只在本图出现 2 次；同名两只以 `ordinal 0/1` 各占一条血条（多目标血条按 `boss_id` 分条）。`bossSpawns` 不在下方自动参数区内，详细坐标与字段以 `map.json` 为准。
 
 ## 二十席分组
