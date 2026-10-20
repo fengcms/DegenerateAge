@@ -5,6 +5,7 @@ extends RefCounted
 
 const GOLD_TO_PURPLE := "gold_to_purple"
 const PURPLE_TARGET := "purple_target"
+const PURPLE_UP_TIER := "purple_up_tier"
 const STAR_TRANSFER := "star_transfer"
 
 ## 从实例穿戴等级计算十级档起点；无效等级返回 0。
@@ -42,7 +43,7 @@ static func make_output(tier: int, kind: String, rng: RandomNumberGenerator = nu
 
 ## 校验四件背包材料并返回输出档；目标部位仅在四紫模式使用。
 static func plan_four(items: Array[Dictionary], mode: String, target_kind: String = "") -> Dictionary:
-	if items.size() != 4 or mode not in [GOLD_TO_PURPLE, PURPLE_TARGET]:
+	if items.size() != 4 or mode not in [GOLD_TO_PURPLE, PURPLE_TARGET, PURPLE_UP_TIER]:
 		return {"ok": false, "reason": "请选择四件合规装备"}
 	var seen := {}
 	var minimum := ItemFactory.INSTANCE_LEVEL_CAP
@@ -59,28 +60,31 @@ static func plan_four(items: Array[Dictionary], mode: String, target_kind: Strin
 			return {"ok": false, "reason": "材料星级无效"}
 		if mode == GOLD_TO_PURPLE and String(item.get("quality", "")) != "epic":
 			return {"ok": false, "reason": "金装合成只接受金色史诗装备"}
-		if mode == PURPLE_TARGET:
+		if mode in [PURPLE_TARGET, PURPLE_UP_TIER]:
 			if String(item.get("quality", "")) != "legendary":
-				return {"ok": false, "reason": "指定合成只接受紫色传说装备"}
+				return {"ok": false, "reason": "四紫合成只接受紫色传说装备"}
 			if star == Upgrade.max_star():
-				return {"ok": false, "reason": "12 星紫装不能用于指定合成"}
+				return {"ok": false, "reason": "12 星紫装不能用于四紫合成"}
 			if first_tier > 0 and tier != first_tier:
 				return {"ok": false, "reason": "四件紫装必须属于同一等级档"}
 		first_tier = tier
 		minimum = mini(minimum, tier)
 	if mode == PURPLE_TARGET and not Equipment.slot_kinds().has(target_kind):
 		return {"ok": false, "reason": "请选择目标装备类型"}
+	var output_tier := minimum + ItemFactory.TIER_SPAN if mode == PURPLE_UP_TIER else minimum
+	if mode == PURPLE_UP_TIER and output_tier > transfer_max_tier():
+		return {"ok": false, "reason": "目标档已超出装备等级上限"}
 	var kinds := [target_kind] if mode == PURPLE_TARGET else Equipment.slot_kinds()
 	for kind in kinds:
-		if template_for(minimum, String(kind)).is_empty():
+		if template_for(output_tier, String(kind)).is_empty():
 			return {"ok": false, "reason": "目标等级档缺少装备型号"}
-	return {"ok": true, "tier": minimum, "target_kind": target_kind, "reason": ""}
+	return {"ok": true, "tier": output_tier, "target_kind": target_kind, "reason": ""}
 
 ## 随机放入只预选同档四件 0 星未收藏装备；不修改背包与现有合成规则。
 ## 先等概率抽合格档，再在该档无放回抽四件，避免容量大的档独占选择机会。
 static func random_materials(inventory: Array, mode: String, rng: RandomNumberGenerator = null) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	if mode not in [GOLD_TO_PURPLE, PURPLE_TARGET]:
+	if mode not in [GOLD_TO_PURPLE, PURPLE_TARGET, PURPLE_UP_TIER]:
 		return result
 	var groups := {}
 	for entry in inventory:
@@ -90,10 +94,11 @@ static func random_materials(inventory: Array, mode: String, rng: RandomNumberGe
 			continue
 		var quality := String(entry.get("quality", ""))
 		if (mode == GOLD_TO_PURPLE and quality != "epic") \
-				or (mode == PURPLE_TARGET and quality != "legendary"):
+				or (mode in [PURPLE_TARGET, PURPLE_UP_TIER] and quality != "legendary"):
 			continue
 		var tier := tier_start(entry)
-		if tier == 0 or Equipment.item_kind(entry).is_empty():
+		if tier == 0 or Equipment.item_kind(entry).is_empty() \
+				or (mode == PURPLE_UP_TIER and tier + ItemFactory.TIER_SPAN > transfer_max_tier()):
 			continue
 		if not groups.has(tier):
 			groups[tier] = []

@@ -37,6 +37,36 @@ func _ready() -> void:
 		and EquipmentFusion.tier_start(specified.get("item", {})) == 61
 		and int(specified.item.star) == 0, "四紫定向生成指定类型 0 星紫装")
 	GameState.reset_to_defaults()
+	var upgrade_materials: Array[Dictionary] = []
+	for i in range(4):
+		var material := ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
+		GameState.inventory[i] = material
+		upgrade_materials.append(material.duplicate(true))
+	var upgrade_stale := upgrade_materials.duplicate(true)
+	GameState.inventory[0].favorite = true
+	var protected_bag := GameState.inventory.duplicate(true)
+	check(not bool(GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, upgrade_stale, "", rng).get("ok", false))
+		and GameState.inventory == protected_bag, "收藏状态变化后四紫升档不吞材料")
+	GameState.inventory[0].favorite = false
+	upgrade_materials[0].star = 11
+	GameState.inventory[0].star = 11
+	var upgraded := GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, upgrade_materials, "", rng)
+	var upgraded_item: Dictionary = upgraded.get("item", {})
+	check(bool(upgraded.get("ok", false)) and GameState.inventory_used() == 1
+		and EquipmentFusion.tier_start(upgraded_item) == 71
+		and String(upgraded_item.get("quality", "")) == "legendary"
+		and int(upgraded_item.get("star", -1)) == 0 and SaveManager._valid_item(upgraded_item),
+		"四紫升档消耗四件，生成随机部位的 71 档全新 0 星紫装")
+	check(not bool(GameState.forge_equipment(EquipmentFusion.PURPLE_UP_TIER, upgrade_materials, "", rng).get("ok", false))
+		and GameState.inventory_used() == 1, "四紫升档重复提交不会复制产物")
+	check(SaveManager.save_slot(3, true), "四紫升档结果可写入隔离槽 3")
+	var upgraded_loaded: Dictionary = SaveManager.read_slot(3)
+	var upgraded_inventory: Array = (upgraded_loaded.get("data", {}) as Dictionary).get("inventory", [])
+	check(bool(upgraded_loaded.get("ok", false)) and upgraded_inventory[0] is Dictionary
+		and int((upgraded_inventory[0] as Dictionary).get("requiredLevel", 0)) == int(upgraded_item.get("requiredLevel", -1)),
+		"四紫升档结果读档后保留新档穿戴等级")
+	SaveManager.delete_slot(3)
+	GameState.reset_to_defaults()
 	var old := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
 	old.star = 12
 	var fresh := ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)

@@ -18,11 +18,15 @@ func key(code: Key) -> void:
 		get_viewport().push_input(event, true)
 
 ## 模拟左键点击屏幕位置，验证 GUI 命中与世界点击是否正确分流。
+## 需同时填 position 与 global_position，并带上左键 mask —— 只填 position 时 GUI 命中拿不到
+## 全局坐标，控件（如快捷格按钮）收不到按下/松开，点击会静默落空。
 func click(point: Vector2) -> void:
 	for pressed in [true, false]:
 		var event := InputEventMouseButton.new()
 		event.button_index = MOUSE_BUTTON_LEFT
 		event.position = point
+		event.global_position = point
+		event.button_mask = MOUSE_BUTTON_MASK_LEFT if pressed else 0
 		event.pressed = pressed
 		get_viewport().push_input(event, true)
 
@@ -89,6 +93,14 @@ func _ready() -> void:
 	check(pilot._find_target() == enemies[0], "锁定目标被拉黑后回退最近可见目标")
 	pilot._blacklist.clear()
 	player.select_target(null)
+	# P2 目标粘性（工程 69 §5）：被误判拉黑丢掉的原目标，出了黑名单后应被优先选回，
+	# 而不是被「更近的那只」抢走（enemies[1] 比 enemies[0] 远，选回它才说明粘性真的生效）。
+	pilot._blacklist_target(enemies[1])
+	pilot._blacklist.clear()                          # 模拟 3s 黑名单到点
+	check(pilot._find_target() == enemies[1],
+		"被误判丢掉的原目标应在黑名单到点后优先被选回（目标粘性）")
+	pilot._sticky_left = 0.0                          # 记忆过期 → 回到「最近可见优先」
+	check(pilot._find_target() == enemies[0], "粘性记忆过期后应恢复最近可见优先")
 	# 空地移动使用世界投影，与相机位置无关。
 	var start := player.global_position
 	var point := start + Vector2(0, 130)
@@ -136,10 +148,18 @@ func _ready() -> void:
 	key(KEY_F)
 	check(GameState.auto_battle_on, "面板打开时 F 仍能切换自动战斗")
 	key(KEY_F)
-	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 2}
+	# P1（工程 71 §4/§5）：面板打开时鼠标点快捷格必须与键盘等效。这里直接调用 `_activate_hotbar`
+	# 断言**守卫**这一层；旧口径（panel_open and not from_keyboard）下这一条必红。
+	# 药水冷却按 item_id 独立且不落档（Consumable._cd），会跨断言残留 —— 每条断言前先 reset，
+	# 否则后一条会被前一条的冷却拦下，把「守卫放行」伪证成「守卫拦下」。
+	Consumable.reset()
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
 	GameState.player.hp = maxi(1, int(GameState.player.hp) - 30)
 	hud._activate_hotbar(0)
-	check(int(GameState.inventory[0].count) == 2, "普通面板内鼠标点快捷格仍防止拖放误用")
+	check(GameState.inventory[0] is Dictionary and int(GameState.inventory[0].count) == 2,
+		"普通面板内点快捷格应真正触发该格操作（旧防误触守卫必红）")
+	Consumable.reset()
+	GameState.player.hp = maxi(1, int(GameState.player.hp) - 30)  # 上一口药已把血补满，须再扣血才能验证键位路径
 	key(KEY_1)
 	check(GameState.inventory[0] is Dictionary and int(GameState.inventory[0].count) == 1,
 		"面板打开时快捷栏数字键仍能使用药品")
@@ -157,6 +177,15 @@ func _ready() -> void:
 	var before_focused_tab := player.locked_target
 	key(KEY_TAB)
 	check(player.locked_target != before_focused_tab, "背包按钮持有焦点时 Tab 仍切换世界目标")
+	# P1 端到端（工程 71 §5）：背包打开会把快捷栏抬到 z_index 100（hud.gd:509），
+	# 鼠标事件确实落在格子上（HotbarUiTest 的真实拖放已验证该坐标可达）——真实点击必须真的生效。
+	Consumable.reset()  # 同上：清掉前两条断言留下的红药冷却
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 2}
+	GameState.player.hp = maxi(1, int(GameState.player.hp) - 30)
+	var bag_stock := int(GameState.inventory[0].count)
+	click(hud._hotbar_buttons[0].get_global_rect().get_center())
+	check(GameState.inventory[0] is Dictionary and int(GameState.inventory[0].count) == bag_stock - 1,
+		"背包打开时真实鼠标点快捷格应消耗药品")
 	inventory_panel.set_open(false)
 	var settings_panel: Control = main.get_node("UI/SettingsPanel")
 	settings_panel.set_open(true)
@@ -167,6 +196,15 @@ func _ready() -> void:
 	Input.action_release("move_left")
 	check(GameState.world_controls_blocked() and player.global_position.is_equal_approx(modal_position),
 		"设置模态面板仍阻止角色移动")
+	# P1 边界（工程 71 §5）：模态面板仍必须拦住快捷格，不许把模态保护一起放开。
+	# 用直接调用断言守卫本身——真实点击会被窗口遮挡混淆，分不清「守卫拦下」与「根本没点到」。
+	Consumable.reset()
+	GameState.inventory[0] = {"kind": "potion", "itemId": "potion_hp_small", "count": 2}
+	GameState.player.hp = maxi(1, int(GameState.player.hp) - 30)
+	var modal_stock := int(GameState.inventory[0].count)
+	hud._activate_hotbar(0)
+	check(GameState.world_controls_blocked() and int(GameState.inventory[0].count) == modal_stock,
+		"设置模态面板内点快捷格仍应被拦下")
 	settings_panel.set_open(false)
 	Input.action_press("move_left")
 	await get_tree().physics_frame

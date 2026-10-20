@@ -79,6 +79,7 @@ func _ready() -> void:
 		and String(output.get("quality", "")) == "legendary" and SaveManager._valid_item(output),
 		"动态紫装产物经工厂生成且存档有效")
 	_test_random_materials()
+	_test_purple_up_tier()
 	if failures.is_empty():
 		print("[EquipmentFusionRuleTest] 全部通过 ✅")
 	else:
@@ -126,3 +127,46 @@ func _test_random_materials() -> void:
 		"没有四件同档 0 星装备时不产生预选")
 	check(EquipmentFusion.random_materials(bag, EquipmentFusion.STAR_TRANSFER, pick_rng).is_empty(),
 		"保星升级不提供随机放入")
+
+## 四紫升紫只认同档紫装，下一档随机部位；顶档、12 星和混档在预览前拒绝。
+func _test_purple_up_tier() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 6842
+	var items: Array[Dictionary] = []
+	for _i in range(4):
+		items.append(ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng))
+	var plan := EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER)
+	check(bool(plan.get("ok", false)) and int(plan.get("tier", 0)) == 71
+		and String(plan.get("target_kind", "x")).is_empty(), "同档四紫升到下一档且不指定部位")
+	items[0].star = 11
+	check(bool(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("ok", false)),
+		"11 星紫装可手动投入")
+	items[0].star = 12
+	check(not bool(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("ok", false)),
+		"12 星紫装不能用于升档")
+	items[0] = ItemFactory.make_equip_dynamic("c6_equip_ring", 71, "legendary", rng)
+	check(not bool(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("ok", false)),
+		"混档紫装不能升档")
+	items[0] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "epic", rng)
+	check(not bool(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("ok", false)),
+		"金装不能用于四紫升档")
+	items.clear()
+	for _i in range(4):
+		items.append(ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng))
+	check(int(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("tier", 0)) == 61,
+		"51 档紫装升到首个动态档 61")
+	var bag: Array = items.duplicate(true)
+	bag[0].star = 3
+	for _i in range(4):
+		bag.append(ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng))
+	var before := bag.duplicate(true)
+	var chosen := EquipmentFusion.random_materials(bag, EquipmentFusion.PURPLE_UP_TIER, rng)
+	check(chosen.size() == 4 and chosen.all(func(item: Dictionary) -> bool:
+		return int(item.get("star", -1)) == 0 and EquipmentFusion.tier_start(item) == EquipmentFusion.tier_start(chosen[0]))
+		and bag == before, "随机放入只预选同档 0 星紫装且不改背包")
+	items.clear()
+	for _i in range(4):
+		items.append(ItemFactory.make_equip_dynamic("c6_equip_weapon", 9981, "legendary", rng))
+	check(not bool(EquipmentFusion.plan_four(items, EquipmentFusion.PURPLE_UP_TIER).get("ok", false))
+		and EquipmentFusion.random_materials(items, EquipmentFusion.PURPLE_UP_TIER, rng).is_empty(),
+		"最高可用档不再继续升档，随机放入也不选不可合成档")

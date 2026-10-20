@@ -83,6 +83,10 @@ var drop_table_override := ""
 ## 循环图经验先除以同级 Boss 基线比例，再乘以本图收益系数；仅刷新点显式设置。
 @export var xp_curve_divisor: int = 1
 @export var xp_multiplier: float = 1.0
+## M10-3c：刷新点级生命倍率（缺省 1.0 ⇒ 存量图逐值不变）。
+@export var hp_multiplier: float = 1.0
+## M10-3c：刷新点级攻击倍率（缺省 1.0 ⇒ 存量图逐值不变）。
+@export var atk_multiplier: float = 1.0
 
 signal died(id: String)
 
@@ -207,6 +211,11 @@ func _load_template() -> void:
 	elif scale_stats:
 		attack_power *= scaled
 		defense_power *= scaled
+	# M10-3c：刷新点级倍率（缺省 1.0，存量图逐值不变）。必须在 norm / scale 结算之后，
+	# 否则倍率会被等级缩放覆盖。
+	max_hp = maxi(1, int(round(float(max_hp) * hp_multiplier)))
+	hp = max_hp
+	attack_power *= atk_multiplier
 	_roll_affixes()
 	var ar = template.get("attackRange", {})
 	if ar is Dictionary:
@@ -479,7 +488,7 @@ func _skill_hit(coeff: float) -> void:
 		attack_power * coeff * _level_damage_multiplier(),
 		float(GameState.total_defense()),
 		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
-		float(GameState.player.get("dodge", 0.0)))
+		float(GameState.player.get("dodge", 0.0)), null, _min_hit_on_player())
 	Fx.damage_number(get_tree(), player, res)
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
@@ -769,6 +778,11 @@ func _update_chapter_special(delta: float) -> bool:
 func _level_damage_multiplier() -> float:
 	return LevelGap.damage_multiplier(int(GameState.player.get("level", 1)), level)
 
+## 怪物 → 玩家的伤害下限（产品 03 §3.2 的补充口径）：即便不破防也让玩家持续掉血，
+## 使自动喝药生效、药水经济不空转。按最大生命比例，下限 10、上限 60。
+func _min_hit_on_player() -> int:
+	return clampi(int(round(float(GameState.max_hp()) * 0.0025)), 10, 60)
+
 func _do_attack(player: Node2D, play_attack_art: bool = true, from_skill: bool = false) -> void:
 	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
@@ -781,7 +795,7 @@ func _do_attack(player: Node2D, play_attack_art: bool = true, from_skill: bool =
 		attack_power * _level_damage_multiplier(),
 		float(GameState.total_defense()),
 		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
-		float(GameState.player.get("dodge", 0.0)))
+		float(GameState.player.get("dodge", 0.0)), null, _min_hit_on_player())
 	Fx.damage_number(get_tree(), player, res)
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))

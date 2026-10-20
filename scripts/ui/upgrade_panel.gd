@@ -10,6 +10,7 @@ var _center: Label
 var _preview: Label
 var _price: Label
 var _feedback: Label
+var _auto_rune_button: Button
 var _upgrade_button: Button
 var _choices: Array[Dictionary] = []
 var _selected_id := ""
@@ -134,11 +135,23 @@ func _build() -> void:
 	_price = Label.new()
 	_price.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
 	root.add_child(_price)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 10)
+	root.add_child(actions)
+	_auto_rune_button = Button.new()
+	_auto_rune_button.text = Localization.tr_key("ui.upgrade_panel.auto_runes")
+	_auto_rune_button.tooltip_text = Localization.tr_key("ui.upgrade_panel.auto_runes_tip")
+	_auto_rune_button.custom_minimum_size.y = 38
+	_auto_rune_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_auto_rune_button.pressed.connect(_on_auto_runes)
+	actions.add_child(_auto_rune_button)
+	PanelChrome.style_action(_auto_rune_button)
 	_upgrade_button = Button.new()
 	_upgrade_button.text = Localization.tr_key("ui.upgrade_panel.p004")
 	_upgrade_button.custom_minimum_size.y = 38
+	_upgrade_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_upgrade_button.pressed.connect(_on_upgrade)
-	root.add_child(_upgrade_button)
+	actions.add_child(_upgrade_button)
 	PanelChrome.style_action(_upgrade_button, true)
 	_feedback = Label.new()
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -172,12 +185,23 @@ func _refresh_choices() -> void:
 	_refresh_runes()
 	_refresh_details()
 
+## 背包变动后先按库存核销四格预选：保留前面的有效选择，清空已耗尽或超额的格子。
+## 只同步面板状态，不补选、不消耗；升星结算仍由 Upgrade.rune_plan 终验。
 func _refresh_runes() -> void:
 	var counts := {}
 	for item in GameState.inventory:
 		if item is Dictionary and String(item.get("kind", "")) == "rune":
 			var rune_id := String(item.get("itemId", ""))
-			counts[rune_id] = int(counts.get(rune_id, 0)) + int(item.get("count", 1))
+			counts[rune_id] = int(counts.get(rune_id, 0)) + maxi(0, int(item.get("count", 0)))
+	var remaining := counts.duplicate()
+	for slot in range(_rune_choices.size()):
+		var rune_id := _rune_choices[slot]
+		if rune_id.is_empty():
+			continue
+		if int(remaining.get(rune_id, 0)) <= 0 or not DataLoader.get_entry("runes", rune_id) is Dictionary:
+			_rune_choices[slot] = ""
+		else:
+			remaining[rune_id] = int(remaining[rune_id]) - 1
 	var templates = DataLoader.get_table("runes")
 	for slot in range(_rune_pickers.size()):
 		var picker := _rune_pickers[slot]
@@ -232,6 +256,7 @@ func _refresh_details() -> void:
 		_center.text = Localization.tr_key("ui.upgrade_panel.p007")
 		_preview.text = ""
 		_price.text = ""
+		_auto_rune_button.disabled = true
 		_upgrade_button.disabled = true
 		return
 	var star := int(item.get("star", 0))
@@ -239,8 +264,10 @@ func _refresh_details() -> void:
 	if star >= Upgrade.max_star():
 		_preview.text = Localization.tr_key("ui.upgrade_panel.p008")
 		_price.text = Localization.tr_key("ui.upgrade_panel.p009") % GameState.gold
+		_auto_rune_button.disabled = true
 		_upgrade_button.disabled = true
 		return
+	_auto_rune_button.disabled = not Upgrade.has_usable_runes(GameState.inventory)
 	var next_item := item.duplicate(true)
 	next_item["star"] = star + 1
 	_preview.text = Localization.tr_key("ui.upgrade_panel.p010") % [", ".join(ItemUtil.attr_lines(item)),
@@ -253,6 +280,26 @@ func _refresh_details() -> void:
 		Upgrade.final_rate(star, rune_bonus), price, GameState.gold]
 	_upgrade_button.disabled = GameState.gold < price or not plan.get("ok", false)
 	_upgrade_button.tooltip_text = Localization.tr_key("ui.upgrade_panel.p012") if GameState.gold < price else String(plan.get("reason", ""))
+
+## 只替换当前四格预选；升星、扣金币和扣如意仍由玩家点击升星按钮发起。
+func _on_auto_runes() -> void:
+	if _auto_rune_button.disabled:
+		return
+	var item := _selected_item()
+	if item.is_empty() or int(item.get("star", 0)) >= Upgrade.max_star():
+		return
+	var chosen := Upgrade.auto_runes(Upgrade.success_rate(int(item.get("star", 0))), GameState.inventory)
+	for i in range(_rune_choices.size()):
+		_rune_choices[i] = String(chosen.ids[i])
+	_refresh_runes()
+	_refresh_details()
+	if Upgrade.success_rate(int(item.get("star", 0))) >= 100.0:
+		_feedback.text = Localization.tr_key("ui.upgrade_panel.auto_unneeded")
+	elif bool(chosen.reached):
+		_feedback.text = Localization.tr_key("ui.upgrade_panel.auto_full") % (4 - _rune_choices.count(""))
+	else:
+		_feedback.text = Localization.tr_key("ui.upgrade_panel.auto_partial") % [
+			4 - _rune_choices.count(""), float(chosen.rate)]
 
 func _on_upgrade() -> void:
 	var index := _picker.selected

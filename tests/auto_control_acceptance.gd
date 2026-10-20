@@ -74,6 +74,38 @@ func _ready() -> void:
 	_check(player.global_position.distance_to(alternate.global_position) < distance_before,
 		"T08 改选后应实际接近新目标")
 
+	# P1 有牙（工程 69 §5 P1 / §6.3）：追击期的卡住判据是「角色自身位移」，不是「与目标的直线距离」。
+	# ① 角色**在推进却始终没接近目标**（绕障 / 被击退同形）→ 直线距离口径会在 1.2 秒内三连击拉黑改选；
+	# ② 角色**一步都没挪动** → 仍必须在 STUCK_LIMIT 次后拉黑改选（3.14 ① 的兜底不许丢）。
+	pilot.set_physics_process(false)
+	player.set_physics_process(false)
+	player.auto_move = Vector2.ZERO
+	pilot._blacklist.clear()
+	pilot._target = near
+	pilot._stuck_count = 0
+	pilot._stuck_t = 0.0
+	pilot._last_position = Vector2.INF
+	var away := (player.global_position - near.global_position).normalized()
+	for _i in range(10):
+		player.global_position += away * 30.0        # 每 0.3s 推进 30px，却越走越远
+		pilot._tick_stuck(AutoBattle.STUCK_INTERVAL)
+	_check(pilot.blacklist_size() == 0,
+		"P1 角色有实际位移、只是没接近目标时不得拉黑改选（直线距离口径必误判）")
+	pilot._last_position = player.global_position
+	pilot._stuck_count = 0
+	for _i in range(AutoBattle.STUCK_LIMIT):
+		pilot._tick_stuck(AutoBattle.STUCK_INTERVAL)
+	_check(pilot.blacklist_size() == 1 and pilot._is_blacklisted(near),
+		"P1 角色确实零位移时仍应拉黑改选（3.14 ①）")
+	pilot._blacklist.clear()
+	pilot._target = null
+	pilot._stuck_count = 0
+	pilot.set_physics_process(true)
+	player.set_physics_process(true)
+	player.auto_move = Vector2.ZERO
+	player.global_position = start
+	await get_tree().physics_frame
+
 	# T09：地图真实点击接管，移动结束后 3 秒恢复自动决策。
 	GameState.set_auto_battle(false)
 	await get_tree().physics_frame

@@ -18,7 +18,7 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _hp_text: Label = %HpText
 @onready var _mp_bar: HudStatusBar = %MpBar
 @onready var _mp_text: Label = %MpText
-@onready var _exp_bar: ProgressBar = %ExpBar
+@onready var _exp_bar: HudExperienceBar = %ExpBar
 @onready var _gold_label: Label = %GoldLabel
 @onready var _bag_label: Label = %BagLabel
 @onready var _auto_label: Label = %AutoLabel
@@ -105,10 +105,12 @@ func _on_mp(current: int, maximum: int) -> void:
 	_mp_bar.tooltip_text = "%s  %d / %d" % [Localization.tr_key("ui.hud.mp"), current, maximum]
 	_mp_text.text = "%d / %d" % [current, maximum]
 
+## 同步经验进度与持续悬停的提示；升级时必须同时更新当前值和新等级上限。
 func _on_xp(current: int, maximum: int) -> void:
 	_exp_bar.max_value = maxi(1, maximum)
 	_exp_bar.value = current
 	_exp_bar.tooltip_text = "%d / %d" % [current, maximum]
+	_exp_bar.refresh_live_tooltip()
 	HotbarVisual.update_experience_marker(_exp_bar)
 
 func _layout_bottom_hud() -> void:
@@ -399,7 +401,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	for i in range(12):
 		if InputMap.has_action("hotbar_%d" % (i + 1)) and event.is_action_pressed("hotbar_%d" % (i + 1)):
-			_activate_hotbar(i, true)
+			_activate_hotbar(i)
 			get_viewport().set_input_as_handled()
 			return
 
@@ -523,9 +525,12 @@ func _on_binding_dropped(index: int, payload: Dictionary) -> void:
 			if Warehouse.token_matches(item, String(payload.get("token", ""))):
 				GameState.set_hotbar_entry(index, HotbarConfig.entry_for_item(item))
 
-## 键盘快捷栏可在普通面板打开时使用；鼠标点格在拖放模式下保持原有防误触规则。
-func _activate_hotbar(index: int, from_keyboard: bool = false) -> void:
-	if index < 0 or index >= 12 or GameState.world_controls_blocked() or (GameState.panel_open and not from_keyboard):
+## 快捷栏在普通面板打开时可用，键盘与鼠标**同口径**（工程 71 §4 P1）：
+## 判据只留 `world_controls_blocked()`，鼠标点格不再因为 `panel_open` 被拦；
+## 菜单 / 设置 / 存档 / 死亡 / 装备确认与文字框聚焦仍由该判据拦下。
+## 拖放安全不靠本守卫：从背包 / 技能面板拖入时按下点在源控件上，快捷格只收 `_drop_data`。
+func _activate_hotbar(index: int) -> void:
+	if index < 0 or index >= 12 or GameState.world_controls_blocked():
 		return
 	var binding = GameState.hotbar[index]
 	if not binding is Dictionary:

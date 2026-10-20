@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/portraits/guardian.png" id="3_portrait"]
 [ext_resource type="Shader" path="res://assets/ui/portrait_circle.gdshader" id="4_portrait_mask"]
 [ext_resource type="Script" path="res://scripts/ui/hud_status_bar.gd" id="5_status_bar"]
+[ext_resource type="Script" path="res://scripts/ui/hud_experience_bar.gd" id="5_exp_bar"]
 [ext_resource type="Script" path="res://scripts/ui/hud_status_icon.gd" id="6_status_icon"]
 [ext_resource type="Script" path="res://scripts/ui/hud_portrait_ornament.gd" id="7_portrait_ornament"]
 [ext_resource type="Script" path="res://scripts/ui/hud_level_badge.gd" id="8_level_badge"]
@@ -535,6 +536,7 @@ alignment = 1
 
 [node name="ExpBar" type="ProgressBar" parent="."]
 unique_name_in_owner = true
+script = ExtResource("5_exp_bar")
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

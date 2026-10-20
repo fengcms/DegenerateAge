@@ -11,7 +11,8 @@ extends Node
 ##   SEARCH_LOOT / PATH_TO_LOOT / PICK_UP / RECOVER / MANUAL_OVERRIDE / BLOCKED
 ##
 ## 硬性异常规则（3.14「必须实现」）逐条落地：
-##   ① 连续 3 次不推进 → 目标短期黑名单重搜（T08 不可达改选）；
+##   ① 连续 5 次「角色无位移」→ 目标短期黑名单重搜（T08 不可达改选；口径见工程文档 69 §5 P1）；
+##   ①′ 黑名单 3s + 目标粘性：只要原目标仍有有效、仍可达，重选就回到它（P2，同上 §5）；
 ##   ② 目标消失 / 死亡 / 切图 → 停旧指令（每帧校验目标有效性）；
 ##   ③ 手动接管 → 立即取消、松手后 1.5 秒恢复（4.6）；
 ##   ④ 背包满 → 不走向该掉落物、不循环重试（T10，靠节流 + 目标剔除，不做每帧重试）；
@@ -47,9 +48,17 @@ enum State {
 const SEARCH_INTERVAL := 0.35          # 搜怪节流（s）：无目标待机时不得每帧搜索
 const REPATH_INTERVAL := 0.25          # 接近方向重算节流（s）
 const STUCK_INTERVAL := 0.3            # 卡住检测间隔（s）
+## P1（工程文档 69 §5）：追击期的卡住判据是「角色本间隔内的**自身位移**」，
+## 不再是「与目标的直线距离」——绕障时直线距离可能不降甚至变大，被 Boss 技能击退 / 倒地时同样如此，
+## 用距离判据会把这两种**正常**情况误判成「不推进」并把 Boss 拉黑改选。
+const STUCK_MOVE_EPS := 4.0            # 单次检测内角色自身的最小位移（px）；低于它才算一次「没动」
+## 巡游（`_tick_roam`）与手动点击行走（`player.gd::_map_direction`）仍用**折线推进量**判据。
 const STUCK_PROGRESS_EPS := 6.0        # 两次检测间的最小接近量（px）
-const STUCK_LIMIT := 3                 # 连续不推进次数上限 → 黑名单（3.14 ①）
-const BLACKLIST_TIME := 8.0            # 目标黑名单时长（s）
+const STUCK_LIMIT := 5                 # 连续「没动」次数上限 → 黑名单（3.14 ①，约 1.5s）
+## P2（工程文档 69 §5）：8s 黑名单足够跑去把隔壁一只打完，「中途换 Boss」于是变成事实；
+## 收到 3s，并用下面的粘性记忆在黑名单到点后把原目标捡回来。
+const BLACKLIST_TIME := 3.0            # 目标黑名单时长（s）
+const STICKY_TIME := 4.0               # 目标粘性记忆时长（s，= 黑名单 + 1s 宽限）
 const MANUAL_RESUME_DELAY := 1.5       # 手动接管后恢复延迟（s，4.6）
 const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
@@ -81,7 +90,6 @@ var _loot: Node = null
 var _search_t: float = 0.0
 var _repath_t: float = 0.0
 var _stuck_t: float = 0.0
-var _last_dist: float = INF
 var _stuck_count: int = 0
 var _blocked_t: float = 0.0
 var _manual_t: float = 0.0
@@ -100,6 +108,10 @@ var _last_position := Vector2.INF
 
 ## instance_id → 剩余秒数（短期黑名单，3.14 ①）
 var _blacklist: Dictionary = {}
+## P2 目标粘性：上一只因「确实走不动」被拉黑的候选。黑名单一到点、它仍有效且可达时优先回去，
+## 否则「就近重选」必然落到隔壁那只 —— 那正是「打一半绕出去打别的 Boss」的观感来源。
+var _sticky_target: Node = null
+var _sticky_left := 0.0
 
 func _ready() -> void:
 	_player = get_parent() as PlayerCharacter
@@ -115,10 +127,11 @@ func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 		_search_t = 0.0
 		_repath_t = 0.0
 		_stuck_count = 0
-		_last_dist = INF
 		_last_position = Vector2.INF
 		_cave_nav.clear()
 		_blacklist.clear()
+		_sticky_target = null
+		_sticky_left = 0.0
 		_roam_index = -1
 	else:
 		_target = null
@@ -132,6 +145,8 @@ func reset_after_travel() -> void:
 	_player.clear_travel_intent()
 	_target = null
 	_loot = null
+	_sticky_target = null
+	_sticky_left = 0.0
 	_roam_index = -1
 	_roam_points.clear()
 	_roam_built = false
@@ -223,6 +238,9 @@ func begin_manual_override() -> void:
 	_player.set_auto_move(Vector2.ZERO)
 	_target = null
 	_loot = null
+	# 手动接管是玩家的新指令：清掉粘性记忆，避免 1.5s 后自动战斗把人物带回原来的 Boss（4.6）。
+	_sticky_target = null
+	_sticky_left = 0.0
 	_roam_index = -1
 	_manual_t = MANUAL_RESUME_DELAY if GameState.auto_battle_on else 0.0
 	if GameState.auto_battle_on:
@@ -258,7 +276,6 @@ func _tick(delta: float) -> void:
 	if _target != null and (not is_instance_valid(_target)
 			or _target.get("is_dead") == true or _is_blacklisted(_target)):
 		_target = null
-		_last_dist = INF
 		_stuck_count = 0
 
 	# F/G 同开时优先捡可收取的地面物；背包无空间时 _can_pick 会将其排除。
@@ -277,7 +294,6 @@ func _tick(delta: float) -> void:
 				_repath_t = 0.0
 				_player.set_auto_move(Vector2.ZERO)
 				_player.select_target(_target as Node2D, _player.target_is_manual and _player.locked_target == _target)
-				_last_dist = INF
 				_stuck_count = 0
 				_last_position = Vector2.INF
 				_cave_nav.clear()
@@ -295,7 +311,7 @@ func _tick(delta: float) -> void:
 		if _cave_ground() != null and _direction_to(target2d.global_position) == Vector2.ZERO:
 			_blacklist_target(_target)
 			return
-		_tick_stuck(delta, dist)
+		_tick_stuck(delta)
 		if _blocked_t > 0.0:
 			return
 		_repath_t = maxf(0.0, _repath_t - delta)
@@ -400,11 +416,19 @@ func _try_drink(kind: String) -> bool:
 
 ## 当前画面可见区域内搜索敌人（3.14）。排除 Boss（除非设置允许）、黑名单目标。
 ## M1 目标优先级：距离最近；同距离取血量更低者（「优先低代价 / 弱目标」的最小实现）。
+## P2：「原目标仍有效且可达」这一档**优先于**「距离最近」——先回到原来那只，再谈就近（工程文档 69 §5）。
 func _find_target() -> Node:
 	# 明确选中的目标优先；黑名单仍生效，避免不可达目标循环。
 	if _player.target_is_manual and _player.valid_target(_player.locked_target) and not _is_blacklisted(_player.locked_target):
 		if _route_reachable((_player.locked_target as Node2D).global_position):
 			return _player.locked_target
+	# 目标粘性（P2，工程文档 69 §5）：上一只因「确实走不动」被拉黑的那只，一旦出了黑名单、
+	# 仍有效且仍可达，就优先回到它 —— 只按「谁最近」重选会必然落到隔壁的 Boss 身上。
+	if _sticky_left > 0.0 and _sticky_target != null and is_instance_valid(_sticky_target) \
+			and _sticky_target is Node2D and _sticky_target.get("is_dead") != true \
+			and not _is_blacklisted(_sticky_target) \
+			and _route_reachable((_sticky_target as Node2D).global_position):
+		return _sticky_target
 	var allow_boss := bool(GameState.settings.get("allowBoss", false))
 	var best: Node = null
 	var best_dist := INF
@@ -577,47 +601,48 @@ func _can_pick(gi: GroundItem) -> bool:
 
 # ---- 卡住检测与黑名单（3.14 ①，T08）----
 
-func _tick_stuck(delta: float, dist: float) -> void:
+## 追击期的卡住判据 = **角色自身位移**（P1，见工程文档 69 §3.1 / §5）。
+## 旧口径拿「与目标的**直线距离**每 0.3s 是否下降 6px」当判据，会把两类**正常**行为误判成不可达：
+##   ① 绕障：路径要求先侧向甚至反向绕过悬崖/墙体，头 0.9s 内直线距离几乎不变；
+##   ② 被击退 / 倒地：距离不降反增（`monster.gd` 的 SKILL_KNOCKBACK_DISTANCE / SKILL_KNOCKDOWN_DURATION）。
+## 现在只对「角色本间隔内一步都没挪动（< STUCK_MOVE_EPS）」计数，连续 STUCK_LIMIT 次才拉黑改选——
+## 这才是 3.14 ①「不可达」的本意：角色确实走不动，而不是「走得绕」。
+func _tick_stuck(delta: float) -> void:
 	_stuck_t += delta
 	if _stuck_t < STUCK_INTERVAL:
 		return
 	_stuck_t = 0.0
-	if GameState.current_map == "corruption_source":
-		var moved := _player.global_position.distance_to(_last_position) if _last_position.is_finite() else INF
-		_last_position = _player.global_position
-		if moved >= 2.0:
-			_stuck_count = 0
-			_last_dist = dist
-			return
-		_stuck_count += 1
-		if _stuck_count == STUCK_LIMIT:
-			_cave_nav.clear()
-		if _stuck_count >= STUCK_LIMIT * 2:
-			_blacklist_target(_target)
+	var moved := _player.global_position.distance_to(_last_position) if _last_position.is_finite() else INF
+	_last_position = _player.global_position
+	if moved >= STUCK_MOVE_EPS:
+		_stuck_count = 0
 		return
-	if _last_dist - dist < STUCK_PROGRESS_EPS:
-		_stuck_count += 1
-		if _stuck_count >= STUCK_LIMIT:
-			_blacklist_target(_target)
-		return
-	_stuck_count = 0
-	_last_dist = dist
+	_stuck_count += 1
+	if _stuck_count >= STUCK_LIMIT:
+		_blacklist_target(_target)
 
-## 目标短期拉黑并改选（寻路空 / 终点占位 / 连续不推进 → 3.14 ①）。
+## 目标短期拉黑并改选（寻路空 / 终点占位 / 连续无位移 → 3.14 ①）。
 func _blacklist_target(t: Node) -> void:
 	if t != null and is_instance_valid(t):
 		_blacklist[t.get_instance_id()] = BLACKLIST_TIME
+		# P2：记住它。若这次拉黑本身就是误判，黑名单到点后粘性会把原目标捡回来。
+		_sticky_target = t
+		_sticky_left = STICKY_TIME
 		_toast(Localization.tr_key("ui.auto.unreachable"), "info")
 	_target = null
 	_cave_nav.clear()
 	_last_position = Vector2.INF
-	_last_dist = INF
 	_stuck_count = 0
 	_blocked_t = BLOCKED_TIME
 	_set_state(State.BLOCKED)
 	_player.set_auto_move(Vector2.ZERO)
 
 func _tick_blacklist(delta: float) -> void:
+	# P2 粘性记忆与黑名单同一时间轴衰减，只是多留 1 秒宽限（黑名单先失效，记忆后失效）。
+	if _sticky_left > 0.0:
+		_sticky_left = maxf(0.0, _sticky_left - delta)
+		if _sticky_left <= 0.0:
+			_sticky_target = null
 	if _blacklist.is_empty():
 		return
 	var expired: Array = []
