@@ -785,5 +785,13 @@
   "ui.equip_tip.unworn": "未穿着",
   "msg.save_manager.reclaim_tools": "已补发缺失的随身工具 %d 件",
   "msg.save_manager.reclaim_warehouse": "（%d 件因背包已满放入仓库）",
-  "msg.save_manager.reclaim_failed": "随身工具补发失败：背包与仓库已满"
+  "msg.save_manager.reclaim_failed": "随身工具补发失败：背包与仓库已满",
+  "ui.hud.tool_carter_short": "车夫",
+  "ui.hud.tool_shop_short": "商队",
+  "ui.hud.tool_token_short": "令牌",
+  "ui.hud.p020": "随身工具已放入仓库，请取回背包后使用",
+  "ui.boss_token_panel.p011": "全部",
+  "ui.boss_token_panel.p012": "仅存活",
+  "ui.boss_token_panel.p013": "冷却中",
+  "ui.boss_token_panel.p014": "当前筛选下没有目标，换一档看看。"
 }

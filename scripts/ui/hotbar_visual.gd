@@ -58,6 +58,55 @@ static func binding_icon(binding: Variant) -> Texture2D:
 			return BASIC_SLASH
 	return SampleArt.binding_icon(binding)
 
+## 工程 80：格内**短标签**（无图标时的显示文字）。空串表示沿用「名称首字」。
+## 三件随身工具都没有图标资源，`decorate` 拿不到图就会显示名称首字 ——
+## 「随身车夫」与「随身商队」两个字都是「随」，格子根本分不清（Q2 选 a：简称）。
+## 键名与物品 id 一一对应，加新工具时顺手加一条；查不到就回退首字，不会显示空白。
+const SHORT_LABEL_KEYS := {
+	"tool_portable_carter": "ui.hud.tool_carter_short",
+	"tool_portable_shop": "ui.hud.tool_shop_short",
+	"tool_boss_token": "ui.hud.tool_token_short",
+}
+
+static func short_label(binding: Variant) -> String:
+	if not binding is Dictionary:
+		return ""
+	var key := String((SHORT_LABEL_KEYS as Dictionary).get(String(binding.get("id", "")), ""))
+	if key.is_empty():
+		return ""
+	var text := Localization.tr_key(key)
+	# 本地化缺键时 `tr_key` 会回退成键名本身，那种「ui.hud.xxx」不是给人看的。
+	return "" if text == key else text
+
+## 工程 80：该绑定要不要显示数量角标。随身工具（`useType: panel`）开面板不消耗，
+## 显示「1」既无意义又像消耗品；技能没有数量概念，同样不显示。
+static func shows_count(binding: Variant) -> bool:
+	if not binding is Dictionary:
+		return false
+	if String(binding.get("kind", "")) == "skill":
+		return false
+	if String(binding.get("kind", "")) != "item":
+		return true
+	var template: Variant = DataLoader.get_entry("miscItems", String(binding.get("id", "")))
+	return not (template is Dictionary and String((template as Dictionary).get("useType", "")) == "panel")
+
+## 工程 80：物品不在背包时的提示文案。`_activate_hotbar` 只搜背包，
+## 工具被玩家放进仓库后点格子会失败 —— 不说清「在哪儿」会被当成功能坏了（Q3 选 a）。
+static func missing_item_hint(binding: Variant, in_warehouse: bool) -> String:
+	var name := short_label(binding)
+	if name.is_empty():
+		name = _name_of(binding)
+	return Localization.tr_key("ui.hud.p020") % name if in_warehouse \
+		else Localization.tr_key("ui.hud.p017") % _name_of(binding)
+
+static func _name_of(binding: Variant) -> String:
+	if not binding is Dictionary:
+		return Localization.tr_key("ui.hud.p016")
+	var id := String(binding.get("id", ""))
+	var table := "potions" if String(binding.get("kind", "")) == "potion" else "miscItems"
+	var template: Variant = DataLoader.get_entry(table, id)
+	return String((template as Dictionary).get("name", id)) if template is Dictionary else id
+
 static func key_name(action: String) -> String:
 	var code := SettingsRuntime.key_for(action)
 	return OS.get_keycode_string(code) if code > 0 else ""

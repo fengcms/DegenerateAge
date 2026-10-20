@@ -447,7 +447,11 @@ func _refresh_hotbar() -> void:
 		var name := _binding_name(binding)
 		var slot := _hotbar_buttons[i]
 		slot.entry = binding
-		slot.text = name.substr(0, 1) if binding != null else ""
+		# 工程 80：无图标的随身工具用两字简称（「车夫」/「商队」/「令牌」），
+		# 否则「随身车夫」与「随身商队」都显示首字「随」，快捷栏上分不清。
+		var short := HotbarVisual.short_label(binding)
+		slot.text = short if not short.is_empty() else (name.substr(0, 1) if binding != null else "")
+		slot.add_theme_font_size_override("font_size", 12 if short.length() >= 2 else 16)
 		slot.tooltip_text = Localization.tr_key("ui.hud.p015") % [name, i + 1]
 		slot.set_count(_binding_count(binding))
 		var icon := HotbarVisual.binding_icon(binding)
@@ -487,7 +491,8 @@ func _binding_name(binding: Variant) -> String:
 	return Localization.tr_key("ui.hud.p016")
 
 func _binding_count(binding: Variant) -> int:
-	if not binding is Dictionary or binding.kind == "skill":
+	# 工程 80：随身工具（`useType: panel`）不消耗，显示角标「1」既无意义又像消耗品。
+	if not HotbarVisual.shows_count(binding):
 		return -1
 	var total := 0
 	for raw in GameState.inventory:
@@ -542,7 +547,8 @@ func _activate_hotbar(index: int) -> void:
 			if source >= 0:
 				GameState.use_item(source)
 			else:
-				EventBus.toast_requested.emit(Localization.tr_key("ui.hud.p017") % _binding_name(binding), "danger")
+				EventBus.toast_requested.emit(
+					HotbarVisual.missing_item_hint(binding, _in_warehouse(String(binding.id))), "danger")
 		"skill":
 			var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 			if player != null:
@@ -554,6 +560,13 @@ func _first_item_index(item_id: String) -> int:
 		if item is Dictionary and item.get("itemId") == item_id:
 			return i
 	return -1
+
+## 工程 80：快捷栏只搜背包，工具被放进仓库后会点不动 —— 提示必须说清东西在哪儿。
+func _in_warehouse(item_id: String) -> bool:
+	for raw in GameState.warehouse:
+		if raw is Dictionary and String((raw as Dictionary).get("itemId", "")) == item_id:
+			return true
+	return false
 
 func _use_potion(kind: String) -> void:
 	var idx := Consumable.pick_index(kind)

@@ -15,6 +15,13 @@ extends Control
 ## 判据只有本文件的两处（`_refresh` / `_on_travel`），其余渲染函数两种模式共用。
 
 const PANEL_WIDTH := 560
+## 工程 80 紧凑化：原行高 56px × 35 行 = 2493px（视口可用约 716px ⇒ 3.5 屏）。
+## 收紧外框内边距、行间隔与副标题字号后行高约 40px，再叠加分组折叠把默认视图压进一屏。
+const ROW_MARGIN_H := 8
+const ROW_MARGIN_V := 4
+const ROW_TITLE_SIZE := 14
+const ROW_SUB_SIZE := 11
+const TRAVEL_BUTTON_SIZE := Vector2(72, 28)
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.30, 0.33, 0.38, 0.95)
 const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
@@ -35,6 +42,13 @@ var _portable := false
 ## 当前渲染的分组键（当地模式恒为空）与行数 —— 只读访问器供测试，不含业务分支。
 var _section_keys: Array[String] = []
 var _row_count := 0
+## 工程 80：随身模式七分组可折叠。键 = 分组键，值 = true 表示**收起**，是可见性的唯一来源。
+## 🔴 只在 `set_open(true)` 时按默认策略初始化：金币变化会触发 `_refresh`，
+## 若每次刷新都重置，玩家手动展开的组会被静默收起（行为回退且难复现）。
+var _collapsed: Dictionary = {}
+var _group_counts: Dictionary = {}
+## 当前**实际建出来**的行数（折叠组不计）。与 `row_count()`（统计口径，恒 35）分工不同。
+var _visible_row_count := 0
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -81,6 +95,8 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("carter", open)
 	if open:
+		# 每次打开都回到默认折叠态：等级会变，上次展开的组这次未必还是玩家要去的。
+		_reset_collapsed()
 		_reset_hint()
 		_refresh()
 		EventBus.panel_opened.emit("carter")
@@ -139,7 +155,7 @@ func _build() -> void:
 	root.add_child(_scroll)
 	var content := VBoxContainer.new()
 	content.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
-	content.add_theme_constant_override("separation", 8)
+	content.add_theme_constant_override("separation", 6)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(content)
 	_box.minimum_size_changed.connect(func() -> void: _update_layout.call_deferred())
@@ -157,7 +173,7 @@ func _build() -> void:
 
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_list.add_theme_constant_override("separation", 8)
+	_list.add_theme_constant_override("separation", 6)
 	content.add_child(_list)
 
 	_hint = Label.new()
@@ -199,7 +215,9 @@ func _refresh() -> void:
 		_list.remove_child(c)
 		c.queue_free()
 	_section_keys.clear()
+	_group_counts.clear()
 	_row_count = 0
+	_visible_row_count = 0
 	var dests: Array = MapService.anywhere_destinations() if _portable else MapService.destinations()
 	if dests.is_empty():
 		var l := Label.new()
@@ -211,6 +229,7 @@ func _refresh() -> void:
 		for d in dests:
 			_list.add_child(_make_row(d as Dictionary))
 			_row_count += 1
+			_visible_row_count += 1
 		return
 	# 随身模式：按 LEVEL_GROUPS 的**固定顺序**分组渲染；空组整段跳过（不显示空标题）。
 	var by_group: Dictionary = {}
@@ -219,24 +238,71 @@ func _refresh() -> void:
 		if not by_group.has(key):
 			by_group[key] = []
 		(by_group[key] as Array).append(d)
+		_group_counts[key] = int(_group_counts.get(key, 0)) + 1
 	for raw_key in MapService.LEVEL_GROUPS:
 		var key := String(raw_key)
 		if not by_group.has(key):
 			continue
 		_section_keys.append(key)
 		_list.add_child(_make_section(key))
+		var collapsed := bool(_collapsed.get(key, false))
 		for d in by_group[key]:
-			_list.add_child(_make_row(d as Dictionary))
+			# 🔴 统计口径不随折叠改变：`row_count()` 恒等于全部目的地数（测试锚点 35），
+			# 只有 `visible_row_count()` 反映当前建出来的行。
 			_row_count += 1
+			if collapsed:
+				continue
+			_list.add_child(_make_row(d as Dictionary))
+			_visible_row_count += 1
+	_update_layout.call_deferred()
 
-## 分组标题：循环图组用专名（等级对 60+ 无意义，c7_arena 与 51-60 组同为 60）。
+## 默认展开「玩家等级所在档 + 满级循环组」，其余收起。
+## 当地模式不参与折叠（`_collapsed` 留空 ⇒ 全展开，与原行为逐字一致）。
+func _reset_collapsed() -> void:
+	_collapsed = {}
+	if not _portable:
+		return
+	var open_keys := _default_open_keys()
+	for raw_key in MapService.LEVEL_GROUPS:
+		_collapsed[String(raw_key)] = not open_keys.has(String(raw_key))
+
+## 玩家等级 → 十级一档的分组键。60 级归「51-60」（与 `MapService.level_group_of` 同口径：
+## 只有 `levelFromPlayer` 的循环图才落「60+」，等级本身 60 不进「60+」）。
+static func _default_open_keys() -> Array[String]:
+	var out: Array[String] = ["60+"]
+	var level := maxi(1, int(GameState.player.level))
+	if level >= 60:
+		out.append("51-60")
+		return out
+	var start := (level - 1) / 10 * 10 + 1
+	out.append("%d-%d" % [start, start + 9])
+	return out
+
+## 分组标题（工程 80 起是可点按钮）：循环图组用专名；点击收起 / 展开该组。
+## 🔴 折叠只改**建哪些行**，不改统计口径：`row_count()` 仍返回全部目的地数。
 func _make_section(key: String) -> Control:
-	var l := Label.new()
-	l.text = Localization.tr_key("ui.carter_panel.p013") if key == "60+" \
+	var collapsed := bool(_collapsed.get(key, false))
+	var b := Button.new()
+	b.text = "%s %s（%d）" % ["▸" if collapsed else "▾", _section_title(key), int(_group_counts.get(key, 0))]
+	b.custom_minimum_size = Vector2(0, 28)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_font_size_override("font_size", 14)
+	b.add_theme_color_override("font_color", COL_TITLE)
+	b.pressed.connect(_on_section_pressed.bind(key))
+	return b
+
+## 循环图组用专名（等级对 60+ 无意义，c7_arena 与 51-60 组同为 60）。
+func _section_title(key: String) -> String:
+	return Localization.tr_key("ui.carter_panel.p013") if key == "60+" \
 		else Localization.tr_key("ui.carter_panel.p012") % key
-	l.add_theme_font_size_override("font_size", 14)
-	l.add_theme_color_override("font_color", COL_TITLE)
-	return l
+
+## 与点击分组按钮同一条路（测试用它驱动折叠，避免依赖真实鼠标事件）。
+func toggle_section(key: String) -> void:
+	_on_section_pressed(key)
+
+func _on_section_pressed(key: String) -> void:
+	_collapsed[key] = not bool(_collapsed.get(key, false))
+	_refresh()
 
 ## 只读访问器（同 `BossHealthBar.bar_count()` 规格）：测试用它确认模式串到了 UI。
 func section_keys() -> Array[String]:
@@ -244,6 +310,14 @@ func section_keys() -> Array[String]:
 
 func row_count() -> int:
 	return _row_count
+
+## 当前**可见**行数（折叠组不计）。工程 80 新增：默认视图应显著小于 `row_count()`。
+func visible_row_count() -> int:
+	return _visible_row_count
+
+## 分组是否处于收起态（测试断言默认展开策略用）。
+func is_collapsed(key: String) -> bool:
+	return bool(_collapsed.get(key, false))
 
 ## 提示行文本（失败原因落在这里）。测试用它确认**选对了哪条出行 API**：
 ## 金币不足时 `travel_anywhere` 报「金币不足」、`travel_to` 报「车夫无法直达」，两者不通用。
@@ -260,10 +334,10 @@ func _make_row(d: Dictionary) -> Control:
 	panel.add_theme_stylebox_override("panel", _row_style(unlocked, afford))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
+	margin.add_theme_constant_override("margin_left", ROW_MARGIN_H)
+	margin.add_theme_constant_override("margin_right", ROW_MARGIN_H)
+	margin.add_theme_constant_override("margin_top", ROW_MARGIN_V)
+	margin.add_theme_constant_override("margin_bottom", ROW_MARGIN_V)
 	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
@@ -277,13 +351,13 @@ func _make_row(d: Dictionary) -> Control:
 
 	var title := Label.new()
 	title.text = String(d.get("name", map_id))
-	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_font_size_override("font_size", ROW_TITLE_SIZE)
 	title.add_theme_color_override("font_color", COL_TITLE if unlocked else COL_TEXT_DIM)
 	info.add_child(title)
 
 	var sub := Label.new()
 	sub.text = Localization.tr_key("ui.carter_panel.p006") % [int(d.get("recommendedLevel", 1)), _fee_text(cost)]
-	sub.add_theme_font_size_override("font_size", 12)
+	sub.add_theme_font_size_override("font_size", ROW_SUB_SIZE)
 	sub.add_theme_color_override("font_color", COL_GOLD if cost > 0 else COL_TEXT_DIM)
 	info.add_child(sub)
 
@@ -296,7 +370,7 @@ func _make_travel_button(d: Dictionary, unlocked: bool, afford: bool) -> Button:
 	var map_id := String(d.get("id", ""))
 	var b := Button.new()
 	b.text = Localization.tr_key("ui.carter_panel.p007")
-	b.custom_minimum_size = Vector2(84, 30)
+	b.custom_minimum_size = TRAVEL_BUTTON_SIZE
 	if not unlocked:
 		b.disabled = true
 		b.tooltip_text = String(d.get("reason", Localization.tr_key("ui.carter.locked")))
