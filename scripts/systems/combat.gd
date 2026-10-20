@@ -34,15 +34,19 @@ static func miss_chance(defender_dodge: float) -> float:
 ## 注：传入 use_rng 可复现随机（测试用）；crit_chance=0/1 时结果确定。
 static func resolve(attacker_attack: float, defender_defense: float, multiplier: float,
 		crit_chance: float, crit_mult: float, defender_dodge: float = 0.0,
-		use_rng: RandomNumberGenerator = null) -> Dictionary:
+		use_rng: RandomNumberGenerator = null, min_damage: int = 1) -> Dictionary:
 	var r: RandomNumberGenerator = use_rng if use_rng != null else rng()
 
 	# ① 命中判定（概率 Miss）
 	if r.randf() < miss_chance(defender_dodge):
 		return {"miss": true, "damage": 0, "critical": false}
 
-	# ② 基础伤害：max(1, floor(攻×系数 − 防×0.5))
-	var base := maxf(1.0, floorf(attacker_attack * multiplier - defender_defense * 0.5))
+	# ② 基础伤害：破防时 floor(攻×系数 − 防×0.5)，不破防时取调用方给定的下限
+	#    （`min_damage` 缺省 1 = 原行为；怪物 → 玩家时由调用方传按最大生命比例的下限，
+	#    见 monster.gd::_min_hit_on_player）。下限只在不破防（公式被兜到 ≤0）时替换 1 点兜底，
+	#    不影响任何已破防的伤害数值。
+	var raw := floorf(attacker_attack * multiplier - defender_defense * 0.5)
+	var base := maxf(float(min_damage), 1.0) if raw <= 0.0 else raw
 
 	# ③ 暴击判定
 	var critical := r.randf() < clampf(crit_chance, 0.0, MAX_CRIT_CHANCE)
