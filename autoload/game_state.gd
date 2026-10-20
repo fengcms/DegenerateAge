@@ -305,32 +305,87 @@ func xp_to_next(level: int) -> int:
 func equip_bonus() -> Dictionary:
 	return Equipment.bonus(equipment)
 
-## 总攻击力 = 基础攻击（player.attack，升级成长 4.4）+ 装备固定加成（5.2）。
-## 装备**不改基础值**（5.1）：基础值与装备加成始终分离保存。
-func total_attack() -> int:
+## 套装加成（品质档 + 星级档，相加；产品 05 §5.14 / 工程 66）。
+## **派生值，不落档**：读档后由 `equipment` 重算，`_is_valid_save` 零改动。
+func set_bonus() -> Dictionary:
+	return SetBonus.evaluate(equipment)
+
+## 套装加成总百分比（0.0 – 0.40）。全紫全 12 星 = 0.40。
+func set_bonus_pct() -> float:
+	return float(set_bonus().get("pct", 0.0))
+
+## 正向缩放（越大越好的属性）。
+func _scaled(value: float) -> float:
+	return value * (1.0 + set_bonus_pct())
+
+## 反向缩放（越小越好的属性，如攻击间隔）：**用除法**，除以 (1+pct)。
+## 乘 (1−pct) 会让攻击间隔掉 40% ⇒ 实际攻速涨 66.7%，与「属性 +40%」不符。
+func _inverse_scaled(value: float) -> float:
+	return SetBonus.inverse_scale(value, set_bonus_pct())
+
+## 不含套装的基础攻击（供 `max_hp` 内部使用）。
+## 🔴 若 `max_hp` 直接调 `total_attack()`，套装会**二次放大**到 1.96 倍而不是 1.4 倍。
+func _base_attack() -> int:
 	return int(player.attack) + int(round(float(equip_bonus().get("atk", 0.0))))
 
-## 总防御力 = 基础防御 + 装备固定加成。
-func total_defense() -> int:
+## 不含套装的基础防御。
+func _base_defense() -> int:
 	return int(player.defense) + int(round(float(equip_bonus().get("def", 0.0))))
 
-## 总冷却缩减 = 基础 + 装备词条，**按加法累加**后截断到上限（D7 / 产品 03 §3.8「超限部分在结算时截断」）。
+## 总攻击力 = （基础攻击 + 装备固定加成）× (1 + 套装加成)。
+## 装备**不改基础值**（5.1）：基础值与装备加成始终分离保存。
+func total_attack() -> int:
+	return int(round(_scaled(float(_base_attack()))))
+
+## 总防御力 = （基础防御 + 装备固定加成）× (1 + 套装加成)。
+func total_defense() -> int:
+	return int(round(_scaled(float(_base_defense()))))
+
+## 总冷却缩减 = 基础 + 装备词条，**按加法累加**后乘套装加成，再截断到上限
+## （D7 / 产品 03 §3.8「超限部分在结算时截断」）。
 ## 唯一口径入口：展示与施放冷却都读这里，避免各调用点各算一遍。
 func total_cdr() -> float:
-	return clampf(float(player.get("cdr", 0.0)) + float(equip_bonus().get("cdr", 0.0)), 0.0, PLAYER_CDR_CAP)
+	return clampf(_scaled(float(player.get("cdr", 0.0)) + float(equip_bonus().get("cdr", 0.0))),
+		0.0, PLAYER_CDR_CAP)
 
 ## 施放冷却 = 基础冷却 × (1 − 总冷却缩减)。技能冷却是运行态（切图保留、读档重建）。
 func cooldown_after_cdr(base_cooldown: float) -> float:
 	return maxf(0.0, base_cooldown) * (1.0 - total_cdr())
 
-## 派生的最大生命（4.3 公式；攻 / 防取**总属性**，装备 hp / hpPercent 进入固定 / 百分比项）。
+# ---- 战斗百分比属性（工程 66 D1=B：随套装加成放大，读取一律走这些门面）----
+# `player` 字典里的值**永远是基础值**：套装加成只在这几个门面里乘，
+# 绝不写回字典（写回会污染存档，且触发 save_manager 的上界校验）。
+
+func total_crit_chance() -> float:
+	return clampf(_scaled(float(player.get("criticalChance", 0.0))), 0.0, Combat.MAX_CRIT_CHANCE)
+
+func total_crit_multiplier() -> float:
+	return clampf(_scaled(float(player.get("criticalMultiplier", 1.0))), 1.0, Combat.MAX_CRIT_MULT)
+
+## 闪避 / 格挡是比例值（0–1），放大后截断到 1.0。
+func total_dodge() -> float:
+	return clampf(_scaled(float(player.get("dodge", 0.0))), 0.0, 1.0)
+
+func total_block() -> float:
+	return clampf(_scaled(float(player.get("block", 0.0))), 0.0, 1.0)
+
+## 移动速度（格/秒）。⚠ 4.0 → 5.6 是 40% 加速，手感变化明显；
+## 嫌快可把 `movementSpeed` 从 `equipmentRules.setBonus.scaledKeys` 里删掉。
+func total_move_speed() -> float:
+	return clampf(_scaled(float(player.get("movementSpeed", 4.0))), 0.0, PLAYER_MOVE_SPEED_CAP)
+
+## 普攻间隔（秒）。**反向缩放**：越小越好。
+func total_attack_interval() -> float:
+	return maxf(Combat.MIN_ATTACK_INTERVAL, _inverse_scaled(float(player.get("attackInterval", 0.8))))
+
+## 派生的最大生命（4.3 公式；攻 / 防取**不含套装**的基础值，套装只在最外层乘一次）。
 func max_hp() -> int:
 	var base := BASE_HP + float(player.level) * HP_PER_LV \
-		+ float(total_attack()) * HP_PER_ATK + float(total_defense()) * HP_PER_DEF
+		+ float(_base_attack()) * HP_PER_ATK + float(_base_defense()) * HP_PER_DEF
 	var b := equip_bonus()
 	var pct := float(player.get("hpPercent", 0.0)) + float(b.get("hpPercent", 0.0))
 	var flat := float(player.get("hpFlat", 0.0)) + float(b.get("hp", 0.0))
-	return int(round(base * (1.0 + pct) + flat))
+	return int(round(_scaled(base * (1.0 + pct) + flat)))
 
 ## 派生的最大法力（4.3 公式；装备 mp / mpPercent 进入固定 / 百分比项）。
 func max_mp() -> int:
@@ -338,7 +393,7 @@ func max_mp() -> int:
 	var base := BASE_MP + float(player.level) * MP_PER_LV
 	var pct := float(player.get("mpPercent", 0.0)) + float(b.get("mpPercent", 0.0))
 	var flat := float(player.get("mpFlat", 0.0)) + float(b.get("mp", 0.0))
-	return int(round(base * (1.0 + pct) + flat))
+	return int(round(_scaled(base * (1.0 + pct) + flat)))
 
 # ---- 数值变更（统一走事件广播，HUD 订阅刷新）----
 

@@ -97,5 +97,36 @@
     "bracelet",
     "ring",
     "necklace"
-  ]
+  ],
+  "setBonus": {
+    "requiredSlots": 14,
+    "quality": {
+      "common": 0.0,
+      "uncommon": 0.02,
+      "rare": 0.05,
+      "epic": 0.1,
+      "legendary": 0.2
+    },
+    "star": {
+      "6": 0.03,
+      "8": 0.05,
+      "10": 0.1,
+      "12": 0.2
+    },
+    "scaledKeys": [
+      "atk",
+      "def",
+      "hp",
+      "mp",
+      "criticalChance",
+      "criticalMultiplier",
+      "dodge",
+      "block",
+      "cdr",
+      "movementSpeed"
+    ],
+    "inverseKeys": [
+      "attackInterval"
+    ]
+  }
 }

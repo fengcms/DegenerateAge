@@ -191,17 +191,55 @@ func _refresh() -> void:
 		button.queue_redraw()
 	# 冷却缩减（cdr）已接线（D7：基础 + 装备，加法累加后截断上限），显示值取结算口径；
 	# 其余战斗词条（暴击/攻速/闪避/格挡/移速）执行链尚未接线，装备不参与结算，故仍显示基础值。
+	# 工程 66：以上六项在「有套装加成」时会放大，展示必须走 GameState 的派生门面，
+	# 不能读 player 字典（那里永远是基础值）。
 	var p := GameState.player
 	_stats.text = Localization.tr_key("ui.character_panel.p005") % [
 		int(p.hp), GameState.max_hp(), int(p.mp), GameState.max_mp(),
 		GameState.total_attack(), GameState.total_defense(), int(p.level),
-		float(p.movementSpeed),
-		100.0 * float(p.criticalChance),
-		float(p.criticalMultiplier),
-		maxf(0.1, float(p.attackInterval)),
-		100.0 * float(p.dodge),
-		100.0 * float(p.block),
-		100.0 * GameState.total_cdr()]
+		GameState.total_move_speed(),
+		100.0 * GameState.total_crit_chance(),
+		GameState.total_crit_multiplier(),
+		GameState.total_attack_interval(),
+		100.0 * GameState.total_dodge(),
+		100.0 * GameState.total_block(),
+		100.0 * GameState.total_cdr()] + _set_bonus_text()
+
+## 套装 / 强化两段（工程 66）：成套档位 + 距下一档还差几件。
+## 「还差 N 件」是诱导收集的闭环 —— 只显示当前档位，玩家不知道自己离下一档多远。
+## 🔴 key 从 p007 起：p006 已被「物品位置已变化」占用（撞号会静默后者胜出）。
+func _set_bonus_text() -> String:
+	var info := GameState.set_bonus()
+	if not bool(info.get("full", false)):
+		var required := int(info.get("required", Equipment.SLOT_DEFS.size()))
+		return "\n\n" + Localization.tr_key("ui.character_panel.p011",
+			[int(info.get("worn", 0)), required]) \
+			+ "\n" + Localization.tr_key("ui.character_panel.p012", [required])
+	var lines: Array[String] = []
+	lines.append(Localization.tr_key("ui.character_panel.p007",
+		[ItemUtil.quality_name(String(info.get("quality", "common"))),
+		_pct_text(float(info.get("quality_pct", 0.0)))]))
+	var next_quality := String(info.get("next_quality", ""))
+	if next_quality.is_empty():
+		lines.append(Localization.tr_key("ui.character_panel.p013"))
+	else:
+		lines.append(Localization.tr_key("ui.character_panel.p008",
+			[ItemUtil.quality_name(next_quality), int(info.get("next_quality_need", 0))]))
+	var star := int(info.get("star", 0))
+	if star > 0:
+		lines.append(Localization.tr_key("ui.character_panel.p009",
+			[star, _pct_text(float(info.get("star_pct", 0.0)))]))
+	else:
+		lines.append(Localization.tr_key("ui.character_panel.p014"))
+	if bool(info.get("star_maxed", false)):
+		lines.append(Localization.tr_key("ui.character_panel.p013"))
+	else:
+		lines.append(Localization.tr_key("ui.character_panel.p010",
+			[int(info.get("next_star", 0)), int(info.get("next_star_need", 0))]))
+	return "\n\n" + "\n".join(PackedStringArray(lines))
+
+func _pct_text(value: float) -> String:
+	return "+%.1f%%" % (value * 100.0)
 
 ## 展示形象随当前武器形象更换；形象 id 未变化时不重建纹理。
 func _apply_look() -> void:

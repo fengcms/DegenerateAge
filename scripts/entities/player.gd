@@ -253,15 +253,21 @@ func _ready() -> void:
 	_refresh_mount_art()
 	# G-P2-2：订阅生命周期约定见 autoload/event_bus.gd 顶部（随场景释放自动断开，不逐个补 _exit_tree）。
 	EventBus.equipment_changed.connect(_refresh_look)
+	EventBus.equipment_changed.connect(_refresh_speed)
 	EventBus.mount_changed.connect(_refresh_mount_art)
 	add_to_group("player")
-	_speed = float(GameState.player.get("movementSpeed", 4.0)) * Iso.TILE_W
+	_refresh_speed()
 	var b = DataLoader.get_entry("skills", "basic_slash")
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
 	# G-P3-3：该字典为 GameState 冷却运行态的唯一实例，**禁止整体替换**（只增删条目）；
 	# 读档 / 新游戏由 GameState 侧置空（`reset_to_defaults`、`apply_to_game_state`）。
 	skill_cooldowns = GameState.skill_cooldowns
 	EventBus.player_hp_changed.connect(func(_current: int, _maximum: int) -> void: queue_redraw())
+
+## 移速走派生门面（工程 66）：套装加成会改变 `movementSpeed`。
+## 🔴 换装后必须重算 —— 只在 `_ready()` 算一次的话，`_speed` 会永远停在进图那一刻的值。
+func _refresh_speed() -> void:
+	_speed = GameState.total_move_speed() * Iso.TILE_W
 
 ## 装备变化后重新解析阶段形象；形象 id 未变化时不换纹理，避免无谓的重载。
 func _refresh_look() -> void:
@@ -502,7 +508,7 @@ func effective_attack_power() -> float:
 
 func effective_attack_interval() -> float:
 	var speed := maxf(0.01, 1.0 + GameState.buff_effect_total("attackSpeedPct"))
-	return maxf(Combat.MIN_ATTACK_INTERVAL, float(GameState.player.get("attackInterval", 0.8)) / speed)
+	return maxf(Combat.MIN_ATTACK_INTERVAL, GameState.total_attack_interval() / speed)
 
 ## 快捷栏手动指令：选中目标后接近至技能射程，再由同一施放入口结算。
 func request_skill(skill_id: String) -> bool:
@@ -599,8 +605,8 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 			if _target_is_dead(enemy):
 				break
 			var result := Combat.resolve(gap_power, _target_defense(enemy) * (1.0 - pierce),
-				float(skill.get("coefficient", 1.0)), float(GameState.player.get("criticalChance", 0.0)),
-				float(GameState.player.get("criticalMultiplier", 1.5)), _target_dodge(enemy))
+				float(skill.get("coefficient", 1.0)), GameState.total_crit_chance(),
+				GameState.total_crit_multiplier(), _target_dodge(enemy))
 			Fx.damage_number(get_tree(), enemy, result)
 			EventBus.damage_dealt.emit(enemy, int(result.get("damage", 0)), bool(result.get("critical", false)))
 			enemy.take_hit(result, self)
@@ -678,8 +684,8 @@ func perform_attack(target: Node) -> Dictionary:
 			int(GameState.player.get("level", 1)), _target_level(target)),
 		_target_defense(target),
 		float(_basic.get("coefficient", 1.0)),
-		float(GameState.player.get("criticalChance", 0.0)),
-		float(GameState.player.get("criticalMultiplier", 1.5)),
+		GameState.total_crit_chance(),
+		GameState.total_crit_multiplier(),
 		_target_dodge(target))
 
 	Fx.damage_number(get_tree(), target as Node2D, result)
