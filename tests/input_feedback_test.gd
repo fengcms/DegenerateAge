@@ -89,6 +89,14 @@ func _ready() -> void:
 	check(pilot._find_target() == enemies[0], "锁定目标被拉黑后回退最近可见目标")
 	pilot._blacklist.clear()
 	player.select_target(null)
+	# P2 目标粘性（工程 69 §5）：被误判拉黑丢掉的原目标，出了黑名单后应被优先选回，
+	# 而不是被「更近的那只」抢走（enemies[1] 比 enemies[0] 远，选回它才说明粘性真的生效）。
+	pilot._blacklist_target(enemies[1])
+	pilot._blacklist.clear()                          # 模拟 3s 黑名单到点
+	check(pilot._find_target() == enemies[1],
+		"被误判丢掉的原目标应在黑名单到点后优先被选回（目标粘性）")
+	pilot._sticky_left = 0.0                          # 记忆过期 → 回到「最近可见优先」
+	check(pilot._find_target() == enemies[0], "粘性记忆过期后应恢复最近可见优先")
 	# 空地移动使用世界投影，与相机位置无关。
 	var start := player.global_position
 	var point := start + Vector2(0, 130)
