@@ -332,7 +332,9 @@ func _update_boss(delta: float) -> bool:
 			if sample_art is MonsterActorArt:
 				(sample_art as MonsterActorArt).finish_stomp()
 			var target := _get_player()
-			if target != null and target.global_position.distance_to(_stomp_center) <= _stomp_radius:
+			# 跺地判定与绘制同源：地面距离 ≤ 半径×√2（面积与原屏幕圆一致）
+			if target != null and Iso.ground_distance(target.global_position, _stomp_center) \
+					<= _stomp_radius * BossAction.COMPENSATE:
 				_do_attack(target, false, true)
 		return true
 	var player := _get_player()
@@ -342,7 +344,9 @@ func _update_boss(delta: float) -> bool:
 		if phase.get("behavior", "") != "aoe_stomp":
 			continue
 		_stomp_radius = float(phase.get("radius", attack_range_px / Iso.TILE_W)) * Iso.TILE_W
-		if _stomp_cooldown <= 0 and global_position.distance_to(player.global_position) <= _stomp_radius:
+		# 触发距离与判定同源（同样 ×√2），否则会出现「站进横向圈内却不放技能」
+		if _stomp_cooldown <= 0 \
+				and Iso.ground_distance(global_position, player.global_position) <= _stomp_radius * BossAction.COMPENSATE:
 			_stomp_center = global_position
 			_stomp_remaining = float(phase.get("warnDelay", 0.8))
 			_stomp_cooldown = _stomp_remaining + float(phase.get("cooldown", attack_interval))
@@ -411,20 +415,26 @@ func _resolve_chapter_boss_warn() -> void:
 	if player == null:
 		return
 	var player_pos := player.global_position
+	var gp := Iso.to_ground(player_pos)
 	var hit := false
+	var c := BossAction.COMPENSATE
 	match shape:
 		"sweep":
 			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var toward := player_pos - _chapter_boss_origin
-			hit = toward.length() <= 170.0 and direction.dot(toward.normalized()) >= 0.35
+			var toward := gp - Iso.to_ground(_chapter_boss_origin)
+			# 半角与绘制共用 68°（此前判据是 dot>=0.35 ≈ 69.5°，比画的宽 1.5°，属于「圈外挨打」）
+			hit = (toward.length() <= 170.0 * c
+				and absf(Iso.ground_dir(direction).angle_to(toward)) <= deg_to_rad(68.0))
 		"line":
-			var end := _chapter_boss_origin + (_chapter_boss_target - _chapter_boss_origin).normalized() * 340.0
-			hit = Geometry2D.get_closest_point_to_segment(player_pos, _chapter_boss_origin, end).distance_to(player_pos) <= 48.0
+			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
+			var g0 := Iso.to_ground(_chapter_boss_origin)
+			var g1 := g0 + Iso.ground_dir(direction) * 340.0 * c
+			hit = Geometry2D.get_closest_point_to_segment(gp, g0, g1).distance_to(gp) <= 48.0 * c
 		"circle":
-			hit = player_pos.distance_to(_chapter_boss_target) <= 88.0
+			hit = gp.distance_to(Iso.to_ground(_chapter_boss_target)) <= 88.0 * c
 		"blasts":
 			for center in _chapter_boss_centers:
-				if player_pos.distance_to(center) <= 66.0:
+				if gp.distance_to(Iso.to_ground(center as Vector2)) <= 66.0 * c:
 					hit = true
 					break
 	if hit:
@@ -738,7 +748,7 @@ func _update_chapter_special(delta: float) -> bool:
 				_charge_direction = (_special_target - global_position).normalized()
 				_charge_left = 0.34
 				_charge_hit = false
-			elif player.global_position.distance_to(global_position) <= 135.0:
+			elif Iso.ground_distance(player.global_position, global_position) <= 135.0 * BossAction.COMPENSATE:
 				_do_attack(player, false)
 		return true
 	if _special_cd > 0.0 or state not in [State.CHASE, State.ATTACK]:
@@ -1088,26 +1098,30 @@ func _draw() -> void:
 		_draw_chapter_boss_warn()
 	if not _special_warn.is_empty() and not is_dead:
 		if _special_warn == "sweep":
-			draw_circle(Vector2.ZERO, 135.0, Color(1.0, 0.35, 0.08, 0.15))
-			draw_arc(Vector2.ZERO, 135.0, 0.0, TAU, 48, Color("ff9c53"), 2.0, true)
+			# 地面圆：地面半径 = 屏幕半径 × √2（横向 1.414r、纵向 0.707r，面积不变）
+			var sweep_r := 135.0 * BossAction.COMPENSATE
+			GroundFx.fill(self, Vector2.ZERO, sweep_r, Color(1.0, 0.35, 0.08, 0.15))
+			GroundFx.outline(self, Vector2.ZERO, sweep_r, Color("ff9c53"), 2.0, 48)
 		else:
 			var end := to_local(global_position + (_special_target - global_position).normalized() * 230.0)
 			draw_line(Vector2.ZERO, end, Color("ff9c53"), 22.0, true)
 	if _stomp_pending and not is_dead:
 		var center := to_local(_stomp_center)
-		draw_circle(center, _stomp_radius, Color(1.0, 0.18, 0.05, 0.18))
-		draw_arc(center, _stomp_radius, 0, TAU, 64, Color("ff623a"), 3.0, true)
-		draw_string(MONO_FONT, center + Vector2(-50, -_stomp_radius - 8), Localization.tr_key("msg.monster.p005"), HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
+		var stomp_r := _stomp_radius * BossAction.COMPENSATE
+		GroundFx.fill(self, center, stomp_r, Color(1.0, 0.18, 0.05, 0.18))
+		GroundFx.outline(self, center, stomp_r, Color("ff623a"), 3.0, 64)
+		# 文案锚到椭圆的**上顶点**（纵向半轴 = 地面半径 × GROUND_SQUASH），否则会飘在圈上方 60px
+		draw_string(MONO_FONT, center + Vector2(-50, -stomp_r * Iso.GROUND_SQUASH - 8), Localization.tr_key("msg.monster.p005"), HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
 	if boss_action != null and boss_action.is_warning() and not is_dead:
 		boss_action.draw(self)
 	if selected and not is_dead:
-		draw_arc(Vector2.ZERO, radius + 7.0, 0, TAU, 40, Color("6eebe6"), 2.5, true)
+		GroundFx.outline(self, Vector2.ZERO, radius + 7.0, Color("6eebe6"), 2.5, 40)
 	if sample_art != null or dummy_art != null:
 		if sample_art is MonsterActorArt:
 			_draw_sprite_identity()
-		draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.45))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, Iso.GROUND_SQUASH))
 		draw_circle(Vector2.ZERO, radius if sample_art is MonsterActorArt else 17.0, Color(0, 0, 0, 0.28))
-		draw_set_transform(Vector2.ZERO)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		_draw_head_hp_bar()
 		_draw_head_name()
 		return
@@ -1124,28 +1138,33 @@ func _draw() -> void:
 func _draw_chapter_boss_warn() -> void:
 	var red := Color(1.0, 0.18, 0.08, 0.24)
 	var edge := Color("ff7744")
+	# 四种形态一律「地面几何 + GroundFx」：半径乘 √2 做等面积补偿、纵向压到 0.5。
+	# 判定见 `_resolve_chapter_boss_warn()`，两侧必须同源（工程 53 §4.2）。
+	var c := BossAction.COMPENSATE
 	match _chapter_boss_warn:
 		"sweep":
 			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var points := PackedVector2Array([to_local(_chapter_boss_origin)])
-			for i in range(17):
-				points.append(to_local(_chapter_boss_origin + direction.rotated(deg_to_rad(-68.0 + 8.5 * i)) * 170.0))
-			draw_colored_polygon(points, red)
+			var origin_local := to_local(_chapter_boss_origin)
+			GroundFx.sector(self, origin_local, direction, 170.0 * c, deg_to_rad(136.0), red, 16)
+			GroundFx.sector_outline(self, origin_local, direction, 170.0 * c, deg_to_rad(136.0),
+				edge, 2.0, 16)
 		"line":
 			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var side := direction.orthogonal() * 48.0
-			var finish := _chapter_boss_origin + direction * 340.0
-			draw_colored_polygon(PackedVector2Array([
-				to_local(_chapter_boss_origin + side), to_local(finish + side),
-				to_local(finish - side), to_local(_chapter_boss_origin - side)]), red)
-			draw_line(to_local(_chapter_boss_origin), to_local(finish), edge, 2.0, true)
+			var g0 := Iso.to_ground(_chapter_boss_origin)
+			var g1 := g0 + Iso.ground_dir(direction) * 340.0 * c
+			var s0 := to_local(Iso.from_ground(g0))
+			var s1 := to_local(Iso.from_ground(g1))
+			GroundFx.band_quad(self, s0, s1, 48.0 * c, red)
+			draw_line(s0, s1, edge, 2.0, true)
 		"circle":
-			draw_circle(to_local(_chapter_boss_target), 88.0, red)
-			draw_arc(to_local(_chapter_boss_target), 88.0, 0.0, TAU, 48, edge, 2.0, true)
+			var center := to_local(_chapter_boss_target)
+			GroundFx.fill(self, center, 88.0 * c, red)
+			GroundFx.outline(self, center, 88.0 * c, edge, 2.0, 48)
 		"blasts":
-			for center in _chapter_boss_centers:
-				draw_circle(to_local(center), 66.0, red)
-				draw_arc(to_local(center), 66.0, 0.0, TAU, 40, edge, 2.0, true)
+			for blast_center in _chapter_boss_centers:
+				var bc := to_local(blast_center as Vector2)
+				GroundFx.fill(self, bc, 66.0 * c, red)
+				GroundFx.outline(self, bc, 66.0 * c, edge, 2.0, 40)
 
 ## 受击白闪 / 仇恨变色的统一体色。
 func _current_body(base: Color) -> Color:
@@ -1181,11 +1200,13 @@ func _draw_elite() -> void:
 func _draw_boss() -> void:
 	var c := Vector2(0.0, -radius * 0.6)
 	var body := _current_body(COLOR_BOSS_BODY_ENRAGED if _boss_enraged else COLOR_BOSS_BODY)
-	draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 48, COLOR_BOSS_RING, 2.2, true)
+	GroundFx.outline(self, Vector2.ZERO, radius + 6.0, COLOR_BOSS_RING, 2.2, 48)
 	for i in range(4):
 		var a := TAU * float(i) / 4.0 + PI * 0.25
-		var dir := Vector2(cos(a), sin(a))
-		draw_line(dir * (radius + 1.0), dir * (radius + 12.0), COLOR_BOSS_EDGE, 3.0, true)
+		# 四点刻度沿**地面径向**延伸：纵向被投影压扁，才与贴地的封印环对得上。
+		var dir := Iso.ground_dir(Vector2(cos(a), sin(a)))
+		draw_line(Iso.from_ground(dir * (radius + 1.0)), Iso.from_ground(dir * (radius + 12.0)),
+			COLOR_BOSS_EDGE, 3.0, true)
 	draw_colored_polygon(PackedVector2Array([
 		c + Vector2(-radius * 0.72, -radius * 0.55),
 		c + Vector2(-radius * 0.46, -radius * 1.38),
@@ -1200,10 +1221,9 @@ func _draw_boss() -> void:
 	draw_line(c + Vector2(radius * 0.68, radius * 0.42), c + Vector2(radius * 1.24, radius * 1.00), COLOR_BOSS_EDGE, 3.0, true)
 
 ## 金色菱形地面标识（精英；创意 07 §4「地面标识」）。
+## 等距地面上「正方形」的投影是 **2:1 菱形**；四顶点等距会画成一块斜立的方牌（工程 53 D-1）。
 func _draw_ground_mark(color: Color, r: float) -> void:
-	var g := Vector2(0.0, 6.0)
-	draw_colored_polygon(PackedVector2Array([
-		g + Vector2(0.0, -r), g + Vector2(r, 0.0), g + Vector2(0.0, r), g + Vector2(-r, 0.0)]), color)
+	draw_colored_polygon(Iso.ground_diamond(Vector2(0.0, 6.0), r), color)
 
 ## 头顶血条（9.5）：尺寸随档次 34×4 / 64×6 / 100×8（创意 07 §4）。
 func _draw_head_hp_bar() -> void:
@@ -1230,7 +1250,7 @@ func _draw_sprite_identity() -> void:
 	if is_dead:
 		return
 	if _kind() == "boss":
-		draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 48, COLOR_BOSS_RING, 2.2, true)
+		GroundFx.outline(self, Vector2.ZERO, radius + 6.0, COLOR_BOSS_RING, 2.2, 48)
 	else:
 		_draw_ground_mark(Color(0.95, 0.78, 0.36, 0.30), radius * 0.75)
 

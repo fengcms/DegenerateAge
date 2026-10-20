@@ -26,7 +26,7 @@ const EXPECTED := {
 	"rune_iron": 360,
 	"rune_jade": 960,
 	"rune_gold": 2400,
-	"rune_diamond": 6000,
+	"rune_diamond": 72000,
 }
 
 var failures: Array[String] = []

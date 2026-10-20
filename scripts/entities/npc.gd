@@ -117,13 +117,14 @@ func contains_screen_point(point: Vector2) -> bool:
 func _draw() -> void:
 	var cloak_color := Color("956b4b") if role == "blacksmith" else (Color("547784") if role == "warehouse" else COLOR_CLOAK)
 	var edge := Color("463226") if role == "blacksmith" else (Color("273c44") if role == "warehouse" else COLOR_CLOAK_EDGE)
-	# 脚下阴影
-	draw_set_transform(Vector2(0.0, 8.0), 0.0, Vector2(1.0, 0.5))
+	# 脚下阴影（纵向比走 Iso.GROUND_SQUASH 唯一来源）
+	draw_set_transform(Vector2(0.0, 8.0), 0.0, Vector2(1.0, Iso.GROUND_SQUASH))
 	draw_circle(Vector2.ZERO, 12.0, Color(0, 0, 0, 0.28))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if _art != null:
 		if _near:
-			draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 32, Color(0.95, 0.85, 0.4, 0.55), 2.0, true)
+			# 圆心与阴影圆心（y=8）对齐；贴地才是等距椭圆（工程 53 D-3）
+			GroundFx.outline(self, Vector2(0.0, 8.0), 18.0, Color(0.95, 0.85, 0.4, 0.55), 2.0, 32)
 		return
 
 	# 斗篷（梯形）+ 描边
@@ -146,4 +147,4 @@ func _draw() -> void:
 
 	# 靠近时脚下高亮圈（9.5 目标选中指示的简化版）
 	if _near:
-		draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 32, Color(0.95, 0.85, 0.4, 0.55), 2.0, true)
+		GroundFx.outline(self, Vector2(0.0, 8.0), 18.0, Color(0.95, 0.85, 0.4, 0.55), 2.0, 32)

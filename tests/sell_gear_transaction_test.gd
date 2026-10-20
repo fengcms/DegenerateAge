@@ -41,9 +41,14 @@ func _ready() -> void:
 	check(GameState.set_equipment_favorite(String(changed.instanceId), false), "可取消收藏")
 	chosen = [GameState.preview_equipment_sale()[0]]
 	GameState.gold = GameState.GOLD_CAP - int(chosen[0].price) + 1
-	check(not bool(GameState.sell_selected_equipment(chosen).get("ok", false))
-		and GameState.inventory[0] is Dictionary and GameState.gold == GameState.GOLD_CAP - int(chosen[0].price) + 1,
-		"金币上限导致整批拒绝，不截断收入")
+	# 工程 56 / 口径 A：金币接近上限**不再整批拒绝**，而是照卖、金币封顶、入账为差额。
+	var near_cap := GameState.sell_selected_equipment(chosen)
+	check(bool(near_cap.get("ok", false)) and bool(near_cap.get("capped", false))
+		and GameState.inventory[0] == null and GameState.gold == GameState.GOLD_CAP
+		and int(near_cap.get("gold", -1)) == int(chosen[0].price) - 1,
+		"金币接近上限仍应卖出：装备移除、金币封顶、gold 为上限内的差额")
+	# 与旧口径的关键差异：这件装备**真的没了**，后面的用例要求背包里有两件可卖，故按快照放回。
+	GameState.inventory[0] = (chosen[0].item_snapshot as Dictionary).duplicate(true)
 	GameState.gold = 0
 	var risky: Array[Dictionary] = [GameState.preview_equipment_sale()[1]]
 	check(not bool(GameState.sell_selected_equipment(risky).get("ok", false))
@@ -58,9 +63,18 @@ func _ready() -> void:
 	check(bool(staged.get("ok", false)) and GameState.inventory[0] == null and GameState.gold == gold_before_stage
 		and (staged.get("items", []) as Array).size() == 1, "暂存只取物，不结算金币")
 	GameState.gold = GameState.GOLD_CAP
-	check(not bool(GameState.shop_sell_staged(staged.items).get("ok", false)), "货郎金币满时拒绝结算")
+	# 工程 56 / 口径 A：金币已满时托盘仍能结算（入账 0），否则玩家会被自己的钱包卡死。
+	var full_cap := GameState.shop_sell_staged(staged.items)
+	check(bool(full_cap.get("ok", false)) and int(full_cap.get("count", 0)) == 1
+		and int(full_cap.get("gold", -1)) == 0 and GameState.gold == GameState.GOLD_CAP
+		and bool(full_cap.get("capped", false)),
+		"货郎金币已满时仍应结算：售出 1 件、入账 0、余额不越界")
 	GameState.gold = 0
-	check(bool(GameState.shop_sell_staged(staged.items).get("ok", false)), "金币容量足够后可结算")
+	# 换一批新货验「金币充足 ⇒ 全额入账」：同一批托盘在上一步已经结算过，不能重复卖。
+	var normal := GameState.shop_sell_staged([ItemFactory.make_equip("weapon_iron")])
+	check(bool(normal.get("ok", false)) and int(normal.get("gold", 0)) > 0
+		and not bool(normal.get("capped", true)) and GameState.gold == int(normal.get("gold", -1)),
+		"金币容量足够时应全额入账，且不标记 capped")
 	GameState.set_trade_staged_count(0)
 	if failures.is_empty():
 		print("[SellGearTransactionTest] 全部通过 ✅")

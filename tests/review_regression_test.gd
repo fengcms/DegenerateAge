@@ -166,6 +166,19 @@ func _test_economy() -> void:
 	check(int(batched.get("count", 0)) == 1, "成批结算应售出 1 件")
 	check(int(batched.get("gold", -1)) == 1, "成批售金应为实际入账额 1，而非挂牌总额 50")
 
+	# E-P3-2 第三个出口：一键卖低价值（`sell_low_gear`）。它有自己的前置失败分支，
+	# **只改 shop_sell / shop_sell_staged 会漏掉它**（工程 56 N-4），所以必须单独立断言。
+	GameState.reset_to_defaults()
+	GameState.player.level = 15
+	GameState.gold = GameState.GOLD_CAP
+	GameState.inventory[0] = ItemFactory.make_equip("weapon_iron")
+	var bulk := GameState.sell_low_gear()
+	check(bool(bulk.get("ok", false)), "金币已满时一键卖低价值也应成功")
+	check(int(bulk.get("count", 0)) == 1 and GameState.inventory[0] == null,
+		"一键卖出应清空满足阈值的装备")
+	check(int(bulk.get("gold", -1)) == 0 and GameState.gold == GameState.GOLD_CAP,
+		"金币已满时一键卖出应入账 0 且余额不越界")
+
 	# E-P3-4：托盘有暂存件时 request_autosave 直接返回，不置去抖（防漏档）。
 	GameState.reset_to_defaults()
 	check(GameState.trade_staged_count == 0, "初始无托盘暂存")

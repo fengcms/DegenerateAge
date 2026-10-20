@@ -17,9 +17,18 @@ extends RefCounted
 ##   - `circle`：`offset = [x, y]` 为**世界轴**格偏移（相对首领位置），半径 `radius` 格。
 ##   - `fan`：`angle` 为相对朝向的度数，扇区以首领为心，半径 `radius` 格、张角 `arcDeg` 度。
 ##
+## 🔴 几何空间（工程 53 §4.2 / 工程 55）：`geometry()` 返回的是**地面空间**几何
+## （`Iso.to_ground` 之后的坐标，纵向已放大 `1 / GROUND_SQUASH`），半径 / 半宽 / 长度
+## 都乘了 `COMPENSATE`。判定与绘制只认这一份，保证「看见就是打到」。
+## 屏幕上的视觉效果仍是标准 2:1 椭圆，**面积与原屏幕圆相等**——改数值时不要按屏幕半径理解。
+##
 ## 状态全部自持（含首放 / 复刷倒计时），宿主只需每帧调用 [method update] 并转交伤害。
 
 const MIN_LOCK := 1.0   # 公共动作锁（创意：≥1 秒）
+
+## 等面积补偿：屏幕圆半径 r → 地面半径 r·√2（横向 1.414r、纵向 0.707r，椭圆面积 = πr²）。
+## 集中在这一个常量里：想退回「同源不补偿」（工程 53 方案 A，危险面积减半）改这一处即可。
+const COMPENSATE := 1.4142135623730951
 
 enum Stage { IDLE, TELEGRAPH, GAP, RECOVERY }
 enum Move { NONE, A, B }
@@ -202,15 +211,18 @@ func _segment_delay(idx: int) -> float:
 		return maxf(0.0, float((seg as Dictionary).get("delay", 0.0)))
 	return 0.0
 
-## 当前预警段的判定几何（世界坐标）。非预警阶段返回空字典。
+## 当前预警段的判定几何（**地面空间**）。非预警阶段返回空字典。
+## 地面空间：坐标已 `Iso.to_ground`（纵向 ×2），长度量已乘 `COMPENSATE`（等面积）。
+## `hits()` 与 `draw()` 都只吃这一份，杜绝「画一套、判另一套」。
 func geometry() -> Dictionary:
 	if stage != Stage.TELEGRAPH:
 		return {}
-	var tc := float(Iso.TILE_W)
+	var tc := float(Iso.TILE_W) * COMPENSATE
 	if move == Move.B:
 		return {
 			"kind": "ring",
-			"center": _origin,
+			"space": "ground",
+			"center": Iso.to_ground(_origin),
 			"inner": float(phase_b.get("inner", 2.0)) * tc,
 			"radius": float(phase_b.get("radius", 5.0)) * tc,
 		}
@@ -220,36 +232,41 @@ func geometry() -> Dictionary:
 		"line":
 			var off := _offset(item)
 			var perp := Vector2(-_facing.y, _facing.x)
-			var start := _origin + (perp * off.x + _facing * off.y) * tc
-			return {"kind": "line", "from": start, "to": start + _facing * length_t * tc,
+			# 起点按**屏幕**格偏移算好再整体转地面：落点位置与改动前完全一致。
+			var start := Iso.to_ground(_origin + (perp * off.x + _facing * off.y) * Iso.TILE_W)
+			return {"kind": "line", "space": "ground", "from": start,
+				"to": start + Iso.ground_dir(_facing) * length_t * tc,
 				"half": maxf(1.0, width_t * tc * 0.5)}
 		"circle":
 			var off := _offset(item)
-			return {"kind": "circle", "center": _origin + off * tc, "radius": radius_t * tc}
+			return {"kind": "circle", "space": "ground",
+				"center": Iso.to_ground(_origin + off * Iso.TILE_W), "radius": radius_t * tc}
 		"fan":
-			var dir := _facing.rotated(deg_to_rad(float(item.get("angle", 0.0))))
-			return {"kind": "fan", "center": _origin, "dir": dir,
+			var dir := Iso.ground_dir(_facing.rotated(deg_to_rad(float(item.get("angle", 0.0)))))
+			return {"kind": "fan", "space": "ground", "center": Iso.to_ground(_origin), "dir": dir,
 				"radius": radius_t * tc, "arc": deg_to_rad(arc_deg)}
 	return {}
 
-## 某点在当前预警几何内是否会被命中。
+## 某点（**世界坐标**）在当前预警几何内是否会被命中。
+## 先转地面坐标再算 —— 漏掉这一步就是「屏幕上在圈外、判定却在圈内」（工程 53 N-4）。
 func hits(point: Vector2) -> bool:
 	var geo := geometry()
 	if geo.is_empty():
 		return false
+	var g := Iso.to_ground(point)
 	match String(geo.kind):
 		"line":
-			var closest := Geometry2D.get_closest_point_to_segment(point, geo["from"], geo["to"])
-			return closest.distance_to(point) <= float(geo.half)
+			var closest := Geometry2D.get_closest_point_to_segment(g, geo["from"], geo["to"])
+			return closest.distance_to(g) <= float(geo.half)
 		"circle":
-			return point.distance_to(geo["center"]) <= float(geo.radius)
+			return g.distance_to(geo["center"]) <= float(geo.radius)
 		"fan":
-			var to := point - (geo["center"] as Vector2)
+			var to := g - (geo["center"] as Vector2)
 			if to.length() > float(geo.radius):
 				return false
 			return absf((geo["dir"] as Vector2).angle_to(to)) <= float(geo["arc"]) * 0.5
 		"ring":
-			var d := point.distance_to(geo["center"])
+			var d := g.distance_to(geo["center"])
 			return d >= float(geo.inner) and d <= float(geo.radius)
 	return false
 
@@ -260,7 +277,9 @@ func _offset(item: Dictionary) -> Vector2:
 		return Vector2(float(raw[0]), float(raw[1]))
 	return Vector2.ZERO
 
-## 绘制当前预警（在宿主 `_draw` 内调用；坐标转宿主本地空间）。
+## 绘制当前预警（在宿主 `_draw` 内调用）。
+## 几何来自 `geometry()`（地面空间），这里只做 `Iso.from_ground` 投影 + `GroundFx` 落笔，
+## 所以「画出来的形状」与「判定命中的范围」在数学上是同一个集合（工程 53 §4.2）。
 func draw(canvas: CanvasItem) -> void:
 	var geo := geometry()
 	if geo.is_empty():
@@ -269,31 +288,33 @@ func draw(canvas: CanvasItem) -> void:
 	var edge := Color("ff7744")
 	match String(geo.kind):
 		"line":
-			var from: Vector2 = geo["from"]
-			var to: Vector2 = geo["to"]
-			var side := (to - from).normalized().orthogonal() * float(geo.half)
-			canvas.draw_colored_polygon(PackedVector2Array([
-				canvas.to_local(from + side), canvas.to_local(to + side),
-				canvas.to_local(to - side), canvas.to_local(from - side)]), fill)
-			canvas.draw_line(canvas.to_local(from), canvas.to_local(to), edge, 2.0, true)
+			# 地面矩形带 → 屏幕上是平行四边形，因此走 band_quad 而不是自拼四点。
+			var g_from: Vector2 = geo["from"]
+			var g_to: Vector2 = geo["to"]
+			var s_from: Vector2 = canvas.to_local(Iso.from_ground(g_from))
+			var s_to: Vector2 = canvas.to_local(Iso.from_ground(g_to))
+			if s_from.distance_to(s_to) < 0.001:
+				return
+			GroundFx.band_quad(canvas, s_from, s_to, float(geo.half), fill)
+			canvas.draw_line(s_from, s_to, edge, 2.0, true)
 		"circle":
-			var center: Vector2 = geo["center"]
-			canvas.draw_circle(canvas.to_local(center), float(geo.radius), fill)
-			canvas.draw_arc(canvas.to_local(center), float(geo.radius), 0.0, TAU, 48, edge, 2.0, true)
+			var gc: Vector2 = geo["center"]
+			var cpos: Vector2 = canvas.to_local(Iso.from_ground(gc))
+			GroundFx.fill(canvas, cpos, float(geo.radius), fill)
+			GroundFx.outline(canvas, cpos, float(geo.radius), edge, 2.0, 48)
 		"fan":
-			var fcenter: Vector2 = geo["center"]
-			var dir: Vector2 = geo["dir"]
-			var half := float(geo.arc) * 0.5
-			var points := PackedVector2Array([canvas.to_local(fcenter)])
-			for i in range(13):
-				var a := -half + float(geo.arc) * float(i) / 12.0
-				points.append(canvas.to_local(fcenter + dir.rotated(a) * float(geo.radius)))
-			canvas.draw_colored_polygon(points, fill)
-			canvas.draw_arc(canvas.to_local(fcenter), float(geo.radius),
-				dir.angle() - half, dir.angle() + half, 24, edge, 2.0, true)
+			var fc: Vector2 = geo["center"]
+			var fpos: Vector2 = canvas.to_local(Iso.from_ground(fc))
+			# 地面方向 → 屏幕方向（`from_ground` 的纵向压缩会把指向还原成设计意图）。
+			var sdir: Vector2 = Iso.from_ground(geo["dir"])
+			GroundFx.sector(canvas, fpos, sdir, float(geo.radius), float(geo.arc), fill, 12)
+			GroundFx.sector_outline(canvas, fpos, sdir, float(geo.radius), float(geo.arc),
+				edge, 2.0, 12)
 		"ring":
-			var rcenter: Vector2 = geo["center"]
-			canvas.draw_circle(canvas.to_local(rcenter), float(geo.radius), fill)
-			canvas.draw_circle(canvas.to_local(rcenter), float(geo.inner), Color(0.06, 0.04, 0.05, 0.9))
-			canvas.draw_arc(canvas.to_local(rcenter), float(geo.radius), 0.0, TAU, 48, Color("ffb454"), 3.0, true)
-			canvas.draw_arc(canvas.to_local(rcenter), float(geo.inner), 0.0, TAU, 32, Color("ffb454"), 2.0, true)
+			var rc: Vector2 = geo["center"]
+			var rpos: Vector2 = canvas.to_local(Iso.from_ground(rc))
+			# 环带切片填充；**不要**再在外圆之上叠一块近黑实心圆「挖洞」——
+			# Canvas 无法挖洞，那会在地面上留一块黑斑（工程 53 D-2）。
+			GroundFx.band(canvas, rpos, float(geo.inner), float(geo.radius), fill, 48)
+			GroundFx.outline(canvas, rpos, float(geo.radius), Color("ffb454"), 3.0, 48)
+			GroundFx.outline(canvas, rpos, float(geo.inner), Color("ffb454"), 2.0, 32)
