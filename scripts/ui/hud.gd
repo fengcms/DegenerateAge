@@ -18,7 +18,7 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _hp_text: Label = %HpText
 @onready var _mp_bar: HudStatusBar = %MpBar
 @onready var _mp_text: Label = %MpText
-@onready var _exp_bar: ProgressBar = %ExpBar
+@onready var _exp_bar: HudExperienceBar = %ExpBar
 @onready var _gold_label: Label = %GoldLabel
 @onready var _bag_label: Label = %BagLabel
 @onready var _auto_label: Label = %AutoLabel
@@ -105,10 +105,12 @@ func _on_mp(current: int, maximum: int) -> void:
 	_mp_bar.tooltip_text = "%s  %d / %d" % [Localization.tr_key("ui.hud.mp"), current, maximum]
 	_mp_text.text = "%d / %d" % [current, maximum]
 
+## 同步经验进度与持续悬停的提示；升级时必须同时更新当前值和新等级上限。
 func _on_xp(current: int, maximum: int) -> void:
 	_exp_bar.max_value = maxi(1, maximum)
 	_exp_bar.value = current
 	_exp_bar.tooltip_text = "%d / %d" % [current, maximum]
+	_exp_bar.refresh_live_tooltip()
 	HotbarVisual.update_experience_marker(_exp_bar)
 
 func _layout_bottom_hud() -> void:
