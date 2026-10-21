@@ -1,5 +1,6 @@
 extends Node
-## 工程 86：重铸精炼（投入紫装抬高本次未锁定词条下限）—— 8 组用例。
+## 工程 86：重铸精炼（投入紫装抬高本次未锁定词条下限）—— 13 组用例；
+## 第 10—13 组为工程 87 的「随机放入紫装」规则层用例。
 ##
 ## 三条最值钱的断言：
 ## 1. **有效件数按档位折算，不是按件数** —— 低档料按 1:1 平替同档料会让「四紫升档」与
@@ -26,6 +27,10 @@ func _ready() -> void:
 	_test_settlement_consumes_materials()
 	_test_settlement_rejects_without_consuming()
 	_test_ui_material_slots()
+	_test_random_same_tier_first()
+	_test_random_falls_back_by_tier()
+	_test_random_filters_pool()
+	_test_random_is_read_only_and_capped()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[RefineTest] 全部通过 ✅")
@@ -258,3 +263,97 @@ func _test_ui_material_slots() -> void:
 	check(GameState.inventory[1] == null and GameState.inventory[2] == null, "重铸后材料应被扣除")
 	panel.set_open(false)
 	panel.queue_free()
+
+# ---- 10) 随机放入：同档优先（同档够 4 件就不取低档）----
+
+func _test_random_same_tier_first() -> void:
+	var target := _make("c6_equip_necklace", 100, "legendary", 2481)
+	var pool: Array = []
+	for i in range(5):
+		pool.append(_make("c6_equip_weapon", 100, "legendary", 2482 + i))
+	for i in range(3):
+		pool.append(_make("c6_equip_shoes", 90, "legendary", 2490 + i))
+	var picked := Reforge.random_refine_materials(pool, target, 4, _rng(2495))
+	check(picked.size() == 4, "同档足够时应填满 4 格，实际 %d" % picked.size())
+	if picked.size() != 4:
+		return
+	var target_tier := Reforge.tier_index(Equipment.level_req(target))
+	var seen := {}
+	for item in picked:
+		var tier := Reforge.tier_index(Equipment.level_req(item))
+		check(tier == target_tier, "同档料足够时应只取同档，实际档位 %d" % tier)
+		seen[String(item.get("instanceId", ""))] = true
+	check(seen.size() == 4, "随机不得重复取同一件，实际 %d 件" % seen.size())
+
+# ---- 11) 低档兜底：顺序同档 → 低一档 → 低两档 ----
+
+func _test_random_falls_back_by_tier() -> void:
+	var target := _make("c6_equip_necklace", 100, "legendary", 2501)
+	var pool: Array = [
+		_make("c6_equip_weapon", 100, "legendary", 2502),
+		_make("c6_equip_shoes", 90, "legendary", 2503),
+		_make("c6_equip_shoes", 90, "legendary", 2504),
+		_make("c6_equip_shoes", 80, "legendary", 2505),
+		_make("c6_equip_weapon", 110, "legendary", 2506),
+	]
+	var picked := Reforge.random_refine_materials(pool, target, 4, _rng(2507))
+	check(picked.size() == 4, "低档兜底应填满 4 格，实际 %d" % picked.size())
+	if picked.size() != 4:
+		return
+	var target_tier := Reforge.tier_index(Equipment.level_req(target))
+	check(Reforge.tier_index(Equipment.level_req(picked[0])) == target_tier,
+		"第 1 格应是同档料")
+	for i in range(1, 3):
+		var tier := Reforge.tier_index(Equipment.level_req(picked[i]))
+		check(tier == target_tier - 1, "第 %d 格应是低一档料，实际档位 %d" % [i + 1, tier])
+	var last_tier := Reforge.tier_index(Equipment.level_req(picked[3]))
+	check(last_tier == target_tier - 2, "第 4 格应是低两档料，实际档位 %d" % last_tier)
+
+# ---- 12) 过滤：高档 / 金装 / 收藏 / 星级 / 目标自身 / 非装备一律不进池 ----
+
+func _test_random_filters_pool() -> void:
+	var target := _make("c6_equip_necklace", 100, "legendary", 2511)
+	var higher := _make("c6_equip_weapon", 110, "legendary", 2512)
+	var epic := _make("c6_equip_weapon", 100, "epic", 2513)
+	var favorite := _make("c6_equip_shoes", 100, "legendary", 2514)
+	favorite["favorite"] = true
+	var starred := _make("c6_equip_shoes", 100, "legendary", 2515)
+	starred["star"] = 1
+	var pool: Array = [target, higher, epic, favorite, starred,
+		{"kind": "potion", "count": 1}, null]
+	for i in range(4):
+		pool.append(_make("c6_equip_weapon", 100, "legendary", 2520 + i))
+	var picked := Reforge.random_refine_materials(pool, target, 4, _rng(2530))
+	check(picked.size() == 4, "过滤后应恰好填满 4 格，实际 %d" % picked.size())
+	var banned := [String(target.instanceId), String(higher.instanceId),
+		String(epic.instanceId), String(favorite.instanceId), String(starred.instanceId)]
+	for item in picked:
+		check(not banned.has(String(item.get("instanceId", ""))),
+			"不合格物品不得进池：%s" % String(item.get("instanceId", "")))
+		check(int(item.get("star", 0)) == 0, "自动池只取 0 星")
+
+# ---- 13) 只读 + 件数封顶 + 无候选返回空 ----
+
+func _test_random_is_read_only_and_capped() -> void:
+	GameState.reset_to_defaults()
+	var target := _make("c6_equip_necklace", 100, "legendary", 2541)
+	GameState.inventory[0] = target
+	for i in range(10):
+		GameState.inventory[1 + i] = _make("c6_equip_weapon", 100, "legendary", 2542 + i)
+	var before := str(GameState.inventory)
+	var picked := Reforge.random_refine_materials(GameState.inventory, target, 4, _rng(2550))
+	check(picked.size() == 4, "候选再多也只取 4 件，实际 %d" % picked.size())
+	check(str(GameState.inventory) == before, "随机放入不得修改背包")
+	if not picked.is_empty():
+		picked[0]["star"] = 9
+		check(str(GameState.inventory) == before, "返回值应是快照，改动不得回写背包")
+	for i in range(GameState.inventory.size()):
+		if GameState.inventory[i] != null:
+			GameState.inventory[i]["favorite"] = true
+	var frozen := str(GameState.inventory)
+	check(Reforge.random_refine_materials(GameState.inventory, target, 4, _rng(2551)).is_empty(),
+		"没有合格候选时应返回空数组")
+	check(Reforge.random_refine_materials([], target, 4).is_empty(), "空背包应返回空数组")
+	check(Reforge.random_refine_materials(GameState.inventory, target, 0).is_empty(), "0 格应返回空数组")
+	check(str(GameState.inventory) == frozen, "返回空数组时同样不得修改背包")
+	GameState.reset_to_defaults()

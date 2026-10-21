@@ -232,3 +232,42 @@ static func refine_count(materials: Array, target: Dictionary) -> float:
 ## 🔴 锁定的词条**不参与**抬升 —— 否则「锁 3 条 + 投满 4 件」等于最后一条必高，重铸退化成按按钮。
 static func floor_ratio(effective: float) -> float:
 	return minf(REFINE_CAP, REFINE_STEP * maxf(0.0, effective))
+
+## 工程 87：随机放入的材料快照（只读背包，不修改任何物品）。
+## 自动池比手动投放更保守，三条额外红线：
+## 1. **只取 0 星** —— 升星件是金币成果，不能被「省事」按钮一键烧掉；
+## 2. **只取目标同档或更低档** —— 更高档紫装留给穿戴与四紫升档，手动拖入才是明确决策；
+## 3. **同档优先、低档兜底** —— 低 2 档折算仅 0.25，若从最低档开始填，4 件只值 15%，按钮会显得坑玩家。
+## 🔴 顺序是「同档 → 低 1 档 → 低 2 档及以下」，档内随机无放回；返回空数组表示没有可自动投入的材料。
+static func random_refine_materials(inventory: Array, target: Dictionary,
+		slots: int = 4, rng: RandomNumberGenerator = null) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if slots <= 0 or target.is_empty():
+		return result
+	var target_tier := tier_index(Equipment.level_req(target))
+	if target_tier < 0:
+		return result
+	var groups := {}
+	for entry in inventory:
+		if not entry is Dictionary:
+			continue
+		var item: Dictionary = entry
+		if int(item.get("star", 0)) != 0:
+			continue
+		if not bool(can_refine(item, target).get("ok", false)):
+			continue
+		var tier := tier_index(Equipment.level_req(item))
+		if tier < 0 or tier > target_tier:
+			continue
+		if not groups.has(tier):
+			groups[tier] = [] as Array
+		(groups[tier] as Array).append(item.duplicate(true))
+	for tier in range(target_tier, -1, -1):
+		if result.size() >= slots:
+			break
+		var pool: Array = groups.get(tier, [])
+		while result.size() < slots and not pool.is_empty():
+			var index := rng.randi_range(0, pool.size() - 1) if rng != null else randi_range(0, pool.size() - 1)
+			result.append((pool[index] as Dictionary).duplicate(true))
+			pool.remove_at(index)
+	return result
