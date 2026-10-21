@@ -50,6 +50,39 @@ func _test_maps() -> void:
 	# 工程 82：超杀保护比例是地图级字段（缺省 0 = 关闭），打金图必须是 0.5。
 	check(is_equal_approx(float(gold.get("damageCapPct", 0.0)), 0.5),
 		"金币图 damageCapPct 应为 0.5，实际 %s" % gold.get("damageCapPct"))
+	# 工程 83：8 个怪种必须全部近战 —— 远程怪（射程 6 格）会隔着半个战场点名，
+	# 战士只能逐个追，与「站桩刷」的产品定位直接冲突。判据读**怪物模板**，不是读配置笔误。
+	var species := {}
+	for group in gold.get("spawnPoints", []):
+		var mid := String((group as Dictionary).get("monsterId", ""))
+		species[mid] = true
+		var tpl: Variant = DataLoader.get_entry("monsters", mid)
+		check(tpl is Dictionary, "金币怪 %s 未在怪物表登记" % mid)
+		if tpl is Dictionary:
+			var ar: Variant = (tpl as Dictionary).get("attackRange", {})
+			var ar_kind := "melee"
+			if ar is Dictionary:
+				ar_kind = String((ar as Dictionary).get("kind", "melee"))
+			check(ar_kind == "melee", "聚金地脉的 %s（%s）应为近战，实际 attackRange.kind=%s"
+				% [mid, String((tpl as Dictionary).get("name", "")), ar_kind])
+	check(species.size() == 8, "金币图应有 8 个怪种，实际 %d" % species.size())
+	# 归一化基底必须与怪种集合逐一对上：换怪后留下的孤儿 id 不会被任何席位命中，
+	# 新怪则回退模板数值（等级 53 的模板被投到 80 级 = 数值静默缩水），两边都是静默错误。
+	var norm_rows: Array = []
+	var endgame_cfg: Variant = DataLoader.get_table("endgame")
+	if endgame_cfg is Dictionary:
+		var raw_norms: Variant = (endgame_cfg as Dictionary).get("goldFieldNormals", [])
+		if raw_norms is Array:
+			norm_rows = raw_norms
+	var norm_ids := {}
+	for row in norm_rows:
+		if row is Dictionary:
+			norm_ids[String((row as Dictionary).get("monsterId", ""))] = true
+	check(norm_ids.size() == species.size(),
+		"goldFieldNormals 应 %d 条（与怪种一一对应），实际 %d" % [species.size(), norm_ids.size()])
+	for mid in species.keys():
+		check(norm_ids.has(mid), "goldFieldNormals 缺少 %s" % mid)
+		check(Endgame.has_norm(String(mid)), "%s 应有可用归一化基底" % mid)
 	# 工程 82：金脉守卫 24 席（2 种 × 12）/ 普通 72 席，倍率逐条落库。
 	var guard_seats := 0
 	var normal_seats := 0
@@ -132,6 +165,14 @@ func _test_spawn_instances() -> void:
 		normal._settle_rewards()
 		var expected := int(round(float(int(round(float(Balance.boss_xp(80)) / 10.0))) * 0.1))
 		check(int(GameState.player.get("xp", 0)) - before == expected, "金币怪实得经验为同级 Boss 曲线 /10 再乘 0.1")
+	# 工程 83：运行态也不许出现远程怪。配置断言只证明数据，这里证明**装配链路**
+	# 把模板正确带到了实例上（`is_ranged` 由 `attackRange.kind` 派生）。
+	var ranged_alive := 0
+	for p in gold_spawner._points:
+		var m: Variant = (p as Dictionary).get("entry", null)
+		if m != null and is_instance_valid(m) and (m as Monster).is_ranged:
+			ranged_alive += 1
+	check(ranged_alive == 0, "聚金地脉运行态不应出现远程怪，实际 %d 只" % ranged_alive)
 	gold_spawner.queue_free()
 	await get_tree().process_frame
 	GameState.current_map = "c7_boss_field"

@@ -97,19 +97,19 @@ func _setup(level: int, quality: String, star: int) -> void:
 	GameState.player.mp = GameState.max_mp()
 
 ## 打金图 8 种普通怪的 norm 均值（血量 / 防御），数据源与 `Endgame.norm` 同源。
+## 🔴 怪种集合必须从**地图的 spawnPoints** 取，不能按 `c6_` 前缀过滤：工程 83 换掉两只
+## 远程怪后，前缀过滤只剩 6 种，均值从 2,112 悄悄变成 2,269 —— 断言里那些「按均值怪算出的
+## 击数」会全部跟着漂移，而且报错指向的是「应有 8 种」，不是「均值变了」。
 func _gold_norm_avg() -> Dictionary:
 	var hp_sum := 0.0
 	var def_sum := 0.0
 	var n := 0
-	var rows: Variant = DataLoader.get_table("monsters")
-	if rows is Array:
-		for row in rows:
-			if not row is Dictionary:
+	var gold: Variant = DataLoader.get_entry("maps", "c7_gold_field")
+	if gold is Dictionary:
+		for group in (gold as Dictionary).get("spawnPoints", []):
+			if not group is Dictionary:
 				continue
-			var mid := String((row as Dictionary).get("id", ""))
-			if not mid.begins_with("c6_normal"):
-				continue
-			var norm := Endgame.norm(mid)
+			var norm := Endgame.norm(String((group as Dictionary).get("monsterId", "")))
 			if not norm.has("hp"):
 				continue
 			hp_sum += float(norm.get("hp", 0.0))
