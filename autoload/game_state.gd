@@ -70,6 +70,8 @@ var unlocks: Dictionary = {}        # 解锁标记，如 {"chapter2": true}（M2
 var explored_maps: Dictionary = {}  # map_id -> {区块编号字符串: true}；存档为紧凑数组（M3-3）
 var settings: Dictionary = {}
 var hotbar: Array = []             # 12 格模板引用；背包整理、切图后保持绑定（M4-8）
+## 已购买的技能阶数（只保存 ≥2 阶）；未购/旧档按角色等级自动拥有 0 或 1 阶。
+var skill_ranks: Dictionary = {}
 ## 主动技能冷却是本次会话运行态：跨图保留，读档/新游戏清零，不写存档。
 var skill_cooldowns: Dictionary = {}
 ## 自身增益剩余秒数；与技能冷却同为跨图但不落档的运行态。
@@ -175,6 +177,33 @@ func start_buff(skill_id: String) -> bool:
 func clear_buffs() -> void:
 	active_buffs.clear()
 
+## 当前技能阶数：角色等级未解锁时为 0，解锁后未购买为 1，购买记录只保存 2—5 阶。
+func skill_rank(skill_id: String) -> int:
+	var default_value := SkillProgression.default_rank(skill_id, int(player.level))
+	return int(skill_ranks.get(skill_id, default_value)) if default_value > 0 else 0
+
+## 购买指定技能的下一阶；先完整校验再一次提交金币与阶数，失败不修改任何状态。
+## 返回 ok/reason/rank/cost 供技能面板展示，购买期间不会重置冷却或当前 Buff。
+func buy_skill_rank(skill_id: String) -> Dictionary:
+	var rank := skill_rank(skill_id)
+	if rank < 1:
+		return {"ok": false, "reason": "locked"}
+	var target_rank := rank + 1
+	var step := SkillProgression.step(skill_id, target_rank)
+	if step.is_empty():
+		return {"ok": false, "reason": "max"}
+	if int(player.level) < int(step.get("unlockLevel", 0)):
+		return {"ok": false, "reason": "level"}
+	var cost := int(step.get("goldCost", 0))
+	if cost <= 0 or cost > gold:
+		return {"ok": false, "reason": "gold"}
+	# 两个持久状态先提交，再广播：任何订阅方触发自动存时都能读取同一笔完整交易。
+	gold -= cost
+	skill_ranks[skill_id] = target_rank
+	EventBus.gold_changed.emit(gold)
+	EventBus.skill_rank_changed.emit(skill_id, target_rank)
+	return {"ok": true, "rank": target_rank, "cost": cost}
+
 ## 基础属性模板（数值来源：docs/产品文档/04 角色成长系统 4.4 初始值）。
 ## 独立成函数：reset_to_defaults 与**读档字段补全**（SaveManager._migrate_player）共用，
 ## 保证旧档缺字段时补出来的默认值与新游戏完全一致（M1-10）。
@@ -268,6 +297,7 @@ func reset_to_defaults() -> void:
 	clear_save_pos()
 	settings = SettingsRuntime.with_display_preferences(default_settings())
 	hotbar = HotbarConfig.defaults()
+	skill_ranks = {}
 	SettingsRuntime.apply_all()
 
 func mark_visited(map_id: String) -> void:

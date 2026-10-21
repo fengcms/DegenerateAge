@@ -21,7 +21,8 @@ const MAX_SLOTS := 3
 ## v10（工程文档 22）新增：`inventoryExpansions`，存档校验按扩容次数检查背包长度。
 ## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
 ## v14（E1 / 工程文档 30 §4）新增：`questRewardPlans`（持久任务发奖计划，失败重试复用同一实例与词条）。
-const CURRENT_SCHEMA := 14
+## v15（技能升阶）新增：`skillRanks`（只存已购买的 2—5 阶；旧档默认空，解锁技能按等级拥有 1 阶）。
+const CURRENT_SCHEMA := 15
 ## 可读取的最低 schema 版本（0—10 明确拒读，产品 10.3）。`_is_valid_save` 与导入的前置检查共用同一下限，
 ## 避免两处写死 11 后出现「读档能读、导入不能导」的分裂。
 const MIN_READABLE_SCHEMA := 11
@@ -185,6 +186,7 @@ func _collect() -> Dictionary:
 		"unlocks": GameState.unlocks.duplicate(true),
 		"settings": GameState.settings.duplicate(true),
 		"hotbar": GameState.hotbar.duplicate(true),
+		"skillRanks": GameState.skill_ranks.duplicate(true),
 		"exploredMaps": Fog.encode(),
 		# M4-10：世界时钟与怪物点刷新状态（墓碑跨图 / 跨档保持，见工程文档 14 §3.1 ④）
 		"worldTime": GameState.world_time,
@@ -301,6 +303,7 @@ func _is_test_scene() -> bool:
 func _connect_events() -> void:
 	EventBus.boss_first_clear.connect(func(_id: String) -> void: request_autosave())
 	EventBus.player_leveled.connect(func(_lv: int) -> void: request_autosave())
+	EventBus.skill_rank_changed.connect(func(_id: String, _rank: int) -> void: request_autosave())
 	EventBus.equipment_changed.connect(func() -> void: request_autosave())
 	EventBus.equipment_favorite_changed.connect(func() -> void: request_autosave())
 	EventBus.upgrade_completed.connect(func() -> void: request_autosave())
@@ -424,7 +427,7 @@ func _emit_resume_toast() -> void:
 ## 版本迁移：为旧档补齐新增字段的默认值（10.3 / 04 §4.5 版本化内容 + 旧档导入）。
 func _migrate(source: Dictionary) -> Dictionary:
 	# C-P3-2：本函数中的 v0 与 v<11 分支在真实读档路径**不可达** ——
-	# `_is_valid_save` 只接受 schema 11—13（产品 10.3：0—10 明确拒读），
+	# `_is_valid_save` 只接受 schema 11—15（产品 10.3：0—10 明确拒读），
 	# 故这些分支仅为历史兼容保留（`_migrate` 单测仍会直接调用），勿据此认为旧档可导入。
 	var data := source.duplicate(true)
 	var v := int(data.get("schemaVersion", -1))
@@ -498,6 +501,8 @@ func _migrate(source: Dictionary) -> Dictionary:
 				data.visitedMaps.append(previous_map)
 		if v < 10:
 			data.inventoryExpansions = 0
+		if v < 15:
+			data.skillRanks = {}
 		data.schemaVersion = CURRENT_SCHEMA
 	return data
 
@@ -779,6 +784,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 	if data.get("player", null) is Dictionary:
 		GameState.player = _migrate_player(data["player"] as Dictionary)
 	GameState.gold = clampi(int(data.get("gold", 0)), 0, GameState.GOLD_CAP)
+	GameState.skill_ranks = data.skillRanks.duplicate(true)
 	GameState.current_map = String(data.get("currentMap", "camp"))
 	GameState.visited_maps.clear()
 	for map_id in data.visitedMaps:
@@ -1265,7 +1271,7 @@ func _is_valid_save(raw: Variant) -> bool:
 	if not _whole(raw.get("gold"), 0, GameState.GOLD_CAP):
 		return _reject("gold 非法")
 	var data := _migrate(raw)
-	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps", "questRewardPlans"]:
+	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps", "questRewardPlans", "skillRanks"]:
 		if not data.get(key) is Dictionary:
 			return _reject("%s 应为字典" % key)
 	if not _whole(data.get("inventoryExpansions"), 0, Warehouse.max_expansions()):
@@ -1274,6 +1280,13 @@ func _is_valid_save(raw: Variant) -> bool:
 		return _reject("inventory 长度与扩容不符")
 	if not _whole(data.get("warehouseExpansions"), 0, Warehouse.max_expansions()):
 		return _reject("warehouseExpansions 非法")
+	for skill_id in data.skillRanks.keys():
+		var sid := String(skill_id)
+		var value: Variant = data.skillRanks[skill_id]
+		var step := SkillProgression.step(sid, int(value) if _whole(value, 2, 5) else 0)
+		if not skill_id is String or not _whole(value, 2, 5) or step.is_empty() \
+				or int(data.player.level) < int(step.get("unlockLevel", 99999)):
+			return _reject("skillRanks.%s 阶数或角色等级非法" % sid)
 	if not data.get("warehouse") is Array or data.warehouse.size() != Warehouse.capacity(int(data.warehouseExpansions)):
 		return _reject("warehouse 长度与扩容不符")
 	if not data.get("ownedMounts") is Array or not data.get("activeMount") is String:

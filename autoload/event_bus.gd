@@ -19,6 +19,8 @@ signal player_died()
 
 # ---- 成长 ----
 signal player_leveled(new_level: int)
+## 某技能购买新阶后广播；界面、快捷栏与关键事件存档均从同一次状态提交刷新。
+signal skill_rank_changed(skill_id: String, rank: int)
 
 # ---- 玩家数值（HUD 实时刷新，M1-3）----
 signal player_hp_changed(current: int, maximum: int)

@@ -54,3 +54,7 @@ static func resolve(skill_id: String, rank: int) -> Dictionary:
 			effective.effects = (upgrade.effects as Dictionary).duplicate(true)
 	_resolved[key] = effective
 	return effective
+
+## 读取玩家当前阶生效定义；未解锁时返回空字典，供施放和自动战斗共用。
+static func current(skill_id: String) -> Dictionary:
+	return resolve(skill_id, GameState.skill_rank(skill_id))
