@@ -1229,8 +1229,12 @@ func _upgrade_fail(reason: String) -> Dictionary:
 ## 🔑 **先掷后扣**：`ItemFactory.reroll_affixes` 是纯函数、不改 item、无副作用，掷成功才扣钱。
 ## 于是「扣了钱没重铸」这条错误路径根本不存在 —— 比「先扣、失败再退款」少一条分支。
 ## 品质 / 星级 / 基底 / instanceId 一律不动，只写回 `affixes` / `pctAttrs`（无需改存档 schema）。
+##
+## 工程 81：`locked_stats` 是要**保留**的属性名（如 `["hp", "hpPercent"]`），默认空 ⇒ 全量重掷，
+## 既有调用零改动。🔴 锁定必须在**扣费前**校验（`Reforge.validate_locks`）：
+## 「全锁」等于花钱买一个「什么都没变」，而非法 stat 若静默丢弃，玩家会以为锁住了。
 func reforge_equipment(source: String, key: Variant, expected_id: String,
-		rng: RandomNumberGenerator = null) -> Dictionary:
+		rng: RandomNumberGenerator = null, locked_stats: Array = []) -> Dictionary:
 	var item: Dictionary = {}
 	if source == "bag" and key is int and key >= 0 and key < inventory.size():
 		var candidate = inventory[key]
@@ -1245,12 +1249,16 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	var guard := Reforge.can_reforge(item)
 	if not bool(guard.get("ok", false)):
 		return _reforge_fail(String(guard.get("reason", Localization.tr_key("msg.reforge.p003"))))
-	var price := Reforge.cost(Equipment.level_req(item))
+	var locks := Reforge.validate_locks(item, locked_stats)
+	if not bool(locks.get("ok", false)):
+		return _reforge_fail(String(locks.get("reason", Localization.tr_key("msg.reforge.p007"))))
+	var lock_count := Reforge.lock_count(locked_stats)
+	var price := Reforge.cost(Equipment.level_req(item), lock_count)
 	if price <= 0:
 		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
 	if gold < price:
 		return _reforge_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
-	var rolled := ItemFactory.reroll_affixes(item, rng)
+	var rolled := ItemFactory.reroll_affixes(item, rng, locked_stats)
 	if not bool(rolled.get("ok", false)):
 		return _reforge_fail(Localization.tr_key("msg.reforge.p003"))
 	var unchanged := ItemUtil.affix_lines(item) == ItemUtil.affix_lines({
@@ -1268,7 +1276,7 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	var message := Localization.tr_key("msg.reforge.p005") % [ItemUtil.display_name(item), price]
 	EventBus.toast_requested.emit(message, "pickup")
 	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
-		"unchanged": unchanged, "reason": message}
+		"unchanged": unchanged, "locked": lock_count, "reason": message}
 
 func _reforge_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")

@@ -84,7 +84,8 @@
   "reforge": {
     "baseGold": 500,
     "levelBase": 60,
-    "levelFactor": 0.75
+    "levelFactor": 0.75,
+    "lockFactor": 0.5
   },
   "resale": {
     "levelStep": 0.02,

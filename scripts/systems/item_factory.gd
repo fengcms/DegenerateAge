@@ -158,8 +158,14 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 ## 把 `randf()` 挪到循环后、或把「选属性」与「滚数值」调换，1—60 级所有掉落结果都会变；
 ## `tests/ReforgeTest` 用例 14 用固定种子快照锁死这条顺序（唯一防线）。
 ## `affix_scale` 由调用方按**实例等级**算好传入（见 `reroll_affixes`）。
+##
+## 工程 81：`locked_fixed` / `locked_pct` 是**锁定条目**（`{stat, value}`），原样进结果、
+## **不消耗随机数**；两者都为空时本函数的语句序列与改造前**逐句相同**（快照用例 14 守着）。
+## 🔴 锁定的 stat 必须从候选池里剔除 —— 否则未锁定部分又掷出同一 stat，出现两条 `hp`，
+## 而 `Equipment.bonus()` 是按 stat 累加的 ⇒ **静默叠加、零报错**，玩家只看到「锁的那条变了」。
+## 🔴 锁定了百分比词条时必须**跳过 `randf()` 判定**：否则 50% 概率整条消失，间歇性发作最难查。
 static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
-		rng: RandomNumberGenerator) -> Dictionary:
+		rng: RandomNumberGenerator, locked_fixed: Array = [], locked_pct: Array = []) -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	var cfg := rules()
 	var qualities: Variant = cfg.get("qualities", {})
@@ -174,19 +180,29 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 	var pct_cfg: Dictionary = cfg.get("percentAffixes", {})
 	var fixed: Array = []
 	var percent: Array = []
+	var locked_stats: Dictionary = {}
+	for entry in locked_fixed:
+		if entry is Dictionary:
+			fixed.append((entry as Dictionary).duplicate())
+			locked_stats[String((entry as Dictionary).get("stat", ""))] = true
+	for entry in locked_pct:
+		if entry is Dictionary:
+			percent.append((entry as Dictionary).duplicate())
+			locked_stats[String((entry as Dictionary).get("stat", ""))] = true
 	var available: Array = []
 	for stat in pool:
-		if fixed_cfg.has(String(stat)):
+		if fixed_cfg.has(String(stat)) and not locked_stats.has(String(stat)):
 			available.append(String(stat))
-	if affix_count > 0 and float(q.get("percentChance", 0.0)) > 0.0 and r.randf() < float(q.percentChance):
-		var pct_available: Array = []
-		for stat in pool:
-			if pct_cfg.has(String(stat)):
-				pct_available.append(String(stat))
-		if not pct_available.is_empty():
-			var stat: String = pct_available[r.randi_range(0, pct_available.size() - 1)]
-			var bounds: Dictionary = pct_cfg[stat]
-			percent.append({"stat": stat, "value": snappedf(r.randf_range(float(bounds.min), float(bounds.max)), 0.001)})
+	if (locked_pct as Array).is_empty():
+		if affix_count > 0 and float(q.get("percentChance", 0.0)) > 0.0 and r.randf() < float(q.percentChance):
+			var pct_available: Array = []
+			for stat in pool:
+				if pct_cfg.has(String(stat)) and not locked_stats.has(String(stat)):
+					pct_available.append(String(stat))
+			if not pct_available.is_empty():
+				var stat: String = pct_available[r.randi_range(0, pct_available.size() - 1)]
+				var bounds: Dictionary = pct_cfg[stat]
+				percent.append({"stat": stat, "value": snappedf(r.randf_range(float(bounds.min), float(bounds.max)), 0.001)})
 	while fixed.size() + percent.size() < affix_count and not available.is_empty():
 		var index := r.randi_range(0, available.size() - 1)
 		var stat: String = available[index]
@@ -202,12 +218,16 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 
 ## 重掷一件**既有实例**的词条（M10-8 装备重铸）：成功返回 `{ok, affixes, pctAttrs}`，
 ## 失败返回 `{ok: false, reason}`。
+## 工程 81：`locked_stats` 是要**保留**的属性名数组（`["hp", "hpPercent"]`）；空数组（默认）
+## 走原路径 —— 既有调用零改动。**合法性由 `Reforge.validate_locks` 在扣费前把关**，
+## 这里对取不到的 stat 仍显式失败（不猜不修）。
 ## 🔴 只读实例的 `itemId` / `quality` / `requiredLevel`，**不改 item**（由 `GameState` 写回）。
 ## 🔴 词条倍率必须按**实例等级**算：`affixTierScale[51] × Balance.scale(L − 60)`。
 ## 不能用 `tier_start_for_template(itemId)` 推 —— 循环套恒为 51，用它会把 L1000 的
 ## 词条砸回 L60 数值（这就是负向 N-3）。判据用 `requiredLevel > 60` 而非
 ## `equipmentRuleVersion`：老档实例可能缺这个字段，而等级是必有的。
-static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null) -> Dictionary:
+static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null,
+		locked_stats: Array = []) -> Dictionary:
 	var item_id := String(item.get("itemId", ""))
 	if item_id.is_empty():
 		return {"ok": false, "reason": "id"}
@@ -226,7 +246,52 @@ static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null) 
 		return {"ok": false, "reason": "scale"}
 	var factor := Balance.scale(level - Balance.SOFTCAP_LEVEL) if dynamic else 1.0
 	var affix_scale := float((scale_values as Dictionary)[scale_key]) * factor
-	return _roll_affixes(item_id, quality, affix_scale, rng)
+	if (locked_stats as Array).is_empty():
+		return _roll_affixes(item_id, quality, affix_scale, rng)
+	var split := _split_locked_entries(item, locked_stats)
+	if not bool(split.get("ok", false)):
+		return {"ok": false, "reason": String(split.get("reason", "lock"))}
+	return _roll_affixes(item_id, quality, affix_scale, rng,
+		split.get("fixed", []) as Array, split.get("pct", []) as Array)
+
+## 把「要保留的属性名」翻译成「要保留的**完整条目**」并分流到固定 / 百分比两组。
+## 🔴 取 stat 时**连数值一起取**（`{stat, value}` 整体保留），不是只取属性名重新掷数值。
+## 🔴 归类只认 `fixedAffixes` / `percentAffixes` 两张表：认不出来的 stat 直接失败 ——
+## 硬塞进固定组会把 5.4% 的百分比当成 +5 点写回去。
+static func _split_locked_entries(item: Dictionary, locked_stats: Array) -> Dictionary:
+	var cfg := rules()
+	var fixed_cfg: Dictionary = cfg.get("fixedAffixes", {})
+	var pct_cfg: Dictionary = cfg.get("percentAffixes", {})
+	var wanted: Array[String] = []
+	for raw in locked_stats:
+		var stat := String(raw)
+		if stat.is_empty() or wanted.has(stat):
+			continue
+		wanted.append(stat)
+	var fixed_entries: Array = []
+	var pct_entries: Array = []
+	for stat in wanted:
+		var found := false
+		for key in ["affixes", "pctAttrs"]:
+			var arr: Variant = item.get(String(key), [])
+			if not arr is Array:
+				continue
+			for e in arr as Array:
+				if not e is Dictionary or String((e as Dictionary).get("stat", "")) != stat:
+					continue
+				if fixed_cfg.has(stat):
+					fixed_entries.append((e as Dictionary).duplicate())
+				elif pct_cfg.has(stat):
+					pct_entries.append((e as Dictionary).duplicate())
+				else:
+					return {"ok": false, "reason": "unclassified"}
+				found = true
+				break
+			if found:
+				break
+		if not found:
+			return {"ok": false, "reason": "missing"}
+	return {"ok": true, "fixed": fixed_entries, "pct": pct_entries}
 
 ## M10-1 / D-21：循环装备实例门面，**生产代码的唯一入口**（`Loot` 只走这里）。
 ## `level ≤ 60` 退回普通路径（60 级拿到的仍是 tier51 原版）；
