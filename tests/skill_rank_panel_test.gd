@@ -27,9 +27,41 @@ func _ready() -> void:
 	_check(source_icon.skill_id == "earth_cleave" and not source_icon.disabled,
 		"升阶按钮不破坏原有拖放图标")
 	var summary := first_row.get_child(1) as Label
+	var tooltip := source_icon._make_custom_tooltip(source_icon.tooltip_text) as SkillDetailTooltip
+	add_child(tooltip)
 	_check(summary.text.contains("1/5") and not summary.text.contains("下阶")
-		and source_icon.tooltip_text.contains("下阶") and source_icon.tooltip_text.contains("1500"),
-		"紧凑行卡仅保留阶数，效果和价格进入悬停提示")
+		and tooltip._next.text.contains("下阶") and tooltip._next.text.contains("1500"),
+		"紧凑行卡仅保留阶数，效果和价格进入结构化浮层")
+	_check(tooltip._cooldown.text.contains("基础冷却 4.0")
+		and tooltip._cooldown.text.contains("%.1f" % GameState.cooldown_after_cdr(4.0)),
+		"浮层分别说明基础冷却与当前属性下次施放冷却")
+	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
+	GameState.skill_cooldowns["earth_cleave"] = 2.8
+	panel._refresh_cooldowns()
+	tooltip._refresh_live()
+	_check(player != null and tooltip._remaining.visible and tooltip._remaining.text.contains("2.8")
+		and (source_icon.get_node("CooldownOverlay") as Label).text == "3s",
+		"运行中冷却取同一状态；浮层保留一位小数，图标秒数向上取整")
+	GameState.skill_cooldowns["earth_cleave"] = 0.0
+	panel._refresh_cooldowns()
+	tooltip._refresh_live()
+	_check(not tooltip._remaining.visible and (source_icon.get_node("CooldownOverlay") as Label).text.is_empty(),
+		"冷却归零后两处倒计时同步消失")
+	GameState.active_buffs["battle_focus"] = {"remaining": 3.3, "effects": {"attackSpeedPct": 0.15}}
+	GameState.skill_cooldowns["battle_focus"] = 7.0
+	var focus_tip := SkillDetailTooltip.for_skill("battle_focus")
+	add_child(focus_tip)
+	panel._refresh_cooldowns()
+	_check(focus_tip._remaining.visible and focus_tip._remaining.text.contains("增益剩余")
+		and (panel._cooldown_labels["battle_focus"] as Label).text == "7s"
+		and panel._basic_interval_label.text.contains("%.1f" % player.effective_attack_interval()),
+		"战意浮层同时报告增益和冷却，普攻间隔跟随攻速")
+	remove_child(focus_tip)
+	focus_tip.free()
+	GameState.active_buffs.erase("battle_focus")
+	GameState.skill_cooldowns["battle_focus"] = 0.0
+	remove_child(tooltip)
+	tooltip.free()
 	_check((first_row.get_child(2) as Label).text.contains("CD 4"), "行卡显示基础冷却")
 	upgrade.pressed.emit()
 	_check(GameState.skill_rank("earth_cleave") == 2 and GameState.gold == 0,
@@ -40,8 +72,12 @@ func _ready() -> void:
 	var updated_row: Control = panel._list.get_child(1)
 	var updated_summary := updated_row.get_child(1) as Label
 	var updated_icon := updated_row.get_child(0) as SkillDragButton
-	_check(updated_summary.text.contains("2/5") and updated_icon.tooltip_text.contains("1.44"),
+	var updated_tooltip := updated_icon._make_custom_tooltip(updated_icon.tooltip_text) as SkillDetailTooltip
+	add_child(updated_tooltip)
+	_check(updated_summary.text.contains("2/5") and updated_tooltip._effect.text.contains("1.44"),
 		"购买后阶数更新且悬停说明给出 2 阶实际系数")
+	remove_child(updated_tooltip)
+	updated_tooltip.free()
 	GameState.set_hotbar_entry(4, {"kind": "skill", "id": "earth_cleave"})
 	var hotbar_tip := (hud._hotbar_buttons[4] as HotbarSlot).tooltip_text
 	_check(hotbar_tip.contains("2 阶"),
@@ -61,10 +97,19 @@ func _ready() -> void:
 	_check(box.global_position.x >= -1 and box.global_position.y >= -1
 		and box.global_position.x + box.size.x <= logical.x + 1
 		and box.global_position.y + box.size.y <= logical.y + 1,
-		"200% 界面和文字下技能面板完整落在逻辑视口：%s / %s" % [box.get_global_rect(), logical])
+		"200%% 界面和文字下技能面板完整落在逻辑视口：%s / %s" % [box.get_global_rect(), logical])
 	var scroll := panel._center.content_scroll as ScrollContainer
 	_check(scroll != null and scroll.size.y > 0 and scroll.get_child(0).get_combined_minimum_size().y > scroll.size.y,
 		"200% 极端倍率下内容应留在可滚动区，而非撑出屏幕")
+	var large_tip := updated_icon._make_custom_tooltip(updated_icon.tooltip_text) as SkillDetailTooltip
+	add_child(large_tip)
+	await get_tree().process_frame
+	var tip_size := large_tip.get_combined_minimum_size()
+	_check(large_tip._description.get_theme_font_size("font_size") >= 30
+		and tip_size.x <= logical.x and tip_size.y >= 100.0 and tip_size.y <= logical.y * 0.7,
+		"200%% 文字倍率下浮层字号放大且外框不超逻辑视口：%s / %s" % [tip_size, logical])
+	remove_child(large_tip)
+	large_tip.free()
 	panel.set_open(false)
 	if _failures.is_empty():
 		print("SkillRankPanelTest: PASS")

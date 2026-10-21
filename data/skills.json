@@ -54,7 +54,7 @@
     "duration": 8.0,
     "effects": { "attackPct": 0.2, "attackSpeedPct": 0.15 },
     "targetType": "self",
-    "desc": "自身增益：攻击力 +20%、攻速 +15%，持续 8 秒。",
+    "desc": "自身增益：提升攻击力与攻击速度，持续 8 秒。",
     "icon": "res://assets/sprites/skills/battle_focus.png"
   },
   {
@@ -85,7 +85,7 @@
     "shape": "circle",
     "range": 4.0,
     "targetType": "enemy",
-    "desc": "大范围多段攻击，单次系数 1.0×攻，共 3 段。",
+    "desc": "大范围多段攻击，共 3 段。",
     "icon": "res://assets/sprites/skills/spirit_storm.png"
   }
 ]
