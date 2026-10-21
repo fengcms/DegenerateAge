@@ -39,8 +39,8 @@
     "skillId": "spirit_storm",
     "ranks": [
       {"rank": 2, "unlockLevel": 50, "goldCost": 9000, "coefficientMultiplier": 1.03},
-      {"rank": 3, "unlockLevel": 60, "goldCost": 15000, "coefficientMultiplier": 1.06},
-      {"rank": 4, "unlockLevel": 70, "goldCost": 150000, "coefficientMultiplier": 1.09},
+      {"rank": 3, "unlockLevel": 60, "goldCost": 45000, "coefficientMultiplier": 1.06},
+      {"rank": 4, "unlockLevel": 70, "goldCost": 70000, "coefficientMultiplier": 1.09},
       {"rank": 5, "unlockLevel": 80, "goldCost": 500000, "coefficientMultiplier": 1.12}
     ]
   }

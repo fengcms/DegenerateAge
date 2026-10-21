@@ -180,6 +180,13 @@ func _test_skill_no_one_shot() -> void:
 		% _hits_to_kill(hp, basic, 0.5))
 	check(_hits_to_kill(hp, cleave, 0.5) == 2, "封顶后裂地斩应升到 2 击（不再一刀秒），实际 %d"
 		% _hits_to_kill(hp, cleave, 0.5))
+	GameState.skill_ranks["earth_cleave"] = 5
+	var max_rank_cleave := SkillProgression.current("earth_cleave")
+	var max_rank_hit := _raw_hit(float(max_rank_cleave.get("coefficient", 0.0)),
+		float(avg.get("def", 0.0)), scale)
+	check(_hits_to_kill(hp, max_rank_hit, 0.5) == 2,
+		"5 阶裂地斩仍需 2 击（升阶不能越过打金图超杀保护），实际 %d"
+		% _hits_to_kill(hp, max_rank_hit, 0.5))
 	# 2.0 系数的破甲重击同理（系数越高，未封顶时秒得越彻底）。
 	var break_hit := _raw_hit(2.0, float(avg.get("def", 0.0)), scale)
 	check(_hits_to_kill(hp, break_hit, 0.5) == 2, "封顶后破甲重击应为 2 击，实际 %d"
