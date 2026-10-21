@@ -165,7 +165,8 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 ## 而 `Equipment.bonus()` 是按 stat 累加的 ⇒ **静默叠加、零报错**，玩家只看到「锁的那条变了」。
 ## 🔴 锁定了百分比词条时必须**跳过 `randf()` 判定**：否则 50% 概率整条消失，间歇性发作最难查。
 static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
-		rng: RandomNumberGenerator, locked_fixed: Array = [], locked_pct: Array = []) -> Dictionary:
+		rng: RandomNumberGenerator, locked_fixed: Array = [], locked_pct: Array = [],
+		floor_ratio: float = 0.0) -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	var cfg := rules()
 	var qualities: Variant = cfg.get("qualities", {})
@@ -202,7 +203,12 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 			if not pct_available.is_empty():
 				var stat: String = pct_available[r.randi_range(0, pct_available.size() - 1)]
 				var bounds: Dictionary = pct_cfg[stat]
-				percent.append({"stat": stat, "value": snappedf(r.randf_range(float(bounds.min), float(bounds.max)), 0.001)})
+				# 工程 86：精炼只抬**下限**；ratio == 0 时下式与改造前逐字相同（含浮点值）。
+				var pct_lo := float(bounds.min)
+				var pct_hi := float(bounds.max)
+				if floor_ratio > 0.0:
+					pct_lo += (pct_hi - pct_lo) * floor_ratio
+				percent.append({"stat": stat, "value": snappedf(r.randf_range(pct_lo, pct_hi), 0.001)})
 	while fixed.size() + percent.size() < affix_count and not available.is_empty():
 		var index := r.randi_range(0, available.size() - 1)
 		var stat: String = available[index]
@@ -210,6 +216,8 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 		var bounds: Dictionary = fixed_cfg[stat]
 		var lo := maxi(1, int(round(float(bounds.min) * affix_scale)))
 		var hi := maxi(lo, int(round(float(bounds.max) * affix_scale)))
+		if floor_ratio > 0.0:
+			lo = mini(hi, lo + int(round(float(hi - lo) * floor_ratio)))
 		fixed.append({"stat": stat, "value": r.randi_range(lo, hi)})
 	if fixed.size() + percent.size() != affix_count:
 		push_error("[ItemFactory] %s 的 %s 品质词条池不足" % [item_id, quality])
@@ -227,7 +235,7 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 ## 词条砸回 L60 数值（这就是负向 N-3）。判据用 `requiredLevel > 60` 而非
 ## `equipmentRuleVersion`：老档实例可能缺这个字段，而等级是必有的。
 static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null,
-		locked_stats: Array = []) -> Dictionary:
+		locked_stats: Array = [], floor_ratio: float = 0.0) -> Dictionary:
 	var item_id := String(item.get("itemId", ""))
 	if item_id.is_empty():
 		return {"ok": false, "reason": "id"}
@@ -247,12 +255,12 @@ static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null,
 	var factor := Balance.scale(level - Balance.SOFTCAP_LEVEL) if dynamic else 1.0
 	var affix_scale := float((scale_values as Dictionary)[scale_key]) * factor
 	if (locked_stats as Array).is_empty():
-		return _roll_affixes(item_id, quality, affix_scale, rng)
+		return _roll_affixes(item_id, quality, affix_scale, rng, [], [], floor_ratio)
 	var split := _split_locked_entries(item, locked_stats)
 	if not bool(split.get("ok", false)):
 		return {"ok": false, "reason": String(split.get("reason", "lock"))}
 	return _roll_affixes(item_id, quality, affix_scale, rng,
-		split.get("fixed", []) as Array, split.get("pct", []) as Array)
+		split.get("fixed", []) as Array, split.get("pct", []) as Array, floor_ratio)
 
 ## 把「要保留的属性名」翻译成「要保留的**完整条目**」并分流到固定 / 百分比两组。
 ## 🔴 取 stat 时**连数值一起取**（`{stat, value}` 整体保留），不是只取属性名重新掷数值。

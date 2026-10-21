@@ -164,3 +164,71 @@ static func resale_scale(level: int) -> float:
 	if over <= 0 or step <= 0.0:
 		return 1.0
 	return 1.0 + step * float(over)
+
+## ---- 工程 86：重铸精炼（紫装当材料，抬高本次未锁定词条的数值下限）----
+
+## 单次最多计入 4 件有效材料；每件抬 15%，封顶 60% 分位。
+## 三个数一起定义：改上限就会连带改满投时的下限，不能拆开调。
+const REFINE_MAX_EFFECTIVE := 4.0
+const REFINE_STEP := 0.15
+const REFINE_CAP := 0.60
+## 只有传说（界面紫）能当材料。
+const REFINE_QUALITY := "legendary"
+
+## 十级档序号：同档 → 差 0，高一档 → 差 1。`suit_start` 是唯一套档口径（1—10 → 0，51 → 5，61 → 6）。
+static func tier_index(level: int) -> int:
+	var start := ItemFactory.suit_start(level)
+	if start <= 0:
+		return -1
+	return (start - 1) / 10
+
+## 一件材料折算多少「有效件数」：同档 1 / 高 1 档及以上 2 / 低 1 档 0.5 / 低 2 档及以下 0.25；
+## 12★ 额外 +1（强化投入的沉没成本，避免喂满的旧件只能穿/卖/仓）。
+## 🔴 只影响下限，不改变材料件数：投入 4 件低 2 档也只算 1 件有效，防止低档料按件数平替同档料。
+static func refine_value(material: Dictionary, target: Dictionary) -> float:
+	var mt := tier_index(Equipment.level_req(material))
+	var tt := tier_index(Equipment.level_req(target))
+	if mt < 0 or tt < 0:
+		return 0.0
+	var value := 1.0
+	if mt > tt:
+		value = 2.0
+	elif mt == tt - 1:
+		value = 0.5
+	elif mt < tt - 1:
+		value = 0.25
+	if int(material.get("star", 0)) >= Upgrade.max_star():
+		value += 1.0
+	return value
+
+## 一件材料能否投：`{ok, reason}`。判据与铁匠合成同口径 —— 收藏件、非紫装、脏实例一律不可投。
+## 🔴 不在背包（穿戴中 / 仓库）由调用方按 `find_owned_item` 的落点挡下，这里只管物品本身。
+static func can_refine(material: Dictionary, target: Dictionary) -> Dictionary:
+	if String(material.get("kind", "")) != "equip":
+		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p010")}
+	if quality_of(material) != REFINE_QUALITY:
+		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p010")}
+	if bool(material.get("favorite", false)):
+		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p011")}
+	if String(material.get("instanceId", "")).is_empty() \
+			or String(material.get("instanceId", "")) == String(target.get("instanceId", "")):
+		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p012")}
+	if tier_index(Equipment.level_req(material)) < 0:
+		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p012")}
+	return {"ok": true, "reason": ""}
+
+## 材料列表的**有效件数**（封顶 4）。非法件不计入、也不报错 ——
+## 合法性由 `can_refine` 在扣费前逐件把关，这里只负责计价。
+static func refine_count(materials: Array, target: Dictionary) -> float:
+	var total := 0.0
+	for raw in materials:
+		if raw is Dictionary:
+			total += refine_value(raw as Dictionary, target)
+			if total >= REFINE_MAX_EFFECTIVE:
+				return REFINE_MAX_EFFECTIVE
+	return total
+
+## 未锁定词条的数值下限比例：`min(0.60, 0.15 × 有效件数)`；0 件即 0（完整区间随机）。
+## 🔴 锁定的词条**不参与**抬升 —— 否则「锁 3 条 + 投满 4 件」等于最后一条必高，重铸退化成按按钮。
+static func floor_ratio(effective: float) -> float:
+	return minf(REFINE_CAP, REFINE_STEP * maxf(0.0, effective))

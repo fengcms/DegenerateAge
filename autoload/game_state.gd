@@ -1274,8 +1274,12 @@ func _upgrade_fail(reason: String) -> Dictionary:
 ## 工程 81：`locked_stats` 是要**保留**的属性名（如 `["hp", "hpPercent"]`），默认空 ⇒ 全量重掷，
 ## 既有调用零改动。🔴 锁定必须在**扣费前**校验（`Reforge.validate_locks`）：
 ## 「全锁」等于花钱买一个「什么都没变」，而非法 stat 若静默丢弃，玩家会以为锁住了。
+## 工程 86：`refine_ids` 是投入的紫装材料实例 id 列表（只收背包件）。
+## 材料只抬**未锁定**词条的数值下限（`Reforge.floor_ratio`），不改品质 / 星级 / 基底；
+## 与金币一样是「先掷后扣」——校验失败、掷词条失败都一件不扣。
 func reforge_equipment(source: String, key: Variant, expected_id: String,
-		rng: RandomNumberGenerator = null, locked_stats: Array = []) -> Dictionary:
+		rng: RandomNumberGenerator = null, locked_stats: Array = [],
+		refine_ids: Array = []) -> Dictionary:
 	var item: Dictionary = {}
 	if source == "bag" and key is int and key >= 0 and key < inventory.size():
 		var candidate = inventory[key]
@@ -1293,31 +1297,71 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	var locks := Reforge.validate_locks(item, locked_stats)
 	if not bool(locks.get("ok", false)):
 		return _reforge_fail(String(locks.get("reason", Localization.tr_key("msg.reforge.p007"))))
+	var material_plan := _refine_materials(item, refine_ids)
+	if not bool(material_plan.get("ok", false)):
+		return _reforge_fail(String(material_plan.get("reason", "")))
+	var materials: Array = material_plan.get("items", [])
+	var material_indices: Array = material_plan.get("indices", [])
+	var effective := Reforge.refine_count(materials, item)
 	var lock_count := Reforge.lock_count(locked_stats)
 	var price := Reforge.cost(Equipment.level_req(item), lock_count)
 	if price <= 0:
 		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
 	if gold < price:
 		return _reforge_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
-	var rolled := ItemFactory.reroll_affixes(item, rng, locked_stats)
+	var rolled := ItemFactory.reroll_affixes(item, rng, locked_stats, Reforge.floor_ratio(effective))
 	if not bool(rolled.get("ok", false)):
 		return _reforge_fail(Localization.tr_key("msg.reforge.p003"))
 	var unchanged := ItemUtil.affix_lines(item) == ItemUtil.affix_lines({
 		"affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
 	})
 	add_gold(-price)
+	# 材料与金币同批扣除：上面的校验全部通过才走到这里（含「同一件不能既是目标又是材料」）。
+	for index in material_indices:
+		if index >= 0 and index < inventory.size():
+			inventory[index] = null
 	item["affixes"] = rolled.affixes
 	item["pctAttrs"] = rolled.pctAttrs
+	var materials_used := (materials as Array).size()
 	if source == "worn":
 		EventBus.equipment_changed.emit()
 		EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 		EventBus.player_mp_changed.emit(int(player.mp), max_mp())
+		if materials_used > 0:
+			EventBus.inventory_changed.emit()
 	else:
 		EventBus.inventory_changed.emit()
-	var message := Localization.tr_key("msg.reforge.p005") % [ItemUtil.display_name(item), price]
+	var message := (Localization.tr_key("msg.reforge.p009") % [
+		ItemUtil.display_name(item), price, materials_used] if materials_used > 0 else
+		Localization.tr_key("msg.reforge.p005") % [ItemUtil.display_name(item), price])
 	EventBus.toast_requested.emit(message, "pickup")
 	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
-		"unchanged": unchanged, "locked": lock_count, "reason": message}
+		"unchanged": unchanged, "locked": lock_count, "refined": effective, "reason": message}
+
+## 精炼材料校验：去重、只收背包件、逐件过 `Reforge.can_refine`。
+## 返回 `{ok, items, indices, reason}`；任何一件不合格整单拒绝 ——
+## 「静默跳过坏料」会让玩家以为投了 4 件、实际只算 3 件。
+func _refine_materials(target: Dictionary, refine_ids: Array) -> Dictionary:
+	var items: Array = []
+	var indices: Array = []
+	var seen := {}
+	for raw in refine_ids:
+		var id := String(raw)
+		if id.is_empty() or seen.has(id):
+			return {"ok": false, "reason": Localization.tr_key("msg.reforge.p012")}
+		seen[id] = true
+		var found := find_owned_item(id)
+		if found.is_empty():
+			return {"ok": false, "reason": Localization.tr_key("msg.reforge.p013")}
+		if String(found.get("loc", "")) != "bag":
+			return {"ok": false, "reason": Localization.tr_key("msg.reforge.p014")}
+		var material: Dictionary = found.get("item", {})
+		var guard := Reforge.can_refine(material, target)
+		if not bool(guard.get("ok", false)):
+			return {"ok": false, "reason": String(guard.get("reason", ""))}
+		items.append(material)
+		indices.append(int(found.get("index", -1)))
+	return {"ok": true, "items": items, "indices": indices, "reason": ""}
 
 func _reforge_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")

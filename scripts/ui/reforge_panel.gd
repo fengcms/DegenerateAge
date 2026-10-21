@@ -15,12 +15,21 @@ const COL_WARN := Color(0.88, 0.42, 0.36)
 const EMPTY_AFFIX_TEXT := "—"
 ## 锁按钮宽度：与「锁 / 已锁」两字等宽，避免切换时整行抖动。
 const LOCK_BUTTON_WIDTH := 60.0
+## 工程 86 精炼材料：4 格，每格一件紫装；有效件数按档位折算（见 `Reforge.refine_value`）。
+const REFINE_SLOTS := 4
+const REFINE_SLOT_SIZE := Vector2(56.0, 56.0)
 
 var _picker: OptionButton
 var _hint: Label
 var _affix_title: Label
 var _affix_rows: VBoxContainer
 var _lock_hint: Label
+var _refine_title: Label
+var _refine_row: HBoxContainer
+var _refine_slots: Array[ItemSlot] = []
+## 材料快照（与锁定同口径：面板内的临时状态，不落档，关闭即清空）。
+var _refine_selected: Array[Dictionary] = []
+var _refine_hint: Label
 var _price: Label
 var _feedback: Label
 var _button: Button
@@ -63,6 +72,10 @@ func set_open(open: bool) -> void:
 	# 工程 81：锁定不落档 —— 关面板即清空，下次打开是干净的（不写进存档 ⇒ schema 不动）。
 	_locked.clear()
 	_locked_owner = ""
+	# 工程 86：精炼材料同口径，关面板即清空（材料在确认重铸时才扣除）。
+	for i in range(_refine_selected.size()):
+		_refine_selected[i] = {}
+	_refresh_refine_slots()
 
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id != PANEL_ID and visible:
@@ -136,6 +149,28 @@ func _build() -> void:
 	_lock_hint.add_theme_font_size_override("font_size", 12)
 	_lock_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
 	root.add_child(_lock_hint)
+	_refine_title = Label.new()
+	_refine_title.text = Localization.tr_key("ui.reforge_panel.p018")
+	PanelChrome.style_section(_refine_title)
+	root.add_child(_refine_title)
+	_refine_row = HBoxContainer.new()
+	_refine_row.add_theme_constant_override("separation", 8)
+	root.add_child(_refine_row)
+	for i in range(REFINE_SLOTS):
+		var slot := ItemSlot.new()
+		slot.role = ItemSlot.ROLE_TRAY
+		slot.index = i
+		slot.apply_grid_base(REFINE_SLOT_SIZE)
+		slot.item_dropped.connect(_on_refine_dropped)
+		slot.pressed.connect(_clear_refine.bind(i))
+		_refine_row.add_child(slot)
+		_refine_slots.append(slot)
+		_refine_selected.append({})
+	_refine_hint = Label.new()
+	_refine_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_refine_hint.add_theme_font_size_override("font_size", 12)
+	_refine_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	root.add_child(_refine_hint)
 	_price = Label.new()
 	_price.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
 	root.add_child(_price)
@@ -208,6 +243,9 @@ func _refresh_details() -> void:
 	if item.is_empty():
 		_build_affix_rows({})
 		_lock_hint.visible = false
+		_refine_title.visible = false
+		_refine_row.visible = false
+		_refine_hint.visible = false
 		_price.text = ""
 		_button.text = Localization.tr_key("ui.reforge_panel.p004")
 		_button.disabled = true
@@ -221,6 +259,7 @@ func _refresh_details() -> void:
 	_locked = _prune_locks(item)
 	_build_affix_rows(item)
 	_lock_hint.visible = true
+	_refresh_refine(item)
 	var price := Reforge.cost(Equipment.level_req(item), _locked.size())
 	var guard := Reforge.can_reforge(item)
 	var locks := Reforge.validate_locks(item, _locked)
@@ -315,7 +354,92 @@ func _prune_locks(item: Dictionary) -> Array[String]:
 			kept.append(stat)
 	return kept
 
-## ---- 测试锚点（`ReforgeLockTest` 用例 12：UI 只断「分组数/行数」测不出点了哪条）----
+## ---- 精炼材料（工程 86）----
+## 只抬本次**未锁定**词条的数值下限；材料在确认重铸时才由 `GameState` 校验并扣除。
+## 面板内保存的是快照（与锁定同口径），确认时按实例 id 重新定位，拖放期间整理也不会误耗。
+
+## 丢弃已不在背包 / 已不合格的材料，再按有效件数算下限。
+func _refresh_refine(target: Dictionary) -> void:
+	_refine_title.visible = true
+	_refine_row.visible = true
+	_refine_hint.visible = true
+	_prune_refine(target)
+	_refresh_refine_slots()
+	var materials := refine_materials()
+	var effective := Reforge.refine_count(materials, target)
+	_refine_hint.text = Localization.tr_key("ui.reforge_panel.p019") if materials.is_empty() else \
+		Localization.tr_key("ui.reforge_panel.p020") % [
+			materials.size(), effective, int(round(Reforge.floor_ratio(effective) * 100.0))]
+
+func _prune_refine(target: Dictionary) -> void:
+	for i in range(_refine_selected.size()):
+		var snapshot := _refine_selected[i]
+		if snapshot.is_empty():
+			continue
+		var found := GameState.find_owned_item(String(snapshot.get("instanceId", "")))
+		var current: Dictionary = found.get("item", {}) if not found.is_empty() else {}
+		if String(found.get("loc", "")) != "bag" or current != snapshot \
+				or not bool(Reforge.can_refine(current, target).get("ok", false)):
+			_refine_selected[i] = {}
+
+func _refresh_refine_slots() -> void:
+	for i in range(_refine_slots.size()):
+		var slot := _refine_slots[i]
+		var item := _refine_selected[i]
+		slot.item = item
+		slot.text = ItemUtil.display_name(item).substr(0, 2) if not item.is_empty() else \
+			Localization.tr_key("ui.reforge_panel.p021") % (i + 1)
+		slot.apply_grid_style(
+			ItemUtil.quality_color(String(item.get("quality", "common"))) if not item.is_empty() \
+				else ItemSlot.GRID_BORDER, not item.is_empty())
+		slot.tooltip_text = "" if item.is_empty() else "%s\n%s" % [
+			ItemUtil.display_name(item), "\n".join(PackedStringArray(ItemUtil.attr_lines(item)))]
+		SampleArt.decorate(slot, SampleArt.icon_for(item))
+
+## 接收背包拖入；与铁匠合成同口径，收藏件 / 非紫装 / 重复件一律拒绝并说明原因。
+func _on_refine_dropped(row: int, payload: Dictionary) -> void:
+	if not visible:
+		return
+	var target := _selected_item()
+	if target.is_empty():
+		return
+	var item := _source_item(payload)
+	if item.is_empty():
+		_feedback.text = Localization.tr_key("msg.reforge.p013")
+		return
+	var guard := Reforge.can_refine(item, target)
+	if not bool(guard.get("ok", false)):
+		_feedback.text = String(guard.get("reason", ""))
+		return
+	var id := String(item.get("instanceId", ""))
+	for i in range(_refine_selected.size()):
+		if i != row and String(_refine_selected[i].get("instanceId", "")) == id:
+			_feedback.text = Localization.tr_key("msg.reforge.p012")
+			return
+	_refine_selected[row] = item.duplicate(true)
+	_feedback.text = ""
+	_refresh_details()
+
+func _clear_refine(row: int) -> void:
+	if row < 0 or row >= _refine_selected.size() or _refine_selected[row].is_empty():
+		return
+	_refine_selected[row] = {}
+	_feedback.text = ""
+	_refresh_details()
+
+## 验证拖拽载荷仍指向原背包装备（拖动期间整理 / 变更即失效）。
+func _source_item(payload: Dictionary) -> Dictionary:
+	if int(payload.get("from", -1)) != ItemSlot.ROLE_BAG:
+		return {}
+	var index := int(payload.get("index", -1))
+	if index < 0 or index >= GameState.inventory.size() or not GameState.inventory[index] is Dictionary:
+		return {}
+	var current: Dictionary = GameState.inventory[index]
+	if current != payload.get("item", {}) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+		return {}
+	return current
+
+
 ## 按词条顺序返回锁按钮；未选中装备时为空。
 func lock_buttons() -> Array[Button]:
 	var out: Array[Button] = []
@@ -345,6 +469,29 @@ func _on_lock_toggled(stat: String) -> void:
 	_feedback.text = ""
 	_refresh_details()
 
+## ---- 精炼材料测试锚点（`RefineTest`：不依赖输入系统即可投放 / 撤下材料）----
+
+## 当前已放入的材料快照（空槽已剔除）。
+func refine_materials() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for snapshot in _refine_selected:
+		if not snapshot.is_empty():
+			out.append(snapshot)
+	return out
+
+func refine_slots() -> Array[ItemSlot]:
+	return _refine_slots.duplicate()
+
+## 等价于把第 `bag_index` 格拖入第 `row` 个精炼格。
+func drop_refine_material(row: int, bag_index: int) -> void:
+	if bag_index < 0 or bag_index >= GameState.inventory.size():
+		return
+	var item = GameState.inventory[bag_index]
+	if not item is Dictionary:
+		return
+	_on_refine_dropped(row, {"from": ItemSlot.ROLE_BAG, "index": bag_index,
+		"item": item, "token": Warehouse.item_token(item)})
+
 func _on_reforge() -> void:
 	var index := _picker.selected
 	if index < 0 or index >= _choices.size():
@@ -354,13 +501,19 @@ func _on_reforge() -> void:
 	var old_lines := ItemUtil.affix_lines(before)
 	# 快照：重铸会触发 `inventory_changed` → `_refresh_details`，那之后 `_locked` 已被剪枝重建。
 	var locked_snapshot := _locked.duplicate()
+	var refine_snapshot: Array[String] = []
+	for snapshot in _refine_selected:
+		if not snapshot.is_empty():
+			refine_snapshot.append(String(snapshot.get("instanceId", "")))
 	var result := GameState.reforge_equipment(String(choice.source), choice.key, String(choice.id),
-		null, locked_snapshot)
+		null, locked_snapshot, refine_snapshot)
 	if not bool(result.get("ok", false)):
 		_feedback.text = String(result.get("reason", ""))
 		_feedback.add_theme_color_override("font_color", COL_WARN)
 		_refresh_details()
 		return
+	for i in range(_refine_selected.size()):
+		_refine_selected[i] = {}
 	var new_lines: Array = ItemUtil.affix_lines({
 		"affixes": result.get("affixes", []), "pctAttrs": result.get("pctAttrs", []),
 	})
