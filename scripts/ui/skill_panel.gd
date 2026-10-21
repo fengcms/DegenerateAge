@@ -1,9 +1,10 @@
 extends Control
-## 技能图鉴与有限升阶入口。已解锁技能可拖入快捷栏；购买按钮展示下一阶门槛与实际效果。
+## 技能图鉴与有限升阶入口。紧凑行卡只保留扫读信息，细节从技能图标提示读取。
 ## 金币事件只刷新五个按钮的可用状态，避免挂机拾金时重建全部技能行。
 
 var _center: FloatingWindow
 var _upgrade_buttons: Dictionary = {}
+var _potion_buttons: Dictionary = {}
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -64,6 +65,7 @@ func _on_panel_opened(panel_id: String) -> void:
 		set_open(false)
 
 var _list: VBoxContainer
+var _tools_row: HBoxContainer
 
 func _build() -> void:
 	var dim := ColorRect.new()
@@ -112,7 +114,7 @@ func _build() -> void:
 	content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(content_scroll)
 	var content := VBoxContainer.new()
-	content.custom_minimum_size.x = 560
+	content.custom_minimum_size.x = 500
 	content.add_theme_constant_override("separation", 10)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_scroll.add_child(content)
@@ -123,8 +125,16 @@ func _build() -> void:
 	PanelChrome.style_section(section)
 	content.add_child(section)
 	_list = VBoxContainer.new()
-	_list.add_theme_constant_override("separation", 6)
+	_list.add_theme_constant_override("separation", 4)
 	content.add_child(_list)
+	var tools_section := Label.new()
+	tools_section.text = Localization.tr_key("ui.skill_panel.tools_section")
+	PanelChrome.style_section(tools_section)
+	content.add_child(tools_section)
+	_tools_row = PanelSkillRow.new()
+	_tools_row.custom_minimum_size.y = 60
+	content.add_child(_tools_row)
+	_build_potion_tools()
 
 ## 每项技能沿用同一张低对比内容卡，保留原拖动按钮作为交互源。
 func _new_skill_row() -> HBoxContainer:
@@ -152,9 +162,9 @@ func _refresh() -> void:
 		var unlocked := rank > 0
 		var wired := HotbarConfig.ACTIVE_SKILLS.has(skill_id)
 		var row := _new_skill_row()
-		row.custom_minimum_size.y = 96 if max_rank > 1 else 62
+		row.custom_minimum_size.y = 64
 		var icon := SkillDragButton.new()
-		icon.custom_minimum_size = Vector2(52, 52)
+		icon.custom_minimum_size = Vector2(48, 48)
 		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		icon.text = String(skill.get("name", Localization.tr_key("ui.skill_panel.p001"))).substr(0, 2)
 		icon.skill_id = skill_id
@@ -162,17 +172,36 @@ func _refresh() -> void:
 		SampleArt.decorate(icon, SampleArt.skill_icon(icon.skill_id))
 		icon.add_theme_constant_override("icon_max_width", 42)
 		icon.disabled = not unlocked or not wired
-		icon.tooltip_text = Localization.tr_key("ui.skill_panel.p004") if not icon.disabled else Localization.tr_key("ui.skill_panel.p005")
+		# 详情浮层接入前，完整说明暂放在原生悬停提示中，不丢失旧面板信息。
+		icon.tooltip_text = _skill_row_text(skill, rank, max_rank, unlocked and wired)
 		row.add_child(icon)
-		var desc := Label.new()
-		desc.text = _skill_row_text(skill, rank, max_rank, unlocked and wired)
-		desc.custom_minimum_size.x = 330 if max_rank > 1 else 430
-		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc.add_theme_color_override("font_color", PanelChrome.TEXT)
-		row.add_child(desc)
-		if max_rank > 1:
+		var summary := Label.new()
+		summary.name = "Summary"
+		summary.text = Localization.tr_key("ui.skill_panel.compact_rank") % [String(skill.get("name", "")), rank, max_rank] if unlocked else \
+			Localization.tr_key("ui.skill_panel.compact_locked") % [String(skill.get("name", "")), int(skill.get("unlockLevel", 1))]
+		summary.custom_minimum_size.x = 170
+		summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		summary.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		summary.add_theme_color_override("font_color", PanelChrome.TEXT if unlocked else PanelChrome.MUTED)
+		summary.tooltip_text = icon.tooltip_text
+		row.add_child(summary)
+		var cooldown := Label.new()
+		cooldown.name = "BaseCooldown"
+		cooldown.text = Localization.tr_key("ui.skill_panel.basic_interval") if skill_id == "basic_slash" else \
+			Localization.tr_key("ui.skill_panel.cooldown_badge") % float(skill.get("cooldown", 0.0))
+		cooldown.custom_minimum_size.x = 90
+		cooldown.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		cooldown.add_theme_color_override("font_color", PanelChrome.MUTED)
+		cooldown.tooltip_text = icon.tooltip_text
+		row.add_child(cooldown)
+		if max_rank > 1 and rank >= max_rank:
+			var completed := Label.new()
+			completed.text = Localization.tr_key("ui.skill_panel.max_rank")
+			completed.custom_minimum_size.x = 84
+			completed.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			completed.add_theme_color_override("font_color", PanelChrome.MUTED)
+			row.add_child(completed)
+		elif max_rank > 1 and unlocked:
 			var upgrade := Button.new()
 			upgrade.name = "Upgrade_" + skill_id
 			upgrade.text = Localization.tr_key("ui.skill_panel.upgrade")
@@ -182,24 +211,27 @@ func _refresh() -> void:
 			PanelChrome.style_action(upgrade)
 			row.add_child(upgrade)
 			_upgrade_buttons[skill_id] = upgrade
+	_refresh_affordability()
+
+## 自动红蓝药作为快捷栏工具保持可补领，但不再占用技能行与升阶按钮空间。
+func _build_potion_tools() -> void:
 	for kind in ["red", "blue"]:
-		var row := _new_skill_row()
 		var button := SkillDragButton.new()
-		button.custom_minimum_size = Vector2(52, 52)
+		button.custom_minimum_size = Vector2(48, 48)
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.text = Localization.tr_key("ui.skill_panel.p006") if kind == "red" else Localization.tr_key("ui.skill_panel.p007")
 		button.binding = {"kind": "auto_potion", "id": kind}
 		SampleArt.decorate(button, SampleArt.binding_icon(button.binding))
 		button.add_theme_constant_override("icon_max_width", 42)
 		button.tooltip_text = Localization.tr_key("ui.skill_panel.p008")
-		row.add_child(button)
-		var desc := Label.new()
-		desc.text = Localization.tr_key("ui.skill_panel.p009") % (Localization.tr_key("ui.skill_panel.p010") if kind == "red" else Localization.tr_key("ui.skill_panel.p011"))
-		desc.custom_minimum_size.x = 380
-		desc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		desc.add_theme_color_override("font_color", PanelChrome.TEXT)
-		row.add_child(desc)
-	_refresh_affordability()
+		_tools_row.add_child(button)
+		_potion_buttons[kind] = button
+		var name := Label.new()
+		name.text = Localization.tr_key("ui.skill_panel.auto_red" if kind == "red" else "ui.skill_panel.auto_blue")
+		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name.add_theme_color_override("font_color", PanelChrome.TEXT)
+		_tools_row.add_child(name)
 
 ## 给玩家显示当前阶与下一阶的真实数值；基础描述仍保留在同一行。
 func _skill_row_text(skill: Dictionary, rank: int, max_rank: int, can_use: bool) -> String:

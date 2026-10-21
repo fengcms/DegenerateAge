@@ -26,9 +26,11 @@ func _ready() -> void:
 	var source_icon := first_row.get_child(0) as SkillDragButton
 	_check(source_icon.skill_id == "earth_cleave" and not source_icon.disabled,
 		"升阶按钮不破坏原有拖放图标")
-	var detail := first_row.get_child(1) as Label
-	_check(detail.text.contains("1/5") and detail.text.contains("下阶") and detail.text.contains("1500"),
-		"购买前显示当前与下一阶效果和价格")
+	var summary := first_row.get_child(1) as Label
+	_check(summary.text.contains("1/5") and not summary.text.contains("下阶")
+		and source_icon.tooltip_text.contains("下阶") and source_icon.tooltip_text.contains("1500"),
+		"紧凑行卡仅保留阶数，效果和价格进入悬停提示")
+	_check((first_row.get_child(2) as Label).text.contains("CD 4"), "行卡显示基础冷却")
 	upgrade.pressed.emit()
 	_check(GameState.skill_rank("earth_cleave") == 2 and GameState.gold == 0,
 		"面板升级按钮调用真实购买入口")
@@ -36,9 +38,10 @@ func _ready() -> void:
 	_check(next_button != null and next_button.disabled and next_button.tooltip_text.contains("Lv25"),
 		"购买后刷新为下一阶等级门槛")
 	var updated_row: Control = panel._list.get_child(1)
-	var updated_detail := updated_row.get_child(1) as Label
-	_check(updated_detail.text.contains("2/5") and updated_detail.text.contains("1.44"),
-		"购买后展示 2 阶实际系数")
+	var updated_summary := updated_row.get_child(1) as Label
+	var updated_icon := updated_row.get_child(0) as SkillDragButton
+	_check(updated_summary.text.contains("2/5") and updated_icon.tooltip_text.contains("1.44"),
+		"购买后阶数更新且悬停说明给出 2 阶实际系数")
 	GameState.set_hotbar_entry(4, {"kind": "skill", "id": "earth_cleave"})
 	var hotbar_tip := (hud._hotbar_buttons[4] as HotbarSlot).tooltip_text
 	_check(hotbar_tip.contains("2 阶"),

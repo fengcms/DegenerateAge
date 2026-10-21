@@ -85,8 +85,8 @@ func _ready() -> void:
 	_check(GameState.hotbar[6] == null, "右键清空绑定")
 	# 永久来源：清掉默认自动药项后，仍可从技能面板重新绑定。
 	skills.set_open(true)
-	var source_red: SkillDragButton = skills._list.get_child(skills._list.get_child_count() - 2).get_child(0)
-	var source_blue: SkillDragButton = skills._list.get_child(skills._list.get_child_count() - 1).get_child(0)
+	var source_red: SkillDragButton = skills._potion_buttons["red"]
+	var source_blue: SkillDragButton = skills._potion_buttons["blue"]
 	GameState.set_hotbar_entry(0, null)
 	GameState.set_hotbar_entry(1, null)
 	var red_payload: Dictionary = source_red._get_drag_data(Vector2.ZERO)

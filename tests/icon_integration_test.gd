@@ -53,7 +53,7 @@ func _ready() -> void:
 		slot.queue_free()
 	for index in range(2):
 		var kind := "red" if index == 0 else "blue"
-		var button := rows.get_child(skills.size() + index).get_child(0) as SkillDragButton
+		var button := panel._potion_buttons[kind] as SkillDragButton
 		check(button.icon == SampleArt.binding_icon({"kind": "auto_potion", "id": kind})
 			and button.text.is_empty(), "%s automatic potion picker icon" % kind)
 	if failures.is_empty():
