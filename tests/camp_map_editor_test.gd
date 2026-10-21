@@ -121,8 +121,11 @@ func _ready() -> void:
 	doc.finish_change()
 	assert(doc.footprint("blacksmith") == original_house, "删除顶点后轮廓没有复原")
 	var fence_art := doc.art_rect("training_north")
+	var fence_origin: Vector2 = doc.footprint("training_north")[0]
 	doc.begin_change()
-	doc.move_collision_vertex("training_north", 0, Vector2i(446, 529))
+	## 目标点从当前轮廓推导，不写死坐标：围栏位置会随美术调整整体平移（`46fbd6c2` 就把
+	## `training_north` 从 444,529 挪到 450,519），写死会让「合法编辑」变成「与西栅栏交叉」。
+	doc.move_collision_vertex("training_north", 0, Vector2i(fence_origin) + Vector2i(0, -4))
 	doc.finish_change()
 	assert(doc.art_rect("training_north") == fence_art, "围栏碰撞编辑不应移动围栏美术")
 	assert(doc.validate().is_empty(), "合法的围栏碰撞编辑被拒绝")
@@ -174,7 +177,10 @@ func _ready() -> void:
 		await RenderingServer.frame_post_draw
 		assert(get_viewport().get_texture().get_image().save_png("/tmp/camp_map_editor_pan_ui.png") == OK,
 			"大幅平移后界面截图失败")
-	print("[CampMapEditorTest] PASS · 营地整体物件、道路、地面笔刷和碰撞顶点编辑及撤销重做")
+	## 成功标记必须**独占行尾**：`run_isolated_tests.py` 只认行尾形态（防「正文裸含 PASS」误判），
+	## 写成 `PASS · 说明` 会被判成「未输出完成标记」。
+	print("[CampMapEditorTest] PASS")
+	print("[CampMapEditorTest] 覆盖：营地整体物件、道路、地面笔刷和碰撞顶点编辑及撤销重做")
 	get_tree().quit()
 
 ## 向画布投递本地鼠标按放事件，验证实际 `_gui_input` 模式分发。

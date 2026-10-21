@@ -25,17 +25,22 @@ func _ready() -> void:
 		and ground._camp_foreground_count == source_solids,
 		"正式营地必须装配循环地纹、透明道路与全部原障碍前沿")
 	var cave_walls := ground.get_node("CaveWalls") as StaticBody2D
-	for raw: Array in [[350, 220], [1100, 200], [450, 450], [1170, 625]]:
+	## 取样点从**当前布局实时推导**（每个实体的轮廓重心），不写死画布坐标：
+	## 营地美术调整会整体平移实体（`training_north` 就挪过 444,529 → 450,519），
+	## 写死坐标会静默变成「包围盒内、轮廓外」，断言随之失真。重心在凸/凹多边形内均已核过。
+	for item: Dictionary in ground._camp_whitebox["entities"]:
+		var raw := _centroid(item["footprint"])
 		var world_pos := ground._camp_canvas_to_world(raw)
 		var blocked_cell := Vector2i(Iso.world_to_grid(world_pos).round())
-		assert(not ground.cave.is_walkable(blocked_cell), "保留建筑与马车内部应阻挡：%s" % raw)
+		## `"%s" % raw` 会把 Array 展开成多个参数 ⇒ 格式化失败、掩盖真正的坐标。
+		assert(not ground.cave.is_walkable(blocked_cell), "实体内部应阻挡：%s" % [raw])
 		var query := PhysicsPointQueryParameters2D.new()
 		query.position = world_pos
 		var collided := false
 		for hit: Dictionary in world.get_world_2d().direct_space_state.intersect_point(query):
 			if hit.get("collider") == cave_walls:
 				collided = true
-		assert(collided, "建筑与马车必须有对应整体物理碰撞：%s" % raw)
+		assert(collided, "实体必须有对应整体物理碰撞：%s" % [raw])
 	for raw: Array in [[595, 620], [680, 620], [750, 620]]:
 		var free_cell := Vector2i(Iso.world_to_grid(ground._camp_canvas_to_world(raw)).round())
 		assert(ground.cave.is_walkable(free_cell), "动态木桩原占地不应留下隐形阻挡：%s" % raw)
@@ -83,6 +88,8 @@ func _ready() -> void:
 		and open_perimeter_migrated.unclaimedLoot == previous_camp_save.unclaimedLoot
 		and open_perimeter_migrated.exploredMaps == previous_camp_save.exploredMaps,
 		"从旧白盒升级开放外围时必须保留玩家、地面物和迷雾")
+	## 截图段必须**整段**受无头守卫：`get_viewport().get_texture()` 在 headless 下取不到图，
+	## 原写法只把第一个 `process_frame` 循环包进 if，`save_png` 仍会执行 ⇒ 无头必红。
 	if DisplayServer.get_name() != "headless":
 		for _frame in range(4):
 			await get_tree().process_frame
@@ -108,5 +115,15 @@ func _ready() -> void:
 		await RenderingServer.frame_post_draw
 		assert(get_viewport().get_texture().get_image().save_png("/tmp/degenerateage_camp_final_overview.png") == OK,
 			"正式营地全图截图失败")
-	print("[CampLiveIntegrationTest] PASS · 正式营地场景装配 %d ms · 9 个目标可达" % [load_ms])
+	print("[CampLiveIntegrationTest] PASS")
+	print("[CampLiveIntegrationTest] 正式营地场景装配 %d ms · 9 个目标可达" % [load_ms])
 	get_tree().quit()
+
+## 取轮廓重心（画布坐标），作为「实体内部」取样点；返回 `[x, y]` 以复用 `_camp_canvas_to_world`。
+## 与 `camp_map_editor_test.gd` 同口径：点位一律从当前布局推导，不写死画布坐标。
+func _centroid(footprint: Array) -> Array:
+	var total := Vector2.ZERO
+	for raw: Array in footprint:
+		total += Vector2(raw[0], raw[1])
+	total /= float(footprint.size())
+	return [total.x, total.y]

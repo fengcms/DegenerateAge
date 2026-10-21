@@ -89,7 +89,8 @@ func _ready() -> void:
 		await _walk(world, ground, player, camera, route)
 	if DisplayServer.get_name() != "headless":
 		await _save_overview(world, ground, camera)
-	print("[CampFullArtAcceptanceTest] PASS · 全图 11 个整体实体、开放外围、固定 NPC 与四条实走路线通过")
+	print("[CampFullArtAcceptanceTest] PASS")
+	print("[CampFullArtAcceptanceTest] 覆盖：全图 11 个整体实体、开放外围、固定 NPC 与四条实走路线")
 	get_tree().quit()
 
 ## 检查原十一处外围障碍的位置已可走且没有遗留物理碰撞。

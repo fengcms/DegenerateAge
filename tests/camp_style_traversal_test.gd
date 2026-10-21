@@ -20,7 +20,8 @@ func _ready() -> void:
 	sample._help.visible = false
 	for route: Dictionary in ROUTES:
 		await _walk_route(sample, route)
-	print("[CampStyleTraversalTest] PASS · 四条真实移动路线没有越过既有障碍")
+	print("[CampStyleTraversalTest] PASS")
+	print("[CampStyleTraversalTest] 四条真实移动路线没有越过既有障碍")
 	get_tree().quit()
 
 ## 从布局参考坐标运行一条可达路线；窗口模式在第三十帧保存中途遮挡证据。

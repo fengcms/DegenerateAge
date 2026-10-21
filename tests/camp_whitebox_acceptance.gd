@@ -35,7 +35,8 @@ func _ready() -> void:
 	await _capture("training_play")
 	for id: String in ["blacksmith", "warehouse", "shop", "elder", "carter", "lamp", "east_exit", "north_exit"]:
 		await _travel_to(id, origin, 1150)
-	print("[CampWhiteboxAcceptance] PASS · 可走格 %d/%d · 9 个目标规划和真实玩家移动均通过" % [whitebox.walkable_count, whitebox.interior_count])
+	print("[CampWhiteboxAcceptance] PASS")
+	print("[CampWhiteboxAcceptance] 可走格 %d/%d · 9 个目标规划和真实玩家移动均通过" % [whitebox.walkable_count, whitebox.interior_count])
 	print("[PERF] CampWhitebox 首次布局与导航构建 %d ms；等距格 %d；静态实体 %d" % [load_ms,
 		whitebox.grid_size.x * whitebox.grid_size.y, whitebox._solid_polygons.size()])
 	get_tree().quit()
