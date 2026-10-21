@@ -465,15 +465,13 @@ func _activate_exit(exit_node: TravelExit) -> void:
 	else:
 		EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("msg.game.p009"))), "danger")
 
+## 点击步行路标时先校验完整门禁；开放出口才寻路，避免走到封锁点后被拒绝。
 func _request_exit_interaction(exit_node: TravelExit) -> void:
 	_pending_npc = null
 	_pending_exit = null
-	if not MapService.is_unlocked(exit_node.to_map):
-		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p010") % MapService.display_name(exit_node.to_map), "danger")
-		return
-	var entry_reason := MapService.entry_gate_reason(exit_node.to_map)
-	if not entry_reason.is_empty():
-		EventBus.toast_requested.emit(entry_reason, "danger")
+	var block_reason := MapService.walk_exit_block_reason(MapService.walk_exit(exit_node.exit_id))
+	if not block_reason.is_empty():
+		EventBus.toast_requested.emit(block_reason, "danger")
 		return
 	if Iso.world_to_grid(_player.global_position).distance_to(Iso.world_to_grid(exit_node.global_position)) <= MapService.WALK_RANGE_CELLS:
 		_activate_exit(exit_node)
