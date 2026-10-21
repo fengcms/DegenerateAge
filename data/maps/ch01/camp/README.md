@@ -24,7 +24,7 @@
 | 马车连接 | ["c2_well_town"] |
 | 马车费用 | {"spoke":50,"hub":150} |
 | 指定目的地费用 | {"wild_trial":0,"ash_land":50,"corruption_source":150,"c2_well_town":200} |
-| 马车落点 | [42,30] |
+| 马车落点 | [48,34] |
 | 布局文件 | res://data/layouts/camp.json |
 | 布局版本 | 2026-10-16-camp-open-perimeter-v2 |
 
