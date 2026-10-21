@@ -2,8 +2,8 @@
   "id": "c6_map01",
   "name": "埋光外廊",
   "size": {
-    "w": 208,
-    "h": 117
+    "w": 215,
+    "h": 120
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c6_map01.json",

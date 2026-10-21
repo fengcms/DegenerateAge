@@ -1,17 +1,6 @@
-"""把已核准的第六章地图参考编译为运行时可行走掩码（写入 data/layouts/）。
+"""第六章地图布局编译工具：从创意参考生成通行掩码与具名点。
 
-职责：读取仓库内设计参考 `docs/游戏创意/21-60级内容规划/第六章/地图参考/c6_map0*.json`
-的障碍多边形与出口格，栅格化为 `1/0` 可行走行，逐图断言「出口 / 入口等定点格可走、
-全部可走格四邻接连通」后写出 `data/layouts/c6_map*.json`。产物只进 `data/layouts/`，
-不写 `assets/`；运行时只读 `data/layouts/*.json`，不读参考目录。
-
-适用场景：地图参考修订后重跑本脚本重建掩码，并同时复核参考与产物。
-脚本幂等：输入不变时重复运行产物字节一致，可作为漂移校验。
-
-数据口径与依赖：
-  · 障碍多边形、出口格、`layoutVersion`、画布宽高取自上述设计参考 JSON；
-  · NPC / Boss 圆心坐标取自创意事实源
-    `docs/游戏创意/21-60级内容规划/第六章/02-地图与布局.md`（创意 JSON 只给 id、不给格坐标）。
+运行时只读取 data/layouts；本工具在内容调整后手工执行，并验证剧情点与整张地形连通。
 """
 
 import json
@@ -36,6 +25,7 @@ BOSS_CELLS = {
 
 
 def inside_polygon(x, y, polygon):
+    """判断格中心是否落在不可走多边形内，编译每张静态布局时调用。"""
     inside = False
     j = len(polygon) - 1
     for i, (xi, yi) in enumerate(polygon):
@@ -47,7 +37,7 @@ def inside_polygon(x, y, polygon):
 
 
 def fixed_cells(source):
-    """所有必须落在掩码 "1" 上的固定格：出口 / 刷新位 / 精英 / Boss / NPC / 地标。"""
+    """收集出口、刷新、NPC 和剧情地标等不可被地形封死的格坐标。"""
     cells = []
     for entry in source.get("exits", []):
         cells.append(tuple(entry["cell"]))
@@ -65,7 +55,7 @@ def fixed_cells(source):
 
 
 def collect_points(source):
-    """导出给运行时的具名点；出口用出口 id，其余用稳定可读键。"""
+    """把布局参考中的具名位置导出为运行时索引，不改变点的格坐标。"""
     points = {}
     for entry in source.get("exits", []):
         points[entry["id"]] = entry["cell"]
@@ -83,7 +73,7 @@ def collect_points(source):
 
 
 def nearest_walkable(rows, width, height, cell):
-    """最近的可走格（含自身）；用于断言前的兜底定位。"""
+    """查询指定格附近的可走点，用于车夫回程落点容错。"""
     start = (int(cell[0]), int(cell[1]))
     if 0 <= start[0] < width and 0 <= start[1] < height and rows[start[1]][start[0]] == "1":
         return start
@@ -103,21 +93,25 @@ def nearest_walkable(rows, width, height, cell):
 
 
 def carter_arrival(source, rows, width, height):
-    """回程出口附近 4—6 格内侧的可走落点（仿 c2/c3 写法）。"""
+    """从回程出口附近选取车夫落点；城镇正式落点由地图配置控制。"""
     exit_cell = source["exits"][0]["cell"]
     target = (int(exit_cell[0]) + 6, int(exit_cell[1]))
     return list(nearest_walkable(rows, width, height, target))
 
 
 def compile_one(source):
+    """将原障碍与主题地形编译成唯一通行掩码，并检查全部固定点连通。"""
     assert source["layoutVersion"] == VERSION, source["id"]
     width, height = source["w"], source["h"]
-    assert width * 9 == height * 16, source["id"]
+    # 中段图允许轻微改变画幅比例，让每张地图的尺寸组合与外轮廓都可辨认。
+    assert width > 0 and height > 0 and 1.5 <= width / height <= 2.0, source["id"]
+    # 主题地形与原障碍共同决定显示、碰撞和寻路；只在编译时合并一次。
+    obstacles = source["obstacles"] + [feature["polygon"] for feature in source.get("terrainFeatures", [])]
     rows = []
     for y in range(height):
         rows.append("".join(
             "0" if any(inside_polygon(x + 0.5, y + 0.5, polygon)
-                       for polygon in source["obstacles"]) else "1"
+                       for polygon in obstacles) else "1"
             for x in range(width)
         ))
     fixed = fixed_cells(source)
@@ -147,6 +141,7 @@ def compile_one(source):
 
 
 def main():
+    """批量编译本章地图参考到运行布局文件，供地图服务和碰撞寻路共用。"""
     sources = sorted(SOURCE_DIR.glob("c6_map0*.json"))
     assert len(sources) == 6, len(sources)
     DEST.mkdir(parents=True, exist_ok=True)

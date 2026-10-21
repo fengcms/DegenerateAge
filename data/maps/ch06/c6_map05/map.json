@@ -2,8 +2,8 @@
   "id": "c6_map05",
   "name": "屏障心台",
   "size": {
-    "w": 224,
-    "h": 126
+    "w": 235,
+    "h": 129
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c6_map05.json",

@@ -2,8 +2,8 @@
   "id": "c6_map00",
   "name": "镇脉前哨",
   "size": {
-    "w": 96,
-    "h": 54
+    "w": 102,
+    "h": 56
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c6_map00.json",
@@ -145,8 +145,8 @@
       0
     ],
     "max": [
-      95,
-      53
+      101,
+      55
     ]
   },
   "hubLinks": [

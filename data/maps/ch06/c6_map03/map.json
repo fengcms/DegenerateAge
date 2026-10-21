@@ -2,8 +2,8 @@
   "id": "c6_map03",
   "name": "分流环室",
   "size": {
-    "w": 240,
-    "h": 135
+    "w": 249,
+    "h": 136
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c6_map03.json",
