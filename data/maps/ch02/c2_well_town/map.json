@@ -19,13 +19,13 @@
   "exits": [
     {
       "id": "to_camp",
-      "label": "回幸存者营地",
+      "label": "往灰烬之地",
       "cell": [
         2,
         27
       ],
-      "toMap": "camp",
-      "toEntrance": "from_c2"
+      "toMap": "ash_land",
+      "toEntrance": "from_c2_well_town"
     },
     {
       "id": "to_slope",
@@ -39,13 +39,14 @@
     },
     {
       "id": "to_c3",
-      "label": "往无雨之城",
+      "label": "往断流渠岸",
       "cell": [
         80,
         27
       ],
-      "toMap": "c3_map00",
-      "toEntrance": "from_c2_well_town"
+      "toMap": "c3_map01",
+      "toEntrance": "from_c2_well_town",
+      "requiresUnlock": "chapter3"
     }
   ],
   "entrances": {

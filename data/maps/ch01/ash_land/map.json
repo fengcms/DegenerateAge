@@ -39,6 +39,26 @@
       ],
       "toMap": "corruption_source",
       "toEntrance": "from_ash"
+    },
+    {
+      "id": "to_camp_bridge",
+      "label": "回幸存者营地",
+      "cell": [
+        144,
+        100
+      ],
+      "toMap": "camp",
+      "toEntrance": "from_c2"
+    },
+    {
+      "id": "to_c2_bridge",
+      "label": "往沉井镇",
+      "cell": [
+        96,
+        8
+      ],
+      "toMap": "c2_well_town",
+      "toEntrance": "from_camp"
     }
   ],
   "entrances": {
@@ -49,6 +69,14 @@
     "from_source": [
       183,
       54
+    ],
+    "from_camp_bridge": [
+      144,
+      100
+    ],
+    "from_c2_well_town": [
+      96,
+      8
     ]
   },
   "carterArrival": [

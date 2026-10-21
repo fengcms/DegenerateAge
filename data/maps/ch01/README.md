@@ -8,3 +8,7 @@
 | [试炼野外](wild_trial/README.md) | `wild_trial` | 探索、战斗与任务 | 1–5 |
 | [灰烬之地](ash_land/README.md) | `ash_land` | 探索、战斗与任务 | 5–9 |
 | [腐化源头](corruption_source/README.md) | `corruption_source` | 探索、战斗与任务 | 10–10 |
+
+## 城镇步行过渡
+
+营地与沉井镇的步行路线经灰烬之地；两城不能直接步行切图。车夫仍可按到访与解锁规则直达。

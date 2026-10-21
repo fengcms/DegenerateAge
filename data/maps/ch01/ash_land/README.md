@@ -2,6 +2,8 @@
 
 第一章中间图，6 只普通怪与 2 只精英怪，远程怪登场。
 
+兼任幸存者营地与沉井镇之间的步行过渡区；北侧通沉井镇、南侧通营地，原试炼野外与腐化源头道路保留。
+
 配置源：`map.json`；可通行布局见 `res://data/layouts/ash_land.json`。
 地图用途和设计说明可在本段人工编辑；下方参数区由工具同步。
 
@@ -19,7 +21,7 @@
 | 推荐等级 | 6 |
 | 解锁条件 |  |
 | 全图安全 | 否 |
-| 入口落点 | {"from_wild":[9,54],"from_source":[183,54]} |
+| 入口落点 | {"from_wild":[9,54],"from_source":[183,54],"from_camp_bridge":[144,100],"from_c2_well_town":[96,8]} |
 | 指定目的地费用 | {"camp":70,"wild_trial":50,"corruption_source":100} |
 | 马车落点 | [17,61] |
 | 布局文件 | res://data/layouts/ash_land.json |
@@ -51,5 +53,7 @@ Boss 刷新：无
 |---|---|---|---|
 | 回试炼野外 | wild_trial | [5,54] | 无 |
 | 往腐化源头 | corruption_source | [187,54] | 无 |
+| 回幸存者营地 | camp | [144,100] | 无 |
+| 往沉井镇 | c2_well_town | [96,8] | 无 |
 
 <!-- MAP PARAMETERS END -->

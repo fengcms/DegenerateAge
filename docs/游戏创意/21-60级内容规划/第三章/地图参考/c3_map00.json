@@ -9,20 +9,6 @@
   "index": 0,
   "exits": [
     {
-      "to": "c2_well_town",
-      "flag": "",
-      "cell": [
-        4,
-        27
-      ],
-      "id": "c3_map00_exit01",
-      "arrival": [
-        80,
-        27
-      ],
-      "externalPatch": "沉井镇新增至c3_map00的双向出口与hubLinks；返回落点80,27需对照最新布局验证"
-    },
-    {
       "to": "c3_map01",
       "flag": "",
       "cell": [
@@ -36,7 +22,7 @@
       ]
     },
     {
-      "to": "c4_map00",
+      "to": "c4_map01",
       "flag": "chapter4",
       "cell": [
         51,
@@ -44,8 +30,8 @@
       ],
       "id": "c3_map00_exit03",
       "arrival": [
-        4,
-        27
+        104,
+        8
       ]
     }
   ],

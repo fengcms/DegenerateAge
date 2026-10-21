@@ -63,31 +63,44 @@ func _ready() -> void:
 					check(false, "%s 的刷新位 %s 不可达" % [map_id, cell])
 		check(spawn_cells == 0 if map_id == "c3_map00" else spawn_cells > 0, "%s 刷新位数量符合枢纽/野外口径" % map_id)
 
-	# ② 沉井镇追加边：唯一旧图交通改动，落点须在当前实图上真能走到。
-	var town := MapService.data_for("c2_well_town")
-	var town_layout := CaveLayout.new(String(town.get("layoutPath", "")))
+	# ② 跨章步行先进入野外，再进入新城；旧城不能直接穿到新城。
+	var previous := MapService.data_for("c2_well_town")
+	var previous_layout := CaveLayout.new(String(previous.get("layoutPath", "")))
 	var edge_cell := Vector2i(-1, -1)
-	for exit_data in town.get("exits", []):
-		if String(exit_data.get("toMap", "")) == "c3_map00":
+	for exit_data in previous.get("exits", []):
+		check(String(exit_data.get("toMap", "")) != "c3_map00", "相邻城镇没有直连步行边")
+		if String(exit_data.get("id", "")) == "to_c3":
+			check(String(exit_data.get("toMap", "")) == "c3_map01", "跨章出口先通往野外")
 			edge_cell = _cell(exit_data.cell)
-	var town_anchor := town_layout.nearest_walkable(Vector2i(town_layout.size.x / 2, town_layout.size.y / 2))
-	check(edge_cell.x >= 0 and edge_cell.y >= 0, "沉井镇有通往无雨之城的步行边")
-	check(town_layout.is_walkable(edge_cell), "沉井镇追加边落点 %s 落在可走格" % edge_cell)
-	check(town_layout.reachable(town_anchor, edge_cell), "沉井镇追加边可从镇上走到")
-	for npc in town.get("npcs", []):
-		check(_cell(npc.cell).distance_to(Vector2(edge_cell)) > 3.0, "追加边不压在 NPC %s 身上" % npc.get("npcId", "?"))
+	check(edge_cell.x >= 0 and previous_layout.is_walkable(edge_cell), "跨章出口落在可走格")
+	for npc in previous.get("npcs", []):
+		check(_cell(npc.cell).distance_to(Vector2(edge_cell)) > 3.0, "跨章出口不压在 NPC %s 身上" % npc.get("npcId", "?"))
 
-	# ③ 走通追加边与往返：正向进无雨之城，返回边不锁。
+	# ③ 完成四段往返：前城 → 野外 → 新城 → 野外 → 前城。
 	GameState.unlocks["chapter2"] = true
 	GameState.unlocks["chapter3"] = true
 	GameState.current_map = "c2_well_town"
 	var forward := _walk("to_c3", edge_cell)
-	check(bool(forward.get("ok", false)), "沉井镇可步行进无雨之城：%s" % forward.get("reason", ""))
-	check(GameState.current_map == "c3_map00" and MapService.commit_arrival(), "落进下街水市")
-	var back_exit := MapService.walk_exit("c3_map00_exit01")
-	var back := _walk("c3_map00_exit01", _cell(back_exit.cell))
-	check(bool(back.get("ok", false)), "返回边不锁：%s" % back.get("reason", ""))
-	check(GameState.current_map == "c2_well_town" and MapService.commit_arrival(), "退回沉井镇")
+	check(bool(forward.get("ok", false)), "前城可步行进入野外：%s" % forward.get("reason", ""))
+	check(GameState.current_map == "c3_map01" and MapService.commit_arrival(), "先落进跨章野外")
+	var into_town := MapService.walk_exit("c3_map01_exit01")
+	check(not into_town.is_empty(), "野外存在进入新城的出口")
+	if not into_town.is_empty():
+		var enter_result := _walk("c3_map01_exit01", _cell(into_town.cell))
+		check(bool(enter_result.get("ok", false)), "野外可步行进新城：%s" % enter_result.get("reason", ""))
+		check(GameState.current_map == "c3_map00" and MapService.commit_arrival(), "落进新城")
+	var back_to_field := MapService.walk_exit("c3_map00_exit02")
+	check(not back_to_field.is_empty(), "新城有回野外的出口")
+	if not back_to_field.is_empty():
+		var back_result := _walk("c3_map00_exit02", _cell(back_to_field.cell))
+		check(bool(back_result.get("ok", false)), "新城可返回野外：%s" % back_result.get("reason", ""))
+		check(GameState.current_map == "c3_map01" and MapService.commit_arrival(), "退回野外")
+	var back_to_previous := MapService.walk_exit("c3_map01_to_previous")
+	check(not back_to_previous.is_empty(), "野外有回前城的出口")
+	if not back_to_previous.is_empty():
+		var previous_result := _walk("c3_map01_to_previous", _cell(back_to_previous.cell))
+		check(bool(previous_result.get("ok", false)), "野外可返回前城：%s" % previous_result.get("reason", ""))
+		check(GameState.current_map == "c2_well_town" and MapService.commit_arrival(), "退回前城")
 
 	# ④ 车夫：门未开不给目的地；已开但没走过不能跳关；到访后按报价扣费。
 	GameState.current_map = "c3_map00"

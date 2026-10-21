@@ -18,16 +18,6 @@
   "requiresUnlock": "chapter5",
   "exits": [
     {
-      "id": "c5_map00_exit01",
-      "label": "回根驿营地",
-      "cell": [
-        4,
-        27
-      ],
-      "toMap": "c4_map00",
-      "toEntrance": "from_c5_map00"
-    },
-    {
       "id": "c5_map00_exit02",
       "label": "往折旗长堤",
       "cell": [
@@ -39,12 +29,12 @@
     },
     {
       "id": "c5_map00_exit03",
-      "label": "往镇脉前哨",
+      "label": "往埋光外廊",
       "cell": [
         54,
         3
       ],
-      "toMap": "c6_map00",
+      "toMap": "c6_map01",
       "toEntrance": "from_c5_map00",
       "requiresUnlock": "chapter6"
     }

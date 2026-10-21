@@ -33,6 +33,19 @@
         8,
         54
       ]
+    },
+    {
+      "to": "c5_map00",
+      "flag": "",
+      "cell": [
+        104,
+        8
+      ],
+      "id": "c6_map01_to_previous",
+      "arrival": [
+        54,
+        3
+      ]
     }
   ],
   "npcs": [

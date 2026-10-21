@@ -37,6 +37,16 @@
       "toMap": "c6_map02",
       "toEntrance": "from_c6_map01",
       "requiresUnlock": "c6_access_02"
+    },
+    {
+      "id": "c6_map01_to_previous",
+      "label": "往断旗关",
+      "cell": [
+        104,
+        8
+      ],
+      "toMap": "c5_map00",
+      "toEntrance": "from_c6_map00"
     }
   ],
   "entrances": {
@@ -47,6 +57,10 @@
     "from_c6_map02": [
       200,
       59
+    ],
+    "from_c5_map00": [
+      104,
+      8
     ]
   },
   "carterArrival": [

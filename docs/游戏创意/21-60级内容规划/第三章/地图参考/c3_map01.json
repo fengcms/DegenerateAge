@@ -33,6 +33,19 @@
         8,
         59
       ]
+    },
+    {
+      "to": "c2_well_town",
+      "flag": "",
+      "cell": [
+        96,
+        8
+      ],
+      "id": "c3_map01_to_previous",
+      "arrival": [
+        80,
+        27
+      ]
     }
   ],
   "npcs": [

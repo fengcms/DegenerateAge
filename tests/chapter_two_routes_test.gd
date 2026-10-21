@@ -30,10 +30,19 @@ func _ready() -> void:
 	check(not MapService.is_unlocked("c2_well_town"), "未完成第一章不能入镇")
 	GameState.unlocks["chapter2"] = true
 	var gate := MapService.walk_exit("to_c2")
-	check(not gate.is_empty(), "营地有第二章入口")
+	check(not gate.is_empty() and String(gate.get("toMap", "")) == "ash_land", "营地去第二章先经过灰烬之地")
 	var gate_cell := Vector2i(int(gate.cell[0]), int(gate.cell[1]))
 	var travel := MapService.request_walk("to_c2", Iso.grid_to_world(gate_cell))
-	check(bool(travel.get("ok", false)), "完成第一章后能步行入镇")
+	check(bool(travel.get("ok", false)), "完成第一章后能步行进入灰烬之地")
+	check(GameState.current_map == "ash_land", "先到灰烬之地")
+	check(MapService.commit_arrival(), "中转事务完成")
+	MapService.walk_key_released = true
+	MapService.walk_locked_until_msec = 0
+	var onward := MapService.walk_exit("to_c2_bridge")
+	check(not onward.is_empty(), "灰烬之地有通往沉井镇的出口")
+	var onward_cell := Vector2i(int(onward.cell[0]), int(onward.cell[1]))
+	var second := MapService.request_walk("to_c2_bridge", Iso.grid_to_world(onward_cell))
+	check(bool(second.get("ok", false)), "可从灰烬之地步行入镇")
 	check(GameState.current_map == "c2_well_town", "入镇切图")
 	check(GameState.save_pos == Iso.grid_to_world(Vector2i(6, 27)), "落在新版沉井镇入口")
 	check(MapService.commit_arrival(), "到站事务完成")

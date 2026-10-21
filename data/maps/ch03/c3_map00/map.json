@@ -18,16 +18,6 @@
   "requiresUnlock": "chapter3",
   "exits": [
     {
-      "id": "c3_map00_exit01",
-      "label": "回沉井镇",
-      "cell": [
-        4,
-        27
-      ],
-      "toMap": "c2_well_town",
-      "toEntrance": "from_c3_map00"
-    },
-    {
       "id": "c3_map00_exit02",
       "label": "往断流渠岸",
       "cell": [
@@ -39,12 +29,12 @@
     },
     {
       "id": "c3_map00_exit03",
-      "label": "往根驿营地",
+      "label": "往倒根驿路",
       "cell": [
         51,
         3
       ],
-      "toMap": "c4_map00",
+      "toMap": "c4_map01",
       "toEntrance": "from_c3_map00",
       "requiresUnlock": "chapter4"
     }

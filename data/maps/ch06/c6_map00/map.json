@@ -18,16 +18,6 @@
   "requiresUnlock": "chapter6",
   "exits": [
     {
-      "id": "c6_map00_exit01",
-      "label": "回断旗关",
-      "cell": [
-        4,
-        27
-      ],
-      "toMap": "c5_map00",
-      "toEntrance": "from_c6_map00"
-    },
-    {
       "id": "c6_map00_exit02",
       "label": "往埋光外廊",
       "cell": [

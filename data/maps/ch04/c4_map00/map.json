@@ -18,16 +18,6 @@
   "requiresUnlock": "chapter4",
   "exits": [
     {
-      "id": "c4_map00_exit01",
-      "label": "回沉井镇",
-      "cell": [
-        4,
-        27
-      ],
-      "toMap": "c3_map00",
-      "toEntrance": "from_c4_map00"
-    },
-    {
       "id": "c4_map00_exit02",
       "label": "往倒根驿路",
       "cell": [
@@ -39,12 +29,12 @@
     },
     {
       "id": "c4_map00_exit03",
-      "label": "往断旗关",
+      "label": "往折旗长堤",
       "cell": [
         52,
         3
       ],
-      "toMap": "c5_map00",
+      "toMap": "c5_map01",
       "toEntrance": "from_c4_map00",
       "requiresUnlock": "chapter5"
     }

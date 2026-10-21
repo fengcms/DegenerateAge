@@ -9,19 +9,6 @@
   "index": 0,
   "exits": [
     {
-      "to": "c3_map00",
-      "flag": "",
-      "cell": [
-        4,
-        27
-      ],
-      "id": "c4_map00_exit01",
-      "arrival": [
-        51,
-        3
-      ]
-    },
-    {
       "to": "c4_map01",
       "flag": "",
       "cell": [
@@ -35,7 +22,7 @@
       ]
     },
     {
-      "to": "c5_map00",
+      "to": "c5_map01",
       "flag": "chapter5",
       "cell": [
         52,
@@ -43,8 +30,8 @@
       ],
       "id": "c4_map00_exit03",
       "arrival": [
-        4,
-        27
+        104,
+        8
       ]
     }
   ],

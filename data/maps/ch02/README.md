@@ -10,3 +10,7 @@
 | [工坊下层](c2_lower_works/README.md) | `c2_lower_works` | 探索、战斗与任务 | 15–18 |
 | [余烬炉房](c2_ember_furnace/README.md) | `c2_ember_furnace` | 探索、战斗与任务 | 17–19 |
 | [井心机室](c2_well_core/README.md) | `c2_well_core` | 探索、战斗与任务 | 18–20 |
+
+## 城镇步行过渡
+
+沉井镇向营地走需经灰烬之地，向下街水市走需经断流渠岸。车夫仍可按到访与解锁规则直达。

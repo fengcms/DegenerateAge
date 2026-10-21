@@ -37,6 +37,16 @@
       "toMap": "c5_map02",
       "toEntrance": "from_c5_map01",
       "requiresUnlock": "c5_access_02"
+    },
+    {
+      "id": "c5_map01_to_previous",
+      "label": "往根驿营地",
+      "cell": [
+        104,
+        8
+      ],
+      "toMap": "c4_map00",
+      "toEntrance": "from_c5_map00"
     }
   ],
   "entrances": {
@@ -47,6 +57,10 @@
     "from_c5_map02": [
       200,
       59
+    ],
+    "from_c4_map00": [
+      104,
+      8
     ]
   },
   "carterArrival": [

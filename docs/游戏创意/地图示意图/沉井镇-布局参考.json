@@ -237,13 +237,13 @@
   "exits": [
     {
       "id": "to_camp",
-      "label": "回幸存者营地",
+      "label": "往灰烬之地",
       "cell": [
         2,
         27
       ],
-      "toMap": "camp",
-      "toEntrance": "from_c2"
+      "toMap": "ash_land",
+      "toEntrance": "from_c2_well_town"
     },
     {
       "id": "to_slope",

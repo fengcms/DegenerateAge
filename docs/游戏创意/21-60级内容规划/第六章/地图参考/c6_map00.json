@@ -9,19 +9,6 @@
   "index": 0,
   "exits": [
     {
-      "to": "c5_map00",
-      "flag": "",
-      "cell": [
-        4,
-        27
-      ],
-      "id": "c6_map00_exit01",
-      "arrival": [
-        54,
-        3
-      ]
-    },
-    {
       "to": "c6_map01",
       "flag": "",
       "cell": [

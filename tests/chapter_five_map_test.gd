@@ -112,20 +112,30 @@ func _test_no_dangling_exit() -> void:
 # ---- ⑥ 第四↔第五章双向边 ----
 
 func _test_chapter_bridge() -> void:
-	var camp := _data("c4_map00")
-	var out_edge: Variant = null
-	for exit_data in camp.get("exits", []):
-		if String((exit_data as Dictionary).get("toMap", "")) == HUB:
-			out_edge = exit_data
-	check(out_edge != null, "根驿营地登记通往断旗关的出口")
-	if out_edge is Dictionary:
-		check(String((out_edge as Dictionary).get("toEntrance", "")) == "from_c4_map00", "去程落点为断旗关 from_c4_map00 入口")
-		check(camp.get("entrances", {}).has("from_c5_map00"), "根驿营地登记断旗关回程入口")
-	var back_edge: Variant = null
-	for exit_data in _data(HUB).get("exits", []):
-		if String((exit_data as Dictionary).get("toMap", "")) == "c4_map00":
-			back_edge = exit_data
-	check(back_edge != null, "断旗关登记返回根驿营地的出口")
-	if back_edge is Dictionary:
-		check(String((back_edge as Dictionary).get("toEntrance", "")) == "from_c5_map00", "返程落点为根驿营地 from_c5_map00 入口")
-		check(_data(HUB).get("entrances", {}).has("from_c4_map00"), "断旗关登记去程入口")
+	var prev := _data("c4_map00")
+	var field := _data("c5_map01")
+	var hub := _data(HUB)
+	for edge in prev.get("exits", []):
+		check(String(edge.get("toMap", "")) != HUB, "前城没有直达本城的步行边")
+	var outbound: Dictionary = {}
+	for edge in prev.get("exits", []):
+		if String(edge.get("id", "")) == "c4_map00_exit03":
+			outbound = edge
+	check(String(outbound.get("toMap", "")) == "c5_map01", "前城先通往过渡野外")
+	check(String(outbound.get("requiresUnlock", "")) == "chapter5", "去程仍由 chapter5 把关")
+	check(field.get("entrances", {}).has("from_c4_map00"), "野外有前城落点")
+	var to_hub: Dictionary = {}
+	var to_prev: Dictionary = {}
+	for edge in field.get("exits", []):
+		if String(edge.get("id", "")) == "c5_map01_exit01":
+			to_hub = edge
+		if String(edge.get("id", "")) == "c5_map01_to_previous":
+			to_prev = edge
+	check(String(to_hub.get("toMap", "")) == HUB, "野外可进入本城")
+	check(String(to_prev.get("toMap", "")) == "c4_map00" and not to_prev.has("requiresUnlock"), "野外回前城不锁")
+	check(prev.get("entrances", {}).has("from_c5_map00"), "前城保留回程落点")
+	var hub_return: Dictionary = {}
+	for edge in hub.get("exits", []):
+		if String(edge.get("id", "")) == "c5_map00_exit02":
+			hub_return = edge
+	check(String(hub_return.get("toMap", "")) == "c5_map01", "本城回野外有步行出口")
