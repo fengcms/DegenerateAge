@@ -1749,6 +1749,42 @@
     ]
   },
   {
+    "id": "DT_C7_Gold_Guard",
+    "desc": "聚金地脉金脉守卫（血×6、攻×1.5）：金币四倍、装备必掉一件。单位时间收益低于普通怪（≈×0.67），定位是「掉落更好、值得打一会儿」，不是「刷钱更快」。",
+    "entries": [
+      {
+        "kind": "coin",
+        "chance": 1.0,
+        "goldRange": [
+          1760,
+          2240
+        ]
+      },
+      {
+        "kind": "potion",
+        "chance": 0.15,
+        "itemId": "potion_hp_large"
+      },
+      {
+        "kind": "potion",
+        "chance": 0.1,
+        "itemId": "potion_mp_large"
+      },
+      {
+        "kind": "equip",
+        "chance": 1.0,
+        "templatePool": "c6_normal",
+        "qualityWeight": {
+          "common": 65,
+          "uncommon": 25,
+          "rare": 9,
+          "epic": 1
+        },
+        "levelFromBoss": true
+      }
+    ]
+  },
+  {
     "id": "DT_C7_Boss_Field",
     "desc": "百首禁域 Boss；装备每组独立尝试两次，期望件数翻倍，其余奖励保持原循环 Boss。",
     "entries": [

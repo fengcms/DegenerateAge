@@ -32,6 +32,11 @@ const ILLEGAL_FILENAME_CHARS := ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]
 ## 营地开放外围只增加可走区域；旧白盒档位保留坐标、迷雾和地面战利品。
 const CURRENT_CAMP_LAYOUT_VERSION := "2026-10-16-camp-open-perimeter-v2"
 const PREVIOUS_CAMP_LAYOUT_VERSION := "2026-10-15-camp-whitebox-v1"
+## 工程 82：聚金地脉从 160×90 收成 64×48（单战场 6 营）。坐标需按比例重映射一次。
+## 🔴 **独立的一次性门** —— 不能复用 `mapLayoutVersion`（存量档早已有该键，迁移永远不会触发），
+##    也不能无门（每次读档都按同一比例再缩一次 ⇒ 玩家坐标持续漂移）。
+const CURRENT_C7_GOLD_LAYOUT_VERSION := "2026-10-21-gold-field-v2"
+const LEGACY_C7_GOLD_SIZE := Vector2(160, 90)
 ## 旧目录只用于 v11 读档迁移；正式装备表始终只有二十个型号。
 const EQUIPMENT_LEGACY_IDS := {
 	"weapon_starter": "weapon_iron", "armor_starter": "armor_cloth",
@@ -161,6 +166,8 @@ func _collect() -> Dictionary:
 		"gold": GameState.gold,
 		"currentMap": GameState.current_map,
 		"mapLayoutVersion": CURRENT_CAMP_LAYOUT_VERSION,
+		# 工程 82：聚金地脉缩图版本（迁移的一次性门）。新档从出生就带，老档读一次即补。
+		"c7GoldLayoutVersion": CURRENT_C7_GOLD_LAYOUT_VERSION,
 		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
@@ -431,6 +438,11 @@ func _migrate(source: Dictionary) -> Dictionary:
 		data.mapLayoutVersion = CURRENT_CAMP_LAYOUT_VERSION
 	elif layout_version != CURRENT_CAMP_LAYOUT_VERSION:
 		_migrate_camp_whitebox(data)
+	# 工程 82：聚金地脉缩图（160×90 → 64×48）的一次性坐标迁移。
+	# 🔴 与上面的 `mapLayoutVersion` **完全解耦**：存量档早已有该键，复用它永远不触发；
+	#    独立门保证「每个存档一生只缩一次」，否则每次读档都按同一比例再缩、坐标持续漂移。
+	if String(data.get("c7GoldLayoutVersion", "")) != CURRENT_C7_GOLD_LAYOUT_VERSION:
+		_migrate_c7_gold_positions(data)
 	# 仅明确声明的 v0 支持历史最小角色格式；不能把无版本坏档当旧档补空。
 	if v == 0:
 		var defaults := {"slotId": -1, "savedAt": "", "currentMap": "camp", "playerPos": null,
@@ -713,6 +725,27 @@ func _migrate_landscape_positions(data: Dictionary) -> void:
 			for record in loot[source_map]:
 				if record is Dictionary and record.get("pos") is Array:
 					record.pos = _remap_landscape_position(record.pos, old_sizes[String(source_map)], String(source_map))
+
+## 工程 82：聚金地脉缩图（160×90 → 64×48）的一次性坐标重映射。
+## 覆盖三处会落坐标的地方：玩家位置 / 墓碑刷新点 / 未认领的地面掉落。
+## 映射按格坐标等比缩放（`_remap_landscape_position`），旧图靠边的坐标不会被推到图外。
+func _migrate_c7_gold_positions(data: Dictionary) -> void:
+	var map_id := "c7_gold_field"
+	if String(data.get("currentMap", "")) == map_id and data.get("playerPos") is Array:
+		data.playerPos = _remap_landscape_position(data.playerPos, LEGACY_C7_GOLD_SIZE, map_id)
+	var respawn: Variant = data.get("spawnRespawn", {})
+	if respawn is Dictionary:
+		for key in respawn:
+			if String(key).get_slice("#", 0) == map_id and respawn[key] is Dictionary:
+				var record: Dictionary = respawn[key]
+				if record.get("pos") is Array:
+					record.pos = _remap_landscape_position(record.pos, LEGACY_C7_GOLD_SIZE, map_id)
+	var loot: Variant = data.get("unclaimedLoot", {})
+	if loot is Dictionary and loot.get(map_id) is Array:
+		for record in loot[map_id]:
+			if record is Dictionary and record.get("pos") is Array:
+				record.pos = _remap_landscape_position(record.pos, LEGACY_C7_GOLD_SIZE, map_id)
+	data.c7GoldLayoutVersion = CURRENT_C7_GOLD_LAYOUT_VERSION
 
 func _remap_landscape_position(raw: Array, old_size: Vector2, map_id: String) -> Array:
 	if raw.size() != 2:

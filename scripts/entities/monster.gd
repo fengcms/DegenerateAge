@@ -87,6 +87,9 @@ var drop_table_override := ""
 @export var hp_multiplier: float = 1.0
 ## M10-3c：刷新点级攻击倍率（缺省 1.0 ⇒ 存量图逐值不变）。
 @export var atk_multiplier: float = 1.0
+## 工程 82（聚金地脉超杀保护）：单次命中扣血 ≤ `max_hp × damage_cap_pct`。
+## 由 `MonsterSpawner` 按地图字段透传，缺省 0 = 关闭 ⇒ 存量图与 Boss 档逐值不变。
+@export var damage_cap_pct: float = 0.0
 
 signal died(id: String)
 
@@ -874,13 +877,24 @@ func _update_support_heal(delta: float) -> void:
 
 # ---- 受击 / 死亡 ----
 
+## 工程 82：超杀保护 —— 单次命中扣血不超过目标最大生命的 `cap_pct`。
+## 🔴 只截「扣血」：飘字（`Fx.damage_number`）与 `damage_dealt` 事件由调用方用原始 `result`
+##    发出，仍显示真实伤害 —— 不欺骗玩家看假数字。
+## 🔴 落点必须是 `take_hit`（**唯一扣血入口**）：放到 `Combat.resolve` 会被直调 `take_hit`
+##    的路径绕过（负向 N-3 就守这条）。
+## `cap_pct <= 0`（缺省，存量图）或 `max_hp_value <= 0`（尚未结算完成）⇒ 原样返回，逐值不变。
+static func capped_damage(raw: int, max_hp_value: int, cap_pct: float) -> int:
+	if cap_pct <= 0.0 or max_hp_value <= 0 or raw <= 0:
+		return raw
+	return mini(raw, maxi(1, int(round(float(max_hp_value) * cap_pct))))
+
 ## 承受一次已结算的攻击（由 Combat.resolve 产出）。miss 不扣血；受击转仇恨。
 func take_hit(result: Dictionary, from: Node = null) -> void:
 	if is_dead or bool(result.get("miss", false)):
 		return
 	if from is PlayerCharacter and (MapService.is_in_rest_zone(GameState.current_map, (from as Node2D).global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position)):
 		return
-	hp = maxi(0, hp - int(result.get("damage", 0)))
+	hp = maxi(0, hp - capped_damage(int(result.get("damage", 0)), max_hp, damage_cap_pct))
 	_flash_t = HIT_FLASH
 	if sample_art != null:
 		sample_art.hit()

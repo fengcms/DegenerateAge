@@ -19,12 +19,27 @@ BOSSES = [
     "c4_boss02", "c5_boss02", "c5_boss04",
 ]
 NORMALS = [f"c6_normal{i:02d}" for i in range(1, 9)]
-# 聚金地脉 6 堆的左上角（堆序 H0→H5）；每堆为 4×4 网格、格间距 3。
-HEAP_ORIGINS = [(16, 10), (16, 62), (68, 10), (68, 62), (120, 30), (120, 74)]
+# 工程 82：聚金地脉从「160×90 全图散布 6 堆」收成「64×48 单战场 6 营」。
+# 营心格坐标 = CLUSTER_ORIGIN + 列步 (7,-7) × i + 行步 (-8,-8) × m（i∈0..2 列，m∈0..1 行）。
+# 等距换算：列距 448 px、行距 256 px；营内 4×4、格间距 2。
+CLUSTER_ORIGIN = (35, 29)
+CLUSTER_COL_STEP = (7, -7)
+CLUSTER_ROW_STEP = (-8, -8)
 HEAP_SIDE = 4
-HEAP_SPACING = 3
-MIN_HEAP_WORLD_DISTANCE = 858.0
-MIN_HEAP_GRID_DISTANCE = 24.0
+HEAP_SPACING = 2
+GOLD_SIZE = (64, 48)
+GOLD_EXIT_Y = 24
+# 🔑 站桩判据：任意席位到战场中心的等距世界距离必须落在一个站位点的激活圈内。
+# `MonsterSpawner.ACTIVE_DISTANCE` = 760 px，留 60 px 余量（约 1.7 格站位误差）。
+MAX_SEAT_WORLD_DISTANCE = 700.0
+# 席位两两最小世界距离（普通怪半径 13 px ⇒ 26 px 才不重叠，取 40 px 留余量）。
+MIN_SEAT_WORLD_DISTANCE = 40.0
+# 工程 82 方案 D：打金图普通怪单次命中伤害上限（占目标最大生命比例）。
+GOLD_DAMAGE_CAP_PCT = 0.5
+# 工程 82 方案 F：金脉守卫 —— 血 ×6 / 攻 ×1.5 / 金币 ×4，共 2 种 × 12 席 = 24 席。
+# 🔴 这是**刻意的净亏配比**（单位时间金币 ≈ ×0.67）：守卫定位是「掉落更好、值得打一会儿」，
+#    不是「刷钱更快」。下一个人按「收益应该更高」去改倍率，就把产品定位改掉了（R-10）。
+GUARD_MONSTERS = ("c6_normal02", "c6_normal07")
 
 
 def write_json(path: Path, data: dict, compact: bool = False) -> None:
@@ -76,17 +91,28 @@ def base_map(map_id: str, name: str, width: int, height: int, gate: dict, exit_y
     }
 
 
-def heap_cells(origin: tuple[int, int]) -> list[list[int]]:
-    """一堆 = 4×4 网格、格间距 3；行优先返回 16 个格子（第 k 席 → (k//4, k%4) 行列）。"""
-    bx, by = origin
-    return [[bx + HEAP_SPACING * (k // HEAP_SIDE), by + HEAP_SPACING * (k % HEAP_SIDE)]
+def cluster_centers() -> list[tuple[int, int]]:
+    """6 个营心：3 列 × 2 行，沿等距斜向排布，使整片战场在屏幕上呈矩形而不是菱形。"""
+    cx, cy = CLUSTER_ORIGIN
+    out = []
+    for i in range(3):
+        for m in range(2):
+            out.append((cx + CLUSTER_COL_STEP[0] * i + CLUSTER_ROW_STEP[0] * m,
+                        cy + CLUSTER_COL_STEP[1] * i + CLUSTER_ROW_STEP[1] * m))
+    return out
+
+
+def heap_cells(center: tuple[int, int]) -> list[list[int]]:
+    """一营 = 4×4 网格、格间距 2，**以营心为中心对称**；行优先返回 16 格（第 k 席 → (k//4, k%4)）。"""
+    cx, cy = center
+    half = HEAP_SPACING * (HEAP_SIDE - 1) // 2
+    return [[cx - half + HEAP_SPACING * (k // HEAP_SIDE), cy - half + HEAP_SPACING * (k % HEAP_SIDE)]
             for k in range(HEAP_SIDE * HEAP_SIDE)]
 
 
-def heap_center(origin: tuple[int, int]) -> tuple[float, float]:
-    """堆心 = 4×4 网格的几何中心（小数格坐标）。"""
-    bx, by = origin
-    return (bx + 4.5, by + 4.5)
+def field_center(centers: list[tuple[int, int]]) -> tuple[float, float]:
+    """战场中心 = 6 个营心的算术平均（唯一自然的「站桩点」）。"""
+    return (sum(c[0] for c in centers) / len(centers), sum(c[1] for c in centers) / len(centers))
 
 
 def iso_world(col: float, row: float) -> tuple[float, float]:
@@ -94,38 +120,57 @@ def iso_world(col: float, row: float) -> tuple[float, float]:
     return ((col - row) * 32.0, -(col + row) * 16.0)
 
 
-def assert_heap_spacing() -> None:
-    """固化堆约束：任意两堆心的世界像素距离 ≥ 858、网格欧氏距离 ≥ 24。"""
-    centers = [heap_center(origin) for origin in HEAP_ORIGINS]
-    worlds = [iso_world(*center) for center in centers]
-    pairs = [(a, b) for a in range(len(centers)) for b in range(a + 1, len(centers))]
-    min_world = min(math.dist(worlds[a], worlds[b]) for a, b in pairs)
-    min_grid = min(math.dist(centers[a], centers[b]) for a, b in pairs)
-    assert min_world >= MIN_HEAP_WORLD_DISTANCE, f"堆心世界距离过近：{min_world:.2f}px"
-    assert min_grid >= MIN_HEAP_GRID_DISTANCE, f"堆心网格距离过近：{min_grid:.2f} 格"
-    print(f"堆距自检：最小世界像素距离 {min_world:.2f}px（阈值 {MIN_HEAP_WORLD_DISTANCE:.0f}），"
-          f"最小网格欧氏距离 {min_grid:.2f} 格（阈值 {MIN_HEAP_GRID_DISTANCE:.0f}）")
+def assert_seats_coverable(centers: list[tuple[int, int]],
+                           heaps: list[list[list[int]]]) -> None:
+    """固化「站桩即可全激活」：所有席位到战场中心的距离在激活圈内，且互不重叠。
+
+    🔴 旧断言（`MIN_HEAP_WORLD_DISTANCE 858`）方向正好反了 —— 它保证「一次只激活一堆」，
+    正是玩家必须跑来跑去的根因（工程 82 §2）。判据必须换成**单点覆盖**。
+    """
+    seats = [cell for heap in heaps for cell in heap]
+    assert len(seats) == len({tuple(cell) for cell in seats}), "席位出现重复格"
+    center_world = iso_world(*field_center(centers))
+    far = max(math.dist(iso_world(*cell), center_world) for cell in seats)
+    assert far <= MAX_SEAT_WORLD_DISTANCE, \
+        f"有席位超出激活圈：最远 {far:.2f}px > 阈值 {MAX_SEAT_WORLD_DISTANCE:.0f}px（玩家仍需跑图）"
+    worlds = [iso_world(*cell) for cell in seats]
+    min_pair = min(math.dist(worlds[a], worlds[b])
+                   for a in range(len(worlds)) for b in range(a + 1, len(worlds)))
+    assert min_pair >= MIN_SEAT_WORLD_DISTANCE, \
+        f"席位过密会互相挤：最小世界距离 {min_pair:.2f}px < 阈值 {MIN_SEAT_WORLD_DISTANCE:.0f}px"
+    print(f"站桩自检：{len(seats)} 席，最远席距战场中心 {far:.2f}px"
+          f"（阈值 {MAX_SEAT_WORLD_DISTANCE:.0f}），最小席距 {min_pair:.2f}px")
 
 
 def build_gold() -> dict:
-    """配置 96 个普通怪固定席位：6 堆 × 16 席，每个怪种在每堆占 2 席。"""
-    data = base_map("c7_gold_field", "聚金地脉", 160, 90,
-                    {"walkOnlyFrom": "c7_arena", "minLevel": 80}, 45)
-    assert_heap_spacing()
-    heaps = [heap_cells(origin) for origin in HEAP_ORIGINS]
+    """配置 96 个普通怪固定席位：6 营 × 16 席，每个怪种在每营占 2 席。
+
+    其中 2 种怪为**金脉守卫**（24 席）：血 ×6 / 攻 ×1.5 / 金币 ×4，其余 6 种 72 席保持割草手感。
+    """
+    data = base_map("c7_gold_field", "聚金地脉", GOLD_SIZE[0], GOLD_SIZE[1],
+                    {"walkOnlyFrom": "c7_arena", "minLevel": 80}, GOLD_EXIT_Y)
+    centers = cluster_centers()
+    heaps = [heap_cells(center) for center in centers]
+    assert_seats_coverable(centers, heaps)
     spawn_points = []
     for i, mid in enumerate(NORMALS):
         cells = []
         for heap in heaps:
             cells.append(heap[i * 2])
             cells.append(heap[i * 2 + 1])
-        spawn_points.append({"monsterId": mid, "kind": "normal", "respawnTime": 15,
-                             "count": 12, "cells": cells, "scaleStats": True,
-                             "xpFromCurve": True, "xpCurveDivisor": 10, "xpMultiplier": 0.1,
-                             "dropTableId": "DT_C7_Gold_Normal"})
+        spec = {"monsterId": mid, "kind": "normal", "respawnTime": 15,
+                "count": 12, "cells": cells, "scaleStats": True,
+                "xpFromCurve": True, "xpCurveDivisor": 10, "xpMultiplier": 0.1,
+                "dropTableId": "DT_C7_Gold_Normal"}
+        if mid in GUARD_MONSTERS:
+            spec.update({"hpMultiplier": 6.0, "atkMultiplier": 1.5,
+                         "dropTableId": "DT_C7_Gold_Guard"})
+        spawn_points.append(spec)
     data.update({
         "spawnPoints": spawn_points, "normalCap": 32, "bossCap": 0,
-        "desc": "80级开放的密集金币战场：96 席分为 6 堆，每堆 16 席；第六章普通怪复用外观，等级随玩家成长。",
+        "damageCapPct": GOLD_DAMAGE_CAP_PCT,
+        "desc": "80级开放的密集金币战场：96 席收在 6 营（3列×2行）内，全部落在一个站位点的激活圈里，"
+                "站住即可连续刷；其中 2 种为金脉守卫（血厚、金币四倍）。",
     })
     return data
 

@@ -37,6 +37,9 @@ var _ordinal: Dictionary = {}
 ## 装配期不再按 `tierRange` 夹紧，改在 `_spawn` 里每次生成时现算（P-5：600s 复活
 ## 出来的不能永远是进图那天的等级）。存量图恒 0，整段是空操作。
 var _level_min := 0
+## 工程 82（聚金地脉超杀保护）：本图**普通怪**单次命中扣血上限（占目标最大生命比例）。
+## 地图级字段 `damageCapPct`，缺省 0 = 关闭 —— 存量图与 Boss 档全部零影响。
+var _damage_cap_pct := 0.0
 
 func setup(ground: IsoGround, player: Node2D) -> void:
 	_ground = ground
@@ -114,6 +117,9 @@ func spawn_from_specs(specs: Array, map_id: String = "") -> void:
 				"xp_multiplier": float(spec.get("xpMultiplier", 1.0)),
 				"hp_multiplier": float(spec.get("hpMultiplier", 1.0)),
 				"atk_multiplier": float(spec.get("atkMultiplier", 1.0)),
+				# 工程 82：只作用于普通怪 —— Boss 档与存量图恒 0（`damageCapPct` 本身也只有
+				# 打金图配了），两道条件各自独立生效，任一处漏配都不会误伤 Boss。
+				"damage_cap_pct": _damage_cap_pct if String(spec.get("kind", "normal")) == "normal" else 0.0,
 				"entry": null,
 				"tombstone": bool(spec.get("tombstone", false)),
 				"marker": null,
@@ -226,6 +232,7 @@ func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	m.xp_multiplier = float(point.get("xp_multiplier", 1.0))
 	m.hp_multiplier = float(point.get("hp_multiplier", 1.0))
 	m.atk_multiplier = float(point.get("atk_multiplier", 1.0))
+	m.damage_cap_pct = float(point.get("damage_cap_pct", 0.0))
 	var pos := _spawn_position(point)
 	if is_instance_valid(point.marker):
 		point.marker.queue_free()
@@ -260,6 +267,7 @@ func _cap_for(kind: String) -> int:
 ## 装配期缓存本图 cap 配置（无地图 / 显式测试规格 → 全不限）。
 func _load_caps() -> void:
 	_caps.clear()
+	_damage_cap_pct = 0.0
 	if _map_id.is_empty():
 		return
 	var m: Variant = DataLoader.get_entry("maps", _map_id)
@@ -269,6 +277,8 @@ func _load_caps() -> void:
 		var key: String = String(kind) + "Cap"
 		if (m as Dictionary).has(key):
 			_caps[String(kind)] = int((m as Dictionary).get(key, UNLIMITED_CAP))
+	# 工程 82：打金图普通怪的超杀保护比例；未配的图保持 0（关闭）。
+	_damage_cap_pct = clampf(float((m as Dictionary).get("damageCapPct", 0.0)), 0.0, 1.0)
 
 func _on_monster_died(point: Dictionary) -> void:
 	var pos := Vector2.ZERO
