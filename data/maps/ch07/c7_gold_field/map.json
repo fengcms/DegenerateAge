@@ -172,7 +172,7 @@
       "atkMultiplier": 1.5
     },
     {
-      "monsterId": "c6_normal03",
+      "monsterId": "c5_normal05",
       "kind": "normal",
       "respawnTime": 15,
       "count": 12,
@@ -355,7 +355,7 @@
       "dropTableId": "DT_C7_Gold_Normal"
     },
     {
-      "monsterId": "c6_normal06",
+      "monsterId": "c5_normal08",
       "kind": "normal",
       "respawnTime": 15,
       "count": 12,
@@ -543,5 +543,5 @@
   "normalCap": 32,
   "bossCap": 0,
   "damageCapPct": 0.5,
-  "desc": "80级开放的密集金币战场：96 席收在 6 营（3列×2行）内，全部落在一个站位点的激活圈里，站住即可连续刷；其中 2 种为金脉守卫（血厚、金币四倍）。"
+  "desc": "80级开放的密集金币战场：96 席收在 6 营（3列×2行）内，全部落在一个站位点的激活圈里，站住即可连续刷；8 种普通怪全部近战（无远程），其中 2 种为金脉守卫（血厚、金币四倍）。"
 }

@@ -18,7 +18,18 @@ BOSSES = [
     "c2_boss_slag_devourer", "c2_boss_hundred_arm_extractor", "c3_boss02",
     "c4_boss02", "c5_boss02", "c5_boss04",
 ]
-NORMALS = [f"c6_normal{i:02d}" for i in range(1, 9)]
+# 工程 83：聚金地脉 8 个怪种全部改成**近战**。
+# 原 `c6_normal03 失序刻印偶` / `c6_normal06 断誓游魂` 是远程（射程 6 格 = 384px），
+# 站在营里会被隔着半个战场射击，战士必须逐个追 —— 与「站桩刷」的产品定位冲突。
+# 换成第五章两种**移速 3.1 的快速近战**（主动贴上来，不用等）：
+#   c5_normal05 紫鳞潜猎者（原 index 2）/ c5_normal08 折翼掠兽（原 index 5）。
+# 🔴 席位下标保持不变 ⇒ 每营的格位布局、`map.json` 其余 6 组逐字不动。
+GOLD_NORMALS = [
+    "c6_normal01", "c6_normal02", "c5_normal05", "c6_normal04",
+    "c6_normal05", "c5_normal08", "c6_normal07", "c6_normal08",
+]
+# 换怪后仍必须满足的硬条件（换错就 assert 而不是静默出一张「远程刷图」）。
+GOLD_FORBIDDEN_KINDS = ("ranged",)
 # 工程 82：聚金地脉从「160×90 全图散布 6 堆」收成「64×48 单战场 6 营」。
 # 营心格坐标 = CLUSTER_ORIGIN + 列步 (7,-7) × i + 行步 (-8,-8) × m（i∈0..2 列，m∈0..1 行）。
 # 等距换算：列距 448 px、行距 256 px；营内 4×4、格间距 2。
@@ -142,18 +153,48 @@ def assert_seats_coverable(centers: list[tuple[int, int]],
           f"（阈值 {MAX_SEAT_WORLD_DISTANCE:.0f}），最小席距 {min_pair:.2f}px")
 
 
+def load_monster_templates() -> dict[str, dict]:
+    """读取全部章节的怪物模板（生成器做只读校验用；数据本身即判据）。"""
+    out: dict[str, dict] = {}
+    for path in sorted((ROOT / "data/monsters").glob("ch*/monsters.json")):
+        for row in json.loads(path.read_text(encoding="utf-8")):
+            out[str(row["id"])] = row
+    return out
+
+
+def assert_gold_normals_melee() -> None:
+    """固化「打金图全近战」：任何远程怪混进来都直接 assert，而不是静默出一张刷不动的图。
+
+    🔴 工程 83 的起因就是这里漏了判据：8 个怪种里混了 2 个 `attackRange.kind = ranged`
+    （射程 6 格），玩家站在营里被隔着半个战场点名，必须逐个追。判据放在**生成器**
+    这一侧，是为了让「换怪」这个动作本身不可能再换出远程；运行侧的看守在
+    `EndgameCycleMapTest`（读 `map.json` 断言，防手改产物）。
+    """
+    templates = load_monster_templates()
+    for mid in GOLD_NORMALS:
+        tpl = templates.get(mid)
+        assert tpl is not None, f"聚金地脉引用了未定义怪物 {mid}"
+        assert str(tpl.get("kind", "")) == "normal", f"聚金地脉的 {mid} 不是普通怪"
+        kind = str((tpl.get("attackRange") or {}).get("kind", "melee"))
+        assert kind not in GOLD_FORBIDDEN_KINDS, \
+            f"聚金地脉的 {mid}（{tpl.get('name', '')}）是远程怪 attackRange.kind={kind} —— 打金图必须全近战"
+    print(f"近战自检：{len(GOLD_NORMALS)} 个怪种全部 melee（{', '.join(GOLD_NORMALS)}）")
+
+
 def build_gold() -> dict:
     """配置 96 个普通怪固定席位：6 营 × 16 席，每个怪种在每营占 2 席。
 
-    其中 2 种怪为**金脉守卫**（24 席）：血 ×6 / 攻 ×1.5 / 金币 ×4，其余 6 种 72 席保持割草手感。
+    8 个怪种**全部近战**（工程 83）；其中 2 种怪为**金脉守卫**（24 席）：血 ×6 / 攻 ×1.5 /
+    金币 ×4，其余 6 种 72 席保持割草手感。
     """
+    assert_gold_normals_melee()
     data = base_map("c7_gold_field", "聚金地脉", GOLD_SIZE[0], GOLD_SIZE[1],
                     {"walkOnlyFrom": "c7_arena", "minLevel": 80}, GOLD_EXIT_Y)
     centers = cluster_centers()
     heaps = [heap_cells(center) for center in centers]
     assert_seats_coverable(centers, heaps)
     spawn_points = []
-    for i, mid in enumerate(NORMALS):
+    for i, mid in enumerate(GOLD_NORMALS):
         cells = []
         for heap in heaps:
             cells.append(heap[i * 2])
@@ -170,7 +211,7 @@ def build_gold() -> dict:
         "spawnPoints": spawn_points, "normalCap": 32, "bossCap": 0,
         "damageCapPct": GOLD_DAMAGE_CAP_PCT,
         "desc": "80级开放的密集金币战场：96 席收在 6 营（3列×2行）内，全部落在一个站位点的激活圈里，"
-                "站住即可连续刷；其中 2 种为金脉守卫（血厚、金币四倍）。",
+                "站住即可连续刷；8 种普通怪全部近战（无远程），其中 2 种为金脉守卫（血厚、金币四倍）。",
     })
     return data
 

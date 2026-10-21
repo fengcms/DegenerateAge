@@ -109,7 +109,7 @@
       }
     },
     {
-      "monsterId": "c6_normal03",
+      "monsterId": "c5_normal05",
       "norm": {
         "hp": 1781,
         "atk": 451,
@@ -133,7 +133,7 @@
       }
     },
     {
-      "monsterId": "c6_normal06",
+      "monsterId": "c5_normal08",
       "norm": {
         "hp": 1504,
         "atk": 379,
