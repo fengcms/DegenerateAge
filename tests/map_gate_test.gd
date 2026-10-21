@@ -4,6 +4,7 @@ extends Node
 
 var failures: Array[String] = []
 
+## 收集门禁回归失败项；整轮结束后以退出码报告结果。
 func check(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
@@ -19,6 +20,7 @@ func _walk(exit_id: String, cell: Variant) -> Dictionary:
 		MapService.commit_arrival()
 	return result
 
+## 逐段验证正向锁、返程、封锁提示和地图路标状态与真实步行规则一致。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	var issues := DataLoader.validate_all()
@@ -36,17 +38,36 @@ func _ready() -> void:
 
 	var forward := MapService.walk_exit("c3_map01_exit02")
 	check(MapService.exit_requirement(forward) == "c3_access_02", "正向边自带解锁键")
+	var sign := TravelExit.new()
+	sign.exit_id = "c3_map01_exit02"
+	sign.to_map = "c3_map02"
+	add_child(sign)
+	check(not sign.is_open, "未领奖时路标应显示封锁状态")
 	var blocked := _walk("c3_map01_exit02", forward.get("cell"))
 	check(not bool(blocked.get("ok", false)), "未领奖时正向边锁住")
 	check(GameState.current_map == "c3_map01" and MapService.pending_travel.is_empty(), "被拦下时不切图也不留事务")
 	var reason := String(blocked.get("reason", ""))
 	check(reason.contains("陶汀") and reason.contains("被改道的水"), "封锁说明指名交付人与任务：%s" % reason)
+	check(sign.blocked_reason == reason, "路标封锁原因应与真实步行拒绝原因一致")
+	GameState.unlocks["c3_access_02"] = true
+	EventBus.quest_state_changed.emit()
+	check(sign.is_open, "领奖状态变化应立即打开同图路标")
+	GameState.unlocks.erase("c3_access_02")
+	EventBus.quest_state_changed.emit()
+	check(not sign.is_open, "门禁状态撤销后同图路标应重新显示封锁")
+	sign.queue_free()
 
 	check(bool(_walk("c3_map01_exit01", MapService.walk_exit("c3_map01_exit01").get("cell")).get("ok", false)), "返回边不锁")
 	check(GameState.current_map == "c3_map00", "已退回枢纽")
 
 	GameState.unlocks["c3_access_02"] = true
 	check(bool(_walk("c3_map00_exit02", MapService.walk_exit("c3_map00_exit02").get("cell")).get("ok", false)), "再次进入断流渠岸")
+	var reopened_sign := TravelExit.new()
+	reopened_sign.exit_id = "c3_map01_exit02"
+	reopened_sign.to_map = "c3_map02"
+	add_child(reopened_sign)
+	check(reopened_sign.is_open and reopened_sign.blocked_reason.is_empty(), "领奖后路标应显示开放状态")
+	reopened_sign.queue_free()
 	check(bool(_walk("c3_map01_exit02", forward.get("cell")).get("ok", false)), "C3Q03 领奖后正向边打开")
 	check(GameState.current_map == "c3_map02", "已进入悬渠闸站")
 

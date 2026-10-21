@@ -289,6 +289,20 @@ func _exit_open(exit_data: Dictionary) -> bool:
 	var need := exit_requirement(exit_data)
 	return need.is_empty() or bool(GameState.unlocks.get(need, false))
 
+## 查询一条步行出口当前的封锁原因，供世界路标、点击交互与最终切图共用。
+## 不检查玩家距离或到达防抖；空字符串表示门禁已开放，不代表此次请求必然成功。
+func walk_exit_block_reason(exit_data: Dictionary) -> String:
+	if exit_data.is_empty():
+		return Localization.tr_key("msg.map_service.p004")
+	var to_id := String(exit_data.get("toMap", ""))
+	if not exists(to_id) or to_id == GameState.current_map:
+		return Localization.tr_key("msg.map_service.p005")
+	if not _exit_open(exit_data):
+		return _locked_by(exit_requirement(exit_data), to_id)
+	if not is_unlocked(to_id):
+		return locked_reason(to_id)
+	return entry_gate_reason(to_id)
+
 ## 以解锁键为口径给出封锁说明；定位不到产出任务时退回简短文案。
 func _locked_by(flag: String, map_id: String) -> String:
 	var quest := unlock_source(flag)
@@ -414,13 +428,9 @@ func request_walk(exit_id: String, player_world: Vector2) -> Dictionary:
 	var player_cell := Iso.world_to_grid(player_world)
 	if player_cell.distance_to(Vector2(float(cell[0]), float(cell[1]))) > WALK_RANGE_CELLS:
 		return _fail(Localization.tr_key("msg.map_service.p007"))
-	if not _exit_open(exit_data):
-		return _fail(_locked_by(exit_requirement(exit_data), to_id))
-	if not is_unlocked(to_id):
-		return _fail(locked_reason(to_id))
-	var entry_reason := entry_gate_reason(to_id)
-	if not entry_reason.is_empty():
-		return _fail(entry_reason)
+	var block_reason := walk_exit_block_reason(exit_data)
+	if not block_reason.is_empty():
+		return _fail(block_reason)
 	var entrance_id := String(exit_data.get("toEntrance", ""))
 	var entrances: Variant = data_for(to_id).get("entrances", null)
 	if not entrances is Dictionary or not entrances.has(entrance_id):

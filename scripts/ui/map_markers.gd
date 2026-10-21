@@ -1,6 +1,9 @@
 class_name MapMarkers
 extends RefCounted
-## UI 标记来自当前世界的实际刷新点；收集目标查投放表，不编造地图坐标。
+## 从世界实体提取小/大地图标记；出口状态沿用路标已计算的门禁结果。
+## 收集目标查投放表，不编造地图坐标，也不改变探索迷雾。
+
+## 汇总世界中的 NPC、步行出口、Boss 与任务目标供地图界面绘制。
 static func for_world(world: Node) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if world == null:
@@ -10,13 +13,16 @@ static func for_world(world: Node) -> Array[Dictionary]:
 		out.append({"position": npc.global_position, "kind": "carter" if carter else "npc",
 			"name": Localization.tr_key("ui.map.carter_marker") % String(npc.get("npc_name")) if carter else String(npc.get("npc_name")),
 			"revealed": false, "always_big": carter})
-	for exit_node: Node2D in world.get_node("Exits").get_children():
-		var destination := String(exit_node.get("to_map"))
+	for child in world.get_node("Exits").get_children():
+		var exit_node := child as TravelExit
+		if exit_node == null:
+			continue
+		var destination := exit_node.to_map
 		var label := Localization.tr_key("ui.map.exit_marker") % [MapService.display_name(destination), MapService.recommended_level(destination)]
-		if not MapService.is_unlocked(destination):
+		if not exit_node.is_open:
 			label += Localization.tr_key("ui.map.locked_suffix")
 		out.append({"position": exit_node.global_position, "kind": "exit", "name": label,
-			"to_map": destination, "unlocked": MapService.is_unlocked(destination),
+			"to_map": destination, "unlocked": exit_node.is_open,
 			"revealed": false, "always_big": true})
 	var points: Array[Dictionary] = world.get_node("Spawner").marker_points()
 	for point in points:
@@ -41,6 +47,7 @@ static func for_world(world: Node) -> Array[Dictionary]:
 				out.append({"position": point.position, "kind": "quest", "name": String(quest.name), "revealed": true, "boss": boss})
 	return out
 
+## 判断怪物掉落表是否能产出指定物品，仅服务任务目标地图标记。
 static func drops_item(monster_id: String, item_id: String) -> bool:
 	var monster: Variant = DataLoader.get_entry("monsters", monster_id)
 	if not monster is Dictionary:
