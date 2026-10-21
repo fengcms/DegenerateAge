@@ -1,12 +1,17 @@
 extends Node
 ## 工程 77 装备耐久度：损耗分档、失效卡口、套装保留、修理费与存档兼容。
+## 工程 88 改失效语义：耐久归零**只砍词条**，基底（品质 × 星级）照常生效。
 ##
-## 三组最值钱的断言：
-## 1. **用例 7 是本需求的核心** —— 破损件套装 pct 必须不变（你的规则：自身属性失效、套装还在）。
-##    若有人「顺手」把破损件从 SetBonus 里跳过，这里当场红。
-## 2. **用例 2/3 钉死「绝不加必填」** —— 旧档无 durability 字段必须通过 _valid_item；
+## 四组最值钱的断言：
+## 1. **用例 6 是本需求的核心** —— 破损后 atk/def 必须**严格等于** `base_attrs()`、
+##    且**严格小于**满耐久。两条缺一不可：只断「等于基底」时把 `attrs_for_use` 写成
+##    恒返 `base_attrs` 也绿（词条根本没接上）；只断「小于满耐久」时把基底也砍光也绿。
+## 2. **用例 14 是保险丝** —— 破损态必须仍在 `Combat.resolve` 的「不破防」侧。
+##    基底留下后 def 仍高于怪物攻击，挨打走保底；一旦有人调高后期怪攻击或砍掉基底，
+##    伤害从 60 跳到四位数，**是断崖不是渐变**，所以用「最凶的怪」+ 1.2 倍余量来卡。
+## 3. **用例 2/3 钉死「绝不加必填」** —— 旧档无 durability 字段必须通过 _valid_item；
 ##    一旦有人加必填校验，旧档逐件剔除 = 静默毁档（D-21 教训）。
-## 3. **用例 8 断修理费四点** —— 61 级后「全身 ≈ 一次重铸」是经济锚点，
+## 4. **用例 8 断修理费四点** —— 61 级后「全身 ≈ 一次重铸」是经济锚点，
 ##    公式写错（比例反了、忘记 ceil）会直接打破 D-22 的金币出口平衡。
 
 var failures: Array[String] = []
@@ -27,7 +32,7 @@ func _ready() -> void:
 	_test_valid_item_rules()
 	_test_wear_by_kind()
 	_test_suppress_no_wear()
-	_test_broken_skips_bonus()
+	_test_broken_keeps_base()
 	_test_set_bonus_survives()
 	_test_repair_cost()
 	_test_repair_transaction()
@@ -35,6 +40,7 @@ func _ready() -> void:
 	_test_tooltip()
 	_test_durability_bar()
 	_test_warning_throttle()
+	_test_broken_keeps_unbroken_guard()
 	if failures.is_empty():
 		print("[DurabilityTest] 全部通过 ✅")
 	else:
@@ -104,22 +110,47 @@ func _test_suppress_no_wear() -> void:
 	check(int(item["durability"]) == before, "未调用磨损时耐久不变")
 	GameState.equipment["weapon"] = null
 
-## 用例 6：归零 ⇒ equip_bonus 跳过该件、score = 0。
-func _test_broken_skips_bonus() -> void:
+## 用例 6（本需求核心，工程 88）：归零 ⇒ **只砍词条**，基底（品质 × 星级）仍在。
+## 词条固定写入已知值 —— 不依赖 rng 是否掷出 atk，否则「这条实例本来就没词条」时
+## 「等于基底」与「词条没接上」两种状态区分不开（假绿）。
+func _test_broken_keeps_base() -> void:
 	var item := ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "epic", _rng(600))
+	item["affixes"] = [{"stat": "atk", "value": 500.0}, {"stat": "def", "value": 300.0}]
+	item["pctAttrs"] = [{"stat": "hpPercent", "value": 0.10}]
+	var base := EquipmentMath.base_attrs(item)
+	var star := EquipmentMath.star_factor(item)
+	var base_atk := float(base.get("atk", 0.0))
+	var base_def := float(base.get("def", 0.0))
+	var full_atk := base_atk + 500.0 * star
+	var full_def := base_def + 300.0 * star
+	var full_score := Equipment.score(item)
+	check(base_atk > 0.0 and full_atk > base_atk, "构造前提：基底与词条都非零")
 	item["durability"] = 0
 	GameState.reset_to_defaults()
 	GameState.equipment["weapon"] = item
 	var bonus := GameState.equip_bonus()
-	check(float(bonus.get("atk", 0.0)) == 0.0, "破损件应跳过属性汇总，atk 实际 %s" % str(bonus.get("atk")))
-	check(Equipment.score(item) == 0.0, "破损件评分应为 0")
-	# 修好后属性回来
+	check(is_equal_approx(float(bonus.get("atk", 0.0)), base_atk),
+		"破损件 atk 应等于基底 %.1f，实际 %.1f" % [base_atk, float(bonus.get("atk", 0.0))])
+	check(is_equal_approx(float(bonus.get("def", 0.0)), base_def),
+		"破损件 def 应等于基底 %.1f，实际 %.1f" % [base_def, float(bonus.get("def", 0.0))])
+	check(float(bonus.get("atk", 0.0)) < full_atk,
+		"破损件 atk 必须小于满耐久 %.1f（否则词条根本没失效）" % full_atk)
+	check(float(bonus.get("def", 0.0)) < full_def, "破损件 def 必须小于满耐久 %.1f" % full_def)
+	check(is_zero_approx(float(bonus.get("hpPercent", 0.0))),
+		"破损件 hpPercent 词条应失效，实际 " + str(bonus.get("hpPercent")))
+	var broken_score := Equipment.score(item)
+	check(broken_score > 0.0, "破损件评分不应为 0（否则「属性更高」提示会谎报）")
+	check(broken_score < full_score,
+		"破损件评分应低于满耐久：%.1f vs %.1f" % [broken_score, full_score])
+	# 修好后词条重新生效
 	item["durability"] = Durability.max_durability()
 	var bonus2 := GameState.equip_bonus()
-	check(float(bonus2.get("atk", 0.0)) > 0.0, "修好后属性应恢复")
+	check(is_equal_approx(float(bonus2.get("atk", 0.0)), full_atk),
+		"修好后 atk 应回到满耐久 %.1f，实际 %.1f" % [full_atk, float(bonus2.get("atk", 0.0))])
+	check(is_equal_approx(Equipment.score(item), full_score), "修好后评分应回到满耐久")
 	GameState.equipment["weapon"] = null
 
-## 用例 7：归零 ⇒ 套装 pct 不变（本需求核心）。
+## 用例 7：归零 ⇒ 套装 pct 不变（`SetBonus` 数槽位、不数属性，天然成立但必须钉住）。
 func _test_set_bonus_survives() -> void:
 	GameState.reset_to_defaults()
 	var rng := _rng(700)
@@ -267,6 +298,13 @@ func _test_warning_throttle() -> void:
 	GameState.wear_equipment("normal")
 	var warned: Dictionary = GameState._durability_warned.get(String(item.get("instanceId", "")), {})
 	check(bool(warned.get("low", false)), "跌破 20% 应触发一次 low 预警")
+	## 🔴 文案必须**真的能格式化**：`ui.durability.warn_low` 原为「…不足 20%」，
+	## 裸 `%` 遇 `tr_key(key, [name])` 会触发 `incomplete format`，
+	## 玩家看到的是原样「「%s」耐久不足 20%」（既有 bug，本次随文案一并修）。
+	## 断「等于预期正文」而不是「不含 %s」—— 前者连「改成 20%% 却漏了 %s」也抓得住。
+	var low_text := Localization.tr_key("ui.durability.warn_low", ["测试件"])
+	check(low_text == "「测试件」耐久不足 20%",
+		"预警文案应完成占位填充，实际：" + low_text)
 	# 继续扣到归零：应触发一次 zero
 	item["durability"] = 1
 	GameState.wear_equipment("normal")
@@ -277,3 +315,50 @@ func _test_warning_throttle() -> void:
 	GameState.repair_equipment(1.0)
 	check(GameState._durability_warned.is_empty(), "修理后预警标记应清空复位")
 	GameState.equipment["weapon"] = null
+
+## 用例 14：破损态仍「不破防」（工程 88 R1 保险丝）。
+##
+## `Combat.resolve` 的破防判据是 `攻击 − 防御×0.5 ≤ 0`，不破防才走保底伤害
+## （`maxHP × 0.25%`，上限 60）。基底留下后 def 仍在「攻击×2」之上 ⇒ 挨打伤害
+## 与满耐久**完全一样**，变的只有血池。这条一旦破，伤害会从 60 直接跳到四位数。
+##
+## 🔴 用**最凶的那只金脉怪**（不是均值）作分母，并要求 **1.2 倍余量**：
+##    只断「刚好不破防」时，攻击力上调 1% 就会红在别处、这条仍然绿。
+## 🔴 两档等级都断（L96 / L174）：二次段 `scale()` 在 d>12 后加速，
+##    只测一档无法发现「高等级段被拉开」。
+func _test_broken_keeps_unbroken_guard() -> void:
+	var cfg: Variant = DataLoader.get_table("endgame")
+	var rows: Variant = (cfg as Dictionary).get("goldFieldNormals", []) if cfg is Dictionary else []
+	var worst_norm := 0.0
+	if rows is Array:
+		for row in (rows as Array):
+			if row is Dictionary:
+				var n: Variant = (row as Dictionary).get("norm", {})
+				if n is Dictionary:
+					worst_norm = maxf(worst_norm, float((n as Dictionary).get("atk", 0.0)))
+	check(worst_norm > 0.0, "金脉普通怪必须登记 norm.atk（否则本用例失去判据）")
+	for level: int in [96, 174]:
+		GameState.reset_to_defaults()
+		GameState.player["level"] = level
+		GameState.player["attack"] = Balance.base_attack(level)
+		GameState.player["defense"] = Balance.base_defense(level)
+		var rng := _rng(level)
+		# 14 槽全传说 12★、全部归零：这是「后期玩家挂机到全身破损」的最坏合法状态。
+		for definition in Equipment.SLOT_DEFS:
+			var item := ItemFactory.make_equip_dynamic("c6_equip_" + String(definition.kind),
+				level, "legendary", rng)
+			check(not item.is_empty(), "L%d 生成 %s 失败" % [level, String(definition.kind)])
+			item["star"] = 12
+			item["durability"] = 0
+			GameState.equipment[String(definition.id)] = item
+		var def_broken := float(GameState.total_defense())
+		var worst_atk := worst_norm * Balance.scale(level - Balance.SOFTCAP_LEVEL)
+		var margin := def_broken * 0.5 / worst_atk
+		check(margin >= 1.2,
+			"L%d 破损态必须仍不破防且留 1.2 倍余量：def %.0f × 0.5 / 最凶怪 %.0f = %.2fx"
+				% [level, def_broken, worst_atk, margin])
+		# 血池还得撑过「一次挂机小节」：破损血池 ÷ 60 ≥ 600 击（≈15 分钟 @1.5s/击）。
+		var hp_broken := float(GameState.max_hp())
+		check(hp_broken / 60.0 >= 600.0,
+			"L%d 破损血池 %.0f 撑不到 600 击保底伤害" % [level, hp_broken])
+	GameState.reset_to_defaults()
