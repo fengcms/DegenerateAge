@@ -146,7 +146,7 @@ func _manual_attack_direction(delta: float) -> Vector2:
 		return Vector2.ZERO
 	var reach := melee_range_px()
 	if not _pending_skill_id.is_empty():
-		var pending = DataLoader.get_entry("skills", _pending_skill_id)
+		var pending := SkillProgression.current(_pending_skill_id)
 		if pending is Dictionary:
 			reach = float(pending.get("range", 1.0)) * Iso.TILE_W
 	if not MapService.is_in_safe_area(GameState.current_map, global_position) \
@@ -512,8 +512,11 @@ func effective_attack_interval() -> float:
 
 ## 快捷栏手动指令：选中目标后接近至技能射程，再由同一施放入口结算。
 func request_skill(skill_id: String) -> bool:
-	var skill = DataLoader.get_entry("skills", skill_id)
-	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or not skill is Dictionary:
+	var skill := SkillProgression.current(skill_id)
+	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id):
+		return false
+	if skill.is_empty():
+		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p006"), "danger")
 		return false
 	if skill_id == "basic_slash":
 		if valid_target(locked_target):
@@ -558,8 +561,8 @@ func request_skill(skill_id: String) -> bool:
 
 ## 所有入口共用的实际施放；失败时不耗蓝、不进入冷却。
 func cast_skill(skill_id: String, target: Node = null) -> bool:
-	var skill = DataLoader.get_entry("skills", skill_id)
-	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or skill_id == "basic_slash" or not skill is Dictionary:
+	var skill := SkillProgression.current(skill_id)
+	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or skill_id == "basic_slash" or skill.is_empty():
 		return false
 	if is_dead or _stun > 0.0:
 		return false

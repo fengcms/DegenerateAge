@@ -74,7 +74,8 @@ var hotbar: Array = []             # 12 格模板引用；背包整理、切图�
 var skill_ranks: Dictionary = {}
 ## 主动技能冷却是本次会话运行态：跨图保留，读档/新游戏清零，不写存档。
 var skill_cooldowns: Dictionary = {}
-## 自身增益剩余秒数；与技能冷却同为跨图但不落档的运行态。
+## 自身增益运行态：skill_id -> {remaining: 秒, effects: 施放时效果快照}。
+## 跨图保留但不落档，购买更高阶不会追溯改变已施放的本次 Buff。
 var active_buffs: Dictionary = {}
 ## 本次运行的菜单流程状态；不入档。切图与读档重建 Main 时保留 world。
 var menu_mode: String = "menu"
@@ -145,33 +146,43 @@ func _process(delta: float) -> void:
 	tick_buffs(delta)
 	world_time += delta    # M4-10：世界时钟（面板打开照常走、暂停时冻结；见字段注释）
 
+## 推进活动 Buff 的剩余秒数；过期即删，暂停时 SceneTree 停止调用心跳。
 func tick_buffs(delta: float) -> void:
 	for skill_id in active_buffs.keys():
-		var remaining := maxf(0.0, float(active_buffs[skill_id]) - delta)
+		var state: Variant = active_buffs[skill_id]
+		if not state is Dictionary:
+			active_buffs.erase(skill_id)
+			continue
+		var remaining := maxf(0.0, float(state.get("remaining", 0.0)) - delta)
 		if remaining <= 0.0:
 			active_buffs.erase(skill_id)
 		else:
-			active_buffs[skill_id] = remaining
+			state.remaining = remaining
 
+## 查询当前 Buff 剩余秒数；没有此 Buff 时返回 0。
 func buff_remaining(skill_id: String) -> float:
-	return float(active_buffs.get(skill_id, 0.0))
+	var state: Variant = active_buffs.get(skill_id)
+	return float(state.get("remaining", 0.0)) if state is Dictionary else 0.0
 
+## 汇总施放时的效果快照；升级技能不会在 Buff 持续中途改变本次效果。
 func buff_effect_total(effect: String) -> float:
 	var total := 0.0
-	for skill_id in active_buffs.keys():
-		var skill = DataLoader.get_entry("skills", String(skill_id))
-		if skill is Dictionary:
-			total += float((skill.get("effects", {}) as Dictionary).get(effect, 0.0))
+	for state in active_buffs.values():
+		if state is Dictionary:
+			var effects: Variant = state.get("effects", {})
+			if effects is Dictionary:
+				total += float(effects.get(effect, 0.0))
 	return total
 
+## 启动玩家自身增益；取当前技能阶的效果快照，已在持续中的同名 Buff 不叠层。
 func start_buff(skill_id: String) -> bool:
-	var skill = DataLoader.get_entry("skills", skill_id)
+	var skill := SkillProgression.current(skill_id)
 	if not skill is Dictionary or String(skill.get("kind", "")) != "buff" or buff_remaining(skill_id) > 0.0:
 		return false
 	var duration := float(skill.get("duration", 0.0))
 	if duration <= 0.0:
 		return false
-	active_buffs[skill_id] = duration
+	active_buffs[skill_id] = {"remaining": duration, "effects": (skill.get("effects", {}) as Dictionary).duplicate(true)}
 	return true
 
 func clear_buffs() -> void:

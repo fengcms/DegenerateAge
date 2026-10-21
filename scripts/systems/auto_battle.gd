@@ -342,8 +342,8 @@ func _try_battle_focus(target: Node) -> bool:
 		return false
 	if GameState.buff_remaining("battle_focus") > 0.0:
 		return false
-	var skill = DataLoader.get_entry("skills", "battle_focus")
-	if not skill is Dictionary or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
+	var skill := SkillProgression.current("battle_focus")
+	if skill.is_empty() or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
 		return false
 	if int(GameState.player.mp) < int(skill.get("manaCost", 0)) or _player.skill_cooldown("battle_focus") > 0.0:
 		return false
@@ -358,8 +358,8 @@ func _best_area_skill(target: Node) -> Dictionary:
 	var chosen := {}
 	var best_value := 0.0
 	for skill_id in WIRED_SKILLS:
-		var skill = DataLoader.get_entry("skills", skill_id)
-		if not skill is Dictionary:
+		var skill := SkillProgression.current(skill_id)
+		if skill.is_empty():
 			continue
 		var hit_count := _player.skill_targets(skill, target).size()
 		if hit_count < 2 or choose_skill([skill], int(GameState.player.level),
@@ -378,8 +378,8 @@ func _best_single_skill(target: Node) -> Dictionary:
 		return {}
 	var chosen := {}
 	for skill_id in WIRED_SINGLE_SKILLS:
-		var skill = DataLoader.get_entry("skills", skill_id)
-		if not skill is Dictionary:
+		var skill := SkillProgression.current(skill_id)
+		if skill.is_empty():
 			continue
 		if _player.skill_targets(skill, target).is_empty():
 			continue
