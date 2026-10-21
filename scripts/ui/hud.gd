@@ -52,6 +52,7 @@ func _ready() -> void:
 	EventBus.player_xp_changed.connect(_on_xp)
 	EventBus.gold_changed.connect(_on_gold)
 	EventBus.player_leveled.connect(_on_level)
+	EventBus.skill_rank_changed.connect(_on_skill_rank_changed)
 	EventBus.target_changed.connect(_on_target)
 	EventBus.map_changed.connect(_on_map_changed)
 	EventBus.inventory_changed.connect(_on_inventory_changed)
@@ -128,6 +129,11 @@ func _on_gold(amount: int) -> void:
 func _on_level(level: int) -> void:
 	_level_label.text = "%d" % level
 	_level_label.tooltip_text = "%s %d" % [Localization.tr_key("ui.hud.level"), level]
+	_refresh_hotbar()
+
+## 升阶后只刷新快捷栏名称提示；绑定 id 与格位不变。
+func _on_skill_rank_changed(_skill_id: String, _rank: int) -> void:
+	_refresh_hotbar()
 
 func _on_target(target: Node) -> void:
 	_target = target
@@ -483,7 +489,9 @@ func _binding_name(binding: Variant) -> String:
 		"auto_potion": return Localization.tr_key("ui.hud.auto_red") if binding.id == "red" else Localization.tr_key("ui.hud.auto_blue")
 		"skill":
 			var skill = DataLoader.get_entry("skills", String(binding.id))
-			return String(skill.get("name", binding.id)) if skill is Dictionary else String(binding.id)
+			var name := String(skill.get("name", binding.id)) if skill is Dictionary else String(binding.id)
+			var rank := GameState.skill_rank(String(binding.id))
+			return Localization.tr_key("ui.skill_panel.hotbar_rank") % [name, rank] if rank > 0 else name
 		"potion", "item":
 			var table := "potions" if binding.kind == "potion" else "miscItems"
 			var template = DataLoader.get_entry(table, String(binding.id))
