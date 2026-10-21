@@ -1658,11 +1658,16 @@ func world_controls_blocked() -> bool:
 ## 面板互斥查询（F-P3-1）：`opened_id` 打开时，本面板 `self_id` 是否应保持打开。
 ## 仅「同一面板」或「同属常驻浮窗组」可并开；货郎交易会话中的背包例外由背包 / 货郎面板自身处理。
 ## 铁匠合成工作台额外与背包、人物面板并开（工程 65）：材料既可能来自背包，也可能来自身上穿戴。
+## 重铸面板额外与背包并开（工程 87）：精炼材料只收背包件。
 func panels_coexist(opened_id: String, self_id: String) -> bool:
 	if opened_id == self_id:
 		return true
 	if (opened_id == "equipment_fusion" and self_id in ["inventory", "character"]) \
 			or (opened_id in ["inventory", "character"] and self_id == "equipment_fusion"):
+		return true
+	# 重铸与背包并开（工程 87）：目标可能来自穿戴槽，精炼材料只能从背包拖入。
+	if (opened_id == "reforge" and self_id == "inventory") \
+			or (opened_id == "inventory" and self_id == "reforge"):
 		return true
 	return opened_id in FLOATING_PANEL_IDS and self_id in FLOATING_PANEL_IDS
 

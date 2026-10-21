@@ -90,6 +90,10 @@ signal fusion_mode_changed(active: bool)
 signal equipment_fusion_close_requested()
 ## 合成格中的实例 ID，用于在背包原格显示“已选”角标。
 signal fusion_selection_changed(instance_ids: PackedStringArray)
+## 重铸与背包的并排会话开关（工程 87）：精炼材料只能从背包投入。
+signal reforge_mode_changed(active: bool)
+## 背包在重铸会话中按 I / Esc 时请求整场退出。
+signal reforge_close_requested()
 
 # ---- 仓库（M4-3）----
 signal warehouse_panel_requested(npc_name: String)

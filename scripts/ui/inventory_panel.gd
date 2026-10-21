@@ -39,6 +39,7 @@ var _last_click_ms: int = 0
 ## 交易会话（货郎开店中）：与货郎面板并列显示，背包格开放拖出（M1-8 改造）。
 var _trade_active: bool = false
 var _fusion_active: bool = false
+var _reforge_active: bool = false
 var _fusion_selected_ids := PackedStringArray()
 
 func _ready() -> void:
@@ -55,16 +56,19 @@ func _ready() -> void:
 	EventBus.trade_mode_changed.connect(_on_trade_mode_changed)
 	EventBus.fusion_mode_changed.connect(_on_fusion_mode_changed)
 	EventBus.fusion_selection_changed.connect(_on_fusion_selection_changed)
+	EventBus.reforge_mode_changed.connect(_on_reforge_mode_changed)
 	_refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if get_viewport().is_input_handled():
 		return
 	if event.is_action_pressed("panel_inventory"):
-		# 交易会话中 I 键 = 结束整场交易（与货郎面板同步关闭），避免只关一半
+		# 交易 / 合成 / 重铸会话中 I 键 = 结束整场会话（与对应面板同步关闭），避免只关一半
 		if _trade_active:
 			EventBus.shop_close_requested.emit()
 		elif _fusion_active:
+			set_open(false)
+		elif _reforge_active:
 			set_open(false)
 		else:
 			set_open(not visible)
@@ -72,6 +76,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif visible and event.is_action_pressed("pause"):
 		if _fusion_active:
 			EventBus.equipment_fusion_close_requested.emit()
+			get_viewport().set_input_as_handled()
+			return
+		if _reforge_active:
+			EventBus.reforge_close_requested.emit()
 			get_viewport().set_input_as_handled()
 			return
 		if not _center.is_top_window():
@@ -96,6 +104,8 @@ func set_open(open: bool) -> void:
 	else:
 		if _fusion_active:
 			EventBus.equipment_fusion_close_requested.emit()
+		if _reforge_active:
+			EventBus.reforge_close_requested.emit()
 		var character := get_node_or_null("../CharacterPanel")
 		if character != null and character.visible:
 			character._refresh()
@@ -118,7 +128,7 @@ func _on_trade_mode_changed(active: bool) -> void:
 		if not visible:
 			set_open(true)
 	else:
-		_apply_trade_layout(_fusion_active)
+		_apply_trade_layout(_fusion_active or _reforge_active)
 		if visible:
 			_refresh()
 
@@ -130,7 +140,19 @@ func _on_fusion_mode_changed(active: bool) -> void:
 		if not visible:
 			set_open(true)
 	else:
-		_apply_trade_layout(_trade_active)
+		_apply_trade_layout(_trade_active or _reforge_active)
+		if visible:
+			_refresh()
+
+## 重铸会话（工程 87）：精炼材料只从背包拖入，自动打开背包并让出左半屏。
+func _on_reforge_mode_changed(active: bool) -> void:
+	_reforge_active = active
+	if active:
+		_apply_trade_layout(true)
+		if not visible:
+			set_open(true)
+	else:
+		_apply_trade_layout(_trade_active or _fusion_active)
 		if visible:
 			_refresh()
 

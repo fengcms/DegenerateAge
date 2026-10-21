@@ -10,6 +10,8 @@ extends Control
 
 const PANEL_ID := "reforge"
 const WIDTH := 520.0
+## 与背包并排时的固定间距（工程 87，与合成工作台同口径）。
+const GAP := 12.0
 const COL_WARN := Color(0.88, 0.42, 0.36)
 ## 无词条（普通品质）时的占位符：与「×」同类，属界面符号不属文案。
 const EMPTY_AFFIX_TEXT := "—"
@@ -25,15 +27,20 @@ var _affix_title: Label
 var _affix_rows: VBoxContainer
 var _lock_hint: Label
 var _refine_title: Label
+var _refine_head: HBoxContainer
 var _refine_row: HBoxContainer
 var _refine_slots: Array[ItemSlot] = []
 ## 材料快照（与锁定同口径：面板内的临时状态，不落档，关闭即清空）。
 var _refine_selected: Array[Dictionary] = []
 var _refine_hint: Label
+var _random_refine: Button
 var _price: Label
 var _feedback: Label
 var _button: Button
 var _center: FloatingWindow
+var _box: PanelChrome
+var _content: VBoxContainer
+var _dim: ColorRect
 var _choices: Array[Dictionary] = []
 var _selected_id := ""
 ## 锁定的属性名；`_locked_owner` 记的是它属于哪一件装备（换装备即清空，见 §2.6）。
@@ -51,6 +58,9 @@ func _ready() -> void:
 	EventBus.equipment_changed.connect(_on_items_changed)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.reforge_panel_requested.connect(_on_requested)
+	EventBus.reforge_close_requested.connect(func() -> void: set_open(false))
+	EventBus.settings_changed.connect(_resize)
+	get_viewport().size_changed.connect(_resize)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
@@ -66,8 +76,11 @@ func set_open(open: bool) -> void:
 	if open:
 		_feedback.text = ""
 		_refresh_choices()
+		# 工程 87：先通知背包进入会话，背包自动打开并让出左半屏；随后再广播本面板已打开。
+		EventBus.reforge_mode_changed.emit(true)
 		EventBus.panel_opened.emit(PANEL_ID)
 		_center.show_window()
+		_resize.call_deferred()
 		return
 	# 工程 81：锁定不落档 —— 关面板即清空，下次打开是干净的（不写进存档 ⇒ schema 不动）。
 	_locked.clear()
@@ -76,9 +89,11 @@ func set_open(open: bool) -> void:
 	for i in range(_refine_selected.size()):
 		_refine_selected[i] = {}
 	_refresh_refine_slots()
+	# 工程 87：只关重铸，背包保留（与合成工作台一致）。
+	EventBus.reforge_mode_changed.emit(false)
 
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id != PANEL_ID and visible:
+	if visible and not GameState.panels_coexist(panel_id, PANEL_ID):
 		set_open(false)
 
 func _on_items_changed() -> void:
@@ -90,27 +105,27 @@ func _on_gold_changed(_amount: int) -> void:
 		_refresh_details()
 
 func _build() -> void:
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.42)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
+	_dim = ColorRect.new()
+	_dim.color = Color(0, 0, 0, 0.42)
+	_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_dim)
 	_center = FloatingWindow.new()
 	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
-	var panel := PanelChrome.new()
-	_center.add_child(panel)
+	_box = PanelChrome.new()
+	_center.add_child(_box)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
-	panel.add_child(margin)
-	var root := VBoxContainer.new()
-	root.custom_minimum_size = Vector2(WIDTH, 0)
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
+	_box.add_child(margin)
+	_content = VBoxContainer.new()
+	_content.custom_minimum_size = Vector2(WIDTH, 0)
+	_content.add_theme_constant_override("separation", 10)
+	margin.add_child(_content)
 	var head := HBoxContainer.new()
-	root.add_child(head)
+	_content.add_child(head)
 	PanelChrome.style_header_layout(margin, head)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.reforge_panel.p002")
@@ -124,38 +139,51 @@ func _build() -> void:
 	head.add_child(close)
 	PanelChrome.style_close(close)
 	# 与其余浮窗同构：标题行拖动、点击置前、越界夹紧（工程 74 §7）。
-	_center.setup(self, panel, head, Vector2(0.5, 0.5))
-	root.add_child(PanelChrome.make_title_gap())
+	_center.setup(self, _box, head, Vector2(0.5, 0.5))
+	_content.add_child(PanelChrome.make_title_gap())
 	_hint = Label.new()
 	_hint.text = Localization.tr_key("ui.reforge_panel.p001")
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
-	root.add_child(_hint)
+	_content.add_child(_hint)
 	_picker = OptionButton.new()
 	_picker.custom_minimum_size.y = 36
 	_picker.item_selected.connect(_on_selected)
-	root.add_child(_picker)
+	_content.add_child(_picker)
 	PanelChrome.style_option_button(_picker)
 	_affix_title = Label.new()
 	_affix_title.text = Localization.tr_key("ui.reforge_panel.p003")
 	PanelChrome.style_section(_affix_title)
-	root.add_child(_affix_title)
+	_content.add_child(_affix_title)
 	_affix_rows = VBoxContainer.new()
 	_affix_rows.add_theme_constant_override("separation", 4)
-	root.add_child(_affix_rows)
+	_content.add_child(_affix_rows)
 	_lock_hint = Label.new()
 	_lock_hint.text = Localization.tr_key("ui.reforge_panel.p011")
 	_lock_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_lock_hint.add_theme_font_size_override("font_size", 12)
 	_lock_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
-	root.add_child(_lock_hint)
+	_content.add_child(_lock_hint)
 	_refine_title = Label.new()
 	_refine_title.text = Localization.tr_key("ui.reforge_panel.p018")
 	PanelChrome.style_section(_refine_title)
-	root.add_child(_refine_title)
+	var refine_head := HBoxContainer.new()
+	_refine_head = refine_head
+	refine_head.add_theme_constant_override("separation", 8)
+	refine_head.add_child(_refine_title)
+	var refine_spacer := Control.new()
+	refine_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	refine_head.add_child(refine_spacer)
+	_random_refine = Button.new()
+	_random_refine.text = Localization.tr_key("ui.reforge_panel.p022")
+	_random_refine.tooltip_text = Localization.tr_key("ui.reforge_panel.p023")
+	_random_refine.pressed.connect(_on_random_refine)
+	refine_head.add_child(_random_refine)
+	PanelChrome.style_action(_random_refine)
+	_content.add_child(refine_head)
 	_refine_row = HBoxContainer.new()
 	_refine_row.add_theme_constant_override("separation", 8)
-	root.add_child(_refine_row)
+	_content.add_child(_refine_row)
 	for i in range(REFINE_SLOTS):
 		var slot := ItemSlot.new()
 		slot.role = ItemSlot.ROLE_TRAY
@@ -170,19 +198,65 @@ func _build() -> void:
 	_refine_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_refine_hint.add_theme_font_size_override("font_size", 12)
 	_refine_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
-	root.add_child(_refine_hint)
+	_content.add_child(_refine_hint)
 	_price = Label.new()
 	_price.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
-	root.add_child(_price)
+	_content.add_child(_price)
 	_button = Button.new()
 	_button.text = Localization.tr_key("ui.reforge_panel.p004")
 	_button.custom_minimum_size.y = 38
 	_button.pressed.connect(_on_reforge)
-	root.add_child(_button)
+	_content.add_child(_button)
 	PanelChrome.style_action(_button, true)
 	_feedback = Label.new()
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_feedback)
+	_content.add_child(_feedback)
+
+## 工程 87：与背包并排。宽屏把背包 dock 在左侧、重铸 pin 到背包右侧；
+## 窄屏不强行分区（52% 高度会裁掉按钮），改为背包铺满背景、重铸保持居中浮窗，
+## 玩家拖标题栏即可让出背包格。
+func _resize() -> void:
+	if _box == null or _content == null:
+		return
+	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
+	if logical.x <= 0.0 or logical.y <= 0.0:
+		return
+	var width := minf(WIDTH, logical.x * 0.9)
+	_content.custom_minimum_size.x = width
+	var bag: Variant = get_node_or_null("../InventoryPanel")
+	var bag_width := 540.0
+	if bag != null and bag._center != null:
+		bag_width = bag._center.panel_box.get_combined_minimum_size().x
+	# 并开时去掉全屏暗色遮罩：本面板在背包之后入树，遮罩会把左半屏背包一起压暗。
+	_dim.visible = bag == null or not bool(bag.visible)
+	if logical.x >= bag_width + width + GAP + 24.0:
+		var left := (logical.x - bag_width - width - GAP) * 0.5
+		if bag != null and bag.visible:
+			bag._center.set_docked(true, left / logical.x, (left + bag_width) / logical.x)
+		_center.set_pinned(false)
+		var panel_width := _box.get_combined_minimum_size().x
+		_center.set_origin(Vector2((left + bag_width + GAP) / maxf(1.0, logical.x - panel_width), 0.5), true)
+	else:
+		if bag != null and bag.visible:
+			bag._center.set_docked(true, 0.0, 1.0)
+		_center.set_pinned(false)
+		_center.set_origin(Vector2(0.5, 0.5), true)
+
+## 工程 87：随机放入只替换面板预选，不动背包；候选与排序全部由规则层决定。
+func _on_random_refine() -> void:
+	if not visible:
+		return
+	var target := _selected_item()
+	if target.is_empty():
+		return
+	var picked := Reforge.random_refine_materials(GameState.inventory, target, REFINE_SLOTS)
+	if picked.is_empty():
+		_feedback.text = Localization.tr_key("ui.reforge_panel.p024")
+		return
+	for i in range(_refine_selected.size()):
+		_refine_selected[i] = picked[i] if i < picked.size() else {}
+	_feedback.text = ""
+	_refresh_details()
 
 ## 候选＝已穿戴（按槽位定义序）+ 背包（按格序），与升星面板同一范式。
 ## 刻意**不过滤「不能重铸的装备」**：普通品质的装备也要能选中，玩家才看得到
@@ -243,7 +317,7 @@ func _refresh_details() -> void:
 	if item.is_empty():
 		_build_affix_rows({})
 		_lock_hint.visible = false
-		_refine_title.visible = false
+		_refine_head.visible = false
 		_refine_row.visible = false
 		_refine_hint.visible = false
 		_price.text = ""
@@ -360,7 +434,7 @@ func _prune_locks(item: Dictionary) -> Array[String]:
 
 ## 丢弃已不在背包 / 已不合格的材料，再按有效件数算下限。
 func _refresh_refine(target: Dictionary) -> void:
-	_refine_title.visible = true
+	_refine_head.visible = true
 	_refine_row.visible = true
 	_refine_hint.visible = true
 	_prune_refine(target)
