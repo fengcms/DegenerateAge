@@ -7,7 +7,7 @@
 | 地图 | ID | 用途 | 等级范围 |
 |---|---|---|---|
 | [无尽回廊](c7_arena/README.md) | `c7_arena` | 满级后循环 Boss 挑战场（车夫直达） | 60–60 |
-| [聚金地脉](c7_gold_field/README.md) | `c7_gold_field` | 96 席普通怪循环金币图 | 80 级起 |
+| [聚金地脉](c7_gold_field/README.md) | `c7_gold_field` | 96 席普通怪循环金币图（单战场 6 营，一屏站桩可刷；含 24 席金脉守卫） | 80 级起 |
 | [百首禁域](c7_boss_field/README.md) | `c7_boss_field` | 100 席 Boss 循环装备图，全身紫装门槛 | 100 级起 |
 
 `data/maps/index.json` 仅登记加载顺序与相对路径，地图属性仍只写在各自 `map.json` 内。
