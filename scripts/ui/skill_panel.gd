@@ -16,6 +16,7 @@ var _potion_buttons: Dictionary = {}
 var _cooldown_labels: Dictionary = {}
 var _basic_interval_label: Label
 var _cooldown_accumulator := 0.0
+var _focus_tooltip: SkillDetailTooltip
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -70,6 +71,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func set_open(open: bool) -> void:
+	if not open:
+		_hide_focus_tooltip()
 	visible = open
 	GameState.set_panel_open("skill", open)
 	var hud := get_node_or_null("../Hud")
@@ -167,6 +170,7 @@ func _new_skill_row() -> HBoxContainer:
 func _refresh() -> void:
 	if _list == null:
 		return
+	_hide_focus_tooltip()
 	_upgrade_buttons.clear()
 	_cooldown_labels.clear()
 	_basic_interval_label = null
@@ -188,6 +192,9 @@ func _refresh() -> void:
 		var row := _new_skill_row()
 		row.skill_id = skill_id
 		row.tooltip_text = skill_id
+		row.focus_mode = Control.FOCUS_ALL
+		row.focus_entered.connect(_show_focus_tooltip.bind(skill_id, row))
+		row.focus_exited.connect(_hide_focus_tooltip)
 		row.custom_minimum_size.y = 64
 		var icon := SkillDragButton.new()
 		icon.custom_minimum_size = Vector2(48, 48)
@@ -200,6 +207,8 @@ func _refresh() -> void:
 		icon.add_theme_constant_override("icon_max_width", 42)
 		icon.disabled = not unlocked or not wired
 		icon.tooltip_text = skill_id
+		icon.focus_entered.connect(_show_focus_tooltip.bind(skill_id, icon))
+		icon.focus_exited.connect(_hide_focus_tooltip)
 		row.add_child(icon)
 		var overlay := Label.new()
 		overlay.name = "CooldownOverlay"
@@ -250,11 +259,43 @@ func _refresh() -> void:
 			upgrade.custom_minimum_size.x = 84
 			upgrade.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			upgrade.pressed.connect(_on_upgrade_pressed.bind(skill_id))
+			upgrade.focus_entered.connect(_show_focus_tooltip.bind(skill_id, upgrade))
+			upgrade.focus_exited.connect(_hide_focus_tooltip)
 			PanelChrome.style_action(upgrade)
 			row.add_child(upgrade)
 			_upgrade_buttons[skill_id] = upgrade
 	_refresh_affordability()
 	_refresh_cooldowns()
+
+## 键盘焦点没有原生悬停事件，借用同一张详情卡并限制其位于逻辑视口内。
+func _show_focus_tooltip(skill_id: String, source: Control) -> void:
+	_hide_focus_tooltip()
+	if not visible or not is_instance_valid(source):
+		return
+	_focus_tooltip = SkillDetailTooltip.for_skill(skill_id)
+	add_child(_focus_tooltip)
+	_ignore_focus_tooltip_mouse(_focus_tooltip)
+	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
+	var size_hint := _focus_tooltip.get_combined_minimum_size()
+	var source_rect := source.get_global_rect()
+	var x := source_rect.end.x + 10.0
+	if x + size_hint.x > logical.x:
+		x = source_rect.position.x - size_hint.x - 10.0
+	_focus_tooltip.position = Vector2(clampf(x, 8.0, maxf(8.0, logical.x - size_hint.x - 8.0)),
+		clampf(source_rect.position.y, 8.0, maxf(8.0, logical.y - size_hint.y - 8.0)))
+
+## 聚焦卡片不接管鼠标，避免遮挡底下的升阶按钮；长内容仍能从鼠标悬停卡片滚动查看。
+func _ignore_focus_tooltip_mouse(node: Control) -> void:
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		if child is Control:
+			_ignore_focus_tooltip_mouse(child)
+
+## 焦点离开、面板关闭或列表重建时释放临时卡片与其全局信号订阅。
+func _hide_focus_tooltip() -> void:
+	if is_instance_valid(_focus_tooltip):
+		_focus_tooltip.queue_free()
+	_focus_tooltip = null
 
 ## 自动红蓝药作为快捷栏工具保持可补领，但不再占用技能行与升阶按钮空间。
 func _build_potion_tools() -> void:

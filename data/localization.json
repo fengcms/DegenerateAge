@@ -423,7 +423,7 @@
   "ui.skill_panel.p005": "暂不可配置",
   "ui.skill_panel.p006": "红药",
   "ui.skill_panel.p007": "蓝药",
-  "ui.skill_panel.p008": "拖到快捷栏；自动选用背包中的对应药品",
+  "ui.skill_panel.p008": "拖到快捷栏；自动选用背包中对应药品。每种具体药品独立冷却，剩余秒数显示在快捷栏图标上。",
   "ui.skill_panel.p009": "自动%s药　·　可随时重新拖入快捷栏",
   "ui.skill_panel.p010": "红",
   "ui.skill_panel.p011": "蓝",

@@ -26,6 +26,14 @@ func _ready() -> void:
 	var source_icon := first_row.get_child(0) as SkillDragButton
 	_check(source_icon.skill_id == "earth_cleave" and not source_icon.disabled,
 		"升阶按钮不破坏原有拖放图标")
+	first_row.grab_focus()
+	_check(panel._focus_tooltip != null and panel._focus_tooltip.skill_id == "earth_cleave",
+		"键盘聚焦技能行时显示同一张详情卡")
+	source_icon.grab_focus()
+	_check(panel._focus_tooltip != null and panel._focus_tooltip.skill_id == "earth_cleave",
+		"键盘聚焦技能图标时详情不中断")
+	source_icon.release_focus()
+	_check(panel._focus_tooltip == null, "键盘焦点离开后释放临时详情卡")
 	var summary := first_row.get_child(1) as Label
 	var tooltip := source_icon._make_custom_tooltip(source_icon.tooltip_text) as SkillDetailTooltip
 	add_child(tooltip)
@@ -110,6 +118,14 @@ func _ready() -> void:
 		"200%% 文字倍率下浮层字号放大且外框不超逻辑视口：%s / %s" % [tip_size, logical])
 	remove_child(large_tip)
 	large_tip.free()
+	updated_row.grab_focus()
+	var keyboard_tip: SkillDetailTooltip = panel._focus_tooltip
+	var focus_rect := keyboard_tip.get_global_rect() if keyboard_tip != null else Rect2()
+	_check(keyboard_tip != null and keyboard_tip.position.x >= 0.0 and keyboard_tip.position.y >= 0.0
+		and keyboard_tip.position.x + keyboard_tip.size.x <= logical.x + 1.0
+		and keyboard_tip.position.y + keyboard_tip.size.y <= logical.y + 1.0,
+		"200%% 下键盘焦点卡片保持在逻辑视口内：%s / %s" % [focus_rect, logical])
+	updated_row.release_focus()
 	panel.set_open(false)
 	if _failures.is_empty():
 		print("SkillRankPanelTest: PASS")
