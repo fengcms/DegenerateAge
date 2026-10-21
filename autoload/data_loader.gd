@@ -15,6 +15,7 @@ const TABLES := {
 	"equipments": "equipments.json",
 	"equipmentRules": "equipmentRules.json",
 	"skills": "skills.json",
+	"skillProgression": "skillProgression.json",
 	"affixes": "affixes.json",
 	"dropTables": "dropTables.json",
 	"lootPools": "lootPools.json",
@@ -35,11 +36,12 @@ const MONSTER_INDEX := "res://data/monsters/index.json"
 const APPEARANCE_INDEX := "res://data/monster_appearances/index.json"
 
 ## 需要做「ID 唯一」校验的表（数组型）。
-const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "monsters", "monsterAppearances", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
+const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "skillProgression", "monsters", "monsterAppearances", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
 
 ## 各表用作「唯一键」的字段名（缺省为 id）。shops 以 npcId 为键（见 docs 第 10 章 schema）。
 const KEY_FIELDS := {
 	"shops": "npcId",
+	"skillProgression": "skillId",
 }
 
 ## M10-4：任务等级门槛 `requiresLevel` 的上界。
@@ -63,6 +65,8 @@ const LEGACY_MAPS := [
 
 var tables: Dictionary = {}
 var errors: Array[String] = []
+## 配置重载修订号；技能阶数解析缓存以此识别热重载并失效。
+var revision := 0
 
 ## 表名 -> { 唯一键 -> 条目 }。启动时构建一次，使 get_entry 由线性扫描降为 O(1)。
 var _index: Dictionary = {}
@@ -81,6 +85,7 @@ func load_all() -> void:
 	tables["monsters"] = _load_monsters()
 	tables["monsterAppearances"] = _load_monster_appearances()
 	_build_index()
+	revision += 1
 	EventBus.data_loaded.emit()
 
 ## 按各表唯一键构建查表索引（仅数组表）。字典表本身即为键值表，无需另建。
@@ -524,6 +529,7 @@ func validate_all() -> Array[String]:
 	report.append_array(Warehouse.validate_config())
 	# 5) 五表结构化校验（B 共性-5）：类型 / 数值范围 / 跨表引用存在性。
 	report.append_array(_validate_skills())
+	report.append_array(_validate_skill_progression())
 	report.append_array(_validate_quests())
 	report.append_array(_validate_potions())
 	report.append_array(_validate_misc_items())
@@ -1206,6 +1212,63 @@ func _validate_skills() -> Array[String]:
 						report.append("[skills] %s 的 effects.%s 应为正数" % [sid, key])
 		if String(entry.get("icon", "")).is_empty():
 			report.append("[skills] %s 缺少 icon" % sid)
+	return report
+
+## 玩家技能升级表：只允许五个非普攻技能，阶数连续且等级/金币/效果合法。
+## 启动时校验一次；运行时解析器只读这份已经通过校验的配置。
+func _validate_skill_progression() -> Array[String]:
+	var report: Array[String] = []
+	var config: Variant = tables.get("skillProgression")
+	if not config is Array:
+		report.append("[skillProgression] 需要数组")
+		return report
+	var expected: Dictionary = {}
+	var skills: Variant = tables.get("skills")
+	if skills is Array:
+		for raw_skill in skills:
+			if raw_skill is Dictionary and String(raw_skill.get("id", "")) != "basic_slash":
+				expected[String(raw_skill.id)] = raw_skill
+	var seen: Dictionary = {}
+	for raw_entry in config:
+		if not raw_entry is Dictionary:
+			report.append("[skillProgression] 条目应为字典")
+			continue
+		var sid := String(raw_entry.get("skillId", ""))
+		if not expected.has(sid) or seen.has(sid):
+			report.append("[skillProgression] 技能 ID 未知或重复：%s" % sid)
+			continue
+		seen[sid] = true
+		var ranks: Variant = raw_entry.get("ranks")
+		if not ranks is Array or ranks.size() != 4:
+			report.append("[skillProgression] %s 必须配置 2—5 阶" % sid)
+			continue
+		var base: Dictionary = expected[sid]
+		var previous_cost := 0
+		for i in range(4):
+			var entry: Variant = ranks[i]
+			if not entry is Dictionary:
+				report.append("[skillProgression] %s 第 %d 阶应为字典" % [sid, i + 2])
+				continue
+			var rank := i + 2
+			if not _is_whole_level(entry.get("rank")) or int(entry.rank) != rank:
+				report.append("[skillProgression] %s 阶数应连续为 %d" % [sid, rank])
+			if not _is_whole_level(entry.get("unlockLevel")) or int(entry.unlockLevel) != int(base.unlockLevel) + 10 * (rank - 1):
+				report.append("[skillProgression] %s 第 %d 阶等级门槛非法" % [sid, rank])
+			if not _is_whole_level(entry.get("goldCost")) or int(entry.goldCost) <= previous_cost or int(entry.goldCost) > 999999999:
+				report.append("[skillProgression] %s 第 %d 阶金币价格应递增且不越上限" % [sid, rank])
+			else:
+				previous_cost = int(entry.goldCost)
+			if String(base.get("kind", "")) == "buff":
+				var effects: Variant = entry.get("effects")
+				if not effects is Dictionary or effects.size() != 2 or not _is_nonnegative_number(effects.get("attackPct")) or not _is_nonnegative_number(effects.get("attackSpeedPct")) \
+						or float(effects.attackPct) <= float((base.effects as Dictionary).get("attackPct", 0.0)) or float(effects.attackPct) > 0.26 \
+						or float(effects.attackSpeedPct) <= float((base.effects as Dictionary).get("attackSpeedPct", 0.0)) or float(effects.attackSpeedPct) > 0.19:
+					report.append("[skillProgression] %s 第 %d 阶增益越界" % [sid, rank])
+			elif not _is_nonnegative_number(entry.get("coefficientMultiplier")) or float(entry.coefficientMultiplier) <= 1.0 or float(entry.coefficientMultiplier) > 1.12:
+				report.append("[skillProgression] %s 第 %d 阶系数倍率越界" % [sid, rank])
+	for sid in expected:
+		if not seen.has(sid):
+			report.append("[skillProgression] 缺少技能：%s" % sid)
 	return report
 
 ## quests.json：类型 / 结构 / 跨表引用（B 共性-5）。
