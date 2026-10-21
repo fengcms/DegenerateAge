@@ -2,12 +2,6 @@ class_name PanelSkillRow
 extends HBoxContainer
 ## 技能列表行保持 HBox 子节点结构，让原有拖拽源与快捷栏测试继续直接定位按钮。
 
-var skill_id := ""
-
-## 名称和空白区由行卡提供悬停详情；自动药品工具行不绑定技能。
-func _make_custom_tooltip(_for_text: String) -> Object:
-	return SkillDetailTooltip.for_skill(skill_id) if not skill_id.is_empty() else null
-
 ## 初始化可扫描行高和间距，并在尺寸变化时重绘背景。
 func _init() -> void:
 	custom_minimum_size.y = 58

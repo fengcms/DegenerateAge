@@ -17,8 +17,10 @@ func _ready() -> void:
 	var hud := main.get_node("UI/Hud") as Control
 	panel.set_open(true)
 	var upgrade := panel._upgrade_buttons.get("earth_cleave") as Button
-	_check(upgrade != null and upgrade.disabled and upgrade.tooltip_text.contains("金币"),
+	upgrade.mouse_entered.emit()
+	_check(upgrade != null and upgrade.disabled and panel._detail_tooltip._next.text.contains("金币"),
 		"金币不足时按钮置灰并解释原因")
+	upgrade.mouse_exited.emit()
 	GameState.gold = 1500
 	EventBus.gold_changed.emit(GameState.gold)
 	_check(not upgrade.disabled, "金币达到价格后不重建列表即可点亮按钮")
@@ -27,16 +29,16 @@ func _ready() -> void:
 	_check(source_icon.skill_id == "earth_cleave" and not source_icon.disabled,
 		"升阶按钮不破坏原有拖放图标")
 	first_row.grab_focus()
-	_check(panel._focus_tooltip != null and panel._focus_tooltip.skill_id == "earth_cleave",
+	_check(panel._detail_tooltip != null and panel._detail_tooltip.skill_id == "earth_cleave",
 		"键盘聚焦技能行时显示同一张详情卡")
 	source_icon.grab_focus()
-	_check(panel._focus_tooltip != null and panel._focus_tooltip.skill_id == "earth_cleave",
+	_check(panel._detail_tooltip != null and panel._detail_tooltip.skill_id == "earth_cleave",
 		"键盘聚焦技能图标时详情不中断")
 	source_icon.release_focus()
-	_check(panel._focus_tooltip == null, "键盘焦点离开后释放临时详情卡")
+	_check(panel._detail_tooltip == null, "键盘焦点离开后释放临时详情卡")
 	var summary := first_row.get_child(1) as Label
-	var tooltip := source_icon._make_custom_tooltip(source_icon.tooltip_text) as SkillDetailTooltip
-	add_child(tooltip)
+	source_icon.mouse_entered.emit()
+	var tooltip: SkillDetailTooltip = panel._detail_tooltip
 	_check(summary.text.contains("1/5") and not summary.text.contains("下阶")
 		and tooltip._next.text.contains("下阶") and tooltip._next.text.contains("1500"),
 		"紧凑行卡仅保留阶数，效果和价格进入结构化浮层")
@@ -68,30 +70,57 @@ func _ready() -> void:
 	focus_tip.free()
 	GameState.active_buffs.erase("battle_focus")
 	GameState.skill_cooldowns["battle_focus"] = 0.0
-	remove_child(tooltip)
-	tooltip.free()
+	source_icon.mouse_exited.emit()
 	_check((first_row.get_child(2) as Label).text.contains("CD 4"), "行卡显示基础冷却")
 	upgrade.pressed.emit()
 	_check(GameState.skill_rank("earth_cleave") == 2 and GameState.gold == 0,
 		"面板升级按钮调用真实购买入口")
 	var next_button := panel._upgrade_buttons.get("earth_cleave") as Button
-	_check(next_button != null and next_button.disabled and next_button.tooltip_text.contains("Lv25"),
+	next_button.mouse_entered.emit()
+	_check(next_button != null and next_button.disabled and panel._detail_tooltip._next.text.contains("Lv25"),
 		"购买后刷新为下一阶等级门槛")
+	next_button.mouse_exited.emit()
 	var updated_row: Control = panel._list.get_child(1)
 	var updated_summary := updated_row.get_child(1) as Label
 	var updated_icon := updated_row.get_child(0) as SkillDragButton
-	var updated_tooltip := updated_icon._make_custom_tooltip(updated_icon.tooltip_text) as SkillDetailTooltip
-	add_child(updated_tooltip)
+	updated_icon.mouse_entered.emit()
+	var updated_tooltip: SkillDetailTooltip = panel._detail_tooltip
 	_check(updated_summary.text.contains("2/5") and updated_tooltip._effect.text.contains("1.44"),
 		"购买后阶数更新且悬停说明给出 2 阶实际系数")
-	remove_child(updated_tooltip)
-	updated_tooltip.free()
+	updated_icon.mouse_exited.emit()
 	GameState.set_hotbar_entry(4, {"kind": "skill", "id": "earth_cleave"})
 	var hotbar_tip := (hud._hotbar_buttons[4] as HotbarSlot).tooltip_text
 	_check(hotbar_tip.contains("2 阶"),
 		"快捷栏绑定不变且悬停提示显示当前阶数，实际：%s" % hotbar_tip)
-	# 极端倍率下技能行可滚动，标题与购买入口仍留在逻辑视口内。
+	# 鼠标浮层挂在 UI CanvasLayer 后，界面与文字两轴应分别控制外框和实际字号。
 	var ui := main.get_node("UI") as CanvasLayer
+	updated_icon.mouse_entered.emit()
+	var baseline_tip: SkillDetailTooltip = panel._detail_tooltip
+	var baseline_font := baseline_tip._description.get_theme_font_size("font_size") * SettingsRuntime.ui_scale_value()
+	var baseline_width := baseline_tip.get_combined_minimum_size().x * SettingsRuntime.ui_scale_value()
+	updated_icon.mouse_exited.emit()
+	GameState.settings["uiScale"] = 1.5
+	GameState.settings["textScale"] = 1.0
+	SettingsRuntime.apply_ui_scale_to(ui)
+	SettingsRuntime.apply_text_scale_to(ui)
+	EventBus.settings_changed.emit()
+	await get_tree().process_frame
+	updated_icon.mouse_entered.emit()
+	var ui_only_tip: SkillDetailTooltip = panel._detail_tooltip
+	_check(is_equal_approx(ui_only_tip._description.get_theme_font_size("font_size") * SettingsRuntime.ui_scale_value(), baseline_font)
+		and ui_only_tip.get_combined_minimum_size().x * SettingsRuntime.ui_scale_value() > baseline_width * 1.4,
+		"只调界面到 150%% 时卡片外框变大、物理字号保持不变")
+	updated_icon.mouse_exited.emit()
+	GameState.settings["textScale"] = 1.5
+	SettingsRuntime.apply_text_scale_to(ui)
+	EventBus.settings_changed.emit()
+	await get_tree().process_frame
+	updated_icon.mouse_entered.emit()
+	var both_tip: SkillDetailTooltip = panel._detail_tooltip
+	_check(both_tip._description.get_theme_font_size("font_size") * SettingsRuntime.ui_scale_value() >= baseline_font * 1.4,
+		"界面和文字均为 150%% 时，浮层实际字号也放大")
+	updated_icon.mouse_exited.emit()
+	# 极端倍率下技能行可滚动，标题与购买入口仍留在逻辑视口内。
 	GameState.settings["uiScale"] = 2.0
 	GameState.settings["textScale"] = 2.0
 	SettingsRuntime.apply_ui_scale_to(ui)
@@ -109,17 +138,25 @@ func _ready() -> void:
 	var scroll := panel._center.content_scroll as ScrollContainer
 	_check(scroll != null and scroll.size.y > 0 and scroll.get_child(0).get_combined_minimum_size().y > scroll.size.y,
 		"200% 极端倍率下内容应留在可滚动区，而非撑出屏幕")
-	var large_tip := updated_icon._make_custom_tooltip(updated_icon.tooltip_text) as SkillDetailTooltip
-	add_child(large_tip)
+	updated_icon.mouse_entered.emit()
+	var large_tip: SkillDetailTooltip = panel._detail_tooltip
 	await get_tree().process_frame
 	var tip_size := large_tip.get_combined_minimum_size()
-	_check(large_tip._description.get_theme_font_size("font_size") >= 30
-		and tip_size.x <= logical.x and tip_size.y >= 100.0 and tip_size.y <= logical.y * 0.7,
-		"200%% 文字倍率下浮层字号放大且外框不超逻辑视口：%s / %s" % [tip_size, logical])
-	remove_child(large_tip)
-	large_tip.free()
+	_check(large_tip._description.get_theme_font_size("font_size") * SettingsRuntime.ui_scale_value() >= 30
+		and tip_size.x <= logical.x and tip_size.y >= 100.0 and tip_size.y <= logical.y
+		and large_tip.find_children("*", "ScrollContainer", true, false).is_empty(),
+		"200%% 文字倍率下浮层放大、完整显示且无滚动条：%s / %s" % [tip_size, logical])
+	updated_icon.mouse_exited.emit()
+	for row in panel._list.get_children():
+		(row as Control).mouse_entered.emit()
+		var detail: SkillDetailTooltip = panel._detail_tooltip
+		var detail_size := detail.get_combined_minimum_size()
+		_check(detail_size.x <= logical.x and detail_size.y <= logical.y
+			and detail.find_children("*", "ScrollContainer", true, false).is_empty(),
+			"全部技能在 200%% 下无滚动且内容能放进视口：%s / %s" % [detail.skill_id, detail_size])
+		(row as Control).mouse_exited.emit()
 	updated_row.grab_focus()
-	var keyboard_tip: SkillDetailTooltip = panel._focus_tooltip
+	var keyboard_tip: SkillDetailTooltip = panel._detail_tooltip
 	var focus_rect := keyboard_tip.get_global_rect() if keyboard_tip != null else Rect2()
 	_check(keyboard_tip != null and keyboard_tip.position.x >= 0.0 and keyboard_tip.position.y >= 0.0
 		and keyboard_tip.position.x + keyboard_tip.size.x <= logical.x + 1.0

@@ -2,22 +2,18 @@ extends Control
 ## 技能图鉴与有限升阶入口。紧凑行卡只保留扫读信息，细节由结构化悬停浮层承载。
 ## 金币事件只刷新五个按钮的可用状态，避免挂机拾金时重建全部技能行。
 
-class SkillUpgradeButton extends Button:
-	## 升阶按钮与技能图标共用一张详情卡，灰态时仍可查原因。
-	var skill_id := ""
-
-	## Godot 原生悬停窗口每次创建一张临时卡片，关闭后由引擎释放。
-	func _make_custom_tooltip(_for_text: String) -> Object:
-		return SkillDetailTooltip.for_skill(skill_id) if not skill_id.is_empty() else null
-
 var _center: FloatingWindow
 var _upgrade_buttons: Dictionary = {}
 var _potion_buttons: Dictionary = {}
 var _cooldown_labels: Dictionary = {}
 var _basic_interval_label: Label
 var _cooldown_accumulator := 0.0
-var _focus_tooltip: SkillDetailTooltip
+var _detail_tooltip: SkillDetailTooltip
+var _detail_source: Control
+var _hover_source: Control
+var _focus_source: Control
 
+## 装配可并开的技能浮窗，订阅阶数与设置变化；面板初始隐藏。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -29,6 +25,7 @@ func _ready() -> void:
 	EventBus.skill_rank_changed.connect(_on_skill_rank_changed)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.data_loaded.connect(_on_data_loaded)
+	EventBus.settings_changed.connect(_on_settings_changed)
 
 ## 面板可见时约每 0.1 秒仅刷新六个图标上的倒计时，不重建技能行。
 func _process(delta: float) -> void:
@@ -39,6 +36,7 @@ func _process(delta: float) -> void:
 		return
 	_cooldown_accumulator = 0.0
 	_refresh_cooldowns()
+	_position_detail_tooltip()
 
 ## 角色升级后若面板可见，重建技能行以显示新解锁或新阶门槛。
 func _on_player_leveled(_level: int) -> void:
@@ -60,6 +58,7 @@ func _on_data_loaded() -> void:
 	if visible:
 		_refresh()
 
+## 处理技能面板快捷键与 Esc；不接管面板背后的移动和战斗输入。
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("panel_skill") and not event.is_echo():
 		set_open(not visible)
@@ -70,9 +69,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
+## 面板开关同步快捷栏拖放模式，并在关闭时释放悬停详情。
 func set_open(open: bool) -> void:
 	if not open:
-		_hide_focus_tooltip()
+		_clear_detail_tooltip()
 	visible = open
 	GameState.set_panel_open("skill", open)
 	var hud := get_node_or_null("../Hud")
@@ -92,6 +92,7 @@ func _on_panel_opened(panel_id: String) -> void:
 var _list: VBoxContainer
 var _tools_row: HBoxContainer
 
+## 创建标题、可滚动技能列表和自动药品工具行；详情卡由悬停时按需创建。
 func _build() -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -167,10 +168,11 @@ func _new_skill_row() -> HBoxContainer:
 	_list.add_child(row)
 	return row
 
+## 等级、阶数或数据变化时重建固定六行；金币和冷却走轻量刷新。
 func _refresh() -> void:
 	if _list == null:
 		return
-	_hide_focus_tooltip()
+	_clear_detail_tooltip()
 	_upgrade_buttons.clear()
 	_cooldown_labels.clear()
 	_basic_interval_label = null
@@ -190,25 +192,21 @@ func _refresh() -> void:
 		var unlocked := rank > 0
 		var wired := HotbarConfig.ACTIVE_SKILLS.has(skill_id)
 		var row := _new_skill_row()
-		row.skill_id = skill_id
-		row.tooltip_text = skill_id
+		row.set_meta("detail_skill_id", skill_id)
 		row.focus_mode = Control.FOCUS_ALL
-		row.focus_entered.connect(_show_focus_tooltip.bind(skill_id, row))
-		row.focus_exited.connect(_hide_focus_tooltip)
+		_wire_detail_source(row)
 		row.custom_minimum_size.y = 64
 		var icon := SkillDragButton.new()
 		icon.custom_minimum_size = Vector2(48, 48)
 		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		icon.text = String(skill.get("name", Localization.tr_key("ui.skill_panel.p001"))).substr(0, 2)
 		icon.skill_id = skill_id
-		icon.tooltip_skill_id = skill_id
+		icon.set_meta("detail_skill_id", skill_id)
 		icon.drag_label = String(skill.get("name", ""))
 		SampleArt.decorate(icon, SampleArt.skill_icon(icon.skill_id))
 		icon.add_theme_constant_override("icon_max_width", 42)
 		icon.disabled = not unlocked or not wired
-		icon.tooltip_text = skill_id
-		icon.focus_entered.connect(_show_focus_tooltip.bind(skill_id, icon))
-		icon.focus_exited.connect(_hide_focus_tooltip)
+		_wire_detail_source(icon)
 		row.add_child(icon)
 		var overlay := Label.new()
 		overlay.name = "CooldownOverlay"
@@ -252,50 +250,106 @@ func _refresh() -> void:
 			completed.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_child(completed)
 		elif max_rank > 1 and unlocked:
-			var upgrade := SkillUpgradeButton.new()
-			upgrade.skill_id = skill_id
+			var upgrade := Button.new()
+			upgrade.set_meta("detail_skill_id", skill_id)
 			upgrade.name = "Upgrade_" + skill_id
 			upgrade.text = Localization.tr_key("ui.skill_panel.upgrade")
 			upgrade.custom_minimum_size.x = 84
 			upgrade.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			upgrade.pressed.connect(_on_upgrade_pressed.bind(skill_id))
-			upgrade.focus_entered.connect(_show_focus_tooltip.bind(skill_id, upgrade))
-			upgrade.focus_exited.connect(_hide_focus_tooltip)
+			_wire_detail_source(upgrade)
 			PanelChrome.style_action(upgrade)
 			row.add_child(upgrade)
 			_upgrade_buttons[skill_id] = upgrade
 	_refresh_affordability()
 	_refresh_cooldowns()
 
-## 键盘焦点没有原生悬停事件，借用同一张详情卡并限制其位于逻辑视口内。
-func _show_focus_tooltip(skill_id: String, source: Control) -> void:
-	_hide_focus_tooltip()
-	if not visible or not is_instance_valid(source):
-		return
-	_focus_tooltip = SkillDetailTooltip.for_skill(skill_id)
-	add_child(_focus_tooltip)
-	_ignore_focus_tooltip_mouse(_focus_tooltip)
-	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
-	var size_hint := _focus_tooltip.get_combined_minimum_size()
-	var source_rect := source.get_global_rect()
-	var x := source_rect.end.x + 10.0
-	if x + size_hint.x > logical.x:
-		x = source_rect.position.x - size_hint.x - 10.0
-	_focus_tooltip.position = Vector2(clampf(x, 8.0, maxf(8.0, logical.x - size_hint.x - 8.0)),
-		clampf(source_rect.position.y, 8.0, maxf(8.0, logical.y - size_hint.y - 8.0)))
+## 鼠标悬停与键盘焦点共用面板内的详情卡，避免引擎原生提示脱离 UI 缩放层。
+func _wire_detail_source(source: Control) -> void:
+	source.mouse_entered.connect(_on_detail_mouse_entered.bind(source))
+	source.mouse_exited.connect(_on_detail_mouse_exited.bind(source))
+	source.focus_entered.connect(_on_detail_focus_entered.bind(source))
+	source.focus_exited.connect(_on_detail_focus_exited.bind(source))
 
-## 聚焦卡片不接管鼠标，避免遮挡底下的升阶按钮；长内容仍能从鼠标悬停卡片滚动查看。
-func _ignore_focus_tooltip_mouse(node: Control) -> void:
+## 鼠标移到技能源时优先显示该项；卡片本身不捕获鼠标。
+func _on_detail_mouse_entered(source: Control) -> void:
+	_hover_source = source
+	_update_detail_tooltip()
+
+## 只撤销当前悬停源，避免父行与子图标交接时清掉新目标。
+func _on_detail_mouse_exited(source: Control) -> void:
+	if _hover_source == source:
+		_hover_source = null
+	_update_detail_tooltip()
+
+## 键盘移动到技能行、图标或升阶按钮时显示相同详情。
+func _on_detail_focus_entered(source: Control) -> void:
+	_focus_source = source
+	_update_detail_tooltip()
+
+## 焦点离开后回退到鼠标悬停目标，若两者都没有则释放详情卡。
+func _on_detail_focus_exited(source: Control) -> void:
+	if _focus_source == source:
+		_focus_source = null
+	_update_detail_tooltip()
+
+## 同时最多保留一张卡，文本与宽高都由当前设置计算；切换同项来源只移动卡片。
+func _update_detail_tooltip() -> void:
+	var source := _hover_source if is_instance_valid(_hover_source) else _focus_source
+	if not visible or not is_instance_valid(source):
+		_hide_detail_tooltip()
+		return
+	var skill_id := String(source.get_meta("detail_skill_id", ""))
+	if skill_id.is_empty():
+		_hide_detail_tooltip()
+		return
+	if not is_instance_valid(_detail_tooltip) or _detail_tooltip.skill_id != skill_id:
+		_hide_detail_tooltip()
+		_detail_tooltip = SkillDetailTooltip.for_skill(skill_id)
+		add_child(_detail_tooltip)
+		# 快捷栏在打开面板时使用 z=100；详情卡应位于其上，避免末行被快捷栏遮住。
+		_detail_tooltip.z_as_relative = false
+		_detail_tooltip.z_index = 200
+		_ignore_detail_mouse(_detail_tooltip)
+	_detail_source = source
+	_position_detail_tooltip()
+
+## 详情卡不吞掉下方按钮点击；真实技能列表可继续由鼠标拖放操作。
+func _ignore_detail_mouse(node: Control) -> void:
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for child in node.get_children():
 		if child is Control:
-			_ignore_focus_tooltip_mouse(child)
+			_ignore_detail_mouse(child)
 
-## 焦点离开、面板关闭或列表重建时释放临时卡片与其全局信号订阅。
-func _hide_focus_tooltip() -> void:
-	if is_instance_valid(_focus_tooltip):
-		_focus_tooltip.queue_free()
-	_focus_tooltip = null
+## 以逻辑视口夹住自然大小的卡片；按钮附近优先右侧，不够空间则尝试左侧。
+func _position_detail_tooltip() -> void:
+	if not is_instance_valid(_detail_tooltip) or not is_instance_valid(_detail_source):
+		return
+	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
+	var size_hint := _detail_tooltip.get_combined_minimum_size()
+	var source_rect := _detail_source.get_global_rect()
+	var x := source_rect.end.x + 10.0
+	if x + size_hint.x > logical.x:
+		x = source_rect.position.x - size_hint.x - 10.0
+	_detail_tooltip.position = Vector2(clampf(x, 8.0, maxf(8.0, logical.x - size_hint.x - 8.0)),
+		clampf(source_rect.position.y, 8.0, maxf(8.0, logical.y - size_hint.y - 8.0)))
+
+## 设置变动后等卡片重算字号，再按新的逻辑视口摆放。
+func _on_settings_changed() -> void:
+	_position_detail_tooltip.call_deferred()
+
+## 鼠标与焦点均离开、关闭面板或重建列表时断开卡片订阅并释放。
+func _hide_detail_tooltip() -> void:
+	if is_instance_valid(_detail_tooltip):
+		_detail_tooltip.queue_free()
+	_detail_tooltip = null
+	_detail_source = null
+
+## 清除来源，防止重建后旧行在释放前重新唤出详情。
+func _clear_detail_tooltip() -> void:
+	_hover_source = null
+	_focus_source = null
+	_hide_detail_tooltip()
 
 ## 自动红蓝药作为快捷栏工具保持可补领，但不再占用技能行与升阶按钮空间。
 func _build_potion_tools() -> void:
@@ -347,7 +401,7 @@ func _refresh_affordability() -> void:
 		elif GameState.gold < int(step.get("goldCost", 0)):
 			reason = Localization.tr_key("ui.skill_panel.reason_gold") % int(step.goldCost)
 		button.disabled = not reason.is_empty()
-		button.tooltip_text = reason if not reason.is_empty() else Localization.tr_key("ui.skill_panel.ready")
+		button.tooltip_text = ""
 
 ## 玩家点击升级时调用原子购买入口，成功后由阶数事件刷新面板和快捷栏。
 func _on_upgrade_pressed(skill_id: String) -> void:
