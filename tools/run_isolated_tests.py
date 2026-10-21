@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 58 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 59 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除仅作夹具的场景。
 
 默认集已为第四/五/六章各纳入 1 个**地图数据契约场景**（ChapterFour/ Five/ SixMapTest），
@@ -109,6 +109,10 @@ DEFAULT_TESTS = [
     # / panel 类不显示角标 / 缺件提示区分背包与仓库 / 车夫折叠**只改可见性不改 row_count**
     # / 默认展开组跟着等级走 / 令牌过滤与折叠**不回写 BossToken.rows()** / 手风琴同时最多一组。
     "PortableToolsHotbarTest",
+    # 工程 82 打金图超杀保护 + 金脉守卫：**技能不再一刀秒（1→2 击）** / **弱装逐值不变**
+    # / **Boss 档击数逐值不变** / cap 纯函数六条边界 / take_hit 是唯一入口且不改写 result
+    # / spawner 按地图字段透传（Boss 零泄漏）/ 守卫血×6 与金币×4 比值 / 多段技能每段各自受 cap。
+    "GoldFieldCapTest",
     "SmokeTest",
 ]
 

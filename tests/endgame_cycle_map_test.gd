@@ -47,6 +47,39 @@ func _test_maps() -> void:
 		check(int(group.get("respawnTime", 0)) == 15, "金币怪 15 秒重生")
 		check(Endgame.has_norm(String(group.get("monsterId", ""))), "金币怪需有归一化数值")
 	check(count == 96 and int(gold.get("normalCap", 0)) == 32, "金币图 96 席、同屏上限 32")
+	# 工程 82：超杀保护比例是地图级字段（缺省 0 = 关闭），打金图必须是 0.5。
+	check(is_equal_approx(float(gold.get("damageCapPct", 0.0)), 0.5),
+		"金币图 damageCapPct 应为 0.5，实际 %s" % gold.get("damageCapPct"))
+	# 工程 82：金脉守卫 24 席（2 种 × 12）/ 普通 72 席，倍率逐条落库。
+	var guard_seats := 0
+	var normal_seats := 0
+	for group in gold.get("spawnPoints", []):
+		var spec: Dictionary = group
+		var seats := int(spec.get("count", 0))
+		if is_equal_approx(float(spec.get("hpMultiplier", 1.0)), 6.0):
+			guard_seats += seats
+			check(is_equal_approx(float(spec.get("atkMultiplier", 0.0)), 1.5),
+				"金脉守卫 %s 攻击倍率应为 1.5" % spec.get("monsterId"))
+			check(String(spec.get("dropTableId", "")) == "DT_C7_Gold_Guard",
+				"金脉守卫 %s 应走专属掉落表" % spec.get("monsterId"))
+		else:
+			normal_seats += seats
+			check(is_equal_approx(float(spec.get("hpMultiplier", 1.0)), 1.0)
+				and is_equal_approx(float(spec.get("atkMultiplier", 1.0)), 1.0),
+				"普通怪 %s 不应带血量 / 攻击倍率" % spec.get("monsterId"))
+			check(String(spec.get("dropTableId", "")) == "DT_C7_Gold_Normal",
+				"普通怪 %s 应走普通掉落表" % spec.get("monsterId"))
+	check(guard_seats == 24 and normal_seats == 72,
+		"守卫应 24 席、普通应 72 席，实际守卫 %d / 普通 %d" % [guard_seats, normal_seats])
+	var guard_drop: Dictionary = DataLoader.get_entry("dropTables", "DT_C7_Gold_Guard")
+	var guard_coin: Array = (guard_drop.get("entries", [])[0] as Dictionary).get("goldRange", [])
+	check(guard_coin.size() == 2 and int(guard_coin[0]) == 1760 and int(guard_coin[1]) == 2240,
+		"守卫金币应为普通怪的四倍（1760–2240），实际 %s" % str(guard_coin))
+	var guard_equip_chance := 0.0
+	for row in guard_drop.get("entries", []):
+		if String(row.get("kind", "")) == "equip":
+			guard_equip_chance = float(row.get("chance", 0.0))
+	check(is_equal_approx(guard_equip_chance, 1.0), "守卫装备应必掉（chance 1.0），实际 %.2f" % guard_equip_chance)
 	var seats: Array = boss.get("bossSpawns", [])
 	check(seats.size() == 100 and int(boss.get("bossCap", 0)) == 18, "百 Boss 图 100 席、同屏上限 18")
 	for seat in seats:
@@ -148,11 +181,16 @@ func _test_multipliers() -> void:
 		check(is_equal_approx(float(g.get("xpMultiplier", 0.0)), 0.1),
 			"聚金地脉 %s 的 xpMultiplier 应为 0.1" % String(g.get("monsterId", "")))
 
-## Task 5.2：聚金地脉必须真的是「6 堆 × 16 席」，而不是把 96 席摊成一片。
-## 方法：对每个格子枚举候选堆原点（cell − (a,b)，a/b ∈ {0,3,6,9}），
-## 只有真正的 6 个原点各自恰好覆盖 16 格、合计 96 格；再校验 6 堆心两两世界像素距离。
+## 工程 82：聚金地脉从「散布 6 堆」收成「单战场 6 营」。判据必须**反转**：
+## 旧判据「堆心两两 ≥ 858px」保证的是「一次只激活一堆」——那正是玩家必须跑来跑去的根因。
+## 新判据 = 所有席位落在一个站位点的激活圈内（站桩即可全激活），且互不重叠。
+## 方法：① 枚举候选营心（cell − (a,b)，a/b ∈ {0,2,4,6}）找恰好覆盖 16 格的 6 个营；
+## ② 所有席位到战场中心（6 营心平均）≤ ACTIVE_DISTANCE − 60px 余量；③ 席位最小间距 ≥ 40px。
 func _test_gold_piles() -> void:
 	var gold: Dictionary = DataLoader.get_entry("maps", "c7_gold_field")
+	var size: Dictionary = gold.get("size", {})
+	check(int(size.get("w", 0)) == 64 and int(size.get("h", 0)) == 48,
+		"聚金地脉应收成 64×48，实际 %s×%s" % [size.get("w"), size.get("h")])
 	var cells := {}
 	for group in gold.get("spawnPoints", []):
 		var list: Variant = (group as Dictionary).get("cells", [])
@@ -165,27 +203,48 @@ func _test_gold_piles() -> void:
 
 	var coverage := {}
 	for cell in cells.keys():
-		for a in [0, 3, 6, 9]:
-			for b in [0, 3, 6, 9]:
+		for a in [0, 2, 4, 6]:
+			for b in [0, 2, 4, 6]:
 				var origin := (cell as Vector2i) - Vector2i(a, b)
 				coverage[origin] = int(coverage.get(origin, 0)) + 1
-	var origins: Array = []
+	var centers: Array[Vector2] = []
 	for origin in coverage.keys():
 		if int(coverage[origin]) == 16:
-			origins.append(origin)
-	check(origins.size() == 6 and origins.size() * 16 == 96,
-		"聚金地脉应恰好 6 堆各 16 席，实际 %d 堆（覆盖 %d）" % [origins.size(), origins.size() * 16])
+			var o: Vector2i = origin
+			centers.append(Iso.grid_pt(float(o.x) + 3.0, float(o.y) + 3.0))
+	check(centers.size() == 6 and centers.size() * 16 == 96,
+		"聚金地脉应为 6 营各 16 席，实际 %d 营（覆盖 %d）" % [centers.size(), centers.size() * 16])
 
-	var centers: Array[Vector2] = []
-	for origin in origins:
-		var o: Vector2i = origin
-		centers.append(Iso.grid_pt(float(o.x) + 4.5, float(o.y) + 4.5))
-	var min_dist := INF
-	for i in range(centers.size()):
-		for j in range(i + 1, centers.size()):
-			min_dist = minf(min_dist, centers[i].distance_to(centers[j]))
-	check(centers.size() == 6 and min_dist >= 858.0,
-		"聚金地脉 6 堆心两两世界像素距离应 ≥ 858px，实际 %.2f" % min_dist)
+	var hub := Vector2.ZERO
+	for center in centers:
+		hub += center
+	hub /= float(centers.size())
+	# 🔴 只断「席位到 hub」会漏掉**整体平移**：hub 是 6 营平均，营一起挪它也跟着挪，
+	# 距离一位不变 ⇒ 布局被挪到图角也照样绿（首轮负向 N-1 就是这样假绿的）。
+	# 所以必须再锚一个**与布局无关的绝对点**：战场中心要靠近图中心（进图步行短、一屏可见）。
+	var grid_center := Vector2(float(int(size.get("w", 0)) - 1) * 0.5,
+		float(int(size.get("h", 0)) - 1) * 0.5)
+	var hub_cell := Iso.world_to_grid(hub)
+	check(Vector2(float(hub_cell.x), float(hub_cell.y)).distance_to(grid_center) <= 10.0,
+		"战场中心应靠近图中心（≤ 10 格），实际 %s vs %s —— 挪到图角即玩家要长距离跑图"
+		% [str(hub_cell), str(grid_center)])
+	var limit := MonsterSpawner.ACTIVE_DISTANCE - 60.0
+	var far := 0.0
+	for cell in cells.keys():
+		var p: Vector2i = cell
+		far = maxf(far, hub.distance_to(Iso.grid_pt(float(p.x), float(p.y))))
+	check(far <= limit,
+		"所有席位应落在一个站位点的激活圈内（≤ %.0fpx），实际最远 %.2fpx —— 超出即玩家仍需跑图" % [limit, far])
+
+	var keys: Array = cells.keys()
+	var nearest := INF
+	for i in range(keys.size()):
+		for j in range(i + 1, keys.size()):
+			var a: Vector2i = keys[i]
+			var b: Vector2i = keys[j]
+			nearest = minf(nearest, Iso.grid_pt(float(a.x), float(a.y)).distance_to(
+				Iso.grid_pt(float(b.x), float(b.y))))
+	check(nearest >= 40.0, "席位两两间距应 ≥ 40px（普通怪半径 13px 才不互相挤），实际 %.2fpx" % nearest)
 
 ## Task 5.2：怪物 → 玩家伤害下限（不破防时按最大生命比例，10–60）。
 ## 既有公式：破防走 floor(攻×系数 − 防×0.5)，只有不破防才用调用方下限替换 1 点兜底。
