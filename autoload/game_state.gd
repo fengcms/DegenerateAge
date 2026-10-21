@@ -1202,6 +1202,42 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	EventBus.trade_done.emit("forge", String(output.get("itemId", "")), cost)
 	return {"ok": true, "item": output, "index": output_index, "cost": cost, "reason": ""}
 
+## 工程 87：紫装献祭换经验。**只吃背包**（身上的紫装不参与），任一件不合规就**整批不扣**。
+## 经验按**装备需求等级**结算（`Sacrifice.xp_of`），不按玩家等级 —— 理由见该类注释。
+## UI 传入打开预览时的实例 ID 列表，这里按 id 重新定位并逐件复核（背包整理不会误耗）。
+func sacrifice_purple(instance_ids: PackedStringArray) -> Dictionary:
+	if int(player.get("level", 1)) < Sacrifice.OPEN_LEVEL:
+		return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.low_level", [Sacrifice.OPEN_LEVEL])}
+	if instance_ids.is_empty():
+		return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.empty")}
+	if instance_ids.size() > Sacrifice.MAX_BATCH:
+		return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.too_many", [Sacrifice.MAX_BATCH])}
+	var indices: Array[int] = []
+	var total := 0
+	var seen := {}
+	for raw_id in instance_ids:
+		var id := String(raw_id)
+		if id.is_empty() or seen.has(id):
+			return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.stale")}
+		seen[id] = true
+		var found := find_owned_item(id)
+		# 穿戴中的件一律拒绝：献祭不能把身上的战力喂掉（与四紫升紫「只能背包」同口径）。
+		if found.is_empty() or String(found.get("loc", "")) != "bag":
+			return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.stale")}
+		var item: Dictionary = found["item"]
+		if not Sacrifice.eligible(item):
+			return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.invalid")}
+		indices.append(int(found["index"]))
+		total += Sacrifice.xp_of(item)
+	if indices.is_empty() or total <= 0:
+		return {"ok": false, "reason": Localization.tr_key("ui.sacrifice.empty")}
+	# 先扣件再给经验：扣件在本函数内是纯内存写、没有失败分支；`add_xp` 会触发连升与 toast。
+	for index in indices:
+		inventory[index] = null
+	EventBus.inventory_changed.emit()
+	add_xp(total)
+	return {"ok": true, "count": indices.size(), "xp": total, "reason": ""}
+
 ## source = "bag" / "worn"；key 是背包下标或装备槽 id。
 ## expected_id 防止选择后背包整理、穿脱导致错误实例被扣费。
 func upgrade_equipment(source: String, key: Variant, expected_id: String,

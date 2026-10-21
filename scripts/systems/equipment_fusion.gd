@@ -7,6 +7,10 @@ const GOLD_TO_PURPLE := "gold_to_purple"
 const PURPLE_TARGET := "purple_target"
 const PURPLE_UP_TIER := "purple_up_tier"
 const STAR_TRANSFER := "star_transfer"
+## 工程 87：紫装献祭。**不是铁匠合成**——它不产生新装备、不吃材料格、不碰随机流，
+## 只是复用 `equipment_fusion_panel` 的面板骨架；真正的规则在 `Sacrifice`。
+## 放在这里是为了让铁匠菜单与面板共用同一套 mode 白名单。
+const SACRIFICE := "sacrifice"
 
 ## 一次合成允许的材料件数区间（含端点）。
 ## 只有四紫升紫用「件数换成功率」：4 件必成、3 件 75%、2 件 50%；

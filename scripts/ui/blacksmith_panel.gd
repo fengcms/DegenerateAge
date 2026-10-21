@@ -183,10 +183,16 @@ func _build() -> void:
 	_fusion_buttons.append(transfer)
 	transfer_row.add_child(_make_hint("ui.blacksmith_panel.hint_transfer"))
 	# 维护组（工程 77）：一键修理身上 14 件，价格写在按钮上、点击即修不再二次确认。
+	# 工程 87：紫装献祭并排放在这里 —— 两者都是「就地处理已有装备」，共用一行说明后
+	# 菜单高度不增、维护组也从单按钮变成成对（不再留孤格）。
 	var repair_grid := _build_group(service_content, "ui.blacksmith_panel.group_maintain",
 		"ui.blacksmith_panel.hint_maintain")
 	_repair = _make_service(repair_grid, "ui.blacksmith_panel.repair", true)
 	_repair.pressed.connect(_on_repair)
+	var sacrifice := _make_service(repair_grid, "ui.sacrifice.title", false)
+	sacrifice.tooltip_text = Localization.tr_key("ui.sacrifice.hint_short")
+	sacrifice.pressed.connect(_open_fusion.bind(EquipmentFusion.SACRIFICE))
+	_fusion_buttons.append(sacrifice)
 	# 离开与继续固定在底部操作行，不再混进服务网格。
 	_footer = HBoxContainer.new()
 	_footer.add_theme_constant_override("separation", 8)

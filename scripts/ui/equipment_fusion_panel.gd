@@ -1,5 +1,8 @@
 extends Control
-## 铁匠四种合成共用的材料工作台；背包物品只做预选引用，确认后才由 GameState 结算。
+## 铁匠四种合成 + 紫装献祭共用的工作台；背包物品只做预选引用，确认后才由 GameState 结算。
+##
+## 献祭（工程 87）复用这个面板骨架但不吃材料格：它扫整个背包、按档位分组汇总，
+## 规则全在 `Sacrifice`，结算走 `GameState.sacrifice_purple`。
 
 const PANEL_ID := "equipment_fusion"
 const WIDTH := 430.0
@@ -23,6 +26,8 @@ var _slots: Array[ItemSlot] = []
 var _remove_buttons: Array[Button] = []
 var _selected: Array[Dictionary] = []
 var _risk_confirmed := false
+## 献祭专用：12★ 是保星底件，默认不计入，需要显式勾选（勾了会在汇总里另起一行提示）。
+var _star12: CheckBox
 
 ## 接入工作台会话和背包更新，不进行逐帧背包扫描。
 func _ready() -> void:
@@ -51,7 +56,8 @@ func _unhandled_input(event: InputEvent) -> void:
 ## 铁匠菜单只能打开已登记的服务。
 func _on_requested(mode: String) -> void:
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_TARGET,
-			EquipmentFusion.PURPLE_UP_TIER, EquipmentFusion.STAR_TRANSFER]:
+			EquipmentFusion.PURPLE_UP_TIER, EquipmentFusion.STAR_TRANSFER,
+			EquipmentFusion.SACRIFICE]:
 		return
 	_mode = mode
 	set_open(true)
@@ -76,12 +82,20 @@ func set_open(open: bool) -> void:
 			EquipmentFusion.STAR_TRANSFER:
 				title_key = "ui.fusion.star_title"
 				hint_key = "ui.fusion.star_hint"
+			EquipmentFusion.SACRIFICE:
+				title_key = "ui.sacrifice.title"
+				hint_key = "ui.sacrifice.hint"
 		_title.text = Localization.tr_key(title_key)
 		_hint.text = Localization.tr_key(hint_key)
+		# 献祭不选材料：材料格、目标类型、随机放入一律隐藏，只留汇总 + 确认。
+		var batch_mode := _mode == EquipmentFusion.SACRIFICE
 		_target_row.visible = _mode == EquipmentFusion.PURPLE_TARGET
-		_random.visible = _mode != EquipmentFusion.STAR_TRANSFER
+		_random.visible = _mode not in [EquipmentFusion.STAR_TRANSFER, EquipmentFusion.SACRIFICE]
+		_grid.visible = not batch_mode
+		_star12.visible = batch_mode
+		_star12.button_pressed = false
 		_confirm.text = Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else
-			"ui.fusion.forge_action")
+			("ui.sacrifice.action" if batch_mode else "ui.fusion.forge_action"))
 		_refresh_slots()
 		EventBus.fusion_mode_changed.emit(true)
 		_resize.call_deferred()
@@ -246,6 +260,16 @@ func _build() -> void:
 	_summary = Label.new()
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_summary)
+	# 献祭专用开关：12★ 是保星底件，默认不计入（只在献祭模式显示）。
+	_star12 = CheckBox.new()
+	_star12.text = Localization.tr_key("ui.sacrifice.star12")
+	_star12.tooltip_text = Localization.tr_key("ui.sacrifice.star12_tip")
+	_star12.visible = false
+	_star12.toggled.connect(func(_pressed: bool) -> void:
+		_risk_confirmed = false
+		_refresh_preview())
+	root.add_child(_star12)
+	root.move_child(_star12, _summary.get_index())
 	_feedback = Label.new()
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_feedback.add_theme_color_override("font_color", Color("ffbd88"))
@@ -433,6 +457,9 @@ func _material_snapshots() -> Array[Dictionary]:
 func _refresh_preview() -> void:
 	if _confirm == null:
 		return
+	if _mode == EquipmentFusion.SACRIFICE:
+		_refresh_sacrifice()
+		return
 	_confirm.text = Localization.tr_key("ui.fusion.confirm_again") if _risk_confirmed else \
 		Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else "ui.fusion.forge_action")
 	_confirm.disabled = true
@@ -477,6 +504,9 @@ func _refresh_preview() -> void:
 ## 带星材料、少于四件的赌局与保星交易都要二次确认，最终仍由 GameState 快照重核。
 func _on_confirm() -> void:
 	if _confirm.disabled:
+		return
+	if _mode == EquipmentFusion.SACRIFICE:
+		_on_confirm_sacrifice()
 		return
 	var items := _material_snapshots()
 	if items.is_empty():
@@ -527,3 +557,66 @@ func _on_confirm() -> void:
 		_feedback.text = String(result.get("reason", "合成失败"))
 		_risk_confirmed = false
 		_refresh_preview()
+
+## 献祭预览：扫整个背包（不读材料格），按档位分组汇总；12★ 单列且默认不计入。
+## 只读 `Sacrifice.plan`，不产生任何副作用。
+func _refresh_sacrifice() -> void:
+	var level := int(GameState.player.get("level", 1))
+	_confirm.text = Localization.tr_key("ui.sacrifice.confirm_again" if _risk_confirmed
+		else "ui.sacrifice.action")
+	_confirm.disabled = true
+	if level < Sacrifice.OPEN_LEVEL:
+		_summary.text = Localization.tr_key("ui.sacrifice.low_level", [Sacrifice.OPEN_LEVEL])
+		return
+	var plan := Sacrifice.plan(GameState.inventory, _star12.button_pressed)
+	var count := int(plan.get("count", 0))
+	if count <= 0:
+		_summary.text = Localization.tr_key("ui.sacrifice.empty")
+		return
+	var lines: Array[String] = []
+	var raw_groups: Array = plan.get("groups", [])
+	for raw in raw_groups:
+		var group: Dictionary = raw
+		var tier := int(group.get("tier", 0))
+		lines.append(Localization.tr_key("ui.sacrifice.group",
+			[tier, tier + 9, int(group.get("count", 0)), int(group.get("xp", 0))]))
+	var gain := int(plan.get("xp", 0))
+	var next := maxi(1, GameState.xp_to_next(level))
+	var percent := int(round(float(gain) * 100.0 / float(next)))
+	lines.append(Localization.tr_key("ui.sacrifice.summary", [count, gain, percent]))
+	if int(plan.get("star12_count", 0)) > 0 and not _star12.button_pressed:
+		lines.append(Localization.tr_key("ui.sacrifice.star12_hint",
+			[int(plan.get("star12_count", 0)), int(plan.get("star12_xp", 0))]))
+	if int(plan.get("remaining", 0)) > 0:
+		lines.append(Localization.tr_key("ui.sacrifice.batch",
+			[Sacrifice.MAX_BATCH, int(plan.get("remaining", 0))]))
+	_summary.text = "\n".join(PackedStringArray(lines))
+	_confirm.disabled = false
+
+## 献祭结算：确认时**重新扫背包**（面板可能开很久），按实例 ID 交回 GameState 二次复核。
+## 紫装献祭不可逆，所以第一次点击只做风险确认，第二次才真正消耗。
+func _on_confirm_sacrifice() -> void:
+	if int(GameState.player.get("level", 1)) < Sacrifice.OPEN_LEVEL:
+		_feedback.text = Localization.tr_key("ui.sacrifice.low_level", [Sacrifice.OPEN_LEVEL])
+		return
+	var plan := Sacrifice.plan(GameState.inventory, _star12.button_pressed)
+	var ids := PackedStringArray(plan.get("ids", PackedStringArray()))
+	if ids.is_empty():
+		_feedback.text = Localization.tr_key("ui.sacrifice.empty")
+		_refresh_preview()
+		return
+	if not _risk_confirmed:
+		_risk_confirmed = true
+		_feedback.text = Localization.tr_key("ui.sacrifice.warning",
+			[int(plan.get("count", 0)), int(plan.get("xp", 0))])
+		_refresh_preview()
+		return
+	var result := GameState.sacrifice_purple(ids)
+	_risk_confirmed = false
+	if bool(result.get("ok", false)):
+		EventBus.toast_requested.emit(Localization.tr_key("ui.sacrifice.done",
+			[int(result.get("count", 0)), int(result.get("xp", 0))]), "pickup")
+		_feedback.text = ""
+	else:
+		_feedback.text = String(result.get("reason", ""))
+	_refresh_preview()
