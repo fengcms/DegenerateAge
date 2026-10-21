@@ -2,8 +2,8 @@
   "id": "c3_map02",
   "name": "悬渠闸站",
   "size": {
-    "w": 208,
-    "h": 117
+    "w": 210,
+    "h": 118
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c3_map02.json",

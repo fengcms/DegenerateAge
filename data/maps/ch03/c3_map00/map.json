@@ -3,7 +3,7 @@
   "name": "下街水市",
   "size": {
     "w": 96,
-    "h": 54
+    "h": 57
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c3_map00.json",
@@ -146,7 +146,7 @@
     ],
     "max": [
       95,
-      53
+      56
     ]
   },
   "hubLinks": [
