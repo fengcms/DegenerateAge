@@ -2,8 +2,8 @@
   "id": "c4_map03",
   "name": "观测站外环",
   "size": {
-    "w": 240,
-    "h": 135
+    "w": 245,
+    "h": 138
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c4_map03.json",

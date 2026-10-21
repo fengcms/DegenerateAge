@@ -2,8 +2,8 @@
   "id": "c4_map01",
   "name": "倒根驿路",
   "size": {
-    "w": 208,
-    "h": 117
+    "w": 211,
+    "h": 118
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c4_map01.json",

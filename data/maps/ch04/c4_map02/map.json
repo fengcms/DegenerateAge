@@ -2,8 +2,8 @@
   "id": "c4_map02",
   "name": "失声哨林",
   "size": {
-    "w": 192,
-    "h": 108
+    "w": 196,
+    "h": 110
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c4_map02.json",

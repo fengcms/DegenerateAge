@@ -2,8 +2,8 @@
   "id": "c4_map05",
   "name": "回流观测台",
   "size": {
-    "w": 224,
-    "h": 126
+    "w": 231,
+    "h": 127
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c4_map05.json",
