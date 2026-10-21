@@ -2,8 +2,8 @@
   "id": "c5_map01",
   "name": "折旗长堤",
   "size": {
-    "w": 208,
-    "h": 117
+    "w": 213,
+    "h": 119
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c5_map01.json",

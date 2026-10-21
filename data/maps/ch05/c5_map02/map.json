@@ -2,8 +2,8 @@
   "id": "c5_map02",
   "name": "失陷号台",
   "size": {
-    "w": 192,
-    "h": 108
+    "w": 198,
+    "h": 111
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c5_map02.json",

@@ -2,8 +2,8 @@
   "id": "c5_map00",
   "name": "断旗关",
   "size": {
-    "w": 96,
-    "h": 54
+    "w": 100,
+    "h": 55
   },
   "layoutVersion": "2026-10-15-content-v1",
   "layoutPath": "res://data/layouts/c5_map00.json",
@@ -145,8 +145,8 @@
       0
     ],
     "max": [
-      95,
-      53
+      99,
+      54
     ]
   },
   "hubLinks": [
