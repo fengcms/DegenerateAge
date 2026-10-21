@@ -33,14 +33,16 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_resize)
 	_resize.call_deferred()
 
-## 根据逻辑视口限制菜单尺寸；100% 下说明整体放得下，只在窄窗口保留滚动兜底。
-## 窗口自身的尺寸与落点由 FloatingWindow 按内容与可见区结算，不再强制撑满逻辑视口。
+## 根据逻辑视口限制菜单宽度；服务区高度不再写死一档，改由 FloatingWindow.fit_content
+## 按内容自然高度结算：内容放得下就按内容铺开（100% 缩放下不出滚动条），
+## 只有窄窗口（如 200% 缩放）才收回到可见区内，由滚动条兜底。
 func _resize() -> void:
 	if _root == null:
 		return
 	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
 	_root.custom_minimum_size = Vector2(minf(500.0, logical.x * 0.84), 0.0)
-	_service_scroll.custom_minimum_size.y = clampf(logical.y - 250.0, 54.0, 380.0)
+	# 同一滚动容器重复注入是幂等的，只是触发一次 deferred 重排。
+	_center.set_content_scroll(_service_scroll)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
@@ -159,29 +161,23 @@ func _build() -> void:
 	_upgrade.pressed.connect(_open_upgrade)
 	_reforge = _make_service(enhance_grid, "ui.reforge_panel.p002", true)
 	_reforge.pressed.connect(_open_reforge)
-	# 合成组：原有两种服务并排；升档随机合成独占下一行，避免两列留下孤格。
+	# 合成组：四项服务排成 2×2 —— 四金合紫 / 四紫定向 一行，四紫升紫 / 保星升级 一行，
+	# 两种「往上升档」的服务同排，也省掉一整行按钮高度（滚动条的根因，见 _resize）。
+	# 下排两项都走高亮样式：一格金一格灰并排会显得层级不齐，而这两项本来就是同一档语义。
 	var forge_grid := _build_group(service_content, "ui.blacksmith_panel.group_forge",
 		"ui.blacksmith_panel.hint_forge")
 	for service in [
-		{"mode": EquipmentFusion.GOLD_TO_PURPLE, "key": "ui.fusion.gold_title"},
-		{"mode": EquipmentFusion.PURPLE_TARGET, "key": "ui.fusion.purple_title"},
+		{"mode": EquipmentFusion.GOLD_TO_PURPLE, "key": "ui.fusion.gold_title", "primary": false},
+		{"mode": EquipmentFusion.PURPLE_TARGET, "key": "ui.fusion.purple_title", "primary": false},
+		{"mode": EquipmentFusion.PURPLE_UP_TIER, "key": "ui.fusion.purple_up_title", "primary": true},
+		{"mode": EquipmentFusion.STAR_TRANSFER, "key": "ui.fusion.star_title", "primary": true},
 	]:
-		var button := _make_service(forge_grid, String(service.key), false)
+		var button := _make_service(forge_grid, String(service.key), bool(service.primary))
 		button.pressed.connect(_open_fusion.bind(String(service.mode)))
 		_fusion_buttons.append(button)
-	var purple_up_row := VBoxContainer.new()
-	forge_grid.get_parent().add_child(purple_up_row)
-	var purple_up := _make_service(purple_up_row, "ui.fusion.purple_up_title", false)
-	purple_up.pressed.connect(_open_fusion.bind(EquipmentFusion.PURPLE_UP_TIER))
-	_fusion_buttons.append(purple_up)
-	# 保星升级有跨档扣费规则，独占整行才放得下说明。
-	var transfer_row := VBoxContainer.new()
-	transfer_row.add_theme_constant_override("separation", 4)
-	service_content.add_child(transfer_row)
-	var transfer := _make_service(transfer_row, "ui.fusion.star_title", true)
-	transfer.pressed.connect(_open_fusion.bind(EquipmentFusion.STAR_TRANSFER))
-	_fusion_buttons.append(transfer)
-	transfer_row.add_child(_make_hint("ui.blacksmith_panel.hint_transfer"))
+	# 保星升级有跨档扣费规则（工程 64），说明整行跟在网格下方。
+	(forge_grid.get_parent() as VBoxContainer).add_child(
+		_make_hint("ui.blacksmith_panel.hint_transfer"))
 	# 维护组（工程 77）：一键修理身上 14 件，价格写在按钮上、点击即修不再二次确认。
 	# 工程 87：紫装献祭并排放在这里 —— 两者都是「就地处理已有装备」，共用一行说明后
 	# 菜单高度不增、维护组也从单按钮变成成对（不再留孤格）。
@@ -204,6 +200,8 @@ func _build() -> void:
 	_footer.add_child(footer_spacer)
 	_continue = _make_footer_action("ui.blacksmith_panel.p003", true)
 	_continue.pressed.connect(_show_menu)
+	# 交给浮窗层按可见区结算服务区高度（F-P2-3）：放得下就是内容高度，放不下才出滚动条。
+	_center.set_content_scroll(_service_scroll)
 
 ## 服务分组：小标题 + 一句话说明 + 两列按钮，替代原来挤在滚动区里的三段长文。
 func _build_group(parent: VBoxContainer, title_key: String, hint_key: String) -> GridContainer:
@@ -260,6 +258,8 @@ func _show_menu() -> void:
 		button.visible = true
 	_greeting_card.visible = false
 	_service_card.visible = true
+	# 问候卡与服务卡互换后最小尺寸会变，重新触发一次结算再抢焦点。
+	_center.set_content_scroll(_service_scroll)
 	_upgrade.grab_focus()
 
 ## 修理按钮：价格直接写在按钮上（点击即修，多一层确认就是纯摩擦）。

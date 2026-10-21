@@ -24,7 +24,7 @@ func _ready() -> void:
 	check(dialogue._leave.get_parent() == dialogue._footer
 		and not dialogue._service_scroll.is_ancestor_of(dialogue._leave),
 		"离开按钮在底部固定行，不再混进服务网格")
-	# 工程 77 之后服务网格是**三组**：强化（2）+ 合成（2）+ 维护与转化（2）。
+	# 工程 77 之后服务网格是**三组**：强化（2）+ 合成（4，2×2）+ 维护与转化（2）。
 	# 原断言「两组、各自成对」是工程 77 之前的形态，该测试此前不在默认集，一直没被发现；
 	# 工程 87 把献祭并进维护组，正好把它从单按钮补成成对。
 	check(dialogue._service_grids.size() == 3 and dialogue._service_grids.all(
@@ -33,13 +33,29 @@ func _ready() -> void:
 	GameState.settings.uiScale = 1.0
 	dialogue._resize()
 	await get_tree().process_frame
-	# 工程 77 加维护组、工程 87 加献祭后，服务项从 4 项变 5 项，内容高度已超过 380px 的滚动区。
-	# 原判据「100% 缩放下无需滚动」是工程 77 之前的形态（该测试此前不在默认集，长期没跑过）。
-	# 改为看守两条更实际的性质：**滚动量有界 + 面板不溢出视口**，避免内容失控时无人发现。
+	await get_tree().process_frame
+	# 2026-10-21：合成组四项排成 2×2，「四紫升紫」与「保星升级」必须落在同一行。
+	# 断的是实际矩形（同一 y、左右相邻、各自有宽），不是「父节点相同」——后者在
+	# GridContainer 换成 1 列或 4 列时照样成立，属于假绿。
+	var purple_up := _button_titled(dialogue._fusion_buttons, "ui.fusion.purple_up_title")
+	var transfer := _button_titled(dialogue._fusion_buttons, "ui.fusion.star_title")
+	check(purple_up != null and transfer != null
+		and purple_up.get_parent() == transfer.get_parent()
+		and absf(purple_up.global_position.y - transfer.global_position.y) <= 1.0
+		and purple_up.global_position.x + purple_up.size.x <= transfer.global_position.x + 1.0
+		and purple_up.size.x > 0.0 and transfer.size.x > 0.0,
+		"四紫升紫与保星升级并排在同一行（左四紫、右保星，各自占半行）")
+	# 服务区高度由 FloatingWindow.fit_content 按内容结算：100% 缩放下必须整段放得下，
+	# 也就是**根本没有滚动条**；曾经写死 `clampf(logical.y - 250, 54, 380)` 时内容 407px
+	# 溢出 27px，滚动条常驻（2026-10-21 修）。判据用 bar.visible + 内容高 vs 视窗高，
+	# 只断「滚动量 ≤ 1.4 屏」会放过滚动条常驻这件事。
 	var bar: VScrollBar = dialogue._service_scroll.get_v_scroll_bar()
-	check(bar.max_value <= dialogue._service_scroll.size.y * 1.4,
-		"100% 缩放下服务区滚动量不超过一屏 40%%（内容 %d / 视窗 %d）"
+	var content := dialogue._service_scroll.get_child(0) as Control
+	check(not bar.visible and bar.max_value <= dialogue._service_scroll.size.y + 0.5,
+		"100%% 缩放下服务区不出现滚动条（内容 %d / 视窗 %d）"
 			% [int(bar.max_value), int(dialogue._service_scroll.size.y)])
+	check(dialogue._service_scroll.size.y >= content.get_combined_minimum_size().y - 0.5,
+		"服务区高度跟随内容自然高度，而不是被压到固定上限")
 	check(dialogue._root.size.y <= dialogue._center.size.y + 1.0, "100% 缩放下铁匠面板不溢出视口")
 	GameState.settings.uiScale = 2.0
 	dialogue._resize()
@@ -288,6 +304,14 @@ func _only_item() -> Dictionary:
 		if entry is Dictionary:
 			return entry
 	return {}
+
+## 按本地化文案找按钮：不依赖 _fusion_buttons 的排列顺序，重排菜单时断言不会跟着失效。
+func _button_titled(buttons: Array[Button], key: String) -> Button:
+	var text := Localization.tr_key(key)
+	for button in buttons:
+		if button.text == text:
+			return button
+	return null
 
 ## 收集失败断言，末尾统一报告。
 func check(ok: bool, label: String) -> void:
