@@ -5,9 +5,11 @@ extends RefCounted
 ## 与 `Reforge` / `Balance` 同规格：纯查表 + 纯计算，**不引用 `GameState`**。
 ## 全部旋钮来自 `data/durability.json`，数值调优只改 JSON 不改代码。
 ##
-## 🔴 失效语义只有两个卡口（见 `Equipment.bonus` / `Equipment.score`）：
-##    破损件不计入属性汇总、评分归零；**套装加成照常** —— `SetBonus.evaluate`
-##    数的是槽位而非属性，破损件仍穿戴 ⇒ 仍计数，零改动天然成立。
+## 🔴 失效语义只有**一个**卡口：`EquipmentMath.attrs_for_use()`（工程 88）——
+##    耐久归零 ⇒ **只砍词条**（`affixes` / `pctAttrs`），基底（品质 × 星级）照常生效；
+##    `Equipment.bonus` 与 `Equipment.score` 共用这一个入口，本类**不参与**属性计算。
+##    **套装加成照常** —— `SetBonus.evaluate` 数的是槽位而非属性，破损件仍穿戴 ⇒ 仍计数。
+##    ⚠ 历史：工程 77 原为「属性全清 + 评分归零」，结果挂机时被小怪两击打死（工程 88 改）。
 ## 🔴 存档兼容：`durability` 是**可选字段**（`favorite` 先例），缺失 = 满耐久。
 ##    旧档零迁移、不 bump schema；`_valid_item` 只在字段存在时校验。
 
@@ -53,7 +55,7 @@ static func current(item: Dictionary) -> int:
 	var value := int(item.get("durability", 0))
 	return clampi(value, 0, max_durability())
 
-## 破损判定：耐久归零 ⇒ 自身属性失效（套装加成保留）。
+## 破损判定：耐久归零 ⇒ **词条**失效（基底与套装加成保留，口径见 `EquipmentMath.attrs_for_use`）。
 static func is_broken(item: Dictionary) -> bool:
 	if String(item.get("kind", "")) != "equip":
 		return false

@@ -214,8 +214,11 @@ static func unequip_to_index(slots: Dictionary, inv: Array, slot_id: String, inv
 
 ## 汇总已穿戴装备的属性加成（固定值累加、百分比累加）。
 ## 返回含 BONUS_KEYS 全键的字典（未出现的键为 0）。
-## 🔴 工程 77：耐久归零的破损件**跳过**（自身属性失效）；套装加成不受影响 ——
-## `SetBonus.evaluate` 数的是槽位而非属性，破损件仍穿戴仍计数，零改动天然成立。
+## 🔴 工程 77/88：破损件**只保留基底**（品质 × 星级），词条失效 —— 判定在
+## `EquipmentMath.attrs_for_use`，本函数**不再自己判耐久**（否则口径分裂）。不改公式：
+## 基底这一档恰好让玩家留在 `Combat.resolve` 的「不破防」侧，挨打仍是保底伤害，
+## 只是血池减半、清怪变慢 —— 罚得动但罚不死（工程 88 §4）。
+## 套装加成不受影响：`SetBonus.evaluate` 数的是槽位而非属性，破损件仍穿戴仍计数。
 static func bonus(slots: Dictionary) -> Dictionary:
 	var b := {}
 	for k in BONUS_KEYS:
@@ -224,9 +227,7 @@ static func bonus(slots: Dictionary) -> Dictionary:
 		var it = slots[sid]
 		if not (it is Dictionary):
 			continue
-		if Durability.is_broken(it):
-			continue
-		accumulate(b, EquipmentMath.effective_attrs(it))
+		accumulate(b, EquipmentMath.attrs_for_use(it))
 	return b
 
 ## 把一处属性来源累加进目标字典。支持两种形态：
@@ -245,15 +246,19 @@ static func accumulate(target: Dictionary, src) -> void:
 					target[key] = float(target[key]) + float(e.get("value", 0.0))
 
 ## 5.9 「属性更高」评分（用于替换提示 / 一键出售排除）。
-## 🔴 工程 77：破损件按 **0 分**计（与生效属性同源掐断）—— 否则两个反常：
-## 对比时残值虚高、或反向被自动出售卖掉可修的好装备。
+## 🔴 工程 88：按**实际生效属性**计（`EquipmentMath.attrs_for_use`），破损件给**基底分**
+## 而不是 0 分。给 0 分有两个反常：① 「已穿戴的破损件 = 0 分」⇒ 随便一件候选都显示
+## 「属性更高」，`is_upgrade_over_worn` 随之判错；② 面板评分行对破损件显示 0，
+## 玩家会误以为这件的品质/星级白做了。
+## ⚠ 破损件**仍然不会被卖掉**：`SellGearPolicy` 的 `damaged` 与 `Shop.matches_low_gear`
+## 两道独立守卫拦着，与评分无关（工程 77 原意保留）。
 static func score(item: Dictionary) -> float:
-	if item.is_empty() or Durability.is_broken(item):
+	if item.is_empty():
 		return 0.0
 	var b := {}
 	for k in BONUS_KEYS:
 		b[k] = 0.0
-	accumulate(b, EquipmentMath.effective_attrs(item))
+	accumulate(b, EquipmentMath.attrs_for_use(item))
 	var s := 0.0
 	for k in SCORE_WEIGHTS.keys():
 		s += float(b[k]) * float(SCORE_WEIGHTS[k])
