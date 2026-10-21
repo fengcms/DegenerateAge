@@ -1244,6 +1244,9 @@ func _validate_skill_progression() -> Array[String]:
 			continue
 		var base: Dictionary = expected[sid]
 		var previous_cost := 0
+		var previous_coefficient := 1.0
+		var previous_attack_pct := float((base.get("effects", {}) as Dictionary).get("attackPct", 0.0))
+		var previous_speed_pct := float((base.get("effects", {}) as Dictionary).get("attackSpeedPct", 0.0))
 		for i in range(4):
 			var entry: Variant = ranks[i]
 			if not entry is Dictionary:
@@ -1261,11 +1264,16 @@ func _validate_skill_progression() -> Array[String]:
 			if String(base.get("kind", "")) == "buff":
 				var effects: Variant = entry.get("effects")
 				if not effects is Dictionary or effects.size() != 2 or not _is_nonnegative_number(effects.get("attackPct")) or not _is_nonnegative_number(effects.get("attackSpeedPct")) \
-						or float(effects.attackPct) <= float((base.effects as Dictionary).get("attackPct", 0.0)) or float(effects.attackPct) > 0.26 \
-						or float(effects.attackSpeedPct) <= float((base.effects as Dictionary).get("attackSpeedPct", 0.0)) or float(effects.attackSpeedPct) > 0.19:
+						or float(effects.attackPct) <= previous_attack_pct or float(effects.attackPct) > 0.26 \
+						or float(effects.attackSpeedPct) <= previous_speed_pct or float(effects.attackSpeedPct) > 0.19:
 					report.append("[skillProgression] %s 第 %d 阶增益越界" % [sid, rank])
-			elif not _is_nonnegative_number(entry.get("coefficientMultiplier")) or float(entry.coefficientMultiplier) <= 1.0 or float(entry.coefficientMultiplier) > 1.12:
+				else:
+					previous_attack_pct = float(effects.attackPct)
+					previous_speed_pct = float(effects.attackSpeedPct)
+			elif not _is_nonnegative_number(entry.get("coefficientMultiplier")) or float(entry.coefficientMultiplier) <= previous_coefficient or float(entry.coefficientMultiplier) > 1.12:
 				report.append("[skillProgression] %s 第 %d 阶系数倍率越界" % [sid, rank])
+			else:
+				previous_coefficient = float(entry.coefficientMultiplier)
 	for sid in expected:
 		if not seen.has(sid):
 			report.append("[skillProgression] 缺少技能：%s" % sid)

@@ -33,6 +33,10 @@ func _ready() -> void:
 	broken_config[0].ranks[0].coefficientMultiplier = 3.0
 	DataLoader.tables["skillProgression"] = broken_config
 	_check(not DataLoader._validate_skill_progression().is_empty(), "错阶与越界伤害配置会被拦截")
+	broken_config = valid_config.duplicate(true)
+	broken_config[0].ranks[1].coefficientMultiplier = 1.01
+	DataLoader.tables["skillProgression"] = broken_config
+	_check(not DataLoader._validate_skill_progression().is_empty(), "高阶倍率倒退会被拦截")
 	DataLoader.tables["skillProgression"] = valid_config
 	DataLoader.load_all()
 	var reloaded := SkillProgression.resolve("earth_cleave", 2)

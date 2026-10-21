@@ -43,6 +43,25 @@ func _ready() -> void:
 	var hotbar_tip := (hud._hotbar_buttons[4] as HotbarSlot).tooltip_text
 	_check(hotbar_tip.contains("2 阶"),
 		"快捷栏绑定不变且悬停提示显示当前阶数，实际：%s" % hotbar_tip)
+	# 极端倍率下技能行可滚动，标题与购买入口仍留在逻辑视口内。
+	var ui := main.get_node("UI") as CanvasLayer
+	GameState.settings["uiScale"] = 2.0
+	GameState.settings["textScale"] = 2.0
+	SettingsRuntime.apply_ui_scale_to(ui)
+	SettingsRuntime.apply_text_scale_to(ui)
+	EventBus.settings_changed.emit()
+	await get_tree().process_frame
+	panel._center._layout()
+	await get_tree().process_frame
+	var box := panel._center.panel_box as Control
+	var logical: Vector2 = panel._center.layout_space()
+	_check(box.global_position.x >= -1 and box.global_position.y >= -1
+		and box.global_position.x + box.size.x <= logical.x + 1
+		and box.global_position.y + box.size.y <= logical.y + 1,
+		"200% 界面和文字下技能面板完整落在逻辑视口：%s / %s" % [box.get_global_rect(), logical])
+	var scroll := panel._center.content_scroll as ScrollContainer
+	_check(scroll != null and scroll.size.y > 0 and scroll.get_child(0).get_combined_minimum_size().y > scroll.size.y,
+		"200% 极端倍率下内容应留在可滚动区，而非撑出屏幕")
 	panel.set_open(false)
 	if _failures.is_empty():
 		print("SkillRankPanelTest: PASS")
