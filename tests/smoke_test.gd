@@ -1370,24 +1370,29 @@ func _test_loot_burst() -> void:
 		"末份停驻应含起飞错峰（期望 %.2f，实际 %.2f）" % [hold_last_expected, float(plan[n - 1]["hold"])])
 	_expect(float(plan[0]["hold"]) > float(plan[n - 1]["hold"]), "越早出场停驻越久（后一份候场更短）")
 
-	# ⑤ 分环散布（§9）：半径在环带内 + 中心间距 ≥0.35 格 + 好装备 / 传说优先内侧
-	var offsets: Array = []
+	# ⑤ 一格一件（工程 93 取代「分环散布」）：目标格唯一 + 格心对齐 + 好装备 / 传说优先内侧
+	var origin_world := Iso.grid_to_world(Vector2i.ZERO)
+	var cells: Array = []
 	for row in plan:
-		offsets.append(row["offset"])
-	var ring: Array = LootBurst.RING_TILES["boss"]
-	var r_lo: float = float(ring[0]) * LootBurst.TILE
-	var r_hi: float = float(ring[1]) * LootBurst.TILE
-	for off in offsets:
-		var r := (off as Vector2).length()
-		_expect(r >= r_lo - 1.0 and r <= r_hi + 1.0,
-			"Boss 落点半径应在 [%.1f, %.1f]，实际 %.1f" % [r_lo, r_hi, r])
-	var min_d: float = LootBurst.MIN_SPACING_TILES * LootBurst.TILE
-	for i in range(offsets.size()):
-		for j in range(i + 1, offsets.size()):
-			var d := (offsets[i] as Vector2).distance_to(offsets[j] as Vector2)
-			_expect(d >= min_d - 0.5, "装备中心间距应 ≥0.35 格（%.1f），实际 %.1f" % [min_d, d])
-	_expect((offsets[n - 1] as Vector2).length() < (offsets[0] as Vector2).length(),
-		"传说应比金币更靠内（好装备 / 传说优先内侧）")
+		var cell_v: Variant = row.get("cell", null)
+		_expect(cell_v is Vector2i, "每份掉落都必须带格位（一件一格），实际 %s" % str(cell_v))
+		if cell_v is Vector2i:
+			cells.append(cell_v as Vector2i)
+			var expect_off := Iso.grid_to_world(cell_v as Vector2i) - origin_world
+			_expect((row["offset"] as Vector2).is_equal_approx(expect_off),
+				"落点偏移应等于目标格心偏移（期望 %s，实际 %s）"
+				% [str(expect_off), str(row["offset"])])
+	_expect(cells.size() == plan.size(), "每份都应有格位：%d 份 → %d 格" % [plan.size(), cells.size()])
+	for i in range(cells.size()):
+		for j in range(i + 1, cells.size()):
+			_expect(cells[i] != cells[j], "两件掉落不得落在同一格：%s 与 %s" % [str(cells[i]), str(cells[j])])
+	var ring_of := func(c: Vector2i) -> int:
+		return maxi(absi(c.x), absi(c.y))
+	_expect(int(ring_of.call(cells[n - 1])) < int(ring_of.call(cells[0])),
+		"传说应比金币更靠内（好装备 / 传说优先内侧）：传说 r=%d，金币 r=%d"
+		% [int(ring_of.call(cells[n - 1])), int(ring_of.call(cells[0]))])
+	_expect(int(ring_of.call(cells[0])) <= LootBurst.rings_for(plan.size()),
+		"7 件应能在 %d 圈内铺完" % LootBurst.rings_for(plan.size()))
 
 	# ⑥ 边界：空批次 / 单件 / 未知档次回退
 	_expect(LootBurst.build([], "boss").is_empty(), "空批次应返回空编排")

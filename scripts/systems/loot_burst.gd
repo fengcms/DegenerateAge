@@ -1,9 +1,9 @@
 class_name LootBurst
 extends RefCounted
-## M6-0d（创意 07 §9）：装备雨展示编排 —— 出场时序 + 分环散布。
+## M6-0d（创意 07 §9）：装备雨展示编排 —— 出场时序 + **一格一件的格铺**。
 ##
 ## 纯计算（static、无节点、无副作用）：由 `Monster._settle_rewards` 在死亡帧调用一次，
-## 产出每份掉落的展示参数（出场延迟 / 落地时长 / 停驻时长 / 飞行时长 / 落点偏移），
+## 产出每份掉落的展示参数（出场延迟 / 落地时长 / 停驻时长 / 飞行时长 / 目标格 + 落点偏移），
 ## 再逐件写入 `GroundItem`。时间全部相对死亡帧 t=0（暂停与后台冻结由引擎 delta 天然满足）。
 ##
 ## 关键分工（与 0c 认领序**解耦**）：
@@ -12,6 +12,19 @@ extends RefCounted
 ##
 ## 分组＝按 kind + 品质判定：基础槽（普 / 优）／好装备槽（稀 / 史）／传说槽（传说）。
 ## 该判定与 `dropTables.json` 的槽位一一对应（§5 / §6），不额外标记得以保持物品实例干净。
+##
+## ## 工程 93（D-31）：为什么从「分环散布」改成「一格一件」
+##
+## 旧实现把整批塞进一条窄环带（Boss 半径 1.2—2.5 格 = 77—160px）再靠松弛推开。
+## 但环带面积是硬上限：86 件时每件等效直径只有 **30px**，小于图标本身 32px ⇒ 图标必然重叠；
+## 名字绘制宽度 **240px**，是格间最小间距（22.4px）的 10.7 倍 ⇒ 名字必然糊成一团。
+## **这不是排布算法没调好，是物理上放不下。**
+##
+## 新实现以击杀格为中心按等距菱形同心圈铺开（Chebyshev 距离 = 圈号），**一格一件**：
+##   · 累计格数 `1 + 4r(r+1)`：r=2 → 25 格、r=5 → 121 格（孤王绝域上限 102 件正好吃下）；
+##   · 格距 64×32px > 图标 32px ⇒ 不再重叠；
+##   · 圈数按件数自动决定，无需配置；圈数上限 `MAX_RING`（12 圈 = 625 格）。
+## 名字重叠问题由 `GroundItem.LABEL_CROWD_LIMIT` 处理（同批 ≥20 件时稀有以上只悬停显示）。
 
 ## 展示 / 起飞次序（§9 原文顺序，值越小越先出场 / 越先离场）。
 const ORDER_COIN := 0
@@ -55,12 +68,11 @@ const BURST_HOLD := {"normal": 0.20, "elite": 0.80, "boss": 1.50}
 const FLY_STAGGER := {"normal": 0.07, "elite": 0.08, "boss": 0.10}
 ## 每份飞行持续。
 const FLY_TIME := {"normal": 0.70, "elite": 0.70, "boss": 0.90}
-## 散布环带（格；§9：精英 0.7–1.5 / Boss 1.2–2.5；普通怪取小环）。
-const RING_TILES := {"normal": [0.5, 1.2], "elite": [0.7, 1.5], "boss": [1.2, 2.5]}
-## 装备中心最小间距（格；§9：≥0.35 格）。
-const MIN_SPACING_TILES := 0.35
-## 黄金角（≈137.5°）：确定性螺旋排布，天然近似最优散布（无需随机数 → 可测）。
-const GOLDEN_ANGLE := 2.399963229728653
+
+## 工程 93：格铺圈数上限（12 圈 = 1 + 4×12×13 = 625 格）。
+## 取 12 的理由：现有最大掉落表是孤王绝域 102 件，只需 5 圈（121 格），
+## 12 圈留了一倍以上余量，同时防止「地图极小 + 件数极多」时空转。
+const MAX_RING := 12
 
 ## 取时序表值（缺档位回退 normal）。
 static func _t(table: Dictionary, kind: String) -> float:
@@ -96,8 +108,15 @@ static func order_of(item: Dictionary) -> int:
 ## 计算整批展示编排。返回数组（**顺序＝出场 / 起飞顺序**），每项：
 ##   { "item": Dictionary, "order": int, "appear": float（出场延迟）,
 ##     "land_time": float, "hold": float（停驻时长）, "fly_time": float,
-##     "offset": Vector2（相对死亡点的落点偏移） }
-static func build(items: Array, kind: String) -> Array:
+##     "cell": Vector2i（目标格，绝对地图格坐标；工程 93）,
+##     "offset": Vector2（目标格心相对**击杀格心**的世界像素偏移） }
+##
+## `ctx`（工程 93，可选）：
+##   · `"origin": Vector2i`  —— 击杀点所在格（默认 `Vector2i.ZERO`，此时 `offset` 即绝对格心）；
+##   · `"walkable": Callable` —— `(cell) -> bool`，不可走的格被跳过（墙 / 水 / 越界）。
+##     ⚠ 回调**自己负责判地图边界**：`IsoGround.is_walkable_cell()` 在 `cave == null`
+##     时恒返回 true，单靠它会把掉落铺到图外，再被 `clamp_to_map` 挤回同一堆。
+static func build(items: Array, kind: String, ctx: Dictionary = {}) -> Array:
 	var k := kind if kind in ["elite", "boss"] else "normal"
 	var rows: Array = []
 	for it in items:
@@ -142,25 +161,24 @@ static func build(items: Array, kind: String) -> Array:
 		row["fly_time"] = fly_time
 		row["hold"] = maxf(0.0, takeoff - (float(row["appear"]) + land_time))
 
-	# ③ 分环散布（内侧优先；确定性，可测）
-	var offsets := _scatter(rows, k)
-	for i in range(rows.size()):
-		rows[i]["offset"] = offsets[i]
+	# ③ 格铺（一件一格；内侧优先；确定性，可测）
+	_layout(rows, ctx)
 	return rows
 
-## 分环散布：好装备 / 传说优先内侧，确定性螺旋 + 松弛保证中心间距 ≥0.35 格。
-## 返回与 `rows` 同序的偏移数组。
-static func _scatter(rows: Array, kind: String) -> Array:
+## 工程 93：格铺落点。就地写入每行的 `cell`（绝对格）与 `offset`（相对击杀格心的像素偏移）。
+##
+## 分配规则：**内侧优先**（`INNER_RANK` 小的先占内圈）→ 逐圈向外取**可走**格 →
+## 圈数不够就扩圈（上限 `MAX_RING`）→ 仍不够则**循环复用已有格位**（宁可叠，绝不丢件）。
+static func _layout(rows: Array, ctx: Dictionary) -> void:
 	var n := rows.size()
-	var out: Array = []
-	out.resize(n)
 	if n == 0:
-		return out
-	var ring_v: Variant = RING_TILES.get(kind, RING_TILES["normal"])
-	var ring: Array = ring_v as Array
-	var r_min: float = float(ring[0]) * TILE
-	var r_max: float = float(ring[1]) * TILE
-	# 内侧优先排序：好装备 / 传说先占内环
+		return
+	var origin_v: Variant = ctx.get("origin", Vector2i.ZERO)
+	var origin: Vector2i = origin_v if origin_v is Vector2i else Vector2i.ZERO
+	var walk_v: Variant = ctx.get("walkable", null)
+	var walk: Callable = walk_v as Callable if walk_v is Callable else Callable()
+
+	# 内侧优先：好装备 / 传说先占内圈
 	var idx: Array = []
 	for i in range(n):
 		idx.append(i)
@@ -170,44 +188,61 @@ static func _scatter(rows: Array, kind: String) -> Array:
 		if ra == rb:
 			return a < b
 		return ra < rb)
-	# 螺旋初值（sqrt 半径 → 面积均布；黄金角 → 角度错开）
-	var pts: Array = []
-	var denom := float(maxi(1, n - 1))
-	for i in range(n):
-		var radius := lerpf(r_min, r_max, sqrt(float(i) / denom))
-		var ang := GOLDEN_ANGLE * float(i)
-		pts.append(Vector2(cos(ang), sin(ang)) * radius)
-	_relax(pts, r_min, r_max)
-	for i in range(n):
-		out[idx[i]] = pts[i]
-	return out
 
-## 松弛迭代：两两推开至最小间距，并把半径夹回环带（n ≤ ~14，代价可忽略）。
-static func _relax(pts: Array, r_min: float, r_max: float) -> void:
-	var n := pts.size()
-	var min_d := MIN_SPACING_TILES * TILE
-	for _iteration in range(48):
-		var moved := false
-		for i in range(n):
-			for j in range(i + 1, n):
-				var a: Vector2 = pts[i]
-				var b: Vector2 = pts[j]
-				var d := b - a
-				var dist := d.length()
-				if dist < min_d:
-					var dir := d / maxf(dist, 0.0001)
-					var push := dir * ((min_d - dist) * 0.5)
-					pts[i] = a - push
-					pts[j] = b + push
-					moved = true
-		for i in range(n):
-			var p: Vector2 = pts[i]
-			var r := p.length()
-			if r < 0.0001:
-				pts[i] = Vector2(r_min, 0.0)
-			elif r < r_min:
-				pts[i] = p * (r_min / r)
-			elif r > r_max:
-				pts[i] = p * (r_max / r)
-		if not moved:
-			break
+	# 逐圈向外收集可用格位
+	var slots: Array = []
+	var ring := 0
+	while slots.size() < n and ring <= MAX_RING:
+		for delta in _ring_deltas(ring):
+			if slots.size() >= n:
+				break
+			var cell: Vector2i = origin + (delta as Vector2i)
+			if walk.is_valid() and not bool(walk.call(cell)):
+				continue
+			slots.append(cell)
+		ring += 1
+
+	# 兜底一：整张图一格都不可走（正常不会发生）⇒ 全部叠在击杀点，至少不丢件。
+	if slots.is_empty():
+		slots.append(origin)
+	# 兜底二：件数超过可用格位（MAX_RING 内全满）⇒ 循环复用，绝不丢件。
+	var capacity := slots.size()
+	var extra := 0
+	while slots.size() < n:
+		slots.append(slots[extra % capacity])
+		extra += 1
+
+	var origin_world := Iso.grid_to_world(origin)
+	for i in range(n):
+		var row: Dictionary = rows[idx[i]]
+		var cell: Vector2i = slots[i]
+		row["cell"] = cell
+		row["offset"] = Iso.grid_to_world(cell) - origin_world
+
+## 第 `r` 圈的格位增量（Chebyshev 距离 == r）。r=0 只有中心格，r≥1 有 8r 格。
+## 环内按**地面视角**角度升序（`Iso.TILE_H` 加权），保证同一份输入永远得到同一份排布。
+static func _ring_deltas(r: int) -> Array:
+	if r <= 0:
+		return [Vector2i.ZERO]
+	var ring: Array = []
+	for dx in range(-r, r + 1):
+		for dy in range(-r, r + 1):
+			if maxi(absi(dx), absi(dy)) != r:
+				continue
+			ring.append(Vector2i(dx, dy))
+	ring.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		var aa := atan2(float(a.y) * Iso.TILE_H, float(a.x) * Iso.TILE_W)
+		var ba := atan2(float(b.y) * Iso.TILE_H, float(b.x) * Iso.TILE_W)
+		if is_equal_approx(aa, ba):
+			return a.x < b.x
+		return aa < ba)
+	return ring
+
+## 容纳 `count` 件所需的圈数（`1 + 4r(r+1) ≥ count` 的最小 r）。供测试与文档对照。
+static func rings_for(count: int) -> int:
+	if count <= 1:
+		return 0
+	var r := 0
+	while 1 + 4 * r * (r + 1) < count:
+		r += 1
+	return r

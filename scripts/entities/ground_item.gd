@@ -44,6 +44,15 @@ const STAGGER_MAX := 0.35
 const FLY_TIMEOUT_EXTRA := 0.4
 ## 单帧目标点跳变阈值（px）：读档 / 回城卷 / 瞬移 → 不拉长弧，直接淡出回收。
 const TELEPORT_BREAK := 220.0
+## 工程 93（D-31）：同批件数 ≥ 此值 ⇒ 稀有以上的地面名字只悬停显示（见 `batch_size` 注释）。
+const LABEL_CROWD_LIMIT := 20
+
+## 工程 93：某件掉落是否**常显**地面名字（与 `_draw_label` 共用，供测试直接断言）。
+## 稀有以上默认常显；但同批 ≥ `LABEL_CROWD_LIMIT` 件时改为悬停才显示，避免名字糊成一团。
+static func should_always_show_label(quality: String, batch_size: int) -> bool:
+	if not (quality in ["rare", "epic", "legendary"]):
+		return false
+	return batch_size < LABEL_CROWD_LIMIT
 
 enum Stage { GROUND, HOLD, FLY }
 
@@ -72,6 +81,12 @@ enum Stage { GROUND, HOLD, FLY }
 ## M6-0e（创意 07 §10）：精英 / Boss 装备为 true ⇒ 入包成功**不弹**「拾取」提示
 ## （件数多，改由批次摘要统一说明，不逐件播报）。普通怪 / 玩家丢弃物保持 false。
 @export var silent_pickup: bool = false
+## 工程 93（D-31）：本批掉落总件数（由 `Monster._spawn_drop` 传入）。
+## 同批 ≥ `LABEL_CROWD_LIMIT` 时，稀有以上的地面名字改为**仅悬停显示**。
+## 🔴 为什么必须这样做：格铺后格距 64px，而名字绘制宽度 **240px**（跨 3.75 格），
+## 一屏 100 个名字必然叠成读不出信息的糊字。品质已由光柱高度 / 颜色区分，
+## 「看到有多少件」比「读到每一件的名字」重要；名字仍可悬停查看，批次摘要也会列出稀有以上。
+@export var batch_size: int = 0
 
 @export var item: Dictionary = {}
 
@@ -496,11 +511,12 @@ func _draw_quality_augment(kind: String, quality: String, col: Color) -> void:
 		draw_polyline(loop, Color(tint.r, tint.g, tint.b, 0.8), 1.4)
 
 ## M6-0d（§9）：装备名称与品质 —— 稀有以上常显，普通 / 优秀悬停显示。
+## 工程 93：同批件数过多时稀有以上也改为悬停显示（名字宽 240px ≫ 一格 64px，会糊成一团）。
 ## 世界文字：抵消地图倍率，并按最终文字倍率显示。
 func _draw_label(kind: String, quality: String, col: Color, center: Vector2) -> void:
 	if kind != "equip":
 		return
-	if not (quality in ["rare", "epic", "legendary"] or _hovered):
+	if not (should_always_show_label(quality, batch_size) or _hovered):
 		return
 	var font_size := 13.0 * SettingsRuntime.world_text_scale_value()
 	draw_string(MONO_FONT, Vector2(center.x - 120.0, center.y - 20.0), ItemUtil.display_name(item),

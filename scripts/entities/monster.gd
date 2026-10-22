@@ -977,8 +977,8 @@ func _settle_rewards() -> void:
 	var kind := _kind()
 	var persistent := kind in ["elite", "boss"]   # 精英 / Boss 未领取 ⇒ 跨图 / 跨档保留（§11）
 	var anim := bool(GameState.settings.get("dropFlyAnim", true))   # 关闭 ⇒ 不散落 / 不飞行（§10）
-	# M6-0d（创意 07 §9）：装备雨展示编排（出场时序 + 落地 + 停留 + 错峰起飞 + 分环散布）
-	var plan := LootBurst.build(rolled, kind)
+	# M6-0d（创意 07 §9）：装备雨展示编排（出场时序 + 落地 + 停留 + 错峰起飞 + **一格一件的格铺**）
+	var plan := LootBurst.build(rolled, kind, _loot_layout_context())
 	# 认领序（§8，仅决定背包空间分配）与展示序（§9）解耦：高品质优先入包，展示按 plan 自带时序。
 	# 认领在 `add_child` 时同步判定，故循环结束时「未领取装备数」已可确定（§11.1）。
 	var unclaimed_equip := 0
@@ -986,7 +986,7 @@ func _settle_rewards() -> void:
 	var auto_sold := 0
 	var auto_sold_gold := 0
 	for row in _order_rows_by_claim(plan):
-		var gi := _spawn_drop(row, batch_id, persistent, anim)
+		var gi := _spawn_drop(row, batch_id, persistent, anim, plan.size())
 		if gi == null:
 			continue
 		if gi.is_claimed():
@@ -1090,10 +1090,14 @@ func _emit_toast_delayed(text: String, kind: String, delay: float) -> void:
 ## 生成一件地面掉落物（7.6 / 9.9）。
 ## M6-0c：`persistent`（精英 / Boss）⇒ 入包失败登记为「未领取战利品」，跨图 / 跨档保留（创意 07 §11）。
 ## M6-0d（创意 07 §9）：`row` 为 `LootBurst.build` 产出的展示编排行（出场延迟 / 落地时长 /
-##   停驻 / 飞行时长 / 落点偏移）；`anim=false`（关闭 dropFlyAnim）⇒ 立即出场、不散落、不飞行（§10）。
+##   停驻 / 飞行时长 / 目标格 + 落点偏移）；`anim=false`（关闭 dropFlyAnim）⇒ 立即出场、不散落、不飞行（§10）。
 ## M6-0e（创意 07 §10）：精英 / Boss **装备**不逐件弹「拾取」提示（由批次摘要统一说明）。
+## 工程 93（D-31）：`row` 带 `cell` 时落点**精确对齐该格心**（一件一格），
+##   而不是「死亡点 + 偏移」—— 死亡点很少正好在格心，两者混用会让格子歪斜、边界处重新挤成一堆。
+##   同时把整批件数写进 `batch_size`，供地面名字按「同批过多则只悬停显示」降噪。
 ## 返回生成的 `GroundItem`（供结算统计未领取件数）；无掉落层 / 非法物品时返回 `null`。
-func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = false, anim: bool = true) -> GroundItem:
+func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = false,
+		anim: bool = true, batch_size: int = 0) -> GroundItem:
 	var item_v: Variant = row.get("item", {})
 	if not (item_v is Dictionary) or (item_v as Dictionary).is_empty():
 		return null
@@ -1106,6 +1110,7 @@ func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = fals
 	gi.auto_claim = GameState.auto_pickup_on
 	gi.batch_id = batch_id
 	gi.persistent = persistent
+	gi.batch_size = batch_size
 	gi.silent_pickup = persistent and String(item.get("kind", "")) == "equip"
 	var offset := Vector2.ZERO
 	var off_v: Variant = row.get("offset", Vector2.ZERO)
@@ -1120,11 +1125,31 @@ func _spawn_drop(row: Dictionary, batch_id: String = "", persistent: bool = fals
 		gi.appear_delay = 0.0
 		gi.hold_time = 0.0
 	layer.add_child(gi)
-	# 落点：死亡位置 + 分环偏移。关闭动画时**认领物**不散落（立即飞走 / 消失），
+	# 落点：优先用编排给的**绝对格心**；关闭动画时**认领物**不散落（立即飞走 / 消失），
 	# 但**未领取物**仍需错开，避免多件叠在同一点而看不见（§10「未领取物仍须有可见地面标记」）。
 	var apply_offset := anim or not gi.is_claimed()
-	gi.global_position = _clamp_to_map(global_position + (offset if apply_offset else Vector2.ZERO))
+	var cell_v: Variant = row.get("cell", null)
+	var target := global_position + (offset if apply_offset else Vector2.ZERO)
+	if apply_offset and cell_v is Vector2i:
+		target = Iso.grid_to_world(cell_v as Vector2i)
+	gi.global_position = _clamp_to_map(target)
 	return gi
+
+## 工程 93（D-31）：格铺上下文 —— 击杀点所在格 + 本图**可走格**判定。
+## 🔴 越界必须在这个回调里自己拦：`IsoGround.is_walkable_cell()` 在 `cave == null` 时恒返回 true，
+## 而 `clamp_to_map()` 的合法范围是 `[2, grid_size - 3]`（margin 2）。只判可走会让孤王绝域
+## 40×30 的掉落铺到图外，再被 clamp 全部挤回边界同一堆 —— 格铺白做，且症状是「只有靠边时才重叠」。
+func _loot_layout_context() -> Dictionary:
+	var origin := Vector2i(Iso.world_to_grid(global_position).round())
+	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
+	if ground == null:
+		return {"origin": origin}
+	var size := ground.grid_size
+	var walk := func(cell: Vector2i) -> bool:
+		if cell.x < 2 or cell.y < 2 or cell.x >= size.x - 2 or cell.y >= size.y - 2:
+			return false
+		return ground.is_walkable_cell(cell)
+	return {"origin": origin, "walkable": walk}
 
 ## M6-0d（创意 07 §9）：落点至少满足地图边界内；完整可走网格校验待障碍系统落地后复用。
 ## 找不到地面节点（测试 / 无世界上下文）时原样返回。
