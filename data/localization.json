@@ -887,5 +887,8 @@
   "msg.drop_to_ground.p005": "物品位置已变化，请重新拖动",
   "msg.drop_to_ground.p006": "这里放不下，换个位置再丢",
   "msg.drop_to_ground.p007": "丢弃失败，请重试",
-  "ui.drop_zone.hint": "松开左键，把物品丢到地面"
+  "ui.drop_zone.hint": "松开左键，把物品丢到地面",
+  "ui.reforge_panel.p025": "（较上次 %s）",
+  "ui.reforge_panel.p026": "（与上次持平）",
+  "ui.reforge_panel.p027": "耐久破损：词条不生效，评分只含基底"
 }

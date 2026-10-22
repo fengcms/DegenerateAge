@@ -25,6 +25,20 @@ var _picker: OptionButton
 var _hint: Label
 var _affix_title: Label
 var _affix_rows: VBoxContainer
+## 工程 90：当前选中装备的评分。与「当前词条」**同一行右对齐** —— 不是审美选择：
+## 实测本面板 570×623、内容自然高 581，uiScale 1.25 时可用高只剩 640（余量 17px），
+## 独立占一行（+26px）当场顶穿，而评分又必须常驻可读。
+var _score: Label
+## 破损件补充说明：`score()` 走 `attrs_for_use`，破损时只算基底 ⇒ 词条重掷了、分数不动。
+## 不解释就是「花 5 万金币买了个寂寞」（工程 88 的口径，见产品 05 §5.9）。
+var _score_note: Label
+## 上一次重铸**前**的评分（Q5=A）。只在重铸成功分支里写；换装备 / 关面板清零。
+## 🔴 不能写在 `_refresh_details` 里：它被 `inventory_changed` / `gold_changed` / 锁定切换反复调用，
+## 基准会被随手覆盖 ⇒ 永远显示「持平」，而且这种错在测试里极易假绿。
+var _score_base := NAN
+var _score_base_owner := ""
+## 内容区滚动容器（Q4=A，F-P2-3）。标题行留在外框渐变带内，其余内容整体可滚。
+var _scroll: ScrollContainer
 var _lock_hint: Label
 var _refine_title: Label
 var _refine_head: HBoxContainer
@@ -85,6 +99,9 @@ func set_open(open: bool) -> void:
 	# 工程 81：锁定不落档 —— 关面板即清空，下次打开是干净的（不写进存档 ⇒ schema 不动）。
 	_locked.clear()
 	_locked_owner = ""
+	# 工程 90：增量基准同口径 —— 关掉面板就不再记住「上次重铸前多少分」。
+	_score_base = NAN
+	_score_base_owner = ""
 	# 工程 86：精炼材料同口径，关面板即清空（材料在确认重铸时才扣除）。
 	for i in range(_refine_selected.size()):
 		_refine_selected[i] = {}
@@ -120,12 +137,11 @@ func _build() -> void:
 	for side in ["left", "right", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	_box.add_child(margin)
-	_content = VBoxContainer.new()
-	_content.custom_minimum_size = Vector2(WIDTH, 0)
-	_content.add_theme_constant_override("separation", 10)
-	margin.add_child(_content)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	margin.add_child(root)
 	var head := HBoxContainer.new()
-	_content.add_child(head)
+	root.add_child(head)
 	PanelChrome.style_header_layout(margin, head)
 	var title := Label.new()
 	title.text = Localization.tr_key("ui.reforge_panel.p002")
@@ -140,7 +156,21 @@ func _build() -> void:
 	PanelChrome.style_close(close)
 	# 与其余浮窗同构：标题行拖动、点击置前、越界夹紧（工程 74 §7）。
 	_center.setup(self, _box, head, Vector2(0.5, 0.5))
-	_content.add_child(PanelChrome.make_title_gap())
+	root.add_child(PanelChrome.make_title_gap())
+	# 工程 90 Q4=A（F-P2-3）：标题行固定在外框渐变带内，其余内容整体滚动。
+	# 不接的后果是量出来的：uiScale 1.5 时面板高 623 > 可用高 533，费用行与「重铸」按钮直接出屏，
+	# 又没有滚动条可救（与 08 §7 第 44 条同源）。
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(_scroll)
+	_center.set_content_scroll(_scroll)
+	_content = VBoxContainer.new()
+	_content.custom_minimum_size = Vector2(WIDTH, 0)
+	_content.add_theme_constant_override("separation", 10)
+	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(_content)
 	_hint = Label.new()
 	_hint.text = Localization.tr_key("ui.reforge_panel.p001")
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -151,10 +181,29 @@ func _build() -> void:
 	_picker.item_selected.connect(_on_selected)
 	_content.add_child(_picker)
 	PanelChrome.style_option_button(_picker)
+	var affix_head := HBoxContainer.new()
+	affix_head.add_theme_constant_override("separation", 8)
+	_content.add_child(affix_head)
 	_affix_title = Label.new()
 	_affix_title.text = Localization.tr_key("ui.reforge_panel.p003")
+	_affix_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	PanelChrome.style_section(_affix_title)
-	_content.add_child(_affix_title)
+	affix_head.add_child(_affix_title)
+	# 工程 90：评分贴在同一行右侧。`autowrap=OFF` + `SHRINK_END` —— 文字倍率放大后
+	# 让标题先挤压，而不是把「评分：166.4」折成两行把整行顶高。
+	_score = Label.new()
+	_score.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_score.size_flags_horizontal = Control.SIZE_SHRINK_END
+	_score.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_score.add_theme_font_size_override("font_size", 15)
+	_score.visible = false
+	affix_head.add_child(_score)
+	_score_note = Label.new()
+	_score_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_score_note.add_theme_font_size_override("font_size", 12)
+	_score_note.add_theme_color_override("font_color", PanelChrome.MUTED)
+	_score_note.visible = false
+	_content.add_child(_score_note)
 	_affix_rows = VBoxContainer.new()
 	_affix_rows.add_theme_constant_override("separation", 4)
 	_content.add_child(_affix_rows)
@@ -295,9 +344,21 @@ func _add_choice(source: String, key: Variant, item: Dictionary, prefix: String)
 	_choices.append({"source": source, "key": key, "id": id})
 	_picker.add_item("%s　%s" % [prefix, ItemUtil.display_name(item)])
 
+## 等价于在下拉里选中第 `index` 项（测试不依赖输入系统）。
+## 🔴 只调 `_on_selected` 不够：`_selected_item()` 读的是 `_picker.selected`，
+## 真实路径下信号先改了它，直接调函数则仍是旧值 ⇒ 面板显示的还是上一件。
+func select_choice(index: int) -> void:
+	if index < 0 or index >= _choices.size():
+		return
+	_picker.select(index)
+	_on_selected(index)
+
 func _on_selected(index: int) -> void:
 	if index >= 0 and index < _choices.size():
 		_selected_id = String(_choices[index].id)
+		# 工程 90：换装备即丢掉上一次重铸的对比基准（与锁定「换件即清空」同口径）。
+		_score_base = NAN
+		_score_base_owner = ""
 		_feedback.text = ""
 		_refresh_details()
 
@@ -316,6 +377,9 @@ func _refresh_details() -> void:
 	var item := _selected_item()
 	if item.is_empty():
 		_build_affix_rows({})
+		# 工程 90：无候选就整行隐藏 —— 显示「评分 0.0」会被读成「这件装备一文不值」，
+		# 而真实原因是「你还没有装备」。
+		_refresh_score({})
 		_lock_hint.visible = false
 		_refine_head.visible = false
 		_refine_row.visible = false
@@ -332,6 +396,7 @@ func _refresh_details() -> void:
 		_locked_owner = owner_id
 	_locked = _prune_locks(item)
 	_build_affix_rows(item)
+	_refresh_score(item)
 	_lock_hint.visible = true
 	_refresh_refine(item)
 	var price := Reforge.cost(Equipment.level_req(item), _locked.size())
@@ -353,6 +418,47 @@ func _refresh_details() -> void:
 		_button.tooltip_text = Localization.tr_key("ui.reforge_panel.p007")
 	else:
 		_button.tooltip_text = ""
+
+## ---- 工程 90：评分（当前值 + 与上一次重铸的差值）----
+## 🔴 口径只有 `Equipment.score` 一个入口（内部走 `EquipmentMath.attrs_for_use`）。
+## 面板自己再算一遍就会出现「面板 166.4 / 背包浮层 172.0」的分裂 —— 与工程 88
+## 「面板与结算各写一遍」同型；测试直接用 `Equipment.score` 的返回值当判据。
+func _refresh_score(item: Dictionary) -> void:
+	if _score == null or _score_note == null:
+		return
+	if item.is_empty():
+		_score.visible = false
+		_score.text = ""
+		_score_note.visible = false
+		return
+	_score.visible = true
+	var current := _rounded_score(Equipment.score(item))
+	var text := Localization.tr_key("ui.equip_tip.score", [current])
+	var color := PanelChrome.GOLD_LIGHT
+	if _score_base_owner == String(item.get("instanceId", "")) and not is_nan(_score_base):
+		var delta := current - _score_base
+		if absf(delta) < 0.005:
+			text += Localization.tr_key("ui.reforge_panel.p026")
+			color = PanelChrome.MUTED
+		else:
+			text += Localization.tr_key("ui.reforge_panel.p025") % _signed_delta(delta)
+			color = PanelChrome.GOLD_LIGHT if delta > 0.0 else COL_WARN
+	_score.text = text
+	_score.add_theme_color_override("font_color", color)
+	# 破损件：词条重掷了，但评分一点不动（`score` 只算基底）。不说清楚就是「花了钱没效果」。
+	var broken := Durability.is_broken(item)
+	_score_note.visible = broken
+	if broken:
+		_score_note.text = Localization.tr_key("ui.reforge_panel.p027")
+
+## 先归一到 `%.1f` 再比：166.44 与 166.36 都显示 166.4，差值直接相减却是 -0.1，
+## 玩家会看到「评分 166.4（较上次 -0.1）」这种自相矛盾的文案。
+static func _rounded_score(value: float) -> float:
+	return roundf(value * 10.0) / 10.0
+
+## 涨要带 `+`；跌由 `%.1f` 自带 `-`（format 不补正号）。
+static func _signed_delta(value: float) -> String:
+	return ("+%.1f" % value) if value > 0.0 else ("%.1f" % value)
 
 ## 词条区改行容器：每行「词条文本 + 锁按钮」。锁定行用金色，未锁用正文色。
 ## 🔴 锁按钮到上限后**置灰而不是隐藏** —— 隐藏会让玩家以为「这件装备只能锁两条」，
@@ -573,6 +679,9 @@ func _on_reforge() -> void:
 	var choice := _choices[index]
 	var before := _selected_item()
 	var old_lines := ItemUtil.affix_lines(before)
+	# 工程 90：基准必须在调用前取成**值**。`before` 是字典引用，重铸若原地改写它，
+	# 事后取分就会静默拿到「新分」⇒ 增量恒为 0，而且不报任何错。
+	var before_score := Equipment.score(before)
 	# 快照：重铸会触发 `inventory_changed` → `_refresh_details`，那之后 `_locked` 已被剪枝重建。
 	var locked_snapshot := _locked.duplicate()
 	var refine_snapshot: Array[String] = []
@@ -588,6 +697,10 @@ func _on_reforge() -> void:
 		return
 	for i in range(_refine_selected.size()):
 		_refine_selected[i] = {}
+	# 工程 90：基准只在这里落定（成功分支）。失败分支（金币不足 / 校验拒绝）不写 ——
+	# 否则下一次成功时会拿一个很旧的基准去比，差值失去意义。
+	_score_base = _rounded_score(before_score)
+	_score_base_owner = String(choice.id)
 	var new_lines: Array = ItemUtil.affix_lines({
 		"affixes": result.get("affixes", []), "pctAttrs": result.get("pctAttrs", []),
 	})
