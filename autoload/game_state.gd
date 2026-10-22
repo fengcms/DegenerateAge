@@ -1633,14 +1633,23 @@ func apply_unclaimed_loot(raw: Variant) -> void:
 # ---- 自动战斗 / 自动拾取开关（M1-9，3.14 / 4.6）----
 
 ## 设置自动战斗开关（F 键）。返回新状态。决策机订阅本信号以重置锚点。
+## 2026-10-22：开自动战斗时**顺手打开自动拾取** —— 自动战斗会一路清怪，玩家常常忘了
+## 按 G，打完一整圈发现地上的东西全没捡。单向联动：关战斗不动拾取；拾取打开后玩家
+## 随时可按 G 单独关掉（关掉后不会被 F 反复抢回去，只有重新按 F 开启才再联动一次）。
 func set_auto_battle(on: bool) -> bool:
 	if auto_battle_on == on:
 		return auto_battle_on
 	auto_battle_on = on
+	var pickup_was_on := auto_pickup_on
+	if on and not auto_pickup_on:
+		auto_pickup_on = true
 	EventBus.auto_state_changed.emit(auto_battle_on, auto_pickup_on)
 	var msg := Localization.tr_key("msg.game_state.p042") if on else Localization.tr_key("msg.game_state.p043")
-	if on and auto_pickup_on:
+	if on and pickup_was_on:
 		msg += Localization.tr_key("msg.game_state.p044")
+	elif on:
+		# 本次是「开战斗时顺带打开」的，明确告诉玩家 G 现在也亮着、可单独关。
+		msg += Localization.tr_key("msg.game_state.p057")
 	EventBus.toast_requested.emit(msg, "info")
 	return auto_battle_on
 

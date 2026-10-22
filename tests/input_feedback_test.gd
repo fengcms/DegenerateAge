@@ -145,9 +145,35 @@ func _ready() -> void:
 	key(KEY_G)
 	check(GameState.auto_pickup_on, "面板打开时 G 仍能切换自动拾取")
 	key(KEY_G)
+	# 2026-10-22：F 开自动战斗时联动打开自动拾取（挂机最常漏的一步），G 仍可单独关。
+	# 四条断言覆盖完整交互链，避免「联动写了但提示在骗人」或「G 关掉后又被抢回去」。
+	var toasts: Array[String] = []
+	var on_toast := func(text: String, _kind: String) -> void:
+		toasts.append(text)
+	EventBus.toast_requested.connect(on_toast)
+	toasts.clear()
 	key(KEY_F)
-	check(GameState.auto_battle_on, "面板打开时 F 仍能切换自动战斗")
+	check(GameState.auto_battle_on and GameState.auto_pickup_on,
+		"按 F 开启自动战斗时一并打开自动拾取")
+	check(toasts.size() == 1 and toasts[0] == Localization.tr_key("msg.game_state.p042")
+		+ Localization.tr_key("msg.game_state.p057"),
+		"提示写明本次是顺带开启了拾取（实际 %s）" % [toasts])
+	key(KEY_G)
+	check(not GameState.auto_pickup_on and GameState.auto_battle_on,
+		"G 可单独关闭自动拾取，自动战斗不受影响")
 	key(KEY_F)
+	check(not GameState.auto_battle_on and not GameState.auto_pickup_on,
+		"关自动战斗不会顺手改动自动拾取")
+	key(KEY_G)
+	toasts.clear()
+	key(KEY_F)
+	check(GameState.auto_pickup_on and toasts.size() == 1
+		and toasts[0] == Localization.tr_key("msg.game_state.p042")
+			+ Localization.tr_key("msg.game_state.p044"),
+		"拾取本来就开着时提示不再说「已同时开启」（实际 %s）" % [toasts])
+	key(KEY_F)
+	key(KEY_G)
+	EventBus.toast_requested.disconnect(on_toast)
 	# P1（工程 71 §4/§5）：面板打开时鼠标点快捷格必须与键盘等效。这里直接调用 `_activate_hotbar`
 	# 断言**守卫**这一层；旧口径（panel_open and not from_keyboard）下这一条必红。
 	# 药水冷却按 item_id 独立且不落档（Consumable._cd），会跨断言残留 —— 每条断言前先 reset，
