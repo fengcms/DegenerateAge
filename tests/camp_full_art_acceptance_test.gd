@@ -83,7 +83,7 @@ func _ready() -> void:
 	var blocked := _scan_original_footprints(ground, layout)
 	assert(blocked > 150, "逐格障碍扫描覆盖不足")
 	_check_open_perimeter(world, ground)
-	_check_npc_positions(world)
+	_check_npc_positions(world, ground)
 	print("[PERF] 营地 B 全图原障碍逐格扫描不可走格心：", blocked)
 	for route: Dictionary in ROUTES:
 		await _walk(world, ground, player, camera, route)
@@ -136,12 +136,16 @@ func _scan_original_footprints(ground: IsoGround, layout: Dictionary) -> int:
 				assert(not ground.cave.is_walkable(cell), "原实体足迹中有可走格：%s" % cell)
 	return checked
 
-## NPC 位置逐一与原 maps.json 配置比较，防止贴图替换时服务点意外移动。
-func _check_npc_positions(world: Node2D) -> void:
+## 检查落点未被美术改动埋进障碍，NPC 位置逐一与原 maps.json 配置比较。
+func _check_npc_positions(world: Node2D, ground: IsoGround) -> void:
 	var specs: Array = MapService.current_npcs()
 	var arrival: Array = MapService.data_for("camp")["carterArrival"]
-	assert(arrival.size() == 2 and int(arrival[0]) == 42 and int(arrival[1]) == 30,
-		"马车旅行落点不应随美术与外围开放偏移")
+	# 不写死格子号：落点口径由 `TownCarterArrivalTest` 逐座城镇校验（2026-10-22 六座
+	# 城镇已统一挪到车夫旁），这里只守「美术与外围开放没有把落点埋进障碍」这条本场景的职责。
+	# 原断言写死 [42,30]，数据改成 [48,34] 后它必然误红，且红的原因跟美术毫无关系。
+	assert(arrival.size() == 2
+		and ground.cave.is_walkable(Vector2i(int(arrival[0]), int(arrival[1]))),
+		"马车旅行落点不应随美术与外围开放偏移（必须仍是可走格）")
 	var npcs := world.get_node("Npcs")
 	assert(npcs.get_child_count() == specs.size() and specs.size() == 5, "营地 NPC 数量变更")
 	for spec: Dictionary in specs:
