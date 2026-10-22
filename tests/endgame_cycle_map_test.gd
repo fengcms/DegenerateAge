@@ -186,9 +186,12 @@ func _test_spawn_instances() -> void:
 	check(boss_spawner.point_count() == 100 and boss_spawner.alive_count() == 18, "百 Boss 图真实装配 100 点、最多 18 只")
 	var boss: Monster = boss_spawner._points[0].get("entry", null)
 	if boss != null:
+		# 复合断言必须把实际值打出来：否则红了只知道「四项里有一项错」，看不出是哪项
+		# （实测 N-4 只漏改 1 席时就只吐一句「攻击 ×3.0」，没有数字可对）。
 		check(boss.level == 100 and is_equal_approx(boss.xp_multiplier, 0.25)
-			and is_equal_approx(boss.hp_multiplier, 2.0) and is_equal_approx(boss.atk_multiplier, 1.5),
-			"Boss 实例等级 100、经验 ×0.25、生命 ×2、攻击 ×1.5")
+			and is_equal_approx(boss.hp_multiplier, 2.0) and is_equal_approx(boss.atk_multiplier, 3.0),
+			"Boss 实例应为 100 级 / 经验 ×0.25 / 生命 ×2.0 / 攻击 ×3.0，实际 %d / ×%.2f / ×%.2f / ×%.2f"
+			% [boss.level, boss.xp_multiplier, boss.hp_multiplier, boss.atk_multiplier])
 	boss_spawner.queue_free()
 	await get_tree().process_frame
 
@@ -201,7 +204,9 @@ func _test_multipliers() -> void:
 		var seat: Dictionary = raw
 		var mid := String(seat.get("monsterId", ""))
 		check(is_equal_approx(float(seat.get("hpMultiplier", 0.0)), 2.0), "百首禁域 %s 的 hpMultiplier 应为 2.0" % mid)
-		check(is_equal_approx(float(seat.get("atkMultiplier", 0.0)), 1.5), "百首禁域 %s 的 atkMultiplier 应为 1.5" % mid)
+		# 工程 94（D-32）：1.5 → 3.0。1.5 倍在 140 级仍在破防线（20,928）之下 ⇒ 每击恒保底 60。
+		check(is_equal_approx(float(seat.get("atkMultiplier", 0.0)), 3.0),
+			"百首禁域 %s 的 atkMultiplier 应为 3.0（破防，工程 94），实际 %.2f" % [mid, float(seat.get("atkMultiplier", 0.0))])
 		check(is_equal_approx(float(seat.get("xpMultiplier", 0.0)), 0.25), "百首禁域 %s 的 xpMultiplier 应为 0.25" % mid)
 
 	var arena: Dictionary = DataLoader.get_entry("maps", "c7_arena")

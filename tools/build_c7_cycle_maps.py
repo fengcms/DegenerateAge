@@ -65,6 +65,15 @@ GOLD_DAMAGE_CAP_PCT = 0.5
 # 🔴 这是**刻意的净亏配比**（单位时间金币 ≈ ×0.67）：守卫定位是「掉落更好、值得打一会儿」，
 #    不是「刷钱更快」。下一个人按「收益应该更高」去改倍率，就把产品定位改掉了（R-10）。
 GUARD_MONSTERS = ("c6_normal02", "c6_normal07")
+# 🔑 百首禁域攻击倍率 3.0（工程 94 / D-32）：与孤王绝域同一个病因 —— 原地 1.5 倍是血包。
+#    破防阈值是 `攻击 > 防御×0.5`，140 级满紫 12 星防御 41,857 ⇒ 破防线 20,928，
+#    而 Boss 基础攻 8,725 × 1.5 = 13,087 仍在阈值之下 ⇒ 每击恒走保底 60（0.07% 血）。
+#    ⚠ **别调成「刚好 2.40」**：`Combat.resolve` 走保底的条件是 `攻击 − 防御×0.5 <= 0`，
+#    恰配阈值时每击只剩 12 点（比保底 60 还轻），比不配更糟。要么明显越过去，要么别动。
+#    ⚠ 这个值随等级漂移（140 级 2.3987 倍 / 137 级 2.46 倍），改它先用 tools/boss_ttk_probe 复算。
+#    ⚠ 百首禁域是**三档攻速混合图**（首领攻速 1.8s / 1.5s / 1.4s 都有），同倍率下
+#    单只掉血差 30% —— 判据只认「裸站多久会死」，不认「每击多少」。
+BOSS_FIELD_ATK = 3.0
 
 
 def write_json(path: Path, data: dict, compact: bool = False) -> None:
@@ -242,7 +251,7 @@ def build_boss() -> dict:
                       "cell": [20 + column * 18, 10 + row * 11],
                       "kind": "boss", "respawnTime": 600, "tombstone": True,
                       "scaleStats": True, "xpFromCurve": True,
-                      "hpMultiplier": 2.0, "atkMultiplier": 1.5, "xpMultiplier": 0.25,
+                      "hpMultiplier": 2.0, "atkMultiplier": BOSS_FIELD_ATK, "xpMultiplier": 0.25,
                       "dropTableId": "DT_C7_Boss_Field", "group": chr(ord("A") + row)})
     # 7 与 10 互素，十个外观在每一行各出现一次。
     data.update({"spawnPoints": [], "bossSpawns": seats, "normalCap": 0,

@@ -61,7 +61,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -78,7 +78,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -95,7 +95,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -112,7 +112,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -129,7 +129,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -146,7 +146,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -163,7 +163,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -180,7 +180,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -197,7 +197,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -214,7 +214,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "A"
@@ -231,7 +231,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -248,7 +248,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -265,7 +265,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -282,7 +282,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -299,7 +299,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -316,7 +316,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -333,7 +333,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -350,7 +350,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -367,7 +367,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -384,7 +384,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "B"
@@ -401,7 +401,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -418,7 +418,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -435,7 +435,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -452,7 +452,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -469,7 +469,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -486,7 +486,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -503,7 +503,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -520,7 +520,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -537,7 +537,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -554,7 +554,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "C"
@@ -571,7 +571,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -588,7 +588,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -605,7 +605,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -622,7 +622,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -639,7 +639,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -656,7 +656,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -673,7 +673,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -690,7 +690,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -707,7 +707,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -724,7 +724,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "D"
@@ -741,7 +741,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -758,7 +758,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -775,7 +775,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -792,7 +792,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -809,7 +809,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -826,7 +826,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -843,7 +843,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -860,7 +860,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -877,7 +877,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -894,7 +894,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "E"
@@ -911,7 +911,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -928,7 +928,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -945,7 +945,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -962,7 +962,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -979,7 +979,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -996,7 +996,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -1013,7 +1013,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -1030,7 +1030,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -1047,7 +1047,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -1064,7 +1064,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "F"
@@ -1081,7 +1081,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1098,7 +1098,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1115,7 +1115,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1132,7 +1132,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1149,7 +1149,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1166,7 +1166,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1183,7 +1183,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1200,7 +1200,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1217,7 +1217,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1234,7 +1234,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "G"
@@ -1251,7 +1251,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1268,7 +1268,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1285,7 +1285,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1302,7 +1302,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1319,7 +1319,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1336,7 +1336,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1353,7 +1353,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1370,7 +1370,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1387,7 +1387,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1404,7 +1404,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "H"
@@ -1421,7 +1421,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1438,7 +1438,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1455,7 +1455,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1472,7 +1472,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1489,7 +1489,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1506,7 +1506,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1523,7 +1523,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1540,7 +1540,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1557,7 +1557,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1574,7 +1574,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "I"
@@ -1591,7 +1591,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1608,7 +1608,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1625,7 +1625,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1642,7 +1642,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1659,7 +1659,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1676,7 +1676,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1693,7 +1693,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1710,7 +1710,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1727,7 +1727,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"
@@ -1744,7 +1744,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 2.0,
-      "atkMultiplier": 1.5,
+      "atkMultiplier": 3.0,
       "xpMultiplier": 0.25,
       "dropTableId": "DT_C7_Boss_Field",
       "group": "J"

@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 71 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 72 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -65,6 +65,10 @@ DEFAULT_TESTS = [
     # 工程 91 孤王绝域：单席 / 血 ×20 重生 1800 / 双门槛（100 级 + 全身紫装）/
     # 十倍件数逐组比值 / 掉落 levelOffset=10（101 与 110 必须同时出现）/ 回廊第四出口。
     "SoloBossFieldTest",
+    # 工程 94 百首禁域承伤：**结果**层面的契约（不是配置层面）。用真实存档快照
+    # （140 级 / 防御 41,857 / 血 408,288）+ 真实例化 Boss 算每击、破防余量、60 秒掉血。
+    # 守的是「Boss 打得疼」这件事，配置写成 3.0 但玩家防御涨过它就红。
+    "BossFieldDamageTest",
     # M10-3b 多目标血条：实例分条 + 不重排 + 逐条过期/死亡 + current_bosses + 音频按实例。
     "BossMultiTargetTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。
