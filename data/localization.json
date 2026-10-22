@@ -879,5 +879,13 @@
   "ui.sacrifice.low_level": "需要 Lv%d 才能使用紫装献祭。",
   "ui.sacrifice.stale": "背包已变化，请重新打开面板再试。",
   "ui.sacrifice.invalid": "只能献祭背包里未收藏的紫装。",
-  "ui.sacrifice.too_many": "单次最多献祭 %d 件。"
+  "ui.sacrifice.too_many": "单次最多献祭 %d 件。",
+  "msg.drop_to_ground.p001": "已丢弃：%s（%d 秒后消失）",
+  "msg.drop_to_ground.p002": "任务物品不能丢弃：%s",
+  "msg.drop_to_ground.p003": "已收藏的装备不能丢弃：%s（先取消收藏）",
+  "msg.drop_to_ground.p004": "随身工具不能丢弃：%s",
+  "msg.drop_to_ground.p005": "物品位置已变化，请重新拖动",
+  "msg.drop_to_ground.p006": "这里放不下，换个位置再丢",
+  "msg.drop_to_ground.p007": "丢弃失败，请重试",
+  "ui.drop_zone.hint": "松开左键，把物品丢到地面"
 }

@@ -51,6 +51,11 @@ enum Stage { GROUND, HOLD, FLY }
 @export var hold_time: float = HOLD_TIME
 ## 生成即认领：怪物掉落 = true；**玩家丢弃物应传 false**（留地 + 60s 消失，见工程文档 10 §5）。
 @export var auto_claim: bool = false
+## 工程 89（2026-10-22）：玩家主动丢弃物 = true ⇒ **只能点击拾取**。
+## 不参与「靠近自动拾取」，也不进自动战斗的顺路拾取候选（`AutoBattle._can_pick`）。
+## 🔴 为什么不沿用普通未认领语义：丢弃物落在玩家脚边，而拾取半径 96px、保护期仅 0.2s，
+## 且 F 开自动战斗会联动打开 G —— 松手 0.2 秒后就被原样捡回，功能等于不可用。
+@export var manual_only: bool = false
 ## 同批多件起飞错峰（s）：由掉落方按序号传入（`Monster._spawn_drop`）。
 @export var stagger_delay: float = 0.0
 ## M6-0c（创意 07 §11）：精英 / Boss 掉落为 true ⇒ 入包失败登记为「未领取战利品」，
@@ -154,6 +159,9 @@ func _physics_process(delta: float) -> void:
 			return
 	# 停驻 / 保护期内不自动拾取（点击不受限，见 _on_click_area_input_event）
 	if _spawn_t < appear_delay + maxf(hold_time, 0.0):
+		return
+	# 工程 89：玩家丢弃物只认点击 —— 否则丢在脚边会被立刻捡回去。
+	if manual_only:
 		return
 	# G 关闭时任何地面物都必须由玩家点击拾取。
 	if not GameState.auto_pickup_on or GameState.npc_dialog_open():

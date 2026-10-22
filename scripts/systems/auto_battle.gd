@@ -595,6 +595,10 @@ func _reset_roam_progress() -> void:
 func _can_pick(gi: GroundItem) -> bool:
 	if not gi.visible or gi.is_queued_for_deletion():
 		return false
+	# 工程 89：玩家主动丢弃物只能点击拾取，不能进「顺路拾取」候选 ——
+	# 否则挂机时会绕路把刚扔掉的垃圾一件件捡回来。
+	if gi.manual_only:
+		return false
 	if String(gi.item.get("kind", "")) == "coin":
 		return not GameState.gold_is_capped()
 	return Inventory.has_space_for(GameState.inventory, gi.item)

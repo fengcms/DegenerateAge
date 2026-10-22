@@ -499,6 +499,75 @@ func remove_item_at(index: int) -> Dictionary:
 		EventBus.inventory_changed.emit()
 	return it
 
+# ---- 拖到地面丢弃（工程 89，2026-10-22 拍板 Q1—Q6 全 A）----
+
+## 丢弃落点与玩家的最大距离（世界像素 ≈ 6 格）。超出即视为「拖到了地图外」，
+## 退回玩家脚边 —— 营地外围的 `clamp_to_map` 会把人一路送回出生点，那显然不是玩家想要的位置。
+const DROP_MAX_DISTANCE := 6.0 * 64.0
+
+## 这件物品能不能丢弃。返回 `{ok, reason}`，reason ∈ tool / quest_item / favorite / empty。
+##
+## Q2=A：任务物品、收藏装备、随身工具三类一律拒绝。
+## 🔴 工具必须禁（不是「顺手加的保险」）：`ToolReclaim` 的补领判据是「解锁键为真但背包+仓库
+## 都没有」—— 工具一旦可丢，丢一次再重读档/重进图就能再补一件，判据立刻变成无限刷。
+## 见 `scripts/systems/tool_reclaim.gd` 顶部那条反向约束。
+##
+## 🔑 **工具判定排在最前**：三件工具的 `miscItems` 里同时带 `questItem: true`，
+## 若按 quest 先判，玩家丢随身车夫会看到「任务物品不能丢弃」—— 语义错了，玩家的结论会是
+## 「那我这条任务链怎么办」。先判工具，文案才对得上真实原因（两者都是拒绝，顺序只影响提示）。
+func can_drop_item(item: Dictionary) -> Dictionary:
+	if item.is_empty():
+		return {"ok": false, "reason": "empty"}
+	if ToolReclaim.panel_tool_ids().has(String(item.get("itemId", ""))):
+		return {"ok": false, "reason": "tool"}
+	if Shop.is_quest_item(item):
+		return {"ok": false, "reason": "quest_item"}
+	if bool(item.get("favorite", false)):
+		return {"ok": false, "reason": "favorite"}
+	return {"ok": true, "reason": ""}
+
+## 把背包第 `index` 格丢到地面。返回 `{ok, reason, item, point}`。
+##
+## **只负责「校验 → 解析落点 → 从背包取出」**，地面节点由调用方（`WorldDropZone`）实例化
+## 后再 `add_child` —— 这样「实例化可能失败」发生在**取出之前**，不会出现「背包空了、地上也没有」。
+##
+## 顺序是刻意的：**先校验 token、再取出**。反过来一旦背包在拖拽那 3 秒里被整理过，
+## 就会「按旧下标移除错的那件」——与 `death_penalty` 相反，那里 index 是刚算出来的，不会失效。
+func drop_item_to_ground(index: int, token: String, world_point: Vector2) -> Dictionary:
+	if index < 0 or index >= inventory.size():
+		return {"ok": false, "reason": "index"}
+	var raw: Variant = inventory[index]
+	if not (raw is Dictionary) or (raw as Dictionary).is_empty():
+		return {"ok": false, "reason": "empty"}
+	var item := raw as Dictionary
+	if not Warehouse.token_matches(item, token):
+		return {"ok": false, "reason": "stale"}
+	var allowed := can_drop_item(item)
+	if not bool(allowed.get("ok", false)):
+		return {"ok": false, "reason": String(allowed.get("reason", "blocked"))}
+	# 容器先确认：没有 loot_root 就不动背包（否则就是静默丢件）。
+	if get_tree().get_first_node_in_group("loot_root") == null:
+		return {"ok": false, "reason": "no_ground"}
+	var point := _resolve_drop_point(world_point)
+	var removed := remove_item_at(index)
+	if removed.is_empty():
+		return {"ok": false, "reason": "index"}
+	return {"ok": true, "reason": "", "item": removed, "point": point}
+
+## 落点解析（Q5=A）：鼠标所指世界坐标 → 夹到地图内；不可走由 `clamp_to_map` 退到最近可走格；
+## 若最终点离玩家太远（拖到营地/地图外围）则改为玩家脚边。
+func _resolve_drop_point(world_point: Vector2) -> Vector2:
+	var ground := get_tree().get_first_node_in_group("map_ground")
+	if ground == null or not ground.has_method("clamp_to_map"):
+		return world_point          # 独立测试 / 无地面场景：原样接受
+	var point: Vector2 = ground.clamp_to_map(world_point)
+	var player_node := get_tree().get_first_node_in_group("player") as Node2D
+	if player_node == null:
+		return point
+	if point.distance_to(player_node.global_position) > DROP_MAX_DISTANCE:
+		point = ground.clamp_to_map(player_node.global_position)
+	return point
+
 ## 拾取自动出售是否生效（工程 63）。**等级在这里再拦一次**，不能只靠设置界面灰显：
 ## `settings` 随存档走，改档 / 导入别人的档 / 将来出现降级机制，都可能出现「等级不足但开关为真」。
 func auto_sell_enabled() -> bool:
