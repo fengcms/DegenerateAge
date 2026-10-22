@@ -114,6 +114,11 @@ static func _roll_equip(e: Dictionary, r: RandomNumberGenerator, source_level: i
 	# 未提供 source_level 时兜底 60 档（不产生 v5 实例），宁可掉旧装也不写出读不回的档。
 	if bool(e.get("levelFromBoss", false)):
 		var boss_level := source_level if source_level > 0 else Balance.SOFTCAP_LEVEL
+		# 工程 91：`levelOffset` 让「掉落比击杀目标高 N 级」（孤王绝域 = +10）。
+		# 🔴 只能加在**动态条**上：静态条的穿戴等级由 `tierStart` 决定，加偏移会让实例
+		# `level` 与 `requiredLevel` 脱钩，直接违反存档硬约束（读档必被 `_valid_item` 剔除）。
+		# 位置在品质抽取之后、等级使用之前 ⇒ 随机调用序列一步未变（同 M10-2 的分岔原则）。
+		boss_level += int(e.get("levelOffset", 0))
 		var dynamic_tpl := _pick_equip_template(ItemFactory.DYNAMIC_BASE_TIER, r, pool)
 		if dynamic_tpl.is_empty():
 			return {}

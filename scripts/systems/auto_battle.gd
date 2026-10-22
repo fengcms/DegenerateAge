@@ -162,6 +162,21 @@ func reset_after_travel() -> void:
 	else:
 		_set_state(State.SEARCH_TARGET)
 
+## 当前地图是否启用「未领取战利品停战」；返回地图 id（空 = 不启用）。
+##
+## 🔑 判据只看**数据**（`preserveUnclaimedLoot` + `unclaimedLootCap > 0`），不认地图 id 白名单：
+## 工程 88 之前的写法是 `current_map == "c7_boss_field"`，于是每新增一张同类图都会**静默**少一层
+## 保护。真正的分界不是「哪张图」，而是「这张图会不会按 FIFO 淘汰未领取奖励」。
+func _loot_guard_map() -> String:
+	var data: Variant = MapService.data_for(GameState.current_map)
+	if not data is Dictionary:
+		return ""
+	if not bool((data as Dictionary).get("preserveUnclaimedLoot", false)):
+		return ""
+	if int((data as Dictionary).get("unclaimedLootCap", 0)) <= 0:
+		return ""
+	return GameState.current_map
+
 func _physics_process(delta: float) -> void:
 	_tick_blacklist(delta)
 	if _player == null or not is_instance_valid(_player):
@@ -186,11 +201,17 @@ func _physics_process(delta: float) -> void:
 		GameState.set_auto_battle(false)
 		_set_state(State.OFF)
 		return
-	if GameState.current_map == "c7_boss_field" and GameState.unclaimed_count("c7_boss_field") \
-			>= GameState.unclaimed_loot_cap("c7_boss_field") - BOSS_LOOT_RESERVE:
+	# 未领取战利品停战：判据改为**数据驱动**（工程 91）。
+	# 🔴 原来是写死 `current_map == "c7_boss_field"` + 中文文案，新增循环图时天然没有这层保护 ——
+	# 而 `preserveUnclaimedLoot` 地图一旦超过 `unclaimedLootCap`，超出部分会被按 FIFO 静默删除，
+	# 也就是「打着打着奖励没了」且玩家毫无提示。凡是配了 `preserveUnclaimedLoot` 的图都必须进这里。
+	if _loot_guard_map() != "" and GameState.unclaimed_count(GameState.current_map) \
+			>= GameState.unclaimed_loot_cap(GameState.current_map) - BOSS_LOOT_RESERVE:
 		_player.set_auto_move(Vector2.ZERO)
 		GameState.set_auto_battle(false)
-		EventBus.toast_requested.emit("百首禁域未领取战利品已接近容量，请先清理后再开启自动战斗", "danger")
+		EventBus.toast_requested.emit(
+			Localization.tr_key("msg.auto_battle.loot_cap",
+				[MapService.display_name(GameState.current_map)]), "danger")
 		_set_state(State.OFF)
 		return
 	if _player.is_sitting:

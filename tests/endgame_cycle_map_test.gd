@@ -222,6 +222,22 @@ func _test_multipliers() -> void:
 		check(is_equal_approx(float(g.get("xpMultiplier", 0.0)), 0.1),
 			"聚金地脉 %s 的 xpMultiplier 应为 0.1" % String(g.get("monsterId", "")))
 
+	# 工程 91：孤王绝域 —— 单席、血 ×20、经验 ×5、重生半小时。
+	# 不加进这里的话，这四条倍率改错也全绿（第四张循环图此前无人看守）。
+	var solo: Dictionary = DataLoader.get_entry("maps", "c7_solo_boss")
+	var solo_seats: Array = solo.get("bossSpawns", [])
+	check(solo_seats.size() == 1, "孤王绝域 bossSpawns 应为 1 条，实际 %d" % solo_seats.size())
+	if solo_seats.size() == 1:
+		var seat: Dictionary = solo_seats[0]
+		check(is_equal_approx(float(seat.get("hpMultiplier", 0.0)), 20.0),
+			"孤王绝域 hpMultiplier 应为 20.0，实际 %.2f" % float(seat.get("hpMultiplier", 0.0)))
+		check(is_equal_approx(float(seat.get("xpMultiplier", 0.0)), 5.0),
+			"孤王绝域 xpMultiplier 应为 5.0，实际 %.2f" % float(seat.get("xpMultiplier", 0.0)))
+		check(is_equal_approx(float(seat.get("respawnTime", 0.0)), 1800.0),
+			"孤王绝域重生应为 1800 秒（半小时一只），实际 %.0f" % float(seat.get("respawnTime", 0.0)))
+		check(not seat.has("atkMultiplier") or is_equal_approx(float(seat.get("atkMultiplier", 1.0)), 1.0),
+			"孤王绝域不应叠加攻击倍率（100 级满装防御 13,985 让攻击翻倍也走保底 60）")
+
 ## 工程 82：聚金地脉从「散布 6 堆」收成「单战场 6 营」。判据必须**反转**：
 ## 旧判据「堆心两两 ≥ 858px」保证的是「一次只激活一堆」——那正是玩家必须跑来跑去的根因。
 ## 新判据 = 所有席位落在一个站位点的激活圈内（站桩即可全激活），且互不重叠。

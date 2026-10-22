@@ -7,6 +7,7 @@ extends Node
 ## 所以断言全部压在具体数值上，而不是「有没有生成」。
 
 const MAP_ID := "c7_arena"
+const SOLO_ID := "c7_solo_boss"
 const HUB_ID := "c6_map00"
 const DROP_TABLE := "DT_C7_Arena_Boss"
 const LAYOUT_PATH := "res://data/layouts/c7_arena.json"
@@ -71,7 +72,37 @@ func _test_topology() -> void:
 	# 出口双向同格（`_validate_walk_exits` 的契约）：目标图 entrances[X] 必须等于**目标图自己**
 	# 通往 X 的那个出口格，否则落地会卡在墙里。
 	var exits: Array = data.get("exits", [])
-	check(exits.size() == 3, "循环图应有返回城镇与两张循环图共 3 个出口，实际 %d" % exits.size())
+	check(exits.size() == 4, "循环图应有返回城镇与三张循环图共 4 个出口，实际 %d" % exits.size())
+	# 工程 91：东侧新增「孤王绝域」入口。只断「出口有 4 个」等于没验 —— 把 exit04 的
+	# `toMap` 写成 c7_boss_field 也照样绿。必须逐项验目的地、落点与双向同格。
+	var solo_exit: Variant = null
+	for raw in exits:
+		if raw is Dictionary and String((raw as Dictionary).get("toMap", "")) == SOLO_ID:
+			solo_exit = raw
+	check(solo_exit != null, "循环图必须有通往 %s 的出口" % SOLO_ID)
+	var solo_data: Variant = DataLoader.get_entry("maps", SOLO_ID)
+	check(solo_data is Dictionary, "%s 必须登记在地图索引中" % SOLO_ID)
+	if solo_exit is Dictionary:
+		var solo_cell: Variant = (solo_exit as Dictionary).get("cell", null)
+		# ⚠ JSON 坐标解析出来是 float 数组，与 [152, 45] 直接比会恒不相等。
+		check(solo_cell is Array and (solo_cell as Array).size() == 2
+			and int((solo_cell as Array)[0]) == 152 and int((solo_cell as Array)[1]) == 45,
+			"孤王绝域入口应在东侧 [152,45]，实际 %s" % str(solo_cell))
+		var own_entrances: Variant = data.get("entrances", {})
+		check(own_entrances is Dictionary
+			and (own_entrances as Dictionary).get("from_%s" % SOLO_ID) == solo_cell,
+			"回廊 entrances[from_%s] 必须等于东侧出口格（否则从孤王绝域回来会落地卡墙）" % SOLO_ID)
+	if solo_data is Dictionary:
+		var solo_exits: Array = (solo_data as Dictionary).get("exits", [])
+		check(solo_exits.size() == 1, "孤王绝域应只有 1 个出口（回无尽回廊），实际 %d" % solo_exits.size())
+		if solo_exits.size() == 1:
+			var solo_back: Dictionary = solo_exits[0]
+			check(String(solo_back.get("toMap", "")) == MAP_ID, "孤王绝域的出口必须通回无尽回廊")
+			# 双向同格契约的方向：**目标图自己**的 entrance 等于**它自己**的回程出口格。
+			var solo_entr: Variant = (solo_data as Dictionary).get("entrances", {})
+			check(solo_entr is Dictionary
+				and (solo_entr as Dictionary).get("from_%s" % MAP_ID) == solo_back.get("cell"),
+				"孤王绝域.entrances[from_%s] 必须等于它自己的回程出口格" % MAP_ID)
 	if exits.size() >= 1:
 		var exit_cell: Variant = (exits[0] as Dictionary).get("cell", null)
 		var entrances: Variant = data.get("entrances", {})

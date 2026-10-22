@@ -1,0 +1,74 @@
+{
+  "id": "c7_solo_boss",
+  "name": "孤王绝域",
+  "size": {
+    "w": 40,
+    "h": 30
+  },
+  "layoutVersion": "2026-10-20-cycle-v1",
+  "layoutPath": "res://data/layouts/c7_solo_boss.json",
+  "recommendedLevel": 100,
+  "safeZone": false,
+  "kind": "spoke",
+  "hubId": "c6_map00",
+  "requiresUnlock": "campaign_complete",
+  "entryGate": {
+    "walkOnlyFrom": "c7_arena",
+    "minLevel": 100,
+    "allEquipmentQuality": "legendary"
+  },
+  "levelFromPlayer": {
+    "enabled": true,
+    "minLevel": 100
+  },
+  "exits": [
+    {
+      "id": "c7_solo_boss_exit01",
+      "label": "回无尽回廊",
+      "cell": [
+        6,
+        15
+      ],
+      "toMap": "c7_arena",
+      "toEntrance": "from_c7_solo_boss"
+    }
+  ],
+  "entrances": {
+    "from_c7_arena": [
+      6,
+      15
+    ]
+  },
+  "carterArrival": [
+    8,
+    15
+  ],
+  "bossSpawn": null,
+  "npcs": [],
+  "eliteCap": 0,
+  "carterFares": {},
+  "bossSpawns": [
+    {
+      "monsterId": "boss_corrupted_beast",
+      "cell": [
+        20,
+        15
+      ],
+      "kind": "boss",
+      "respawnTime": 1800,
+      "tombstone": true,
+      "scaleStats": true,
+      "xpFromCurve": true,
+      "hpMultiplier": 20.0,
+      "xpMultiplier": 5.0,
+      "dropTableId": "DT_C7_Solo_Boss",
+      "group": "A"
+    }
+  ],
+  "spawnPoints": [],
+  "normalCap": 0,
+  "bossCap": 1,
+  "unclaimedLootCap": 600,
+  "preserveUnclaimedLoot": true,
+  "desc": "100级且全身紫装开放的单王绝域：一只、半小时一遇、十倍掉落、比玩家高十级。"
+}

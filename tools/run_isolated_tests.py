@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 69 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 70 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -62,6 +62,9 @@ DEFAULT_TESTS = [
     "ArenaMapTest",
     # 第七章双循环分支：动态门槛、96/100 席装配、收益和超软上限奖励保全。
     "EndgameCycleMapTest",
+    # 工程 91 孤王绝域：单席 / 血 ×20 重生 1800 / 双门槛（100 级 + 全身紫装）/
+    # 十倍件数逐组比值 / 掉落 levelOffset=10（101 与 110 必须同时出现）/ 回廊第四出口。
+    "SoloBossFieldTest",
     # M10-3b 多目标血条：实例分条 + 不重排 + 逐条过期/死亡 + current_bosses + 音频按实例。
     "BossMultiTargetTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。

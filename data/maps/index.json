@@ -36,5 +36,6 @@
   "ch06/c6_map05/map.json",
   "ch07/c7_arena/map.json",
   "ch07/c7_gold_field/map.json",
-  "ch07/c7_boss_field/map.json"
+  "ch07/c7_boss_field/map.json",
+  "ch07/c7_solo_boss/map.json"
 ]

@@ -12,7 +12,7 @@ const ARENA := "c7_arena"
 const LEGACY_MAP := "c6_map05"
 const LEGACY_BOSS := "c6_boss03"
 const ARENA_BOSS := "c6_boss03"
-const TOTAL_BOSS_ROWS := 137  # 17 单点 + c7_arena 20 + 百首禁域 100
+const TOTAL_BOSS_ROWS := 138  # 17 单点 + c7_arena 20 + 百首禁域 100 + 孤王绝域 1
 const LEGACY_UNLOCK := "c6_access_05"
 
 var failures: Array[String] = []
@@ -51,9 +51,12 @@ func _test_rows_complete() -> void:
 	_visit_all_boss_maps()
 	var rows := BossToken.rows()
 	check(rows.size() == TOTAL_BOSS_ROWS,
-		"走过全部 boss 图后应有 %d 行（17 单点 + c7_arena 20），实际 %d" % [TOTAL_BOSS_ROWS, rows.size()])
+		"走过全部 boss 图后应有 %d 行（17 单点 + c7_arena 20 + 百首禁域 100 + 孤王绝域 1），实际 %d" % [TOTAL_BOSS_ROWS, rows.size()])
 	var arena := _rows_of(rows, ARENA)
 	check(arena.size() == 20, "c7_arena 应贡献 20 行（bossSpawns 形态），实际 %d" % arena.size())
+	# 工程 91：孤王绝域只有 1 席 —— 令牌面板必须列出它，否则玩家看不到那只王还要等多久。
+	var solo := _rows_of(rows, "c7_solo_boss")
+	check(solo.size() == 1, "c7_solo_boss 应贡献 1 行（单王），实际 %d" % solo.size())
 	var legacy := _rows_of(rows, LEGACY_MAP)
 	check(legacy.size() == 1, "%s 应贡献 1 行（bossSpawn 形态），实际 %d" % [LEGACY_MAP, legacy.size()])
 	# 当前图置顶：camp 没有 boss，所以这里先只断言「当前图的行全部在最前面」。

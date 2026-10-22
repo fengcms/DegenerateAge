@@ -739,7 +739,16 @@ func _validate_drop_tables() -> Array[String]:
 							report.append("[dropTables] %s equip 的 levelFromBoss 与 tierStart 互斥" % did)
 						if en.has("levelRange"):
 							report.append("[dropTables] %s equip 的 levelFromBoss 条目不应带 levelRange" % did)
+						# 工程 91：`levelOffset` = 掉落等级在击杀目标等级上的偏移（孤王绝域 +10）。
+						# 上界 9990 与 `ItemFactory.dynamic_tier_start` 的末档夹取对齐。
+						if en.has("levelOffset"):
+							var offset: Variant = en.get("levelOffset")
+							if not _is_whole_level(offset) or int(offset) < 0 or int(offset) > 9990:
+								report.append("[dropTables] %s 的 levelOffset 必须是 0—9990 的整数" % did)
 					else:
+						# 🔴 静态条配 levelOffset 会让实例等级与 requiredLevel 脱钩 ⇒ 必须报错，不能静默忽略。
+						if en.has("levelOffset"):
+							report.append("[dropTables] %s 的 levelOffset 只能配在 levelFromBoss 条目上" % did)
 						var level_range: Variant = en.get("levelRange", null)
 						if not level_range is Array or level_range.size() != 2 \
 								or not _is_whole_level(level_range[0]) or not _is_whole_level(level_range[1]) \

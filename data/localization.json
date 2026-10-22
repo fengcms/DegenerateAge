@@ -890,5 +890,6 @@
   "ui.drop_zone.hint": "松开左键，把物品丢到地面",
   "ui.reforge_panel.p025": "（较上次 %s）",
   "ui.reforge_panel.p026": "（与上次持平）",
-  "ui.reforge_panel.p027": "耐久破损：词条不生效，评分只含基底"
+  "ui.reforge_panel.p027": "耐久破损：词条不生效，评分只含基底",
+  "msg.auto_battle.loot_cap": "%s未领取战利品已接近容量，请先清理后再开启自动战斗"
 }

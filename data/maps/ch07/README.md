@@ -9,7 +9,8 @@
 | [无尽回廊](c7_arena/README.md) | `c7_arena` | 满级后循环 Boss 挑战场（车夫直达） | 60–60 |
 | [聚金地脉](c7_gold_field/README.md) | `c7_gold_field` | 96 席普通怪循环金币图（单战场 6 营，一屏站桩可刷；含 24 席金脉守卫） | 80 级起 |
 | [百首禁域](c7_boss_field/README.md) | `c7_boss_field` | 100 席 Boss 循环装备图，全身紫装门槛 | 100 级起 |
+| [孤王绝域](c7_solo_boss/README.md) | `c7_solo_boss` | 单王挑战图：一只 Boss、半小时重生、十倍掉落、装备比玩家高十级；全身紫装门槛 | 100 级起 |
 
 `data/maps/index.json` 仅登记加载顺序与相对路径，地图属性仍只写在各自 `map.json` 内。
 
-与相邻章节的衔接：`c7_arena` 是第 6 章城镇枢纽 `c6_map00`（镇脉前哨）的支线，解锁条件 `campaign_complete`（由 C6Q12 任务产出）。回廊南北两个新增入口分别通向百首禁域和聚金地脉；其动态等级及装备门槛由目的地图 `entryGate` 管理。
+与相邻章节的衔接：`c7_arena` 是第 6 章城镇枢纽 `c6_map00`（镇脉前哨）的支线，解锁条件 `campaign_complete`（由 C6Q12 任务产出）。回廊三个新增入口分别通向聚金地脉（北）、百首禁域（南）与孤王绝域（东）；其动态等级及装备门槛由目的地图 `entryGate` 管理。

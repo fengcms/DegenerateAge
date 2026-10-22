@@ -40,6 +40,15 @@ HEAP_SIDE = 4
 HEAP_SPACING = 2
 GOLD_SIZE = (64, 48)
 GOLD_EXIT_Y = 24
+# 工程 91：孤王绝域 —— 40×30 的小图，全场只有一席 Boss。
+# 🔑 重生 1800 秒（半小时）是**产品定位**，不是配错：这张图不为「刷」，为「一次硬仗 + 一次爆爽」。
+#    想让它变成刷图就改这个数字，但先读 docs/工程文档/91 §Q4。
+SOLO_SIZE = (40, 30)
+SOLO_EXIT_Y = 15
+SOLO_BOSS = "boss_corrupted_beast"
+SOLO_BOSS_CELL = [20, 15]
+SOLO_RESPAWN = 1800
+# 装备等级在击杀目标等级上 +10（= 比玩家高 10 级）由掉落表的 `levelOffset` 承担，不在这里配。
 # 🔑 站桩判据：任意席位到战场中心的等距世界距离必须落在一个站位点的激活圈内。
 # `MonsterSpawner.ACTIVE_DISTANCE` = 760 px，留 60 px 余量（约 1.7 格站位误差）。
 MAX_SEAT_WORLD_DISTANCE = 700.0
@@ -237,9 +246,36 @@ def build_boss() -> dict:
     return data
 
 
+def build_solo() -> dict:
+    """孤王绝域：40×30、单席 Boss、重生 1800 秒、血 ×20、经验 ×5。
+
+    与另两图的三处刻意差异（改之前先读工程 91）：
+    1. `bossCap 1`：场上只有一只，没有轮转替班 ⇒ 重生时间直接决定出产节奏；
+    2. `hpMultiplier 20.0`：**不加 `atkMultiplier`** —— 100 级满装防御 13,985，
+       Boss 攻击 420×S(40)=3,159 根本破不了防，加倍也只走保底 60，等于白配；
+    3. `unclaimedLootCap 600` + `preserveUnclaimedLoot`：一只爆 ~85 件装备，
+       背包 40 格必然捡不完，剩下的必须留在地上不许 FIFO 淘汰。
+    """
+    data = base_map("c7_solo_boss", "孤王绝域", SOLO_SIZE[0], SOLO_SIZE[1],
+                    {"walkOnlyFrom": "c7_arena", "minLevel": 100,
+                     "allEquipmentQuality": "legendary"}, SOLO_EXIT_Y)
+    data.update({
+        "bossSpawns": [{
+            "monsterId": SOLO_BOSS, "cell": SOLO_BOSS_CELL, "kind": "boss",
+            "respawnTime": SOLO_RESPAWN, "tombstone": True, "scaleStats": True,
+            "xpFromCurve": True, "hpMultiplier": 20.0, "xpMultiplier": 5.0,
+            "dropTableId": "DT_C7_Solo_Boss", "group": "A",
+        }],
+        "spawnPoints": [], "normalCap": 0, "eliteCap": 0, "bossCap": 1,
+        "unclaimedLootCap": 600, "preserveUnclaimedLoot": True,
+        "desc": "100级且全身紫装开放的单王绝域：一只、半小时一遇、十倍掉落、比玩家高十级。",
+    })
+    return data
+
+
 def main() -> None:
-    """重新生成两图与布局，并逐图验证席位和入口的掩码连通性。"""
-    for data in (build_gold(), build_boss()):
+    """重新生成三图与布局，并逐图验证席位和入口的掩码连通性。"""
+    for data in (build_gold(), build_boss(), build_solo()):
         layout = validate_and_layout(data)
         write_json(CHAPTER / data["id"] / "map.json", data)
         write_json(LAYOUT_DIR / f"{data['id']}.json", layout, compact=True)
