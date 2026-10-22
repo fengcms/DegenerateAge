@@ -222,8 +222,8 @@ func _test_multipliers() -> void:
 		check(is_equal_approx(float(g.get("xpMultiplier", 0.0)), 0.1),
 			"聚金地脉 %s 的 xpMultiplier 应为 0.1" % String(g.get("monsterId", "")))
 
-	# 工程 91：孤王绝域 —— 单席、血 ×20、经验 ×5、重生半小时。
-	# 不加进这里的话，这四条倍率改错也全绿（第四张循环图此前无人看守）。
+	# 工程 91：孤王绝域 —— 单席、血 ×20、攻 ×3.3、经验 ×5、重生半小时。
+	# 不加进这里的话，这五条倍率改错也全绿（第四张循环图此前无人看守）。
 	var solo: Dictionary = DataLoader.get_entry("maps", "c7_solo_boss")
 	var solo_seats: Array = solo.get("bossSpawns", [])
 	check(solo_seats.size() == 1, "孤王绝域 bossSpawns 应为 1 条，实际 %d" % solo_seats.size())
@@ -235,8 +235,11 @@ func _test_multipliers() -> void:
 			"孤王绝域 xpMultiplier 应为 5.0，实际 %.2f" % float(seat.get("xpMultiplier", 0.0)))
 		check(is_equal_approx(float(seat.get("respawnTime", 0.0)), 1800.0),
 			"孤王绝域重生应为 1800 秒（半小时一只），实际 %.0f" % float(seat.get("respawnTime", 0.0)))
-		check(not seat.has("atkMultiplier") or is_equal_approx(float(seat.get("atkMultiplier", 1.0)), 1.0),
-			"孤王绝域不应叠加攻击倍率（100 级满装防御 13,985 让攻击翻倍也走保底 60）")
+		# 工程 92（D-30）反转：原来是「不应叠加攻击倍率」，实机证明那是血包 ——
+		# 破防阈值是 `防×0.5`（137 级需 2.46 倍），翻倍仍然只走保底 60。现固定 3.3。
+		check(is_equal_approx(float(seat.get("atkMultiplier", 1.0)), 3.3),
+			"孤王绝域 atkMultiplier 应为 3.3（破防，工程 92），实际 %.2f"
+			% float(seat.get("atkMultiplier", 1.0)))
 
 ## 工程 82：聚金地脉从「散布 6 堆」收成「单战场 6 营」。判据必须**反转**：
 ## 旧判据「堆心两两 ≥ 858px」保证的是「一次只激活一堆」——那正是玩家必须跑来跑去的根因。

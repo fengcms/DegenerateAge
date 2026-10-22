@@ -1,8 +1,10 @@
 extends Node
-## 工程 91「孤王绝域」契约：单席 / 倍率 / 双重门槛 / 布局 / 十倍件数 / **掉落 +10 级** / 回廊第四出口。
+## 工程 91「孤王绝域」契约：单席 / 倍率 / 双重门槛 / 布局 / 件数 / **掉落 +10 级** / 回廊第四出口。
+## 工程 92 修订两处：`atkMultiplier 3.3`（破防，不再是血包）、传说组**必出且只出 1 件**。
 ##
 ## 核心底线：这份配置一旦退化，游戏**能跑、能进、能打、不报错** ——
-## 只是「血 20 倍」变成普通 Boss、「十倍掉落」变成一倍、装备等级还是玩家等级。
+## 只是「血 20 倍」变成普通 Boss、「十倍掉落」变成一倍、装备等级还是玩家等级、
+## 或者最隐蔽的一种：攻击倍率掉回 1.0，每击恒走保底 60，148 秒战斗只掉 1.9% 血。
 ## 所以断言全部压在具体数值上，不断「有没有这张图」。
 
 const MAP_ID := "c7_solo_boss"
@@ -108,9 +110,14 @@ func _test_multipliers() -> void:
 	# 调成 600 会让它变成另一张百首禁域；调成 120 会变成刷图。改这里必须同步工程 91 §Q4。
 	check(is_equal_approx(float(seat.get("respawnTime", 0.0)), 1800.0),
 		"重生应为 1800 秒（半小时一只），实际 %.0f" % float(seat.get("respawnTime", 0.0)))
-	# 100 级满装防御 13,985（减伤 6,992）> Boss 攻击 420×S(40)=3,159 ⇒ 攻击倍率配了也走保底 60。
-	check(not seat.has("atkMultiplier") or is_equal_approx(float(seat.get("atkMultiplier", 1.0)), 1.0),
-		"孤王绝域不应叠加攻击倍率（破不了防，配了等于没配；难度落在血量与时长上）")
+	# 🔴 工程 92：破防阈值是 `防 × 0.5`，不是「有没有翻倍」。
+	#    135 级满紫 12 星防御 37,734 ⇒ 只配 hpMultiplier 时 Boss 攻 7,867 永远够不到
+	#    18,867，每击恒走保底 60（血量的 0.016%），148 秒战斗只掉 1.9% 血 = 血包。
+	#    3.3 倍把每击推到 7,095（1.88% 血）：裸站 67 秒、只备大红药刚好打平。
+	#    ⚠ 2.40 倍以下**直接破不了防**（数字变小反而变成「没难度」）。改前跑 tools/boss_ttk_probe。
+	check(is_equal_approx(float(seat.get("atkMultiplier", 1.0)), 3.3),
+		"atkMultiplier 应为 3.3（破防阈值 2.40 倍；3.3 才是「必须吃药才打得死」），实际 %.2f"
+		% float(seat.get("atkMultiplier", 1.0)))
 
 # ---- 4) 双重门槛：100 级 + 全身紫装 ----
 
@@ -201,19 +208,30 @@ func _test_count_multiplier() -> void:
 		var s: Dictionary = solo[key]
 		var b_span: Array = b.get("count", [])
 		var s_span: Array = s.get("count", [])
-		var b_mid := (float(b_span[0]) + float(b_span[1])) * 0.5
-		var s_mid := (float(s_span[0]) + float(s_span[1])) * 0.5
-		check(is_equal_approx(s_mid, b_mid * 10.0),
-			"组 %s 的件数应恰好是回廊的 10 倍：回廊 %s → 期望 %s，实际 %s"
-			% [String(key), str(b_span), str(b_mid * 10.0), str(s_span)])
-		# 🔴 放大的是**件数**，不是概率：回廊三组 chance 全是 1.0，改概率根本改不动。
-		check(is_equal_approx(float(s.get("chance", -1.0)), float(b.get("chance", -2.0))),
-			"组 %s 的 chance 必须与回廊一致（放大件数，不改概率）：%s vs %s"
-			% [String(key), str(b.get("chance")), str(s.get("chance"))])
-		# 等级偏移只加在装备上，且三组一致。
+		var group := String(key)
+		if group == "legendary":
+			# 🔴 工程 92 用户拍板：传说组**必出，但只出一件**。
+			#    这与「十倍件数」是**相反**的要求（回廊 1 件 × 5% → 这里 1 件 × 100%），
+			#    所以必须与下面那条分开写死 —— 否则为了「三组都十倍」会把必出紫改回概率掉落，
+			#    而且改回去之后**游戏照跑、报告零错误**，只是玩家再也见不到紫。
+			check(is_equal_approx(float(s.get("chance", -1.0)), 1.0),
+				"传说组必须 chance 1.0（必出紫），实际 %s" % str(s.get("chance")))
+			check(s_span.size() == 2 and int(s_span[0]) == 1 and int(s_span[1]) == 1,
+				"传说组必须只出 1 件（爽感靠前两组的件数，不是靠紫装堆量），实际 %s" % str(s_span))
+		else:
+			var b_mid := (float(b_span[0]) + float(b_span[1])) * 0.5
+			var s_mid := (float(s_span[0]) + float(s_span[1])) * 0.5
+			check(is_equal_approx(s_mid, b_mid * 10.0),
+				"组 %s 的件数应恰好是回廊的 10 倍：回廊 %s → 期望 %s，实际 %s"
+				% [group, str(b_span), str(b_mid * 10.0), str(s_span)])
+			# 🔴 放大的是**件数**，不是概率：回廊前两组 chance 全是 1.0，改概率根本改不动。
+			check(is_equal_approx(float(s.get("chance", -1.0)), float(b.get("chance", -2.0))),
+				"组 %s 的 chance 必须与回廊一致（放大件数，不改概率）：%s vs %s"
+				% [group, str(b.get("chance")), str(s.get("chance"))])
+		# 等级偏移只加在装备上，且三组一致（必出紫那件也是下一档的期货）。
 		check(int(s.get("levelOffset", 0)) == 10,
-			"组 %s 的 levelOffset 应为 10（比玩家高 10 级），实际 %d" % [String(key), int(s.get("levelOffset", 0))])
-		check(bool(s.get("levelFromBoss", false)), "组 %s 必须 levelFromBoss（等级跟随击杀目标）" % String(key))
+			"组 %s 的 levelOffset 应为 10（玩家升级后的下一档），实际 %d" % [group, int(s.get("levelOffset", 0))])
+		check(bool(s.get("levelFromBoss", false)), "组 %s 必须 levelFromBoss（等级跟随击杀目标）" % group)
 
 # ---- 7) 掉落 +10 级（本需求的核心判据）----
 
@@ -249,10 +267,15 @@ func _test_level_offset() -> void:
 	for key in keys:
 		check(int(key) >= 101 and int(key) <= 110,
 			"装备等级 %d 越界（应落在 101—110）" % int(key))
-	# 101—110 是下一套：100 级玩家一件都穿不上，这是「期货」不是 bug。
+	# 101—110 是玩家升级后的**下一档**（100 级本档 91—100，`T(110)=101`）：100 级穿不上，
+	# 这是「比玩家高 10 级」的必然结果，不是 bug。
 	var probe: Dictionary = {"kind": "equip", "requiredLevel": 101, "level": 101, "quality": "legendary"}
 	check(not Equipment.meets_level(probe, 100),
 		"101 级装备在 100 级玩家身上必须判定为「穿不上」（level == requiredLevel 硬约束）")
+	# 反方向也要断：101 级玩家**能**穿 ⇒ 掉的是「下一档」而不是「下下档」。
+	# （工程 92：用户在实测里纠正过这个口径，此前文档误写成「下下套」。）
+	check(Equipment.meets_level(probe, 101),
+		"101 级装备在 101 级玩家身上必须能穿（掉落应落在下一档，不是下下档）")
 
 # ---- 8) 回廊第四出口 ----
 

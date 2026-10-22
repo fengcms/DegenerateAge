@@ -1912,7 +1912,7 @@
   },
   {
     "id": "DT_C7_Solo_Boss",
-    "desc": "孤王绝域单王掉落；件数是无尽回廊 Boss 的 10 倍（chance 不变，只放大 countRange），装备等级在击杀目标等级上 +10（levelOffset），即比玩家高 10 级。",
+    "desc": "孤王绝域单王掉落；前两组件数是回廊 Boss 的 10 倍（chance 不变，只放大 countRange），传说组改为**必出 1 件**（chance 1.0，工程 92 用户拍板）；装备等级在击杀目标等级上 +10（levelOffset）= 玩家升级后的**下一档**。",
     "entries": [
       {
         "kind": "coin",
@@ -1954,10 +1954,10 @@
       },
       {
         "kind": "equip",
-        "chance": 0.05,
+        "chance": 1.0,
         "countRange": [
-          10,
-          10
+          1,
+          1
         ],
         "levelFromBoss": true,
         "templatePool": "c6_legendary",

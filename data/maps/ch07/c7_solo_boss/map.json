@@ -60,6 +60,7 @@
       "scaleStats": true,
       "xpFromCurve": true,
       "hpMultiplier": 20.0,
+      "atkMultiplier": 3.3,
       "xpMultiplier": 5.0,
       "dropTableId": "DT_C7_Solo_Boss",
       "group": "A"
@@ -70,5 +71,5 @@
   "bossCap": 1,
   "unclaimedLootCap": 600,
   "preserveUnclaimedLoot": true,
-  "desc": "100级且全身紫装开放的单王绝域：一只、半小时一遇、十倍掉落、比玩家高十级。"
+  "desc": "100级且全身紫装开放的单王绝域：一只、半小时一遇、爆量十倍且必出紫、比玩家高十级（下一档）。"
 }

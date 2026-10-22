@@ -48,6 +48,11 @@ SOLO_EXIT_Y = 15
 SOLO_BOSS = "boss_corrupted_beast"
 SOLO_BOSS_CELL = [20, 15]
 SOLO_RESPAWN = 1800
+# 🔑 攻击倍率 3.3（工程 92）：破防阈值是 `防×0.5`，不是「有没有翻倍」。
+#    135 级满紫 12 星防御 37,734 ⇒ 需 `7,867×2.40` 才破防；3.3 倍把每击推到 7,095
+#    （1.88% 血），裸站 67 秒、只备大红药刚好打平 ⇒「必须吃药才能打死」。
+#    ⚠ 这个值随等级漂移（100 级是 2.24 倍、135 级是 2.40 倍），改它先用 tools/boss_ttk_probe 复算。
+SOLO_ATK = 3.3
 # 装备等级在击杀目标等级上 +10（= 比玩家高 10 级）由掉落表的 `levelOffset` 承担，不在这里配。
 # 🔑 站桩判据：任意席位到战场中心的等距世界距离必须落在一个站位点的激活圈内。
 # `MonsterSpawner.ACTIVE_DISTANCE` = 760 px，留 60 px 余量（约 1.7 格站位误差）。
@@ -247,13 +252,16 @@ def build_boss() -> dict:
 
 
 def build_solo() -> dict:
-    """孤王绝域：40×30、单席 Boss、重生 1800 秒、血 ×20、经验 ×5。
+    """孤王绝域：40×30、单席 Boss、重生 1800 秒、血 ×20、攻 ×3.3、经验 ×5。
 
-    与另两图的三处刻意差异（改之前先读工程 91）：
+    与另两图的四处刻意差异（改之前先读工程 91 / 92）：
     1. `bossCap 1`：场上只有一只，没有轮转替班 ⇒ 重生时间直接决定出产节奏；
-    2. `hpMultiplier 20.0`：**不加 `atkMultiplier`** —— 100 级满装防御 13,985，
-       Boss 攻击 420×S(40)=3,159 根本破不了防，加倍也只走保底 60，等于白配；
-    3. `unclaimedLootCap 600` + `preserveUnclaimedLoot`：一只爆 ~85 件装备，
+    2. `hpMultiplier 20.0`：时长靠血量堆（135 级约 910 万，击杀约 148 秒）；
+    3. `atkMultiplier 3.3`：**工程 92 补的**。工程 91 当时判断「翻倍也破不了防 ⇒ 干脆不配」，
+       把这张图做成了血包（每击恒走保底 60 = 血量 0.016%）。破防阈值是 `防×0.5`，
+       135 级满紫 12 星要 2.40 倍才破防 —— 「配了没用」的真实含义是「配得不够」，
+       不是「不该配」。3.3 倍下裸站 67 秒、只备大红药刚好打平；
+    4. `unclaimedLootCap 600` + `preserveUnclaimedLoot`：一只爆 ~86 件装备，
        背包 40 格必然捡不完，剩下的必须留在地上不许 FIFO 淘汰。
     """
     data = base_map("c7_solo_boss", "孤王绝域", SOLO_SIZE[0], SOLO_SIZE[1],
@@ -263,12 +271,13 @@ def build_solo() -> dict:
         "bossSpawns": [{
             "monsterId": SOLO_BOSS, "cell": SOLO_BOSS_CELL, "kind": "boss",
             "respawnTime": SOLO_RESPAWN, "tombstone": True, "scaleStats": True,
-            "xpFromCurve": True, "hpMultiplier": 20.0, "xpMultiplier": 5.0,
+            "xpFromCurve": True, "hpMultiplier": 20.0, "atkMultiplier": SOLO_ATK,
+            "xpMultiplier": 5.0,
             "dropTableId": "DT_C7_Solo_Boss", "group": "A",
         }],
         "spawnPoints": [], "normalCap": 0, "eliteCap": 0, "bossCap": 1,
         "unclaimedLootCap": 600, "preserveUnclaimedLoot": True,
-        "desc": "100级且全身紫装开放的单王绝域：一只、半小时一遇、十倍掉落、比玩家高十级。",
+        "desc": "100级且全身紫装开放的单王绝域：一只、半小时一遇、爆量十倍且必出紫、比玩家高十级（下一档）。",
     })
     return data
 
