@@ -157,7 +157,12 @@ func _report(rows: Dictionary, boss: Dictionary) -> void:
 			float(r.max_mp) / maxf(1.0, float(base.max_mp)), PlayerClass.mult("mpMult", String(class_id)),
 			float(r.attack) / maxf(1.0, float(base.attack))])
 
-	# 蓝收支：三档蓝药供给 - 护盾消耗 - 技能循环（按单次循环总蓝耗 / 平均 CD 摊）。
+	# 蓝收支：三档蓝药供给 - 护盾消耗 - 技能循环。
+	# 🔴 技能频率受**攻击槽位**约束：`player.gd::cast_skill` 收尾写着
+	#    `_attack_cd = effective_attack_interval()`，所以每秒最多 1/interval 次施放。
+	#    旧口径按 Σ(pct/CD) 无条件求和，CD 压到 0.6s 后会算出 4.2%/s —— 虚假值
+	#    （雷电术实际最多 1.75 次/s）。这里改成「价值从高到低抢槽位」，与
+	#    `tests/mage_rotation_test.gd` 的模型同口径。
 	var mage: Dictionary = rows.get("mage", {})
 	if mage.is_empty():
 		return
@@ -168,23 +173,43 @@ func _report(rows: Dictionary, boss: Dictionary) -> void:
 			continue
 		supply += float(mage.max_mp) * float((tpl as Dictionary).get("restorePercent", 0.0)) \
 			/ maxf(1.0, float((tpl as Dictionary).get("cooldown", 1.0)))
-	var cycle_per_sec := 0.0
-	for sid in PlayerClass.active_skills("mage"):
-		var tpl: Variant = DataLoader.get_entry("skills", String(sid))
-		if not (tpl is Dictionary) or bool((tpl as Dictionary).get("basic", false)):
-			continue
-		var cd := maxf(1.0, float((tpl as Dictionary).get("cooldown", 1.0)))
-		cycle_per_sec += _pct_of(String(sid)) * float(mage.max_mp) / cd
+	var slots := 1.0 / maxf(0.01, float(mage.interval))
+	var max_mp := float(mage.max_mp)
+	var single_spend := _skill_spend(["lightning"], slots, max_mp)
+	var aoe_spend := _skill_spend(["flame_burst", "frost_roar", "meteor"], slots, max_mp)
+	var shield := float(mage.mana_drain)
+	var to_pct := 100.0 / max_mp
 	print("")
-	print("[CLASS] 蓝收支：药水供给 %.0f/s（%.2f%%/s）− 护盾 %.0f/s（%.2f%%/s）− 技能循环 %.0f/s（%.2f%%/s）= %.2f%%/s" % [
-		supply, supply / maxf(1.0, float(mage.max_mp)) * 100.0,
-		float(mage.mana_drain), float(mage.mana_drain) / maxf(1.0, float(mage.max_mp)) * 100.0,
-		cycle_per_sec, cycle_per_sec / maxf(1.0, float(mage.max_mp)) * 100.0,
-		(supply - float(mage.mana_drain) - cycle_per_sec) / maxf(1.0, float(mage.max_mp)) * 100.0])
+	print("[CLASS] 槽位速率 %.2f 次/s（攻击间隔 %.3fs）｜技能蓝耗按槽位约束实算，不再用 Σ(pct/CD)" % [
+		slots, float(mage.interval)])
+	print("[CLASS] 蓝收支：药水 %.0f/s（%.2f%%/s）− 护盾 %.0f/s（%.2f%%/s）− 技能 单怪 %.0f/s / 多怪 %.0f/s" % [
+		supply, supply * to_pct, shield, shield * to_pct, single_spend, aoe_spend])
+	print("[CLASS] 净额：单怪 %.2f%%/s（%.0f 秒见底）｜多怪 %.2f%%/s（%.0f 秒见底）" % [
+		(supply - shield - single_spend) * to_pct, max_mp / maxf(1.0, shield + single_spend - supply),
+		(supply - shield - aoe_spend) * to_pct, max_mp / maxf(1.0, shield + aoe_spend - supply)])
 
-func _pct_of(skill_id: String) -> float:
-	var tpl: Variant = DataLoader.get_entry("skills", skill_id)
-	return float((tpl as Dictionary).get("manaCostPct", 0.0)) if tpl is Dictionary else 0.0
+## 一组技能在给定槽位速率下的每秒蓝耗。价值 = 系数 × 段数（与 `AutoBattle.skill_value` 同口径），
+## 按价值降序抢槽位 —— 高价值技能先满足自己的 `1/CD`，抢不到就吃剩下的。
+func _skill_spend(ids: Array, slots: float, max_mp: float) -> float:
+	var pool: Array = []
+	for sid in ids:
+		var tpl: Variant = DataLoader.get_entry("skills", String(sid))
+		if not (tpl is Dictionary):
+			continue
+		var d: Dictionary = tpl
+		var cd := maxf(0.05, float(d.get("cooldown", 1.0)))
+		var value := float(d.get("coefficient", 0.0)) * float(maxi(1, int(d.get("hits", 1))))
+		pool.append({"value": value, "freq": 1.0 / cd, "pct": float(d.get("manaCostPct", 0.0))})
+	pool.sort_custom(func(a, b): return float(a.value) > float(b.value))
+	var left := slots
+	var spend := 0.0
+	for item in pool:
+		var take := minf(float(item.freq), left)
+		if take <= 0.0:
+			continue
+		spend += take * float(item.pct) * max_mp
+		left -= take
+	return spend
 
 func _load_real_save() -> bool:
 	if not FileAccess.file_exists(REAL_SAVE):

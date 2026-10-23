@@ -47,13 +47,16 @@ func _ready() -> void:
 func _lightning() -> Dictionary:
 	return SkillProgression.current("lightning")
 
-## 3% × 最大法力，四舍五入 —— 口径必须能一眼复算出来。
+## 1.2% × 最大法力，四舍五入 —— 口径必须能一眼复算出来。
+## ⚠ 工程 98 修订：技能 CD 从 5s 压到 0.6s（≈1 个攻击间隔）后，单次蓝耗必须同比例下调，
+## 否则每秒蓝耗从 0.6% 涨到 5% 以上，蓝池 20 秒见底。费率是绝对判据（不复用被测常量）：
+## 数据被改回 3% 时这条会红，那是它该报告的内容，不是「数字不好看」。
 func _test_cost_formula() -> void:
 	GameState.reset_to_defaults("mage")
 	GameState.player.level = 30
-	var expected := int(round(float(GameState.max_mp()) * 0.03))
+	var expected := int(round(float(GameState.max_mp()) * 0.012))
 	check(GameState.skill_mana_cost(_lightning()) == expected,
-		"雷电术耗蓝应为 max_mp 的 3%%（%.0f → %d），实际 %d"
+		"雷电术耗蓝应为 max_mp 的 1.2%%（%.0f → %d），实际 %d"
 		% [float(GameState.max_mp()), expected, GameState.skill_mana_cost(_lightning())])
 	var shield: Dictionary = SkillProgression.current("magic_shield")
 	check(GameState.skill_mana_cost(shield) == int(round(float(GameState.max_mp()) * 0.06)),
@@ -69,8 +72,8 @@ func _test_cost_follows_max_mp() -> void:
 	var after_mp := GameState.max_mp()
 	var after_cost := GameState.skill_mana_cost(_lightning())
 	check(after_mp > before_mp * 2, "用例前提：加蓝装后蓝池应显著变大（%d → %d）" % [before_mp, after_mp])
-	check(after_cost == int(round(float(after_mp) * 0.03)),
-		"耗蓝必须跟着蓝池走（%d → %d），实际 %d" % [before_cost, int(round(float(after_mp) * 0.03)), after_cost])
+	check(after_cost == int(round(float(after_mp) * 0.012)),
+		"耗蓝必须跟着蓝池走（%d → %d），实际 %d" % [before_cost, int(round(float(after_mp) * 0.012)), after_cost])
 	GameState.player.mpFlat = 0
 
 ## 蓝不足：不施放、不扣蓝、不进入冷却（三条缺一都会让玩家「以为放了」）。

@@ -1,4 +1,4 @@
-"""负向验证：确认职业体系（工程 98）的六条判据真的有牙。
+"""负向验证：确认职业体系（工程 98）的八条判据真的有牙。
 
 背景：法师这一整套机制错起来**全是静默的** —— 系数配错、射程没接上、蓝耗变成免费、
 盾只减伤不扣蓝、减速没生效、读档留着别人的技能格，游戏都照常跑、零报错。
@@ -6,12 +6,17 @@
 对应断言变红，而且必须红在**那一条**上。
 
 N-1 `classes.json` 武士 `hpMult` 1.0 → 1.1 —— `ClassFrameTest`「默认职业系数全 1.0」变红。
-N-2 `classes.json` 法师 `attackRange` 4.0 → 1.0 —— `MageRangedTest`「3.9 格能打」变红。
+N-2 `classes.json` 法师 `attackRange` 6.0 → 1.0 —— `MageRangedTest`「5.9 格能打」变红。
 N-3 删掉 `lightning` 的 `manaCostPct` —— `MageManaTest`「按 max_mp 算」变红。
     （改 0.0 不行：`data_loader` 会判 `(0,1)` 越界，红的就不是这条了。）
 N-4 `magic_shield` 的 `damageToManaPct` 0.35 → 0.0 —— `MagicShieldTest`「扣血 650」变红。
 N-5 `frost_roar` 的 debuff 强度 0.35 → 0.0 —— `MageSlowTest`「移速 ×0.65」变红。
 N-6 删掉读档时的 `prune_hotbar_for_class()` —— `ClassFrameTest`「快捷栏无非本职业技能」变红。
+N-7 `lightning` 系数 1.25 → 2.2（CD 缩短了但伤害退回旧值）—— `MageRotationTest`
+    「单次伤害 0.50—0.65 倍」变红。**这条守的是「缩短 CD 不白送强度」**：
+    系数回去而 CD 又是 0.6s，单怪输出直接 ×1.76，是静默的平衡崩。
+N-8 `lightning` CD 0.6 → 5.0（有人把雷电术改回「等 5 秒」）—— `MageRotationTest`
+    「雷电术 CD 必须 ≤ 1 秒」变红。用户实机反馈的原问题就是这一条。
 
 🔴 每个用例前还原**所有**被改文件：只还原当次那个的话，上一轮补丁会留在盘上，
    第二次「变红」证明的就不是想验的那一条（工程 89 已踩）。
@@ -31,15 +36,17 @@ SAVE_MANAGER = ROOT / "autoload/save_manager.gd"
 
 # ---- 锚点（原文必须逐字命中，命中失败要报出来，不能静默跳过）----
 WARRIOR_HP = '    "hpMult": 1.0,'
-MAGE_RANGE = '    "attackRange": 4.0,'
-LIGHTNING_PCT = '    "manaCostPct": 0.03,\n'
+MAGE_RANGE = '    "attackRange": 6.0,'
+LIGHTNING_PCT = '    "manaCostPct": 0.012,\n'
+LIGHTNING_COEF = '    "coefficient": 1.25,'
+LIGHTNING_CD = '    "cooldown": 0.6,'
 SHIELD_PCT = '    "effects": { "damageToManaPct": 0.35 },'
 FROST_DEBUFF = '    "debuff": { "type": "slow", "value": 0.35, "duration": 3.0 },'
 PRUNE_CALL = "\tGameState.prune_hotbar_for_class()\n"
 
 CASES = [
     ("N-1 武士 hpMult 1.0 → 1.1（默认职业不再是基准）", "ClassFrameTest", CLASSES, WARRIOR_HP, '    "hpMult": 1.1,'),
-    ("N-2 法师射程 4.0 → 1.0（远程变近战）", "MageRangedTest", CLASSES, MAGE_RANGE, '    "attackRange": 1.0,'),
+    ("N-2 法师射程 6.0 → 1.0（远程变近战）", "MageRangedTest", CLASSES, MAGE_RANGE, '    "attackRange": 1.0,'),
     ("N-3 删掉闪电术的百分比蓝耗（法术变免费）", "MageManaTest", SKILLS, LIGHTNING_PCT, ""),
     ("N-4 魔法盾转嫁 0.35 → 0.0（只减伤不扣蓝）", "MagicShieldTest", SKILLS, SHIELD_PCT,
      '    "effects": { "damageToManaPct": 0.0 },'),
@@ -47,6 +54,10 @@ CASES = [
      '    "debuff": { "type": "slow", "value": 0.0, "duration": 3.0 },'),
     ("N-6 读档不清理非法技能格（法师档留着武士技能）", "ClassFrameTest", SAVE_MANAGER,
      PRUNE_CALL, "\tpass\n"),
+    ("N-7 雷电术系数 1.25 → 2.2（CD 短了但伤害退回旧值 ⇒ 静默变强）", "MageRotationTest", SKILLS,
+     LIGHTNING_COEF, '    "coefficient": 2.2,'),
+    ("N-8 雷电术 CD 0.6 → 5.0（改回「等 5 秒」）", "MageRotationTest", SKILLS,
+     LIGHTNING_CD, '    "cooldown": 5.0,'),
 ]
 
 
