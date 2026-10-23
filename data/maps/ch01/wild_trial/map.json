@@ -73,7 +73,8 @@
       "level": 4,
       "respawnTime": 120,
       "count": 1,
-      "kind": "elite"
+      "kind": "elite",
+      "tombstone": true
     }
   ],
   "bossSpawn": null,

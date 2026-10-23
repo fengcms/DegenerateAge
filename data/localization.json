@@ -29,7 +29,7 @@
   "ui.boss_token_panel.p008": "金币不足（需 %d）",
   "ui.boss_token_panel.p009": "持有金币 %d",
   "ui.boss_token_panel.p010": "已到达，正在接近目标",
-  "ui.boss_tombstone.p001": "Boss 刷新 %02d:%02d",
+  "ui.boss_tombstone.p001": "刷新 %02d:%02d",
   "ui.dialog.continue": "继续",
   "ui.common.confirm": "确认",
   "ui.common.cancel": "取消",

@@ -517,7 +517,8 @@
         41,
         80
       ],
-      "kind": "elite"
+      "kind": "elite",
+      "tombstone": true
     }
   ],
   "bossSpawn": null,

@@ -283,7 +283,8 @@
         23
       ],
       "kind": "elite",
-      "dropTableId": "DT_C2_Core_Elite"
+      "dropTableId": "DT_C2_Core_Elite",
+      "tombstone": true
     },
     {
       "monsterId": "c2_elite_ash_leader",

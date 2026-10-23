@@ -355,7 +355,8 @@
         61
       ],
       "kind": "elite",
-      "dropTableId": "DT_C2_Industrial_Elite"
+      "dropTableId": "DT_C2_Industrial_Elite",
+      "tombstone": true
     }
   ],
   "bossSpawn": {

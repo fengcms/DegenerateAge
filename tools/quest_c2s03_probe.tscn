@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tools/quest_c2s03_probe.gd" id="1"]
+
+[node name="QuestC2s03Probe" type="Node"]
+script = ExtResource("1")
