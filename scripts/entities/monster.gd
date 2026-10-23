@@ -121,6 +121,9 @@ var is_ranged: bool = false
 var defense_power := 0.0
 ## R4-c：破甲剩余时长（秒）。运行态，不落档；0 表示无减益（默认值 ⇒ 既有战斗不受影响）。
 var armor_break_left := 0.0
+## 工程 98：冰咆哮减速。同样是运行态、不落档；`slow_left == 0` ⇒ 移速乘子恒 1.0（旧行为逐位不变）。
+var slow_pct := 0.0
+var slow_left := 0.0
 var active_affixes: Array[Dictionary] = []
 var _life_steal_credit := 0.0
 ## M6-0a：当前外观半径（按 kind 决定），绘制与点击命中同源（见 game.gd::enemy_at_screen）。
@@ -547,10 +550,34 @@ func apply_armor_break(duration: float) -> void:
 func armor_break_remaining() -> float:
 	return armor_break_left
 
+## 工程 98：施加 / 续期减速。同强度刷新时间，更强的效果才覆盖（与玩家侧 `apply_slow` 同语义）。
+## Boss 时长**减半**（方案 R8）：否则百首禁域 100 席可被无限减速刷，等于把整张图改成木桩。
+func apply_slow(percent: float, duration: float) -> void:
+	if is_dead or percent <= 0.0 or duration <= 0.0:
+		return
+	if _kind() == "boss":
+		duration *= 0.5
+	if percent >= slow_pct or slow_left <= 0.0:
+		slow_pct = clampf(percent, 0.0, 0.95)
+		slow_left = duration
+
+func slow_remaining() -> float:
+	return slow_left
+
+## 移速乘子：无减速恒 1.0。所有实际位移都要乘它（`_approach` / 冲锋），
+## 只改其中一处会出现「走路被冻住但冲锋照常」这种只有玩家能看见的漏洞。
+func movement_multiplier() -> float:
+	return 1.0 - slow_pct if slow_left > 0.0 else 1.0
+
+func current_move_speed() -> float:
+	return move_speed_px * movement_multiplier()
+
 ## 状态计时集中一处：物理帧推进与测试直接调用走同一条实现，避免两套时钟。
 func tick_status(delta: float) -> void:
 	if armor_break_left > 0.0:
 		armor_break_left = maxf(0.0, armor_break_left - delta)
+	if slow_left > 0.0:
+		slow_left = maxf(0.0, slow_left - delta)
 
 func get_dodge() -> float:
 	return float(template.get("dodge", 0.0))
@@ -718,11 +745,11 @@ func _approach(target_pos: Vector2) -> void:
 	var to := _cave_nav.direction(ground, global_position, target_pos)
 	if to.length() < 0.001:
 		return
-	var step := to * move_speed_px * get_physics_process_delta_time()
+	var step := to * current_move_speed() * get_physics_process_delta_time()
 	if MapService.is_in_rest_zone(GameState.current_map, global_position + step):
 		velocity = Vector2.ZERO
 		return
-	velocity = to * move_speed_px
+	velocity = to * current_move_speed()
 
 func _get_player() -> Node2D:
 	var p := get_tree().get_first_node_in_group("player")
@@ -745,7 +772,7 @@ func _update_chapter_special(delta: float) -> bool:
 		return false
 	if _charge_left > 0.0:
 		_charge_left -= delta
-		velocity = _charge_direction * move_speed_px * 2.5
+		velocity = _charge_direction * current_move_speed() * 2.5
 		if not _charge_hit and player.global_position.distance_to(global_position) <= 32.0:
 			_do_attack(player)
 			_charge_hit = true

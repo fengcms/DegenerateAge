@@ -31,6 +31,11 @@ var _mode := "manage"
 var _hint: Label
 var _name_row: HBoxContainer
 var _name_input: LineEdit
+## 工程 98 Q1=A：职业在「新的旅程」处二选一（默认武士），不做随时切换。
+## 职业一旦落档就不可改：装备、技能阶、快捷栏、进度全部按它派生，切换等于半个重置系统。
+var _class_row: HBoxContainer
+var _class_option: OptionButton
+var _class_desc: Label
 var _overwrite_dialog: PanelConfirmDialog
 var _pending_overwrite := -1
 ## 导出 / 导入的文件选择器与覆盖确认弹层（工程文档《人物存档导出与导入设计方案》§4.3）。
@@ -163,8 +168,33 @@ func _build() -> void:
 	PanelChrome.style_line_edit(_name_input)
 	var class_label := Label.new()
 	class_label.text = Localization.tr_key("ui.save_panel.p004")
+	class_label.custom_minimum_size = Vector2(64, 0)
 	_name_row.add_child(class_label)
 	root.add_child(_name_row)
+
+	# 职业选择独占一行：说明文字较长，和名称挤一行会把输入框压到看不清。
+	_class_row = HBoxContainer.new()
+	_class_row.add_theme_constant_override("separation", 10)
+	var class_spacer := Label.new()
+	class_spacer.custom_minimum_size = Vector2(64, 0)
+	_class_row.add_child(class_spacer)
+	_class_option = OptionButton.new()
+	_class_option.custom_minimum_size = Vector2(150, 30)
+	_class_option.add_theme_font_size_override("font_size", 13)
+	for class_id in PlayerClass.ids():
+		_class_option.add_item(PlayerClass.display_name(String(class_id)))
+		_class_option.set_item_metadata(_class_option.item_count - 1, String(class_id))
+	PanelChrome.style_option_button(_class_option)
+	_class_option.item_selected.connect(func(_index: int) -> void: _refresh_class_desc())
+	_class_row.add_child(_class_option)
+	_class_desc = Label.new()
+	_class_desc.add_theme_font_size_override("font_size", 12)
+	_class_desc.add_theme_color_override("font_color", PanelChrome.MUTED)
+	_class_desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_class_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_class_row.add_child(_class_desc)
+	root.add_child(_class_row)
+	_refresh_class_desc()
 
 	var name_divider := HSeparator.new()
 	root.add_child(name_divider)
@@ -314,6 +344,7 @@ func _make_button(text: String) -> Button:
 
 func _refresh() -> void:
 	_name_row.visible = _mode == "new"
+	_class_row.visible = _mode == "new"
 	_hint.text = Localization.tr_key("ui.save_panel.p012") if _mode == "new" else \
 		Localization.tr_key("ui.save_panel.load_hint") if _mode == "load" else \
 		Localization.tr_key("ui.save_panel.manage_hint")
@@ -389,6 +420,24 @@ func _on_overwrite_confirmed() -> void:
 	_pending_overwrite = -1
 	_create_new_slot(slot)
 
+## 当前选中的职业 id（`item_metadata` 存的是 id，不依赖显示名 —— 改名不会悄悄换职业）。
+func _selected_class() -> String:
+	if _class_option == null or _class_option.selected < 0:
+		return PlayerClass.DEFAULT_ID
+	return PlayerClass.normalize(String(_class_option.get_item_metadata(_class_option.selected)))
+
+## 职业说明跟着选择走：面板上必须能看出「这个选择意味着什么」。
+func _refresh_class_desc() -> void:
+	if _class_desc == null:
+		return
+	var class_id := _selected_class()
+	_class_desc.text = Localization.tr_key("ui.save_panel.class_desc") % [
+		PlayerClass.describe(class_id),
+		int(round(PlayerClass.mult("hpMult", class_id) * 100.0)),
+		int(round(PlayerClass.mult("mpMult", class_id) * 100.0)),
+		PlayerClass.attack_range(class_id),
+	]
+
 func _valid_new_name() -> bool:
 	var name := _name_input.text.strip_edges()
 	if name.length() >= 2 and name.length() <= 16:
@@ -402,7 +451,8 @@ func _create_new_slot(slot: int) -> void:
 		return
 	# 新档原子覆盖旧槽，成功后才清除旧备份；写盘失败保留旧存档。
 	SaveManager.active_slot = -1
-	GameState.reset_to_defaults()
+	# 职业必须随 `reset_to_defaults` 一起落 —— 快捷栏默认格与血/蓝上限都按它派生。
+	GameState.reset_to_defaults(_selected_class())
 	GameState.player.name = _name_input.text.strip_edges()
 	if not SaveManager.save_slot(slot, true, true):
 		_refresh()

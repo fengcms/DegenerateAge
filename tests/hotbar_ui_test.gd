@@ -72,8 +72,14 @@ func _ready() -> void:
 		"破甲重击接通后可拖入")
 	_check(hud._hotbar_buttons[6]._can_drop_data(Vector2.ZERO, {"kind": "hotbar_skill", "id": "spirit_storm"}),
 		"灵刃风暴接通后可拖入")
-	_check(HotbarConfig.ACTIVE_SKILLS.size() == 6,
-		"可装备技能共 6 条，与 skills.json 全量一致（无未接线残留）")
+	_check(HotbarConfig.ACTIVE_SKILLS.size() == 12,
+		"可装备技能共 12 条（两职业各 6），与 skills.json 全量一致（无未接线残留）")
+	# 工程 98：单职业视角必须各自 6 条且互不串味 —— 只断并集大小会漏掉
+	# 「法师技能混进武士快捷栏」这类错误（并集仍然是 12）。
+	_check(HotbarConfig.active_skills("warrior").size() == 6, "武士应 6 条技能（含普攻）")
+	_check(HotbarConfig.active_skills("mage").size() == 6, "法师应 6 条技能（含普攻）")
+	_check(not HotbarConfig.usable_skill("meteor", "warrior"), "武士不得使用法师的陨石术")
+	_check(not HotbarConfig.usable_skill("spirit_storm", "mage"), "法师不得使用武士的灵刃风暴")
 	var right := InputEventMouseButton.new()
 	right.position = hud._hotbar_buttons[6].get_global_rect().get_center()
 	right.global_position = right.position

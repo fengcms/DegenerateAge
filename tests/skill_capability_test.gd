@@ -170,6 +170,9 @@ func _check_auto_battle() -> void:
 	pilot.queue_free()
 
 ## ⑥ 接线：可装备列表与数据全量一致（少一条就等于玩家永远拖不进）。
+## 工程 98：口径从「一个固定 6 条表」升级为「两职业并集」——
+## 这里同时断「并集 == skills.json 全量」与「每个职业各 6 条且不含他职业技能」，
+## 只断前者会让「两条法师技能误挂到武士名下」照样全绿。
 func _check_wiring() -> void:
 	var skills: Variant = DataLoader.get_table("skills")
 	var expected := 0
@@ -177,8 +180,22 @@ func _check_wiring() -> void:
 		expected = (skills as Array).size()
 	_check(HotbarConfig.ACTIVE_SKILLS.size() == expected,
 		"可装备技能应覆盖 skills.json 全量 %d 条，实际 %d" % [expected, HotbarConfig.ACTIVE_SKILLS.size()])
+	var union: Array = []
+	for class_id in PlayerClass.ids():
+		var list := HotbarConfig.active_skills(String(class_id))
+		_check(list.size() == 6, "%s 应有 6 条技能（含普攻），实际 %d" % [String(class_id), list.size()])
+		for sid in list:
+			if not union.has(sid):
+				union.append(sid)
+	union.sort()
+	var declared: Array = HotbarConfig.ACTIVE_SKILLS.duplicate()
+	declared.sort()
+	_check(union == declared, "各职业技能并集应与 ACTIVE_SKILLS 完全一致")
+	_check(not HotbarConfig.usable_skill("meteor", "warrior"), "武士不得使用法师技能")
+	_check(not HotbarConfig.usable_skill("spirit_storm", "mage"), "法师不得使用武士技能")
 	_check(HotbarConfig.valid_entry({"kind": "skill", "id": "armor_break"}), "破甲重击应可拖入快捷栏")
 	_check(HotbarConfig.valid_entry({"kind": "skill", "id": "spirit_storm"}), "灵刃风暴应可拖入快捷栏")
+	_check(HotbarConfig.valid_entry({"kind": "skill", "id": "meteor"}), "陨石术应可拖入快捷栏")
 
 func _dummy(at: Vector2, defense: float) -> DummyEnemy:
 	var enemy := DummyEnemy.new()

@@ -221,6 +221,9 @@ func buy_skill_rank(skill_id: String) -> Dictionary:
 func default_player() -> Dictionary:
 	return {
 		"name": "守护者",
+		# 工程 98：职业 id。旧档无此字段时由 `SaveManager._migrate_player` 补默认值 ⇒ **不 bump schema**。
+		# 非法值（被改档）在读档时归一成 warrior，不拒档。
+		"classId": "warrior",
 		"level": 1,
 		"xp": 0,
 		"hp": 102,          # 派生：见 4.3，L1（攻12/防5）=> 102
@@ -276,9 +279,12 @@ func default_settings() -> Dictionary:
 	}
 
 ## 重置为初始状态（新建角色 / 初始化时调用）。
-func reset_to_defaults() -> void:
+## `class_id` 留空 = 默认职业（武士）。存档面板「新的旅程」按玩家选择传入。
+## 🔴 职业必须在**建快捷栏之前**落到 `player.classId` —— `HotbarConfig.defaults()` 要按职业取普攻 id。
+func reset_to_defaults(class_id: String = "") -> void:
 	reset_equipment_prompt_session()
 	player = default_player()
+	player.classId = PlayerClass.normalize(class_id)
 	gold = 0
 	current_map = "camp"
 	visited_maps = ["camp"]
@@ -311,8 +317,12 @@ func reset_to_defaults() -> void:
 	unclaimed_loot = {}             # M6-0c：未领取战利品（新游戏 / 初始化清空）
 	clear_save_pos()
 	settings = SettingsRuntime.with_display_preferences(default_settings())
-	hotbar = HotbarConfig.defaults()
+	hotbar = HotbarConfig.defaults(String(player.classId))
 	skill_ranks = {}
+	# 职业系数会改血 / 蓝上限：新档必须按职业把当前值补到上限，
+	# 否则法师新档会以 102 点血（武士模板值）开局、超出自己 73 的上限。
+	player.hp = max_hp()
+	player.mp = max_mp()
 	SettingsRuntime.apply_all()
 
 func mark_visited(map_id: String) -> void:
@@ -341,6 +351,24 @@ func swap_hotbar_entries(from_index: int, to_index: int) -> bool:
 	hotbar[to_index] = old
 	EventBus.hotbar_changed.emit()
 	return true
+
+## 清理快捷栏里**不属于本职业**的技能格（工程 98 R5）。返回清理条数。
+## 读档迁移与新建角色各调一次：不清理的话，法师档会继承武士的 6 个技能格 ——
+## 点下去无反应，而技能面板里根本找不到它们（R5 描述的正是这种「看不见的坏档」）。
+## 只动 `kind == "skill"`：药水 / 杂项与职业无关，一律保留。
+func prune_hotbar_for_class() -> int:
+	var allowed := HotbarConfig.active_skills()
+	var cleared := 0
+	for i in range(hotbar.size()):
+		var entry: Variant = hotbar[i]
+		if not entry is Dictionary or String((entry as Dictionary).get("kind", "")) != "skill":
+			continue
+		if not allowed.has(String((entry as Dictionary).get("id", ""))):
+			hotbar[i] = null
+			cleared += 1
+	if cleared > 0:
+		EventBus.hotbar_changed.emit()
+	return cleared
 
 ## 经验升级所需（M10-0 起走 Balance 曲线；L ≤ 60 与旧的 round(100 × L^1.6) 逐位一致）。
 func xp_to_next(level: int) -> int:
@@ -377,14 +405,16 @@ func _base_attack() -> int:
 func _base_defense() -> int:
 	return int(player.defense) + int(round(float(equip_bonus().get("def", 0.0))))
 
-## 总攻击力 = （基础攻击 + 装备固定加成）× (1 + 套装加成)。
+## 总攻击力 = （基础攻击 + 装备固定加成）× (1 + 套装加成) × 职业系数。
 ## 装备**不改基础值**（5.1）：基础值与装备加成始终分离保存。
+## 🔴 职业系数**只能**乘在这里。乘进 `_base_attack()` 会被 `max_hp()` 二次放大（工程 98 R1）。
 func total_attack() -> int:
-	return int(round(_scaled(float(_base_attack()))))
+	return int(round(_scaled(float(_base_attack())) * PlayerClass.mult("atkMult")))
 
-## 总防御力 = （基础防御 + 装备固定加成）× (1 + 套装加成)。
+## 总防御力 = （基础防御 + 装备固定加成）× (1 + 套装加成) × 职业系数。
+## 🔴 防御系数恒 1.0（两职业都不降防）：本作承伤是差值公式，防御打九折 = 承伤 +39%。
 func total_defense() -> int:
-	return int(round(_scaled(float(_base_defense()))))
+	return int(round(_scaled(float(_base_defense())) * PlayerClass.mult("defMult")))
 
 ## 总冷却缩减 = 基础 + 装备词条，**按加法累加**后乘套装加成，再截断到上限
 ## （D7 / 产品 03 §3.8「超限部分在结算时截断」）。
@@ -424,21 +454,32 @@ func total_attack_interval() -> float:
 	return maxf(Combat.MIN_ATTACK_INTERVAL, _inverse_scaled(float(player.get("attackInterval", 0.8))))
 
 ## 派生的最大生命（4.3 公式；攻 / 防取**不含套装**的基础值，套装只在最外层乘一次）。
+## 工程 98：职业 `hpMult` 同样只在**最外层**乘一次（法师 0.72）。
 func max_hp() -> int:
 	var base := BASE_HP + float(player.level) * HP_PER_LV \
 		+ float(_base_attack()) * HP_PER_ATK + float(_base_defense()) * HP_PER_DEF
 	var b := equip_bonus()
 	var pct := float(player.get("hpPercent", 0.0)) + float(b.get("hpPercent", 0.0))
 	var flat := float(player.get("hpFlat", 0.0)) + float(b.get("hp", 0.0))
-	return int(round(_scaled(base * (1.0 + pct) + flat)))
+	return int(round(_scaled(base * (1.0 + pct) + flat) * PlayerClass.mult("hpMult")))
 
 ## 派生的最大法力（4.3 公式；装备 mp / mpPercent 进入固定 / 百分比项）。
+## 工程 98：法师 `mpMult` = 2.0，蓝池是「第二条血」的储备。
 func max_mp() -> int:
 	var b := equip_bonus()
 	var base := BASE_MP + float(player.level) * MP_PER_LV
 	var pct := float(player.get("mpPercent", 0.0)) + float(b.get("mpPercent", 0.0))
 	var flat := float(player.get("mpFlat", 0.0)) + float(b.get("mp", 0.0))
-	return int(round(_scaled(base * (1.0 + pct) + flat)))
+	return int(round(_scaled(base * (1.0 + pct) + flat) * PlayerClass.mult("mpMult")))
+
+## 技能实际法力消耗（**唯一口径入口**，工程 98 R3）。
+## 法师技能按 `manaCostPct`（最大法力百分比）计费；武士仍是固定 `manaCost`。
+## 🔴 漏改任一调用点（施放 / 手动校验 / 自动战斗三处）就会出现「以为蓝够、实际放不出」的空挥。
+func skill_mana_cost(skill: Dictionary) -> int:
+	var pct := float(skill.get("manaCostPct", 0.0))
+	if pct > 0.0:
+		return maxi(1, int(round(float(max_mp()) * pct)))
+	return int(skill.get("manaCost", 0))
 
 # ---- 数值变更（统一走事件广播，HUD 订阅刷新）----
 

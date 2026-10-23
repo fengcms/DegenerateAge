@@ -33,24 +33,34 @@ func _ready() -> void:
 		"hotbar automatic potions use delivered red and blue icons")
 	var panel: Variant = preload("res://scripts/ui/skill_panel.gd").new()
 	add_child(panel)
-	panel._refresh()
 	var rows: VBoxContainer = panel._list
-	var skills: Array = DataLoader.get_table("skills")
-	for index in range(skills.size()):
-		var skill: Dictionary = skills[index]
-		var id := String(skill.id)
-		var texture := SampleArt.skill_icon(id)
-		check(texture != null and texture.get_size() == Vector2(48, 48), id + " loaded texture")
-		check(ResourceLoader.exists(String(skill.icon), "Texture2D"), id + " data path")
-		var button := rows.get_child(index).get_child(0) as SkillDragButton
-		check(button.icon == texture and button.text.is_empty(), id + " skill panel icon")
-		check(button.drag_label == String(skill.name), id + " drag preview label")
-		var slot := HotbarSlot.new()
-		add_child(slot)
-		slot.entry = {"kind": "skill", "id": id}
-		SampleArt.decorate(slot, null)
-		check(slot.icon == texture, id + " hotbar icon")
-		slot.queue_free()
+	# 工程 98 R5：技能面板按**当前职业**过滤，所以「图标 / 数据路径」对全表 12 条都要查，
+	# 而「面板行 + 快捷栏槽位」只能按本职业那 6 条查 —— 拿全表去索引行会越界
+	# （`--all` 抓到的原形：`Index p_index = 6 is out of bounds (… = 6)`，随后 `get_child` 空引用）。
+	for raw_skill in DataLoader.get_table("skills"):
+		var sid := String(raw_skill.id)
+		var tex := SampleArt.skill_icon(sid)
+		check(tex != null and tex.get_size() == Vector2(48, 48), sid + " loaded texture")
+		check(ResourceLoader.exists(String(raw_skill.icon), "Texture2D"), sid + " data path")
+	for class_id in PlayerClass.ids():
+		GameState.player.classId = String(class_id)
+		panel._refresh()
+		var ids: Array = HotbarConfig.active_skills(String(class_id))
+		check(rows.get_child_count() == ids.size(),
+			"%s 技能面板应只列本职业 %d 条，实际 %d" % [String(class_id), ids.size(), rows.get_child_count()])
+		for index in range(mini(ids.size(), rows.get_child_count())):
+			var id := String(ids[index])
+			var skill: Dictionary = DataLoader.get_entry("skills", id)
+			var texture := SampleArt.skill_icon(id)
+			var button := rows.get_child(index).get_child(0) as SkillDragButton
+			check(button.icon == texture and button.text.is_empty(), id + " skill panel icon")
+			check(button.drag_label == String(skill.name), id + " drag preview label")
+			var slot := HotbarSlot.new()
+			add_child(slot)
+			slot.entry = {"kind": "skill", "id": id}
+			SampleArt.decorate(slot, null)
+			check(slot.icon == texture, id + " hotbar icon")
+			slot.queue_free()
 	for index in range(2):
 		var kind := "red" if index == 0 else "blue"
 		var button := panel._potion_buttons[kind] as SkillDragButton

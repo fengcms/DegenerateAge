@@ -456,6 +456,12 @@ func _migrate(source: Dictionary) -> Dictionary:
 				data[key] = defaults[key]
 		if data.get("player") is Dictionary:
 			data.player = _migrate_player(data.player)
+	# ⚠ 工程 98：**与下面 M5-9c 完全同一个坑** —— `_is_valid_save` 会按 `default_player()`
+	# 逐键校验 `player`，所以 `default_player()` 新增键（`classId`）时若只在 `v == 0` 分支补，
+	# 存量档会在下一版上线**立刻全部判为损坏**（实测：续档直接报「player.classId 非法」，
+	# 然后走备份恢复）。这里对所有版本统一补齐，缺键取默认值、已有值优先。
+	if data.get("player") is Dictionary:
+		data.player = _migrate_player(data.player)
 	# ⚠ M5-9c：设置键补齐对**所有版本**生效，不能只放在下面的 v < CURRENT_SCHEMA 分支里。
 	# default_settings() 新增键（mapScale / displayScaleMode / displayScale…）时，当前版本的存量档
 	# 同样缺这些键；若只在跨版本迁移时补，新键一上线就会把全部存量档判为损坏
@@ -808,6 +814,9 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.preferred_mount = GameState.active_mount
 	GameState.equipment = _migrate_equipment(data.get("equipment", {}))
 	GameState.hotbar = data.hotbar.duplicate(true)
+	# 工程 98 R5：快捷栏里不属于**本档职业**的技能格必须清空。
+	# 放着不管的后果不是报错，而是「点技能格没反应 + 技能面板里找不到它」——玩家无法自救。
+	GameState.prune_hotbar_for_class()
 	# 任务状态：经 Quest 归一化（老档 String 值 → {state, progress}，见 11 §4.1 R8）
 	GameState.quest_states = Quest.normalize_states(data.get("questStates", {}))
 	GameState.quest_items = _deep_int(data.get("questItems", {}))
@@ -904,6 +913,9 @@ func _migrate_player(raw: Dictionary) -> Dictionary:
 	var out := GameState.default_player()
 	for k in raw.keys():
 		out[k] = raw[k]
+	# 工程 98：职业字段与 `autoRepairEquip` 同口径 —— 默认表打底 + 旧字段覆盖，
+	# **旧档因此自动补成 warrior，不 bump schema**。非法值（被改档）回退默认，不拒档。
+	out["classId"] = PlayerClass.normalize(String(out.get("classId", "")))
 	return _deep_int(out) as Dictionary
 
 func _migrate_settings(raw: Dictionary) -> Dictionary:
@@ -1333,6 +1345,13 @@ func _is_valid_save(raw: Variant) -> bool:
 		if key == "name":
 			if not value is String or value.is_empty():
 				return _reject("player.name 非法")
+		elif key == "classId":
+			# 工程 98：职业 id 是**字符串枚举**，不是数值。这段循环会把 `default_player()`
+			# 里除 `name` 外的每个键都当非负数校验 —— 加了 `classId` 却忘了这里，
+			# 结果就是**所有存档全部读不进来**（报错文案还是「player.classId 应为非负数」）。
+			# 🔴 非法 id 不拒档：交给 `_migrate_player` 归一成默认职业，避免被改档的人彻底进不去。
+			if not value is String or String(value).is_empty():
+				return _reject("player.classId 非法")
 		elif not _number(value) or float(value) < 0:
 			return _reject("player.%s 应为非负数" % key)
 	for key in ["level", "xp", "hp", "mp"]:

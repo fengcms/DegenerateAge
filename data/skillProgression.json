@@ -43,5 +43,50 @@
       {"rank": 4, "unlockLevel": 70, "goldCost": 70000, "coefficientMultiplier": 1.09},
       {"rank": 5, "unlockLevel": 80, "goldCost": 500000, "coefficientMultiplier": 1.12}
     ]
+  },
+  {
+    "skillId": "lightning",
+    "ranks": [
+      {"rank": 2, "unlockLevel": 15, "goldCost": 3000, "coefficientMultiplier": 1.03},
+      {"rank": 3, "unlockLevel": 25, "goldCost": 5000, "coefficientMultiplier": 1.06},
+      {"rank": 4, "unlockLevel": 35, "goldCost": 8000, "coefficientMultiplier": 1.09},
+      {"rank": 5, "unlockLevel": 45, "goldCost": 12000, "coefficientMultiplier": 1.12}
+    ]
+  },
+  {
+    "skillId": "flame_burst",
+    "ranks": [
+      {"rank": 2, "unlockLevel": 20, "goldCost": 4000, "coefficientMultiplier": 1.03},
+      {"rank": 3, "unlockLevel": 30, "goldCost": 6500, "coefficientMultiplier": 1.06},
+      {"rank": 4, "unlockLevel": 40, "goldCost": 10000, "coefficientMultiplier": 1.09},
+      {"rank": 5, "unlockLevel": 50, "goldCost": 15000, "coefficientMultiplier": 1.12}
+    ]
+  },
+  {
+    "skillId": "magic_shield",
+    "ranks": [
+      {"rank": 2, "unlockLevel": 25, "goldCost": 5000, "effects": {"damageToManaPct": 0.38}},
+      {"rank": 3, "unlockLevel": 35, "goldCost": 8000, "effects": {"damageToManaPct": 0.41}},
+      {"rank": 4, "unlockLevel": 45, "goldCost": 12000, "effects": {"damageToManaPct": 0.44}},
+      {"rank": 5, "unlockLevel": 55, "goldCost": 18000, "effects": {"damageToManaPct": 0.47}}
+    ]
+  },
+  {
+    "skillId": "frost_roar",
+    "ranks": [
+      {"rank": 2, "unlockLevel": 35, "goldCost": 9000, "coefficientMultiplier": 1.03},
+      {"rank": 3, "unlockLevel": 45, "goldCost": 14000, "coefficientMultiplier": 1.06},
+      {"rank": 4, "unlockLevel": 55, "goldCost": 20000, "coefficientMultiplier": 1.09},
+      {"rank": 5, "unlockLevel": 65, "goldCost": 28000, "coefficientMultiplier": 1.12}
+    ]
+  },
+  {
+    "skillId": "meteor",
+    "ranks": [
+      {"rank": 2, "unlockLevel": 50, "goldCost": 20000, "coefficientMultiplier": 1.03},
+      {"rank": 3, "unlockLevel": 60, "goldCost": 30000, "coefficientMultiplier": 1.06},
+      {"rank": 4, "unlockLevel": 70, "goldCost": 42000, "coefficientMultiplier": 1.09},
+      {"rank": 5, "unlockLevel": 80, "goldCost": 58000, "coefficientMultiplier": 1.12}
+    ]
   }
 ]

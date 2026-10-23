@@ -11,14 +11,30 @@ const RANDOM_TICKET := "misc_random_ticket"
 ## 也放进来，点上去弹「该物品无法使用」——那是**做出一个假功能**，不是多给一个格子。
 ## 新增类型时先确认 `_use_misc` 已实现该分支，再往这里加。
 const USABLE_TYPES := ["townPortal", "randomTeleport", "panel"]
-## R4-d：可装备技能必须与「引擎真的实现了该能力」同步。
-## `armor_break`（L25，穿防 + 破甲）与 `spirit_storm`（L40，3 段）此前只存在于数据里，
-## 引擎不认识 `defensePierce` / `debuff` / `hits`，加 id 会造出「描述写了、行为没有」的假技能。
-const ACTIVE_SKILLS := ["basic_slash", "earth_cleave", "whirlwind", "battle_focus", "armor_break", "spirit_storm"]
+## 引擎真的实现了该能力的技能并集（工程 98：两职业各 6 条）。
+## 启动校验 `tests/skill_capability_test.gd` 断言它等于「所有职业 `skills` 并集」且等于 `skills.json` 全量，
+## 少一条就等于玩家永远拖不进，多一条就是假技能。
+## ⚠ 单职业视角用 `active_skills(class_id)`；本常量只用于「格式是否可拖入」这一个纯静态判定
+## （`valid_entry` 没有职业上下文，也不该有 —— 它会读到别人的档）。
+const ACTIVE_SKILLS := [
+	"basic_slash", "earth_cleave", "whirlwind", "battle_focus", "armor_break", "spirit_storm",
+	"basic_fireball", "lightning", "flame_burst", "magic_shield", "frost_roar", "meteor",
+]
 
-static func defaults() -> Array:
+## 本职业可拖上快捷栏的技能（含普攻）。`class_id` 留空 = 当前存档职业。
+static func active_skills(class_id: String = "") -> Array:
+	return PlayerClass.active_skills(class_id)
+
+## 该技能是否属于指定职业（留空 = 当前职业）。施放与技能面板都走这里，避免两处各写一遍。
+static func usable_skill(skill_id: String, class_id: String = "") -> bool:
+	return active_skills(class_id).has(skill_id)
+
+## 默认快捷栏：红药 / 蓝药 / 本职业普攻。第三格的技能 id 必须按职业取，
+## 否则法师新档第 3 格挂的是破甲前的 `basic_slash`（点下去无反应且不在技能面板里）。
+static func defaults(class_id: String = "") -> Array:
 	var slots: Array = [{"kind": "auto_potion", "id": "red"},
-		{"kind": "auto_potion", "id": "blue"}, {"kind": "skill", "id": "basic_slash"}]
+		{"kind": "auto_potion", "id": "blue"},
+		{"kind": "skill", "id": PlayerClass.basic_skill(class_id)}]
 	while slots.size() < SIZE:
 		slots.append(null)
 	return slots

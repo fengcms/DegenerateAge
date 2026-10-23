@@ -115,6 +115,14 @@ const SKILL_ICONS := {
 	"battle_focus": preload("res://assets/sprites/skills/battle_focus.png"),
 	"armor_break": preload("res://assets/sprites/skills/armor_break.png"),
 	"spirit_storm": preload("res://assets/sprites/skills/spirit_storm.png"),
+	# 工程 98：法师职业 6 条技能。必须与 data/skills.json 的 id **逐条对齐**——
+	# 这张表是 `preload` 白名单，不是按前缀扫目录，漏一条就是玩家看到空白格。
+	"basic_fireball": preload("res://assets/sprites/skills/basic_fireball.png"),
+	"lightning": preload("res://assets/sprites/skills/lightning.png"),
+	"flame_burst": preload("res://assets/sprites/skills/flame_burst.png"),
+	"magic_shield": preload("res://assets/sprites/skills/magic_shield.png"),
+	"frost_roar": preload("res://assets/sprites/skills/frost_roar.png"),
+	"meteor": preload("res://assets/sprites/skills/meteor.png"),
 }
 
 ## 读取预载技能图标；找不到时返回空，供快捷栏保留文字回退。

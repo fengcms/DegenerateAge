@@ -109,10 +109,16 @@ func _refresh_static() -> void:
 	_set_line(_title, Localization.tr_key("ui.skill_panel.detail_title") % [str(base.get("name", skill_id)), rank, maximum])
 	_set_line(_description, str(base.get("desc", "")))
 	_set_line(_effect, Localization.tr_key("ui.skill_panel.detail_current" if rank > 0 else "ui.skill_panel.detail_after_unlock") % _effect_summary(skill))
-	var mana := int(skill.get("manaCost", 0))
+	var mana := GameState.skill_mana_cost(skill)
 	var range := Localization.tr_key("ui.skill_panel.detail_tiles") % str(skill.get("range", 0.0)) if str(skill.get("shape", "")) != "self" else Localization.tr_key("ui.skill_panel.detail_self")
-	_set_line(_meta, Localization.tr_key("ui.skill_panel.detail_meta") % [mana, range])
-	if skill_id == "basic_slash":
+	# 工程 98：法师技能按最大法力百分比计费 —— 只显示绝对值的话，玩家换一件 +蓝装
+	# 就会看到同一技能的「耗蓝」变了，却不知道为什么。两个口径一起给。
+	var pct := float(skill.get("manaCostPct", 0.0))
+	if pct > 0.0:
+		_set_line(_meta, Localization.tr_key("ui.skill_panel.detail_meta_pct") % [int(round(pct * 100.0)), mana, range])
+	else:
+		_set_line(_meta, Localization.tr_key("ui.skill_panel.detail_meta") % [mana, range])
+	if skill_id == PlayerClass.basic_skill():
 		var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 		var interval := player.effective_attack_interval() if player != null else GameState.total_attack_interval()
 		_set_line(_cooldown, Localization.tr_key("ui.skill_panel.detail_basic_interval") % interval)
@@ -145,6 +151,10 @@ func _next_step_text(rank: int, maximum: int) -> String:
 func _effect_summary(skill: Dictionary) -> String:
 	if str(skill.get("kind", "")) == "buff":
 		var effects: Dictionary = skill.get("effects", {})
+		# 工程 98：魔法盾走的是「伤害转嫁法力」，与战意觉醒的两个百分比不是同一类效果。
+		if effects.has("damageToManaPct"):
+			return Localization.tr_key("ui.skill_panel.detail_shield") % [
+				float(effects.get("damageToManaPct", 0.0)) * 100.0, float(skill.get("duration", 0.0))]
 		return Localization.tr_key("ui.skill_panel.detail_buff") % [
 			float(effects.get("attackPct", 0.0)) * 100.0,
 			float(effects.get("attackSpeedPct", 0.0)) * 100.0,
@@ -161,13 +171,13 @@ func _refresh_live() -> void:
 	if player == null:
 		_remaining.hide()
 		return
-	if skill_id == "battle_focus":
+	if skill_id == "battle_focus" or skill_id == "magic_shield":
 		var buff_left := GameState.buff_remaining(skill_id)
 		var cd_left := player.skill_cooldown(skill_id)
 		_set_line(_remaining, Localization.tr_key("ui.skill_panel.detail_remaining_buff") % [cd_left, buff_left] if buff_left > 0.0 else \
 			Localization.tr_key("ui.skill_panel.detail_remaining") % cd_left)
 		_remaining.visible = cd_left > 0.0 or buff_left > 0.0
-	elif skill_id == "basic_slash":
+	elif skill_id == PlayerClass.basic_skill():
 		_remaining.hide()
 	else:
 		var left := player.skill_cooldown(skill_id)

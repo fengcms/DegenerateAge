@@ -12,6 +12,7 @@ const DATA_DIR := "res://data/"
 
 ## 逻辑表名 -> 文件名；地图与怪物由各自的目录清单加载。
 const TABLES := {
+	"classes": "classes.json",
 	"equipments": "equipments.json",
 	"equipmentRules": "equipmentRules.json",
 	"skills": "skills.json",
@@ -36,7 +37,7 @@ const MONSTER_INDEX := "res://data/monsters/index.json"
 const APPEARANCE_INDEX := "res://data/monster_appearances/index.json"
 
 ## 需要做「ID 唯一」校验的表（数组型）。
-const ID_UNIQUE_TABLES := ["affixes", "equipments", "skills", "skillProgression", "monsters", "monsterAppearances", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
+const ID_UNIQUE_TABLES := ["classes", "affixes", "equipments", "skills", "skillProgression", "monsters", "monsterAppearances", "quests", "maps", "potions", "miscItems", "mounts", "runes", "shops", "dropTables", "lootPools"]
 
 ## 各表用作「唯一键」的字段名（缺省为 id）。shops 以 npcId 为键（见 docs 第 10 章 schema）。
 const KEY_FIELDS := {
@@ -528,6 +529,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_equipment_model())
 	report.append_array(Warehouse.validate_config())
 	# 5) 五表结构化校验（B 共性-5）：类型 / 数值范围 / 跨表引用存在性。
+	report.append_array(_validate_classes())
 	report.append_array(_validate_skills())
 	report.append_array(_validate_skill_progression())
 	report.append_array(_validate_quests())
@@ -1176,6 +1178,50 @@ func _npc_id_set() -> Dictionary:
 					out[nid] = true
 	return out
 
+## 工程 98 职业表：系数 / 射程 / 技能归属必须自洽。
+## 最有价值的一条是「`skills` 与 skills.json 的 `class` 双向对齐」—— 只写一边会让
+## 技能面板（按 skills 过滤）与快捷栏（按 classes 过滤）各说各话，玩家看到技能却拖不上去。
+func _validate_classes() -> Array[String]:
+	var report: Array[String] = []
+	var rows: Variant = tables.get("classes")
+	if not rows is Array or (rows as Array).is_empty():
+		return ["[classes] 需要非空数组"] as Array[String]
+	var seen := {}
+	for raw in (rows as Array):
+		if not raw is Dictionary:
+			report.append("[classes] 条目必须是字典")
+			continue
+		var cid := String((raw as Dictionary).get("id", ""))
+		if cid.is_empty() or seen.has(cid):
+			report.append("[classes] id 为空或重复：%s" % cid)
+			continue
+		seen[cid] = true
+		if String((raw as Dictionary).get("name", "")).is_empty():
+			report.append("[classes] %s 缺少 name" % cid)
+		for key in ["hpMult", "mpMult", "atkMult", "defMult"]:
+			if not _is_positive_number((raw as Dictionary).get(key, null)):
+				report.append("[classes] %s 的 %s 应为正数" % [cid, key])
+		var reach: Variant = (raw as Dictionary).get("attackRange", null)
+		if not _is_positive_number(reach) or float(reach) < 1.0:
+			report.append("[classes] %s 的 attackRange 应不小于 1 格" % cid)
+		var basic := String((raw as Dictionary).get("basicSkill", ""))
+		var skills: Variant = (raw as Dictionary).get("skills", [])
+		if not skills is Array or (skills as Array).is_empty():
+			report.append("[classes] %s 的 skills 需要非空数组" % cid)
+			continue
+		if not (skills as Array).has(basic):
+			report.append("[classes] %s 的 skills 必须包含普攻 %s" % [cid, basic])
+		for sid in (skills as Array):
+			var template: Variant = get_entry("skills", String(sid))
+			if not template is Dictionary:
+				report.append("[classes] %s 引用未定义技能 '%s'" % [cid, sid])
+			elif String((template as Dictionary).get("class", "")) != cid:
+				report.append("[classes] %s 的技能 '%s' 在 skills 表里归属 %s" % [
+					cid, sid, String((template as Dictionary).get("class", ""))])
+	if not seen.has("warrior"):
+		report.append("[classes] 必须存在默认职业 warrior（旧档迁移的落点）")
+	return report
+
 ## skills.json：类型 / 范围 / 形状 / 目标（B 共性-5）。
 func _validate_skills() -> Array[String]:
 	var report: Array[String] = []
@@ -1189,6 +1235,18 @@ func _validate_skills() -> Array[String]:
 		var sid := String(entry.get("id", "?"))
 		if String(entry.get("name", "")).is_empty():
 			report.append("[skills] %s 缺少 name" % sid)
+		# 工程 98：每条技能必须归属且只归属一个职业。缺省视为 warrior 会让
+		# 「新加一条法师技能忘了写 class」变成静默出现在武士面板里。
+		var owner := String(entry.get("class", ""))
+		if owner.is_empty():
+			report.append("[skills] %s 缺少 class 归属" % sid)
+		elif get_entry("classes", owner) == null:
+			report.append("[skills] %s 的 class '%s' 未在 classes 表登记" % [sid, owner])
+		if entry.has("manaCostPct") \
+				and (not _is_positive_number(entry.get("manaCostPct")) or float(entry.get("manaCostPct")) >= 1.0):
+			report.append("[skills] %s 的 manaCostPct 应在 (0,1) 内（占最大法力的比例）" % sid)
+		if entry.has("basic") and not entry.get("basic") is bool:
+			report.append("[skills] %s 的 basic 必须为布尔值" % sid)
 		if not _is_whole_level(entry.get("unlockLevel")) or int(entry.get("unlockLevel", 0)) < 1:
 			report.append("[skills] %s 的 unlockLevel 应为正整数" % sid)
 		var kind := String(entry.get("kind", ""))
@@ -1235,7 +1293,8 @@ func _validate_skill_progression() -> Array[String]:
 	var skills: Variant = tables.get("skills")
 	if skills is Array:
 		for raw_skill in skills:
-			if raw_skill is Dictionary and String(raw_skill.get("id", "")) != "basic_slash":
+			# 工程 98：普攻由数据标记 `basic` 判定，不再写死 `basic_slash`（法师火球术同属普攻）。
+			if raw_skill is Dictionary and not bool(raw_skill.get("basic", false)):
 				expected[String(raw_skill.id)] = raw_skill
 	var seen: Dictionary = {}
 	for raw_entry in config:
@@ -1254,8 +1313,13 @@ func _validate_skill_progression() -> Array[String]:
 		var base: Dictionary = expected[sid]
 		var previous_cost := 0
 		var previous_coefficient := 1.0
-		var previous_attack_pct := float((base.get("effects", {}) as Dictionary).get("attackPct", 0.0))
-		var previous_speed_pct := float((base.get("effects", {}) as Dictionary).get("attackSpeedPct", 0.0))
+		# 工程 98：增益类技能的上一阶快照按**基础表的键**初始化 —— 战意觉醒是
+		# attackPct / attackSpeedPct，魔法盾是 damageToManaPct。写死两个键会让魔法盾
+		# 永远判定越界，或者（更糟）把它的升阶值当噪声放过。
+		var previous_effects: Dictionary = {}
+		var base_effects: Dictionary = base.get("effects", {})
+		for key in base_effects.keys():
+			previous_effects[String(key)] = float(base_effects[key])
 		for i in range(4):
 			var entry: Variant = ranks[i]
 			if not entry is Dictionary:
@@ -1272,13 +1336,22 @@ func _validate_skill_progression() -> Array[String]:
 				previous_cost = int(entry.goldCost)
 			if String(base.get("kind", "")) == "buff":
 				var effects: Variant = entry.get("effects")
-				if not effects is Dictionary or effects.size() != 2 or not _is_nonnegative_number(effects.get("attackPct")) or not _is_nonnegative_number(effects.get("attackSpeedPct")) \
-						or float(effects.attackPct) <= previous_attack_pct or float(effects.attackPct) > 0.26 \
-						or float(effects.attackSpeedPct) <= previous_speed_pct or float(effects.attackSpeedPct) > 0.19:
+				var next_effects: Dictionary = previous_effects.duplicate()
+				var bad := not effects is Dictionary or (effects as Dictionary).size() != base_effects.size()
+				if not bad:
+					for key in base_effects.keys():
+						var value: Variant = (effects as Dictionary).get(String(key), null)
+						var cap := _progression_effect_cap(String(key))
+						if not _is_nonnegative_number(value) \
+								or float(value) <= float(next_effects.get(String(key), 0.0)) \
+								or float(value) > cap:
+							bad = true
+							break
+						next_effects[String(key)] = float(value)
+				if bad:
 					report.append("[skillProgression] %s 第 %d 阶增益越界" % [sid, rank])
 				else:
-					previous_attack_pct = float(effects.attackPct)
-					previous_speed_pct = float(effects.attackSpeedPct)
+					previous_effects = next_effects
 			elif not _is_nonnegative_number(entry.get("coefficientMultiplier")) or float(entry.coefficientMultiplier) <= previous_coefficient or float(entry.coefficientMultiplier) > 1.12:
 				report.append("[skillProgression] %s 第 %d 阶系数倍率越界" % [sid, rank])
 			else:
@@ -1287,6 +1360,18 @@ func _validate_skill_progression() -> Array[String]:
 		if not seen.has(sid):
 			report.append("[skillProgression] 缺少技能：%s" % sid)
 	return report
+
+## 增益键的满阶上限。未登记的键按 1.0 处理（仍要求逐阶递增，只是不限顶）——
+## 新增效果键时必须在这里补一行，否则上限形同虚设。
+func _progression_effect_cap(key: String) -> float:
+	match key:
+		"attackPct":
+			return 0.26
+		"attackSpeedPct":
+			return 0.19
+		"damageToManaPct":
+			return 0.50
+	return 1.0
 
 ## quests.json：类型 / 结构 / 跨表引用（B 共性-5）。
 func _validate_quests() -> Array[String]:

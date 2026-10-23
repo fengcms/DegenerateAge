@@ -26,6 +26,16 @@ const IDLE_MP_RATE := 0.02
 const SIT_HP_RATE := 0.03
 const SIT_MP_RATE := 0.05
 
+## 远程施法的投射物颜色（纯视觉，工程 98 §4.3）。缺省金黄。
+const SPELL_COLORS := {
+	"basic_fireball": "ffb347",
+	"lightning": "9ad8ff",
+	"flame_burst": "ff8a4c",
+	"frost_roar": "b6f0ff",
+	"meteor": "ff9b6b",
+	"magic_shield": "a7efed",
+}
+
 ## 减速是实体运行态，死亡清除，不写存档。
 var _slow_pct := 0.0
 var _slow_remaining := 0.0
@@ -48,7 +58,7 @@ var _attack_cd: float = 0.0
 ## 主动技能冷却为角色运行态；切图保留、暂停冻结、读档重新创建。
 var skill_cooldowns: Dictionary = {}
 var _pending_skill_id := ""
-## 普攻技能定义（skills.json: basic_slash）
+## 普攻技能定义（skills.json 的**本职业**普攻：武士 basic_slash / 法师 basic_fireball）
 var _basic: Dictionary = {}
 ## 受击保护计时
 var _invuln: float = 0.0
@@ -250,6 +260,8 @@ func _ready() -> void:
 	_look_id = CharacterLook.look_id_for(GameState.equipment)
 	sample_art = SampleActorArt.attach_look(self, CharacterLook.definition(_look_id))
 	sample_art.display_scale = ART_SCALE
+	# 工程 98 §3.6：法师暂无专属形象，用冷色调偏移做最小区分（武士 tint 为空 ⇒ 恒等，逐位不变）。
+	sample_art.modulate = PlayerClass.tint()
 	_refresh_mount_art()
 	# G-P2-2：订阅生命周期约定见 autoload/event_bus.gd 顶部（随场景释放自动断开，不逐个补 _exit_tree）。
 	EventBus.equipment_changed.connect(_refresh_look)
@@ -257,7 +269,7 @@ func _ready() -> void:
 	EventBus.mount_changed.connect(_refresh_mount_art)
 	add_to_group("player")
 	_refresh_speed()
-	var b = DataLoader.get_entry("skills", "basic_slash")
+	var b = DataLoader.get_entry("skills", PlayerClass.basic_skill())
 	_basic = b if b is Dictionary else {"coefficient": 1.0, "range": 1.0}
 	# G-P3-3：该字典为 GameState 冷却运行态的唯一实例，**禁止整体替换**（只增删条目）；
 	# 读档 / 新游戏由 GameState 侧置空（`reset_to_defaults`、`apply_to_game_state`）。
@@ -369,10 +381,32 @@ func apply_damage(amount: int) -> int:
 	_invuln = IFRAME
 	_stun = HITSTUN
 	_reset_regen_after_hit()
-	var actual := mini(amount, int(GameState.player.hp))
-	if GameState.damage_player(amount):
+	# 工程 98 Q4=A：魔法盾只把**一部分伤害**转成法力，余下照常扣血。
+	# 🔴 顺序不能反：先算转嫁（可能要读 mp），再扣血 —— 反过来会让「血已经归零」的帧去扣蓝。
+	var to_mana := _shield_absorb(amount)
+	var hp_amount := amount - to_mana
+	var actual := mini(hp_amount, int(GameState.player.hp))
+	if hp_amount > 0 and GameState.damage_player(hp_amount):
 		_begin_death()
 	return actual
+
+## 魔法盾转嫁（工程 98 §4.5）。返回实际由法力承担的伤害（= 实际扣蓝量）。
+##
+## 比例来自**已生效的 buff** `damageToManaPct`，不是写死常量 —— 升阶（0.30→0.46）才能真生效。
+## 蓝不足时按**剩余量**转嫁，余下全部扣血；蓝为 0 ⇒ 与无盾逐位一致（这也是武士的路径：
+## 武士没有任何 buff 带这个键，`buff_effect_total` 返回 0.0，本函数直接早退）。
+func _shield_absorb(amount: int) -> int:
+	var pct := clampf(GameState.buff_effect_total("damageToManaPct"), 0.0, 0.9)
+	if pct <= 0.0 or amount <= 0:
+		return 0
+	var want := int(round(float(amount) * pct))
+	var to_mana := mini(want, int(GameState.player.mp))
+	if to_mana <= 0:
+		return 0
+	# 走 `spend_mp` 而不是直接写 `player.mp`：HUD 蓝条与事件都靠它广播。
+	if not GameState.spend_mp(to_mana):
+		return 0
+	return to_mana
 
 ## A4（03 §3.4）：Boss 技能命中后由来源调用，施加击退位移与倒地。
 ## 只在 `apply_damage` 真正扣到血（返回 > 0）时才该被调用 —— 无敌帧 / 死亡 / 休息区
@@ -497,8 +531,18 @@ func try_auto_attack(target: Node) -> bool:
 # ---- 攻击 ----
 
 ## 普攻的攻击距离上限（格 → 像素）。超距自动走位（3.15）与自动战斗（3.14）共用。
+## 工程 98：射程由**职业**决定（武士 1 格 / 法师 4 格），不再读普攻技能自身的 `range` ——
+## 两处都写会让「改 classes.json 不改 skills.json」出现两套射程。
+func attack_range_px() -> float:
+	return PlayerClass.attack_range() * Iso.TILE_W
+
+## 旧名保留为别名：4 处调用点 + 2 处测试都在用，且语义已收敛到 `attack_range_px()`。
 func melee_range_px() -> float:
-	return float(_basic.get("range", 1.0)) * Iso.TILE_W
+	return attack_range_px()
+
+## 本职业是否为远程（决定要不要放投射物视觉、以及自动战斗的停步距离）。
+func is_ranged_class() -> bool:
+	return PlayerClass.is_ranged()
 
 func skill_cooldown(skill_id: String) -> float:
 	return float(skill_cooldowns.get(skill_id, 0.0))
@@ -513,12 +557,12 @@ func effective_attack_interval() -> float:
 ## 快捷栏手动指令：选中目标后接近至技能射程，再由同一施放入口结算。
 func request_skill(skill_id: String) -> bool:
 	var skill := SkillProgression.current(skill_id)
-	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id):
+	if not HotbarConfig.usable_skill(skill_id):
 		return false
 	if skill.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p006"), "danger")
 		return false
-	if skill_id == "basic_slash":
+	if skill_id == PlayerClass.basic_skill():
 		if valid_target(locked_target):
 			return request_target_attack(locked_target)
 		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p005"), "danger")
@@ -526,7 +570,7 @@ func request_skill(skill_id: String) -> bool:
 	if is_dead or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
 		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p006"), "danger")
 		return false
-	if int(GameState.player.mp) < int(skill.get("manaCost", 0)):
+	if int(GameState.player.mp) < GameState.skill_mana_cost(skill):
 		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p007"), "danger")
 		return false
 	if skill_cooldown(skill_id) > 0.0:
@@ -562,13 +606,13 @@ func request_skill(skill_id: String) -> bool:
 ## 所有入口共用的实际施放；失败时不耗蓝、不进入冷却。
 func cast_skill(skill_id: String, target: Node = null) -> bool:
 	var skill := SkillProgression.current(skill_id)
-	if not HotbarConfig.ACTIVE_SKILLS.has(skill_id) or skill_id == "basic_slash" or skill.is_empty():
+	if not HotbarConfig.usable_skill(skill_id) or skill_id == PlayerClass.basic_skill() or skill.is_empty():
 		return false
 	if is_dead or _stun > 0.0:
 		return false
 	if int(GameState.player.level) < int(skill.get("unlockLevel", 1)) or skill_cooldown(skill_id) > 0.0:
 		return false
-	var mana_cost := int(skill.get("manaCost", 0))
+	var mana_cost := GameState.skill_mana_cost(skill)
 	if int(GameState.player.mp) < mana_cost:
 		return false
 	if String(skill.get("kind", "")) == "buff" and String(skill.get("shape", "")) == "self":
@@ -595,6 +639,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
 	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if String(skill.get("shape", "")) == "cone" else Vector2.RIGHT
 	add_child(range_fx)
+	_spawn_projectile(skill_id, (targets[0] as Node2D).global_position)
 	# R4-a：`defensePierce` 是**本击**减防，不进状态；`debuff` 才是持续状态（R4-c）。
 	var pierce := clampf(float(skill.get("defensePierce", 0.0)), 0.0, 1.0)
 	var hits := maxi(1, int(skill.get("hits", 1)))
@@ -681,6 +726,7 @@ func perform_attack(target: Node) -> Dictionary:
 		slash.direction = ((target as Node2D).global_position - global_position).angle()
 		slash.position = Vector2(0, -16 * ART_SCALE)
 		add_child(slash)
+	_spawn_projectile(PlayerClass.basic_skill(), (target as Node2D).global_position)
 
 	var result := Combat.resolve(
 		effective_attack_power() * LevelGap.damage_multiplier(
@@ -697,6 +743,21 @@ func perform_attack(target: Node) -> Dictionary:
 		select_target(target as Node2D, false)
 	target.take_hit(result, self)
 	return result
+
+## 远程职业的施法视觉：一道纯视觉投射物飞向目标。
+## 🔴 伤害**已在调用点结算完毕**（见 `player_projectile.gd` 顶端）。近战职业直接返回，
+##    武士路径因此逐位不变 —— 这一条由 `tests/class_frame_test.gd` 断「武士不产生投射物节点」。
+func _spawn_projectile(skill_id: String, to_point: Vector2) -> void:
+	if not is_ranged_class() or not is_inside_tree():
+		return
+	var host := get_parent()
+	if host == null:
+		return
+	var bolt := preload("res://scripts/systems/player_projectile.gd").new() as Node2D
+	host.add_child(bolt)
+	if bolt.has_method("setup"):
+		bolt.call("setup", global_position + Vector2(0, -18.0 * ART_SCALE), to_point,
+			Color(String(SPELL_COLORS.get(skill_id, "ffd479"))), 6.0)
 
 func _reset_regen_after_hit() -> void:
 	_regen_elapsed = 0.0
@@ -749,10 +810,15 @@ func _apply_skill_debuff(t: Node, skill: Dictionary) -> void:
 	if not debuff is Dictionary:
 		return
 	var row: Dictionary = debuff
-	if String(row.get("type", "")) != "armorBreak":
-		return
-	if t.has_method("apply_armor_break"):
-		t.apply_armor_break(float(row.get("duration", 0.0)))
+	match String(row.get("type", "")):
+		"armorBreak":
+			if t.has_method("apply_armor_break"):
+				t.apply_armor_break(float(row.get("duration", 0.0)))
+		"slow":
+			# 工程 98：冰咆哮。怪物侧 `apply_slow` 自己处理 Boss 减半（见 monster.gd），
+			# 这里不做职业 / 目标判断 —— 两个地方各写一份豁免规则必然漂移。
+			if t.has_method("apply_slow"):
+				t.apply_slow(float(row.get("value", 0.0)), float(row.get("duration", 0.0)))
 
 ## 多段结算的提前收手判据：目标已死就不再吃后续段。
 func _target_is_dead(t: Node) -> bool:

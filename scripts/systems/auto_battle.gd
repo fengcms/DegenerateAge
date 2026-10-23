@@ -78,6 +78,14 @@ const BOSS_LOOT_RESERVE := 32
 const WIRED_SKILLS: Array[String] = ["earth_cleave", "whirlwind", "spirit_storm"]
 ## R4-d：单体技能单独一条路径 —— 范围技要求 ≥2 只才放，单体技（破甲重击）正是用来打单个硬目标。
 const WIRED_SINGLE_SKILLS: Array[String] = ["armor_break"]
+## 工程 98：法师的接线白名单。**必须与 `skills.json` 里引擎真实支持的能力对齐** ——
+## 火焰喷发 / 冰咆哮 / 陨石术走 `hits` + `debuff`（已实现），雷电术走 `defensePierce`（已实现）。
+const MAGE_AREA_SKILLS: Array[String] = ["flame_burst", "frost_roar", "meteor"]
+const MAGE_SINGLE_SKILLS: Array[String] = ["lightning"]
+## 工程 98 §4.6 低蓝保盾：低于 25% 停攻击技能、回到 40% 恢复。
+## 不实现这条，挂机法师会在蓝见底时「盾断 + 继续挥技能」，两头落空。
+const MAGE_LOW_MANA := 0.25
+const MAGE_MANA_RESUME := 0.40
 
 var _player: PlayerCharacter = null
 var _state: int = State.OFF
@@ -106,6 +114,8 @@ var _roam_component := 0
 var _roam_last_dist := INF
 var _roam_stuck_t := 0.0
 var _roam_stuck_count := 0
+## 工程 98 §4.6：法师低蓝保盾的滞回状态（低于 25% 进、回到 40% 出）。
+var _mana_saver := false
 var _cave_nav := CaveNavigator.new()
 var _last_position := Vector2.INF
 
@@ -300,6 +310,10 @@ func _tick(delta: float) -> void:
 	else:
 		_danger_t = 0.0
 
+	# 工程 98：法师保盾优先于一切攻击决策 —— 盾断了等于把 30% 伤害从法力搬回血条。
+	if _tick_mage_shield():
+		return
+
 	# ② 每帧校验目标有效性（死亡 / 释放 / 进黑名单 → 停旧指令）
 	if _target != null and (not is_instance_valid(_target)
 			or _target.get("is_dead") == true or _is_blacklisted(_target)):
@@ -331,7 +345,8 @@ func _tick(delta: float) -> void:
 
 	var target2d := _target as Node2D
 	var dist := _player.global_position.distance_to(target2d.global_position)
-	var reach := _player.melee_range_px() - STOP_GAP
+	# 工程 98 P2：停步距离必须跟**职业射程**走（法师 4 格）。改这一行即可让挂机在 4 格停住放技能。
+	var reach := _player.attack_range_px() - STOP_GAP
 
 	# 安全区只屏蔽伤害，不屏蔽寻怪/移动。靠近边缘目标时先穿出边界再攻击。
 	if dist > reach or MapService.is_in_safe_area(GameState.current_map, _player.global_position):
@@ -353,6 +368,10 @@ func _tick(delta: float) -> void:
 	_set_state(State.ATTACK_TARGET)
 	_stuck_count = 0
 	if _try_battle_focus(_target):
+		return
+	# 工程 98 §4.6：低蓝保盾期只普攻 —— 盾与普攻都不耗蓝，蓝会靠药水回上来。
+	if not _mana_allows_attack():
+		_player.try_auto_attack(_target)
 		return
 	var skill := _best_area_skill(_target)
 	if not skill.is_empty() and _player.cast_skill(String(skill.id), _target):
@@ -376,18 +395,67 @@ func _tick_auto_forge(delta: float) -> void:
 
 ## 只在真实可攻击目标已进入近战范围时启动自身增益；巡游、追路和拾取阶段均不空放。
 func _try_battle_focus(target: Node) -> bool:
+	# 工程 98：战意觉醒是**武士**技能。不加这一句，法师挂机每次贴脸都会花 30 点蓝放一个
+	# 法力一点不影响的增益（而且技能面板里根本没有它）。
+	if not HotbarConfig.usable_skill("battle_focus"):
+		return false
 	if not _player.valid_target(target) or not _player.is_attack_ready():
 		return false
-	if _player.global_position.distance_to((target as Node2D).global_position) > _player.melee_range_px():
+	if _player.global_position.distance_to((target as Node2D).global_position) > _player.attack_range_px():
 		return false
 	if GameState.buff_remaining("battle_focus") > 0.0:
 		return false
 	var skill := SkillProgression.current("battle_focus")
 	if skill.is_empty() or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
 		return false
-	if int(GameState.player.mp) < int(skill.get("manaCost", 0)) or _player.skill_cooldown("battle_focus") > 0.0:
+	if int(GameState.player.mp) < GameState.skill_mana_cost(skill) or _player.skill_cooldown("battle_focus") > 0.0:
 		return false
 	return _player.cast_skill("battle_focus")
+
+## 工程 98：法师自动维持魔法盾。与手动施放共用 `cast_skill`（不绕过冷却、不绕过蓝）。
+## 返回 true 表示本帧已被盾占用，调用方应直接 return。
+func _tick_mage_shield() -> bool:
+	if not PlayerClass.is_ranged() or not HotbarConfig.usable_skill("magic_shield"):
+		return false
+	if GameState.buff_remaining("magic_shield") > 0.0:
+		return false
+	var skill := SkillProgression.current("magic_shield")
+	if skill.is_empty() or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
+		return false
+	if int(GameState.player.mp) < GameState.skill_mana_cost(skill):
+		return false
+	return _player.cast_skill("magic_shield")
+
+## 工程 98 §4.6 低蓝保盾（滞回）：低于 25% 进省蓝态，回到 40% 才恢复。
+## 武士恒为 true —— 这条策略只对「蓝是第二条血」的职业有意义。
+func _mana_allows_attack() -> bool:
+	if not PlayerClass.is_ranged():
+		return true
+	var maximum := maxi(1, GameState.max_mp())
+	var ratio := float(GameState.player.mp) / float(maximum)
+	if _mana_saver:
+		if ratio < MAGE_MANA_RESUME:
+			return false
+		_mana_saver = false
+	elif ratio < MAGE_LOW_MANA:
+		_mana_saver = true
+		return false
+	return true
+
+## 本职业已接线的范围技白名单。
+func _wired_area_skills() -> Array:
+	return MAGE_AREA_SKILLS if PlayerClass.is_ranged() else WIRED_SKILLS
+
+## 本职业已接线的单体技白名单。
+func _wired_single_skills() -> Array:
+	return MAGE_SINGLE_SKILLS if PlayerClass.is_ranged() else WIRED_SINGLE_SKILLS
+
+## 把百分比蓝耗折算成绝对量后交给 `choose_skill`（它只认 `manaCost`，且是纯静态函数）。
+## 🔴 不做这一步，法师的每个技能在自动战斗眼里都是「0 蓝，随便放」—— 就是 R3 的空挥。
+func _skill_for_choice(skill: Dictionary) -> Dictionary:
+	var copy := skill.duplicate()
+	copy["manaCost"] = GameState.skill_mana_cost(skill)
+	return copy
 
 ## 按实际命中集合选择范围技；只有至少两只怪在技能形状内才消耗法力。
 ## R4-d：评分从「命中数优先」升级为「命中数 × 总系数」——否则 3 段的灵刃风暴
@@ -397,17 +465,17 @@ func _best_area_skill(target: Node) -> Dictionary:
 		return {}
 	var chosen := {}
 	var best_value := 0.0
-	for skill_id in WIRED_SKILLS:
+	for skill_id in _wired_area_skills():
 		var skill := SkillProgression.current(skill_id)
 		if skill.is_empty():
 			continue
 		var hit_count := _player.skill_targets(skill, target).size()
-		if hit_count < 2 or choose_skill([skill], int(GameState.player.level),
+		if hit_count < 2 or choose_skill([_skill_for_choice(skill)], int(GameState.player.level),
 			int(GameState.player.mp), _player.skill_cooldowns, hit_count).is_empty():
 			continue
 		var value := float(hit_count) * skill_value(skill)
 		if value > best_value or (is_equal_approx(value, best_value) and
-			int(skill.get("manaCost", 0)) < int(chosen.get("manaCost", 2147483647))):
+			GameState.skill_mana_cost(skill) < GameState.skill_mana_cost(chosen)):
 			chosen = skill
 			best_value = value
 	return chosen
@@ -417,13 +485,13 @@ func _best_single_skill(target: Node) -> Dictionary:
 	if not _player.is_attack_ready() or not _player.valid_target(target):
 		return {}
 	var chosen := {}
-	for skill_id in WIRED_SINGLE_SKILLS:
+	for skill_id in _wired_single_skills():
 		var skill := SkillProgression.current(skill_id)
 		if skill.is_empty():
 			continue
 		if _player.skill_targets(skill, target).is_empty():
 			continue
-		if choose_skill([skill], int(GameState.player.level), int(GameState.player.mp),
+		if choose_skill([_skill_for_choice(skill)], int(GameState.player.level), int(GameState.player.mp),
 			_player.skill_cooldowns, 1).is_empty():
 			continue
 		if chosen.is_empty() or skill_value(skill) > skill_value(chosen):
@@ -783,8 +851,10 @@ static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictiona
 		if not (s is Dictionary):
 			continue
 		var sid := String(s.get("id", ""))
-		if sid.is_empty() or sid == "basic_slash":
-			continue                                   # 普攻由攻击间隔单独驱动
+		# 普攻由攻击间隔单独驱动。工程 98：改用数据标记 `basic` 而不是写死 `basic_slash`，
+		# 否则法师的火球术会被当成主动技能参与评分（它有 id、有系数、CD 为 0）。
+		if sid.is_empty() or bool(s.get("basic", false)):
+			continue
 		if String(s.get("kind", "attack")) != "attack":
 			continue
 		if int(s.get("unlockLevel", 1)) > level:
@@ -804,7 +874,9 @@ static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictiona
 		return aoe
 	return single
 
-## 自动战斗是否愿意施放该技能：必须已接线（M1 仅普攻）。
-## R4-d：单体技能走独立白名单，与范围技同名同权。
+## 自动战斗是否愿意施放该技能（按职业白名单）。
+## R4-d：单体技能走独立白名单，与范围技同名同权；工程 98 增法师两表与魔法盾。
 func can_cast(skill_id: String) -> bool:
-	return WIRED_SKILLS.has(skill_id) or WIRED_SINGLE_SKILLS.has(skill_id)
+	return WIRED_SKILLS.has(skill_id) or WIRED_SINGLE_SKILLS.has(skill_id) \
+		or MAGE_AREA_SKILLS.has(skill_id) or MAGE_SINGLE_SKILLS.has(skill_id) \
+		or skill_id == "magic_shield"

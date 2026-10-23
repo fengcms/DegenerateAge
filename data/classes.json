@@ -1,0 +1,28 @@
+[
+  {
+    "id": "warrior",
+    "name": "武士",
+    "desc": "近身强攻，血厚防高，以命换命的正面职业。",
+    "hpMult": 1.0,
+    "mpMult": 1.0,
+    "atkMult": 1.0,
+    "defMult": 1.0,
+    "attackRange": 1.0,
+    "basicSkill": "basic_slash",
+    "skills": ["basic_slash", "earth_cleave", "whirlwind", "battle_focus", "armor_break", "spirit_storm"],
+    "tint": ""
+  },
+  {
+    "id": "mage",
+    "name": "法师",
+    "desc": "远程法术，血量稀薄但法力浑厚，以魔法盾护身。",
+    "hpMult": 0.64,
+    "mpMult": 2.0,
+    "atkMult": 1.08,
+    "defMult": 1.0,
+    "attackRange": 4.0,
+    "basicSkill": "basic_fireball",
+    "skills": ["basic_fireball", "lightning", "flame_burst", "magic_shield", "frost_roar", "meteor"],
+    "tint": "86c8ff"
+  }
+]

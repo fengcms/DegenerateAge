@@ -309,7 +309,7 @@
   "ui.save_panel.p001": "存档",
   "ui.save_panel.p002": "角色名称",
   "ui.save_panel.p003": "守护者",
-  "ui.save_panel.p004": "职业：灵刃战士",
+  "ui.save_panel.p004": "职业",
   "ui.save_panel.p005": "覆盖存档",
   "ui.save_panel.p006": "槽 %d",
   "ui.save_panel.p007": "保存",
@@ -913,5 +913,8 @@
   "ui.settings_panel.p061": "自动与交互",
   "ui.settings_panel.p062": "面板与快捷格",
   "ui.settings_panel.p063": "窗口尺寸",
-  "ui.settings_panel.p064": "手动系数"
+  "ui.settings_panel.p064": "手动系数",
+  "ui.save_panel.class_desc": "%s｜血量 %d%% · 法力 %d%% · 普攻射程 %.1f 格",
+  "ui.skill_panel.detail_meta_pct": "耗蓝 %d%% 法力上限（当前 %d）· 范围 %s",
+  "ui.skill_panel.detail_shield": "受伤 %.1f%% 转由法力承担 · 持续 %.0f 秒"
 }

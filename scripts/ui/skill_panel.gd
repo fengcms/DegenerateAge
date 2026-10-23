@@ -187,10 +187,14 @@ func _refresh() -> void:
 			continue
 		var skill: Dictionary = raw
 		var skill_id := String(skill.get("id", ""))
+		# 工程 98 R5：只列**本职业**技能。不滤的话武士能买法师技能、法师面板里混着 6 条
+		# 永远无法拖上快捷栏的灰行。
+		if not HotbarConfig.usable_skill(skill_id):
+			continue
 		var rank := GameState.skill_rank(skill_id)
 		var max_rank := SkillProgression.max_rank(skill_id)
 		var unlocked := rank > 0
-		var wired := HotbarConfig.ACTIVE_SKILLS.has(skill_id)
+		var wired := HotbarConfig.usable_skill(skill_id)
 		var row := _new_skill_row()
 		row.set_meta("detail_skill_id", skill_id)
 		row.focus_mode = Control.FOCUS_ALL
@@ -232,14 +236,14 @@ func _refresh() -> void:
 		row.add_child(summary)
 		var cooldown := Label.new()
 		cooldown.name = "BaseCooldown"
-		cooldown.text = Localization.tr_key("ui.skill_panel.basic_interval") if skill_id == "basic_slash" else \
+		cooldown.text = Localization.tr_key("ui.skill_panel.basic_interval") if skill_id == PlayerClass.basic_skill() else \
 			Localization.tr_key("ui.skill_panel.cooldown_badge") % float(skill.get("cooldown", 0.0))
 		cooldown.custom_minimum_size.x = 90
 		cooldown.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		cooldown.add_theme_color_override("font_color", PanelChrome.MUTED)
 		cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(cooldown)
-		if skill_id == "basic_slash":
+		if skill_id == PlayerClass.basic_skill():
 			_basic_interval_label = cooldown
 		if max_rank > 1 and rank >= max_rank:
 			var completed := Label.new()
