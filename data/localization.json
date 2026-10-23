@@ -170,6 +170,7 @@
   "ui.sale_preview.reason_quality": "品质高于预设",
   "ui.sale_preview.reason_level": "等级接近当前角色",
   "ui.sale_preview.reason_suit": "仍属当前或更高档",
+  "ui.sale_preview.reason_damaged": "已损坏（耐久为 0，修好仍可用）",
   "ui.sale_preview.summary": "已选 %d 件 · 预计 %d 金币",
   "ui.sale_preview.stale": "背包或装备已变化，请重新核对后再次确认。",
   "ui.sale_preview.capacity": "托盘还剩 %d 格，请减少 %d 件。",

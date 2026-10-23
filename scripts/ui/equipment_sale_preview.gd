@@ -251,12 +251,17 @@ func _add_row(row: Dictionary) -> void:
 	wrapper.add_child(HSeparator.new())
 
 ## 将策略原因转为玩家可读短语；颜色之外始终保留文字说明。
+## 🔴 「仅提示」项（`damaged`）**无论是否勾选都要显示** —— 破损件现在会被预设正常勾上
+## （工程 99），若只在未勾选时列出原因，玩家就再也看不到「已损坏」这条标注了。
 func _reasons_text(row: Dictionary) -> String:
-	if bool(row.default_selected):
-		return Localization.tr_key("ui.sale_preview.default_reason")
+	var selected := bool(row.default_selected)
 	var labels: Array[String] = []
+	if selected:
+		labels.append(Localization.tr_key("ui.sale_preview.default_reason"))
 	for reason in row.reasons:
-		labels.append(Localization.tr_key("ui.sale_preview.reason_" + String(reason)))
+		var text_key := "ui.sale_preview.reason_" + String(reason)
+		if SellGearPolicy.NOTES_ONLY.has(String(reason)) or not selected:
+			labels.append(Localization.tr_key(text_key))
 	return " · ".join(PackedStringArray(labels))
 
 ## 本次勾选只改预览，不改背包；高价值手选会重置二次确认。

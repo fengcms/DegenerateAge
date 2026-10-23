@@ -29,9 +29,31 @@ const RULES := {
 	BRUTAL: {},
 }
 
+## 「仅提示」原因：写进 `reasons` 供界面展示，但**不否决默认勾选**。
+##
+## 🔴 `damaged` 为什么从否决项降级为提示项（工程 99）：
+##   工程 77 把它设成否决项，理由是「破损件 `score()` 归 0 ⇒ 失去『属性更高』保护 ⇒
+##   可能被静默卖掉可修的稀有件」。但工程 88 已把 `score()` 改成「破损只砍词条、
+##   给基底分」—— 该前提不复存在：破损件仍会被 `upgrade`（评分可提升）与 `starred`
+##   （已升星）两条真正拦截。
+##   而否决项的**实际后果**是：背包里所有耐久归零的垃圾（含 Lv1 白装）在三档常规预设下
+##   永远不被勾选，玩家只能逐件手勾 + 二次风险确认 —— 快速出售对破损件整体失效。
+##   ⇒ 破损件照常参与预设判断，只在清单里标注「已损坏」，玩家能看见也能手动取消。
+##   `auto_sell()` 仍按**完整** `reasons` 拦截（拾取自动出售保留最保守口径）。
+const NOTES_ONLY := ["damaged"]
+
 ## 返回预设是否合法，供设置入口和存档校验共用。
 static func valid_preset(preset: String) -> bool:
 	return PRESETS.has(preset)
+
+## 从完整原因集里滤掉「仅提示」项，得到真正**否决默认勾选**的原因（工程 99）。
+## 🔑 全项目只有 `entry()` 该用它判 `default_selected`；`auto_sell()` 必须用完整 `reasons`。
+static func blocking_reasons(reasons: Array[String]) -> Array[String]:
+	var out: Array[String] = []
+	for reason in reasons:
+		if not NOTES_ONLY.has(reason):
+			out.append(reason)
+	return out
 
 ## 价值判断的**唯一实现**：拆出 reasons / preview / sellable / favorite / stronger。
 ## `entry()`（手动清单）与 `auto_sell()`（拾取瞬间）共用 —— 两处若各写一套，规则必然漂移。
@@ -52,8 +74,8 @@ static func _judge(item: Dictionary, player_level: int, equipment: Dictionary,
 		reasons.append("upgrade")
 	if int(item.get("star", 0)) > 0:
 		reasons.append("starred")
-	# 工程 77：破损件**不参与自动出售**（score() 归 0 会失去「属性更高」保护，
-	# 不拦就会静默卖掉可修的稀有件 —— 破损 ≠ 垃圾，修好还是好装备）。
+	# 工程 77 引入；工程 99 降级为「仅提示」—— 见 `NOTES_ONLY` 的长注释。
+	# reasons 里保留它，是为了让清单能写明「已损坏」，而不是无声地当成好件卖掉。
 	if Durability.is_broken(item):
 		reasons.append("damaged")
 	var quality := Shop.item_quality(item)
@@ -94,7 +116,8 @@ static func entry(item: Dictionary, bag_index: int, player_level: int,
 	var judged := _judge(item, player_level, equipment, preset)
 	var preview: Dictionary = judged["preview"]
 	var reasons: Array[String] = judged["reasons"]
-	var automatic := reasons.is_empty() and bool(preview.get("ok", false))
+	# 破损（`damaged`）只提示不否决 —— 否则破损垃圾在常规预设下永远进不了快速出售（工程 99）。
+	var automatic := blocking_reasons(reasons).is_empty() and bool(preview.get("ok", false))
 	return {"instance_id": String(item.get("instanceId", "")), "bag_index": bag_index,
 		"item_snapshot": item.duplicate(true), "price": Shop.sell_price(item),
 		"player_level": player_level, "preset": preset,
@@ -124,6 +147,8 @@ static func auto_sell(item: Dictionary, player_level: int, equipment: Dictionary
 		return {"sell": false, "reason": "gold_capped", "price": 0}
 	var judged := _judge(item, player_level, equipment, preset)
 	var reasons: Array[String] = judged["reasons"]
+	# 🔴 这里吃**完整** reasons，不过 `blocking_reasons()` —— 拾取自动出售没有「取消勾选」
+	# 这一步，破损件一旦卖掉就再也拿不回来。与 `entry()` 的口径差异是刻意的（工程 99）。
 	if not reasons.is_empty():
 		return {"sell": false, "reason": reasons[0], "price": 0}
 	var preview: Dictionary = judged["preview"]

@@ -250,8 +250,10 @@ static func accumulate(target: Dictionary, src) -> void:
 ## 而不是 0 分。给 0 分有两个反常：① 「已穿戴的破损件 = 0 分」⇒ 随便一件候选都显示
 ## 「属性更高」，`is_upgrade_over_worn` 随之判错；② 面板评分行对破损件显示 0，
 ## 玩家会误以为这件的品质/星级白做了。
-## ⚠ 破损件**仍然不会被卖掉**：`SellGearPolicy` 的 `damaged` 与 `Shop.matches_low_gear`
-## 两道独立守卫拦着，与评分无关（工程 77 原意保留）。
+## ⚠ 破损件**能卖**，但默认不让它进「批量快速出售」的老口径**已在工程 99 撤销**：
+## `SellGearPolicy` 把 `damaged` 降级为提示项（只标注、不否决），因此破损垃圾与同类
+## 完好件一视同仁地参与预设勾选；真正拦下可修好装备的是 `upgrade` 与 `starred` 两条。
+## `Shop.matches_low_gear`（旧一键卖低价值）仍保留破损排除，属另一条独立链路。
 static func score(item: Dictionary) -> float:
 	if item.is_empty():
 		return 0.0

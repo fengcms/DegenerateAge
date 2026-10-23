@@ -46,9 +46,27 @@ func _ready() -> void:
 	check(not bool(GameState.inventory[0].get("favorite", true)), "右键可取消收藏")
 	preview._on_confirm()
 	check(GameState.inventory[0] is Dictionary, "取消收藏导致过期的清单仍需重新确认")
-	var price := Shop.sell_price(old_shoes)
+	# 工程 99：破损件（耐久 0）必须能被预设勾上、能直卖成交，且原因行写人话而不是裸 key。
+	# 修复前它恒为「默认不勾」，快速出售对破损件整体失效 —— 用户报的就是这个现象。
+	var broken_shoes := ItemFactory.make_equip_roll("shoes_cloth", 1, "common", rng)
+	broken_shoes["durability"] = 0
+	GameState.inventory[1] = broken_shoes
+	preview._reload_entries()
+	var broken_row := {}
+	for row in preview._rows:
+		if String(row.get("instance_id", "")) == String(broken_shoes.instanceId):
+			broken_row = row
+	var broken_text := preview._reasons_text(broken_row)
+	check(not broken_row.is_empty() and bool(broken_row.get("default_selected", false))
+		and bool(preview._selected.get(String(broken_shoes.instanceId), false)),
+		"破损件出现在清单里并被预设默认勾选并预选")
+	check(broken_text.contains(Localization.tr_key("ui.sale_preview.reason_damaged"))
+		and not broken_text.contains("ui.sale_preview.reason_damaged"),
+		"破损件原因行显示「已损坏」文案而不是裸 key：%s" % broken_text)
+	var price := Shop.sell_price(old_shoes) + Shop.sell_price(broken_shoes)
 	preview._on_confirm()
-	check(GameState.inventory[0] == null and GameState.gold == price, "新清单确认后只卖出选中的装备")
+	check(GameState.inventory[0] == null and GameState.inventory[1] == null and GameState.gold == price,
+		"新清单确认后只卖出选中的装备（含破损件）")
 	var merchant := preload("res://scripts/ui/shop_panel.gd").new()
 	add_child(merchant)
 	var rare := ItemFactory.make_equip_roll("shoes_cloth", 1, "rare", rng)
