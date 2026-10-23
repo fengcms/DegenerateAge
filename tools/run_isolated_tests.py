@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 73 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 74 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -72,6 +72,9 @@ DEFAULT_TESTS = [
     # 工程 95 挂机自动维护：自动修复（阈值/1.5× 便利费/只修身上/金币不足一件不修）
     # + 自动四金合紫（只吃背包 0 星未收藏同档料 / 收服务费 / 铁匠仍免费）。
     "AutoMaintenanceTest",
+    # 工程 96 保星产物穿不上：产物等级口径（十个部位 vs 真造实例）+ 预览/确认/toast 三层提示
+    # + 身上件被吃的叠加警告。守的是「玩家知道自己拿到的是什么、什么时候能穿」。
+    "StarTransferLevelHintTest",
     # M10-3b 多目标血条：实例分条 + 不重排 + 逐条过期/死亡 + current_bosses + 音频按实例。
     "BossMultiTargetTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。

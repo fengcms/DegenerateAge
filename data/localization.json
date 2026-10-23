@@ -227,7 +227,7 @@
   "ui.fusion.old_role": "第一格需要旧档 12 星紫装。",
   "ui.fusion.new_role": "第二格需要更高档同类型 0 星紫装。",
   "ui.fusion.gap": "跨 %d 档，费用 ×%d",
-  "ui.fusion.out_level": "产物需求等级 %d，当前 Lv%d 暂时无法穿戴。",
+  "ui.fusion.out_level": "产物需 Lv%d，你当前 Lv%d —— 还差 %d 级才能穿，它会进背包。",
   "ui.inventory_panel.p019": "金币  %d",
   "ui.inventory_panel.p020": "需求等级 %d",
   "ui.inventory_panel.p021": "需求等级 %d（当前 Lv%d，不足）",
@@ -899,5 +899,8 @@
   "msg.auto_maintenance.p001": "自动修复：全身装备已修满，花费 %d 金币",
   "msg.auto_maintenance.p002": "自动修复暂停：需要 %d 金币，耐久已跌破预警线",
   "msg.auto_maintenance.p003": "自动合成：「%s」已产出，花费 %d 金币",
-  "msg.auto_maintenance.p004": "自动合成暂停：需要 %d 金币"
+  "msg.auto_maintenance.p004": "自动合成暂停：需要 %d 金币",
+  "ui.fusion.out_level_confirm": "产物需 Lv%d，你现在 Lv%d：会进背包，等 %d 级后穿。",
+  "ui.fusion.done_locked": "合成成功：%s（需 Lv%d 才能穿）",
+  "ui.fusion.worn_locked_warning": "%s 正穿在身上，合成后该部位会空出来，而产物要 Lv%d 才能穿 —— 这段时间你会少一件装备。"
 }

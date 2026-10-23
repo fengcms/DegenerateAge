@@ -169,6 +169,23 @@ static func transfer_gap(old_tier: int, new_tier: int) -> int:
 static func transfer_max_tier() -> int:
 	return ItemFactory.INSTANCE_LEVEL_CAP - (ItemFactory.TIER_SPAN - 1)
 
+## 保星产物的**实际**穿戴等级：与 `make_output` 同一条口径（`dynamic_level_for`），
+## 但只查表、不造实例、不吃 RNG，所以预览里可以反复调用。
+## 🔴 提示必须读这里，不能读材料等级（`new_item.requiredLevel`）：同档同部位时两者相等，
+## 但旧规则的逐级实例（如 115 级武器，`suit_start` 归到 111 档）会让材料等级比产物高 4 级，
+## 少报的那个方向会让玩家到手才发现穿不上。
+static func transfer_output_level(tier: int, kind: String) -> int:
+	var template_id := template_for(tier, kind)
+	if template_id.is_empty():
+		return 0
+	return ItemFactory.dynamic_level_for(template_id, tier)
+
+## 产物在当前等级下穿不上就返回它的需求等级，穿得上返回 0。
+## UI 的预览行、二次确认、成功 toast 与测试**共用这一个判据**，
+## 避免三处各写一遍 `<` 之后各自漂移（工程 08 第 20 条同族）。
+static func transfer_locked_level(output_level: int, player_level: int) -> int:
+	return output_level if output_level > player_level else 0
+
 ## 校验低档 12 星与更高档 0 星紫装；两件均消耗并重随机产物词条。
 ## 跨档数只放大金币，不改变星级 / 品质 / 部位规则。
 static func plan_transfer(old_item: Dictionary, new_item: Dictionary) -> Dictionary:
@@ -192,6 +209,9 @@ static func plan_transfer(old_item: Dictionary, new_item: Dictionary) -> Diction
 		return {"ok": false, "reason": "目标档已超出装备等级上限"}
 	if template_for(new_tier, kind).is_empty():
 		return {"ok": false, "reason": "目标等级档缺少装备型号"}
+	# `required` 是**材料**等级（既有断言与旧 UI 都读它，语义不动）；
+	# `outputLevel` 才是产物等级 —— 新 UI 与工程 96 的提示一律读后者。
 	return {"ok": true, "tier": new_tier, "target_kind": kind, "gap": gap,
 		"required": int(new_item.get("requiredLevel", 0)),
+		"outputLevel": transfer_output_level(new_tier, kind),
 		"cost": full_star_cost() * gap, "reason": ""}

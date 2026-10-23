@@ -189,6 +189,8 @@ func _ready() -> void:
 		and int(GameState.inventory[0].get("star", -1)) == 12, "保星再次确认才结算")
 	# 跨档保星：51 档 12★ 升到 71 档，费用按档数翻倍，产物穿不上时明确提示。
 	GameState.reset_to_defaults()
+	# 显式钉住等级：默认等级一旦变化，「产物穿不上」这个前提会静默失效，断言就变成空转。
+	GameState.player["level"] = 1
 	var far_old := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
 	far_old.star = 12
 	GameState.inventory[0] = far_old
@@ -199,7 +201,9 @@ func _ready() -> void:
 	panel._on_material_dropped(1, _payload(1))
 	check(not panel._confirm.disabled and panel._summary.text.contains("跨 2 档")
 		and panel._summary.text.contains("257494"), "跨两档预览标明倍数与双倍费用")
-	check(panel._summary.text.contains("暂时无法穿戴"), "产物高出玩家等级时提示暂时穿不上")
+	check(panel._out_level.text.contains("Lv71") and panel._out_level.text.contains("还差 70 级")
+		and not panel._summary.text.contains("暂时无法穿戴"),
+		"产物高出玩家等级时提示搬到独立高亮行（不再混在四模式共用的 _summary 里）")
 	panel._on_confirm()
 	panel._on_confirm()
 	var far_output := _only_item()

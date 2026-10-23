@@ -17,6 +17,9 @@ var _grid: FusionMaterialGrid
 var _title: Label
 var _hint: Label
 var _summary: Label
+## 工程 96：保星产物「暂时穿不上」的独立高亮行。**不拼进 `_summary`** ——
+## 后者被四个模式共用，改它的颜色会波及其余三个。
+var _out_level: Label
 var _feedback: Label
 var _confirm: Button
 var _random: Button
@@ -260,6 +263,12 @@ func _build() -> void:
 	_summary = Label.new()
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_summary)
+	# 橙色而非红色：产物穿不上是跨档保星的**正常设计**（D3 产物永远进背包），
+	# 不是错误状态。用 danger 红会让玩家以为操作失败了。
+	_out_level = Label.new()
+	_out_level.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_out_level.add_theme_color_override("font_color", Color("ffbd88"))
+	root.add_child(_out_level)
 	# 献祭专用开关：12★ 是保星底件，默认不计入（只在献祭模式显示）。
 	_star12 = CheckBox.new()
 	_star12.text = Localization.tr_key("ui.sacrifice.star12")
@@ -457,6 +466,9 @@ func _material_snapshots() -> Array[Dictionary]:
 func _refresh_preview() -> void:
 	if _confirm == null:
 		return
+	# 任何模式重算前先清空：否则切服务或撤下材料后，上一轮的「穿不上」会留在屏幕上。
+	if _out_level != null:
+		_out_level.text = ""
 	if _mode == EquipmentFusion.SACRIFICE:
 		_refresh_sacrifice()
 		return
@@ -495,11 +507,19 @@ func _refresh_preview() -> void:
 		if gap > 1:
 			_summary.text += "\n" + Localization.tr_key("ui.fusion.gap", [gap, gap])
 		_summary.text += "\n" + Localization.tr_key("ui.fusion.cost", [int(plan.cost), GameState.gold])
-		var required := int(plan.get("required", 0))
-		if required > int(GameState.player.get("level", 1)):
-			_summary.text += "\n" + Localization.tr_key("ui.fusion.out_level",
-				[required, int(GameState.player.get("level", 1))])
+		_refresh_out_level(plan)
 	_confirm.disabled = GameState.gold < int(plan.get("cost", 0))
+
+## 工程 96 P1：产物穿不上时把提示搬到独立高亮行。
+## 判据来自规则层 `EquipmentFusion.transfer_locked_level`，UI 不自己写 `<`。
+func _refresh_out_level(plan: Dictionary) -> void:
+	if _out_level == null:
+		return
+	var level := int(GameState.player.get("level", 1))
+	var need := EquipmentFusion.transfer_locked_level(int(plan.get("outputLevel", 0)), level)
+	if need <= 0:
+		return
+	_out_level.text = Localization.tr_key("ui.fusion.out_level", [need, level, need - level])
 
 ## 带星材料、少于四件的赌局与保星交易都要二次确认，最终仍由 GameState 快照重核。
 func _on_confirm() -> void:
@@ -527,6 +547,14 @@ func _on_confirm() -> void:
 	for item in items:
 		if String(GameState.find_owned_item(String(item.get("instanceId", ""))).get("loc", "")) == "worn":
 			worn_names.append(ItemUtil.display_name(item))
+	# 工程 96 P2：产物穿不上必须在**决策点**再说一次 —— 预览行在第一次点击之前就显示了，
+	# 但玩家那时的视线在按钮上，而且确认后预览会随材料一起清空。
+	var level := int(GameState.player.get("level", 1))
+	var locked_level := 0
+	if _mode == EquipmentFusion.STAR_TRANSFER and items.size() >= 2:
+		var plan := EquipmentFusion.plan_transfer(items[0], items[1])
+		if bool(plan.get("ok", false)):
+			locked_level = EquipmentFusion.transfer_locked_level(int(plan.get("outputLevel", 0)), level)
 	if risk and not _risk_confirmed:
 		_risk_confirmed = true
 		var lines: Array[String] = []
@@ -538,16 +566,29 @@ func _on_confirm() -> void:
 					[int(round(rate * 100.0)), items.size()]))
 			if not stars.is_empty():
 				lines.append(Localization.tr_key("ui.fusion.star_loss", [", ".join(PackedStringArray(stars))]))
+		# P4：身上件被吃 + 产物穿不上 = 该部位**净空一件**，是本流程唯一会掉战力的组合，
+		# 比单独的「暂时穿不上」严重一档，单独用强化文案。
 		if not worn_names.is_empty():
-			lines.append(Localization.tr_key("ui.fusion.worn_warning",
-				[", ".join(PackedStringArray(worn_names))]))
+			var names := ", ".join(PackedStringArray(worn_names))
+			lines.append(Localization.tr_key("ui.fusion.worn_locked_warning", [names, locked_level])
+				if locked_level > 0 else Localization.tr_key("ui.fusion.worn_warning", [names]))
+		elif locked_level > 0:
+			lines.append(Localization.tr_key("ui.fusion.out_level_confirm",
+				[locked_level, level, locked_level - level]))
 		_feedback.text = "\n".join(PackedStringArray(lines))
 		_refresh_preview()
 		return
 	var kind := Equipment.slot_kinds()[_target.selected - 1] if _mode == EquipmentFusion.PURPLE_TARGET else ""
 	var result := GameState.forge_equipment(_mode, items, kind)
 	if bool(result.get("ok", false)):
-		EventBus.toast_requested.emit(Localization.tr_key("ui.fusion.done", [ItemUtil.display_name(result.item)]), "pickup")
+		# P3：用**产物实际等级**而不是上面的预估值 —— 万一口径哪天漂了，toast 也必须说真话。
+		# 🔴 只加短后缀：`hud.gd` 的 toast 是单行 Label、无 autowrap，长文案会横向溢出屏幕。
+		var gained: Dictionary = result.item
+		var need := Equipment.level_req(gained)
+		var text := Localization.tr_key("ui.fusion.done", [ItemUtil.display_name(gained)])
+		if need > level:
+			text = Localization.tr_key("ui.fusion.done_locked", [ItemUtil.display_name(gained), need])
+		EventBus.toast_requested.emit(text, "pickup")
 		_reset_materials()
 	elif bool(result.get("lost", false)):
 		# 掷骰失败：材料已经被吃掉。只写小字会被当成「装备静默消失」，必须走 toast。
