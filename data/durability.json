@@ -10,5 +10,14 @@
     "earlyPerLevel": 5,
     "earlyMaxLevel": 60,
     "reforgeShare": 0.075
+  },
+  "autoRepair": {
+    "feeRate": 1.5,
+    "warnCooldown": 60.0
+  },
+  "autoForge": {
+    "feeShare": 0.5,
+    "interval": 2.0,
+    "warnCooldown": 60.0
   }
 }

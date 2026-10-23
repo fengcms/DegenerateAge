@@ -891,5 +891,13 @@
   "ui.reforge_panel.p025": "（较上次 %s）",
   "ui.reforge_panel.p026": "（与上次持平）",
   "ui.reforge_panel.p027": "耐久破损：词条不生效，评分只含基底",
-  "msg.auto_battle.loot_cap": "%s未领取战利品已接近容量，请先清理后再开启自动战斗"
+  "msg.auto_battle.loot_cap": "%s未领取战利品已接近容量，请先清理后再开启自动战斗",
+  "ui.settings_panel.p050": "自动修复装备（耐久低于 20%）",
+  "ui.settings_panel.p051": "自动四金合紫",
+  "ui.settings_panel.p052": "自动修复只修身上 14 件，费用为铁匠处的 150%（挂机便利费）；金币不足时一件不修。两个开关只在自动战斗开启期间持续生效，关掉自动战斗即停止扣费。",
+  "ui.settings_panel.p053": "自动合成只吃背包里 0 星、未收藏的 4 件金色史诗装备（同档、取最低档），每次收取 0.5 件修理价的服务费。铁匠手动合成仍然免费。",
+  "msg.auto_maintenance.p001": "自动修复：全身装备已修满，花费 %d 金币",
+  "msg.auto_maintenance.p002": "自动修复暂停：需要 %d 金币，耐久已跌破预警线",
+  "msg.auto_maintenance.p003": "自动合成：「%s」已产出，花费 %d 金币",
+  "msg.auto_maintenance.p004": "自动合成暂停：需要 %d 金币"
 }

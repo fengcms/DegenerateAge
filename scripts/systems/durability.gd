@@ -15,6 +15,10 @@ extends RefCounted
 
 ## 配置缺失时的兜底上限；`_valid_item` 的宽松上界另见 `SAVE_FIELD_CAP`。
 const DEFAULT_MAX := 800
+## 低耐久兜底线（比例）。`warnThresholds` 缺失或全 0 时，自动修复阈值退回这个数。
+## ⚠ `GameState._warn_durability` 里的 0.2 是**既有写死值**，本次不动它；
+##    两处当前同数（都等于 `warnThresholds` 的 0.2），调阈值时必须一起看。
+const DEFAULT_LOW_WARN := 0.2
 ## 存档字段的宽松上界。**不写死 800** —— 上限在 JSON 里可调，写死会让
 ## 调高上限后旧档逐件判毁档（D-21 静默毁档教训）。
 const SAVE_FIELD_CAP := 10000
@@ -23,6 +27,46 @@ const SAVE_FIELD_CAP := 10000
 static func config() -> Dictionary:
 	var raw: Variant = DataLoader.get_table("durability")
 	return raw if raw is Dictionary else {}
+
+## 工程 95：挂机自动维护的两块配置。数值同样只从 JSON 读，代码里只留兜底值。
+## 🔑 自动修复的触发阈值**不在这里** —— 它复用 `warnThresholds` 的 0.2（见 `auto_repair_threshold`），
+##    否则「预警线」和「自动修线」会各自漂移成两个数字。
+static func auto_repair_config() -> Dictionary:
+	var raw: Variant = config().get("autoRepair", {})
+	return raw if raw is Dictionary else {}
+
+static func auto_forge_config() -> Dictionary:
+	var raw: Variant = config().get("autoForge", {})
+	return raw if raw is Dictionary else {}
+
+## 自动修复倍率（相对铁匠 1.0×）。下限 1.0：便利费**不能比回城更便宜**，
+## 否则挂机自动修就成了「免费优化」，铁匠的修理出口会直接作废。
+static func auto_repair_fee_rate() -> float:
+	return maxf(1.0, float(auto_repair_config().get("feeRate", 1.5)))
+
+## 自动合成的便利费占「同档单件修满价」的比例（工程 95 Q2 拍板 0.5）。
+static func auto_forge_fee_share() -> float:
+	return maxf(0.0, float(auto_forge_config().get("feeShare", 0.5)))
+
+## 自动合成的最小间隔（s）：同时是「一次只合一组」的天然限速。
+static func auto_forge_interval() -> float:
+	return maxf(0.5, float(auto_forge_config().get("interval", 2.0)))
+
+## 自动修复触发阈值（比例）。与预警线取同一个数：`warnThresholds` 里**最高的正数档**。
+## 配置缺失或全为 0 时退回 0.2（`DEFAULT_LOW_WARN`，与 `_warn_durability` 同源口径）。
+static func auto_repair_threshold() -> float:
+	var best := 0.0
+	for value in warn_thresholds():
+		if value > 0.0:
+			best = maxf(best, value)
+	return best if best > 0.0 else DEFAULT_LOW_WARN
+
+## 自动维护提示节流（s）。修复与合成**各一份**，避免一个功能的失败提示盖住另一个。
+static func auto_repair_warn_cooldown() -> float:
+	return maxf(1.0, float(auto_repair_config().get("warnCooldown", 60.0)))
+
+static func auto_forge_warn_cooldown() -> float:
+	return maxf(1.0, float(auto_forge_config().get("warnCooldown", 60.0)))
 
 ## 耐久上限；配置缺失走兜底常量（修理费不同：那条链路缺配置要显式报错）。
 static func max_durability() -> int:

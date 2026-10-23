@@ -249,6 +249,10 @@ func default_settings() -> Dictionary:
 		# 工程 63：拾取装备自动出售。判定口径复用 `sellGearPreset`（不带暴力），
 		# 等级门槛见 `SellGearPolicy.AUTO_SELL_MIN_LEVEL`。加键**不 bump schema**。
 		"autoSellEquipOnPickup": false,
+		# 工程 95：挂机自动维护。两个开关**只在自动战斗开启期间生效**（Q1 拍板）；
+		# 加键**不 bump schema**（`_migrate_settings` 以默认表补缺键）。
+		"autoRepairEquip": false,
+		"autoForgeGold": false,
 		"masterVolume": 1.0,
 		"sfxVolume": 1.0,
 		"uiScale": 1.0,
@@ -1086,6 +1090,10 @@ func _after_equip_change() -> void:
 ## 预警节流：每件每档只提示一次（`instanceId -> 已提示档位集合`），修理后清空复位。
 ## 只存运行时、不落档 —— 重启后重新预警一次远比漏预警安全。
 var _durability_warned := {}
+## 工程 95：自动维护的失败提示节流（毫秒时间戳，`-1` = 从未提示）。运行时变量，不落档。
+## 用时间戳而不是「剩余秒数」：`wear_equipment` 没有 delta 可减，递减式冷却会永远停在初始值。
+var _auto_repair_warn_ms := -1
+var _auto_forge_warn_ms := -1
 
 ## 击杀磨损：已穿戴 14 件按怪物档次各自扣点（normal 1 / elite 4 / boss 12）。
 ## 挂在 `_settle_rewards` 顶部，与经验/掉落同口径（`suppress_rewards` 时不磨损）。
@@ -1107,6 +1115,10 @@ func wear_equipment(monster_kind: String) -> void:
 		_warn_durability(it, before, after)
 	if changed:
 		_after_equip_change()
+		# 工程 95：自动修复挂在**唯一磨损入口**的尾部。不新开 tick / 不监听事件 ——
+		# 耐久只在这里变少，别处都不可能让「跌破阈值」发生。
+		if auto_repair_enabled():
+			try_auto_repair()
 
 ## 预警 toast：首次跌破 20% 与归零各提示一次（每档一辈子一次，修理后复位）。
 ## 14 件同时破损时合并成两条 toast，避免刷屏。
@@ -1156,6 +1168,98 @@ func repair_equipment(rate_multiplier: float = 1.0) -> Dictionary:
 	_durability_warned.clear()
 	_after_equip_change()
 	return {"ok": true, "cost": total, "repaired": repaired, "reason": ""}
+
+# ---- 工程 95：挂机自动维护（自动修复 + 自动四金合紫）----
+
+## 开关 = 玩家勾选 **且** 正在自动战斗（Q1 拍板）。手动玩时走铁匠平价/免费。
+func auto_repair_enabled() -> bool:
+	return auto_battle_on and bool(settings.get("autoRepairEquip", false))
+
+func auto_forge_enabled() -> bool:
+	return auto_battle_on and bool(settings.get("autoForgeGold", false))
+
+## 身上有多少件跌破自动修复阈值（**严格小于**，20% 整不修）。
+## 阈值取 `Durability.auto_repair_threshold()`（= `warnThresholds` 的正数最高档），
+## 不另立常量 —— 否则预警线和自动修线会各自漂移成两个数字。
+func auto_repair_pending() -> int:
+	var limit := float(Durability.max_durability()) * Durability.auto_repair_threshold()
+	var count := 0
+	for slot_id in equipment.keys():
+		var it = equipment[slot_id]
+		if it is Dictionary and float(Durability.current(it)) < limit:
+			count += 1
+	return count
+
+## 自动修复**动作**函数：只做「到阈值就修满全身」，**不含开关判断**。
+## gating 放在两个调用点：`wear_equipment` 尾部（挂机时）、设置面板勾选瞬间（一次性）。
+## 这样「勾上就立刻生效」（方案 §3.6），而挂机时仍严格受 Q1 约束。
+## 费用、只修身上、按缺失比例计价、金币不足一件不修 —— 全部复用 `repair_equipment`。
+func try_auto_repair() -> Dictionary:
+	if auto_repair_pending() <= 0:
+		return {"ok": false, "cost": 0, "repaired": 0, "reason": "未到阈值"}
+	var result := repair_equipment(Durability.auto_repair_fee_rate())
+	if bool(result.get("ok", false)):
+		EventBus.toast_requested.emit(Localization.tr_key(
+			"msg.auto_maintenance.p001", [int(result.get("cost", 0))]), "success")
+	else:
+		_auto_warn(true, int(result.get("cost", 0)))
+	return result
+
+## 自动四金合紫：**一次只合一组**，限速由调用方（`AutoBattle` 每 2 秒）负责。
+## 🔑 挑料完全复用铁匠「随机放入」的 `random_materials`：只扫背包 / 只吃 0 星 / 不吃收藏 /
+##    按档分组取最低档。自动与手动共用同一个函数，规则不可能各自漂移。
+## 🔴 铁匠四金合紫**免费**；服务费只在本函数里收，绝不改 `forge_equipment` 的 cost 语义
+##    （改了会让铁匠跟着涨价，与需求完全相反）。
+func auto_forge_gold() -> Dictionary:
+	if not auto_forge_enabled():
+		return {"ok": false, "reason": "未开启"}
+	var mats := EquipmentFusion.random_materials(inventory, EquipmentFusion.GOLD_TO_PURPLE)
+	if mats.is_empty():
+		return {"ok": false, "reason": ""}
+	var fee := auto_forge_fee(mats)
+	if gold < fee:
+		_auto_warn(false, fee)
+		return {"ok": false, "cost": fee, "reason": "金币不足"}
+	# 先校验金币 → 再合成（`forge_equipment` 内部失败零消耗）→ 最后扣费。
+	# 产物落点天然安全：4 进 1 出，优先复用被消耗的格子，不存在「背包满放不下」。
+	var result := forge_equipment(EquipmentFusion.GOLD_TO_PURPLE, mats)
+	if not bool(result.get("ok", false)):
+		return result
+	if fee > 0:
+		add_gold(-fee)
+	var produced: Dictionary = result["item"]
+	EventBus.toast_requested.emit(Localization.tr_key("msg.auto_maintenance.p003",
+		[ItemUtil.display_name(produced), fee]), "success")
+	return {"ok": true, "cost": fee, "item": produced}
+
+## 自动合成的服务费：**同档单件修满价 × `feeShare`**（Q2 拍板 0.5）。
+## 材料必然同档（`random_materials` 按档分组），取第一件即可，不取平均。
+## 🔑 锚定「修理费」而非「产物卖价」：四金合紫在卖价上本来就亏
+##    （4 件金装 ≈ 2 倍产物紫装价），按产物定价会让玩家算一下账就永远不开这个开关。
+func auto_forge_fee(materials: Array) -> int:
+	if materials.is_empty() or not materials[0] is Dictionary:
+		return 0
+	var first: Dictionary = materials[0]
+	var full := Durability.repair_full_price(first)
+	if full < 0:
+		return 0
+	return maxi(1, int(round(float(full) * Durability.auto_forge_fee_share())))
+
+## 失败提示节流：同一类失败 60 秒最多一条（14 件同时破、每 2 秒合一次都会刷屏）。
+## 用毫秒时间戳而不是「剩余冷却秒数」：`wear_equipment` 没有 delta 可减。
+func _auto_warn(repair: bool, cost: int) -> void:
+	var now := Time.get_ticks_msec()
+	var last := _auto_repair_warn_ms if repair else _auto_forge_warn_ms
+	var cooldown := Durability.auto_repair_warn_cooldown() if repair \
+		else Durability.auto_forge_warn_cooldown()
+	if last >= 0 and now - last < int(cooldown * 1000.0):
+		return
+	if repair:
+		_auto_repair_warn_ms = now
+	else:
+		_auto_forge_warn_ms = now
+	EventBus.toast_requested.emit(Localization.tr_key(
+		"msg.auto_maintenance.p002" if repair else "msg.auto_maintenance.p004", [cost]), "danger")
 
 # ---- 装备升星（M4-1）----
 

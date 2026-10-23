@@ -94,6 +94,9 @@ var _stuck_count: int = 0
 var _blocked_t: float = 0.0
 var _manual_t: float = 0.0
 var _danger_t: float = 0.0
+## 工程 95：自动四金合紫的节流计时（s）。同时是「一次只合一组」的天然限速 ——
+## 否则一开开关会把背包里 20 组存量料连合成渣，金币瞬间见底。
+var _auto_forge_t: float = 0.0
 var _roam_points: Array[Vector2] = []
 var _roam_index: int = -1
 var _roam_built := false
@@ -270,6 +273,10 @@ func begin_manual_override() -> void:
 # ---- 决策主体 ----
 
 func _tick(delta: float) -> void:
+	# 工程 95：自动四金合紫。放在所有分支之前 —— 追击 / 拾取 / 巡游任一状态下都该继续合成，
+	# 它不依赖拾取事件（背包里已有的存量料，一开开关也能被处理）。
+	_tick_auto_forge(delta)
+
 	# 受阻停留（3.14 ① 拉黑目标后的短暂停顿，避免同帧立即重选）
 	if _blocked_t > 0.0:
 		_blocked_t = maxf(0.0, _blocked_t - delta)
@@ -354,6 +361,18 @@ func _tick(delta: float) -> void:
 	if not single.is_empty() and _player.cast_skill(String(single.id), _target):
 		return
 	_player.try_auto_attack(_target)
+
+## 工程 95：自动四金合紫。开关未开时把计时器清零 —— 下次开开关**立刻**尝试一组，
+## 而不是先白等 2 秒（与「勾选即时生效」同口径）。
+func _tick_auto_forge(delta: float) -> void:
+	if not GameState.auto_forge_enabled():
+		_auto_forge_t = 0.0
+		return
+	_auto_forge_t = maxf(0.0, _auto_forge_t - delta)
+	if _auto_forge_t > 0.0:
+		return
+	_auto_forge_t = Durability.auto_forge_interval()
+	GameState.auto_forge_gold()
 
 ## 只在真实可攻击目标已进入近战范围时启动自身增益；巡游、追路和拾取阶段均不空放。
 func _try_battle_focus(target: Node) -> bool:

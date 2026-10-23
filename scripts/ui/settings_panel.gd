@@ -314,6 +314,7 @@ func _build_game(tabs: TabContainer) -> void:
 	box.add_child(revive_hint)
 	# 品质自动拾取过滤尚未接线，旧档字段保留兼容，避免展示不会生效的选项。
 	_build_auto_sell(box)
+	_build_auto_maintenance(box)
 
 ## 工程 63：拾取装备自动出售。勾选后拾取装备即换成金币（判定见 `SellGearPolicy.auto_sell`）。
 ## 预设复用 `settings.sellGearPreset`（与背包装备出售面板同一键、三档、天然不含「暴力」），
@@ -362,6 +363,34 @@ func _refresh_auto_sell_gate() -> void:
 		var current := String(GameState.settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
 		_auto_sell_preset.select(maxi(0, SellGearPolicy.PERSISTABLE.find(current)))
 		_auto_sell_preset.disabled = not allowed
+
+## 工程 95：挂机自动维护（自动修复 + 自动四金合紫）。
+## 两个开关**只在自动战斗开启期间持续生效**（Q1 拍板）：手动玩走铁匠平价/免费，
+## 150% 的便利费没有购买理由。但**勾选瞬间的那一次修复不受此限** ——
+## 它是玩家主动触发的一次性动作，不是「持续收费」。否则存量档勾上后要再杀 54 只
+## Boss 才看到效果，会被当成没生效（方案 §3.6）。
+func _build_auto_maintenance(box: VBoxContainer) -> void:
+	var repair := CheckBox.new()
+	repair.text = Localization.tr_key("ui.settings_panel.p050")
+	repair.button_pressed = bool(GameState.settings.get("autoRepairEquip", false))
+	repair.toggled.connect(func(v: bool) -> void:
+		GameState.settings["autoRepairEquip"] = v
+		_changed()
+		if v:
+			GameState.try_auto_repair())
+	box.add_child(repair)
+	var forge := CheckBox.new()
+	forge.text = Localization.tr_key("ui.settings_panel.p051")
+	forge.button_pressed = bool(GameState.settings.get("autoForgeGold", false))
+	forge.toggled.connect(func(v: bool) -> void:
+		GameState.settings["autoForgeGold"] = v
+		_changed())
+	box.add_child(forge)
+	for key in ["ui.settings_panel.p052", "ui.settings_panel.p053"]:
+		var hint := Label.new()
+		hint.text = Localization.tr_key(String(key))
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(hint)
 
 func _build_controls(tabs: TabContainer) -> void:
 	var root := _tab(tabs, Localization.tr_key("ui.settings_panel.p038"))
