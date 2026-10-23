@@ -1,5 +1,8 @@
 extends Control
 ## M4-6 设置：即时预览，写入当前存档；冲突键位经确认后交换。
+## 工程 97：补齐「分组层」——页签之下先用卡片（短表单）或小标题 + 分隔线（长列表）分组，再放控件；
+## 行规格统一（左标签列定宽、下拉定宽、注解 14 号 MUTED），避免 44 个控件等权平铺成一条线。
+## 只动布局与样式：任何设置键名、默认值、存档结构、控件行为均不变。
 
 const ACTION_NAMES := {
 	"move_up": "ui.action.move_up", "move_down": "ui.action.move_down", "move_left": "ui.action.move_left", "move_right": "ui.action.move_right",
@@ -7,6 +10,28 @@ const ACTION_NAMES := {
 	"interact": "ui.action.interact", "pause": "ui.action.pause", "panel_inventory": "ui.action.panel_inventory", "panel_character": "ui.action.panel_character",
 	"panel_map": "ui.action.panel_map", "panel_skill": "ui.action.panel_skill", "panel_mount": "ui.action.panel_mount", "mount_toggle": "ui.action.mount_toggle",
 }
+
+## 控制页分组（工程 97）：按动作 id 显式列举，**未列出的动作落入最后一组**（快捷格 hotbar_N）。
+## 漏写的后果只是「归错组」，不会丢行 —— 新增动作不必改这里也能显示出来。
+const KEY_GROUPS := [
+	{"title": "ui.settings_panel.p060",
+		"actions": ["move_up", "move_down", "move_left", "move_right", "attack", "target_next", "sit_toggle"]},
+	{"title": "ui.settings_panel.p061", "actions": ["auto_battle", "auto_pickup", "interact", "pause"]},
+	{"title": "ui.settings_panel.p062",
+		"actions": ["panel_inventory", "panel_character", "panel_map", "panel_skill", "panel_mount", "mount_toggle"]},
+]
+
+## 统一行规格（工程 97 §5）：改一处即全页生效，别再在单个 `_build_*` 里写自己的数值。
+const CAPTION_WIDTH := 150.0
+const KEY_CAPTION_WIDTH := 140.0
+const KEY_BUTTON_WIDTH := 110.0
+const SLIDER_MIN_WIDTH := 240.0
+const OPTION_MIN_WIDTH := 160.0
+const VALUE_WIDTH := 56.0
+const HINT_FONT_SIZE := 14
+const HINT_INDENT := 4
+## 面板最大高：拆卡后游戏页内容高约 610，600 会让溢出从 2 行变 4 行（工程 97 §6.2）。
+const PANEL_MAX_HEIGHT := 680.0
 
 var _key_list: VBoxContainer
 var _capture_action := ""
@@ -144,23 +169,90 @@ func _update_layout() -> void:
 		return
 	var logical := get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
 	_layout_root.custom_minimum_size = Vector2(minf(860.0, maxf(320.0, logical.x - 64.0)),
-		minf(600.0, maxf(260.0, logical.y - 64.0)))
+		minf(PANEL_MAX_HEIGHT, maxf(260.0, logical.y - 64.0)))
 
-func _slider(box: VBoxContainer, label: String, field: String, minimum: float, maximum: float, step: float) -> void:
+# ---- 构造 helper（工程 97）：分组长什么样、行有多宽，只在这里定义 ----
+
+## 分组卡片：深底 + 细边 + 内距，标题用小标题字号（与其余 13 个面板同一套语言）。
+func _card(parent: VBoxContainer, title_key: String) -> VBoxContainer:
+	var panel := PanelContainer.new()
+	PanelChrome.style_card(panel)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	if not title_key.is_empty():
+		var title := Label.new()
+		title.text = Localization.tr_key(title_key)
+		PanelChrome.style_section(title)
+		box.add_child(title)
+	return box
+
+## 注解：14 号 MUTED + 左缩进 4。与正文区分开，才不会被当成又一行控件读过去。
+func _hint(parent: VBoxContainer, key: String) -> Label:
+	var wrap := MarginContainer.new()
+	wrap.add_theme_constant_override("margin_left", HINT_INDENT)
+	parent.add_child(wrap)
+	var hint := Label.new()
+	hint.text = Localization.tr_key(key)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hint.add_theme_font_size_override("font_size", HINT_FONT_SIZE)
+	hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	wrap.add_child(hint)
+	return hint
+
+## 控件行：左标签列定宽，右控件列同一起点（所有下拉/滑块/勾选框共用）。
+func _control_row(parent: VBoxContainer, caption_text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	box.add_child(row)
+	row.add_theme_constant_override("separation", 10)
+	parent.add_child(row)
 	var caption := Label.new()
-	caption.text = label
-	caption.custom_minimum_size.x = 160
+	caption.text = caption_text
+	caption.custom_minimum_size.x = CAPTION_WIDTH
+	caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	caption.add_theme_color_override("font_color", PanelChrome.TEXT)
 	row.add_child(caption)
+	return row
+
+## 勾选行：左列留空。勾选框带着自己的文字，所以不能搬去左列（会丢掉点击热区）。
+func _check_row(parent: VBoxContainer) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	parent.add_child(row)
+	var spacer := Control.new()
+	spacer.custom_minimum_size.x = CAPTION_WIDTH
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(spacer)
+	return row
+
+## 下拉框统一外观与最小宽；字重回到 16 与同排标签一致（操作按钮那套是 15）。
+func _style_option(button: OptionButton) -> void:
+	PanelChrome.style_option_button(button)
+	button.add_theme_font_size_override("font_size", 16)
+	button.custom_minimum_size.x = OPTION_MIN_WIDTH
+
+func _new_check(label: String) -> CheckBox:
+	var check := CheckBox.new()
+	check.text = label
+	check.add_theme_color_override("font_color", PanelChrome.TEXT)
+	check.add_theme_color_override("font_disabled_color", PanelChrome.MUTED)
+	return check
+
+func _slider(parent: VBoxContainer, caption_text: String, field: String, minimum: float, maximum: float, step: float) -> void:
+	var row := _control_row(parent, caption_text)
 	var slider := HSlider.new()
-	slider.custom_minimum_size.x = 300
+	slider.custom_minimum_size.x = SLIDER_MIN_WIDTH
 	slider.min_value = minimum
 	slider.max_value = maximum
 	slider.step = step
 	slider.value = float(GameState.settings.get(field, minimum))
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(slider)
 	var value := Label.new()
+	value.custom_minimum_size.x = VALUE_WIDTH
+	value.add_theme_color_override("font_color", PanelChrome.TEXT)
 	value.text = "%.0f%%" % (slider.value * 100.0) if maximum <= 1.0 else str(slider.value)
 	row.add_child(value)
 	slider.value_changed.connect(func(v: float) -> void:
@@ -168,74 +260,46 @@ func _slider(box: VBoxContainer, label: String, field: String, minimum: float, m
 		value.text = "%.0f%%" % (v * 100.0) if maximum <= 1.0 else str(v)
 		_changed())
 
-func _checkbox(box: VBoxContainer, label: String, field: String) -> void:
-	var check := CheckBox.new()
-	check.text = label
+func _checkbox(parent: VBoxContainer, label: String, field: String) -> void:
+	var row := _check_row(parent)
+	var check := _new_check(label)
 	check.button_pressed = bool(GameState.settings.get(field, false))
 	check.toggled.connect(func(v: bool) -> void:
 		GameState.settings[field] = v
 		_changed())
-	box.add_child(check)
+	row.add_child(check)
 
 func _build_audio(tabs: TabContainer) -> void:
+	# 两个滑块不值得套卡片；单页只有一组控件时，卡片只会白占一层留白。
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p009"))
 	_slider(box, Localization.tr_key("ui.settings_panel.p010"), "musicVolume", 0.0, 1.0, 0.05)
 	_slider(box, Localization.tr_key("ui.settings_panel.p011"), "sfxVolume", 0.0, 1.0, 0.05)
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.settings_panel.p012")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(hint)
+	_hint(box, "ui.settings_panel.p012")
 
 func _build_visual(tabs: TabContainer) -> void:
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p013"))
-	# M5-9d（09-A）：三轴各自档位化 + 显示适配（自动/手动）。
-	_option_row(box, Localization.tr_key("ui.settings_panel.p014"), "uiScale", [80, 100, 125, 150, 175, 200])
-	_option_row(box, Localization.tr_key("ui.settings_panel.p015"), "mapScale", [80, 100, 125, 150, 175, 200])
-	_option_row(box, Localization.tr_key("ui.settings_panel.p016"), "textScale", [100, 110, 125, 150, 175, 200])
-	var color_row := HBoxContainer.new()
-	box.add_child(color_row)
-	var color_label := Label.new()
-	color_label.text = Localization.tr_key("ui.settings_panel.p017")
-	color_label.custom_minimum_size.x = 160
-	color_row.add_child(color_label)
-	var color_options := OptionButton.new()
-	color_options.add_item(Localization.tr_key("ui.settings_panel.p018"))
-	color_options.add_item(Localization.tr_key("ui.settings_panel.p019"))
-	color_options.select(1 if String(GameState.settings.get("colorblindMode", "off")) == "friendly" else 0)
-	color_options.item_selected.connect(func(index: int) -> void:
-		GameState.settings["colorblindMode"] = "friendly" if index == 1 else "off"
-		_changed())
-	color_row.add_child(color_options)
-	_build_display_adapt(box)
-	_checkbox(box, Localization.tr_key("ui.settings_panel.p020"), "fullscreen")
-	var resolution := OptionButton.new()
-	for entry in [{"id": "auto", "label": Localization.tr_key("ui.settings_panel.p021")}, {"id": "1280x800", "label": "1280×800"},
-		{"id": "1440x900", "label": "1440×900"}, {"id": "1600x900", "label": "1600×900"},
-		{"id": "1920x1200", "label": "1920×1200"}]:
-		resolution.add_item(String(entry.label))
-		resolution.set_item_metadata(resolution.item_count - 1, String(entry.id))
-		if String(GameState.settings.get("resolution", "auto")) == String(entry.id):
-			resolution.select(resolution.item_count - 1)
-	resolution.item_selected.connect(func(index: int) -> void:
-		GameState.settings["resolution"] = resolution.get_item_metadata(index)
-		_changed())
-	box.add_child(resolution)
+	# ① 适配方式：决定基准倍率，必须排在三个百分比之前（先定基准，再微调三轴）。
+	var adapt := _card(box, "ui.settings_panel.p025")
+	_build_display_adapt(adapt)
+	# ② 三轴独立档位。
+	var scaling := _card(box, "ui.settings_panel.p055")
+	# M5-9d（09-A）：三轴各自档位化。
+	_option_row(scaling, Localization.tr_key("ui.settings_panel.p014"), "uiScale", [80, 100, 125, 150, 175, 200])
+	_option_row(scaling, Localization.tr_key("ui.settings_panel.p015"), "mapScale", [80, 100, 125, 150, 175, 200])
+	_option_row(scaling, Localization.tr_key("ui.settings_panel.p016"), "textScale", [100, 110, 125, 150, 175, 200])
+	_hint(scaling, "ui.settings_panel.p024")
+	# ③ 设备与无障碍：与缩放无关，单独一组，色盲也不再夹在三轴中间。
+	var device := _card(box, "ui.settings_panel.p056")
+	_checkbox(device, Localization.tr_key("ui.settings_panel.p020"), "fullscreen")
+	_resolution_row(device)
+	_colorblind_row(device)
 	# 屏震 / 强闪尚无实际效果；旧档字段保留兼容，界面暂不暴露空开关。
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.settings_panel.p024")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(hint)
 
 ## M5-9d：百分比档位下拉（界面大小 / 地图显示大小 / 文字大小共用，写入 float 设置键）。
 ## 旧档值不在档位表内时（如 9d 前的 uiScale=1.2）：选中最接近档位**但不改写设置** ——
 ## 玩家不动它就保持原值生效，一动即落到新档位（与 textScale clamp 兼容旧档同一思路）。
-func _option_row(box: VBoxContainer, label: String, field: String, percents: Array) -> void:
-	var row := HBoxContainer.new()
-	box.add_child(row)
-	var caption := Label.new()
-	caption.text = label
-	caption.custom_minimum_size.x = 160
-	row.add_child(caption)
+func _option_row(parent: VBoxContainer, caption_text: String, field: String, percents: Array) -> void:
+	var row := _control_row(parent, caption_text)
 	var options := OptionButton.new()
 	var current := float(GameState.settings.get(field, 1.0))
 	var exact := -1
@@ -254,84 +318,106 @@ func _option_row(box: VBoxContainer, label: String, field: String, percents: Arr
 	options.item_selected.connect(func(index: int) -> void:
 		GameState.settings[field] = float(options.get_item_id(index)) / 100.0
 		_changed())
+	_style_option(options)
+	row.add_child(options)
+
+## 窗口尺寸：原来是一个裸挂在下拉列表、没有标签的下拉框，玩家只能猜它管什么（工程 97 §2.2）。
+func _resolution_row(parent: VBoxContainer) -> void:
+	var row := _control_row(parent, Localization.tr_key("ui.settings_panel.p063"))
+	var resolution := OptionButton.new()
+	for entry in [{"id": "auto", "label": Localization.tr_key("ui.settings_panel.p021")}, {"id": "1280x800", "label": "1280×800"},
+		{"id": "1440x900", "label": "1440×900"}, {"id": "1600x900", "label": "1600×900"},
+		{"id": "1920x1200", "label": "1920×1200"}]:
+		resolution.add_item(String(entry.label))
+		resolution.set_item_metadata(resolution.item_count - 1, String(entry.id))
+		if String(GameState.settings.get("resolution", "auto")) == String(entry.id):
+			resolution.select(resolution.item_count - 1)
+	resolution.item_selected.connect(func(index: int) -> void:
+		GameState.settings["resolution"] = resolution.get_item_metadata(index)
+		_changed())
+	_style_option(resolution)
+	row.add_child(resolution)
+
+func _colorblind_row(parent: VBoxContainer) -> void:
+	var row := _control_row(parent, Localization.tr_key("ui.settings_panel.p017"))
+	var options := OptionButton.new()
+	options.add_item(Localization.tr_key("ui.settings_panel.p018"))
+	options.add_item(Localization.tr_key("ui.settings_panel.p019"))
+	options.select(1 if String(GameState.settings.get("colorblindMode", "off")) == "friendly" else 0)
+	options.item_selected.connect(func(index: int) -> void:
+		GameState.settings["colorblindMode"] = "friendly" if index == 1 else "off"
+		_changed())
+	_style_option(options)
 	row.add_child(options)
 
 ## M5-9c/d：显示适配 —— 自动（默认）/ 手动（75–150% 统一系数，乘到界面、文字、地图三轴）。
 func _build_display_adapt(box: VBoxContainer) -> void:
-	# 手动系数行先建后加：模式行在上、系数行在下（仅手动模式可见）。
 	# ⚠ 代码创建的控件入树后名字是 "@类型@N" 自动名，勿按名字引用；顺序由 add_child 决定。
-	var manual_row := HBoxContainer.new()
-	manual_row.visible = SettingsRuntime.display_scale_mode() == "manual"
-	var row := HBoxContainer.new()
-	box.add_child(row)
-	var caption := Label.new()
-	caption.text = Localization.tr_key("ui.settings_panel.p025")
-	caption.custom_minimum_size.x = 160
-	row.add_child(caption)
+	var manual := SettingsRuntime.display_scale_mode() == "manual"
+	var row := _control_row(box, Localization.tr_key("ui.settings_panel.p054"))
 	var mode := OptionButton.new()
 	mode.add_item(Localization.tr_key("ui.settings_panel.p026"))
 	mode.add_item(Localization.tr_key("ui.settings_panel.p027"))
-	mode.select(1 if SettingsRuntime.display_scale_mode() == "manual" else 0)
-	mode.item_selected.connect(func(index: int) -> void:
-		GameState.settings["displayScaleMode"] = "manual" if index == 1 else "auto"
-		manual_row.visible = index == 1
-		_changed())
+	mode.select(1 if manual else 0)
+	_style_option(mode)
 	row.add_child(mode)
-	box.add_child(manual_row)
-	var spacer := Label.new()
-	spacer.custom_minimum_size.x = 160
-	manual_row.add_child(spacer)
+	# 手动系数行紧随模式行，仅手动模式可见（隐藏时不留空白行）。
+	var manual_row := _control_row(box, Localization.tr_key("ui.settings_panel.p064"))
+	manual_row.visible = manual
 	var slider := HSlider.new()
-	slider.custom_minimum_size.x = 300
+	slider.custom_minimum_size.x = SLIDER_MIN_WIDTH
 	slider.min_value = SettingsRuntime.DISPLAY_SCALE_MIN
 	slider.max_value = SettingsRuntime.DISPLAY_SCALE_MAX
 	slider.step = 0.05
 	slider.value = clampf(float(GameState.settings.get("displayScale", 1.0)),
 		SettingsRuntime.DISPLAY_SCALE_MIN, SettingsRuntime.DISPLAY_SCALE_MAX)
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	manual_row.add_child(slider)
 	var value := Label.new()
+	value.custom_minimum_size.x = VALUE_WIDTH
+	value.add_theme_color_override("font_color", PanelChrome.TEXT)
 	value.text = "%.0f%%" % (slider.value * 100.0)
 	manual_row.add_child(value)
 	slider.value_changed.connect(func(v: float) -> void:
 		GameState.settings["displayScale"] = v
 		value.text = "%.0f%%" % (v * 100.0)
 		_changed())
-	var hint := Label.new()
-	hint.text = Localization.tr_key("ui.settings_panel.p028")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(hint)
+	mode.item_selected.connect(func(index: int) -> void:
+		GameState.settings["displayScaleMode"] = "manual" if index == 1 else "auto"
+		manual_row.visible = index == 1
+		_changed())
+	_hint(box, "ui.settings_panel.p028")
 
 func _build_game(tabs: TabContainer) -> void:
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p029"))
-	_slider(box, Localization.tr_key("ui.settings_panel.p030"), "potionThreshold", 0.1, 0.9, 0.05)
-	_checkbox(box, Localization.tr_key("ui.settings_panel.p031"), "allowBoss")
-	_checkbox(box, Localization.tr_key("ui.settings_panel.p032"), "dropFlyAnim")
+	# ① 战斗辅助
+	var combat := _card(box, "ui.settings_panel.p057")
+	_slider(combat, Localization.tr_key("ui.settings_panel.p030"), "potionThreshold", 0.1, 0.9, 0.05)
+	_checkbox(combat, Localization.tr_key("ui.settings_panel.p031"), "allowBoss")
 	# G：死亡自动原地复活并恢复战斗（见 docs/工程文档/死亡自动原地复活与恢复战斗设计方案.md）
-	_checkbox(box, Localization.tr_key("ui.settings_panel.p033"), "autoReviveOnDeath")
-	var revive_hint := Label.new()
-	revive_hint.text = Localization.tr_key("ui.settings_panel.p034")
-	revive_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(revive_hint)
+	_checkbox(combat, Localization.tr_key("ui.settings_panel.p033"), "autoReviveOnDeath")
+	_hint(combat, "ui.settings_panel.p034")
+	# ② 拾取与出售：拾取飞行动画归到「拾取」，不再夹在死亡复活与自动出售之间。
+	var loot := _card(box, "ui.settings_panel.p058")
+	_checkbox(loot, Localization.tr_key("ui.settings_panel.p032"), "dropFlyAnim")
 	# 品质自动拾取过滤尚未接线，旧档字段保留兼容，避免展示不会生效的选项。
-	_build_auto_sell(box)
-	_build_auto_maintenance(box)
+	_build_auto_sell(loot)
+	# ③ 挂机维护（工程 95）：两个开关终于有归属，不再是裸追加在页尾。
+	var upkeep := _card(box, "ui.settings_panel.p059")
+	_build_auto_maintenance(upkeep)
 
 ## 工程 63：拾取装备自动出售。勾选后拾取装备即换成金币（判定见 `SellGearPolicy.auto_sell`）。
 ## 预设复用 `settings.sellGearPreset`（与背包装备出售面板同一键、三档、天然不含「暴力」），
 ## 勾选本身受 `SellGearPolicy.AUTO_SELL_MIN_LEVEL` 约束。
 func _build_auto_sell(box: VBoxContainer) -> void:
-	_auto_sell_check = CheckBox.new()
+	var row := _check_row(box)
+	_auto_sell_check = _new_check("")
 	_auto_sell_check.button_pressed = bool(GameState.settings.get("autoSellEquipOnPickup", false))
 	_auto_sell_check.toggled.connect(func(v: bool) -> void:
 		GameState.settings["autoSellEquipOnPickup"] = v
 		_changed())
-	box.add_child(_auto_sell_check)
-	var row := HBoxContainer.new()
-	box.add_child(row)
-	var caption := Label.new()
-	caption.text = Localization.tr_key("ui.settings_panel.p048")
-	caption.custom_minimum_size.x = 160
-	row.add_child(caption)
+	row.add_child(_auto_sell_check)
+	var preset_row := _control_row(box, Localization.tr_key("ui.settings_panel.p048"))
 	_auto_sell_preset = OptionButton.new()
 	for preset_id in SellGearPolicy.PERSISTABLE:
 		_auto_sell_preset.add_item(Localization.tr_key("ui.sale_preview.preset_" + String(preset_id)))
@@ -339,12 +425,10 @@ func _build_auto_sell(box: VBoxContainer) -> void:
 	_auto_sell_preset.item_selected.connect(func(index: int) -> void:
 		GameState.set_sell_gear_preset(String(_auto_sell_preset.get_item_metadata(index)))
 		_changed())
-	row.add_child(_auto_sell_preset)
-	var hint := Label.new()
+	_style_option(_auto_sell_preset)
+	preset_row.add_child(_auto_sell_preset)
 	# D2/D3 的口径写进玩家可见文案 —— 这两条是「不可撤销操作」的边界，不能只写在文档里。
-	hint.text = Localization.tr_key("ui.settings_panel.p049")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(hint)
+	_hint(box, "ui.settings_panel.p049")
 	_refresh_auto_sell_gate()
 
 ## 等级门槛只在**打开面板时**重算：等级只升不降，但读档 / 切角色 / 导入档都会变，
@@ -370,32 +454,32 @@ func _refresh_auto_sell_gate() -> void:
 ## 它是玩家主动触发的一次性动作，不是「持续收费」。否则存量档勾上后要再杀 54 只
 ## Boss 才看到效果，会被当成没生效（方案 §3.6）。
 func _build_auto_maintenance(box: VBoxContainer) -> void:
-	var repair := CheckBox.new()
-	repair.text = Localization.tr_key("ui.settings_panel.p050")
+	var repair_row := _check_row(box)
+	var repair := _new_check(Localization.tr_key("ui.settings_panel.p050"))
 	repair.button_pressed = bool(GameState.settings.get("autoRepairEquip", false))
 	repair.toggled.connect(func(v: bool) -> void:
 		GameState.settings["autoRepairEquip"] = v
 		_changed()
 		if v:
 			GameState.try_auto_repair())
-	box.add_child(repair)
-	var forge := CheckBox.new()
-	forge.text = Localization.tr_key("ui.settings_panel.p051")
+	repair_row.add_child(repair)
+	var forge_row := _check_row(box)
+	var forge := _new_check(Localization.tr_key("ui.settings_panel.p051"))
 	forge.button_pressed = bool(GameState.settings.get("autoForgeGold", false))
 	forge.toggled.connect(func(v: bool) -> void:
 		GameState.settings["autoForgeGold"] = v
 		_changed())
-	box.add_child(forge)
+	forge_row.add_child(forge)
 	for key in ["ui.settings_panel.p052", "ui.settings_panel.p053"]:
-		var hint := Label.new()
-		hint.text = Localization.tr_key(String(key))
-		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		box.add_child(hint)
+		_hint(box, String(key))
 
+## 控制页（工程 97）：29 条改键用**小标题 + 分隔线**分组，不套卡片 ——
+## 卡片边框会把长列表切碎，且每张卡上下内距还要白吃 20px。
 func _build_controls(tabs: TabContainer) -> void:
 	var root := _tab(tabs, Localization.tr_key("ui.settings_panel.p038"))
 	_capture_label = Label.new()
 	_capture_label.text = Localization.tr_key("ui.settings_panel.p039")
+	_capture_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_capture_label.add_theme_color_override("font_color", PanelChrome.TEXT)
 	root.add_child(_capture_label)
 	_key_list = VBoxContainer.new()
@@ -415,31 +499,66 @@ func _build_data(tabs: TabContainer) -> void:
 		save_panel.set_open(true))
 	box.add_child(button)
 	PanelChrome.style_action(button)
-	var note := Label.new()
-	note.text = Localization.tr_key("ui.settings_panel.p042")
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(note)
+	_hint(box, "ui.settings_panel.p042")
 
 func _refresh_keys() -> void:
 	if _key_list == null:
 		return
+	# 立即摘除（不是只 queue_free）：同帧二次刷新时旧的已排队节点还在树里，
+	# 会让「行数」与「第一行」多出一批幽灵行。
 	for child in _key_list.get_children():
+		_key_list.remove_child(child)
 		child.queue_free()
+	var placed := {}
+	var first_section := true
+	for i in KEY_GROUPS.size():
+		var group := KEY_GROUPS[i] as Dictionary
+		var actions := _group_actions(group, i == KEY_GROUPS.size() - 1, placed)
+		if actions.is_empty():
+			continue
+		_add_key_section(String(group["title"]), first_section)
+		first_section = false
+		for action in actions:
+			placed[action] = true
+			_add_key_row(action)
+
+## 组内动作：显式列举；**最后一组兜住所有未列出的动作**（快捷格），保证一行都不丢。
+func _group_actions(group: Dictionary, is_last: bool, placed: Dictionary) -> Array:
+	var out := []
+	var listed := group.get("actions", []) as Array
 	for action in SettingsRuntime.ACTIONS:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 14)
-		_key_list.add_child(row)
-		var name := Label.new()
-		name.text = _action_name(action)
-		name.custom_minimum_size.x = 300
-		name.add_theme_color_override("font_color", PanelChrome.TEXT)
-		row.add_child(name)
-		var key := Button.new()
-		key.custom_minimum_size.x = 140
-		key.text = OS.get_keycode_string(SettingsRuntime.key_for(action))
-		key.pressed.connect(_start_capture.bind(action))
-		row.add_child(key)
-		PanelChrome.style_action(key)
+		var id := String(action)
+		if placed.has(id):
+			continue
+		if is_last or listed.has(id):
+			out.append(id)
+	return out
+
+func _add_key_section(title_key: String, is_first: bool) -> void:
+	if not is_first:
+		var line := HSeparator.new()
+		PanelChrome.style_separator(line)
+		_key_list.add_child(line)
+	var title := Label.new()
+	title.text = Localization.tr_key(title_key)
+	PanelChrome.style_section(title)
+	_key_list.add_child(title)
+
+func _add_key_row(action: String) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	_key_list.add_child(row)
+	var caption := Label.new()
+	caption.text = _action_name(action)
+	caption.custom_minimum_size.x = KEY_CAPTION_WIDTH
+	caption.add_theme_color_override("font_color", PanelChrome.TEXT)
+	row.add_child(caption)
+	var key := Button.new()
+	key.custom_minimum_size.x = KEY_BUTTON_WIDTH
+	key.text = OS.get_keycode_string(SettingsRuntime.key_for(action))
+	key.pressed.connect(_start_capture.bind(action))
+	row.add_child(key)
+	PanelChrome.style_action(key)
 
 func _action_name(action: String) -> String:
 	if action.begins_with("hotbar_"):

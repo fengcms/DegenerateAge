@@ -104,6 +104,7 @@ func _ready() -> void:
 		"1920×1200 窗口档位应被接受、未登记档位应被拒绝")
 	await _check_visual_tab()
 	await _check_controls_tab()
+	await _check_layout_structure()
 	await _check_panels_matrix()
 	await _check_embedded_resize()
 	_check_display_preferences()
@@ -115,8 +116,8 @@ func _check_controls_tab() -> void:
 	var panel: Control = (load("res://scenes/ui/SettingsPanel.tscn") as PackedScene).instantiate()
 	add_child(panel)
 	panel.set_open(true)
-	var controls := _find_by_name(panel, "控制") as ScrollContainer
-	_check(controls != null, "设置面板应含「控制」页")
+	var controls := _find_by_name(panel, "按键") as ScrollContainer
+	_check(controls != null, "设置面板应含「按键」页（工程 97 由「控制」改名）")
 	if controls == null:
 		panel.queue_free()
 		return
@@ -124,11 +125,11 @@ func _check_controls_tab() -> void:
 	tabs.current_tab = controls.get_index()
 	await get_tree().process_frame
 	var rows := panel._key_list as VBoxContainer
-	var first_row := rows.get_child(0) as HBoxContainer
+	var first_row := _first_key_row(rows)
 	var key_button := first_row.get_child(1) as Button
-	_check(rows.get_parent() == controls.get_child(0) and rows.get_child_count() == SettingsRuntime.ACTIONS.size()
+	_check(rows.get_parent() == controls.get_child(0) and _count_key_rows(rows) == SettingsRuntime.ACTIONS.size()
 		and key_button.is_visible_in_tree() and key_button.size.y > 0,
-		"改键列表应在控制页展开且按钮可见")
+		"改键列表应在按键页展开且按钮可见（实际 %d 条，应为 %d 条）" % [_count_key_rows(rows), SettingsRuntime.ACTIONS.size()])
 	var original := SettingsRuntime.key_for("move_up")
 	var replacement := KEY_F12
 	_check(SettingsRuntime.action_for_key(replacement).is_empty(), "测试改键用键应未被占用")
@@ -140,8 +141,65 @@ func _check_controls_tab() -> void:
 	panel._input(event)
 	await get_tree().process_frame
 	_check(SettingsRuntime.key_for("move_up") == replacement and
-		(rows.get_child(0).get_child(1) as Button).text == "F12", "控制页改键应即时生效并刷新显示")
+		(_first_key_row(rows).get_child(1) as Button).text == "F12", "按键页改键应即时生效并刷新显示")
 	SettingsRuntime.set_binding("move_up", original)
+	panel.set_open(false)
+	panel.queue_free()
+	await get_tree().process_frame
+
+## 工程 97：分组层与统一行规格。断言的是「页签之下必须先分组」这件事本身 ——
+## 只数控件个数抓不到「44 个控件等权平铺」（改版前后数量一样），必须断结构。
+func _check_layout_structure() -> void:
+	var panel: Control = (load("res://scenes/ui/SettingsPanel.tscn") as PackedScene).instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	await get_tree().process_frame
+	var visual := _find_by_name(panel, "画面") as ScrollContainer
+	var game := _find_by_name(panel, "游戏") as ScrollContainer
+	var keys := _find_by_name(panel, "按键") as ScrollContainer
+	var data := _find_by_name(panel, "存档") as ScrollContainer
+	_check(visual != null and game != null and keys != null and data != null,
+		"页签应为 音频/画面/游戏/按键/存档（工程 97：控制→按键、数据→存档）")
+	if visual == null or game == null or keys == null:
+		panel.queue_free()
+		return
+	_check(_card_titles(visual) == ["显示适配", "界面缩放", "显示与辅助"],
+		"画面页应分 3 组卡片，实际 %s" % str(_card_titles(visual)))
+	_check(_card_titles(game) == ["战斗辅助", "拾取与出售", "挂机维护"],
+		"游戏页应分 3 组卡片，实际 %s" % str(_card_titles(game)))
+	var sections := _section_titles(panel._key_list as VBoxContainer)
+	_check(sections == ["移动与战斗", "自动与交互", "面板与快捷格"],
+		"按键页应分 3 组小标题，实际 %s" % str(sections))
+	# 统一行规格：画面页每个控件行的左标签列必须同宽（改版前是 160 / 300 / 无 caption 三种并存）。
+	var widths := {}
+	for row in _collect_rows(visual):
+		if row.get_child_count() > 0 and row.get_child(0) is Label:
+			widths[int((row.get_child(0) as Label).custom_minimum_size.x)] = true
+	_check(widths.keys() == [150], "画面页左标签列应统一为 150，实际 %s" % str(widths.keys()))
+	# 注解降级：与正文同字号同色时，注解读起来就是「又一行控件」。
+	var hint := _label_with_text(visual, Localization.tr_key("ui.settings_panel.p024"))
+	_check(hint != null and int(hint.get_theme_font_size("font_size")) == 14
+		and hint.get_theme_color("font_color") == PanelChrome.MUTED,
+		"注解应为 14 号 MUTED 色，实际 %s" % ("缺失" if hint == null else
+			"%d 号 %s" % [int(hint.get_theme_font_size("font_size")), hint.get_theme_color("font_color")]))
+	# 面板高度上限 680：必须在「窗口足够高」的视口里验 ——
+	# 否则 600 与 680 都会被 logical.y - 64 夹住，改回 600 也照样绿（假绿）。
+	var old_ui := float(GameState.settings.get("uiScale", 1.0))
+	GameState.settings["uiScale"] = 1.0
+	SettingsRuntime.apply_all()
+	var embedded := SubViewport.new()
+	embedded.size = Vector2i(1280, 800)
+	add_child(embedded)
+	var tall: Control = (load("res://scenes/ui/SettingsPanel.tscn") as PackedScene).instantiate()
+	embedded.add_child(tall)
+	tall.set_open(true)
+	await get_tree().process_frame
+	var tall_height := (tall._layout_root as VBoxContainer).custom_minimum_size.y
+	_check(is_equal_approx(tall_height, 680.0),
+		"1280×800、界面 100%% 时设置面板最大高应为 680，实际 %.0f" % tall_height)
+	embedded.queue_free()
+	GameState.settings["uiScale"] = old_ui
+	SettingsRuntime.apply_all()
 	panel.set_open(false)
 	panel.queue_free()
 	await get_tree().process_frame
@@ -212,18 +270,18 @@ func _check_visual_tab() -> void:
 	GameState.settings["uiScale"] = old_ui
 	GameState.settings["textScale"] = old_text
 	SettingsRuntime.apply_text_scale_to(panel)
-	# 收集「标签行 → 下拉」：manual_row 里只有 HSlider 无 OptionButton，天然被跳过
+	# 收集「标签行 → 下拉」：卡片层（工程 97）把行包了一层，只扫一层会一个都找不到；
+	# manual_row 里只有 HSlider 无 OptionButton，天然被跳过。
 	var dropdowns := {}
-	for row in visual.get_children():
-		if row is HBoxContainer:
-			var options: OptionButton = null
-			for node in row.get_children():
-				if node is OptionButton:
-					options = node as OptionButton
-			if options != null and row.get_child(0) is Label:
-				dropdowns[String((row.get_child(0) as Label).text)] = options
+	for row in _collect_rows(visual):
+		var options: OptionButton = null
+		for node in row.get_children():
+			if node is OptionButton:
+				options = node as OptionButton
+		if options != null and row.get_child_count() > 0 and row.get_child(0) is Label:
+			dropdowns[String((row.get_child(0) as Label).text)] = options
 	_check(dropdowns.has("界面大小") and dropdowns.has("地图显示大小") and dropdowns.has("文字大小")
-		and dropdowns.has("显示适配"), "画面页应有 界面/地图/文字/显示适配 四个档位行")
+		and dropdowns.has("适配方式"), "画面页应有 界面/地图/文字/适配方式 四个档位行，实际 %s" % str(dropdowns.keys()))
 	if dropdowns.has("界面大小"):
 		var items := _option_texts(dropdowns["界面大小"])
 		_check(items == ["80%", "100%", "125%", "150%", "175%", "200%"],
@@ -236,10 +294,10 @@ func _check_visual_tab() -> void:
 		var items := _option_texts(dropdowns["文字大小"])
 		_check(items == ["100%", "110%", "125%", "150%", "175%", "200%"],
 			"文字大小档位应为 100/110/125/150/175/200，实际 %s" % str(items))
-	if dropdowns.has("显示适配"):
-		var mode: OptionButton = dropdowns["显示适配"]
+	if dropdowns.has("适配方式"):
+		var mode: OptionButton = dropdowns["适配方式"]
 		_check(mode.item_count == 2 and String(mode.get_item_text(0)).begins_with("自动"),
-			"显示适配应有「自动 / 手动」两档")
+			"适配方式应有「自动 / 手动」两档")
 		# 选「手动」⇒ 写 displayScaleMode 并显示系数行
 		mode.select(1)
 		mode.item_selected.emit(1)
@@ -288,6 +346,64 @@ func _find_by_name(node: Node, name: String) -> Node:
 		return node
 	for child in node.get_children():
 		var found := _find_by_name(child, name)
+		if found != null:
+			return found
+	return null
+
+## 递归收集控件行：工程 97 的卡片（PanelContainer）把行包了一层，只扫一层会一个都找不到。
+func _collect_rows(root: Node) -> Array:
+	var out := []
+	for child in root.get_children():
+		if child is HBoxContainer:
+			out.append(child)
+		elif child is Control:
+			out.append_array(_collect_rows(child))
+	return out
+
+## 卡片标题：每组卡片 = PanelContainer → VBox → 首个 Label。
+func _card_titles(scroll: ScrollContainer) -> Array:
+	var out := []
+	if scroll == null:
+		return out
+	for child in scroll.get_child(0).get_children():
+		if child is PanelContainer:
+			for node in child.get_child(0).get_children():
+				if node is Label:
+					out.append(String((node as Label).text))
+					break
+	return out
+
+## 按键页分组小标题（`_key_list` 里只放 Label 与行/分隔线，Label 即小标题）。
+func _section_titles(list: VBoxContainer) -> Array:
+	var out := []
+	if list == null:
+		return out
+	for child in list.get_children():
+		if child is Label:
+			out.append(String((child as Label).text))
+	return out
+
+## 改键行：`_key_list` 里还混着小标题与分隔线，不能再用 get_child(0)。
+func _count_key_rows(list: VBoxContainer) -> int:
+	var count := 0
+	if list == null:
+		return count
+	for child in list.get_children():
+		if child is HBoxContainer:
+			count += 1
+	return count
+
+func _first_key_row(list: VBoxContainer) -> HBoxContainer:
+	for child in list.get_children():
+		if child is HBoxContainer:
+			return child as HBoxContainer
+	return null
+
+func _label_with_text(root: Node, text: String) -> Label:
+	if root is Label and String((root as Label).text) == text:
+		return root as Label
+	for child in root.get_children():
+		var found := _label_with_text(child, text)
 		if found != null:
 			return found
 	return null

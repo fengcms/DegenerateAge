@@ -228,6 +228,10 @@ func _test_summary_text() -> void:
 
 func _test_ui_gate() -> void:
 	GameState.reset_to_defaults()
+	# 勾选态只在构建时读一次设置（`_refresh_auto_sell_gate` 只管灰显与预设档），
+	# 所以必须**先写设置再实例化**，否则「已开启」的档打开面板会显示成未勾选
+	# —— 工程 97 重排时正是漏了这一句初值读取。
+	GameState.settings["autoSellEquipOnPickup"] = true
 	GameState.player.level = 59
 	var panel: Control = (load("res://scenes/ui/SettingsPanel.tscn") as PackedScene).instantiate()
 	add_child(panel)
@@ -238,6 +242,7 @@ func _test_ui_gate() -> void:
 	check(check_box != null, "设置面板「游戏」页应有自动出售勾选框")
 	check(picker != null, "设置面板应有预设下拉")
 	if check_box != null:
+		check(check_box.button_pressed, "设置已开启时勾选框应为勾选态（初值读取不得丢）")
 		check(check_box.disabled, "59 级时勾选框必须灰显")
 		check(check_box.text.contains(str(SellGearPolicy.AUTO_SELL_MIN_LEVEL)),
 			"灰显时应写明等级门槛，实际「%s」" % check_box.text)
