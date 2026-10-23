@@ -9,8 +9,16 @@ extends CharacterBody2D
 const GROUND_ITEM_SCENE := preload("res://scenes/entities/GroundItem.tscn")
 
 const M_HP_PER_LV := 0.12      # 7.5：每高 1 级约 +12% 生命（初始参数）
-const AGGRO_RANGE := 200.0     # 仇恨半径（px，≈3 格）
-const LEASH_RANGE := 420.0     # 追击边界：离 spawn 点过远则返回（px）
+## 工程 98-b：仇恨半径 200 → 512（= 8 格）。原值 200（≈3 格）小于法师射程 4 格，
+## 于是「法师在射程内、怪却不理你」成了常态。512 明显越过法师普攻射程（384px），
+## 怪会主动从屏幕边缘扑过来。
+## 🔴 这条与 `LEASH_RANGE` 是**包含关系**：aggro 必须 < leash，否则出现
+##    「看见你 → 冲过来 → 离巢到 leash 就掉头」的死区，永远打不到人。
+const AGGRO_RANGE := 512.0     # 仇恨半径（px，= 8 格）
+## 工程 98-b：420 → 800。原值比新的 aggro 还小（420 < 512），会形成上面说的死区。
+## 800 = aggro + 288（4.5 格追击余量），保证「发现了就一定走得到」。
+## 🔴 Boss 不用这个值：`_setup_boss_action()` 另行覆盖为 `BOSS_ARENA_TILES 18 格 = 1152px`。
+const LEASH_RANGE := 800.0     # 追击边界：离 spawn 点过远则返回（px，= 12.5 格）
 const PATROL_RADIUS := 90.0    # 巡逻半径（px）
 const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）

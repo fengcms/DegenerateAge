@@ -144,11 +144,13 @@ func _report(rows: Dictionary, boss: Dictionary) -> void:
 		if String(class_id) == "warrior":
 			continue
 		var r: Dictionary = rows[class_id]
-		print("[CLASS] %-7s 击杀耗时 ×%.3f（应 0.90—1.00）｜开盾存活 ×%.3f（应 0.85—1.15）｜断盾存活 ×%.3f（应 ≥1.50）" % [
+		print("[CLASS] %-7s 击杀耗时 ×%.3f（应 0.90—1.00）｜开盾存活 ×%.3f（应 0.85—1.15）｜断盾存活 武士÷法师 ×%.3f（应 ≥1.50）" % [
 			String(class_id),
 			float(r.ttk) / maxf(0.001, float(base.ttk)),
 			float(r.survive_sec_shield) / maxf(0.001, float(base.survive_sec)),
-			float(r.survive_sec) / maxf(0.001, float(base.survive_sec))])
+			# 🔴 判据方向：§5.1 写的是「武士存活 ÷ 法师存活 ≥ 1.50」（法师明显更脆）。
+			# 用「法师 ÷ 武士」会得到 0.64，永远不满足 ≥1.50 —— 那是一条永远红的假判据。
+			float(base.survive_sec) / maxf(0.001, float(r.survive_sec))])
 		print("[CLASS] %-7s 血池 ×%.3f（hpMult=%.2f）｜蓝池 ×%.3f（mpMult=%.2f）｜攻击 ×%.3f" % [
 			String(class_id),
 			float(r.max_hp) / maxf(1.0, float(base.max_hp)), PlayerClass.mult("hpMult", String(class_id)),

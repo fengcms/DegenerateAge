@@ -20,7 +20,7 @@
     "mpMult": 2.0,
     "atkMult": 1.08,
     "defMult": 1.0,
-    "attackRange": 4.0,
+    "attackRange": 6.0,
     "basicSkill": "basic_fireball",
     "skills": ["basic_fireball", "lightning", "flame_burst", "magic_shield", "frost_roar", "meteor"],
     "tint": "86c8ff"
