@@ -3,6 +3,6 @@
   { "id": "potion_mp_small", "name": "小蓝药", "kind": "blue", "tier": 1, "restoreAmount": 80, "restorePercent": 0.03, "cooldown": 8, "price": 20, "stackMax": 99 },
   { "id": "potion_hp_mid", "name": "中红药", "kind": "red", "tier": 2, "restoreAmount": 220, "restorePercent": 0.09, "cooldown": 12, "price": 60, "stackMax": 99 },
   { "id": "potion_mp_mid", "name": "中蓝药", "kind": "blue", "tier": 2, "restoreAmount": 220, "restorePercent": 0.09, "cooldown": 12, "price": 60, "stackMax": 99 },
-  { "id": "potion_hp_large", "name": "大红药", "kind": "red", "tier": 3, "restoreAmount": 500, "restorePercent": 0.2, "cooldown": 20, "price": 150, "stackMax": 99 },
-  { "id": "potion_mp_large", "name": "大蓝药", "kind": "blue", "tier": 3, "restoreAmount": 500, "restorePercent": 0.2, "cooldown": 20, "price": 150, "stackMax": 99 }
+  { "id": "potion_hp_large", "name": "大红药", "kind": "red", "tier": 3, "restoreAmount": 500, "restorePercent": 0.2, "cooldown": 10, "price": 150, "stackMax": 99 },
+  { "id": "potion_mp_large", "name": "大蓝药", "kind": "blue", "tier": 3, "restoreAmount": 500, "restorePercent": 0.2, "cooldown": 10, "price": 150, "stackMax": 99 }
 ]
