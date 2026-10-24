@@ -24,12 +24,19 @@ const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）
 ## 工程 103（怪物重叠）：同类软分离 —— 不依赖物理碰撞层（怪物 mask 仍只有地形），
 ## 在移动决策里并入排斥向量，避免多只怪收敛到同一像素点。
-## 触发间距 = 两者外观半径之和 × SEPARATION_KEEP；0.9 允许约 10% 视觉重叠，取 1 会来回抖动。
+## 触发间距 = 两者**可见半宽**之和 × SEPARATION_KEEP；0.9 允许约 10% 视觉重叠，取 1 会来回抖动。
+## 🔴 是可见半宽（`separation_radius`），不是玩法半径 `radius`：后者只有 13px，
+##    打金图怪物帧内可见体宽 69px，按玩法半径算出的 23px 间距画面上仍重叠 66%（工程 103 §9）。
 const SEPARATION_KEEP := 0.9
 ## 排斥方向在期望方向上的权重：过小摊不开，过大会让怪绕着玩家兜圈。
 const SEPARATION_WEIGHT := 0.9
 ## 攻击态站位纠正的移速上限（px/s）：只为摊开叠点，不能变成「边走边打」。
 const ATTACK_SPACING_SPEED := 48.0
+## 工程 103-b：近战射程下限 1.25 格（80px）。
+## 按可见体宽分离后，64px 攻击圈只能站 6—7 只怪，打金图的密度与承伤明显下降；
+## 抬到 1.25 格可让约 8—10 只同时够得着玩家（用户已拍板：方案 A + 近战射程补偿）。
+## Boss 不参与：Boss 是不可推动的锚点，且 `_stomp_radius` 的缺省半径复用了攻击射程。
+const MELEE_RANGE_FLOOR := 1.25
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
 ## R4-c：破甲幅度。`skills.json` 只写 `debuff.type/duration`，没写幅度；
 ## 取 −30% 与 `armor_break.defensePierce: 0.3` 同数，语义一致（Q-5）。
@@ -144,6 +151,9 @@ var active_affixes: Array[Dictionary] = []
 var _life_steal_credit := 0.0
 ## M6-0a：当前外观半径（按 kind 决定），绘制与点击命中同源（见 game.gd::enemy_at_screen）。
 var radius: float = RADIUS
+## 工程 103-b：同类分离半径 = 画面可见半宽（装配表现后按 alpha 包围盒推导）。
+## 取不到体宽（程序占位等）时回退 `radius`；Boss 恒为 `radius` —— 它只做不可推动的锚点。
+var separation_radius: float = RADIUS
 var boss_phase := 0
 var _boss_enraged := false
 var _boss_beat := 0.0
@@ -191,11 +201,15 @@ func _ready() -> void:
 	add_to_group("enemies")
 	_rng.randomize()
 	_load_template()
-	var art: CanvasItem = MonsterAppearance.attach(self, String(template.get("appearanceId", "placeholder")))
+	var appearance_id := String(template.get("appearanceId", "placeholder"))
+	var art: CanvasItem = MonsterAppearance.attach(self, appearance_id)
 	if art is SampleActorArt:
 		sample_art = art as SampleActorArt
 	elif art is Sprite2D:
 		dummy_art = art as Sprite2D
+	# 工程 103-b：分离半径按画面体宽算（体宽取不到时回退玩法半径）；Boss 只做锚点。
+	var visible := MonsterAppearance.body_half_width(appearance_id, art) if art != null else 0.0
+	separation_radius = radius if _kind() == "boss" or visible <= 0.0 else visible
 	if spawn_position == Vector2.ZERO:
 		spawn_position = position
 	_state_t = _rng.randf() * IDLE_TIME   # 错开巡逻相位
@@ -242,7 +256,11 @@ func _load_template() -> void:
 	var ar = template.get("attackRange", {})
 	if ar is Dictionary:
 		is_ranged = String(ar.get("kind", "melee")) == "ranged"
-		attack_range_px = float(ar.get("range", 1.0)) * Iso.TILE_W
+		var range_tiles := float(ar.get("range", 1.0))
+		# 工程 103-b：近战射程下限 1.25 格，补偿按体宽分离后的攻击圈容量（Boss 不参与）。
+		if not is_ranged and _kind() != "boss":
+			range_tiles = maxf(range_tiles, MELEE_RANGE_FLOOR)
+		attack_range_px = range_tiles * Iso.TILE_W
 	_setup_boss_action()
 
 ## E1：仅**新结构** `bossSkill`（带 `shape`）装配共享动作组件；c1（phases）/ c2 沿用既有实现。
@@ -775,7 +793,9 @@ func _approach(target_pos: Vector2) -> void:
 	velocity = to * current_move_speed()
 
 ## 同类排斥向量：长度 = 还差多少才到最小间距（px），方向由邻居指向自己。
-## Boss 是**不可推动的锚点**：自身不产生排斥位移，但仍会把普通怪推开（半径也更大）。
+## 间距用各自 `separation_radius`（可见半宽）而不是玩法半径，否则 69px 的身体只拉开 23px。
+## Boss 是**不可推动的锚点**：自身不产生排斥位移；对普通怪只按玩法半径计间距，
+## 不按 Boss 的美术体宽把小怪推到很远处。
 ## 邻居查询直接遍历 `enemies` 组：本图普通怪预算 32 只（打金图），每帧 O(N²) 可接受；
 ## 若未来召唤物数量级上升，再改网格分桶。
 func _separation_push() -> Vector2:
@@ -786,7 +806,7 @@ func _separation_push() -> Vector2:
 		var other := node as Monster
 		if other == null or other == self or other.is_dead:
 			continue
-		var min_dist := (radius + other.radius) * SEPARATION_KEEP
+		var min_dist := (separation_radius + other.separation_radius) * SEPARATION_KEEP
 		var offset := global_position - other.global_position
 		var dist := offset.length()
 		if dist >= min_dist:
