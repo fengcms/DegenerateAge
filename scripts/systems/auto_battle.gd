@@ -86,6 +86,8 @@ const MAGE_SINGLE_SKILLS: Array[String] = ["lightning"]
 ## 不实现这条，挂机法师会在蓝见底时「盾断 + 继续挥技能」，两头落空。
 const MAGE_LOW_MANA := 0.25
 const MAGE_MANA_RESUME := 0.40
+## 自动补盾提前量；基础冷却 10 秒、持续 30 秒，避免恰好到期时出现断档。
+const MAGE_SHIELD_REFRESH_WINDOW := 5.0
 
 var _player: PlayerCharacter = null
 var _state: int = State.OFF
@@ -404,12 +406,13 @@ func _try_battle_focus(target: Node) -> bool:
 func _tick_mage_shield() -> bool:
 	if not PlayerClass.is_ranged() or not HotbarConfig.usable_skill("magic_shield"):
 		return false
-	if GameState.buff_remaining("magic_shield") > 0.0:
+	if GameState.buff_remaining("magic_shield") > MAGE_SHIELD_REFRESH_WINDOW:
 		return false
 	var skill := SkillProgression.current("magic_shield")
 	if skill.is_empty() or int(GameState.player.level) < int(skill.get("unlockLevel", 1)):
 		return false
-	if int(GameState.player.mp) < GameState.skill_mana_cost(skill):
+	if _player.skill_cooldown("magic_shield") > 0.0 or \
+			int(GameState.player.mp) < GameState.skill_mana_cost(skill):
 		return false
 	return _player.cast_skill("magic_shield")
 

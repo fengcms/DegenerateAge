@@ -174,10 +174,13 @@ func buff_effect_total(effect: String) -> float:
 				total += float(effects.get(effect, 0.0))
 	return total
 
-## 启动玩家自身增益；取当前技能阶的效果快照，已在持续中的同名 Buff 不叠层。
+## 启动玩家自身增益；魔法盾可刷新时长与效果快照，其余活动 Buff 不叠层。
+## 冷却与蓝耗由玩家施放入口校验，此处只负责 Buff 状态。
 func start_buff(skill_id: String) -> bool:
 	var skill := SkillProgression.current(skill_id)
-	if not skill is Dictionary or String(skill.get("kind", "")) != "buff" or buff_remaining(skill_id) > 0.0:
+	if not skill is Dictionary or String(skill.get("kind", "")) != "buff":
+		return false
+	if buff_remaining(skill_id) > 0.0 and skill_id != "magic_shield":
 		return false
 	var duration := float(skill.get("duration", 0.0))
 	if duration <= 0.0:

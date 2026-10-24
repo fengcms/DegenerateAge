@@ -577,7 +577,7 @@ func request_skill(skill_id: String) -> bool:
 		EventBus.toast_requested.emit(Localization.tr_key("msg.player.p008"), "danger")
 		return false
 	if String(skill.get("kind", "")) == "buff":
-		if GameState.buff_remaining(skill_id) > 0.0:
+		if GameState.buff_remaining(skill_id) > 0.0 and skill_id != "magic_shield":
 			EventBus.toast_requested.emit(Localization.tr_key("msg.player.p009"), "danger")
 			return false
 		begin_manual_command()

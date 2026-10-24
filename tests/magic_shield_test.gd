@@ -20,6 +20,8 @@ func check(ok: bool, label: String) -> void:
 
 func _ready() -> void:
 	_test_cast_costs_mana()
+	_test_refresh_and_rank_snapshot()
+	_test_auto_refresh_window()
 	_test_absorbs_share()
 	_test_mana_exhausted()
 	_test_partial_mana()
@@ -58,6 +60,54 @@ func _test_cast_costs_mana() -> void:
 		"开盾应扣 %d 点蓝（%d → %d）" % [cost, before, int(GameState.player.mp)])
 	check(GameState.buff_remaining("magic_shield") > 0.0, "开盾后 buff 必须生效")
 	check(player.skill_cooldown("magic_shield") > 0.0, "开盾必须进入冷却")
+	player.queue_free()
+
+## CD 已结束时手动重施，必须完整付费并覆盖剩余时间；升阶后取新效果、不叠加旧效果。
+func _test_refresh_and_rank_snapshot() -> void:
+	var player := _make_player()
+	var skill := SkillProgression.current("magic_shield")
+	check(float(skill.get("cooldown", 0.0)) < float(skill.get("duration", 0.0)),
+		"魔法盾基础 CD 必须短于持续时间")
+	check(player.cast_skill("magic_shield"), "首次开启魔法盾")
+	GameState.tick_buffs(20.0)
+	player.skill_cooldowns["magic_shield"] = 0.0
+	GameState.skill_ranks["magic_shield"] = 5
+	var mp_before := int(GameState.player.mp)
+	var cost := GameState.skill_mana_cost(SkillProgression.current("magic_shield"))
+	check(player.request_skill("magic_shield"), "冷却结束后允许手动刷新有效魔法盾")
+	check(is_equal_approx(GameState.buff_remaining("magic_shield"), 30.0),
+		"重施只刷新到 30 秒，不累加旧盾剩余时间")
+	check(int(GameState.player.mp) == mp_before - cost and player.skill_cooldown("magic_shield") > 0.0,
+		"重施应再次耗蓝并进入冷却")
+	check(is_equal_approx(GameState.buff_effect_total("damageToManaPct"), 0.47),
+		"重施用新阶效果覆盖旧阶快照，不叠加")
+	check(not player.request_skill("magic_shield") and int(GameState.player.mp) == mp_before - cost,
+		"冷却内不可重复扣蓝")
+	player.queue_free()
+
+## 自动战斗只在到期前五秒内续盾；缺蓝或冷却未好时保留原盾。
+func _test_auto_refresh_window() -> void:
+	var player := _make_player()
+	var pilot := AutoBattle.new()
+	pilot.name = "AutoPilot"
+	player.add_child(pilot)
+	pilot.set_physics_process(false)
+	check(player.cast_skill("magic_shield"), "自动补盾场景先开盾")
+	GameState.tick_buffs(24.0)
+	player.skill_cooldowns["magic_shield"] = 0.0
+	check(not pilot._tick_mage_shield(), "剩余六秒时不提前浪费法力")
+	GameState.tick_buffs(1.2)
+	var before := int(GameState.player.mp)
+	check(pilot._tick_mage_shield(), "剩余不足五秒时自动补盾")
+	check(is_equal_approx(GameState.buff_remaining("magic_shield"), 30.0)
+		and int(GameState.player.mp) < before, "自动补盾刷新时间并扣蓝")
+	GameState.tick_buffs(26.0)
+	player.skill_cooldowns["magic_shield"] = 1.0
+	check(not pilot._tick_mage_shield(), "冷却未好时不得刷新")
+	player.skill_cooldowns["magic_shield"] = 0.0
+	GameState.player.mp = 0
+	check(not pilot._tick_mage_shield() and GameState.buff_remaining("magic_shield") > 0.0,
+		"缺蓝时不续盾也不删除尚有效的旧盾")
 	player.queue_free()
 
 ## 核心：1000 点伤害 → 扣血 650 / 扣蓝 350（按 buff 的 0.35 转嫁）。
