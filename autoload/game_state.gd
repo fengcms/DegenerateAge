@@ -408,11 +408,18 @@ func _inverse_scaled(value: float) -> float:
 ## 不含套装的基础攻击（供 `max_hp` 内部使用）。
 ## 🔴 若 `max_hp` 直接调 `total_attack()`，套装会**二次放大**到 1.96 倍而不是 1.4 倍。
 func _base_attack() -> int:
-	return int(player.attack) + int(round(float(equip_bonus().get("atk", 0.0))))
+	return _base_attack_with_bonus(equip_bonus())
+
+## 派生血蓝时复用同一份装备汇总，避免一个属性查询重复遍历全部穿戴装备。
+func _base_attack_with_bonus(bonus: Dictionary) -> int:
+	return int(player.attack) + int(round(float(bonus.get("atk", 0.0))))
 
 ## 不含套装的基础防御。
 func _base_defense() -> int:
-	return int(player.defense) + int(round(float(equip_bonus().get("def", 0.0))))
+	return _base_defense_with_bonus(equip_bonus())
+
+func _base_defense_with_bonus(bonus: Dictionary) -> int:
+	return int(player.defense) + int(round(float(bonus.get("def", 0.0))))
 
 ## 总攻击力 = （基础攻击 + 装备固定加成）× (1 + 套装加成) × 职业系数。
 ## 装备**不改基础值**（5.1）：基础值与装备加成始终分离保存。
@@ -465,9 +472,10 @@ func total_attack_interval() -> float:
 ## 派生的最大生命（4.3 公式；攻 / 防取**不含套装**的基础值，套装只在最外层乘一次）。
 ## 工程 98：职业 `hpMult` 同样只在**最外层**乘一次（法师当前 0.64）。
 func max_hp() -> int:
-	var base := BASE_HP + float(player.level) * HP_PER_LV \
-		+ float(_base_attack()) * HP_PER_ATK + float(_base_defense()) * HP_PER_DEF
 	var b := equip_bonus()
+	var base := BASE_HP + float(player.level) * HP_PER_LV \
+		+ float(_base_attack_with_bonus(b)) * HP_PER_ATK \
+		+ float(_base_defense_with_bonus(b)) * HP_PER_DEF
 	var pct := float(player.get("hpPercent", 0.0)) + float(b.get("hpPercent", 0.0))
 	var flat := float(player.get("hpFlat", 0.0)) + float(b.get("hp", 0.0))
 	return int(round(_scaled(base * (1.0 + pct) + flat) * PlayerClass.mult("hpMult")))
@@ -489,7 +497,8 @@ func max_mp() -> int:
 	var b := equip_bonus()
 	var old_base := (BASE_MP + float(player.level) * MP_PER_LV) * PlayerClass.mult("mpMult")
 	var combat_core := (BASE_HP + float(player.level) * HP_PER_LV \
-		+ float(_base_attack()) * HP_PER_ATK + float(_base_defense()) * HP_PER_DEF) \
+		+ float(_base_attack_with_bonus(b)) * HP_PER_ATK \
+		+ float(_base_defense_with_bonus(b)) * HP_PER_DEF) \
 		* PlayerClass.mult("hpMult")
 	var base := maxf(old_base, float(roundi(combat_core * MAGE_MANA_CORE_RATIO)))
 	var pct := float(player.get("mpPercent", 0.0)) + float(b.get("mpPercent", 0.0))
