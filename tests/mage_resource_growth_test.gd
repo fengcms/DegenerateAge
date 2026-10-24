@@ -10,6 +10,7 @@ func check(ok: bool, label: String) -> void:
 
 func _ready() -> void:
 	_test_level_curve()
+	_test_common_equipment_ratio()
 	_test_stat_independence()
 	_test_legacy_save_migration()
 	_test_level_up_keeps_ratio()
@@ -36,6 +37,43 @@ func _test_level_curve() -> void:
 			"法师 L%d 裸装应维持蓝多于血（HP %d / MP %d）" % [level, hp, mp])
 		check(mp >= warrior_mp * 2, "法师 L%d 不得低于旧蓝池" % level)
 		print("[MANA] L%d 裸装 HP=%d MP=%d 比值=%.3f" % [level, hp, mp, float(mp) / float(hp)])
+
+## 用现行装备生成器构造常规品质的 14 槽样本；它不能代替真人词条分布，
+## 但能抓出「裸装蓝多、穿上普通装备又变高血低蓝」的公式退化。
+func _test_common_equipment_ratio() -> void:
+	var by_kind := {}
+	for raw in DataLoader.get_table("equipments"):
+		if not raw is Dictionary:
+			continue
+		var tpl: Dictionary = raw
+		if bool(tpl.get("debug", false)) or not bool(tpl.get("lootable", true)):
+			continue
+		var bases: Variant = tpl.get("tierBases", {})
+		if not bases is Dictionary or not (bases as Dictionary).has(str(ItemFactory.DYNAMIC_BASE_TIER)):
+			continue
+		var kind := String(tpl.get("slot", ""))
+		if not by_kind.has(kind):
+			by_kind[kind] = String(tpl.get("id", ""))
+	for level in [100, 160]:
+		GameState.reset_to_defaults("mage")
+		GameState.player.level = level
+		GameState.player.attack = Balance.base_attack(level)
+		GameState.player.defense = Balance.base_defense(level)
+		for raw_slot in Equipment.SLOT_DEFS:
+			var slot: Dictionary = raw_slot
+			var kind := String(slot.get("kind", ""))
+			check(by_kind.has(kind), "动态装备应包含 %s 部位" % kind)
+			if not by_kind.has(kind):
+				continue
+			var item := ItemFactory.make_equip_dynamic(String(by_kind[kind]), level, "common")
+			check(not item.is_empty(), "L%d %s 普通品质装备应生成" % [level, kind])
+			GameState.equipment[String(slot.get("id", ""))] = item
+		var hp := GameState.max_hp()
+		var mp := GameState.max_mp()
+		var ratio := float(mp) / float(hp)
+		print("[MANA] L%d 普通品质满槽 HP=%d MP=%d 比值=%.3f" % [level, hp, mp, ratio])
+		check(ratio >= 1.1 and ratio <= 1.4,
+			"L%d 普通品质满槽法师蓝/血应在 1.1–1.4（实际 %.3f）" % [level, ratio])
 
 func _test_stat_independence() -> void:
 	GameState.reset_to_defaults("mage")
