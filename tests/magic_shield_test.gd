@@ -13,11 +13,13 @@ const TILE := 64.0
 
 var failures: Array[String] = []
 
+## 收集魔法盾的行为与表现断言，交由隔离运行器统一报告。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
 		push_error("[MagicShieldTest] " + label)
 
+## 按开盾、续盾、承伤、视觉与职业隔离的顺序运行契约测试。
 func _ready() -> void:
 	_test_cast_costs_mana()
 	_test_refresh_and_rank_snapshot()
@@ -27,6 +29,7 @@ func _ready() -> void:
 	_test_partial_mana()
 	_test_expired()
 	_test_rank_effect()
+	_test_aura_lifecycle()
 	_test_warrior_unchanged()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
@@ -36,6 +39,7 @@ func _ready() -> void:
 		print("[MagicShieldTest] 失败 %d 项" % failures.size())
 		get_tree().quit(1)
 
+## 新建无场景画层的逻辑玩家，验证技能结算且不依赖视觉节点。
 func _make_player() -> PlayerCharacter:
 	GameState.reset_to_defaults("mage")
 	GameState.current_map = "wild_trial"
@@ -163,6 +167,41 @@ func _test_rank_effect() -> void:
 	check(is_equal_approx(GameState.buff_effect_total("damageToManaPct"), 0.47),
 		"5 阶盾的转嫁比例应为 0.47，实际 %.2f" % GameState.buff_effect_total("damageToManaPct"))
 	check(player.apply_damage(1000) == 530, "5 阶盾下 1000 点伤害应扣 530 血")
+	player.queue_free()
+
+## 正式玩家场景的护罩须跟随 Buff、蓝量、骑乘和死亡切换，且不改变碰撞层。
+func _test_aura_lifecycle() -> void:
+	GameState.reset_to_defaults("mage")
+	GameState.current_map = "wild_trial"
+	GameState.player.level = 60
+	GameState.player.mp = GameState.max_mp()
+	var player := (load("res://scenes/entities/Player.tscn") as PackedScene).instantiate() as PlayerCharacter
+	add_child(player)
+	player.set_physics_process(false)
+	var back := player.get_node("MagicShieldBack") as MagicShieldAura
+	var front := player.get_node("MagicShieldFront") as MagicShieldAura
+	check(not back.visible and not front.visible, "无盾时世界护罩不绘制")
+	check(player.cast_skill("magic_shield"), "正式玩家场景能开启魔法盾")
+	check(back.visible and front.visible and back.z_index < 0 and front.z_index > 0,
+		"开盾后人物前后两层护罩立即出现")
+	check(back.outline_bounds() == front.outline_bounds(), "护罩前后轮廓应吻合")
+	GameState.player.mp = 0
+	player._sync_magic_shield_visual()
+	check(not back.visible and not front.visible, "蓝量耗尽时护罩熄灭")
+	GameState.player.mp = 100
+	player._sync_magic_shield_visual()
+	check(back.visible and front.visible, "Buff 仍有效时回蓝可恢复护罩")
+	GameState.collect_mount("mount_corrupted_wing")
+	check(bool(GameState.ride_mount("mount_corrupted_wing").get("ok", false)), "护罩测试坐骑可骑乘")
+	check(back.outline_bounds().size.x > 120.0 and back.outline_bounds() == front.outline_bounds(),
+		"骑乘时前后护罩同步扩大")
+	GameState.clear_buffs()
+	player._sync_magic_shield_visual()
+	check(not back.visible and not front.visible, "盾到期或清除后护罩消失")
+	GameState.start_buff("magic_shield")
+	player.is_dead = true
+	player._sync_magic_shield_visual()
+	check(not back.visible and not front.visible, "死亡时即使 Buff 未清理也不显示护罩")
 	player.queue_free()
 
 ## 武士路径逐位不变：没有任何 buff 提供 damageToManaPct ⇒ 全额扣血、蓝不动。

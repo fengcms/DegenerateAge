@@ -6,7 +6,7 @@ extends CharacterBody2D
 ## M1-9：暴露自动移动 / 自动攻击接口（供 AutoBattle 决策机驱动，3.14）。
 ## 普攻设计为「离散事件」——每次成功发动只结算一次，天然满足 T04（不重复结算）。
 ## 锁定目标超距接近与点击普攻已接入；技能格随后续技能系统接线。
-## 形象：按当前武器解析「阶段形象」整体换图（CharacterLook），不做分层叠加。
+## 形象：按当前武器解析「阶段形象」整体换图（CharacterLook）；魔法盾护罩仅为随身视觉，不参与结算。
 
 const RADIUS := 12.0
 const ART_SCALE := 1.5  # 只放大玩家外观；碰撞和战斗距离仍使用原逻辑尺寸。
@@ -76,6 +76,9 @@ var is_sitting: bool = false
 ## 供死亡界面的「自动原地复活」在复活后按原样恢复挂机（见 death_panel._try_auto_revive）。
 var auto_battle_before_death: bool = false
 var sample_art: SampleActorArt
+var _shield_back: MagicShieldAura
+var _shield_front: MagicShieldAura
+var _mount_art_visible := false
 ## 当前阶段形象 id；换装后由 _refresh_look 重新解析。
 var _look_id := ""
 
@@ -256,13 +259,17 @@ func _map_direction(delta: float) -> Vector2:
 			return Vector2.ZERO
 	return global_position.direction_to(waypoint)
 
+## 初始化正式场景的外观和护罩；纯逻辑单测可用没有画层的 PlayerCharacter.new()。
 func _ready() -> void:
+	_shield_back = get_node_or_null("MagicShieldBack") as MagicShieldAura
+	_shield_front = get_node_or_null("MagicShieldFront") as MagicShieldAura
 	_look_id = CharacterLook.look_id_for(GameState.equipment)
 	sample_art = SampleActorArt.attach_look(self, CharacterLook.definition(_look_id))
 	sample_art.display_scale = ART_SCALE
 	# 工程 98 §3.6：法师暂无专属形象，用冷色调偏移做最小区分（武士 tint 为空 ⇒ 恒等，逐位不变）。
 	sample_art.modulate = PlayerClass.tint()
 	_refresh_mount_art()
+	_sync_magic_shield_visual()
 	# G-P2-2：订阅生命周期约定见 autoload/event_bus.gd 顶部（随场景释放自动断开，不逐个补 _exit_tree）。
 	EventBus.equipment_changed.connect(_refresh_look)
 	EventBus.equipment_changed.connect(_refresh_speed)
@@ -292,14 +299,35 @@ func _refresh_look() -> void:
 	sample_art.apply_look(CharacterLook.definition(next))
 	_refresh_mount_art()
 
-## 骑乘事件或角色外观切换后同步外观；仅已拥有且等级有效的腐化之翼会显示双翼图集。
+## 骑乘事件或角色外观切换后同步外观、护罩尺寸与头顶信息高度。
+## 仅已拥有且等级有效、当前 look 有坐骑图集时才按骑乘外观处理。
 func _refresh_mount_art() -> void:
 	if sample_art == null:
 		return
 	var mount_id := GameState.active_mount if GameState.mount_speed_multiplier() > 1.0 else ""
 	sample_art.set_mount(mount_id)
+	var mount_defs: Dictionary = CharacterLook.definition(_look_id).get("mounts", {})
+	_mount_art_visible = not mount_id.is_empty() and mount_defs.has(mount_id)
+	if _shield_back != null:
+		_shield_back.set_mounted(_mount_art_visible)
+	if _shield_front != null:
+		_shield_front.set_mounted(_mount_art_visible)
+	queue_redraw()
 
+## 只把已生效且有法力可承担伤害的魔法盾映射到护罩画层；断蓝时熄灭，回蓝后恢复。
+## 切图的新玩家节点在 _ready 读取当前 Buff，持续过程只切 visible，不逐帧重建几何。
+func _sync_magic_shield_visual() -> void:
+	if _shield_back == null or _shield_front == null:
+		return
+	var active := not is_dead and GameState.buff_remaining("magic_shield") > 0.0 \
+		and int(GameState.player.mp) > 0
+	if _shield_back.visible != active:
+		_shield_back.visible = active
+		_shield_front.visible = active
+
+## 物理帧推进移动与攻击；护罩可见性只比较 Buff/蓝量状态，不在帧内重绘几何。
 func _physics_process(delta: float) -> void:
+	_sync_magic_shield_visual()
 	if locked_target != null and not valid_target(locked_target):
 		manual_attack_active = false
 		select_target(null)
@@ -620,6 +648,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 			return false
 		GameState.spend_mp(mana_cost)
 		skill_cooldowns[skill_id] = GameState.cooldown_after_cdr(float(skill.get("cooldown", 0.0)))
+		_sync_magic_shield_visual()
 		return true
 	if _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
@@ -828,6 +857,7 @@ func _target_is_dead(t: Node) -> bool:
 func _target_dodge(t: Node) -> float:
 	return t.get_dodge() if t.has_method("get_dodge") else 0.0
 
+## 绘制玩家地面阴影和头顶信息；骑乘时抬高名称与血条，给护罩留出空间。
 func _draw() -> void:
 	if sample_art != null:
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, Iso.GROUND_SQUASH))
@@ -836,8 +866,8 @@ func _draw() -> void:
 		if is_sitting:
 			# 打坐圈画在地面，必须是贴地的等距椭圆
 			GroundFx.outline(self, Vector2.ZERO, 19.0, Color("78d8d0"), 1.0, 24)
-		_draw_overhead_name(-119.0)
-		_draw_overhead_hp(-112.0)
+		_draw_overhead_name(-141.0 if _mount_art_visible else -119.0)
+		_draw_overhead_hp(-134.0 if _mount_art_visible else -112.0)
 		return
 	# 占位角色：圆形身体 + 描边；死亡态转灰（脚底碰撞体见 CollisionShape2D）
 	var body := COLOR_DEAD if is_dead else COLOR_BODY

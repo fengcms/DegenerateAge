@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/systems/auto_battle.gd" id="2_auto"]
+[ext_resource type="Script" path="res://scripts/entities/magic_shield_aura.gd" id="3_shield_aura"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 12.0
@@ -13,6 +14,17 @@ script = ExtResource("1_player")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_player")
+
+[node name="MagicShieldBack" type="Node2D" parent="."]
+visible = false
+z_index = -1
+script = ExtResource("3_shield_aura")
+
+[node name="MagicShieldFront" type="Node2D" parent="."]
+visible = false
+z_index = 1
+script = ExtResource("3_shield_aura")
+front_pass = true
 
 [node name="Camera2D" type="Camera2D" parent="." groups=["player_camera"]]
 position_smoothing_enabled = true
