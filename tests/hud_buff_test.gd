@@ -3,6 +3,7 @@ extends Node
 
 var _failures: Array[String] = []
 
+## 验证两职业的活动 Buff 与自动状态图标紧排，并保留原有提示及生命周期断言。
 func _ready() -> void:
 	GameState.reset_to_defaults("mage")
 	GameState.player.level = 15
@@ -12,6 +13,10 @@ func _ready() -> void:
 	_check(GameState.start_buff("magic_shield"), "法师能启动魔法盾")
 	hud._refresh_buff_icons()
 	_check(hud._shield_icon.visible and not hud._focus_icon.visible, "魔法盾图标独立于战意觉醒显示")
+	await get_tree().process_frame
+	_check(is_equal_approx(hud._shield_icon.position.x,
+		hud._pickup_icon.position.x + hud._pickup_icon.size.x + 3.0),
+		"法师魔法盾应紧挨自动拾取，隐藏的战意不占位")
 	_check(hud._shield_icon.tooltip_text.contains("30.0") and hud._shield_icon.tooltip_text.contains("35%"),
 		"图标提示显示剩余时间和本次盾的效果")
 	GameState.current_map = "camp"
@@ -34,6 +39,10 @@ func _ready() -> void:
 	_check(GameState.start_buff("battle_focus"), "武士能启动战意觉醒")
 	hud._refresh_buff_icons()
 	_check(hud._focus_icon.visible and not hud._shield_icon.visible, "武士原有战意图标仍显示")
+	await get_tree().process_frame
+	_check(is_equal_approx(hud._focus_icon.position.x,
+		hud._pickup_icon.position.x + hud._pickup_icon.size.x + 3.0),
+		"武士战意应紧挨自动拾取，隐藏的魔法盾不占位")
 	hud.queue_free()
 	GameState.reset_to_defaults()
 	if _failures.is_empty():
@@ -42,6 +51,7 @@ func _ready() -> void:
 	else:
 		get_tree().quit(1)
 
+## 记录失败原因，让隔离测试运行器能准确区分通过与失败。
 func _check(ok: bool, reason: String) -> void:
 	if not ok:
 		_failures.append(reason)
