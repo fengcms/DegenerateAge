@@ -111,11 +111,13 @@ func _refresh_static() -> void:
 	_set_line(_effect, Localization.tr_key("ui.skill_panel.detail_current" if rank > 0 else "ui.skill_panel.detail_after_unlock") % _effect_summary(skill))
 	var mana := GameState.skill_mana_cost(skill)
 	var range := Localization.tr_key("ui.skill_panel.detail_tiles") % str(skill.get("range", 0.0)) if str(skill.get("shape", "")) != "self" else Localization.tr_key("ui.skill_panel.detail_self")
-	# 工程 98：法师技能按最大法力百分比计费 —— 只显示绝对值的话，玩家换一件 +蓝装
-	# 就会看到同一技能的「耗蓝」变了，却不知道为什么。两个口径一起给。
+	# 工程 103：系数只是费用参考池的比例；普通法术已不等于最大蓝量的同百分比。
+	# 同时显示系数与实时点数；魔法盾仍按当前最大蓝量计费，文案单独说明。
 	var pct := float(skill.get("manaCostPct", 0.0))
 	if pct > 0.0:
-		_set_line(_meta, Localization.tr_key("ui.skill_panel.detail_meta_pct") % [int(round(pct * 100.0)), mana, range])
+		var pct_text := "%.1f" % (pct * 100.0)
+		var meta_key := "ui.skill_panel.detail_meta_shield" if skill_id == "magic_shield" else "ui.skill_panel.detail_meta_pct"
+		_set_line(_meta, Localization.tr_key(meta_key) % [pct_text, mana, range])
 	else:
 		_set_line(_meta, Localization.tr_key("ui.skill_panel.detail_meta") % [mana, range])
 	if skill_id == PlayerClass.basic_skill():

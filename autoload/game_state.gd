@@ -41,6 +41,8 @@ const BASE_MP := 30.0
 const MP_PER_LV := 5.0
 ## 法师法力随攻防装备档次成长；生命词条不直接送法力（工程 103 §4.1）。
 const MAGE_MANA_CORE_RATIO := 1.20
+## 攻击法术费用参考池中新蓝池的权重；其余沿用旧池，扩大法力才会增加可施法次数。
+const MAGE_SPELL_COST_NEW_WEIGHT := 0.55
 const MANA_FORMULA_VERSION := 1
 
 var player: Dictionary = {}
@@ -494,13 +496,19 @@ func max_mp() -> int:
 	var flat := float(player.get("mpFlat", 0.0)) + float(b.get("mp", 0.0))
 	return int(round(_scaled(base * (1.0 + pct) + flat * PlayerClass.mult("mpMult"))))
 
-## 技能实际法力消耗（**唯一口径入口**，工程 98 R3）。
-## 法师技能按 `manaCostPct`（最大法力百分比）计费；武士仍是固定 `manaCost`。
+## 技能实际法力消耗（**唯一口径入口**，工程 98 R3、103 §4.2）。
+## 法师攻击法术按新旧法力池的加权参考池计费；魔法盾仍按新上限 6% 开盾。
+## 武士技能仍是固定 `manaCost`。
 ## 🔴 漏改任一调用点（施放 / 手动校验 / 自动战斗三处）就会出现「以为蓝够、实际放不出」的空挥。
 func skill_mana_cost(skill: Dictionary) -> int:
 	var pct := float(skill.get("manaCostPct", 0.0))
 	if pct > 0.0:
-		return maxi(1, int(round(float(max_mp()) * pct)))
+		var capacity := float(max_mp())
+		if PlayerClass.current_id() == "mage" and String(skill.get("class", "")) == "mage" \
+				and String(skill.get("id", "")) != "magic_shield":
+			capacity = capacity * MAGE_SPELL_COST_NEW_WEIGHT \
+				+ float(legacy_max_mp()) * (1.0 - MAGE_SPELL_COST_NEW_WEIGHT)
+		return maxi(1, int(round(capacity * pct)))
 	return int(skill.get("manaCost", 0))
 
 # ---- 数值变更（统一走事件广播，HUD 订阅刷新）----

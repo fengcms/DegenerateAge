@@ -1244,7 +1244,7 @@ func _validate_skills() -> Array[String]:
 			report.append("[skills] %s 的 class '%s' 未在 classes 表登记" % [sid, owner])
 		if entry.has("manaCostPct") \
 				and (not _is_positive_number(entry.get("manaCostPct")) or float(entry.get("manaCostPct")) >= 1.0):
-			report.append("[skills] %s 的 manaCostPct 应在 (0,1) 内（占最大法力的比例）" % sid)
+				report.append("[skills] %s 的 manaCostPct 应在 (0,1) 内（技能耗蓝系数）" % sid)
 		if entry.has("basic") and not entry.get("basic") is bool:
 			report.append("[skills] %s 的 basic 必须为布尔值" % sid)
 		if not _is_whole_level(entry.get("unlockLevel")) or int(entry.get("unlockLevel", 0)) < 1:

@@ -192,8 +192,8 @@ func _measure(class_id: String, boss: Dictionary) -> Dictionary:
 	player.queue_free()
 
 	# 蓝药：按「所有主动技能一到 CD 就放」的上界估算每秒支出（实际打法只会更省）。
-	var pct_per_sec := 0.0
-	var fixed_per_sec := 0.0
+	# 工程 103：逐项走生产费用入口；用 pct×max_mp 会在法师攻击法术上算错。
+	var skill_per_sec := 0.0
 	for sid in PlayerClass.active_skills(class_id):
 		var tpl: Variant = DataLoader.get_entry("skills", String(sid))
 		if not (tpl is Dictionary):
@@ -202,14 +202,10 @@ func _measure(class_id: String, boss: Dictionary) -> Dictionary:
 		if bool(skill.get("basic", false)):
 			continue
 		var cd := maxf(1.0, float(skill.get("cooldown", 1.0)))
-		var pct := float(skill.get("manaCostPct", 0.0))
-		if pct > 0.0:
-			pct_per_sec += pct * max_mp / cd
-		else:
-			fixed_per_sec += float(skill.get("manaCost", 0)) / cd
+		skill_per_sec += float(GameState.skill_mana_cost(skill)) / cd
 	# 护盾转嫁：每次受击**实测**扣蓝 × 每秒受击次数。
 	var shield_per_sec := float(mana_transferred) / maxf(0.1, float(boss.get("interval", 1.2))) * HIT_RATE
-	var spend := (pct_per_sec + fixed_per_sec + shield_per_sec) * ttk
+	var spend := (skill_per_sec + shield_per_sec) * ttk
 
 	var restore := max_mp * 0.2
 	var potion: Variant = DataLoader.get_entry("potions", MANA_POTION)

@@ -919,6 +919,7 @@
   "ui.settings_panel.p063": "窗口尺寸",
   "ui.settings_panel.p064": "手动系数",
   "ui.save_panel.class_desc": "%s｜血量 %d%% · 法力 %d%% · 普攻射程 %.1f 格",
-  "ui.skill_panel.detail_meta_pct": "耗蓝 %d%% 法力上限（当前 %d）· 范围 %s",
+  "ui.skill_panel.detail_meta_pct": "耗蓝系数 %s%% · 当前 %d 点（按法力容量折算）· 范围 %s",
+  "ui.skill_panel.detail_meta_shield": "开盾耗蓝 %s%% 法力上限（当前 %d 点）· 范围 %s",
   "ui.skill_panel.detail_shield": "受伤 %.1f%% 转由法力承担 · 持续 %.0f 秒"
 }

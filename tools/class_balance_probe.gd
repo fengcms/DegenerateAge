@@ -175,8 +175,8 @@ func _report(rows: Dictionary, boss: Dictionary) -> void:
 			/ maxf(1.0, float((tpl as Dictionary).get("cooldown", 1.0)))
 	var slots := 1.0 / maxf(0.01, float(mage.interval))
 	var max_mp := float(mage.max_mp)
-	var single_spend := _skill_spend(["lightning"], slots, max_mp)
-	var aoe_spend := _skill_spend(["flame_burst", "frost_roar", "meteor"], slots, max_mp)
+	var single_spend := _skill_spend(["lightning"], slots)
+	var aoe_spend := _skill_spend(["flame_burst", "frost_roar", "meteor"], slots)
 	var shield := float(mage.mana_drain)
 	var to_pct := 100.0 / max_mp
 	print("")
@@ -190,7 +190,7 @@ func _report(rows: Dictionary, boss: Dictionary) -> void:
 
 ## 一组技能在给定槽位速率下的每秒蓝耗。价值 = 系数 × 段数（与 `AutoBattle.skill_value` 同口径），
 ## 按价值降序抢槽位 —— 高价值技能先满足自己的 `1/CD`，抢不到就吃剩下的。
-func _skill_spend(ids: Array, slots: float, max_mp: float) -> float:
+func _skill_spend(ids: Array, slots: float) -> float:
 	var pool: Array = []
 	for sid in ids:
 		var tpl: Variant = DataLoader.get_entry("skills", String(sid))
@@ -199,7 +199,7 @@ func _skill_spend(ids: Array, slots: float, max_mp: float) -> float:
 		var d: Dictionary = tpl
 		var cd := maxf(0.05, float(d.get("cooldown", 1.0)))
 		var value := float(d.get("coefficient", 0.0)) * float(maxi(1, int(d.get("hits", 1))))
-		pool.append({"value": value, "freq": 1.0 / cd, "pct": float(d.get("manaCostPct", 0.0))})
+		pool.append({"value": value, "freq": 1.0 / cd, "cost": float(GameState.skill_mana_cost(d))})
 	pool.sort_custom(func(a, b): return float(a.value) > float(b.value))
 	var left := slots
 	var spend := 0.0
@@ -207,7 +207,7 @@ func _skill_spend(ids: Array, slots: float, max_mp: float) -> float:
 		var take := minf(float(item.freq), left)
 		if take <= 0.0:
 			continue
-		spend += take * float(item.pct) * max_mp
+		spend += take * float(item.cost)
 		left -= take
 	return spend
 

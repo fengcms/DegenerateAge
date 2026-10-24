@@ -159,7 +159,7 @@
     "duration": 30.0,
     "effects": { "damageToManaPct": 0.35 },
     "targetType": "self",
-    "desc": "开启法力护盾：受到伤害的 30% 由法力承担（1 点伤害 = 1 点法力），持续 30 秒。",
+    "desc": "开启法力护盾：受到伤害的 35% 由法力承担（1 点伤害 = 1 点法力），持续 30 秒。",
     "icon": "res://assets/sprites/skills/magic_shield.png"
   },
   {
