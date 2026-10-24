@@ -26,6 +26,7 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _battle_icon: HudStatusIcon = %AutoBattleIcon
 @onready var _pickup_icon: HudStatusIcon = %AutoPickupIcon
 @onready var _focus_icon: HudStatusIcon = %BattleFocusIcon
+@onready var _shield_icon: HudStatusIcon = %MagicShieldIcon
 @onready var _toast_box: VBoxContainer = %ToastBox
 @onready var _map_name: Label = %MapName
 @onready var _map_coords: Label = %MapCoords
@@ -86,11 +87,20 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	_update_coords()
 	_update_target()
-	var remaining := GameState.buff_remaining("battle_focus")
-	_buff_label.text = Localization.tr_key("ui.hud.p001") % remaining if remaining > 0.0 else ""
-	_focus_icon.visible = remaining > 0.0
-	if remaining > 0.0:
+	_refresh_buff_icons()
+
+## 只读取 GameState 的活动增益；切图后 HUD 重建和倒计时均不另存一份状态。
+func _refresh_buff_icons() -> void:
+	var focus_left := GameState.buff_remaining("battle_focus")
+	_focus_icon.visible = focus_left > 0.0
+	_buff_label.text = Localization.tr_key("ui.hud.p001") % focus_left if focus_left > 0.0 else ""
+	if focus_left > 0.0:
 		_focus_icon.tooltip_text = _buff_label.text
+	var shield_left := GameState.buff_remaining("magic_shield")
+	_shield_icon.visible = shield_left > 0.0
+	if shield_left > 0.0:
+		_shield_icon.tooltip_text = Localization.tr_key("ui.hud.magic_shield_tooltip") % [
+			shield_left, GameState.buff_effect_total("damageToManaPct") * 100.0]
 
 # ---- 事件回调 ----
 

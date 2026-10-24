@@ -3,7 +3,7 @@ extends Control
 ## Small HUD status glyphs. Off, active and paused have different silhouettes
 ## and colors; their exact meaning remains available through tooltips.
 
-@export_enum("battle", "pickup", "focus") var icon_kind := "battle":
+@export_enum("battle", "pickup", "focus", "shield") var icon_kind := "battle":
 	set(next_kind):
 		icon_kind = next_kind
 		queue_redraw()
@@ -40,6 +40,10 @@ func _draw() -> void:
 			draw_line(Vector2(16, 16), Vector2(12, 20), glyph, 1.0)
 		"focus":
 			draw_colored_polygon(PackedVector2Array([Vector2(13, 3), Vector2(7, 13), Vector2(12, 13), Vector2(10, 21), Vector2(18, 10), Vector2(13, 10)]), glyph)
+		"shield":
+			var shield_icon := SampleArt.skill_icon("magic_shield")
+			if shield_icon != null:
+				draw_texture_rect(shield_icon, Rect2(2, 2, size.x - 4, size.y - 4), false)
 	if paused:
 		draw_rect(Rect2(size.x - 7, 3, 2, 5), Color("e6ddc6"))
 		draw_rect(Rect2(size.x - 4, 3, 2, 5), Color("e6ddc6"))

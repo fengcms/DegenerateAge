@@ -295,6 +295,19 @@ script = ExtResource("6_status_icon")
 icon_kind = "focus"
 active = true
 
+[node name="MagicShieldIcon" type="Control" parent="StatusPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 184.0
+offset_top = 69.0
+offset_right = 208.0
+offset_bottom = 93.0
+mouse_filter = 0
+script = ExtResource("6_status_icon")
+icon_kind = "shield"
+active = true
+
 [node name="AutoLabel" type="Label" parent="."]
 unique_name_in_owner = true
 visible = false

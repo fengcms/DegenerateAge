@@ -110,6 +110,7 @@
   "ui.flow_feedback.p005": "WASD 移动 · Space 攻击 · F 自动战斗 · G 自动拾取\n先与长老交谈，开始守护者的旅程。",
   "ui.flow_feedback.p006": "首战目标：击败腐化野狼。可按 F 开启自动战斗，按 G 控制自动拾取。",
   "ui.hud.p001": "战意觉醒  %.1f 秒",
+  "ui.hud.magic_shield_tooltip": "魔法盾 · 剩余 %.1f 秒 · 伤害 %.0f%% 转由法力承担",
   "ui.hud.p002": "金币  %d",
   "ui.hud.p003": "背包  %d / %d",
   "ui.hud.p004": "打坐中（X 起身）",
