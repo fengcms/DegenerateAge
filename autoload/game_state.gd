@@ -634,9 +634,17 @@ func pickup_loot(item: Dictionary) -> Dictionary:
 			EventBus.item_picked.emit(String(item.get("itemId", "")))
 		return {"ok": placed, "auto_sold": false, "gold": 0, "listed": 0, "reason": ""}
 	var preset := String(settings.get("sellGearPreset", SellGearPolicy.CAUTIOUS))
+	# 工程 102：必须把 `inventory` 传进去 —— 新件要和「已在背包里的更优候选」一起排位，
+	# 只看已穿戴会把额度永远判成「没满」（这是本功能最容易做错的一步）。
 	var decision := SellGearPolicy.auto_sell(item, int(player.get("level", 1)), equipment,
-		preset, gold_is_capped())
+		preset, gold_is_capped(), inventory)
 	if not bool(decision.get("sell", false)):
+		# 新件挤进了同部位前 N：把掉出名额的那件卖掉，再让新件入包（工程 102）。
+		var evict_id := String(decision.get("evict_id", ""))
+		if not evict_id.is_empty():
+			var evicted := _evict_for_pickup(evict_id, item)
+			if not (evicted as Dictionary).is_empty():
+				return evicted
 		var kept := add_item(item)
 		if kept:
 			EventBus.item_picked.emit(String(item.get("itemId", "")))
@@ -648,6 +656,35 @@ func pickup_loot(item: Dictionary) -> Dictionary:
 	EventBus.item_picked.emit(String(item.get("itemId", "")))
 	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), gained)
 	return {"ok": true, "auto_sold": true, "gold": gained, "listed": listed, "reason": ""}
+
+## 拾取时的「驱逐」执行层（工程 102）：新件挤进同部位前 N，把掉出名额的那件卖掉，再让新件入包。
+## 返回 `{}` 表示没找到那件（背包已变化）⇒ 调用方退回普通入包。
+##
+## ⚠ 顺序刻意是「先腾格 → 入包 → 再入账」，不是「先卖后加」：腾出的格正是新件要占的格，
+##   而先卖后加一旦入包失败，就会出现「东西卖了、新件也没了」。入包失败则把旧件放回原格。
+func _evict_for_pickup(evict_id: String, incoming: Dictionary) -> Dictionary:
+	var slot := -1
+	for i in range(inventory.size()):
+		if inventory[i] is Dictionary and String(inventory[i].get("instanceId", "")) == evict_id:
+			slot = i
+			break
+	if slot < 0:
+		return {}
+	var evicted: Dictionary = inventory[slot]
+	inventory[slot] = null
+	if not add_item(incoming):
+		inventory[slot] = evicted
+		return {"ok": false, "auto_sold": false, "gold": 0, "listed": 0, "reason": "bag_full"}
+	var listed := Shop.sell_price(evicted)
+	var gained := _gold_gain(listed)
+	# 视同「捡到了」：拾取音效与收集类任务都挂在 item_picked 上。
+	EventBus.item_picked.emit(String(incoming.get("itemId", "")))
+	EventBus.trade_done.emit("sell", String(evicted.get("itemId", "")), gained)
+	EventBus.toast_requested.emit(
+		Localization.tr_key("msg.game_state.p058") % [ItemUtil.display_name(evicted), gained], "pickup")
+	_notify_gold_gap(listed, gained)
+	return {"ok": true, "auto_sold": false, "gold": gained, "listed": listed,
+		"reason": "", "evicted": evicted.duplicate(true)}
 
 ## 背包已占用格数。
 func inventory_used() -> int:
@@ -832,6 +869,9 @@ func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false,
 	var total := 0
 	var level := int(player.get("level", 1))
 	var preset := _active_preset(preset_override)
+	# 工程 102：额度上下文必须与 `build_preview()` 算出**同一份**，否则重核时
+	# `default_selected` 会整行翻转，玩家看到「装备清单已变化」却什么都没动（R2）。
+	var quota := SellGearPolicy.rank_context(inventory, level, equipment, preset)
 	for row in rows:
 		var instance_id := String(row.get("instance_id", ""))
 		if instance_id.is_empty() or seen.has(instance_id) or not by_id.has(instance_id):
@@ -842,7 +882,7 @@ func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false,
 		if item != row.get("item_snapshot", {}) or not Shop.can_sell(item) \
 				or level != int(row.get("player_level", -1)) or preset != String(row.get("preset", "")):
 			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
-		var current := SellGearPolicy.entry(item, i, level, equipment, preset)
+		var current := SellGearPolicy.entry(item, i, level, equipment, preset, quota)
 		if int(current.get("price", -1)) != int(row.get("price", -2)) \
 				or bool(current.get("protected_upgrade", false)) != bool(row.get("protected_upgrade", false)) \
 				or bool(current.get("default_selected", false)) != bool(row.get("default_selected", false)):

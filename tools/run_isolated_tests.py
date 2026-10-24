@@ -191,6 +191,10 @@ DEFAULT_TESTS = [
     # / E 死亡仍关挂机。前身 NpcAutoBattleTest 的断言已按需求反向。
     "NpcAutoBattleTest",
     "PanelAutoBattleTest",
+    # 工程 102 同部位额度：单槽/双槽额度、金紫占额度但不卖（口径 B）、星级硬保护优先、
+    # 端到端透传（防「额度上下文漏传 ⇒ 静默退回旧口径」）、同分排序稳定、空槽与破损口径不变、
+    # 拾取驱逐与让位（含同分让位）。
+    "SellGearQuotaTest",
     "SmokeTest",
 ]
 
