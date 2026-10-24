@@ -1,5 +1,5 @@
 extends Node
-## 法师挂机在实际距离和敌群位置下的施法顺序；不依赖理论 CD 模型。
+## 法师挂机在实际距离、敌群与待拾取物下的施法顺序；覆盖低蓝解围和寻路受阻。
 
 const TILE := 64.0
 
@@ -24,6 +24,10 @@ func _ready() -> void:
 	_test_cone_uses_nearby_anchor()
 	_test_single_target_standoff()
 	_test_low_mana_and_blocked_position()
+	_test_blocked_swarm_still_fights()
+	_test_loot_in_pickup_range_does_not_hold_combat()
+	_test_loot_outside_pickup_range_keeps_priority()
+	_test_low_mana_swarm_reserves_shield()
 	GameState.reset_to_defaults()
 	if _failures.is_empty():
 		print("[MageAutoSkillsTest] 全部通过 ✅")
@@ -162,6 +166,97 @@ func _test_low_mana_and_blocked_position() -> void:
 		"近距施法位卡住时回退远程攻击，不拉黑原目标")
 	target.queue_free()
 	partner.queue_free()
+	player.queue_free()
+
+## 临时拉黑只暂停重新寻路；身边两只怪仍应被群攻，不能因 BLOCKED 停战一秒。
+func _test_blocked_swarm_still_fights() -> void:
+	var nodes := _setup()
+	var player: PlayerCharacter = nodes.player
+	var pilot: AutoBattle = nodes.pilot
+	var left := _enemy(player.global_position + Vector2(2.0 * TILE, -12))
+	var right := _enemy(player.global_position + Vector2(2.0 * TILE, 12))
+	pilot._blocked_t = 1.0
+	pilot._target = null
+	pilot._tick(0.016)
+	_check(pilot._blocked_t < 1.0 and left.hits > 0 and right.hits > 0,
+		"目标暂时受阻时仍能原地群攻解围")
+	left.queue_free()
+	right.queue_free()
+	player.queue_free()
+
+## 掉落已在 1.5 格拾取范围内时无需站到其中心；保护期内仍应继续战斗。
+func _test_loot_in_pickup_range_does_not_hold_combat() -> void:
+	var nodes := _setup()
+	var player: PlayerCharacter = nodes.player
+	var pilot: AutoBattle = nodes.pilot
+	var left := _enemy(player.global_position + Vector2(2.0 * TILE, -12))
+	var right := _enemy(player.global_position + Vector2(2.0 * TILE, 12))
+	GameState.auto_pickup_on = true
+	var drop := GroundItem.new()
+	drop.item = {"kind": "coin", "amount": 1}
+	drop.hold_time = 5.0
+	add_child(drop)
+	drop.global_position = player.global_position + Vector2(16, 0)
+	pilot._loot = drop
+	pilot._target = left
+	pilot._tick(0.016)
+	_check(pilot._loot == null and left.hits > 0 and right.hits > 0,
+		"已进入自动拾取范围的待收取物不阻断群攻")
+	drop.queue_free()
+	left.queue_free()
+	right.queue_free()
+	player.queue_free()
+
+## 范围外的可拾取物仍优先于敌群，防止解围改动反转 F/G 的既有拾取顺序。
+func _test_loot_outside_pickup_range_keeps_priority() -> void:
+	var nodes := _setup()
+	var player: PlayerCharacter = nodes.player
+	var pilot: AutoBattle = nodes.pilot
+	var left := _enemy(player.global_position + Vector2(2.0 * TILE, -12))
+	var right := _enemy(player.global_position + Vector2(2.0 * TILE, 12))
+	GameState.auto_pickup_on = true
+	var drop := GroundItem.new()
+	drop.item = {"kind": "coin", "amount": 1}
+	drop.hold_time = 5.0
+	add_child(drop)
+	drop.global_position = player.global_position + Vector2(160, 0)
+	pilot._loot = drop
+	pilot._target = left
+	pilot._tick(0.016)
+	_check(pilot.current_state() == AutoBattle.State.PATH_TO_LOOT and player.auto_move.length() > 0.0
+			and left.hits == 0 and right.hits == 0,
+		"拾取范围外仍先接近可收取物，再处理敌群")
+	drop.queue_free()
+	left.queue_free()
+	right.queue_free()
+	player.queue_free()
+
+## 低蓝保盾期间三怪贴身可临时群攻，但必须为下一次开盾留足法力。
+func _test_low_mana_swarm_reserves_shield() -> void:
+	var nodes := _setup()
+	var player: PlayerCharacter = nodes.player
+	var pilot: AutoBattle = nodes.pilot
+	var enemies: Array[TestEnemy] = []
+	for offset in [Vector2(2.0 * TILE, -18), Vector2(2.0 * TILE, 0), Vector2(2.0 * TILE, 18)]:
+		enemies.append(_enemy(player.global_position + offset))
+	pilot._target = enemies[0]
+	GameState.player.mp = int(GameState.max_mp() * 0.2)
+	pilot._tick(0.016)
+	_check(enemies[0].hits > 0 and enemies[1].hits > 0 and enemies[2].hits > 0,
+		"低蓝但盾有效、三怪贴身且预留开盾费用时允许群攻解围")
+	player._attack_cd = 0.0
+	player.skill_cooldowns.clear()
+	var shield_cost := GameState.skill_mana_cost(SkillProgression.current("magic_shield"))
+	var cheapest_area := GameState.skill_mana_cost(SkillProgression.current("flame_burst"))
+	GameState.player.mp = shield_cost + cheapest_area - 1
+	var hits_before := enemies[0].hits + enemies[1].hits + enemies[2].hits
+	pilot._tick(0.016)
+	var hits_after := enemies[0].hits + enemies[1].hits + enemies[2].hits
+	_check(hits_after <= hits_before + 1 and player.skill_cooldown("flame_burst") == 0.0
+			and player.skill_cooldown("meteor") == 0.0 and player.skill_cooldown("frost_roar") == 0.0,
+		"低蓝解围不得花掉预留的下一次开盾法力，允许不耗蓝的单体普攻")
+	for enemy in enemies:
+		enemy.queue_free()
 	player.queue_free()
 
 ## 记录失败原因以让隔离运行器得到可靠退出码。

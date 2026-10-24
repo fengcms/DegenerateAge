@@ -62,7 +62,7 @@ const STICKY_TIME := 4.0               # 目标粘性记忆时长（s，= 黑名
 const MANUAL_RESUME_DELAY := 1.5       # 手动接管后恢复延迟（s，4.6）
 const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
-const LOOT_ARRIVE_EPS := 6.0           # 判定「已抵达掉落物」（px；≤1.5 格由 GroundItem 自动入包）
+const LOOT_ARRIVE_EPS := 6.0           # 现有手动点击行走也使用这个到达阈值；不可改成拾取半径
 const STOP_GAP := 8.0                  # 攻击范围内提前停步（px，避免与目标互相顶开）
 const ROAM_GRID_STEP := 7               # 巡游采样间隔（格），往返覆盖地图有效区域
 const ROAM_ARRIVE_EPS := 12.0
@@ -289,13 +289,6 @@ func _tick(delta: float) -> void:
 	_mage_position_t = maxf(0.0, _mage_position_t - delta)
 	_mage_position_retry_t = maxf(0.0, _mage_position_retry_t - delta)
 
-	# 受阻停留（3.14 ① 拉黑目标后的短暂停顿，避免同帧立即重选）
-	if _blocked_t > 0.0:
-		_blocked_t = maxf(0.0, _blocked_t - delta)
-		_player.set_auto_move(Vector2.ZERO)
-		_set_state(State.BLOCKED)
-		return
-
 	# 生命和法力各自按设置阈值判断；两者都不足时先保命，下一帧再补法力。
 	# 药尽仍继续战斗，不因任一颜色缺药而停寻怪。
 	var hp_low := _needs_potion(Consumable.KIND_RED)
@@ -316,6 +309,15 @@ func _tick(delta: float) -> void:
 	if _tick_mage_shield():
 		return
 
+	# 拉黑只暂停重新寻路，不暂停原地防卫、喝药或补盾；密集怪群中停战一秒会反复受击。
+	if _blocked_t > 0.0:
+		_blocked_t = maxf(0.0, _blocked_t - delta)
+		if _try_mage_swarm_cast(null):
+			return
+		_player.set_auto_move(Vector2.ZERO)
+		_set_state(State.BLOCKED)
+		return
+
 	# ② 每帧校验目标有效性（死亡 / 释放 / 进黑名单 → 停旧指令）
 	if _target != null and (not is_instance_valid(_target)
 			or _target.get("is_dead") == true or _is_blacklisted(_target)):
@@ -326,6 +328,9 @@ func _tick(delta: float) -> void:
 	if GameState.auto_pickup_on and _tick_loot():
 		return
 	_loot = null
+	# 不依赖追击目标：目标刚死亡或尚在搜索节流时，近身敌群仍可立即解围。
+	if _try_mage_swarm_cast(_target):
+		return
 
 	if _target == null:
 		_search_t = maxf(0.0, _search_t - delta)
@@ -347,22 +352,10 @@ func _tick(delta: float) -> void:
 
 	var target2d := _target as Node2D
 	var dist := _player.global_position.distance_to(target2d.global_position)
-	# 法师被身边敌群围住时先向实际可命中的敌群施法，再继续追远处的原目标。
-	# 自中心范围技不把远处锁定目标传给 cast_skill；扇形技使用范围内的施法朝向目标。
-	var area_cast: Dictionary = {}
-	if PlayerClass.is_ranged() and _mana_allows_attack() \
-			and not MapService.is_in_safe_area(GameState.current_map, _player.global_position):
-		area_cast = _best_mage_area_cast(_target)
-		if not area_cast.is_empty():
-			var area_skill: Dictionary = area_cast.skill
-			if _player.cast_skill(String(area_skill.id), area_cast.anchor):
-				_player.set_auto_move(Vector2.ZERO)
-				_set_state(State.ATTACK_TARGET)
-				return
 	# 常态按职业普攻射程停步；法师仅在已有敌群且近距范围技可用时短暂进位。
 	var reach := _player.attack_range_px() - STOP_GAP
 	if dist <= reach and not MapService.is_in_safe_area(GameState.current_map, _player.global_position) \
-			and area_cast.is_empty() and _try_mage_area_position(delta, target2d):
+			and _try_mage_area_position(delta, target2d):
 		return
 
 	# 安全区只屏蔽伤害，不屏蔽寻怪/移动。靠近边缘目标时先穿出边界再攻击。
@@ -540,6 +533,32 @@ func _mana_allows_attack() -> bool:
 		return false
 	return true
 
+## 当前位置有真实命中的敌群时优先解围；返回 true 表示成功施法，调用方本帧不再移动。
+## 保蓝态仅在盾尚稳固、至少命中三只且施法后仍留够一次开盾法力时例外放行。
+func _try_mage_swarm_cast(target: Variant) -> bool:
+	if not PlayerClass.is_ranged() or not _player.is_attack_ready() \
+			or MapService.is_in_safe_area(GameState.current_map, _player.global_position):
+		return false
+	var conserving := not _mana_allows_attack()
+	var minimum_hits := 2
+	var reserved_mp := 0
+	if conserving:
+		if GameState.buff_remaining("magic_shield") <= MAGE_SHIELD_REFRESH_WINDOW:
+			return false
+		minimum_hits = 3
+		reserved_mp = GameState.skill_mana_cost(SkillProgression.current("magic_shield"))
+	# 拾取或击杀信号可能在本帧释放旧目标；传入有类型的施法选择器前先剔除失效引用。
+	var cast_target: Node = target if is_instance_valid(target) and target is Node else null
+	var area_cast := _best_mage_area_cast(cast_target, minimum_hits, reserved_mp)
+	if area_cast.is_empty():
+		return false
+	var area_skill: Dictionary = area_cast.skill
+	if not _player.cast_skill(String(area_skill.id), area_cast.anchor):
+		return false
+	_player.set_auto_move(Vector2.ZERO)
+	_set_state(State.ATTACK_TARGET)
+	return true
+
 ## 本职业已接线的范围技白名单。
 func _wired_area_skills() -> Array:
 	return MAGE_AREA_SKILLS if PlayerClass.is_ranged() else WIRED_SKILLS
@@ -580,9 +599,9 @@ func _best_area_skill(target: Node) -> Dictionary:
 			best_value = value
 	return chosen
 
-## 为法师挑选能真实命中至少两只敌人的范围技与合法施法目标。
-## 自中心圆形技能用空锚点；扇形从原目标及最近六个候选中找朝向，最坏只做常数次敌群扫描。
-func _best_mage_area_cast(target: Node) -> Dictionary:
+## 为法师挑选能真实命中 minimum_hits 只敌人的范围技与合法施法目标。
+## reserved_mp 是低蓝解围时预留的下次开盾费用；自中心圆形用空锚点，扇形从最多六个候选找朝向。
+func _best_mage_area_cast(target: Node, minimum_hits: int = 2, reserved_mp: int = 0) -> Dictionary:
 	if not PlayerClass.is_ranged() or not _player.is_attack_ready():
 		return {}
 	var ready_skills: Array[Dictionary] = []
@@ -590,7 +609,7 @@ func _best_mage_area_cast(target: Node) -> Dictionary:
 	for skill_id in MAGE_AREA_SKILLS:
 		var skill := SkillProgression.current(skill_id)
 		if skill.is_empty() or choose_skill([_skill_for_choice(skill)], int(GameState.player.level),
-				int(GameState.player.mp), _player.skill_cooldowns, 2).is_empty():
+				int(GameState.player.mp) - reserved_mp, _player.skill_cooldowns, minimum_hits).is_empty():
 			continue
 		ready_skills.append(skill)
 		max_reach = maxf(max_reach, float(skill.get("range", 0.0)) * Iso.TILE_W)
@@ -603,7 +622,7 @@ func _best_mage_area_cast(target: Node) -> Dictionary:
 		var enemy := raw as Node2D
 		if _player.global_position.distance_to(enemy.global_position) <= max_reach:
 			nearby.append(enemy)
-	if nearby.size() < 2:
+	if nearby.size() < minimum_hits:
 		return {}
 	nearby.sort_custom(func(a: Node2D, b: Node2D) -> bool:
 		return _player.global_position.distance_squared_to(a.global_position) \
@@ -633,7 +652,7 @@ func _best_mage_area_cast(target: Node) -> Dictionary:
 				if count > hits:
 					hits = count
 					anchor = candidate
-		if hits < 2:
+		if hits < minimum_hits:
 			continue
 		var value := float(hits) * skill_value(skill)
 		if chosen.is_empty() or value > best_value or (is_equal_approx(value, best_value) \
@@ -738,7 +757,8 @@ func _find_loot() -> GroundItem:
 		if gi.item.is_empty() or not _can_pick(gi):
 			continue
 		var d := _player.global_position.distance_to(gi.global_position)
-		if d > radius:
+		# 已在 GroundItem 的自动拾取范围内时无需寻路；保护期结束后由物品自行入包。
+		if d <= GroundItem.PICKUP_RANGE_PX or d > radius:
 			continue
 		if not _route_reachable(gi.global_position):
 			continue
@@ -756,10 +776,9 @@ func _tick_loot() -> bool:
 		if _loot == null:
 			return false
 	var d := _player.global_position.distance_to((_loot as Node2D).global_position)
-	if d <= LOOT_ARRIVE_EPS:
-		_player.set_auto_move(Vector2.ZERO)
-		_set_state(State.PICK_UP)                 # 进入 1.5 格后由 GroundItem 自动入包（9.9）
-		return true
+	if d <= GroundItem.PICKUP_RANGE_PX:
+		_loot = null
+		return false # 保护期内也不阻塞战斗；GroundItem 会在到期后自行收取
 	_set_state(State.PATH_TO_LOOT)
 	var direction := _direction_to((_loot as Node2D).global_position)
 	_player.set_auto_move(direction)
