@@ -39,6 +39,9 @@ const HP_PER_ATK := 2.0
 const HP_PER_DEF := 4.0
 const BASE_MP := 30.0
 const MP_PER_LV := 5.0
+## 法师法力随攻防装备档次成长；生命词条不直接送法力（工程 103 §4.1）。
+const MAGE_MANA_CORE_RATIO := 1.20
+const MANA_FORMULA_VERSION := 1
 
 var player: Dictionary = {}
 var gold: int = 0
@@ -227,6 +230,7 @@ func default_player() -> Dictionary:
 		# 工程 98：职业 id。旧档无此字段时由 `SaveManager._migrate_player` 补默认值 ⇒ **不 bump schema**。
 		# 非法值（被改档）在读档时归一成 warrior，不拒档。
 		"classId": "warrior",
+		"manaFormulaVersion": MANA_FORMULA_VERSION,
 		"level": 1,
 		"xp": 0,
 		"hp": 102,          # 派生：见 4.3，L1（攻12/防5）=> 102
@@ -457,7 +461,7 @@ func total_attack_interval() -> float:
 	return maxf(Combat.MIN_ATTACK_INTERVAL, _inverse_scaled(float(player.get("attackInterval", 0.8))))
 
 ## 派生的最大生命（4.3 公式；攻 / 防取**不含套装**的基础值，套装只在最外层乘一次）。
-## 工程 98：职业 `hpMult` 同样只在**最外层**乘一次（法师 0.72）。
+## 工程 98：职业 `hpMult` 同样只在**最外层**乘一次（法师当前 0.64）。
 func max_hp() -> int:
 	var base := BASE_HP + float(player.level) * HP_PER_LV \
 		+ float(_base_attack()) * HP_PER_ATK + float(_base_defense()) * HP_PER_DEF
@@ -466,14 +470,29 @@ func max_hp() -> int:
 	var flat := float(player.get("hpFlat", 0.0)) + float(b.get("hp", 0.0))
 	return int(round(_scaled(base * (1.0 + pct) + flat) * PlayerClass.mult("hpMult")))
 
-## 派生的最大法力（4.3 公式；装备 mp / mpPercent 进入固定 / 百分比项）。
-## 工程 98：法师 `mpMult` = 2.0，蓝池是「第二条血」的储备。
-func max_mp() -> int:
+## 改版前的法力派生口径；仅供旧档一次性比例结转与新版费用参考池使用。
+## 武士当前法力仍走这一公式，不能因法师调整而改动。
+func legacy_max_mp() -> int:
 	var b := equip_bonus()
 	var base := BASE_MP + float(player.level) * MP_PER_LV
 	var pct := float(player.get("mpPercent", 0.0)) + float(b.get("mpPercent", 0.0))
 	var flat := float(player.get("mpFlat", 0.0)) + float(b.get("mp", 0.0))
 	return int(round(_scaled(base * (1.0 + pct) + flat) * PlayerClass.mult("mpMult")))
+
+## 法师新法力底数：攻防装备参与档次成长，直接生命词条不参与；
+## mpFlat 原有的 2 倍职业收益与套装最外层倍率保持不变。
+func max_mp() -> int:
+	if PlayerClass.current_id() != "mage":
+		return legacy_max_mp()
+	var b := equip_bonus()
+	var old_base := (BASE_MP + float(player.level) * MP_PER_LV) * PlayerClass.mult("mpMult")
+	var combat_core := (BASE_HP + float(player.level) * HP_PER_LV \
+		+ float(_base_attack()) * HP_PER_ATK + float(_base_defense()) * HP_PER_DEF) \
+		* PlayerClass.mult("hpMult")
+	var base := maxf(old_base, float(roundi(combat_core * MAGE_MANA_CORE_RATIO)))
+	var pct := float(player.get("mpPercent", 0.0)) + float(b.get("mpPercent", 0.0))
+	var flat := float(player.get("mpFlat", 0.0)) + float(b.get("mp", 0.0))
+	return int(round(_scaled(base * (1.0 + pct) + flat * PlayerClass.mult("mpMult"))))
 
 ## 技能实际法力消耗（**唯一口径入口**，工程 98 R3）。
 ## 法师技能按 `manaCostPct`（最大法力百分比）计费；武士仍是固定 `manaCost`。
@@ -2134,10 +2153,12 @@ func _level_up() -> void:
 ## ⚠ 调用前必须已恢复 `equipment` —— `max_hp()` 依赖装备加成，否则 HP 结转比例会算错。
 func align_baseline_stats() -> void:
 	var ratio := float(player.hp) / float(maxi(1, max_hp()))
+	var mp_ratio := float(player.mp) / float(maxi(1, max_mp()))
 	player.attack = maxi(int(player.attack), Balance.base_attack(int(player.level)))
 	player.defense = maxi(int(player.defense), Balance.base_defense(int(player.level)))
 	# HP 按比例结转而不是补满：读档时玩家可能正在残血，补满等于白送一次治疗。
 	player.hp = clampi(int(round(float(max_hp()) * ratio)), 0, max_hp())
+	player.mp = clampi(int(round(float(max_mp()) * mp_ratio)), 0, max_mp())
 
 ## 广播全部数值（HUD 初始化 / 读档后同步）。
 func emit_all() -> void:

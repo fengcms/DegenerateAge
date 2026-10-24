@@ -172,6 +172,7 @@ DEFAULT_TESTS = [
     # + **魔法盾**（扣血与扣蓝两侧夹逼 / 断蓝即全额 / 升阶真生效 / 武士逐位不变）
     # + **减速**（移速乘子与到期恢复 / Boss 时长减半 / 未命中不减速）。
     "ClassFrameTest",
+    "MageResourceGrowthTest",
     "MageRangedTest",
     "MageManaTest",
     "MagicShieldTest",

@@ -849,6 +849,12 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.auto_pickup_on = false
 	# M10-0：旧档的基础攻防是线性成长的（每级 +2/+1），这里按曲线基线幂等抬一次。
 	# 必须放在 `GameState.equipment` 恢复**之后**（max_hp 依赖装备加成），且不落档、不写标记。
+	# 工程 103：旧法师档先按旧蓝池还原百分比，再由新上限接收该百分比。
+	# 标记随 player 正常落档，读同一份新版存档不会反复补蓝；武士旧值不变。
+	if int(GameState.player.get("manaFormulaVersion", 0)) < GameState.MANA_FORMULA_VERSION:
+		var old_mp_ratio := clampf(float(GameState.player.mp) / float(maxi(1, GameState.legacy_max_mp())), 0.0, 1.0)
+		GameState.player.mp = int(round(float(GameState.max_mp()) * old_mp_ratio))
+		GameState.player.manaFormulaVersion = GameState.MANA_FORMULA_VERSION
 	GameState.align_baseline_stats()
 
 	# C-P3-4：菜单流程态同属会话运行态（不落档）。成功读到存档即代表进入世界，
@@ -916,6 +922,9 @@ func _migrate_player(raw: Dictionary) -> Dictionary:
 	# 工程 98：职业字段与 `autoRepairEquip` 同口径 —— 默认表打底 + 旧字段覆盖，
 	# **旧档因此自动补成 warrior，不 bump schema**。非法值（被改档）回退默认，不拒档。
 	out["classId"] = PlayerClass.normalize(String(out.get("classId", "")))
+	# 缺字段即旧法力公式；不能直接套 default_player 的新版标记，否则旧蓝量只剩小比例。
+	if not raw.has("manaFormulaVersion"):
+		out["manaFormulaVersion"] = 0
 	return _deep_int(out) as Dictionary
 
 func _migrate_settings(raw: Dictionary) -> Dictionary:
@@ -1358,6 +1367,8 @@ func _is_valid_save(raw: Variant) -> bool:
 		var maximum: float = GameState.PLAYER_LEVEL_CAP if key == "level" else 9007199254740991.0
 		if not _whole(data.player.get(key), 1.0 if key == "level" else 0.0, maximum):
 			return _reject("player.%s 非法或越界" % key)
+	if not _whole(data.player.get("manaFormulaVersion"), 0, GameState.MANA_FORMULA_VERSION):
+		return _reject("player.manaFormulaVersion 非法")
 	# C-P3-1：与战斗侧一致的上界（产品 03 §3.8 / Combat 常量），拦明显异常或被篡改的值。
 	for key in ["attack", "defense", "dodge", "block"]:
 		if not _number(data.player.get(key)) or float(data.player[key]) > GameState.PLAYER_STAT_CAP:

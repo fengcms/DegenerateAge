@@ -1,5 +1,5 @@
 extends Node
-## 工程 98 第一层：职业框架契约。
+## 工程 98 第一层与工程 103 法力成长：职业框架契约。
 ##
 ## 这一层最怕的不是「法师不好玩」，而是**改坏了武士**。所以本文件一半的断言是「武士逐位不变」：
 ## 默认职业全系数 1.0、L1 血蓝仍是 102 / 35、防御不降。另一半守三条容易静默失效的规则：
@@ -90,8 +90,8 @@ func _test_derivation_layers() -> void:
 	var def_m := GameState.total_defense()
 	check(hp_m == int(round(float(hp_w) * 0.64)),
 		"法师血池应恰为武士的 0.64（%d → %d，实际 %d）" % [hp_w, int(round(float(hp_w) * 0.64)), hp_m])
-	check(mp_m == int(round(float(mp_w) * 2.0)),
-		"法师蓝池应恰为武士的 2.0 倍（%d → %d，实际 %d）" % [mp_w, int(round(float(mp_w) * 2.0)), mp_m])
+	check(mp_m > mp_w * 2 and float(mp_m) / float(hp_m) >= 1.1,
+		"法师高等级蓝池须随攻防成长并超过自身血量（武士蓝 %d / 法师血 %d、蓝 %d）" % [mp_w, hp_m, mp_m])
 	check(atk_m == int(round(float(atk_w) * 1.08)), "法师攻击应恰为武士的 1.08 倍（%d → %d）" % [atk_w, atk_m])
 	check(def_m == def_w, "两职业防御必须相同（承伤是差值公式，防御打九折 = 承伤 +39%）")
 	# 血池只放一次：若 atkMult 误入 `_base_attack()`，法师血会被放大两遍（0.64×1.08 的反向）。
