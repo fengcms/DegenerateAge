@@ -17,8 +17,11 @@ class TestEnemy extends Node2D:
 
 var _failures: Array[String] = []
 
+## 在实际空间距离下验证法师群攻、追击、低蓝与受阻回退。
 func _ready() -> void:
 	_test_cluster_rotation()
+	_test_nearby_swarm_while_target_far()
+	_test_cone_uses_nearby_anchor()
 	_test_single_target_standoff()
 	_test_low_mana_and_blocked_position()
 	GameState.reset_to_defaults()
@@ -28,6 +31,7 @@ func _ready() -> void:
 	else:
 		get_tree().quit(1)
 
+## 建立隔离法师及自动战斗节点，关闭引擎心跳以便逐次推进决策。
 func _setup() -> Dictionary:
 	GameState.reset_to_defaults("mage")
 	GameState.current_map = "wild_trial"
@@ -43,12 +47,14 @@ func _setup() -> Dictionary:
 	GameState.start_buff("magic_shield")
 	return {"player": player, "pilot": pilot}
 
+## 在指定世界像素坐标放置无攻击行为的可命中敌人。
 func _enemy(point: Vector2) -> TestEnemy:
 	var enemy := TestEnemy.new()
 	add_child(enemy)
 	enemy.global_position = point
 	return enemy
 
+## 双怪从远端接近后依次验证陨石、近距火焰与冰咆哮。
 func _test_cluster_rotation() -> void:
 	var nodes := _setup()
 	var player: PlayerCharacter = nodes.player
@@ -79,6 +85,46 @@ func _test_cluster_rotation() -> void:
 	partner.queue_free()
 	player.queue_free()
 
+## 原目标在群攻射程外时，先清理玩家身边两只怪，且不丢失原追击目标。
+func _test_nearby_swarm_while_target_far() -> void:
+	var nodes := _setup()
+	var player: PlayerCharacter = nodes.player
+	var pilot: AutoBattle = nodes.pilot
+	var target := _enemy(player.global_position + Vector2(8.0 * TILE, 0))
+	var left := _enemy(player.global_position + Vector2(2.0 * TILE, -0.3 * TILE))
+	var right := _enemy(player.global_position + Vector2(2.0 * TILE, 0.3 * TILE))
+	pilot._target = target
+	pilot._tick(0.016)
+	_check(player.skill_cooldown("flame_burst") > 0.0 and left.hits > 0 and right.hits > 0,
+		"锁定目标远离时应优先对身边两只怪施放自中心群攻")
+	_check(target.hits == 0 and pilot._target == target and player.auto_move == Vector2.ZERO,
+		"局部解围不能误伤远处目标、改选目标或继续追击移动")
+	target.queue_free()
+	left.queue_free()
+	right.queue_free()
+	player.queue_free()
+
+## 自中心群攻都在冷却时，扇形技能须以身边怪为朝向锚点而非远处锁定目标。
+func _test_cone_uses_nearby_anchor() -> void:
+	var nodes := _setup()
+	var player: PlayerCharacter = nodes.player
+	var pilot: AutoBattle = nodes.pilot
+	var target := _enemy(player.global_position + Vector2(5.8 * TILE, 0))
+	var left := _enemy(player.global_position + Vector2(3.0 * TILE, -0.25 * TILE))
+	var right := _enemy(player.global_position + Vector2(3.0 * TILE, 0.25 * TILE))
+	player.skill_cooldowns["meteor"] = 10.0
+	player.skill_cooldowns["flame_burst"] = 10.0
+	pilot._target = target
+	pilot._tick(0.016)
+	_check(player.skill_cooldown("frost_roar") > 0.0 and left.hits > 0 and right.hits > 0,
+		"远处锁定目标不可使近身冰咆哮误判可用却施放失败")
+	_check(target.hits == 0 and pilot._target == target, "扇形施法后保持原追击目标")
+	target.queue_free()
+	left.queue_free()
+	right.queue_free()
+	player.queue_free()
+
+## 单怪不消耗范围技能，保持法师的远程停步与雷电术分工。
 func _test_single_target_standoff() -> void:
 	var nodes := _setup()
 	var player: PlayerCharacter = nodes.player
@@ -93,6 +139,7 @@ func _test_single_target_standoff() -> void:
 	target.queue_free()
 	player.queue_free()
 
+## 低蓝时保护盾资源，近距进位受阻时也不拉黑原本可攻击目标。
 func _test_low_mana_and_blocked_position() -> void:
 	var nodes := _setup()
 	var player: PlayerCharacter = nodes.player
@@ -117,6 +164,7 @@ func _test_low_mana_and_blocked_position() -> void:
 	partner.queue_free()
 	player.queue_free()
 
+## 记录失败原因以让隔离运行器得到可靠退出码。
 func _check(ok: bool, reason: String) -> void:
 	if not ok:
 		_failures.append(reason)

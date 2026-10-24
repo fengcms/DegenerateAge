@@ -347,10 +347,22 @@ func _tick(delta: float) -> void:
 
 	var target2d := _target as Node2D
 	var dist := _player.global_position.distance_to(target2d.global_position)
+	# 法师被身边敌群围住时先向实际可命中的敌群施法，再继续追远处的原目标。
+	# 自中心范围技不把远处锁定目标传给 cast_skill；扇形技使用范围内的施法朝向目标。
+	var area_cast: Dictionary = {}
+	if PlayerClass.is_ranged() and _mana_allows_attack() \
+			and not MapService.is_in_safe_area(GameState.current_map, _player.global_position):
+		area_cast = _best_mage_area_cast(_target)
+		if not area_cast.is_empty():
+			var area_skill: Dictionary = area_cast.skill
+			if _player.cast_skill(String(area_skill.id), area_cast.anchor):
+				_player.set_auto_move(Vector2.ZERO)
+				_set_state(State.ATTACK_TARGET)
+				return
 	# 常态按职业普攻射程停步；法师仅在已有敌群且近距范围技可用时短暂进位。
 	var reach := _player.attack_range_px() - STOP_GAP
 	if dist <= reach and not MapService.is_in_safe_area(GameState.current_map, _player.global_position) \
-			and _try_mage_area_position(delta, target2d):
+			and area_cast.is_empty() and _try_mage_area_position(delta, target2d):
 		return
 
 	# 安全区只屏蔽伤害，不屏蔽寻怪/移动。靠近边缘目标时先穿出边界再攻击。
@@ -378,9 +390,10 @@ func _tick(delta: float) -> void:
 	if not _mana_allows_attack():
 		_player.try_auto_attack(_target)
 		return
-	var skill := _best_area_skill(_target)
-	if not skill.is_empty() and _player.cast_skill(String(skill.id), _target):
-		return
+	if not PlayerClass.is_ranged():
+		var skill := _best_area_skill(_target)
+		if not skill.is_empty() and _player.cast_skill(String(skill.id), _target):
+			return
 	var single := _best_single_skill(_target)
 	if not single.is_empty() and _player.cast_skill(String(single.id), _target):
 		return
@@ -433,11 +446,10 @@ func _tick_mage_shield() -> bool:
 	return _player.cast_skill("magic_shield")
 
 ## 在正常远程射程内，只为能命中至少两只敌人的近距法术向前进位。
+## 调用方已尝试当前位置可释放的群攻；这里不重复扫描附近敌群。
 ## 路线不可用或遭动态碰撞时直接在当前射程攻击，不把原本能打的目标拉黑。
 func _try_mage_area_position(delta: float, target: Node2D) -> bool:
 	if not PlayerClass.is_ranged() or not _player.is_attack_ready() or not _mana_allows_attack():
-		return false
-	if not _best_area_skill(target).is_empty():
 		return false
 	var point := _mage_area_position(target)
 	if not point.is_finite() or _player.global_position.distance_to(point) <= 10.0:
@@ -547,6 +559,8 @@ func _skill_for_choice(skill: Dictionary) -> Dictionary:
 ## R4-d：评分从「命中数优先」升级为「命中数 × 总系数」——否则 3 段的灵刃风暴
 ## （总系数 3.0）会被 1.4 的裂地斩按便宜优先挤掉，多段能力等于没接线。
 func _best_area_skill(target: Node) -> Dictionary:
+	if PlayerClass.is_ranged():
+		return _best_mage_area_cast(target).get("skill", {})
 	if not _player.is_attack_ready():
 		return {}
 	var chosen := {}
@@ -563,6 +577,68 @@ func _best_area_skill(target: Node) -> Dictionary:
 		if value > best_value or (is_equal_approx(value, best_value) and
 			GameState.skill_mana_cost(skill) < GameState.skill_mana_cost(chosen)):
 			chosen = skill
+			best_value = value
+	return chosen
+
+## 为法师挑选能真实命中至少两只敌人的范围技与合法施法目标。
+## 自中心圆形技能用空锚点；扇形从原目标及最近六个候选中找朝向，最坏只做常数次敌群扫描。
+func _best_mage_area_cast(target: Node) -> Dictionary:
+	if not PlayerClass.is_ranged() or not _player.is_attack_ready():
+		return {}
+	var ready_skills: Array[Dictionary] = []
+	var max_reach := 0.0
+	for skill_id in MAGE_AREA_SKILLS:
+		var skill := SkillProgression.current(skill_id)
+		if skill.is_empty() or choose_skill([_skill_for_choice(skill)], int(GameState.player.level),
+				int(GameState.player.mp), _player.skill_cooldowns, 2).is_empty():
+			continue
+		ready_skills.append(skill)
+		max_reach = maxf(max_reach, float(skill.get("range", 0.0)) * Iso.TILE_W)
+	if ready_skills.is_empty():
+		return {}
+	var nearby: Array[Node2D] = []
+	for raw in get_tree().get_nodes_in_group("enemies"):
+		if not _player.valid_target(raw):
+			continue
+		var enemy := raw as Node2D
+		if _player.global_position.distance_to(enemy.global_position) <= max_reach:
+			nearby.append(enemy)
+	if nearby.size() < 2:
+		return {}
+	nearby.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		return _player.global_position.distance_squared_to(a.global_position) \
+			< _player.global_position.distance_squared_to(b.global_position))
+	var chosen: Dictionary = {}
+	var best_value := 0.0
+	for skill in ready_skills:
+		var reach := float(skill.get("range", 0.0)) * Iso.TILE_W
+		var anchor: Node2D = null
+		var hits := 0
+		if String(skill.get("shape", "")) == "circle":
+			for enemy in nearby:
+				if _player.global_position.distance_to(enemy.global_position) <= reach:
+					hits += 1
+		else:
+			var candidates: Array[Node2D] = []
+			if target is Node2D and nearby.has(target as Node2D) \
+					and _player.global_position.distance_to((target as Node2D).global_position) <= reach:
+				candidates.append(target as Node2D)
+			for enemy in nearby:
+				if candidates.size() >= 6:
+					break
+				if not candidates.has(enemy) and _player.global_position.distance_to(enemy.global_position) <= reach:
+					candidates.append(enemy)
+			for candidate in candidates:
+				var count := _player.skill_targets(skill, candidate).size()
+				if count > hits:
+					hits = count
+					anchor = candidate
+		if hits < 2:
+			continue
+		var value := float(hits) * skill_value(skill)
+		if chosen.is_empty() or value > best_value or (is_equal_approx(value, best_value) \
+				and GameState.skill_mana_cost(skill) < GameState.skill_mana_cost(chosen.skill)):
+			chosen = {"skill": skill, "anchor": anchor, "hits": hits}
 			best_value = value
 	return chosen
 
