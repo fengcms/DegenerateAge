@@ -186,6 +186,11 @@ DEFAULT_TESTS = [
     # 但会让任务箭头常亮指向一格空地。守「kill 任务引用的精英必须有墓碑」+ 文案不再写死
     # Boss + Boss 侧 17 处不被波及 + 真标记冷却后原地长出墓碑的行为往返。
     "QuestTargetRespawnHintTest",
+    # 工程 101 面板不再阻断挂机：A 12 类业务面板都不切「对话中暂停」/ B 行为层真在移动
+    # / C 真暂停仍冻结（守边界，别把暂停一起放开）/ D 面板打开时自动拾取仍生效
+    # / E 死亡仍关挂机。前身 NpcAutoBattleTest 的断言已按需求反向。
+    "NpcAutoBattleTest",
+    "PanelAutoBattleTest",
     "SmokeTest",
 ]
 

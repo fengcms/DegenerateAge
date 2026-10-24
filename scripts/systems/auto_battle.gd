@@ -90,7 +90,6 @@ const MAGE_MANA_RESUME := 0.40
 var _player: PlayerCharacter = null
 var _state: int = State.OFF
 var _phase: String = ""
-var _npc_dialog_suspended := false
 
 var _target: Node = null
 var _loot: Node = null
@@ -233,21 +232,9 @@ func _physics_process(delta: float) -> void:
 		_loot = null
 		_set_state(State.RECOVER, Localization.tr_key("ui.auto.sitting"))
 		return
-	if GameState.npc_dialog_open():
-		if not _npc_dialog_suspended:
-			_player.clear_travel_intent()
-			_target = null
-			_loot = null
-			_npc_dialog_suspended = true
-		_player.set_auto_move(Vector2.ZERO)
-		_set_state(State.RECOVER, Localization.tr_key("ui.auto.npc_dialog"))
-		return
-	if _npc_dialog_suspended:
-		_npc_dialog_suspended = false
-		_manual_t = 0.0
-		_set_state(State.SEARCH_TARGET)
-
-	# NPC 会话在上方单独暂停自动决策；普通面板中的手动操作仍可接管挂机。
+	# 工程 101：面板打开**不再**打断挂机（原 NPC 会话档已拆）。挂机停不停只由
+	# 「世界在不在跑」决定 —— 真正的暂停由引擎冻结本节点，下面这段是给
+	# PROCESS_MODE 调整后留的显式兜底，正常路径不会走到。
 	if get_tree().paused:
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.RECOVER, Localization.tr_key("ui.auto.paused"))

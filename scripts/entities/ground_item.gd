@@ -128,8 +128,8 @@ func _ready() -> void:
 		area.mouse_entered.connect(_on_hover.bind(true))
 		area.mouse_exited.connect(_on_hover.bind(false))
 	queue_redraw()
-	# 生成即认领（方案 C 核心）：不再依赖玩家走近
-	if auto_claim and GameState.auto_pickup_on and not GameState.npc_dialog_open():
+	# 生成即认领（方案 C 核心）：不再依赖玩家走近。工程 101 起面板打开也照捡。
+	if auto_claim and GameState.auto_pickup_on:
 		_try_claim()
 	elif persistent:
 		_register_unclaimed.call_deferred()
@@ -178,8 +178,8 @@ func _physics_process(delta: float) -> void:
 	# 工程 89：玩家丢弃物只认点击 —— 否则丢在脚边会被立刻捡回去。
 	if manual_only:
 		return
-	# G 关闭时任何地面物都必须由玩家点击拾取。
-	if not GameState.auto_pickup_on or GameState.npc_dialog_open():
+	# G 关闭时任何地面物都必须由玩家点击拾取。工程 101 起面板打开不作限制。
+	if not GameState.auto_pickup_on:
 		return
 	# 靠近自动拾取（9.9）
 	var player := _get_player()

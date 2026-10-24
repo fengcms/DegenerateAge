@@ -64,7 +64,9 @@ func _ready() -> void:
 	dialogue._open_fusion(EquipmentFusion.GOLD_TO_PURPLE)
 	await get_tree().process_frame
 	panel._resize()
-	check(panel.visible and bag.visible and GameState.npc_dialog_open(), "合成与背包并开并暂停自动战斗")
+	# 工程 101：工作台不再算「NPC 会话」，不接管世界输入 ⇒ 背后挂机照跑。
+	check(panel.visible and bag.visible and not GameState.world_controls_blocked(),
+		"合成与背包并开且不接管世界输入")
 	var logical: Vector2 = panel.get_viewport_rect().size / SettingsRuntime.ui_scale_value()
 	check(panel._center.position.x >= 0.0 and panel._center.position.y >= 0.0
 		and panel._center.position.y + panel._center.size.y <= logical.y + 1.0
@@ -105,7 +107,7 @@ func _ready() -> void:
 	check(GameState.inventory_used() == 1 and String(_only_item().get("quality", "")) == "legendary",
 		"合成确认仅产一件紫装")
 	panel.set_open(false)
-	check(bag.visible and not GameState.npc_dialog_open(), "关闭工作台保留背包并结束 NPC 会话")
+	check(bag.visible, "关闭工作台保留背包")
 	panel._on_requested(EquipmentFusion.GOLD_TO_PURPLE)
 	bag.set_open(false)
 	check(not panel.visible, "关闭会话中的背包也关闭合成工作台")

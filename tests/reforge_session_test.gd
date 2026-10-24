@@ -72,7 +72,8 @@ func _test_open_opens_bag() -> void:
 	_panel.set_open(true)
 	check(_panel.visible, "重铸面板应打开")
 	check(_bag.visible, "打开重铸应自动打开背包")
-	check(GameState.npc_dialog_open(), "重铸会话应暂停自动战斗挂机")
+	# 工程 101：面板打开不再打断挂机，也不接管世界输入（原「暂停自动战斗」断言已反向）。
+	check(not GameState.world_controls_blocked(), "重铸会话不接管世界输入，背后挂机照常")
 	var selected: Dictionary = _panel._selected_item()
 	check(String(selected.get("instanceId", "")) == String(target.get("instanceId", "")),
 		"默认应选中背包里的目标装备")

@@ -1,9 +1,11 @@
 extends Node
-## NPC 对话回归：验证挂机暂停、手动移动与会话关闭后的恢复，不写正式存档。
+## NPC 面对面会话回归（工程 101 反转）：面板打开**不再**打断挂机。
+## 保留的边界是「F / 图标在面板打开时仍可开关」与「手动输入仍能接管挂机」。
+## 不写正式存档。
 
 var failures: Array[String] = []
 
-## 构造真实货郎与背包会话，检查自动决策和玩家手动输入的边界。
+## 构造真实货郎会话，检查自动决策照常运行、手动输入仍可接管。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	var main := preload("res://scenes/Main.tscn").instantiate()
@@ -18,17 +20,26 @@ func _ready() -> void:
 	EventBus.shop_open_requested.emit("peddler_camp")
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	check(shop.visible and GameState.npc_dialog_open(), "货郎对话标记为 NPC 会话")
-	check(GameState.auto_battle_on and pilot.current_phase() == Localization.tr_key("ui.auto.npc_dialog")
-		and player.auto_move == Vector2.ZERO, "对话中保留 F 开关并停止自动移动")
+	# 前置防空跑：面板本身要真的开着，否则下面每条「不停战」都是空转通过。
+	check(shop.visible, "货郎面板真的打开（前置）")
+	# 判据一（文本层）：不再切进「对话中暂停」这个 phase。
+	check(GameState.auto_battle_on and pilot.current_phase() != Localization.tr_key("ui.auto.npc_dialog"),
+		"打开货郎不把挂机切成暂停态")
+	# 判据二（行为层）：30 帧内出现过非零移动意图 —— 光看文案不变会被
+	# 「守卫把整段决策跳过」骗过去。
+	var moved := false
+	for _i in range(30):
+		await get_tree().physics_frame
+		if player.auto_move != Vector2.ZERO:
+			moved = true
+			break
+	check(moved, "货郎打开时挂机仍产生移动意图（行为层）")
 	var before_manual := player.global_position
 	Input.action_press("move_left")
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	Input.action_release("move_left")
-	check(player.global_position.distance_to(before_manual) > 1.0
-		and pilot.current_phase() == Localization.tr_key("ui.auto.npc_dialog"),
-		"NPC 对话时仍能手动移动，但挂机决策保持暂停")
+	check(player.global_position.distance_to(before_manual) > 1.0, "货郎打开时仍能手动移动")
 	var f := InputEventAction.new()
 	f.action = "auto_battle"
 	f.pressed = true
@@ -42,9 +53,8 @@ func _ready() -> void:
 	shop.set_open(false)
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	check(not GameState.npc_dialog_open() and GameState.auto_battle_on
-		and pilot.current_phase() != Localization.tr_key("ui.auto.npc_dialog"),
-		"关闭 NPC 对话后保留自动战斗开关并恢复决策")
+	check(GameState.auto_battle_on and pilot.current_phase() != Localization.tr_key("ui.auto.npc_dialog"),
+		"关闭货郎后保留自动战斗开关且仍非暂停态")
 	check(GameState.panel_open, "关闭货郎后背包保留打开")
 	main.queue_free()
 	await get_tree().process_frame

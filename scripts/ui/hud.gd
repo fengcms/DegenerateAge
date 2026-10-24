@@ -187,8 +187,9 @@ func _refresh_auto() -> void:
 		_auto_label.text = Localization.tr_key("ui.hud.p007") % [_auto_phase if not _auto_phase.is_empty() else Localization.tr_key("ui.hud.p008"), tail]
 		var col := COL_AUTO_OVERRIDE if _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) else COL_AUTO_ON
 		_auto_label.add_theme_color_override("font_color", col)
+	# 工程 101：面板打开不再算「暂停」，只有打坐 / 手动接管 / 真暂停才打叉。
 	var paused := sitting or _auto_phase.begins_with(Localization.tr_key("ui.auto.manual")) \
-		or _auto_phase in [Localization.tr_key("ui.auto.paused"), Localization.tr_key("ui.auto.npc_dialog")]
+		or _auto_phase == Localization.tr_key("ui.auto.paused")
 	_battle_icon.active = _auto_battle
 	_battle_icon.paused = _auto_battle and paused
 	_battle_icon.tooltip_text = "%s · F" % _auto_label.text

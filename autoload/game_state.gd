@@ -1890,9 +1890,9 @@ func toggle_auto_pickup() -> bool:
 
 ## 常驻浮窗面板（F-P3-1）：四者可彼此并开，其余面板打开时它们统一关闭。
 const FLOATING_PANEL_IDS := ["inventory", "character", "skill", "mount"]
-## NPC 会话面板：打开期间暂停自动战斗挂机（普通可并开的信息面板不影响自动决策）。
-const NPC_DIALOG_PANEL_IDS := ["shop", "quest", "carter", "blacksmith", "warehouse", "upgrade", "reforge", "equipment_fusion"]
 ## 真正接管键盘的流程面板；普通信息与 NPC 面板可在操作角色时保持打开。
+## 工程 101：不再有「NPC 会话面板」这一档 —— 面板打开一律不打断挂机，
+## 挂机停不停只由「世界在不在跑」决定（引擎暂停 / 死亡），不由面板决定。
 const WORLD_INPUT_BLOCKING_PANEL_IDS := ["menu", "settings", "save", "death", "equipment_confirm"]
 
 ## 登记 / 注销一个已打开的面板；panel_open 只描述可见状态，不再代表世界输入禁用。
@@ -1929,13 +1929,6 @@ func panels_coexist(opened_id: String, self_id: String) -> bool:
 			or (opened_id == "inventory" and self_id == "reforge"):
 		return true
 	return opened_id in FLOATING_PANEL_IDS and self_id in FLOATING_PANEL_IDS
-
-## 仅 NPC 会话暂停挂机。
-func npc_dialog_open() -> bool:
-	for panel_id in NPC_DIALOG_PANEL_IDS:
-		if _open_panels.has(panel_id):
-			return true
-	return false
 
 # ---- 货郎交易（6.4；算价与物品构造见 scripts/systems/shop.gd）----
 
