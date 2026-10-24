@@ -82,6 +82,10 @@ const WIRED_SINGLE_SKILLS: Array[String] = ["armor_break"]
 ## 火焰喷发 / 冰咆哮 / 陨石术走 `hits` + `debuff`（已实现），雷电术走 `defensePierce`（已实现）。
 const MAGE_AREA_SKILLS: Array[String] = ["flame_burst", "frost_roar", "meteor"]
 const MAGE_SINGLE_SKILLS: Array[String] = ["lightning"]
+## 只为近距范围技寻找安全施法位；陨石术在普攻停步距离外也够得着。
+const MAGE_CLOSE_AREA_SKILLS: Array[String] = ["flame_burst", "frost_roar"]
+const MAGE_POSITION_RECHECK := 0.35
+const MAGE_POSITION_RETRY := 2.0
 ## 工程 98 §4.6 低蓝保盾：低于 25% 停攻击技能、回到 40% 恢复。
 ## 不实现这条，挂机法师会在蓝见底时「盾断 + 继续挥技能」，两头落空。
 const MAGE_LOW_MANA := 0.25
@@ -117,6 +121,10 @@ var _roam_stuck_t := 0.0
 var _roam_stuck_count := 0
 ## 工程 98 §4.6：法师低蓝保盾的滞回状态（低于 25% 进、回到 40% 出）。
 var _mana_saver := false
+var _mage_position_t := 0.0
+var _mage_position_retry_t := 0.0
+var _mage_position_target_id := 0
+var _mage_position_point := Vector2.INF
 var _cave_nav := CaveNavigator.new()
 var _last_position := Vector2.INF
 
@@ -137,6 +145,7 @@ func _ready() -> void:
 
 ## 开启自动战斗时重置搜索节流。
 func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
+	_reset_mage_position()
 	if battle and _player != null:
 		_search_t = 0.0
 		_repath_t = 0.0
@@ -157,6 +166,7 @@ func reset_after_travel() -> void:
 	if _player == null:
 		return
 	_player.clear_travel_intent()
+	_reset_mage_position()
 	_target = null
 	_loot = null
 	_sticky_target = null
@@ -259,6 +269,7 @@ func _physics_process(delta: float) -> void:
 ## 输入事件到达即可取消旧决策，不依赖下一物理帧。
 func begin_manual_override() -> void:
 	_player.set_auto_move(Vector2.ZERO)
+	_reset_mage_position()
 	_target = null
 	_loot = null
 	# 手动接管是玩家的新指令：清掉粘性记忆，避免 1.5s 后自动战斗把人物带回原来的 Boss（4.6）。
@@ -275,6 +286,8 @@ func _tick(delta: float) -> void:
 	# 工程 95：自动四金合紫。放在所有分支之前 —— 追击 / 拾取 / 巡游任一状态下都该继续合成，
 	# 它不依赖拾取事件（背包里已有的存量料，一开开关也能被处理）。
 	_tick_auto_forge(delta)
+	_mage_position_t = maxf(0.0, _mage_position_t - delta)
+	_mage_position_retry_t = maxf(0.0, _mage_position_retry_t - delta)
 
 	# 受阻停留（3.14 ① 拉黑目标后的短暂停顿，避免同帧立即重选）
 	if _blocked_t > 0.0:
@@ -334,8 +347,11 @@ func _tick(delta: float) -> void:
 
 	var target2d := _target as Node2D
 	var dist := _player.global_position.distance_to(target2d.global_position)
-	# 工程 98 P2：停步距离必须跟**职业射程**走（法师 4 格）。改这一行即可让挂机在 4 格停住放技能。
+	# 常态按职业普攻射程停步；法师仅在已有敌群且近距范围技可用时短暂进位。
 	var reach := _player.attack_range_px() - STOP_GAP
+	if dist <= reach and not MapService.is_in_safe_area(GameState.current_map, _player.global_position) \
+			and _try_mage_area_position(delta, target2d):
+		return
 
 	# 安全区只屏蔽伤害，不屏蔽寻怪/移动。靠近边缘目标时先穿出边界再攻击。
 	if dist > reach or MapService.is_in_safe_area(GameState.current_map, _player.global_position):
@@ -415,6 +431,86 @@ func _tick_mage_shield() -> bool:
 			int(GameState.player.mp) < GameState.skill_mana_cost(skill):
 		return false
 	return _player.cast_skill("magic_shield")
+
+## 在正常远程射程内，只为能命中至少两只敌人的近距法术向前进位。
+## 路线不可用或遭动态碰撞时直接在当前射程攻击，不把原本能打的目标拉黑。
+func _try_mage_area_position(delta: float, target: Node2D) -> bool:
+	if not PlayerClass.is_ranged() or not _player.is_attack_ready() or not _mana_allows_attack():
+		return false
+	if not _best_area_skill(target).is_empty():
+		return false
+	var point := _mage_area_position(target)
+	if not point.is_finite() or _player.global_position.distance_to(point) <= 10.0:
+		return false
+	var direction := _direction_to(point)
+	if direction == Vector2.ZERO:
+		_mage_position_retry_t = MAGE_POSITION_RETRY
+		_player.set_auto_move(Vector2.ZERO)
+		return false
+	_tick_stuck(delta, false)
+	if _mage_position_retry_t > 0.0:
+		return false
+	_set_state(State.PATH_TO_TARGET)
+	_repath_t = maxf(0.0, _repath_t - delta)
+	if _repath_t <= 0.0:
+		_repath_t = REPATH_INTERVAL
+		_player.set_auto_move(direction)
+	return true
+
+## 每 0.35 秒至多检查两种近距技能 × 当前活动怪数；只接受直线路段可通行的施法位。
+func _mage_area_position(target: Node2D) -> Vector2:
+	if _mage_position_retry_t > 0.0:
+		return Vector2.INF
+	var target_id := target.get_instance_id()
+	if _mage_position_target_id == target_id and _mage_position_t > 0.0:
+		return _mage_position_point
+	_mage_position_target_id = target_id
+	_mage_position_t = MAGE_POSITION_RECHECK
+	_mage_position_point = Vector2.INF
+	var facing := _player.global_position.direction_to(target.global_position)
+	if facing == Vector2.ZERO:
+		return Vector2.INF
+	var ground := _cave_ground()
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	var best_value := 0.0
+	for skill_id in MAGE_CLOSE_AREA_SKILLS:
+		var skill := SkillProgression.current(skill_id)
+		if skill.is_empty() or choose_skill([_skill_for_choice(skill)], int(GameState.player.level),
+				int(GameState.player.mp), _player.skill_cooldowns, 2).is_empty():
+			continue
+		var range_px := float(skill.get("range", 0.0)) * Iso.TILE_W
+		var point := target.global_position - facing * (range_px - STOP_GAP)
+		if MapService.is_in_safe_area(GameState.current_map, point):
+			continue
+		if ground != null and not ground.cave.segment_walkable(_player.global_position, point):
+			continue
+		var hit_count := 0
+		for raw in enemies:
+			if not _player.valid_target(raw):
+				continue
+			var offset := (raw as Node2D).global_position - point
+			if offset.length() > range_px:
+				continue
+			if String(skill.get("shape", "")) == "cone" and offset.length() > 0.01 \
+					and facing.dot(offset.normalized()) < cos(PI / 4.0):
+				continue
+			hit_count += 1
+			if hit_count >= int(skill.get("maxTargets", 999)):
+				break
+		if hit_count < 2:
+			continue
+		var value := float(hit_count) * skill_value(skill)
+		if value > best_value:
+			best_value = value
+			_mage_position_point = point
+	return _mage_position_point
+
+## 手动接管、切图或重开挂机后废弃旧地图/旧位置算出的近距施法位。
+func _reset_mage_position() -> void:
+	_mage_position_t = 0.0
+	_mage_position_retry_t = 0.0
+	_mage_position_target_id = 0
+	_mage_position_point = Vector2.INF
 
 ## 工程 98 §4.6 低蓝保盾（滞回）：低于 25% 进省蓝态，回到 40% 才恢复。
 ## 武士恒为 true —— 这条策略只对「蓝是第二条血」的职业有意义。
@@ -709,7 +805,7 @@ func _can_pick(gi: GroundItem) -> bool:
 ##   ② 被击退 / 倒地：距离不降反增（`monster.gd` 的 SKILL_KNOCKBACK_DISTANCE / SKILL_KNOCKDOWN_DURATION）。
 ## 现在只对「角色本间隔内一步都没挪动（< STUCK_MOVE_EPS）」计数，连续 STUCK_LIMIT 次才拉黑改选——
 ## 这才是 3.14 ①「不可达」的本意：角色确实走不动，而不是「走得绕」。
-func _tick_stuck(delta: float) -> void:
+func _tick_stuck(delta: float, blacklist_on_failure: bool = true) -> void:
 	_stuck_t += delta
 	if _stuck_t < STUCK_INTERVAL:
 		return
@@ -721,7 +817,12 @@ func _tick_stuck(delta: float) -> void:
 		return
 	_stuck_count += 1
 	if _stuck_count >= STUCK_LIMIT:
-		_blacklist_target(_target)
+		if blacklist_on_failure:
+			_blacklist_target(_target)
+		else:
+			_stuck_count = 0
+			_mage_position_retry_t = MAGE_POSITION_RETRY
+			_player.set_auto_move(Vector2.ZERO)
 
 ## 目标短期拉黑并改选（寻路空 / 终点占位 / 连续无位移 → 3.14 ①）。
 func _blacklist_target(t: Node) -> void:
