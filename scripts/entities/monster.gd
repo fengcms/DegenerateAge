@@ -22,6 +22,14 @@ const LEASH_RANGE := 800.0     # 追击边界：离 spawn 点过远则返回（p
 const PATROL_RADIUS := 90.0    # 巡逻半径（px）
 const IDLE_TIME := 1.4         # 巡逻间停留（s）
 const REACH := 6.0             # 到达判定（px）
+## 工程 103（怪物重叠）：同类软分离 —— 不依赖物理碰撞层（怪物 mask 仍只有地形），
+## 在移动决策里并入排斥向量，避免多只怪收敛到同一像素点。
+## 触发间距 = 两者外观半径之和 × SEPARATION_KEEP；0.9 允许约 10% 视觉重叠，取 1 会来回抖动。
+const SEPARATION_KEEP := 0.9
+## 排斥方向在期望方向上的权重：过小摊不开，过大会让怪绕着玩家兜圈。
+const SEPARATION_WEIGHT := 0.9
+## 攻击态站位纠正的移速上限（px/s）：只为摊开叠点，不能变成「边走边打」。
+const ATTACK_SPACING_SPEED := 48.0
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
 ## R4-c：破甲幅度。`skills.json` 只写 `debuff.type/duration`，没写幅度；
 ## 取 −30% 与 `armor_break.defensePierce: 0.3` 同数，语义一致（Q-5）。
@@ -699,12 +707,15 @@ func _update_ai(delta: float) -> void:
 				_enter(State.RETURN)
 			elif dist > attack_range_px * 1.2:
 				_enter(State.CHASE)
-			elif _attack_cd <= 0.0:
-				# A3：判定完全数据驱动（`attackRange.kind == "ranged"`），不再额外加 `c2_` 前缀门。
-				if is_ranged:
-					_begin_projectile(player)
-				else:
-					_do_attack(player)
+			else:
+				# 工程 103：站桩的怪也要参与站位纠正，否则后来者会叠进同一像素点。
+				_hold_attack_spacing(player)
+				if _attack_cd <= 0.0:
+					# A3：判定完全数据驱动（`attackRange.kind == "ranged"`），不再额外加 `c2_` 前缀门。
+					if is_ranged:
+						_begin_projectile(player)
+					else:
+						_do_attack(player)
 		State.RETURN:
 			if _can_aggro(player, dist):
 				_enter(State.CHASE)
@@ -753,11 +764,55 @@ func _approach(target_pos: Vector2) -> void:
 	var to := _cave_nav.direction(ground, global_position, target_pos)
 	if to.length() < 0.001:
 		return
+	# 工程 103：先并入同类排斥，再做休整区判定 —— 被排斥后的方向同样不能踩进休息区。
+	var push := _separation_push()
+	if push.length() > 0.001:
+		to = (to + push.normalized() * SEPARATION_WEIGHT).normalized()
 	var step := to * current_move_speed() * get_physics_process_delta_time()
 	if MapService.is_in_rest_zone(GameState.current_map, global_position + step):
 		velocity = Vector2.ZERO
 		return
 	velocity = to * current_move_speed()
+
+## 同类排斥向量：长度 = 还差多少才到最小间距（px），方向由邻居指向自己。
+## Boss 是**不可推动的锚点**：自身不产生排斥位移，但仍会把普通怪推开（半径也更大）。
+## 邻居查询直接遍历 `enemies` 组：本图普通怪预算 32 只（打金图），每帧 O(N²) 可接受；
+## 若未来召唤物数量级上升，再改网格分桶。
+func _separation_push() -> Vector2:
+	if is_dead or _kind() == "boss":
+		return Vector2.ZERO
+	var push := Vector2.ZERO
+	for node in get_tree().get_nodes_in_group("enemies"):
+		var other := node as Monster
+		if other == null or other == self or other.is_dead:
+			continue
+		var min_dist := (radius + other.radius) * SEPARATION_KEEP
+		var offset := global_position - other.global_position
+		var dist := offset.length()
+		if dist >= min_dist:
+			continue
+		if dist < 0.001:
+			# 完全重合（例如刚召唤出来）：用实例 id 派生稳定角度，避免随机抖动让整堆抖成一团。
+			offset = Vector2.from_angle(float(get_instance_id() % 8) * TAU / 8.0)
+			dist = 0.001
+		push += offset / dist * (min_dist - dist)
+	return push
+
+## 攻击态站位纠正：ATTACK 不再走 `_approach`，站桩的怪会被后来者挤到同一位置。
+## 只在真实重叠时给一个很小的侧移；**不夹攻击范围** —— 被 Boss 之类的大体积锚点挡住时，
+## 位移会把怪挤出 ATTACK 阈值，状态机自然转 CHASE 重新绕位，比原地卡在身体里更好。
+func _hold_attack_spacing(_player: Node2D) -> void:
+	if move_speed_px <= 0.0:
+		return
+	var push := _separation_push()
+	if push.length() < 0.001:
+		return
+	var speed := minf(ATTACK_SPACING_SPEED, push.length() * 6.0)
+	var to := push.normalized()
+	var step := to * speed * get_physics_process_delta_time()
+	if MapService.is_in_rest_zone(GameState.current_map, global_position + step):
+		return
+	velocity = to * speed
 
 func _get_player() -> Node2D:
 	var p := get_tree().get_first_node_in_group("player")

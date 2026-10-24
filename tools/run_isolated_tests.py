@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 74 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 75 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -198,6 +198,9 @@ DEFAULT_TESTS = [
     # 端到端透传（防「额度上下文漏传 ⇒ 静默退回旧口径」）、同分排序稳定、空槽与破损口径不变、
     # 拾取驱逐与让位（含同分让位）。
     "SellGearQuotaTest",
+    # 工程 103 怪物重叠：追击与攻击两阶段都保持同类最小间距 / Boss 不可被推动但会挤开普通怪
+    # / 碰撞层不变（玩家仍可穿过怪群，ActorCollisionTest 的断言继续成立）。
+    "MonsterCrowdTest",
     "SmokeTest",
 ]
 
