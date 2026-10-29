@@ -26,6 +26,11 @@ const IDLE_MP_RATE := 0.02
 const SIT_HP_RATE := 0.03
 const SIT_MP_RATE := 0.05
 
+## 工程 107：减伤上限。数据侧（`data_loader._progression_effect_cap`）只放到 0.28，
+## 这里是**运行态防线** —— 数据被改坏或未来叠加多个减伤源时，不允许出现「无敌」。
+## 0.6 的含义：最坏情况仍有 40% 伤害进来，配合 `maxi(1, …)` 保证每次命中至少 1 点。
+const DAMAGE_REDUCE_CAP := 0.6
+
 ## 远程施法的投射物颜色（纯视觉，工程 98 §4.3）。缺省金黄。
 const SPELL_COLORS := {
 	"basic_fireball": "ffb347",
@@ -409,14 +414,34 @@ func apply_damage(amount: int) -> int:
 	_invuln = IFRAME
 	_stun = HITSTUN
 	_reset_regen_after_hit()
+	# 工程 107：减伤必须在**一切伤害分配之前**结算 —— 「减伤 20%」的产品语义是
+	# 「玩家总损失（血 + 蓝）下降 20%」。放到盾之后再减，被转嫁的那部分就吃不到减伤，
+	# 同样 20% 的数值实测总损失只降约 13%（乘法交换，但扣蓝份额不同）。
+	var reduced := _apply_damage_reduction(amount)
 	# 工程 98 Q4=A：魔法盾只把**一部分伤害**转成法力，余下照常扣血。
 	# 🔴 顺序不能反：先算转嫁（可能要读 mp），再扣血 —— 反过来会让「血已经归零」的帧去扣蓝。
-	var to_mana := _shield_absorb(amount)
-	var hp_amount := amount - to_mana
+	var to_mana := _shield_absorb(reduced)
+	var hp_amount := reduced - to_mana
 	var actual := mini(hp_amount, int(GameState.player.hp))
 	if hp_amount > 0 and GameState.damage_player(hp_amount):
 		_begin_death()
 	return actual
+
+## 工程 107：战意觉醒的减伤（`damageReducePct`）。返回减免后的伤害。
+##
+## 三条口径：
+## 1. **至少 1 点**：命中就该有代价。高减伤 + 高防御若能把伤害压到 0，等于造出一个
+##    安全区，而且会让 `apply_damage` 返回值 0 —— 那个 0 在既有调用点里表示「没打中/被无敌帧挡」，
+##    吸血与击退都会误判。
+## 2. **取整用 round**：与 `_shield_absorb` 的 `round` 一致，避免「减伤后转嫁」两处取整方向相反。
+## 3. 无该 buff 时**逐位返回原值**：武士不带战意觉醒、法师不带战意觉醒，路径与工程 98 完全相同。
+func _apply_damage_reduction(amount: int) -> int:
+	if amount <= 0:
+		return amount
+	var pct := clampf(GameState.buff_effect_total("damageReducePct"), 0.0, DAMAGE_REDUCE_CAP)
+	if pct <= 0.0:
+		return amount
+	return maxi(1, int(round(float(amount) * (1.0 - pct))))
 
 ## 魔法盾转嫁（工程 98 §4.5）。返回实际由法力承担的伤害（= 实际扣蓝量）。
 ##
@@ -649,6 +674,16 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 		GameState.spend_mp(mana_cost)
 		skill_cooldowns[skill_id] = GameState.cooldown_after_cdr(float(skill.get("cooldown", 0.0)))
 		_sync_magic_shield_visual()
+		# 工程 107：增益类技能也走同一张 `CAST_FX` 表。在此之前这里直接 `return`，
+		# **根本没有调用点** —— 数据里给战意觉醒写 `fx` 也不会出任何特效（配了等于没配）。
+		# 锚点取自身、半径传 0：`shape = self` 没有范围，声明 `DRAWS_AREA = true` 的 fx
+		# 会在守门测试里被判「自报半径与 range 不一致」，正好把误标挡住。
+		var self_aim := Vector2.RIGHT
+		if valid_target(locked_target):
+			self_aim = global_position.direction_to((locked_target as Node2D).global_position)
+			if self_aim == Vector2.ZERO:
+				self_aim = Vector2.RIGHT
+		_spawn_cast_fx(skill, skill_id, self, self_aim, 0.0)
 		return true
 	if _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
@@ -731,6 +766,13 @@ func skill_targets(skill: Dictionary, target: Node = null) -> Array[Node2D]:
 		result.push_front(target)
 	if shape == "cone" and result.size() > int(skill.get("maxTargets", 3)):
 		result.resize(int(skill.get("maxTargets", 3)))
+	# 工程 107：圆形也支持上限（灵刃风暴 8 只）。缺省 **0 = 不限** ⇒ 既有的旋风斩 / 火焰喷发 /
+	# 陨石逐位不变。⚠ 缺省值与 cone 的 3 不同是刻意的：cone 历史上就有 3 这个上限，
+	# 而 circle 一直是「范围内全命中」，给 0 才是「没写就是旧行为」。
+	# 取的是**最近的 N 只**（result 已按距离升序排好），不是随机也不是血量最低。
+	var circle_cap := int(skill.get("maxTargets", 0))
+	if shape == "circle" and circle_cap > 0 and result.size() > circle_cap:
+		result.resize(circle_cap)
 	# 单体技能（`shape=single`）在实现上曾是「半径内全员」—— 那与技能描述的单体语义相反，
 	# 会让 25 级的「单体穿透重击」变成隐形势 AoE。这里收敛为：有显式目标取目标，否则取最近一只。
 	if shape == "single":
@@ -791,6 +833,12 @@ const CAST_FX := {
 	"meteor": preload("res://scripts/systems/meteor_fx.gd"),
 	"flame_burst": preload("res://scripts/systems/flame_burst_fx.gd"),
 	"frost_roar": preload("res://scripts/systems/frost_roar_fx.gd"),
+	# 工程 107：武士五个主动技能。表里加行 + 数据里写 `fx`，不碰任何判定代码。
+	"earth_cleave": preload("res://scripts/systems/earth_cleave_fx.gd"),
+	"whirlwind": preload("res://scripts/systems/whirlwind_fx.gd"),
+	"battle_focus": preload("res://scripts/systems/battle_focus_fx.gd"),
+	"armor_break": preload("res://scripts/systems/armor_break_fx.gd"),
+	"spirit_storm": preload("res://scripts/systems/spirit_storm_fx.gd"),
 }
 
 ## 远程施法弹道速度（px/s）与时长上下限（工程 106 §3.1 / R3）。
@@ -916,7 +964,14 @@ func _apply_skill_debuff(t: Node, skill: Dictionary) -> void:
 	match String(row.get("type", "")):
 		"armorBreak":
 			if t.has_method("apply_armor_break"):
-				t.apply_armor_break(float(row.get("duration", 0.0)))
+				# 工程 107：幅度由数据给。**数据没写就不传**，让怪物侧用自己的缺省常量
+				# （`ARMOR_BREAK_SCALE = 0.7` ⇒ −30%，与工程 52 一致）—— 缺省值只留一处真相，
+				# 两处各写一份必然漂移。
+				var break_dur := float(row.get("duration", 0.0))
+				if row.has("defenseScale"):
+					t.apply_armor_break(break_dur, float(row.get("defenseScale")))
+				else:
+					t.apply_armor_break(break_dur)
 		"slow":
 			# 工程 98：冰咆哮。怪物侧 `apply_slow` 自己处理 Boss 减半（见 monster.gd），
 			# 这里不做职业 / 目标判断 —— 两个地方各写一份豁免规则必然漂移。

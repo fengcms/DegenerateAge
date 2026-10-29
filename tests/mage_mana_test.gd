@@ -1,8 +1,9 @@
 extends Node
-## 工程 98/103：法师攻击法术按加权容量计费、魔法盾按新最大法力计费。
+## 工程 98/103/107：攻击法术按加权容量计费、魔法盾按新最大法力计费、武士也已改为百分比。
 ##
-## 为什么不能沿用武士的固定蓝耗：装备把蓝池堆到 15 万，武士的 15—60 点蓝耗等于免费。
-## 法师若也写固定值，「高蓝」就只是数字，魔法盾也就没有压力。
+## 为什么不能沿用固定蓝耗：装备把蓝池堆到 15 万，15—60 点的技能蓝耗等于免费。
+## 法师若写固定值，「高蓝」就只是数字，魔法盾也就没有压力。工程 107 起武士吃的是同一个教训
+## （160 级 `mpFlat` 能堆到 7 万），所以武士也改成百分比 —— 见 `_test_warrior_scales_with_pool`。
 ##
 ## 守三件事：
 ##   ① 唯一口径 `GameState.skill_mana_cost()` 用新旧法力池加权，扩蓝确实增加可施法次数；
@@ -35,7 +36,7 @@ func _ready() -> void:
 	_test_cost_follows_max_mp()
 	_test_high_level_cast_budget()
 	_test_insufficient_mp()
-	_test_warrior_stays_fixed()
+	_test_warrior_scales_with_pool()
 	_test_tooltip_format()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
@@ -123,15 +124,26 @@ func _test_insufficient_mp() -> void:
 	player.queue_free()
 	enemy.queue_free()
 
-## 武士的固定蓝耗一个字节都不许动。
-func _test_warrior_stays_fixed() -> void:
+## 工程 107：武士也改成百分比耗蓝 —— 旧的「固定点耗」在高等级蓝池下等于免费
+## （160 级 `mpFlat` 能堆到 7 万，15—60 点摊薄到 0.1%）。所以这条从「武士不许动」
+## **反转为**「武士必须随蓝池走」，判据也从绝对值换成比例 + 同比例上升。
+func _test_warrior_scales_with_pool() -> void:
 	GameState.reset_to_defaults("warrior")
 	GameState.player.level = 30
 	var cleave: Dictionary = SkillProgression.current("earth_cleave")
-	check(int(cleave.get("manaCost", 0)) == 15, "武士裂地斩的基础蓝耗应仍为 15")
+	var pct := float(cleave.get("manaCostPct", 0.0))
+	check(pct > 0.0 and pct < 1.0, "武士裂地斩应配 manaCostPct（实际 %.3f）" % pct)
+	check(int(cleave.get("manaCost", 0)) == 0,
+		"配了 manaCostPct 就不该再留固定点耗：两套口径并存时谁生效取决于代码分支，读数据的人会算错")
+	var base_cost := GameState.skill_mana_cost(cleave)
 	GameState.player.mpFlat = 100000
-	check(GameState.skill_mana_cost(cleave) == 15,
-		"武士固定蓝耗不得随蓝池变化（实际 %d）" % GameState.skill_mana_cost(cleave))
+	var rich_cost := GameState.skill_mana_cost(cleave)
+	check(rich_cost > base_cost * 10,
+		"堆蓝池后耗蓝必须同比例上升（%d → %d）：否则「装备堆蓝」等于把技能变成免费" % [base_cost, rich_cost])
+	# 绝对判据：耗蓝 = round(当前蓝池 × 比例)，误差不超过 1 点取整。
+	var want := int(round(float(GameState.max_mp()) * pct))
+	check(absi(rich_cost - want) <= 1,
+		"耗蓝应为蓝池 × %.1f%%（期望 %d，实际 %d）" % [pct * 100.0, want, rich_cost])
 	GameState.player.mpFlat = 0
 
 ## 浮层文案：必须出现百分比且不残留 `%d` 原文（裸 % 遇带参格式化会静默返回原文）。

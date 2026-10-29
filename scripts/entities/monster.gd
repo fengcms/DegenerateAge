@@ -38,8 +38,9 @@ const ATTACK_SPACING_SPEED := 48.0
 ## Boss 不参与：Boss 是不可推动的锚点，且 `_stomp_radius` 的缺省半径复用了攻击射程。
 const MELEE_RANGE_FLOOR := 1.25
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
-## R4-c：破甲幅度。`skills.json` 只写 `debuff.type/duration`，没写幅度；
-## 取 −30% 与 `armor_break.defensePierce: 0.3` 同数，语义一致（Q-5）。
+## R4-c：破甲的**缺省**幅度（目标防御保留比例）。工程 107 起幅度由数据驱动
+## （`debuff.defenseScale`，破甲重击 1 阶 0.70 → 5 阶 0.58），常量只剩「数据没写时」的兜底值。
+## ⚠ 缺省必须等于旧值：0.70 ⇒ −30% 防御。改成别的数会让**所有**既有怪突然变脆，且零报错。
 const ARMOR_BREAK_SCALE := 0.7
 
 ## E1（工程文档 30 §4，创意 第三章/03）：首领场参考半径 18 格 / 脱战 5 秒归位回满。
@@ -144,6 +145,9 @@ var is_ranged: bool = false
 var defense_power := 0.0
 ## R4-c：破甲剩余时长（秒）。运行态，不落档；0 表示无减益（默认值 ⇒ 既有战斗不受影响）。
 var armor_break_left := 0.0
+## 工程 107：本次破甲的防御保留比例（0.70 = −30%，0.58 = −42%）。运行态、不落档。
+## 缺省即旧值 ⇒ 数据没写 `defenseScale` 时逐位等同于工程 52 的行为。
+var armor_break_scale := ARMOR_BREAK_SCALE
 ## 工程 98：冰咆哮减速。同样是运行态、不落档；`slow_left == 0` ⇒ 移速乘子恒 1.0（旧行为逐位不变）。
 var slow_pct := 0.0
 var slow_left := 0.0
@@ -572,13 +576,18 @@ func get_attack() -> float:
 func get_defense() -> float:
 	# R4-c：破甲期间防御打折；到期自然恢复，不写回 defense_power（模板值不可被污染）。
 	if armor_break_left > 0.0:
-		return defense_power * ARMOR_BREAK_SCALE
+		return defense_power * armor_break_scale
 	return defense_power
 
 ## R4-c：施加 / 续期破甲。重复命中取**较长**剩余时长，而不是叠加或缩短。
-func apply_armor_break(duration: float) -> void:
+## 工程 107：幅度同语义 —— 取**更强**（更小）的保留比例覆盖，不做叠乘（叠乘会让「1 阶 + 5 阶」变成
+## 谁先打谁决定强度，玩家无法预期）。
+func apply_armor_break(duration: float, scale: float = ARMOR_BREAK_SCALE) -> void:
 	if duration <= 0.0 or is_dead:
 		return
+	if armor_break_left <= 0.0:
+		armor_break_scale = ARMOR_BREAK_SCALE
+	armor_break_scale = minf(armor_break_scale, scale)
 	armor_break_left = maxf(armor_break_left, duration)
 
 func armor_break_remaining() -> float:

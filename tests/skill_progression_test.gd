@@ -37,8 +37,12 @@ func _ready() -> void:
 		if String(base.get("kind", "")) == "buff":
 			var effects: Dictionary = top.effects
 			if sid == "battle_focus":
-				_check(is_equal_approx(float(effects.attackPct), 0.26)
-					and is_equal_approx(float(effects.attackSpeedPct), 0.19), "战意觉醒 5 阶效果")
+				# 工程 107：战意觉醒不再给攻击，改成「减伤 + 攻速」。用 `.get()` 而不是 `.attackPct`：
+				# 点语法访问缺失键会 SCRIPT ERROR 并返回 null，整条用例链静默报废。
+				_check(is_equal_approx(float(effects.get("damageReducePct", 0.0)), 0.28)
+					and is_equal_approx(float(effects.attackSpeedPct), 0.19), "战意觉醒 5 阶效果（减伤 28% / 攻速 19%）")
+				_check(not effects.has("attackPct"),
+					"战意觉醒不应再有 attackPct：减伤已经占满这个槽位，两套输出口径并存会让定位重新模糊")
 			elif sid == "magic_shield":
 				_check(is_equal_approx(float(effects.get("damageToManaPct", 0.0)), 0.47), "魔法盾 5 阶转嫁")
 			else:
@@ -48,6 +52,31 @@ func _ready() -> void:
 			# `get()` 而不是 `.range`：没有射程字段的技能（自施法）两侧同为空，仍算「没暗改」。
 			_check(int(top.get("hits", 1)) == int(base.get("hits", 1)) and top.get("range") == base.get("range")
 				and top.cooldown == base.cooldown and top.manaCost == base.manaCost, "%s 不暗改段数/射程/冷却/耗蓝" % sid)
+			# 工程 107（B2-d）：debuff 也随阶成长。三件事各断一次 ——
+			# ① 类型不变；② 幅度**变强**（保留系数更小）；③ 是独立副本（`_resolved` 是共享缓存，
+			# 裸引用会被下游改脏，且下一次解析拿到的就是脏数据）。
+			if base.has("debuff"):
+				var base_db: Dictionary = base.debuff
+				var top_db: Variant = top.get("debuff")
+				_check(top_db is Dictionary
+					and String((top_db as Dictionary).get("type", "")) == String(base_db.get("type", "")),
+					"%s 的 5 阶 debuff 类型应与基础表一致" % sid)
+				_check(not is_same(top_db, base_db), "%s 的 5 阶 debuff 必须是独立副本" % sid)
+				# 只有破甲有「幅度」概念（防御保留系数）；减速的 value 是控制强度，本工程不动。
+				# 不加这一条分支会让冰咆哮被判成「破甲变弱」，而它根本没有 defenseScale 字段。
+				if String(base_db.get("type", "")) == "armorBreak":
+					var base_keep := float(base_db.get("defenseScale", 1.0))
+					var top_keep := 1.0
+					if top_db is Dictionary:
+						top_keep = float((top_db as Dictionary).get("defenseScale", 1.0))
+					_check(top_keep < base_keep,
+						"%s 的 5 阶破甲应更强（保留系数 %.2f 应 < 基础 %.2f）" % [sid, top_keep, base_keep])
+					_check(is_equal_approx(top_keep, 0.58),
+						"%s 的 5 阶破甲保留系数应为 0.58（−42%%），实际 %.2f" % [sid, top_keep])
+				else:
+					_check(top_db is Dictionary
+						and is_equal_approx(float((top_db as Dictionary).get("value", 0.0)), float(base_db.get("value", 0.0))),
+						"%s 的 5 阶控制强度应保持不变（本工程只改破甲幅度）" % sid)
 	var original := SkillProgression.resolve("earth_cleave", 2)
 	var valid_config: Array = (config as Array).duplicate(true)
 	var broken_config: Array = valid_config.duplicate(true)

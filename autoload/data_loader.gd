@@ -50,6 +50,12 @@ const KEY_FIELDS := {
 ## `data_loader` 目前完全不引用 `GameState`，加引用会引入 autoload 初始化顺序耦合）。
 const MAX_QUEST_REQUIRES_LEVEL := 9999
 
+## 工程 107：破甲幅度（`debuff.defenseScale` = 目标防御的**保留比例**）的合法下界。
+## 1.0 必然非法（等于没破甲）；0.55 ⇒ 最多破 45% 防御。再深会和 `defensePierce`
+## 叠成接近无视防御 —— 那是阶跃式的数值塌陷（工程 88 教训），校验直接拦在数据层。
+## ⚠ 别和 `Monster.ARMOR_BREAK_SCALE = 0.7` 混为一谈：那个是「数据没写时」的兜底值。
+const ARMOR_BREAK_SCALE_FLOOR := 0.55
+
 ## M10-6：随身商队使用**合成店铺 id**（`Shop.PORTABLE_SHOP_ID`），它不写进 `shops.json`。
 ## 这里写字面量而非引用 `Shop`，同样是为了不给 data_loader 引入反向依赖；
 ## 真实店铺一旦占用这个 id，货单会被聚合力覆盖 → 启动期直接报错，不留给运行时猜。
@@ -1279,6 +1285,23 @@ func _validate_skills() -> Array[String]:
 						report.append("[skills] %s 的 effects.%s 应为正数" % [sid, key])
 		if String(entry.get("icon", "")).is_empty():
 			report.append("[skills] %s 缺少 icon" % sid)
+		# 工程 107：减益的结构校验。`defenseScale` 是**防御保留比例**，语义方向与
+		# 「破甲幅度」相反 —— 写反了（填 1.42 表示破 42%）会静默变成「给怪加防」。
+		var debuff: Variant = entry.get("debuff")
+		if entry.has("debuff"):
+			if not debuff is Dictionary:
+				report.append("[skills] %s 的 debuff 应为字典" % sid)
+			else:
+				var dtype := String((debuff as Dictionary).get("type", ""))
+				if not ["armorBreak", "slow"].has(dtype):
+					report.append("[skills] %s 的 debuff.type '%s' 非法" % [sid, dtype])
+				if not _is_positive_number((debuff as Dictionary).get("duration", null)):
+					report.append("[skills] %s 的 debuff 需正数 duration" % sid)
+				if (debuff as Dictionary).has("defenseScale"):
+					var keep: Variant = (debuff as Dictionary).get("defenseScale")
+					if not _is_positive_number(keep) \
+							or float(keep) < ARMOR_BREAK_SCALE_FLOOR or float(keep) >= 1.0:
+						report.append("[skills] %s 的 debuff.defenseScale 应在 [%.2f, 1) 内（防御保留比例，非破甲幅度）" % [sid, ARMOR_BREAK_SCALE_FLOOR])
 	return report
 
 ## 玩家技能升级表：只允许五个非普攻技能，阶数连续且等级/金币/效果合法。
@@ -1320,6 +1343,9 @@ func _validate_skill_progression() -> Array[String]:
 		var base_effects: Dictionary = base.get("effects", {})
 		for key in base_effects.keys():
 			previous_effects[String(key)] = float(base_effects[key])
+		# 工程 107：破甲幅度的上一阶快照。基础表没写 defenseScale ⇒ 以 0.7 起算。
+		var base_debuff: Dictionary = base.get("debuff", {})
+		var previous_break_scale := float(base_debuff.get("defenseScale", 0.7))
 		for i in range(4):
 			var entry: Variant = ranks[i]
 			if not entry is Dictionary:
@@ -1356,6 +1382,24 @@ func _validate_skill_progression() -> Array[String]:
 				report.append("[skillProgression] %s 第 %d 阶系数倍率越界" % [sid, rank])
 			else:
 				previous_coefficient = float(entry.coefficientMultiplier)
+			# 工程 107：破甲幅度逐阶成长。三条判据（方向与「破甲幅度」相反，是保留比例）：
+			# ① 落在 [0.55, 1) 内；② 逐阶只能**变小**（变不变大就是升阶变弱）；③ 类型必须与基础表一致。
+			# 基础表没写 defenseScale 时以 0.7（工程 52 旧值）为起点，否则第一阶会被判成「越界变大」。
+			var step_debuff: Variant = entry.get("debuff")
+			if step_debuff is Dictionary:
+				if String((step_debuff as Dictionary).get("type", "")) != String(base_debuff.get("type", "")):
+					report.append("[skillProgression] %s 第 %d 阶 debuff.type 必须与基础表一致" % [sid, rank])
+				elif (step_debuff as Dictionary).has("defenseScale"):
+					var keep: Variant = (step_debuff as Dictionary).get("defenseScale")
+					if not _is_positive_number(keep) \
+							or float(keep) < ARMOR_BREAK_SCALE_FLOOR or float(keep) >= 1.0:
+						report.append("[skillProgression] %s 第 %d 阶 debuff.defenseScale 应在 [%.2f, 1) 内" % [sid, rank, ARMOR_BREAK_SCALE_FLOOR])
+					elif float(keep) >= previous_break_scale:
+						report.append("[skillProgression] %s 第 %d 阶 debuff.defenseScale 必须小于上一阶（%.2f）" % [sid, rank, previous_break_scale])
+					else:
+						previous_break_scale = float(keep)
+			elif entry.has("debuff"):
+				report.append("[skillProgression] %s 第 %d 阶 debuff 应为字典" % [sid, rank])
 	for sid in expected:
 		if not seen.has(sid):
 			report.append("[skillProgression] 缺少技能：%s" % sid)
@@ -1371,6 +1415,10 @@ func _progression_effect_cap(key: String) -> float:
 			return 0.19
 		"damageToManaPct":
 			return 0.50
+		# 工程 107：战意觉醒改用减伤（不再给攻击）。上限 = 5 阶 0.28。
+		# ⚠ 减伤与魔法盾的转嫁是**乘算**关系，上限抬到 0.5 以上会让武士变成准无敌。
+		"damageReducePct":
+			return 0.28
 	return 1.0
 
 ## quests.json：类型 / 结构 / 跨表引用（B 共性-5）。

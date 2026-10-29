@@ -1052,8 +1052,20 @@ func current_target() -> Node:
 static func skill_value(skill: Dictionary) -> float:
 	return float(skill.get("coefficient", 0.0)) * float(maxi(1, int(skill.get("hits", 1))))
 
+## 技能单次蓝耗。百分比口径必须知道**蓝池上限**才能算，所以这里把池子显式作为参数传进来，
+## 而不是在函数里偷读 `GameState.max_mp()` —— 后者会让 `choose_skill` 失去纯函数性质：
+## 调用方传进来的 `mp` 与函数内部假定的池子可能不是同一次结算的，无头回归也无法构造
+## 「刚好差 1 点蓝」这种边界（工程 107 踩过）。
+static func _skill_cost(skill: Dictionary, pool: int) -> int:
+	var pct := float(skill.get("manaCostPct", 0.0))
+	if pct > 0.0 and pool > 0:
+		return maxi(1, int(round(float(pool) * pct)))
+	return int(skill.get("manaCost", 0))
+
 static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictionary,
-		target_count: int) -> Dictionary:
+		target_count: int, pool: int = 0) -> Dictionary:
+	# `pool <= 0` ⇒ 取当前真实蓝池（生产路径的唯一调用方式）；测试可显式注入以脱离存档。
+	var capacity := pool if pool > 0 else GameState.max_mp()
 	var aoe := {}
 	var single := {}
 	for s in skills:
@@ -1068,13 +1080,16 @@ static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictiona
 			continue
 		if int(s.get("unlockLevel", 1)) > level:
 			continue                                   # 未解锁
-		if int(s.get("manaCost", 0)) > mp:
+		# 🔴 不能读 `manaCost` 字段：百分比耗蓝（法师全部 + 工程 107 起的武士）在 `manaCost`
+		# 里是 0，直接读会得到「蓝永远够」—— 低蓝时自动战斗会挑一个根本放不出的技能，
+		# 白白浪费一次决策，表现为「站着不动等回蓝」。工程 98 潜伏、107 才被武士暴露。
+		if _skill_cost(s, capacity) > mp:
 			continue                                   # MP 不足 → 不施放
 		if float(cooldowns.get(sid, 0.0)) > 0.0:
 			continue                                   # 冷却中 → 不施放
 		var is_aoe := String(s.get("shape", "single")) != "single"
 		if is_aoe and target_count >= 2:
-			if aoe.is_empty() or int(s.get("manaCost", 0)) < int(aoe.get("manaCost", 0)):
+			if aoe.is_empty() or _skill_cost(s, capacity) < _skill_cost(aoe, capacity):
 				aoe = s
 		elif String(s.get("shape", "single")) == "single":
 			if single.is_empty() or skill_value(s) > skill_value(single):

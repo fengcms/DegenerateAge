@@ -356,12 +356,22 @@ func _run_cone_side(spec: Dictionary, script: Script, sign_x: float) -> void:
 
 # ---- F：没有 fx 的技能必须逐位不变 ----
 
+## 🔴 工程 107 把武士五个技能全部接上了 fx，`earth_cleave` 不再是「无 fx 的技能」。
+## 直接删掉这条会让「一刀切把所有范围提示都删掉」失去看守（坑 64：为堵 A 加的防线在
+## 前提消失后静默变成新 bug，且零断言）。
+## 所以改成**内存里临时摘掉 `fx` 字段**把「无 fx 路径」重新构造出来，跑完立刻还原 ——
+## 判据不变，样本改为构造出来的，这样无论以后接多少个 fx，这条都还有牙。
 func _test_no_fx_unchanged() -> void:
 	var host := Node2D.new()
 	add_child(host)
 	var player := _make_player(host, "warrior", FIXTURE_LEVEL_FLOOR)
 	var enemy := _enemy(host, player.global_position + Vector2(TILE * 1.5, 0.0))
 	await get_tree().process_frame
+	var saved: Variant = _strip_fx("earth_cleave")
+	check(saved is String and not (saved as String).is_empty(),
+		"构造前提：裂地斩原本应有 fx 字段（否则「摘掉」这一步什么都没验证）")
+	player.skill_cooldowns.clear()
+	player._attack_cd = 0.0
 	check(player.cast_skill("earth_cleave", enemy),
 		"无 fx 前提：武士裂地斩应能施放（否则下面的计数断言没有意义）")
 	await get_tree().process_frame
@@ -369,8 +379,34 @@ func _test_no_fx_unchanged() -> void:
 		"无 fx 的技能必须照旧 spawn 通用范围提示（否则一刀切把武士的提示也删了）")
 	check(_count_script(host, _res_path(ProjScript)) == 0,
 		"武士不得产生飞行投射物（近战路径逐位不变）")
+	_restore_fx("earth_cleave", saved as String)
 	host.queue_free()
 	await get_tree().process_frame
+
+## 临时摘掉某条技能的 `fx` 字段，并让 `SkillProgression` 的解析缓存失效（它按
+## `DataLoader.revision` 判断）。返回原值供还原。
+## 🔴 不能走 `DataLoader.load_all()` —— 那会从磁盘重读，把内存里的摘除又盖回去。
+func _strip_fx(skill_id: String) -> Variant:
+	var table: Variant = DataLoader.tables.get("skills")
+	if not table is Array:
+		return null
+	for raw in table:
+		if raw is Dictionary and String((raw as Dictionary).get("id", "")) == skill_id:
+			var saved: Variant = (raw as Dictionary).get("fx")
+			(raw as Dictionary).erase("fx")
+			DataLoader.revision += 1
+			return saved
+	return null
+
+func _restore_fx(skill_id: String, value: String) -> void:
+	var table: Variant = DataLoader.tables.get("skills")
+	if not table is Array or value.is_empty():
+		return
+	for raw in table:
+		if raw is Dictionary and String((raw as Dictionary).get("id", "")) == skill_id:
+			(raw as Dictionary)["fx"] = value
+			DataLoader.revision += 1
+			return
 
 # ---- H：未知 fx key 必须回落，而不是静默什么都不画 ----
 

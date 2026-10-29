@@ -15,6 +15,12 @@ const Projectile := preload("res://scripts/systems/player_projectile.gd")
 const FlameBurstFx := preload("res://scripts/systems/flame_burst_fx.gd")
 const FrostRoarFx := preload("res://scripts/systems/frost_roar_fx.gd")
 const ShieldAura := preload("res://scripts/entities/magic_shield_aura.gd")
+# 工程 107：武士五个主动技能。
+const EarthCleaveFx := preload("res://scripts/systems/earth_cleave_fx.gd")
+const WhirlwindFx := preload("res://scripts/systems/whirlwind_fx.gd")
+const BattleFocusFx := preload("res://scripts/systems/battle_focus_fx.gd")
+const ArmorBreakFx := preload("res://scripts/systems/armor_break_fx.gd")
+const SpiritStormFx := preload("res://scripts/systems/spirit_storm_fx.gd")
 
 const OUT_DIR := "/tmp/mage_fx_after"
 ## 陨石落点：屏幕中上方偏右，模拟「怪在前方」。
@@ -39,6 +45,19 @@ const FROST_SHOTS := [0.05, 0.15, 0.22, 0.32, 0.46]
 ## 魔法盾：`_t` 取 1.8s 周期里的四个相位（呼吸最低 / 中点 / 最高 / 中点）。
 const SHIELD_SHOTS := [0.0, 0.45, 0.9, 1.35]
 
+## 武士技能的地面半径一律从 skills.json 的格数算出来（不在预览里另写一份真相）。
+const CLEAVE_RADIUS := 3.0 * 64.0
+const WHIRL_RADIUS := 2.2 * 64.0
+const STORM_RADIUS := 4.0 * 64.0
+## 破甲重击是单体，没有地面范围；96px 只用来摆目标位置。
+const ARMOR_REACH := 1.5 * 64.0
+## 各技能时间轴的取样点，取在「形态变化最明显」的时刻上。
+const CLEAVE_SHOTS := [0.05, 0.10, 0.16, 0.24, 0.38]
+const WHIRL_SHOTS := [0.02, 0.08, 0.14, 0.22, 0.32]
+const FOCUS_SHOTS := [0.04, 0.10, 0.18, 0.30, 0.52]
+const ARMOR_SHOTS := [0.03, 0.07, 0.11, 0.20, 0.40]
+const STORM_SHOTS := [0.05, 0.12, 0.22, 0.34, 0.52, 0.70]
+
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT_DIR)
 	RenderingServer.set_default_clear_color(Color(0.09, 0.10, 0.12))
@@ -62,6 +81,16 @@ func _ready() -> void:
 	printerr("PREVIEW stage: frost done")
 	await _render_shield()
 	printerr("PREVIEW stage: shield done")
+	await _render_earth_cleave()
+	printerr("PREVIEW stage: earth_cleave done")
+	await _render_whirlwind()
+	printerr("PREVIEW stage: whirlwind done")
+	await _render_battle_focus()
+	printerr("PREVIEW stage: battle_focus done")
+	await _render_armor_break()
+	printerr("PREVIEW stage: armor_break done")
+	await _render_spirit_storm()
+	printerr("PREVIEW stage: spirit_storm done")
 	print("PREVIEW 输出目录：", OUT_DIR)
 	get_tree().quit(0)
 
@@ -217,6 +246,149 @@ func _render_shield() -> void:
 		await RenderingServer.frame_post_draw
 		await RenderingServer.frame_post_draw
 		_save("shield_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 裂地斩（工程 107）。扇形朝屏幕**右**：右前方三只怪在扇形内（maxTargets 3），
+## 左后方一只在扇形外 —— 一眼看出「裂缝方向与扇形张角对不对」。
+func _render_earth_cleave() -> void:
+	for t in CLEAVE_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		for offset: Vector2 in [Vector2(70.0, 18.0), Vector2(130.0, -20.0), Vector2(100.0, 40.0), Vector2(-90.0, 0.0)]:
+			var target := MockTarget.new()
+			target.position = CASTER + offset
+			stage.add_child(target)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := EarthCleaveFx.new() as Node2D
+		stage.add_child(fx)
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_radius", CLEAVE_RADIUS)
+		fx.set("_facing", Vector2.RIGHT)
+		fx.set("_age", float(t))
+		fx.global_position = CASTER
+		fx.queue_redraw()
+		_add_tag(stage, "earth_cleave  t=%.2fs  radius=%.0fpx（range 3.0 格）  ARC=90°  朝向→右" % [
+			float(t), CLEAVE_RADIUS])
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("cleave_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 旋风斩（工程 107）。环周 2.2 格，四周各放一只怪 —— 刀光转到哪个角度，
+## 对应方位的怪就应该「已经被扫过」。
+func _render_whirlwind() -> void:
+	for t in WHIRL_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		# 四只怪要**都看得见**：正上方那只如果只放 40px 会被角色身体完全挡住，
+		# 而「刀光转到上方时那只已经挨过打」正是这条预览要核对的东西。
+		for offset: Vector2 in [Vector2(76.0, 0.0), Vector2(-76.0, 0.0), Vector2(0.0, 52.0), Vector2(0.0, -56.0)]:
+			var target := MockTarget.new()
+			target.position = CASTER + offset
+			stage.add_child(target)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := WhirlwindFx.new() as Node2D
+		stage.add_child(fx)
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_radius", WHIRL_RADIUS)
+		fx.set("_age", float(t))
+		fx.global_position = CASTER
+		fx.queue_redraw()
+		_add_tag(stage, "whirlwind  t=%.2fs  radius=%.0fpx（range 2.2 格）  两道刀光转满一圈" % [
+			float(t), WHIRL_RADIUS])
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("whirl_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 战意觉醒（工程 107）。自身增益，没有范围 —— 只看「红环 + 三道气浪升腾」是否成立。
+func _render_battle_focus() -> void:
+	for t in FOCUS_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := BattleFocusFx.new() as Node2D
+		stage.add_child(fx)
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_age", float(t))
+		fx.global_position = CASTER
+		fx.queue_redraw()
+		_add_tag(stage, "battle_focus  t=%.2fs  DRAWS_AREA=false（self 无范围）  减伤 20%% / 攻速 +15%%" % float(t))
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("focus_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 破甲重击（工程 107）。单体：**只打一只**，旁边再放一只作为「没被打到」的对照。
+func _render_armor_break() -> void:
+	var hit_point := CASTER + Vector2(ARMOR_REACH * 0.62, -6.0)
+	for t in ARMOR_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		var struck := MockTarget.new()
+		struck.position = hit_point
+		stage.add_child(struck)
+		var bystander := MockTarget.new()
+		bystander.position = CASTER + Vector2(-70.0, 30.0)
+		stage.add_child(bystander)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := ArmorBreakFx.new() as Node2D
+		stage.add_child(fx)
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_age", float(t))
+		fx.global_position = hit_point
+		fx.set("_hit_dir", Vector2.RIGHT)
+		fx.queue_redraw()
+		_add_tag(stage, "armor_break  t=%.2fs  ANCHOR=target（单体，不打左侧那只）" % float(t))
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("armor_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 灵刃风暴（工程 107）。4 格共 256px，是武士最大的范围。八只怪摆一圈正好等于
+## `maxTargets: 8` —— 三波刃光收完时，一圈的怪都应被扫过。
+func _render_spirit_storm() -> void:
+	for t in STORM_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		for i in range(8):
+			var angle := TAU * float(i) / 8.0
+			var target := MockTarget.new()
+			target.position = CASTER + Vector2(cos(angle) * 150.0, sin(angle) * 150.0 * Iso.GROUND_SQUASH + 10.0)
+			stage.add_child(target)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := SpiritStormFx.new() as Node2D
+		stage.add_child(fx)
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_radius", STORM_RADIUS)
+		fx.set("_age", float(t))
+		fx.global_position = CASTER
+		fx.queue_redraw()
+		_add_tag(stage, "spirit_storm  t=%.2fs  radius=%.0fpx（range 4.0 格）  三波刃光内收 = 3 段" % [
+			float(t), STORM_RADIUS])
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("storm_t%03d" % int(round(float(t) * 100.0)))
 		stage.queue_free()
 		await get_tree().process_frame
 

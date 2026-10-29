@@ -286,17 +286,30 @@ func _test_bare_drop(rows: Dictionary) -> void:
 			"%s 蓝为 0 时盾必须一点蓝都拿不到，实际蓝条变成 %d" % [
 				String(class_id), int(rows[class_id].mana_leaked)])
 
-## §5.1 之 4：每只 Boss 蓝药消耗 —— 法师 > 0、武士 = 0。
+## §5.1 之 4：每只 Boss 蓝药消耗 —— 两职业都 > 0，且武士更省。
 ## 口径：击杀期间的**法力净支出** ÷ 最大瓶蓝药回蓝量，向下取整成瓶数（上界估算）。
+##
+## 🔴 工程 107 **反转**：武士从「固定点耗 ⇒ 0 瓶」改成百分比耗蓝。旧判据「武士 = 0 瓶」
+## 不是被放宽，而是它守的那个属性本身被判定为缺陷 —— 160 级蓝池 7.6 万点，15—60 点蓝耗
+## 摊薄到 0.1%，等于「法力」这个系统对武士完全不存在。
+## 新判据守两件事：① 武士重新有蓝压力（> 0）；② 武士仍比法师省（< 法师），
+## 否则「武士靠普攻、法师靠技能」的定位消失，两个职业只差贴图。
 func _test_mana_bottles(rows: Dictionary) -> void:
 	var warrior: Dictionary = rows.get("warrior", {})
 	var mage: Dictionary = rows.get("mage", {})
 	if warrior.is_empty() or mage.is_empty():
 		check(false, "必须同时测出 warrior 与 mage")
 		return
-	check(int(warrior.bottles) == 0,
-		"武士每只 Boss 的蓝药消耗应为 0 瓶（支出 %.0f / 蓝池 %.0f）；固定点耗 + 大蓝池决定了它不需要蓝药"
-		% [float(warrior.mana_spend), float(warrior.max_mp)])
+	print("[ClassBalanceTest] 蓝药瓶数｜warrior %d 瓶（支出 %.0f / 池 %.0f）｜mage %d 瓶（支出 %.0f / 池 %.0f）"
+		% [int(warrior.bottles), float(warrior.mana_spend), float(warrior.max_mp),
+		   int(mage.bottles), float(mage.mana_spend), float(mage.max_mp)])
+	check(int(warrior.bottles) > 0,
+		"武士每只 Boss 应有蓝药消耗（支出 %.0f / 蓝池 %.0f = %.1f%%）：107 之前是 0 瓶，固定点耗被大蓝池摊平了"
+		% [float(warrior.mana_spend), float(warrior.max_mp),
+		   float(warrior.mana_spend) / maxf(1.0, float(warrior.max_mp)) * 100.0])
+	check(int(warrior.bottles) < int(mage.bottles),
+		"武士应比法师省蓝（武士 %d 瓶 / 法师 %d 瓶）：否则两职业的定位差只剩贴图"
+		% [int(warrior.bottles), int(mage.bottles)])
 	check(int(mage.bottles) > 0,
 		"法师每只 Boss 的蓝药消耗应 > 0 瓶（支出 %.0f / 蓝池 %.0f = %.1f%%）；百分比蓝耗必须真的贵，否则「高蓝」是免费属性"
 		% [float(mage.mana_spend), float(mage.max_mp),
