@@ -30,19 +30,30 @@ const LIFETIME := 0.26
 const WARN_END := 0.05
 const SPOT_END := 0.12
 
-## 落雷起点相对目标的高度。目标在屏幕中心时约覆盖上半屏的 1/3，够「从天而降」。
-const BOLT_HEIGHT := 170.0
+## 落雷起点相对目标的高度。视口高 800，从目标上方 320px 劈下 ≈ 覆盖上半屏的 40%。
+## 首版 170（约 1/3 屏）→ 260 → 320：两轮实机反馈都是「太小太短」。
+## 怪物在屏幕上沿附近时起点会落到画面外，正是「从天上劈下来」该有的效果，不要为此压矮。
+const BOLT_HEIGHT := 320.0
 ## 闪电终点 = 目标身体中心。怪物绘制中心在 `-radius * 0.6`（`monster.gd:1353`），
 ## radius 17—22 ⇒ 约 -10 ~ -13，取 -12 让闪电**穿过身体**而不是停在头顶。
 const BODY_OFFSET := -12.0
 ## 落点光斑 = 脚下地面，与怪物阴影同高（不与身体中心重合，否则像贴在胸口）。
 const GROUND_OFFSET := 8.0
-## 预兆光柱的下端：身体上方 40px，留出「还没落下来」的空隙。
+## 预兆光柱的下端：身体上方 52px，留出「还没落下来」的空隙。
 const WARN_STOP := -52.0
 
-const SEGMENTS := 8
-const JITTER := 7.0
-const BRANCH_COUNT := 2
+## 段数随 BOLT_HEIGHT 同比放大：首版 170/8 ≈ 21px 一段，现 320/13 ≈ 25px，折角比例不变。
+## 🔴 只加高度不加段数，长雷会退化成一根歪斜的粗棍 —— 两者必须同步改。
+const SEGMENTS := 13
+## 每段相对上一段的最大转向角（弧度）。0.55 ≈ 31°，接近真实闪电的折角。
+## 🔴 不要退回「每段独立横向 ±N 像素」：那样相邻段方向互不相关，长雷上会画出
+##    Z 字形硬折角，看着像渲染错误而不是电弧（2026-10-29 预览截图踩到过）。
+const MAX_TURN := 0.55
+## 每段结束后把方向朝「起点→终点」的基准方向拉回的比例（回正力）。
+## 🔴 没有它，方向随机会累积成随机游走：3 段之后整条雷就拐成一根歪鞭子，
+##    最后一段变成斜拉 100 多 px 的长杆（预览截图实测）。这是形状正确性的前提，不是手感参数。
+const PULL_BACK := 0.40
+const BRANCH_COUNT := 3
 ## 每帧完全随机会像噪点闪烁；2 帧重算一次更接近电弧的持续放电。
 const JITTER_INTERVAL := 0.032
 
@@ -81,29 +92,34 @@ func _draw() -> void:
 	var t := (_age - WARN_END) / (LIFETIME - WARN_END)
 	# 前 35% 全亮，之后线性渐隐 —— 余电阶段仍在放电，不是「一键消失」。
 	var alpha := 1.0 - clampf((t - 0.35) / 0.65, 0.0, 1.0)
-	# 外光先画（粗、淡），白芯后画（细、亮）：顺序反了白芯会被外光糊掉。
-	draw_polyline(_bolt, Color(BOLT_COLOR, 0.55 * alpha), 4.5, true)
-	draw_polyline(_bolt, Color(CORE_COLOR, alpha), 1.4, true)
+	# 三层从外到内：辉光（粗、极淡）→ 外光（中、偏蓝）→ 白芯（细、全亮）。
+	# 顺序反了白芯会被粗线糊掉。要「更粗」只能加粗外层，压白芯只会变模糊。
+	draw_polyline(_bolt, Color(BOLT_COLOR, 0.24 * alpha), 16.0, true)
+	draw_polyline(_bolt, Color(BOLT_COLOR, 0.60 * alpha), 8.0, true)
+	draw_polyline(_bolt, Color(CORE_COLOR, alpha), 3.0, true)
 	for i in range(_branches.size()):
 		var pts: PackedVector2Array = _branches[i]
-		draw_polyline(pts, Color(BOLT_COLOR, 0.5 * alpha), 1.4, true)
+		draw_polyline(pts, Color(BOLT_COLOR, 0.5 * alpha), 2.4, true)
 	if _age < SPOT_END:
 		_draw_impact((_age - WARN_END) / (SPOT_END - WARN_END))
 
 ## 预兆：一道越来越亮的细光柱，位置与主雷完全对齐（不能偏，否则落雷会「跳一下」）。
+## 刻意压得很淡：预兆是「马上要挨打」的提示，不该比主雷还抢眼。
 func _draw_warning(k: float) -> void:
-	var a := 0.10 + 0.16 * clampf(k, 0.0, 1.0)
+	var a := 0.10 + 0.18 * clampf(k, 0.0, 1.0)
 	draw_line(Vector2(0.0, -BOLT_HEIGHT), Vector2(0.0, WARN_STOP),
-		Color(BOLT_COLOR, a), 2.0, true)
+		Color(BOLT_COLOR, a), 4.0, true)
 
-## 落点：地面光斑 + 快速外扩的冲击环。两者都是**落点标记**，不是范围提示 ——
-## 半径 18px ≈ 1/4 格，与「单体技能画半径 416px 的圈」是两回事（工程 105 §1.2）。
+## 落点：脚下小高光 + 快速外扩的冲击环。两者都是**落点标记**，不是范围提示。
+## 🔴 光斑必须**小而淡**：本节点 `z_index = 1` 盖在怪身上，半径一过 20px、alpha 一过 0.25
+##    就会把目标整只吞掉（预览截图实测，2026-10-29）—— 玩家又会看成「一个圈」。
+##    想让它更醒目只能加长「环」的扩散距离，不能加粗填充。
 func _draw_impact(k: float) -> void:
 	var fade := 1.0 - clampf(k, 0.0, 1.0)
 	var ground := Vector2(0.0, GROUND_OFFSET)
-	GroundFx.fill(self, ground, 18.0, Color(SPOT_COLOR, 0.30 * fade))
-	GroundFx.outline(self, ground, lerpf(18.0, 34.0, clampf(k, 0.0, 1.0)),
-		Color(BOLT_COLOR, 0.55 * fade), 2.0, 32)
+	GroundFx.fill(self, ground, 14.0, Color(SPOT_COLOR, 0.26 * fade))
+	GroundFx.outline(self, ground, lerpf(16.0, 40.0, clampf(k, 0.0, 1.0)),
+		Color(BOLT_COLOR, 0.50 * fade), 2.2, 32)
 
 func _rebuild() -> void:
 	_bolt = _zigzag(Vector2(0.0, -BOLT_HEIGHT), Vector2(0.0, BODY_OFFSET))
@@ -115,17 +131,29 @@ func _rebuild() -> void:
 		var pts := PackedVector2Array([origin])
 		var cur := origin
 		# 分叉向两侧斜下方甩出，像被击穿后溢出的电弧；不是平行副路（平行会看成双闪）。
-		for _step in range(3):
-			cur += Vector2(side * _rng.randf_range(6.0, 14.0), _rng.randf_range(8.0, 16.0))
+		# 每条分叉带 0.6—1.0 倍长度随机：三条里有两条同侧，等长会长得一模一样（像镜像贴图）；
+		# 上限压在 1.0，否则单条会甩出一个身位、孤零零挂在画面边上。
+		var reach := _rng.randf_range(0.6, 1.0)
+		for _step in range(4):
+			cur += Vector2(side * _rng.randf_range(8.0, 16.0),
+				_rng.randf_range(10.0, 20.0)) * reach
 			pts.append(cur)
 		_branches.append(pts)
 
-## 等分取点 + 横向抖动；两端不抖，保证首尾精确贴合起点与目标身体中心。
+## 等分步进 + **方向累积转向 + 回正力**：每段在前一段方向基础上偏转 ±MAX_TURN，
+## 再朝基准方向（起点→终点）拉回 PULL_BACK。
+## 两端精确：首点 = 起点，末点强制写 `to`（不会因为累积转向漂移到目标旁边）。
 func _zigzag(from: Vector2, to: Vector2) -> PackedVector2Array:
 	var pts := PackedVector2Array()
-	for i in range(SEGMENTS + 1):
-		var p := from.lerp(to, float(i) / float(SEGMENTS))
-		if i > 0 and i < SEGMENTS:
-			p.x += _rng.randf_range(-JITTER, JITTER)
-		pts.append(p)
+	var step_len := from.distance_to(to) / float(SEGMENTS)
+	var base := from.direction_to(to)
+	var dir := base
+	var cur := from
+	pts.append(cur)
+	for _i in range(SEGMENTS - 1):
+		dir = dir.rotated(_rng.randf_range(-MAX_TURN, MAX_TURN))
+		dir = dir.slerp(base, PULL_BACK).normalized()
+		cur += dir * step_len
+		pts.append(cur)
+	pts.append(to)
 	return pts
