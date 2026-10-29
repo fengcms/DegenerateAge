@@ -257,5 +257,15 @@
     "desc": "双击出发，去任何走过的地图。",
     "questItem": true,
     "price": 0
+  },
+  {
+    "id": "tool_portable_blacksmith",
+    "name": "随身铁匠",
+    "useType": "panel",
+    "panelId": "blacksmith",
+    "animation": "",
+    "desc": "双击就地开炉：升星、重铸、合成、献祭、修理，与城里铁匠同一套服务。修理按 1.5 倍收费，其余加价两成。",
+    "questItem": true,
+    "price": 0
   }
 ]
