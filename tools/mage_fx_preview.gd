@@ -12,18 +12,32 @@ extends Node2D
 
 const MeteorFx := preload("res://scripts/systems/meteor_fx.gd")
 const Projectile := preload("res://scripts/systems/player_projectile.gd")
+const FlameBurstFx := preload("res://scripts/systems/flame_burst_fx.gd")
+const FrostRoarFx := preload("res://scripts/systems/frost_roar_fx.gd")
+const ShieldAura := preload("res://scripts/entities/magic_shield_aura.gd")
 
 const OUT_DIR := "/tmp/mage_fx_after"
 ## 陨石落点：屏幕中上方偏右，模拟「怪在前方」。
 const TARGET := Vector2(560.0, 380.0)
 ## `range = 7` 格 ⇒ 地面半径 448px，与 skills.json 一致（不在这里另写一份）。
 const RADIUS := 7.0 * 64.0
+## 火焰喷发 `range = 3.5` 格；冰咆哮 `range = 4.5` 格。半径一律从 skills.json 的格数算出来。
+const FLAME_RADIUS := 3.5 * 64.0
+const FROST_RADIUS := 4.5 * 64.0
+## 以自身为中心的技能，施法者站在屏幕偏下（相机跟随玩家，玩家通常在画面中下）。
+const CASTER := Vector2(640.0, 560.0)
 
 ## 陨石时间轴：预警 0—0.45 / 落下 0.45—0.60 / 冲击 0.60—0.70 / 余韵 0.70—0.95
 const METEOR_SHOTS := [0.08, 0.38, 0.52, 0.64, 0.72, 0.90]
 ## 火球：飞行中段 + 命中爆点。
 const FIREBALL_SHOTS := [0.25, 0.6, 0.9]
 const FIREBALL_IMPACT := [0.03, 0.07]
+## 火焰喷发：预兆 0—0.10 / 爆发 0.10—0.22 / 余韵 0.22—0.50
+const FLAME_SHOTS := [0.06, 0.14, 0.22, 0.34, 0.48]
+## 冰咆哮：预兆 0—0.08 / 推进 0.08—0.30 / 冰晶 0.12—0.55 / 余韵 0.30—0.58
+const FROST_SHOTS := [0.05, 0.15, 0.22, 0.32, 0.46]
+## 魔法盾：`_t` 取 1.8s 周期里的四个相位（呼吸最低 / 中点 / 最高 / 中点）。
+const SHIELD_SHOTS := [0.0, 0.45, 0.9, 1.35]
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT_DIR)
@@ -42,6 +56,12 @@ func _ready() -> void:
 	printerr("PREVIEW stage: meteor done")
 	await _render_fireball()
 	printerr("PREVIEW stage: fireball done")
+	await _render_flame_burst()
+	printerr("PREVIEW stage: flame done")
+	await _render_frost_roar()
+	printerr("PREVIEW stage: frost done")
+	await _render_shield()
+	printerr("PREVIEW stage: shield done")
 	print("PREVIEW 输出目录：", OUT_DIR)
 	get_tree().quit(0)
 
@@ -106,6 +126,100 @@ func _render_fireball() -> void:
 		stage.queue_free()
 		await get_tree().process_frame
 
+## 火焰喷发（工程 106 §3.2）。范围内放三只怪，其中一只**贴着施法者**——
+## 近战怪一定会站到 3.5 格内，它是「火舌有没有把怪盖住」的唯一判据。
+func _render_flame_burst() -> void:
+	for t in FLAME_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		for offset: Vector2 in [Vector2(-70.0, 14.0), Vector2(120.0, 6.0), Vector2(30.0, -90.0)]:
+			var target := MockTarget.new()
+			target.position = CASTER + offset
+			stage.add_child(target)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := FlameBurstFx.new() as Node2D
+		stage.add_child(fx)
+		# 🔴 复刻生产层级：`player._spawn_cast_node()` 用 `move_child(fx, 0)` 把地面系特效
+		#    压到所有角色之下。漏掉这一步，预览会显示「火舌盖住怪」的假问题。
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_radius", FLAME_RADIUS)
+		fx.set("_age", float(t))
+		fx.global_position = CASTER
+		fx.queue_redraw()
+		_add_tag(stage, "flame_burst  t=%.2fs  radius=%.0fpx（range 3.5 格）  ANCHOR=origin" % [
+			float(t), FLAME_RADIUS])
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("flame_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 冰咆哮（工程 106 §3.3）。扇形朝屏幕**右**：右方两只怪在扇形内、左方一只在扇形外，
+## 一眼就能看出「朝向有没有跟错」。
+func _render_frost_roar() -> void:
+	for t in FROST_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		for offset: Vector2 in [Vector2(150.0, -25.0), Vector2(230.0, 20.0), Vector2(-175.0, 0.0)]:
+			var target := MockTarget.new()
+			target.position = CASTER + offset
+			stage.add_child(target)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var fx := FrostRoarFx.new() as Node2D
+		stage.add_child(fx)
+		stage.move_child(fx, 0)
+		fx.set_process(false)
+		fx.set("_radius", FROST_RADIUS)
+		fx.set("_facing", Vector2.RIGHT)
+		fx.set("_age", float(t))
+		fx.global_position = CASTER
+		fx.queue_redraw()
+		_add_tag(stage, "frost_roar  t=%.2fs  radius=%.0fpx（range 4.5 格）  ARC=90°  朝向→右" % [
+			float(t), FROST_RADIUS])
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("frost_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
+## 魔法盾（工程 106 §3.5）。取 1.8s 呼吸周期的四个相位，看「呼吸是否可辨、网是否在转」。
+## 后层（填充）+ 角色 + 前层（轮廓 + 网）三层，与 `Player.tscn` 的节点顺序一致。
+func _render_shield() -> void:
+	for t in SHIELD_SHOTS:
+		var stage := Node2D.new()
+		add_child(stage)
+		var back := ShieldAura.new() as Node2D
+		stage.add_child(back)
+		var caster := MockCaster.new()
+		caster.position = CASTER
+		stage.add_child(caster)
+		var front := ShieldAura.new() as Node2D
+		stage.add_child(front)
+		for node in [back, front]:
+			var aura := node as Node2D
+			aura.set_process(false)
+			aura.position = CASTER
+		back.set("front_pass", false)
+		front.set("front_pass", true)
+		for node in [back, front]:
+			var aura := node as Node2D
+			# 手算 _process 的产物，不走真计时：`set_process(false)` 之后内部状态不会自己推进。
+			aura.set("breath", 0.70 + 0.15 * sin(TAU * float(t) / 1.8))
+			aura.set("net_phase", TAU * float(t) / 30.0)
+			aura.queue_redraw()
+		_add_tag(stage, "magic_shield  t=%.2fs  breath=%.2f  net=%.1f°" % [
+			float(t), 0.70 + 0.15 * sin(TAU * float(t) / 1.8), 360.0 * float(t) / 30.0])
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		_save("shield_t%03d" % int(round(float(t) * 100.0)))
+		stage.queue_free()
+		await get_tree().process_frame
+
 func _add_tag(stage: Node2D, text: String) -> void:
 	var tag := Label.new()
 	tag.add_theme_font_size_override("font_size", 18)
@@ -128,3 +242,18 @@ class MockTarget extends Node2D:
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		draw_circle(Vector2(0, -12), 18.0, Color(0.52, 0.18, 0.20))
 		draw_arc(Vector2(0, -12), 18.0, 0.0, TAU, 32, Color(0.16, 0.05, 0.06), 2.0, true)
+
+## 施法者：等距视角下的简化法师（长袍 + 头 + 法杖）。有它才判断得出
+## 「火舌/冰晶有没有盖住人」「护罩有没有罩住整个身体」。
+## 高度按 `MagicShieldAura.outline_bounds()` 反推：站立时护罩 y 从 -93 到 +19。
+class MockCaster extends Node2D:
+	func _draw() -> void:
+		draw_set_transform(Vector2(0, 10), 0.0, Vector2(1.0, Iso.GROUND_SQUASH))
+		draw_circle(Vector2.ZERO, 20.0, Color(0, 0, 0, 0.42))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(-16, 4), Vector2(16, 4), Vector2(11, -52), Vector2(-11, -52),
+		]), Color(0.24, 0.30, 0.52))
+		draw_circle(Vector2(0, -62), 10.0, Color(0.86, 0.74, 0.62))
+		draw_line(Vector2(14, -8), Vector2(24, -74), Color(0.42, 0.32, 0.20), 3.0, true)
+		draw_circle(Vector2(24, -76), 5.0, Color(0.55, 0.86, 1.0))

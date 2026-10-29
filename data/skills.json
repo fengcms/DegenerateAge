@@ -143,6 +143,7 @@
     "shape": "circle",
     "range": 3.5,
     "targetType": "enemy",
+    "fx": "flame_burst",
     "desc": "以自身为中心喷发烈焰，共 3 段。",
     "icon": "res://assets/sprites/skills/flame_burst.png"
   },
@@ -178,6 +179,7 @@
     "range": 4.5,
     "maxTargets": 5,
     "targetType": "enemy",
+    "fx": "frost_roar",
     "debuff": { "type": "slow", "value": 0.35, "duration": 3.0 },
     "desc": "前方寒潮，共 2 段并冻缓目标 3 秒。",
     "icon": "res://assets/sprites/skills/frost_roar.png"

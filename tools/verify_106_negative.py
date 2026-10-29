@@ -19,7 +19,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAYER = ROOT / "scripts/entities/player.gd"
 METEOR = ROOT / "scripts/systems/meteor_fx.gd"
+FLAME = ROOT / "scripts/systems/flame_burst_fx.gd"
+FROST = ROOT / "scripts/systems/frost_roar_fx.gd"
+SHIELD = ROOT / "scripts/entities/magic_shield_aura.gd"
 TEST = "MageFxCastingTest"
+SHIELD_TEST = "MagicShieldTest"
 
 CASES = [
     {
@@ -84,11 +88,63 @@ CASES = [
                "\t\treturn",
         "expect": ["未知 fx key 必须回落到投射物"],
     },
+    # ---- 批 2（火焰喷发 / 冰咆哮 / 魔法盾）----
+    {
+        "name": "N-9 火焰喷发锚点标错 origin→target（火喷在怪身上、伤害打在脚下）",
+        "file": FLAME,
+        "old": 'const ANCHOR := "origin"',
+        "new": 'const ANCHOR := "target"',
+        "expect": ["位置层"],
+    },
+    {
+        "name": "N-10 冰咆哮朝向写死 RIGHT（冰往右喷、左边的怪掉血）",
+        "file": FROST,
+        "old": "\t_facing = dir.normalized()",
+        "new": "\t_facing = Vector2.RIGHT",
+        "expect": ["朝向应等于"],
+    },
+    {
+        "name": "N-11 冰咆哮张角与命中判据不一致（扫过的怪不掉血）",
+        "file": FROST,
+        "old": "const ARC := PI * 0.5",
+        "new": "const ARC := PI * 0.35",
+        "expect": ["ARC 应为 PI/2"],
+    },
+    {
+        "name": "N-12 火焰喷发半径写死（以后改 range 静默失效）",
+        "file": FLAME,
+        "old": '\t_radius = maxf(32.0, float(ctx.get("radius", 224.0)))',
+        "new": "\t_radius = 224.0",
+        "expect": ["必须采纳 ctx.radius=777"],
+    },
+    {
+        "name": "N-13 护罩隐藏时仍推进动画（无盾状态下白跑每秒 8 条折线）",
+        "file": SHIELD,
+        "old": "\tif not visible:\n\t\treturn\n\t_t += delta",
+        "new": "\tif not visible and _t < -1.0:\n\t\treturn\n\t_t += delta",
+        "test": SHIELD_TEST,
+        "expect": ["护罩隐藏时不得推进动画"],
+    },
+    {
+        "name": "N-14 护罩呼吸幅度超出安全区（盖住角色或看不见盾）",
+        "file": SHIELD,
+        "old": "const BREATH_AMP := 0.15",
+        "new": "const BREATH_AMP := 2.4",
+        "test": SHIELD_TEST,
+        "expect": ["呼吸幅度应落在"],
+    },
 ]
 
 
-def run_case(case: dict) -> tuple[bool, str]:
-    """返回 (是否红在预期断言上, 摘要)。"""
+def _run_once(case: dict) -> tuple[bool | None, str]:
+    """返回 (是否红在预期断言上, 摘要)。`None` 表示**本轮结果无效**（环境故障），调用方应重试。
+
+    🔴 必须把「环境故障」与「牙齿不存在」分开。`run_isolated_tests.py` 在导入阶段失败时
+    只往 stderr 打「资源导入失败」并 return 1，**stdout 里没有任何 FAIL 行** ——
+    直接按「有没有 FAIL」判，就会把一次偶发的导入失败误报成「注入后仍然全绿」。
+    首轮验证里就撞到过：同一条用例单独跑稳定红、连跑时偶发「仍然全绿」，
+    而每次报告的条目还都不一样。那条错误结论比没有验证更危险。
+    """
     path: Path = case["file"]
     original = path.read_text(encoding="utf-8")
     if case["old"] not in original:
@@ -102,6 +158,11 @@ def run_case(case: dict) -> tuple[bool, str]:
         output = result.stdout + result.stderr
         if "Compile Error" in output or "Parse Error" in output:
             return False, "编译失败（无效红，掩盖真实 bug 形态）"
+        # 有效结果必须能在 stdout 里看到该测试的结论行；否则是导入失败 / 超时 / 进程异常。
+        test_name = case.get("test", TEST)
+        if f"{test_name}: PASS" not in output and f"{test_name}: FAIL" not in output:
+            head = next((ln.strip() for ln in output.splitlines() if ln.strip()), "<空输出>")
+            return None, f"本轮结果无效（runner 未产出结论行：{head[:100]}）"
         is_red = "FAIL" in output or "SCRIPT ERROR" in output
         if not is_red:
             return False, "仍然全绿（这颗牙不存在）"
@@ -113,6 +174,16 @@ def run_case(case: dict) -> tuple[bool, str]:
         return True, "红在预期断言：" + " / ".join(case["expect"])
     finally:
         path.write_text(original, encoding="utf-8")
+
+
+def run_case(case: dict, retries: int = 2) -> tuple[bool, str]:
+    """跑一条负向用例；环境故障时重试，避免把偶发导入失败当成「牙齿不存在」。"""
+    summary = ""
+    for _attempt in range(retries + 1):
+        red, summary = _run_once(case)
+        if red is not None:
+            return red, summary
+    return False, summary
 
 
 def main() -> int:

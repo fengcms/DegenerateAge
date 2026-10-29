@@ -60,11 +60,15 @@ var _radius := 448.0
 
 ## 只读观测点（守门测试用）。
 var draw_calls := 0
+## 实际使用的地面半径。`DRAWS_AREA` 为 true 的 fx 必须自报半径，
+## 守门测试拿它与 `skills.json` 的 `range × TILE_W` 对照，抓「脚本里写死 448」这类静默错位。
+var area_radius := 0.0
 
 ## 统一施法特效接口（工程 106 §4.2）。`ctx` 键：`origin` / `target` / `facing` / `radius`。
 ## 陨石挂在**落点**（目标位置），不是施法者脚下。
 func setup(ctx: Dictionary) -> void:
 	_radius = maxf(64.0, float(ctx.get("radius", 448.0)))
+	area_radius = _radius
 	global_position = ctx.get("target", Vector2.ZERO)
 
 func _process(delta: float) -> void:

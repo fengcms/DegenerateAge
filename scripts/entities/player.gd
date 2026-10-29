@@ -789,6 +789,8 @@ func perform_attack(target: Node) -> Dictionary:
 const CAST_FX := {
 	"thunder": preload("res://scripts/systems/thunder_fx.gd"),
 	"meteor": preload("res://scripts/systems/meteor_fx.gd"),
+	"flame_burst": preload("res://scripts/systems/flame_burst_fx.gd"),
+	"frost_roar": preload("res://scripts/systems/frost_roar_fx.gd"),
 }
 
 ## 远程施法弹道速度（px/s）与时长上下限（工程 106 §3.1 / R3）。

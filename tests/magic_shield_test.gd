@@ -30,6 +30,7 @@ func _ready() -> void:
 	_test_expired()
 	_test_rank_effect()
 	_test_aura_lifecycle()
+	_test_aura_animation()
 	_test_warrior_unchanged()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
@@ -202,6 +203,39 @@ func _test_aura_lifecycle() -> void:
 	player.is_dead = true
 	player._sync_magic_shield_visual()
 	check(not back.visible and not front.visible, "死亡时即使 Buff 未清理也不显示护罩")
+	player.queue_free()
+
+## 工程 106 §3.5：护罩是持续 30 秒的状态，改前完全静止 —— 玩家只能靠 UI 图标判断盾在不在。
+## 现在靠「呼吸 + 能量网」自己证明自己活着。本用例守两件事：
+##   · 不可见时**不得**推进动画（30 秒常态下的每秒 8 条折线开销）；
+##   · 可见时两个观测量都必须真的在变（只断「函数被调用了」会被空实现骗过）。
+func _test_aura_animation() -> void:
+	GameState.reset_to_defaults("mage")
+	GameState.current_map = "wild_trial"
+	GameState.player.level = 60
+	GameState.player.mp = GameState.max_mp()
+	var player := (load("res://scenes/entities/Player.tscn") as PackedScene).instantiate() as PlayerCharacter
+	add_child(player)
+	player.set_physics_process(false)
+	var front := player.get_node("MagicShieldFront") as MagicShieldAura
+	check(not front.visible, "动画前提：新玩家节点无盾时护罩应隐藏")
+	var idle_breath := front.breath
+	var idle_phase := front.net_phase
+	for _i in range(10):
+		front._process(0.05)
+	check(is_equal_approx(front.breath, idle_breath) and is_equal_approx(front.net_phase, idle_phase),
+		"护罩隐藏时不得推进动画（否则无盾时也在白跑每秒 8 条折线的重绘）")
+	check(player.cast_skill("magic_shield"), "动画用例：应能开盾")
+	var b0 := front.breath
+	var p0 := front.net_phase
+	for _i in range(12):
+		front._process(0.05)
+	check(absf(front.breath - b0) > 0.01,
+		"呼吸：护罩亮度应随时间起伏（改前是恒定 alpha，这是「盾还活着」的唯一自证）")
+	check(absf(front.net_phase - p0) > 0.01,
+		"能量网：相位应随时间推进（否则网是静止的，等于没加）")
+	check(front.breath > 0.5 and front.breath < 0.9,
+		"呼吸幅度应落在 0.5—0.9：更高会盖住角色贴图，更低在静态截图里几乎看不见盾")
 	player.queue_free()
 
 ## 武士路径逐位不变：没有任何 buff 提供 damageToManaPct ⇒ 全额扣血、蓝不动。
