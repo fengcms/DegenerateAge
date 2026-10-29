@@ -205,6 +205,10 @@ DEFAULT_TESTS = [
     # 工程 104 地面掉落积压：装饰环走预渲染纹理（技能圈仍走折线）/ 背包满早退 +
     # 只在背包满时节流 / 距离门控（远处静止件零重绘、悬停仍每帧）/ ClickArea 不参与重叠检测。
     "GroundLootPerfTest",
+    # 工程 105 单体技能不画范围提示：`single` 一次地面几何都不画（逻辑 + 行为两层）/
+    # `circle`+`cone` 照常画（防一刀切）/ 雷电术按 skills.json 的 fx 分派、不产生飞行投射物 /
+    # 未知 shape 不画（防 else 兜底复活）。
+    "SkillFxShapeTest",
     "SmokeTest",
 ]
 

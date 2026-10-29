@@ -125,6 +125,7 @@
     "range": 6.5,
     "defensePierce": 0.5,
     "targetType": "enemy",
+    "fx": "thunder",
     "desc": "远程单体雷击，忽视目标 50% 防御。",
     "icon": "res://assets/sprites/skills/lightning.png"
   },

@@ -663,12 +663,13 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	_attack_cd = effective_attack_interval()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
+	var shape := String(skill.get("shape", "circle"))
 	var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
-	range_fx.shape = String(skill.get("shape", "circle"))
+	range_fx.shape = shape
 	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
-	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if String(skill.get("shape", "")) == "cone" else Vector2.RIGHT
+	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if shape == "cone" else Vector2.RIGHT
 	add_child(range_fx)
-	_spawn_projectile(skill_id, (targets[0] as Node2D).global_position)
+	_spawn_cast_fx(skill, skill_id, targets[0] as Node2D)
 	# R4-a：`defensePierce` 是**本击**减防，不进状态；`debuff` 才是持续状态（R4-c）。
 	var pierce := clampf(float(skill.get("defensePierce", 0.0)), 0.0, 1.0)
 	var hits := maxi(1, int(skill.get("hits", 1)))
@@ -772,6 +773,29 @@ func perform_attack(target: Node) -> Dictionary:
 		select_target(target as Node2D, false)
 	target.take_hit(result, self)
 	return result
+
+## 技能命中瞬间的施法视觉分派（工程 105）。读 `skills.json` 的 `fx` 字段，
+## **不要**改成 `if skill_id == "lightning"` —— 那样每新增一个瞬发技能都得改代码。
+##   - `fx = "thunder"`：天降折线落雷，**跳过**飞行投射物。雷电是瞬时的，
+##     「一颗球飞过去」会把「雷」的身份丢掉（这正是玩家报障的观感问题）；
+##   - 其余（含 `fx` 缺省）：沿用通用飞行投射物，火球等有真实弹道的技能靠它。
+func _spawn_cast_fx(skill: Dictionary, skill_id: String, target: Node2D) -> void:
+	if String(skill.get("fx", "")) == "thunder":
+		_spawn_thunder(target.global_position)
+		return
+	_spawn_projectile(skill_id, target.global_position)
+
+## 落雷节点挂在**父级**（与投射物一致），否则会跟着玩家移动 —— 雷电劈下去之后
+## 不该随施法者横移。`global_position` 必须在 `add_child` 之后设（节点进树才有意义）。
+func _spawn_thunder(to_point: Vector2) -> void:
+	if not is_inside_tree():
+		return
+	var host := get_parent()
+	if host == null:
+		return
+	var fx := preload("res://scripts/systems/thunder_fx.gd").new() as Node2D
+	host.add_child(fx)
+	fx.global_position = to_point
 
 ## 远程职业的施法视觉：一道纯视觉投射物飞向目标。
 ## 🔴 伤害**已在调用点结算完毕**（见 `player_projectile.gd` 顶端）。近战职业直接返回，
