@@ -19,6 +19,66 @@ const SEG_SMALL := 32
 const SEG_LARGE := 48
 const SEG_THRESHOLD := 120.0
 
+## 装饰环纹理的基准尺寸（像素）与其中环的半径 / 线宽（同样是像素）。
+## 绘制时按 `radius / RING_BASE_RADIUS` 等比缩放整张纹理，线宽随之缩放。
+const RING_TEX_SIZE := 128
+const RING_BASE_RADIUS := 48.0
+const RING_BASE_WIDTH := 4.0
+
+static var _ring_texture: Texture2D = null
+
+## 白色椭圆环纹理（懒生成，全项目共享一张；颜色一律由 `modulate` 给）。
+static func ring_texture() -> Texture2D:
+	if _ring_texture == null:
+		_ring_texture = _build_ring_texture()
+	return _ring_texture
+
+## 装饰环（工程 104）：**固定形状**的等距椭圆环，用预渲染纹理 + `modulate` 着色。
+##
+## 🔴 与 `outline()` 的分工 —— 不要为了「统一」把两者合并：
+##   - `outline()` 是**玩法性**描边（技能预警、Boss 圈、玩家脚下圈），半径 / 张角 / 段数
+##     都是算出来的，必须真实几何，抗锯齿折线是它的正确实现。
+##   - `ring()` 是**装饰性**固定环（掉落物边框 / 品质底座 / 高亮圈），形状恒定，只变色与半径。
+##     同样 4 条圈：折线要 **17.4 µs/件**，纹理 blit 为 **0**（`tools/ground_loot_perf_probe`
+##     PROBE F / H 实测）。百首禁域积压 2400 件时，这一项就是 42 ms/帧 的全部来源。
+##
+## `radius` 是地面半径，纵向按 `Iso.GROUND_SQUASH` 自动压扁，与 `outline()` 同口径。
+static func ring(canvas: CanvasItem, center: Vector2, radius: float, color: Color,
+		alpha: float = 1.0) -> void:
+	if radius <= 0.0 or alpha <= 0.0:
+		return
+	var s := radius / RING_BASE_RADIUS
+	var size := float(RING_TEX_SIZE) * s
+	canvas.draw_texture_rect(ring_texture(),
+		Rect2(center - Vector2(size * 0.5, size * 0.5), Vector2(size, size)), false,
+		Color(color.r, color.g, color.b, color.a * alpha))
+
+## 逐像素生成椭圆环：用「到椭圆的近似距离」做 1px 级柔边（替代折线的 antialiased）。
+static func _build_ring_texture() -> Texture2D:
+	var size := RING_TEX_SIZE
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 1, 1, 0))
+	var c := float(size) * 0.5
+	var rx := RING_BASE_RADIUS
+	var ry := rx * Iso.GROUND_SQUASH
+	var half := RING_BASE_WIDTH * 0.5
+	var feather := 0.75
+	for y in range(size):
+		var dy := float(y) + 0.5 - c
+		for x in range(size):
+			var dx := float(x) + 0.5 - c
+			var f := (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry)
+			var gx := 2.0 * dx / (rx * rx)
+			var gy := 2.0 * dy / (ry * ry)
+			var grad := sqrt(gx * gx + gy * gy)
+			if grad < 0.000001:
+				continue
+			var dist := absf(f - 1.0) / grad
+			var a := clampf((half + feather - dist) / feather, 0.0, 1.0)
+			if a > 0.0:
+				img.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(img)
+
 ## 按半径挑折线段数。
 static func segments_for(radius: float) -> int:
 	return SEG_LARGE if radius > SEG_THRESHOLD else SEG_SMALL

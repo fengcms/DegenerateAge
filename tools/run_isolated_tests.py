@@ -202,6 +202,9 @@ DEFAULT_TESTS = [
     # 工程 103 怪物重叠：追击与攻击两阶段都保持同类最小间距 / Boss 不可被推动但会挤开普通怪
     # / 碰撞层不变（玩家仍可穿过怪群，ActorCollisionTest 的断言继续成立）。
     "MonsterCrowdTest",
+    # 工程 104 地面掉落积压：装饰环走预渲染纹理（技能圈仍走折线）/ 背包满早退 +
+    # 只在背包满时节流 / 距离门控（远处静止件零重绘、悬停仍每帧）/ ClickArea 不参与重叠检测。
+    "GroundLootPerfTest",
     "SmokeTest",
 ]
 

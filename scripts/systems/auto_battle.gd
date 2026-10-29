@@ -72,6 +72,10 @@ const DEFAULT_POTION_THRESHOLD := 0.35
 const DANGER_TOAST_CD := 4.0           # 「危险血量」提示节流（s）
 ## 百 Boss 图预留至少 32 件单次掉落空间；达到阈值时停自动战斗，手动击杀仍保全奖励。
 const BOSS_LOOT_RESERVE := 32
+## 顺路拾取的重扫间隔（s，工程 104）。`_loot == null` 时原本**每个物理帧**都全表扫一遍；
+## 背包满时扫完必然还是 null，等于每秒白扫 60 次 × 上千件。0.25s 只让「发现新掉落」
+## 最多延迟 0.25s，玩家与挂机都无感。
+const LOOT_SCAN_INTERVAL := 0.25
 
 ## 已接线的自动施放范围技；普攻由攻击间隔单独驱动，不进此表。
 ## R4-d：`spirit_storm`（L40，circle × 3 段）在 `_best_area_skill` 里按「命中数 × 总系数」参评。
@@ -99,6 +103,11 @@ var _phase: String = ""
 
 var _target: Node = null
 var _loot: Node = null
+## 工程 104：顺路拾取的扫描节流与「背包已满」缓存。
+## `_bag_full` 每帧在 `_tick_loot()` 刷新一次（扫一遍格子，≈3 µs）；默认 false 只是
+## 「尚未刷新」，此时 `_can_pick()` 会退回逐件判定的旧口径，外部直接调用也安全。
+var _loot_scan_t: float = 0.0
+var _bag_full: bool = false
 
 var _search_t: float = 0.0
 var _repath_t: float = 0.0
@@ -203,6 +212,7 @@ func _loot_guard_map() -> String:
 
 func _physics_process(delta: float) -> void:
 	_tick_blacklist(delta)
+	_loot_scan_t = maxf(0.0, _loot_scan_t - delta)
 	if _player == null or not is_instance_valid(_player):
 		return
 
@@ -768,10 +778,19 @@ func _find_loot() -> GroundItem:
 	return best
 
 func _tick_loot() -> bool:
+	# 工程 104：背包满状态每帧刷新一次（≈3 µs），供 `_can_pick` / `_find_loot` 早退。
+	# 背包满时 2400 次 `has_space_for` 的 6.6 ms/帧 就是这么省掉的（探针 PROBE C）。
+	_bag_full = Inventory.is_full(GameState.inventory)
 	if _loot != null and (not is_instance_valid(_loot)
 			or (_loot as GroundItem).item.is_empty() or not _can_pick(_loot as GroundItem)):
 		_loot = null
 	if _loot == null:
+		# 🔴 节流**只在背包满时**生效：那时扫描结果恒为「找不到」，扫了也是白扫；
+		# 背包未满则保持每帧扫描的原行为 —— 掉落刚出现就要能立刻走向它
+		# （smoke T10「有怪物目标时也应先走向可拾取的地面装备」是这条的守门）。
+		if _bag_full and _loot_scan_t > 0.0:
+			return false
+		_loot_scan_t = LOOT_SCAN_INTERVAL
 		_loot = _find_loot()
 		if _loot == null:
 			return false
@@ -889,7 +908,11 @@ func _can_pick(gi: GroundItem) -> bool:
 	if gi.manual_only:
 		return false
 	if String(gi.item.get("kind", "")) == "coin":
-		return not GameState.gold_is_capped()
+		return not GameState.gold_is_capped()   # 金币不占背包，背包满也能捡
+	# 工程 104：背包满 ⇒ 装备 / 药水 / 材料**必然**入不了包，直接否掉，不去扫格子。
+	# 探针实测：2400 件 × 每件扫 137 格 = 6.6 ms/帧，而结论恒为 false。
+	if _bag_full:
+		return false
 	return Inventory.has_space_for(GameState.inventory, gi.item)
 
 # ---- 卡住检测与黑名单（3.14 ①，T08）----
