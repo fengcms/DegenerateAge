@@ -21,6 +21,9 @@ const PANELS := {
 	"boss_token": {"ready": true, "title": "ui.panel.boss_token"},
 	# 随身商队：面板随 M10-6 交付（复用 `ShopPanel` + `Shop.PORTABLE_SHOP_ID` 聚合货单）。
 	"shop": {"ready": true, "title": "ui.panel.portable_shop"},
+	# 随身铁匠（工程 108）：复用 `BlacksmithPanel`，只多一个 `portable` 模式 ——
+	# 跳过问候卡直接进服务菜单，修理 1.5× / 成长服务 ×1.2。与当地铁匠同一个面板节点。
+	"blacksmith": {"ready": true, "title": "ui.panel.portable_blacksmith"},
 }
 
 ## 该 panelId 是否已登记（启动期校验与运行时共用的唯一判据）。
@@ -57,6 +60,12 @@ static func open(panel_id: String) -> Dictionary:
 			# 复用既有货郎面板：只是把店铺 id 换成合成 id，货单与价格由 `Shop` 聚合推导。
 			# 交易会话（拉起背包并列、托盘退回）等语义全部沿用，面板侧零改造。
 			EventBus.shop_open_requested.emit(Shop.PORTABLE_SHOP_ID)
+			return {"ok": true, "reason": ""}
+		"blacksmith":
+			# 工程 108：第三参 `true` = 随身模式。`npc_name` / `greeting` 传空 ——
+			# 面板在随身模式下自己取 `title()` 当标题、且不显示问候卡，
+			# 传一个假 NPC 名会让标题变成「铁匠」而不是「随身铁匠」。
+			EventBus.blacksmith_panel_requested.emit("", "", true)
 			return {"ok": true, "reason": ""}
 	# 已登记但尚无实现 = 配置超前（`ready` 被提前改成 true 却忘了写分支）。
 	return {"ok": false, "reason": Localization.tr_key("msg.panel_router.p002")}

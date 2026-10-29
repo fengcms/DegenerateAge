@@ -5,7 +5,7 @@ extends RefCounted
 ## 判据（唯一，纯函数，运行态与测试共用）：
 ##   `unlocks` 中该 id 为 true（任务链说「发过」）**且** 背包与仓库都没有该 itemId ⇒ 判为缺失，补发一件。
 ##
-## 🔴 为什么这个判据是安全的：三件工具在**正常游戏里丢不掉** ——
+## 🔴 为什么这个判据是安全的：这些工具在**正常游戏里丢不掉** ——
 ## 死亡惩罚只掉 `kind == "equip"`（`death_penalty.gd`）、商店拒收 `questItem: true`（`shop.gd`）、
 ## **拖到地面丢弃被 `GameState.can_drop_item()` 挡下（工程 89，且工具判定排在最前、
 ## 早于 `questItem` 那条）**、`panel` 类双击只开面板不消耗（`GameState._use_misc`）。
@@ -23,7 +23,10 @@ const PANEL_USE_TYPE := "panel"
 const RECLAIM_COUNT := 1
 
 ## 全库 `useType == "panel"` 的道具 id。
-## 当前三条：随身车夫 / 随身商队 / 追猎令牌（工程 79；`PanelRouter` 只认物品不认解锁键）。
+## 当前四条：随身车夫 / 随身商队 / 追猎令牌（工程 79）+ 随身铁匠（工程 108）。
+## 🔑 这里是**数据驱动**的：新增 panel 类道具不需要改本文件，白名单不在这里 ——
+## 也不要手工加一份「名单」到别处，那样从此有两处真相（工程 108 R5）。
+## 需要跟着改的只有测试里的业务期望清单（`tool_reclaim_test.gd` 的 `EXPECTED_TOOLS`）。
 static func panel_tool_ids() -> Array[String]:
 	var out: Array[String] = []
 	var rows: Variant = DataLoader.get_table("miscItems")

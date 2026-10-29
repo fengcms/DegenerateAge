@@ -57,12 +57,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 ## 铁匠菜单只能打开已登记的服务。
-func _on_requested(mode: String) -> void:
+## 第三参 `portable`（工程 108）：合成与献祭**没有金币费用**（只消耗材料），
+## 所以这里目前不参与任何计价 —— 收下并保存，是为了让「随身 / 回城」这条口径在
+## 四个铁匠子面板里一致，将来若给合成加服务费，只有这一个入口需要接线。
+var _portable := false
+
+## 🔴 刻意**不给** `portable` 默认值：工程 108 把这个回调从单参改成双参时，漏改了
+## 10 处「既有测试直接调用 `_on_requested(mode)`」的点，默认集当场红两项
+## （`SCRIPT ERROR: Expected 2 argument(s)`）。加默认值确实能让它们静默变绿，
+## 但那样「随身打开却按回城口径」在将来给合成加服务费时会**静默**发生 ——
+## 上方注释写了「将来只有这一个入口需要接线」，所以它必须是强制的。
+## 与 `equipment_fusion_panel_requested` 信号同为双参强制；漏传当场炸，才有牙。
+func _on_requested(mode: String, portable: bool) -> void:
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_TARGET,
 			EquipmentFusion.PURPLE_UP_TIER, EquipmentFusion.STAR_TRANSFER,
 			EquipmentFusion.SACRIFICE]:
 		return
 	_mode = mode
+	_portable = portable
 	set_open(true)
 
 ## 切换服务清空预选；关闭时释放引用，但不动背包中的真实装备。

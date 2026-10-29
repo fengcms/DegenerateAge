@@ -66,6 +66,8 @@ const SHORT_LABEL_KEYS := {
 	"tool_portable_carter": "ui.hud.tool_carter_short",
 	"tool_portable_shop": "ui.hud.tool_shop_short",
 	"tool_boss_token": "ui.hud.tool_token_short",
+	# 工程 108：不加这条会回退成名称首字「随」，与「随身商队」「随身车夫」三个字撞车。
+	"tool_portable_blacksmith": "ui.hud.tool_smith_short",
 }
 
 static func short_label(binding: Variant) -> String:

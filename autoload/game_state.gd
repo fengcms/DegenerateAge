@@ -1533,8 +1533,12 @@ func sacrifice_purple(instance_ids: PackedStringArray) -> Dictionary:
 
 ## source = "bag" / "worn"；key 是背包下标或装备槽 id。
 ## expected_id 防止选择后背包整理、穿脱导致错误实例被扣费。
+## `fee_rate`（工程 108）：服务费率，1.0 = 回城铁匠原价，`ServiceFee.PORTABLE_RATE` = 随身铁匠 +20%。
+## 🔴 费率必须由调用方（面板）显式传下来，并且**与面板显示价格用同一个来源** ——
+##    本函数里改算法而面板不改，就是「按钮写一个数、实扣另一个数」。
 func upgrade_equipment(source: String, key: Variant, expected_id: String,
-		rng: RandomNumberGenerator = null, rune_ids: Array = []) -> Dictionary:
+		rng: RandomNumberGenerator = null, rune_ids: Array = [],
+		fee_rate: float = 1.0) -> Dictionary:
 	var item: Dictionary = {}
 	if source == "bag" and key is int and key >= 0 and key < inventory.size():
 		var candidate = inventory[key]
@@ -1551,7 +1555,7 @@ func upgrade_equipment(source: String, key: Variant, expected_id: String,
 	var star := int(item.get("star", 0))
 	if star < 0 or star >= Upgrade.max_star():
 		return _upgrade_fail(Localization.tr_key("msg.game_state.p034"))
-	var price := Upgrade.cost(star)
+	var price := ServiceFee.apply(Upgrade.cost(star), fee_rate)
 	if price <= 0 or Upgrade.success_rate(star) <= 0.0:
 		return _upgrade_fail(Localization.tr_key("msg.game_state.p035"))
 	var plan := Upgrade.rune_plan(inventory, rune_ids)
@@ -1608,7 +1612,7 @@ func _upgrade_fail(reason: String) -> Dictionary:
 ## 与金币一样是「先掷后扣」——校验失败、掷词条失败都一件不扣。
 func reforge_equipment(source: String, key: Variant, expected_id: String,
 		rng: RandomNumberGenerator = null, locked_stats: Array = [],
-		refine_ids: Array = []) -> Dictionary:
+		refine_ids: Array = [], fee_rate: float = 1.0) -> Dictionary:
 	var item: Dictionary = {}
 	if source == "bag" and key is int and key >= 0 and key < inventory.size():
 		var candidate = inventory[key]
@@ -1633,7 +1637,7 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	var material_indices: Array = material_plan.get("indices", [])
 	var effective := Reforge.refine_count(materials, item)
 	var lock_count := Reforge.lock_count(locked_stats)
-	var price := Reforge.cost(Equipment.level_req(item), lock_count)
+	var price := ServiceFee.apply(Reforge.cost(Equipment.level_req(item), lock_count), fee_rate)
 	if price <= 0:
 		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
 	if gold < price:
