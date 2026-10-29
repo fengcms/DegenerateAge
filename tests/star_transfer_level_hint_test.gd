@@ -69,7 +69,7 @@ func _new_piece() -> Dictionary:
 func _open_panel(old: Dictionary, newer: Dictionary) -> Node:
 	var panel := preload("res://scenes/ui/EquipmentFusionPanel.tscn").instantiate()
 	add_child(panel)
-	panel._on_requested(EquipmentFusion.STAR_TRANSFER)
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER, false)
 	panel._selected[0] = old
 	panel._selected[1] = newer
 	panel._refresh_slots()

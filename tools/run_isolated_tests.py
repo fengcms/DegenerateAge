@@ -79,6 +79,10 @@ DEFAULT_TESTS = [
     "BossMultiTargetTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。
     "PortableToolsTest",
+    # 工程 108 随身铁匠：道具契约 / 路由器登记 / 双击不消耗 / **面板双模式（回城零回归）**
+    # / 任务 C7S01 门槛与 unlocks 数组 / 不可丢弃与不上架 / 补领覆盖第四件
+    # / **升星·重铸·修理三处的「显示价 == 实扣」**（服务费 +20% 唯一守得住它的机制）。
+    "PortableBlacksmithTest",
     # M10-5 追猎令牌：行集/过滤/倒计时同源 + ordinal 真进 key + 等级跟随 + 与 Spawner 序号一致
     # + _map_has_monster 认 bossSpawns + travel_anywhere / fee_anywhere + 落地意图。
     "BossTokenTest",

@@ -118,7 +118,8 @@ func _test_exclusions() -> void:
 	for id in ids:
 		check(String(ids[id]) != "equip", "%s 属装备，不得上架" % id)
 	# 任务物点名（数据里真有这些 id，不是构造出来的）
-	for quest_id in ["c6_item_q03", "tool_boss_token", "tool_portable_shop", "tool_portable_carter"]:
+	for quest_id in ["c6_item_q03", "tool_boss_token", "tool_portable_shop", "tool_portable_carter",
+			"tool_portable_blacksmith"]:
 		check(not ids.has(quest_id), "任务物 %s 不得上架" % quest_id)
 	# 灵能碎片：price 16 > 0 且 questItem=false，只能靠 useType == quest 挡住
 	check(not ids.has("spirit_shard"), "spirit_shard（useType=quest）不得上架，否则等于花钱跳过收集任务")

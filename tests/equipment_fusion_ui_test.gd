@@ -18,7 +18,7 @@ func _ready() -> void:
 	add_child(bag)
 	add_child(panel)
 	add_child(character)
-	EventBus.blacksmith_panel_requested.emit("铁匠", "试试新服务")
+	EventBus.blacksmith_panel_requested.emit("铁匠", "试试新服务", false)
 	dialogue._show_menu()
 	check(dialogue._fusion_buttons.size() == 5, "铁匠菜单提供五项消耗装备的服务（四种合成 + 紫装献祭）")
 	check(dialogue._leave.get_parent() == dialogue._footer
@@ -108,13 +108,13 @@ func _ready() -> void:
 		"合成确认仅产一件紫装")
 	panel.set_open(false)
 	check(bag.visible, "关闭工作台保留背包")
-	panel._on_requested(EquipmentFusion.GOLD_TO_PURPLE)
+	panel._on_requested(EquipmentFusion.GOLD_TO_PURPLE, false)
 	bag.set_open(false)
 	check(not panel.visible, "关闭会话中的背包也关闭合成工作台")
 	GameState.reset_to_defaults()
 	for i in range(4):
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
-	panel._on_requested(EquipmentFusion.PURPLE_TARGET)
+	panel._on_requested(EquipmentFusion.PURPLE_TARGET, false)
 	GameState.inventory[0].star = 12
 	panel._on_material_dropped(0, _payload(0))
 	check(panel._selected[0].is_empty(), "12 星紫装不能手动拖进四紫定向格")
@@ -135,7 +135,7 @@ func _ready() -> void:
 	GameState.reset_to_defaults()
 	for i in range(4):
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
-	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER, false)
 	check(panel.visible and panel._random.visible and not panel._target_row.visible
 		and panel._title.text == Localization.tr_key("ui.fusion.purple_up_title"),
 		"四紫升紫沿用四格与随机按钮，不显示指定部位")
@@ -158,7 +158,7 @@ func _ready() -> void:
 	for i in range(4):
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
 	GameState.inventory[0].star = 11
-	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER, false)
 	for i in range(4):
 		panel._on_material_dropped(i, _payload(i))
 	check(not panel._confirm.disabled, "手动可放入 11 星紫装")
@@ -176,7 +176,7 @@ func _ready() -> void:
 	GameState.inventory[0] = old
 	GameState.inventory[1] = ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
 	GameState.gold = EquipmentFusion.full_star_cost()
-	panel._on_requested(EquipmentFusion.STAR_TRANSFER)
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER, false)
 	check(not panel._random.visible and not panel._slots[2].visible, "保星只显示两个材料格且无随机放入")
 	panel._on_material_dropped(0, _payload(1))
 	check(panel._selected[0].is_empty(), "新档 0 星装备不能放入旧档 12 星格")
@@ -198,7 +198,7 @@ func _ready() -> void:
 	GameState.inventory[0] = far_old
 	GameState.inventory[1] = ItemFactory.make_equip_dynamic("c6_equip_weapon", 71, "legendary", rng)
 	GameState.gold = EquipmentFusion.full_star_cost() * 2
-	panel._on_requested(EquipmentFusion.STAR_TRANSFER)
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER, false)
 	panel._on_material_dropped(0, _payload(0))
 	panel._on_material_dropped(1, _payload(1))
 	check(not panel._confirm.disabled and panel._summary.text.contains("跨 2 档")
@@ -219,7 +219,7 @@ func _ready() -> void:
 	GameState.equipment["weapon"] = worn_old
 	GameState.inventory[0] = ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
 	GameState.gold = EquipmentFusion.full_star_cost()
-	panel._on_requested(EquipmentFusion.STAR_TRANSFER)
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER, false)
 	check(panel._slots[0].accept_equip_source and not panel._slots[1].accept_equip_source,
 		"只有保星第一格接收穿戴载荷")
 	var worn_payload := {"from": ItemSlot.ROLE_EQUIP, "slot_id": "weapon",
@@ -263,7 +263,7 @@ func _ready() -> void:
 	GameState.reset_to_defaults()
 	for i in range(2):
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
-	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER, false)
 	panel._on_material_dropped(0, _payload(0))
 	panel._on_material_dropped(1, _payload(1))
 	check(panel._material_snapshots().size() == 2 and not panel._confirm.disabled,
@@ -282,7 +282,7 @@ func _ready() -> void:
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 61, "legendary", rng)
 	for i in range(2, 6):
 		GameState.inventory[i] = ItemFactory.make_equip_dynamic("c6_equip_ring", 71, "legendary", rng)
-	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER)
+	panel._on_requested(EquipmentFusion.PURPLE_UP_TIER, false)
 	for i in range(4):
 		panel._on_material_dropped(i, _payload(i + 2))
 	check(panel._material_snapshots().size() == 4, "手动放满四件 71 档可确认")
