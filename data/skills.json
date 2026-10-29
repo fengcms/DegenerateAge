@@ -195,6 +195,7 @@
     "shape": "circle",
     "range": 7,
     "targetType": "enemy",
+    "fx": "meteor",
     "desc": "召唤陨石轰击，半径 5 格内全部命中。",
     "icon": "res://assets/sprites/skills/meteor.png"
   }

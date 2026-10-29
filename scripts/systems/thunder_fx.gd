@@ -22,6 +22,19 @@ extends Node2D
 ##   0.05—0.14s  主雷劈下 + 落点光斑 + 冲击环
 ##   0.14—0.26s  余电：折线渐隐，分叉甩出
 
+## 🔴 未识别的 `shape` **不绘制 + 报警**，不得再靠 `else` 兜底。让兜底分支承担语义分派，
+## 会让以后新增的形状（如 `line`）静默变成圆盘 —— 与坑清单第 64 条「过宽防线在前提
+## 消失后静默变成新 bug」同构。
+
+## 该 fx 是否自己负责「技能范围提示」（工程 106 §4.2 规矩 2 / R2）。
+## 雷电术是单体，本来就没有范围可提示 ⇒ false。守门测试逐技能核对这个常量与 `shape` 的语义，
+## 防止「标了 fx 但忘了画范围」导致玩家静默失去提示。
+const DRAWS_AREA := false
+
+## 本 fx 挂在上下文的哪个锚点上（工程 106 §4.2）。合法值只有 `"target"` / `"origin"`。
+## 守门测试拿它与节点实际位置对照 —— 「冰往左喷、右边怪掉血」这类错位只能靠这条兜住。
+const ANCHOR := "target"
+
 const BOLT_COLOR := Color("9ad8ff")
 const CORE_COLOR := Color("f2fbff")
 const SPOT_COLOR := Color("e8f8ff")
@@ -65,6 +78,13 @@ var _branches: Array[PackedVector2Array] = []
 
 ## 只读观测点（守门测试用）。
 var draw_calls := 0
+
+## 统一的施法特效接口（工程 106 §4.2）。`ctx` 键：`origin` / `target` / `facing` / `radius`。
+## 🔴 定位写在这里而不是调用点：以前 `player._spawn_thunder()` 负责设 `global_position`，
+##    等于让调用点承担「这个 fx 该挂哪」的语义 —— 加第二个 fx 就得再加一个特例函数。
+##    现在每个 fx 自己决定自己挂哪，调用点只负责传上下文。
+func setup(ctx: Dictionary) -> void:
+	global_position = ctx.get("target", Vector2.ZERO)
 
 func _ready() -> void:
 	# 闪电是「从天而降」，必须盖住被击中的怪，否则怪的身体会挡住落点。

@@ -664,12 +664,20 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
 	var shape := String(skill.get("shape", "circle"))
-	var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
-	range_fx.shape = shape
-	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
-	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if shape == "cone" else Vector2.RIGHT
-	add_child(range_fx)
-	_spawn_cast_fx(skill, skill_id, targets[0] as Node2D)
+	var reach := float(skill.get("range", 1.0)) * Iso.TILE_W
+	var aim := global_position.direction_to((targets[0] as Node2D).global_position)
+	if aim == Vector2.ZERO:
+		aim = Vector2.RIGHT
+	# 🔴 有 `fx` 的技能，范围提示**全权交给专属 fx**（工程 106 §4.2 规矩 2）。
+	#    否则陨石术会同时出现专属预警环与通用的 448px 静态盘 —— 两份提示互相对不上，
+	#    玩家不知道该信哪个。单体的 `fx` 技能（雷电术）本来就不画范围，这条对它无影响。
+	if String(skill.get("fx", "")) == "":
+		var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
+		range_fx.shape = shape
+		range_fx.radius = reach
+		range_fx.facing = aim if shape == "cone" else Vector2.RIGHT
+		add_child(range_fx)
+	_spawn_cast_fx(skill, skill_id, targets[0] as Node2D, aim, reach)
 	# R4-a：`defensePierce` 是**本击**减防，不进状态；`debuff` 才是持续状态（R4-c）。
 	var pierce := clampf(float(skill.get("defensePierce", 0.0)), 0.0, 1.0)
 	var hits := maxi(1, int(skill.get("hits", 1)))
@@ -774,28 +782,63 @@ func perform_attack(target: Node) -> Dictionary:
 	target.take_hit(result, self)
 	return result
 
-## 技能命中瞬间的施法视觉分派（工程 105）。读 `skills.json` 的 `fx` 字段，
-## **不要**改成 `if skill_id == "lightning"` —— 那样每新增一个瞬发技能都得改代码。
-##   - `fx = "thunder"`：天降折线落雷，**跳过**飞行投射物。雷电是瞬时的，
-##     「一颗球飞过去」会把「雷」的身份丢掉（这正是玩家报障的观感问题）；
-##   - 其余（含 `fx` 缺省）：沿用通用飞行投射物，火球等有真实弹道的技能靠它。
-func _spawn_cast_fx(skill: Dictionary, skill_id: String, target: Node2D) -> void:
-	if String(skill.get("fx", "")) == "thunder":
-		_spawn_thunder(target.global_position)
-		return
-	_spawn_projectile(skill_id, target.global_position)
+## 施法视觉分派表（工程 106）：key = `skills.json` 的 `fx` 字段，value = fx 脚本。
+## 🔴 新增技能特效 = **表里加一行 + 数据里写 `fx`**，不改任何 `if`。
+##    靠 `if skill_id == "lightning"` 的话，每加一个技能都要改代码 —— 这正是 105 留下的模式，
+##    加到第三个就会退化成坑清单第 69 条「兜底分支承担语义分派」。
+const CAST_FX := {
+	"thunder": preload("res://scripts/systems/thunder_fx.gd"),
+	"meteor": preload("res://scripts/systems/meteor_fx.gd"),
+}
 
-## 落雷节点挂在**父级**（与投射物一致），否则会跟着玩家移动 —— 雷电劈下去之后
-## 不该随施法者横移。`global_position` 必须在 `add_child` 之后设（节点进树才有意义）。
-func _spawn_thunder(to_point: Vector2) -> void:
+## 远程施法弹道速度（px/s）与时长上下限（工程 106 §3.1 / R3）。
+## 首版时长固定 0.14s：满射程 384px 的等效速度是 2743px/s，60fps 下每帧跳 45.7px
+## = 球径 6px 的 7.6 倍，玩家看到的不是「飞过去」而是「一闪」。
+const PROJECTILE_SPEED := 2000.0
+const PROJECTILE_MIN_DURATION := 0.10
+const PROJECTILE_MAX_DURATION := 0.20
+
+## 技能命中瞬间的施法视觉分派（工程 105 / 106）。读 `skills.json` 的 `fx` 字段。
+##   - 命中分派表：实例化对应的 fx 脚本，**跳过**飞行投射物 —— 这些技能有自己的「发生方式」，
+##     「一颗球飞过去」会把技能身份丢掉（105 玩家报障的观感问题就是这个）；
+##   - 未命中分派表：**报警后**回落投射物。不静默 —— 静默回落会让「数据里写了 fx
+##     但代码忘了加」退化成一颗球的观感问题，没人会发现（坑清单第 64 条同构）；
+##   - 没有 `fx` 字段：沿用通用飞行投射物（武士 5 技能全走这条，行为逐位不变）。
+func _spawn_cast_fx(skill: Dictionary, skill_id: String, target: Node2D,
+		facing: Vector2, radius: float) -> void:
+	var key := String(skill.get("fx", ""))
+	if key != "" and not CAST_FX.has(key):
+		push_warning("Player: skills.json 声明了未知的 fx「%s」（技能 %s），回落到投射物（工程 106）" % [key, skill_id])
+	if key == "" or not CAST_FX.has(key):
+		_spawn_projectile(skill_id, target.global_position)
+		return
+	_spawn_cast_node(CAST_FX[key] as Script, {
+		"origin": global_position,
+		"target": target.global_position,
+		"facing": facing,
+		"radius": radius,
+	})
+
+## 实例化 fx 并挂到**父级**（与投射物一致）：施法特效不该跟着施法者横移。
+## 🔴 `move_child(fx, 0)` 把地面系特效压到**所有角色之下**。`Entities` 没有开 `y_sort`，
+##    纯按子树顺序绘制，所以后加入的节点会盖在怪身上 —— 105 踩过「落点光斑把目标整只吞掉」。
+##    从天而降的 fx（雷电）自己设 `z_index = 1` 覆盖这条规则，不需要在这里特判。
+## 🔴 上下文只由 `setup()` 消费，**不在调用点分派**：105 时每个 fx 都要一个 `_spawn_xxx()` 特例函数。
+func _spawn_cast_node(script: Script, ctx: Dictionary) -> void:
 	if not is_inside_tree():
 		return
 	var host := get_parent()
 	if host == null:
 		return
-	var fx := preload("res://scripts/systems/thunder_fx.gd").new() as Node2D
+	var fx := script.new() as Node2D
 	host.add_child(fx)
-	fx.global_position = to_point
+	host.move_child(fx, 0)
+	if not fx.has_method("setup"):
+		# 缺接口是**代码缺陷**，必须大声失败：静默丢掉等于「技能没有特效」，没人查得出来。
+		push_error("Player: fx 脚本缺少 setup(ctx)（工程 106 分派契约），已丢弃")
+		fx.queue_free()
+		return
+	fx.call("setup", ctx)
 
 ## 远程职业的施法视觉：一道纯视觉投射物飞向目标。
 ## 🔴 伤害**已在调用点结算完毕**（见 `player_projectile.gd` 顶端）。近战职业直接返回，
@@ -809,8 +852,13 @@ func _spawn_projectile(skill_id: String, to_point: Vector2) -> void:
 	var bolt := preload("res://scripts/systems/player_projectile.gd").new() as Node2D
 	host.add_child(bolt)
 	if bolt.has_method("setup"):
-		bolt.call("setup", global_position + Vector2(0, -18.0 * ART_SCALE), to_point,
-			Color(String(SPELL_COLORS.get(skill_id, "ffd479"))), 6.0)
+		var from := global_position + Vector2(0, -18.0 * ART_SCALE)
+		var duration := clampf(from.distance_to(to_point) / PROJECTILE_SPEED,
+			PROJECTILE_MIN_DURATION, PROJECTILE_MAX_DURATION)
+		# 球半径 8.0（原 6.0）：这是全法师最高频的视觉，6px 在 1280 宽的屏幕上只有 0.5% 宽，
+		# 加上辉光与彗尾后仍偏小（工程 106 §3.1 预览实测）。8.0 时辉光 20.8px、尾长 ≈ 65px。
+		bolt.call("setup", from, to_point,
+			Color(String(SPELL_COLORS.get(skill_id, "ffd479"))), 8.0, duration)
 
 func _reset_regen_after_hit() -> void:
 	_regen_elapsed = 0.0

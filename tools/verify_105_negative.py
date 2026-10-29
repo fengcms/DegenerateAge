@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RANGE_FX = ROOT / "scripts/systems/skill_range_fx.gd"
 PLAYER = ROOT / "scripts/entities/player.gd"
 SKILLS = ROOT / "data/skills.json"
+THUNDER_FX = ROOT / "scripts/systems/thunder_fx.gd"
 TEST = "SkillFxShapeTest"
 
 CASES = [
@@ -39,12 +40,13 @@ CASES = [
         "expect": ["未识别的 shape 不得绘制任何地面几何"],
     },
     {
+        # 工程 106 升级了 `skill_range_fx` 的绘制，注入点从「三行 fill/outline」改成
+        # 「`_draw` 末尾那一行 `_draw_circle` 调用」。`k` / `env` 仍被 cone 分支引用，
+        # 所以换成 `pass` 不会产生未使用变量（`warnings_as_errors` 开着）。
         "name": "N-3 circle 绘制被一刀切删掉（真 AoE 提示也消失）",
         "file": RANGE_FX,
-        "old": "\tGroundFx.fill(self, Vector2.ZERO, radius, Color(FX_COLOR, 0.10 * alpha))\n"
-               "\tGroundFx.outline(self, Vector2.ZERO, radius, ink, 2.0, 40)\n"
-               "\tground_draws += 2",
-        "new": "\tground_draws += 0",
+        "old": "\t_draw_circle(k, env)",
+        "new": "\tpass",
         "expect": ["circle 必须照常绘制地面几何"],
     },
     {
@@ -55,17 +57,20 @@ CASES = [
         "expect": ["必须在 skills.json 标 fx=thunder"],
     },
     {
-        "name": "N-5 分派退回一律飞行投射物（雷电又变成扔球）",
+        # 工程 106 把 `if skill.get("fx") == "thunder"` 换成了 `CAST_FX` 分派表，
+        # 注入点随之改为「把 thunder 从表里删掉」—— 这才是现在唯一能让雷电退回投射物的改法。
+        "name": "N-5 分派表删掉 thunder（雷电又变成扔球）",
         "file": PLAYER,
-        "old": '\tif String(skill.get("fx", "")) == "thunder":',
-        "new": '\tif false and String(skill.get("fx", "")) == "thunder":',
+        "old": '\t"thunder": preload("res://scripts/systems/thunder_fx.gd"),\n',
+        "new": "",
         "expect": ["必须生成 1 个落雷节点"],
     },
     {
-        "name": "N-6 落雷原点错挂到玩家身上（位置不对齐目标）",
-        "file": PLAYER,
-        "old": "\tfx.global_position = to_point",
-        "new": "\tfx.global_position = global_position",
+        # 工程 106 把「挂哪」从调用点搬进了 `thunder_fx.setup(ctx)`，注入点随之搬家。
+        "name": "N-6 落雷原点错挂到施法者身上（位置不对齐目标）",
+        "file": THUNDER_FX,
+        "old": '\tglobal_position = ctx.get("target", Vector2.ZERO)',
+        "new": '\tglobal_position = ctx.get("origin", Vector2.ZERO)',
         "expect": ["落雷原点必须对齐目标位置"],
     },
 ]

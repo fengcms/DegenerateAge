@@ -209,6 +209,11 @@ DEFAULT_TESTS = [
     # `circle`+`cone` 照常画（防一刀切）/ 雷电术按 skills.json 的 fx 分派、不产生飞行投射物 /
     # 未知 shape 不画（防 else 兜底复活）。
     "SkillFxShapeTest",
+    # 工程 106 法师技能特效：施法特效分派表覆盖 skills.json 的每个 fx / 每个 fx 技能产生
+    # 恰好 1 个专属节点且 0 投射物 0 通用范围提示 / 节点位置与自报 ANCHOR 一致 /
+    # DRAWS_AREA 与 shape 语义一致 / LIFETIME 短于 CD / 无 fx 的技能逐位不变 /
+    # fx 脚本不引用 GameState 与 Combat / 未知 fx key 回落投射物。
+    "MageFxCastingTest",
     "SmokeTest",
 ]
 
