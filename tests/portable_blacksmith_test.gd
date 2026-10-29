@@ -146,8 +146,8 @@ func _test_quest_contract() -> void:
 	var row: Dictionary = tpl
 	check(int(row.get("requiresLevel", 0)) == 80, "requiresLevel 应为 80，实际 %d" % int(row.get("requiresLevel", 0)))
 	check(String(row.get("prev", "")) == "C6S07", "前置应为 C6S07（先拿到三件套），实际「%s」" % row.get("prev", ""))
-	check(String(row.get("giver", "")) == "camp_smith", "发布人应为 camp_smith")
-	check(String(row.get("turnIn", "")) == "camp_smith", "交付人应为 camp_smith")
+	check(String(row.get("giver", "")) == "c6_npc02", "发布人应为 c6_npc02（镇脉前哨铁匠闻钧）")
+	check(String(row.get("turnIn", "")) == "c6_npc02", "交付人应为 c6_npc02")
 	check(not Quest.level_gate_reason(row, 79).is_empty(), "79 级应被拦")
 	check(Quest.level_gate_reason(row, 80).is_empty(), "80 级应放行")
 	var objective: Dictionary = row.get("objective", {})
@@ -168,9 +168,9 @@ func _test_quest_contract() -> void:
 		if spec is Dictionary and String((spec as Dictionary).get("itemId", "")) == TOOL:
 			found = true
 	check(found, "奖励里应真的发一件该道具（只写 unlocks 不写 items = 领了没有）")
-	# 发布点必须真的在营地里，且该 NPC 有 npcId —— 否则任务面板认不出他是发布人。
-	check(MapService.map_for_npc("camp_smith") == "camp", "camp_smith 应解析到 camp，实际「%s」"
-		% MapService.map_for_npc("camp_smith"))
+	# 发布点必须真的挂在镇脉前哨，且该 NPC 有 npcId —— 否则任务面板认不出他是发布人。
+	check(MapService.map_for_npc("c6_npc02") == "c6_map00", "c6_npc02 应解析到 c6_map00，实际「%s」"
+		% MapService.map_for_npc("c6_npc02"))
 
 # ---- 用例 7：两条既有防线对新道具生效 ----
 

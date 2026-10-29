@@ -2658,8 +2658,8 @@
     "id": "C7S01",
     "name": "炉火随行",
     "type": "side",
-    "giver": "camp_smith",
-    "turnIn": "camp_smith",
+    "giver": "c6_npc02",
+    "turnIn": "c6_npc02",
     "objective": {
       "kind": "kill",
       "targetId": "c6_normal01",
@@ -2684,8 +2684,8 @@
     ],
     "prev": "C6S07",
     "abandonable": false,
-    "desc": "「你越走越远，我这炉子追不上你。」铁匠把一柄巴掌大的小锤塞进你行囊，「带上它，走到哪儿都能开炉。先替我试二十下——聚金地脉的裂纹卫体，正缺人敲。」",
+    "desc": "「你越走越远，我这炉子追不上你。」铁匠把一柄巴掌大的小锤塞进你行囊，「带上它，走到哪儿都能开炉。先替我试二十下——聚金地脉的裂纹卫体，正缺人敲。」——随时回镇脉前哨找铁匠闻钧领锤。",
     "trackerText": "你需要到 {map:c7_gold_field} 击杀 {count} 只 {monster:c6_normal01}（{current}/{count}）。",
-    "turnInText": "快到 {map:camp} 找 {npc:camp_smith} 交任务吧。"
+    "turnInText": "快到 {map:c6_map00} 找 {npc:c6_npc02} 交任务吧。"
   }
 ]
