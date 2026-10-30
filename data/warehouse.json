@@ -6,5 +6,25 @@
   "geoCap": 200,
   "tailStep": 0,
   "cap": 400,
-  "_comment": "每次扩容 expandSlots 格。前 geoCap 格沿用几何价：expandCost(k)=round(expandBase × expandRate^k)（k < geoSteps）；超过 geoCap 的尾段改为平价/线性：tailCost(j)=round(expandBase × expandRate^(geoSteps-1)) + tailStep × j（j 为尾段第几档，从 1 起）。geoSteps=(geoCap − baseSlots)/expandSlots=16。仓库内装备不占背包、不计入死亡掉落。"
+  "_comment": "每次扩容 expandSlots 格。前 geoCap 格沿用几何价：expandCost(k)=round(expandBase × expandRate^k)（k < geoSteps）；超过 geoCap 的尾段改为平价/线性：tailCost(j)=round(expandBase × expandRate^(geoSteps-1)) + tailStep × j（j 为尾段第几档，从 1 起）。geoSteps=(geoCap − baseSlots)/expandSlots=16。仓库内装备不占背包、不计入死亡掉落。",
+  "runeSynthesis": [
+    {
+      "sourceId": "rune_iron",
+      "sourceCount": 4,
+      "targetId": "rune_jade",
+      "targetCount": 1
+    },
+    {
+      "sourceId": "rune_jade",
+      "sourceCount": 4,
+      "targetId": "rune_gold",
+      "targetCount": 1
+    },
+    {
+      "sourceId": "rune_gold",
+      "sourceCount": 40,
+      "targetId": "rune_diamond",
+      "targetCount": 1
+    }
+  ]
 }

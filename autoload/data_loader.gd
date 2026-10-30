@@ -522,6 +522,9 @@ func validate_all() -> Array[String]:
 		# 故与 `accent` 一样做「非空 + 不重复」双校验。
 		var seen_weight := {}
 		for rune in runes:
+			if rune is Dictionary and rune.has("stackMax"):
+				if not _is_whole_level(rune.stackMax) or int(rune.stackMax) < 1:
+					report.append("[runes] stackMax 应为正整数")
 			if not rune is Dictionary:
 				continue
 			var rune_id := String(rune.get("id", ""))
@@ -573,6 +576,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_misc_items())
 	report.append_array(_validate_sellable_prices())
 	report.append_array(_validate_exchange())
+	report.append_array(RuneSynthesis.validate_config(Warehouse.config()))
 	report.append_array(_validate_upgrade())
 	report.append_array(_validate_endgame())
 	report.append_array(_validate_durability())

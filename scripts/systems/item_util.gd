@@ -158,10 +158,11 @@ static func star_badge_font_size(star: int) -> int:
 static func is_stackable(item: Dictionary) -> bool:
 	return STACKABLE_KINDS.has(String(item.get("kind", "")))
 
-## 堆叠上限：药品读 potions.json 的 stackMax，其余用默认 99。
+## 堆叠上限：药品与如意读取模板 stackMax，未配置沿用默认 99。
 static func stack_max(item: Dictionary) -> int:
-	if String(item.get("kind", "")) == "potion":
-		var p = DataLoader.get_entry("potions", String(item.get("itemId", "")))
+	var kind := String(item.get("kind", ""))
+	if kind in ["potion", "rune"]:
+		var p = DataLoader.get_entry("potions" if kind == "potion" else "runes", String(item.get("itemId", "")))
 		if p is Dictionary:
 			return int(p.get("stackMax", DEFAULT_STACK_MAX))
 	return DEFAULT_STACK_MAX

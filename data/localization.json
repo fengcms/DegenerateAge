@@ -968,5 +968,13 @@
   "ui.fusion.auto_runes": "如意如意",
   "ui.fusion.auto_runes_tip": "按钻石、金、玉、铁的顺序，自动从背包选出最好的四枚如意；不足四枚则全部放入。替换当前预选，确认升级成功后才消耗。",
   "ui.reforge_panel.auto_runes": "如意如意",
-  "ui.reforge_panel.auto_runes_tip": "按钻石、金、玉、铁的顺序，自动从背包选出最好的四枚如意；不足四枚则全部放入。替换当前预选，重铸成功后才消耗。"
+  "ui.reforge_panel.auto_runes_tip": "按钻石、金、玉、铁的顺序，自动从背包选出最好的四枚如意；不足四枚则全部放入。替换当前预选，重铸成功后才消耗。",
+  "ui.warehouse.synthesize": "合成如意",
+  "ui.warehouse.synthesize_tip": "仅合成仓库如意：4 铁→1 玉、4 玉→1 金、40 金→1 钻石，连续合成并保留余数。点击立即执行，不可撤销。",
+  "msg.rune_synthesis.empty": "没有足够的如意可合成",
+  "msg.rune_synthesis.space": "仓库空间不足，请腾出空位",
+  "msg.rune_synthesis.config": "如意合成配置无效",
+  "msg.rune_synthesis.invalid": "仓库如意数量异常，无法合成",
+  "msg.rune_synthesis.done": "如意合成完成：%s",
+  "msg.rune_synthesis.change": "%s %d→%d"
 }
