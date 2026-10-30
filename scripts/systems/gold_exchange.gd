@@ -149,18 +149,44 @@ static func max_times(pair_id: String) -> int:
 	var after := _store_without(GameState.warehouse.duplicate(true), from_id, from_count * by_source)
 	return mini(by_source, room_in(after, to_id) / to_count)
 
-## 成功提示里的「得到什么」，如「金条 ×1」/「金币 1000000」。
+## 成功提示里的「得到什么」，如「金条 ×1」/「金币 1000000」。`times < 1` 返回空。
 static func got_text(pair_id: String, times: int) -> String:
+	var row := pair(pair_id)
+	if row.is_empty() or times < 1:
+		return ""
+	var to_id := String(row.get("to", ""))
+	return _amount_text(to_id, int(row.get("toCount", 0)) * times)
+
+## 汇率说明行，如「1 次 = 金币 ×1000000 → 金条」。
+## 🔑 同样从 `exchange.json` 推导：改汇率不用回头找硬编码字符串，
+## 也不会出现「数据改了、说明行还写着旧汇率」这种只有玩家会发现的错。
+static func rate_text(pair_id: String) -> String:
 	var row := pair(pair_id)
 	if row.is_empty():
 		return ""
-	var to_id := String(row.get("to", ""))
-	var count := int(row.get("toCount", 0)) * maxi(1, times)
-	if to_id == GOLD:
-		return ItemUtil.display_name({"kind": "coin", "gold": count})
-	return ItemUtil.display_name({"kind": "misc", "itemId": to_id, "count": count})
+	return Localization.tr_key("msg.exchange.p008") % [
+		_amount_text(String(row.get("from", "")), int(row.get("fromCount", 0))),
+		_amount_text(String(row.get("to", "")), int(row.get("toCount", 0))),
+	]
+
+## 本次**要付出**的数量描述，如「金币 ×100000000」/「金条 ×100」。
+## 与 `got_text()` 同源拼接（都在 `_amount_text`），预览的两行不会各用一套写法。
+static func cost_text(pair_id: String, times: int) -> String:
+	var row := pair(pair_id)
+	if row.is_empty() or times < 1:
+		return ""
+	return _amount_text(String(row.get("from", "")), int(row.get("fromCount", 0)) * times)
 
 # ---- 内部 ----
+
+## 「数量 + 名称」的唯一拼法。`gold` 不是物品，走 coin 形态；其余走 misc 形态。
+## 名称解析交给 `ItemUtil.display_name()` —— 那里才是物品名的权威来源。
+static func _amount_text(item_id: String, count: int) -> String:
+	if item_id.is_empty() or count <= 0:
+		return ""
+	if item_id == GOLD:
+		return ItemUtil.display_name({"kind": "coin", "gold": count})
+	return ItemUtil.display_name({"kind": "misc", "itemId": item_id, "count": count})
 
 ## 从仓库副本中扣除指定物品若干块（跨堆），扣空的格置 null。
 static func _store_without(store: Array, item_id: String, amount: int) -> Array:

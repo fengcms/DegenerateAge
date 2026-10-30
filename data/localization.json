@@ -930,7 +930,14 @@
   "ui.warehouse_panel.p019": "金条 → 金币",
   "ui.warehouse_panel.p020": "金砖 → 金币",
   "ui.warehouse_panel.p021": "%s（%d 次）",
-  "ui.warehouse_panel.p022": "单击换 1 次，按住 Shift 单击换到上限",
+  "ui.warehouse_panel.p022": "点击选择兑换数量",
+  "ui.warehouse_panel.p023": "兑换数量",
+  "ui.warehouse_panel.p024": "兑换次数",
+  "ui.warehouse_panel.p025": "最大 %d",
+  "ui.warehouse_panel.p026": "将消耗 %s",
+  "ui.warehouse_panel.p027": "得到 %s",
+  "ui.warehouse_panel.p028": "请输入 1 到 %d 之间的整数",
+  "ui.warehouse_panel.p029": "超过可换上限（最多 %d 次）",
   "msg.exchange.p001": "金币不足（需 %d 金币）",
   "msg.exchange.p002": "仓库里的金条不足（需 %d 块）",
   "msg.exchange.p003": "仓库里的金砖不足（需 %d 块）",
@@ -938,5 +945,6 @@
   "msg.exchange.p005": "金币已达上限，先花掉一些再兑回金币",
   "msg.exchange.p006": "兑换完成：%s",
   "msg.exchange.p007": "兑换失败，请重试",
+  "msg.exchange.p008": "1 次 = %s → %s",
   "msg.drop_to_ground.p008": "贵重物品不能丢弃：%s"
 }
