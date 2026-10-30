@@ -1447,7 +1447,7 @@ func find_owned_item(instance_id: String) -> Dictionary:
 
 ## 按背包装备快照执行三种铁匠合成；任何校验失败都不改背包或金币。
 ## UI 传入打开预览时的完整实例字典，确认时按 instanceId 重定位，避免整理后误耗。
-## 材料可来自背包或身上穿戴（工程 65）；产物**永远进背包**（D3：跨档后产物可能高于玩家等级）。
+## 保星旧料来自穿戴时，产物满足等级则回原槽；其他情况进背包。
 ## 四紫升紫接受 2—4 件：件数换成功率，**期望材料消耗恒为 4 件**（见 `EquipmentFusion.success_rate`）。
 func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",
 		rng: RandomNumberGenerator = null, rune_ids: Array = []) -> Dictionary:
@@ -1460,6 +1460,7 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		return {"ok": false, "reason": "请选择正确数量的装备"}
 	var bag_indices: Array[int] = []
 	var worn_slots: Array[String] = []
+	var old_worn_slot := ""
 	var items: Array[Dictionary] = []
 	var seen := {}
 	for snapshot in selected:
@@ -1476,6 +1477,8 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 			bag_indices.append(int(found.index))
 		else:
 			worn_slots.append(String(found.slot))
+		if mode == EquipmentFusion.STAR_TRANSFER and items.is_empty() and String(found.loc) == "worn":
+			old_worn_slot = String(found.slot)
 		items.append(found.item)
 	var plan := EquipmentFusion.plan_transfer(items[0], items[1]) if mode == EquipmentFusion.STAR_TRANSFER \
 		else EquipmentFusion.plan_four(items, mode, target_kind)
@@ -1528,18 +1531,22 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 			_reroll_output_best(output, rng, tries)
 	if not SaveManager._valid_item(output):
 		return {"ok": false, "reason": "目标装备校验失败，未消耗材料"}
-	# 产物落点：优先复用背包里被消耗的第一个格子，其次第一个空位；两处都没有就是背包满。
-	# 必须在扣费与消耗之前判定，否则会出现「钱花了、材料没了、东西没地方放」。
+	# 先确定落点再提交。穿戴旧料升级后回原槽，不重新挑选双槽部位。
+	var equip_slot := ""
+	if (not old_worn_slot.is_empty() and Equipment.meets_level(output, int(player.level))
+			and Equipment.slots_for_kind(Equipment.item_kind(output)).has(old_worn_slot)):
+		equip_slot = old_worn_slot
 	var output_index := -1
-	if not bag_indices.is_empty():
-		output_index = bag_indices[0]
-	else:
-		for i in range(inventory.size()):
-			if inventory[i] == null:
-				output_index = i
-				break
-	if output_index < 0:
-		return {"ok": false, "reason": "背包已满，产物没有空位，未消耗材料"}
+	if equip_slot.is_empty():
+		if not bag_indices.is_empty():
+			output_index = bag_indices[0]
+		else:
+			for i in range(inventory.size()):
+				if inventory[i] == null:
+					output_index = i
+					break
+		if output_index < 0:
+			return {"ok": false, "reason": "背包已满，产物没有空位，未消耗材料"}
 	for index in bag_indices:
 		inventory[index] = null
 	for slot_id in worn_slots:
@@ -1547,16 +1554,19 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	# 如意必须在 `inventory[output_index] = output` **之前**扣：`output_index` 可能正是
 	# 某个被清空的材料格，而如意是另一个格子，先写产物会让「扣空置 null」覆盖掉产物（顺序反过来写就炸）。
 	_consume_rune_uses(rune_charge.get("uses", []))
-	inventory[output_index] = output
+	if not equip_slot.is_empty():
+		equipment[equip_slot] = output
+	else:
+		inventory[output_index] = output
 	if cost > 0:
 		add_gold(-cost)
 	if worn_slots.is_empty():
 		EventBus.inventory_changed.emit()
 	else:
-		# 吃掉身上的件后走完整收尾：广播装备变更，并把当前 HP / MP 收敛到降低后的上限。
+		# 完成最终穿戴后统一广播，HP/MP只按最终上限收敛，不经过临时空槽状态。
 		_after_equip_change()
 	EventBus.trade_done.emit("forge", String(output.get("itemId", "")), cost)
-	return {"ok": true, "item": output, "index": output_index, "cost": cost,
+	return {"ok": true, "item": output, "index": output_index, "equipped": not equip_slot.is_empty(), "slot": equip_slot, "cost": cost,
 		"runes": int(rune_charge.get("count", 0)), "tries": tries, "reason": ""}
 
 ## 工程 112：保星产物词条取优。**只写回 `affixes` / `pctAttrs`** ——

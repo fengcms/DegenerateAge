@@ -709,8 +709,11 @@ func _on_confirm() -> void:
 		# 比单独的「暂时穿不上」严重一档，单独用强化文案。
 		if not worn_names.is_empty():
 			var names := ", ".join(PackedStringArray(worn_names))
+			var old_location := GameState.find_owned_item(String(items[0].get("instanceId", "")))
+			var auto_equip: bool = _mode == EquipmentFusion.STAR_TRANSFER and old_location.get("loc", "") == "worn"
+			var worn_key := "ui.fusion.worn_auto_equip" if auto_equip else "ui.fusion.worn_warning"
 			lines.append(Localization.tr_key("ui.fusion.worn_locked_warning", [names, locked_level])
-				if locked_level > 0 else Localization.tr_key("ui.fusion.worn_warning", [names]))
+				if locked_level > 0 else Localization.tr_key(worn_key, [names]))
 		elif locked_level > 0:
 			lines.append(Localization.tr_key("ui.fusion.out_level_confirm",
 				[locked_level, level, locked_level - level]))
@@ -725,7 +728,9 @@ func _on_confirm() -> void:
 		var gained: Dictionary = result.item
 		var need := Equipment.level_req(gained)
 		var text := Localization.tr_key("ui.fusion.done", [ItemUtil.display_name(gained)])
-		if need > level:
+		if bool(result.get("equipped", false)):
+			text = Localization.tr_key("ui.fusion.done_equipped", [ItemUtil.display_name(gained)])
+		elif need > level:
 			text = Localization.tr_key("ui.fusion.done_locked", [ItemUtil.display_name(gained), need])
 		# 工程 112 D4：走了取优就必须说出来，否则四枚钻石如意的消耗在界面上不可见。
 		var tries := int(result.get("tries", 1))
