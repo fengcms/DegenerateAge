@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tools/rune_reroll_preview.gd" id="1_rune_reroll_preview"]
+
+[node name="RuneRerollPreview" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_rune_reroll_preview")
