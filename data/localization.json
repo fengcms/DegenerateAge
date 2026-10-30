@@ -964,5 +964,7 @@
   "ui.super.smith": "随身铁匠",
   "ui.super.carter": "随身车夫",
   "ui.super.warehouse": "随身仓库",
-  "ui.super.shortcuts": "按 1—5 打开服务 · Esc 关闭"
+  "ui.super.shortcuts": "按 1—5 打开服务 · Esc 关闭",
+  "ui.fusion.auto_runes": "如意如意",
+  "ui.fusion.auto_runes_tip": "按钻石、金、玉、铁的顺序，自动从背包选出最好的四枚如意；不足四枚则全部放入。替换当前预选，确认升级成功后才消耗。"
 }

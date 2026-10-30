@@ -33,6 +33,7 @@ var _risk_confirmed := false
 var _star12: CheckBox
 ## 工程 112：如意压阵四格，**只在保星页显示**。四金 / 四紫定向本身 100% 必成，
 ## 四紫升紫是「件数换概率」的刻意设计（D2 拍板不吃如意），三处都没有可优化的掷点。
+var _auto_runes: Button
 var _rune_title: Label
 var _rune_row: GridContainer
 var _rune_pickers: Array[OptionButton] = []
@@ -117,6 +118,7 @@ func set_open(open: bool) -> void:
 		_star12.visible = batch_mode
 		_star12.button_pressed = false
 		var rune_mode := _mode == EquipmentFusion.STAR_TRANSFER
+		_auto_runes.visible = rune_mode
 		_rune_title.visible = rune_mode
 		_rune_row.visible = rune_mode
 		_rune_hint.visible = rune_mode
@@ -289,6 +291,13 @@ func _build() -> void:
 	_rune_title.text = Localization.tr_key("ui.fusion.rune_title")
 	PanelChrome.style_section(_rune_title)
 	form.add_child(_rune_title)
+	_auto_runes = Button.new()
+	_auto_runes.text = Localization.tr_key("ui.fusion.auto_runes")
+	_auto_runes.tooltip_text = Localization.tr_key("ui.fusion.auto_runes_tip")
+	_auto_runes.custom_minimum_size.y = 38
+	PanelChrome.style_action(_auto_runes)
+	_auto_runes.pressed.connect(_on_auto_runes)
+	form.add_child(_auto_runes)
 	# 🔴 2×2 栅格，不是一行四格：四个下拉最小宽度合起来 588px，会把面板整体撑宽，
 	# 而面板定位算式仍按原宽度算（与重铸面板同一个坑）。两列时最小宽度只有 290px。
 	_rune_row = GridContainer.new()
@@ -582,6 +591,7 @@ func _refresh_runes() -> void:
 	if _rune_pickers.is_empty():
 		return
 	var counts := RuneCharge.inventory_counts(GameState.inventory)
+	_auto_runes.disabled = counts.is_empty()
 	var remaining := counts.duplicate()
 	for slot in range(_rune_choices.size()):
 		var rune_id := _rune_choices[slot]
@@ -776,4 +786,13 @@ func _on_confirm_sacrifice() -> void:
 		_feedback.text = ""
 	else:
 		_feedback.text = String(result.get("reason", ""))
+	_refresh_preview()
+
+## 自动预选与手动换如意共用预览及二次确认失效流程。
+func _on_auto_runes() -> void:
+	if _mode != EquipmentFusion.STAR_TRANSFER or _auto_runes.disabled:
+		return
+	_rune_choices = RuneCharge.best_available(GameState.inventory)
+	_risk_confirmed = false
+	_feedback.text = ""
 	_refresh_preview()

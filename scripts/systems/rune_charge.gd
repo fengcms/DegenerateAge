@@ -104,3 +104,24 @@ static func inventory_counts(inv: Array) -> Dictionary:
 		var rune_id := String(entry.get("itemId", ""))
 		counts[rune_id] = int(counts.get(rune_id, 0)) + maxi(0, int(entry.get("count", 0)))
 	return counts
+
+## 按重掷权重从高到低预选四枚；只读背包，不扣除堆叠。
+static func best_available(inv: Array) -> Array[String]:
+	var counts := inventory_counts(inv)
+	var ids := counts.keys()
+	ids.sort_custom(func(a: String, b: String) -> bool:
+		var wa := weight_of(a)
+		var wb := weight_of(b)
+		return a < b if is_equal_approx(wa, wb) else wa > wb)
+	var chosen: Array[String] = []
+	for raw in ids:
+		var rune_id := String(raw)
+		if weight_of(rune_id) <= 0.0:
+			continue
+		for _i in range(mini(int(counts[rune_id]), SLOTS - chosen.size())):
+			chosen.append(rune_id)
+		if chosen.size() == SLOTS:
+			break
+	while chosen.size() < SLOTS:
+		chosen.append("")
+	return chosen

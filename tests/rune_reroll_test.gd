@@ -18,6 +18,7 @@ func check(ok: bool, label: String) -> void:
 		push_error("[RuneRerollTest] " + label)
 
 func _ready() -> void:
+	_test_auto_best()
 	_test_weights()
 	_test_tries()
 	_test_plan()
@@ -385,3 +386,30 @@ func _sample_score(base_item: Dictionary, sample: Dictionary) -> float:
 	probe["affixes"] = sample.get("affixes", [])
 	probe["pctAttrs"] = sample.get("pctAttrs", [])
 	return Equipment.score(probe)
+
+## 自动填充按实际重掷收益选最优四枚，跨堆叠计数且不提前消耗。
+func _test_auto_best() -> void:
+	var inv: Array = [
+		{"kind": "rune", "itemId": "rune_iron", "count": 9},
+		{"kind": "rune", "itemId": "rune_diamond", "count": 1},
+		{"kind": "rune", "itemId": "rune_gold", "count": 1},
+		{"kind": "rune", "itemId": "rune_gold", "count": 1}]
+	var before := inv.duplicate(true)
+	check(RuneCharge.best_available(inv) == ["rune_diamond", "rune_gold", "rune_gold", "rune_iron"],
+		"如意如意跨堆叠选择收益最高的四枚")
+	check(inv == before, "自动预选不扣除背包库存")
+	check(RuneCharge.best_available([inv[1]]) == ["rune_diamond", "", "", ""], "不足四枚留空")
+	check(RuneCharge.best_available([]) == ["", "", "", ""], "空背包不虚构如意")
+	var panel := preload("res://scenes/ui/EquipmentFusionPanel.tscn").instantiate()
+	add_child(panel)
+	GameState.inventory = inv.duplicate(true)
+	panel._mode = EquipmentFusion.STAR_TRANSFER
+	panel._risk_confirmed = true
+	panel._on_auto_runes()
+	check(panel._rune_choices == RuneCharge.best_available(inv) and not panel._risk_confirmed,
+		"自动填充更新四格并使风险确认失效")
+	check(String(panel._rune_pickers[0].get_item_metadata(panel._rune_pickers[0].selected)) == "rune_diamond",
+		"自动填充同步下拉显示")
+	check(GameState.inventory == before, "界面自动填充不消耗库存")
+	panel.queue_free()
+	GameState.reset_to_defaults()
