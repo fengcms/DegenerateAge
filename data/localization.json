@@ -958,5 +958,10 @@
   "msg.exchange.p008": "1 次 = %s → %s",
   "msg.drop_to_ground.p008": "贵重物品不能丢弃：%s",
   "ui.panel.super_portable": "超级随身令牌",
-  "ui.panel.portable_warehouse": "随身仓库"
+  "ui.panel.portable_warehouse": "随身仓库",
+  "ui.super.boss": "随身 Boss",
+  "ui.super.shop": "随身商店",
+  "ui.super.smith": "随身铁匠",
+  "ui.super.carter": "随身车夫",
+  "ui.super.warehouse": "随身仓库"
 }
