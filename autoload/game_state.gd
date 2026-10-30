@@ -1078,6 +1078,18 @@ func exchange(pair_id: String, times: int = 1) -> Dictionary:
 	EventBus.toast_requested.emit(Localization.tr_key("msg.exchange.p006") % got, "pickup")
 	return {"ok": true, "reason": "", "got": got}
 
+
+## 仓库如意合成：同步重算计划后一次提交，失败不改变任何真实物品。
+func synthesize_warehouse_runes() -> Dictionary:
+	var plan := RuneSynthesis.plan(warehouse)
+	if not bool(plan.get("ok", false)):
+		return _warehouse_fail(String(plan.get("reason", "")))
+	warehouse = plan.store
+	var message := RuneSynthesis.summary(plan)
+	EventBus.warehouse_changed.emit()
+	EventBus.toast_requested.emit(message, "pickup")
+	return {"ok": true, "reason": "", "summary": message}
+
 func _exchange_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "reason": reason}

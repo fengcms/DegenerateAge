@@ -1,5 +1,6 @@
 extends Node
 var failures: Array[String] = []
+var warehouse_signals := 0
 
 func check(ok: bool, label: String) -> void:
 	if not ok:
@@ -43,6 +44,26 @@ func _ready() -> void:
 	bad = Warehouse.config().duplicate(true)
 	bad.runeSynthesis[0].targetId = "rune_iron"
 	check(not RuneSynthesis.validate_config(bad).is_empty(), "拒绝自环配方")
+	GameState.reset_to_defaults()
+	GameState.warehouse = store(19, 3, 39, 2)
+	GameState.inventory[0] = ItemFactory.make_any("rune_iron", 99)
+	var bag_before := GameState.inventory.duplicate(true)
+	var panel := preload("res://scenes/ui/WarehousePanel.tscn").instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	check(not panel._synthesize.disabled, "仓库合成按钮可用")
+	EventBus.warehouse_changed.connect(func() -> void: warehouse_signals += 1)
+	panel._synthesize.pressed.emit()
+	check(warehouse_signals == 1 and RuneCharge.inventory_counts(GameState.warehouse).get("rune_diamond") == 3, "真实按钮提交且仅广播一次")
+	check(GameState.inventory == bag_before, "背包不参与")
+	check(panel._synthesize.disabled and panel._detail.text.contains("2→3"), "合成后置灰并显示最终数量")
+	var settled := GameState.warehouse.duplicate(true)
+	check(not GameState.synthesize_warehouse_runes().ok and warehouse_signals == 1 and GameState.warehouse == settled, "重复提交不发奖不广播")
+	GameState.warehouse = store(4, 0, 0, 0)
+	EventBus.warehouse_changed.emit()
+	check(not panel._synthesize.disabled, "库存变更更新按钮")
+	panel.queue_free()
+	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[RuneSynthesisTest] 全部通过 ✅")
 	get_tree().quit(0 if failures.is_empty() else 1)

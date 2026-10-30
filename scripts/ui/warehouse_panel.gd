@@ -21,6 +21,7 @@ var _title: Label
 var _bag_count: Label
 var _store_count: Label
 var _bag_organize: Button
+var _synthesize: Button
 var _store_organize: Button
 var _gold: Label
 var _detail: Label
@@ -154,6 +155,12 @@ func _build() -> void:
 	_store_organize.pressed.connect(_on_store_organize)
 	store_head.add_child(_store_organize)
 	PanelChrome.style_action(_store_organize)
+	# 与整理共用仓库标题操作行，所有按钮保持现有 PanelChrome 风格。
+	_synthesize = Button.new()
+	_synthesize.text = Localization.tr_key("ui.warehouse.synthesize")
+	_synthesize.pressed.connect(_on_synthesize)
+	store_head.add_child(_synthesize)
+	PanelChrome.style_action(_synthesize)
 	_store_scroll = _make_scroll(store_column)
 	_store_grid = _make_grid(_store_scroll)
 	_detail = Label.new()
@@ -229,6 +236,7 @@ func _refresh() -> void:
 	_refresh_grid(_store_grid, _store_slots, GameState.warehouse, "warehouse")
 	_refresh_summary()
 	_refresh_exchange()
+	_refresh_synthesis()
 
 ## 容量变化时才增减格子；物品变化只刷新已有节点，保留拖放与滚动状态。
 func _refresh_grid(grid: GridContainer, slots: Array[ItemSlot], items: Array, side: String) -> void:
@@ -389,3 +397,15 @@ func _on_expand() -> void:
 	var result := GameState.warehouse_expand()
 	_detail.text = Localization.tr_key("ui.warehouse_panel.p015") % result.get("capacity", 0) if result.get("ok", false) \
 		else String(result.get("reason", Localization.tr_key("ui.warehouse.expand_failed")))
+
+func _refresh_synthesis() -> void:
+	var plan := RuneSynthesis.plan(GameState.warehouse)
+	_synthesize.disabled = not bool(plan.get("ok", false))
+	_synthesize.tooltip_text = Localization.tr_key("ui.warehouse.synthesize_tip")
+	if _synthesize.disabled:
+		_synthesize.tooltip_text += "\n" + String(plan.get("reason", ""))
+
+func _on_synthesize() -> void:
+	_reset_click()
+	var result := GameState.synthesize_warehouse_runes()
+	_detail.text = String(result.get("summary", result.get("reason", "")))
