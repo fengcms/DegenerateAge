@@ -457,6 +457,11 @@ func _refresh_details() -> void:
 	_build_affix_rows(item)
 	_refresh_score(item)
 	_lock_hint.visible = true
+	_affix_title.text = Localization.tr_key("ui.reforge.affix_count", [ReforgeAffixes.current_count(item), Reforge.max_lock_count(item)])
+	_lock_hint.text = Localization.tr_key("ui.reforge_panel.p011")
+	if Reforge.quality_of(item) == "legendary":
+		var state_key := "ui.reforge.unlocked" if ReforgeAffixes.unlocked(item) else ("ui.reforge.unlock_ready" if ReforgeAffixes.eligible(item) else "ui.reforge.unlock_later")
+		_lock_hint.text += "\n" + Localization.tr_key(state_key)
 	_refresh_refine(item)
 	var price := ServiceFee.apply(Reforge.cost(Equipment.level_req(item), _locked.size()),
 		ServiceFee.rate_for(_portable))
@@ -848,6 +853,8 @@ func _on_reforge() -> void:
 					float((e as Dictionary).get("value", 0.0))))
 		_feedback.text = Localization.tr_key("ui.reforge_panel.p015") % [
 			", ".join(kept_lines), ", ".join(old_lines), ", ".join(new_lines)]
+	if bool(result.get("unlocked_fifth", false)):
+		_feedback.text = Localization.tr_key("msg.reforge.fifth_unlocked") + "\n" + _feedback.text
 	_feedback.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
 	# 工程 112 D4：投了如意必须让玩家看见「这次是好几次里最好的那次」，
 	# 否则四枚钻石如意的消耗在界面上完全不可见（toast 会被下一句顶掉）。

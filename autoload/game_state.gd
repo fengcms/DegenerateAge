@@ -1773,6 +1773,8 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	# 否则玩家花了四枚钻石如意，看到的和平时一模一样。
 	if tries > 1:
 		message += " · " + Localization.tr_key("msg.reforge.p015", [tries])
+	if unlocks_fifth:
+		message = Localization.tr_key("msg.reforge.fifth_unlocked") + " · " + message
 	EventBus.toast_requested.emit(message, "pickup")
 	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
 		"unchanged": unchanged, "locked": lock_count, "refined": effective, "unlocked_fifth": unlocks_fifth,

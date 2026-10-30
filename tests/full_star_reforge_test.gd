@@ -38,6 +38,7 @@ func _ready() -> void:
 			if locks.has(entry.stat):
 				check((preserved.affixes + preserved.pctAttrs).has(entry), "四锁精确保留")
 	_test_business(rng)
+	await _test_ui()
 	if failures.is_empty():
 		print("[FullStarReforgeTest] 全部通过 ✅")
 	get_tree().quit(0 if failures.is_empty() else 1)
@@ -109,4 +110,50 @@ func _test_business(rng: RandomNumberGenerator) -> void:
 	var selected: Array[Dictionary] = [old_gear.duplicate(true), new_gear.duplicate(true)]
 	var transfer := GameState.forge_equipment(EquipmentFusion.STAR_TRANSFER, selected, "", rng)
 	check(transfer.ok and GameState.inventory[0].star == 12 and count(GameState.inventory[0]) == 4 and not ReforgeAffixes.unlocked(GameState.inventory[0]), "保星新产物12星四条")
+	GameState.reset_to_defaults()
+
+func _test_ui() -> void:
+	GameState.reset_to_defaults()
+	GameState.gold = 10000000
+	var item := make_item("c6_equip_weapon", 944, 100)
+	item.star = 12
+	GameState.inventory[0] = item
+	var ui := CanvasLayer.new()
+	add_child(ui)
+	var panel := preload("res://scenes/ui/ReforgePanel.tscn").instantiate()
+	ui.add_child(panel)
+	panel.set_open(true)
+	check(panel._lock_hint.text.contains("解锁第5条") and panel._affix_title.text.contains("4 条"), "首次解锁预告")
+	panel._button.pressed.emit()
+	check(count(item) == 5 and panel._affix_rows.get_child_count() == 5, "真实按钮解锁并显示五行")
+	check(panel._feedback.text.contains("已解锁第五词条") and panel._affix_title.text.contains("最多锁定 4"), "解锁反馈与锁数同步")
+	check(ItemUtil.affix_lines(item).size() == 5 and ItemUtil.attr_lines(item).has(Localization.tr_key("ui.item.fifth_unlocked")), "通用词条与tooltip显示五条资格")
+	for entry in item.affixes:
+		panel._on_lock_toggled(entry.stat)
+	check(panel._locked.size() == 4 and not panel._button.disabled, "界面允许锁四条")
+	var last_row: Node = panel._affix_rows.get_child(4)
+	check(last_row.get_child(1).disabled, "第五条不能同时锁定")
+	if DisplayServer.get_name() != "headless":
+		for spec in [[Vector2i(1280, 800), 1.0], [Vector2i(960, 720), 1.0], [Vector2i(1280, 800), 1.5]]:
+			DisplayServer.window_set_size(spec[0])
+			GameState.settings.uiScale = spec[1]
+			GameState.settings.textScale = spec[1]
+			SettingsRuntime.apply_ui_scale_to(ui)
+			SettingsRuntime.apply_text_scale_to(ui)
+			panel._resize()
+			panel._scroll.scroll_vertical = 0
+			for _i in range(16):
+				await get_tree().process_frame
+			var box: Control = panel._box
+			var rect := Rect2(box.get_global_transform_with_canvas().origin, box.size * float(spec[1]))
+			check(get_viewport().get_visible_rect().grow(1).encloses(rect), "五词条面板不越界 " + str(spec))
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png("/tmp/fifth_reforge_%d_%d.png" % [spec[0].x, int(float(spec[1]) * 100)])
+			panel._scroll.scroll_vertical = int(panel._scroll.get_v_scroll_bar().max_value)
+			for _i in range(8):
+				await get_tree().process_frame
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png("/tmp/fifth_reforge_bottom_%d_%d.png" % [spec[0].x, int(float(spec[1]) * 100)])
+	panel.queue_free()
+	ui.queue_free()
 	GameState.reset_to_defaults()

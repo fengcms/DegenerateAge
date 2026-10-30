@@ -203,7 +203,7 @@
   "ui.fusion.rate": "成功率 %d%%（投入件数越多越高，4 件必成）",
   "ui.fusion.rate_risk": "失败将消耗投入的全部材料，不生成产物；期望消耗与 4 件相同，只是波动更大。",
   "ui.fusion.rate_loss": "成功率 %d%%：这次只投入 %d 件，失败会全部消耗。再次确认才会执行。",
-  "ui.fusion.star_hint": "消耗 12★ 紫装与任意更高档同类型 0★ 紫装；跨 1 档为基准价，多跨 1 档多扣 1 份金币。产物直接 12 星，词条重新随机，不满意可重铸。第一格也可从人物面板把身上那件直接拖进来。",
+  "ui.fusion.star_hint": "消耗 12★ 紫装与任意更高档同类型 0★ 紫装；跨 1 档为基准价，多跨 1 档多扣 1 份金币。产物直接 12 星，词条重新随机，不满意可重铸。第一格也可从人物面板把身上那件直接拖进来。 新产物为四词条，不继承第五词条解锁；再次重铸可解锁第五条。",
   "ui.fusion.rune_title": "如意压阵（投入如意可重掷取优，最多四枚）",
   "ui.fusion.rune_hint": "产物词条掷 %d 次，取属性评分最高的一次",
   "ui.fusion.rune_none": "不使用如意",
@@ -976,5 +976,11 @@
   "msg.rune_synthesis.config": "如意合成配置无效",
   "msg.rune_synthesis.invalid": "仓库如意数量异常，无法合成",
   "msg.rune_synthesis.done": "如意合成完成：%s",
-  "msg.rune_synthesis.change": "%s %d→%d"
+  "msg.rune_synthesis.change": "%s %d→%d",
+  "ui.reforge.affix_count": "当前词条 %d 条 · 最多锁定 %d 条",
+  "ui.reforge.unlock_ready": "本次成功重铸解锁第5条（4固定＋1百分比）；未锁定旧词条也会重掷。",
+  "ui.reforge.unlock_later": "紫装达到12星后，再成功重铸一次可解锁第5条。",
+  "ui.reforge.unlocked": "第五词条已解锁 · 继续重铸保持5条",
+  "msg.reforge.fifth_unlocked": "已解锁第五词条！",
+  "ui.item.fifth_unlocked": "满星重铸：第五词条已解锁"
 }

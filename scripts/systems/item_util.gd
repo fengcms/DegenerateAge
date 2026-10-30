@@ -239,6 +239,8 @@ static func attr_lines(item: Dictionary) -> Array[String]:
 					if not is_equal_approx(star_factor, 1.0):
 						line += "  升星 %s" % stat_value(stat, value * (star_factor - 1.0))
 					lines.append(line)
+	if ReforgeAffixes.unlocked(item):
+		lines.append(Localization.tr_key("ui.item.fifth_unlocked"))
 	return lines
 
 ## 只列词条的文本（M10-8 重铸面板：新词条 / 旧词条对比）。
