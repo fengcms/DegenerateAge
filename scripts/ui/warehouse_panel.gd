@@ -36,6 +36,11 @@ var _last_index := -1
 var _last_click_ms := 0
 ## 兑换按钮：pair_id → Button（工程 109）。
 var _exchange_buttons: Dictionary = {}
+## 批量数量弹框（工程 110）。最后 add_child，保证盖在面板之上。
+var _amount_dialog: PanelAmountDialog
+## 当前弹框在换哪一对。只有 `_on_exchange()` 会写它 —— 弹框本身不认识「兑换对」，
+## 它只认识一个整数，业务身份由面板自己记住。
+var _pending_pair := ""
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -72,6 +77,9 @@ func _on_gold_changed(_amount: int) -> void:
 
 func set_open(open: bool) -> void:
 	visible = open
+	if not open and _amount_dialog != null:
+		# 面板收起时弹框必须一起收：否则输入框焦点留在隐藏控件上，键盘会继续往里送字符。
+		_amount_dialog.close()
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
 		_update_layout()
@@ -180,6 +188,10 @@ func _build() -> void:
 	_expand.pressed.connect(_on_expand)
 	footer.add_child(_expand)
 	PanelChrome.style_action(_expand)
+	# 弹框放在最后 add_child：同层 Control 的绘制顺序按树序，后加即在最上。
+	_amount_dialog = PanelAmountDialog.new()
+	_amount_dialog.submitted.connect(_on_amount_submitted)
+	add_child(_amount_dialog)
 
 func _make_scroll(parent: VBoxContainer) -> ScrollContainer:
 	var scroll := ScrollContainer.new()
@@ -283,17 +295,48 @@ func _refresh_exchange() -> void:
 			hint = "%s\n%s" % [hint, String(gate.get("reason", ""))]
 		button.tooltip_text = hint
 
-## 单击换 1 次；按住 Shift 单击换到上限。上限同样走 `max_times()`，
-## 不在 UI 里重算一遍汇率与仓容。
+## 点兑换按钮 → 开批量数量弹框。
+## 🔑 刻意**取消**了「单击换 1 次、Shift 换到上限」：Shift 是玩家常按的修饰键，
+## 想换 1 块却手滑按着 Shift ⇒ 1 亿金币瞬间清零，且这一步不可逆。
+## 便捷性不该建立在「按住某个键就等于清空储值」上（110 方案 §1）。
 func _on_exchange(pair_id: String) -> void:
 	_reset_click()
-	var times := 1
-	if Input.is_key_pressed(KEY_SHIFT):
-		times = maxi(1, GoldExchange.max_times(pair_id))
+	var maximum := GoldExchange.max_times(pair_id)
+	if maximum <= 0:
+		return
+	var label_key := _exchange_label_key(pair_id)
+	_amount_dialog.title = Localization.tr_key(label_key) if not label_key.is_empty() else pair_id
+	_amount_dialog.rate_text = GoldExchange.rate_text(pair_id)
+	# 上限在打开时取一次快照，只用于「可换 N 次」提示与输入校验；
+	# 真正的可行性以 `GameState.exchange()` 落账前的重新校验为准（见 _do_exchange）。
+	_amount_dialog.max_times = maximum
+	_amount_dialog.preview_provider = func(times: int) -> Dictionary:
+		return {
+			"cost": GoldExchange.cost_text(pair_id, times),
+			"got": GoldExchange.got_text(pair_id, times),
+		}
+	_pending_pair = pair_id
+	_amount_dialog.popup()
+
+## 弹框确认后落账。弹框打开期间金币/仓库可能已经变了（仓库面板不屏蔽世界，
+## 挂机战斗照旧在跑），所以这里**以 `GameState.exchange()` 的返回为准**，
+## 绝不拿打开弹框时算的 max 去夹取玩家输入 —— 那等于用过期快照改写玩家的意图。
+func _on_amount_submitted(times: int) -> void:
+	_do_exchange(_pending_pair, times)
+
+func _do_exchange(pair_id: String, times: int) -> void:
+	if pair_id.is_empty() or times < 1:
+		return
 	var result := GameState.exchange(pair_id, times)
 	_detail.text = Localization.tr_key("msg.exchange.p006") % String(result.get("got", "")) \
 		if bool(result.get("ok", false)) else String(result.get("reason", ""))
 	_refresh()
+
+func _exchange_label_key(pair_id: String) -> String:
+	for spec in EXCHANGE_ROWS:
+		if String(spec[0]) == pair_id:
+			return String(spec[1])
+	return ""
 
 func _on_bag_organize() -> void:
 	_reset_click()
