@@ -16,6 +16,8 @@ func _ready() -> void:
 		"potion_hp_large", "potion_mp_large", "rune_iron", "rune_jade",
 		"rune_gold", "rune_diamond", "misc_firework", "misc_random_ticket",
 		"misc_town_scroll", "misc_revive_scroll", "spirit_shard",
+		# 工程 109：仓库兑换台的储值物必须能画出图标（漏登记 = 空白格，不报错）
+		"gold_ingot", "gold_brick",
 	]
 	for id in designed_items:
 		var item := ItemFactory.make_any(id)

@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 75 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 94 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -83,6 +83,10 @@ DEFAULT_TESTS = [
     # / 任务 C7S01 门槛与 unlocks 数组 / 不可丢弃与不上架 / 补领覆盖第四件
     # / **升星·重铸·修理三处的「显示价 == 实扣」**（服务费 +20% 唯一守得住它的机制）。
     "PortableBlacksmithTest",
+    # 工程 109 仓库兑换台：汇率契约（100 万 / 10 / 1000 万）/ 双向闭环 / 99 堆叠分格
+    # / **金币上限拒绝而非夹取** / **仓库满不扣钱** / 去余数 / bound 守卫（不可售可丢）
+    # / 图标已登记 / 产物形态。守住「显示可换次数 == 实际能换」与「一分不动」两条红线。
+    "GoldExchangeTest",
     # M10-5 追猎令牌：行集/过滤/倒计时同源 + ordinal 真进 key + 等级跟随 + 与 Spawner 序号一致
     # + _map_has_monster 认 bossSpawns + travel_anywhere / fee_anywhere + 落地意图。
     "BossTokenTest",
