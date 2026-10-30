@@ -100,6 +100,11 @@ const ICONS := {
 	"misc_town_scroll": preload("res://assets/sprites/items/misc_town_scroll.png"),
 	"misc_revive_scroll": preload("res://assets/sprites/items/misc_revive_scroll.png"),
 	"spirit_shard": preload("res://assets/sprites/items/spirit_shard.png"),
+	# 工程 109：仓库兑换台的两种储值物。占位图由 tools/gen_gold_icons.py 生成，
+	# 正式美术用同名文件覆盖即可 —— 这张表是 preload 白名单，漏登记的表现是
+	# 「格子有名字有数量、图标空白」，不报错不崩（坑 61）。
+	"gold_ingot": preload("res://assets/sprites/items/gold_ingot.png"),
+	"gold_brick": preload("res://assets/sprites/items/gold_brick.png"),
 	"coin": preload("res://assets/sprites/items/coin.png"),
 }
 const GROUND := {
