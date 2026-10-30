@@ -64,7 +64,7 @@ static func lock_count(locked: Array) -> int:
 		seen.append(stat)
 	return seen.size()
 
-## 最多能锁几条 = `affixCount − 1`（普通 0 / 优秀 0 / 稀有 1 / 史诗 2 / 传说 3）。
+## 最多锁实例当前条数−1；普通紫装3条，已解锁五词条紫装4条。
 ## 🔴 至少留一条在变，重铸才成立 —— 全锁等于花钱买「什么都没变」，比普通品质重铸更恶劣。
 static func max_lock_count(item: Dictionary) -> int:
 	return maxi(0, ReforgeAffixes.current_count(item) - 1)

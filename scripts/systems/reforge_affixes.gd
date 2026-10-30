@@ -30,6 +30,8 @@ static func valid_state(item: Dictionary) -> bool:
 	var tier: Variant = item.get(FIELD, 0)
 	if not (tier is int or tier is float) or float(tier) not in [0.0, 1.0]:
 		return false
+	if not item.get("affixes", []) is Array or not item.get("pctAttrs", []) is Array:
+		return false
 	if tier == 0:
 		return (item.get("affixes", []) as Array).size() + (item.get("pctAttrs", []) as Array).size() <= 4
 	if not eligible(item):
@@ -51,6 +53,8 @@ static func validate_config(rules: Dictionary, equips: Array) -> Array[String]:
 	var cfg: Variant = rules.get("fullStarReforge")
 	if not cfg is Dictionary or cfg.get("quality") != "legendary" or cfg.get("requiredStar") != 12 or cfg.get("extraCount") != 1 or cfg.get("percentCount") != 1:
 		return ["[equipmentRules] fullStarReforge 必须为紫装12星额外1条、百分比1条"]
+	if rules.get("qualities", {}).get("legendary", {}).get("affixCount") != 4:
+		errors.append("[equipmentRules] 满星重铸要求紫装基础四词条")
 	var fixed: Dictionary = rules.get("fixedAffixes", {})
 	var pct: Dictionary = rules.get("percentAffixes", {})
 	for tpl in equips:

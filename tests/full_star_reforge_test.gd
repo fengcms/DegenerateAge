@@ -16,6 +16,9 @@ func count(item: Dictionary) -> int:
 
 func _ready() -> void:
 	check(DataLoader.validate_all().is_empty(), "正式配置合法")
+	var bad_rules: Dictionary = ItemFactory.rules().duplicate(true)
+	bad_rules.qualities.legendary.affixCount = 3
+	check(not ReforgeAffixes.validate_config(bad_rules, DataLoader.get_table("equipments")).is_empty(), "配置拒绝非四条基础紫装")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8733
 	for tpl in DataLoader.get_table("equipments"):
@@ -54,13 +57,34 @@ func _test_business(rng: RandomNumberGenerator) -> void:
 	GameState.gold = 10000000
 	var low := GameState.reforge_equipment("bag", 0, item.instanceId, rng)
 	check(low.ok and count(item) == 4 and not ReforgeAffixes.unlocked(item), "低星重铸仍四条")
-	item.star = 12
-	check(count(item) == 4 and not ReforgeAffixes.unlocked(item), "到12星不自动解锁")
+	var upgrade_rng := RandomNumberGenerator.new()
+	for seed_value in range(10000):
+		upgrade_rng.seed = seed_value
+		if upgrade_rng.randf() * 100.0 < Upgrade.success_rate(11):
+			upgrade_rng.seed = seed_value
+			break
+	var upgraded := GameState.upgrade_equipment("bag", 0, item.instanceId, upgrade_rng)
+	check(upgraded.ok and item.star == 12 and count(item) == 4 and not ReforgeAffixes.unlocked(item), "真实升12星不自动解锁")
 	GameState.gold = 0
 	var before := item.duplicate(true)
 	check(not GameState.reforge_equipment("bag", 0, item.instanceId, rng).ok and item == before, "金币不足不解锁")
 	GameState.gold = 10000000
-	var first := GameState.reforge_equipment("bag", 0, item.instanceId, rng)
+	var gold_before := GameState.gold
+	GameState.inventory[1] = ItemFactory.make_any("rune_diamond", 3)
+	var missing_runes := GameState.reforge_equipment("bag", 0, item.instanceId, rng, [], [], 1.0,
+		["rune_diamond", "rune_diamond", "rune_diamond", "rune_diamond"])
+	check(not missing_runes.ok and item == before and GameState.gold == gold_before and GameState.inventory[1].count == 3, "首次解锁如意不足不扣资源")
+	check(not GameState.reforge_equipment("bag", 0, item.instanceId, rng, [], ["missing_material"]).ok and item == before and GameState.gold == gold_before, "精炼材料失效不解锁")
+	var all_stats: Array = []
+	for entry in item.affixes + item.pctAttrs:
+		all_stats.append(entry.stat)
+	check(not GameState.reforge_equipment("bag", 0, item.instanceId, rng, all_stats).ok and item == before, "首次不能锁全部四条")
+	var first_locks := all_stats.slice(0, 3)
+	var preserved_before: Array = (item.affixes + item.pctAttrs).duplicate(true)
+	var first := GameState.reforge_equipment("bag", 0, item.instanceId, rng, first_locks)
+	for entry in preserved_before:
+		if first_locks.has(entry.stat):
+			check((item.affixes + item.pctAttrs).has(entry), "首次解锁保留三锁原值")
 	check(first.ok and first.unlocked_fifth and count(item) == 5 and ReforgeAffixes.unlocked(item), "成功重铸原子解锁")
 	check(Reforge.can_reforge(item).ok and Reforge.max_lock_count(item) == 4, "五条合法且可锁四条")
 	var locked: Array = []
@@ -77,6 +101,19 @@ func _test_business(rng: RandomNumberGenerator) -> void:
 		var bad := item.duplicate(true)
 		bad[field] = 11 if field == "star" else ("epic" if field == "quality" else 2)
 		check(not SaveManager._valid_item(bad), "拒绝非法五条 " + field)
+	var malformed := item.duplicate(true)
+	malformed.affixes.append(malformed.affixes[0].duplicate())
+	check(not SaveManager._valid_item(malformed), "拒绝六条")
+	malformed = item.duplicate(true)
+	malformed.affixes[1].stat = malformed.affixes[0].stat
+	check(not SaveManager._valid_item(malformed), "拒绝重复stat")
+	malformed = item.duplicate(true)
+	malformed.pctAttrs.append(malformed.pctAttrs[0].duplicate())
+	malformed.affixes.pop_back()
+	check(not SaveManager._valid_item(malformed), "拒绝两个百分比")
+	malformed = item.duplicate(true)
+	malformed.affixes.pop_back()
+	check(not SaveManager._valid_item(malformed), "拒绝标记五条却只有四条")
 	var no_mark := item.duplicate(true)
 	no_mark.erase("reforgeAffixTier")
 	check(not SaveManager._valid_item(no_mark), "无标记五条拒绝")
@@ -110,6 +147,13 @@ func _test_business(rng: RandomNumberGenerator) -> void:
 	var selected: Array[Dictionary] = [old_gear.duplicate(true), new_gear.duplicate(true)]
 	var transfer := GameState.forge_equipment(EquipmentFusion.STAR_TRANSFER, selected, "", rng)
 	check(transfer.ok and GameState.inventory[0].star == 12 and count(GameState.inventory[0]) == 4 and not ReforgeAffixes.unlocked(GameState.inventory[0]), "保星新产物12星四条")
+	GameState.reset_to_defaults()
+	GameState.gold = 10000000
+	var worn := make_item("weapon_iron", 914)
+	worn.star = 12
+	GameState.equipment.weapon = worn
+	var worn_result := GameState.reforge_equipment("worn", "weapon", worn.instanceId, rng)
+	check(worn_result.ok and count(GameState.equipment.weapon) == 5 and ItemUtil.affix_lines(worn).size() == 5, "穿戴装备同步解锁五条")
 	GameState.reset_to_defaults()
 
 func _test_ui() -> void:
