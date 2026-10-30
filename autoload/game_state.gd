@@ -1734,7 +1734,11 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
 	if gold < price:
 		return _reforge_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
-	var rolled := _roll_affixes_best(item, rng, locked_stats, Reforge.floor_ratio(effective), tries)
+	var unlocks_fifth := ReforgeAffixes.eligible(item) and not ReforgeAffixes.unlocked(item)
+	var roll_item := item.duplicate(true)
+	if unlocks_fifth:
+		roll_item[ReforgeAffixes.FIELD] = 1
+	var rolled := _roll_affixes_best(roll_item, rng, locked_stats, Reforge.floor_ratio(effective), tries)
 	if not bool(rolled.get("ok", false)):
 		return _reforge_fail(Localization.tr_key("msg.reforge.p003"))
 	var unchanged := ItemUtil.affix_lines(item) == ItemUtil.affix_lines({
@@ -1749,6 +1753,8 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	_consume_rune_uses(rune_charge.get("uses", []))
 	item["affixes"] = rolled.affixes
 	item["pctAttrs"] = rolled.pctAttrs
+	if unlocks_fifth:
+		item[ReforgeAffixes.FIELD] = 1
 	var materials_used := (materials as Array).size()
 	var runes_used := int(rune_charge.get("count", 0))
 	if source == "worn":
@@ -1769,7 +1775,7 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 		message += " · " + Localization.tr_key("msg.reforge.p015", [tries])
 	EventBus.toast_requested.emit(message, "pickup")
 	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
-		"unchanged": unchanged, "locked": lock_count, "refined": effective,
+		"unchanged": unchanged, "locked": lock_count, "refined": effective, "unlocked_fifth": unlocks_fifth,
 		"runes": runes_used, "tries": tries, "reason": message}
 
 ## 工程 112：按 `RuneCharge.plan()` 算好的快照扣如意。逐堆递减，扣空置 null。

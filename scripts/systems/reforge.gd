@@ -67,7 +67,7 @@ static func lock_count(locked: Array) -> int:
 ## 最多能锁几条 = `affixCount − 1`（普通 0 / 优秀 0 / 稀有 1 / 史诗 2 / 传说 3）。
 ## 🔴 至少留一条在变，重铸才成立 —— 全锁等于花钱买「什么都没变」，比普通品质重铸更恶劣。
 static func max_lock_count(item: Dictionary) -> int:
-	return maxi(0, affix_count_of(quality_of(item)) - 1)
+	return maxi(0, ReforgeAffixes.current_count(item) - 1)
 
 ## 品质的词条条数（读 `equipmentRules.json` 的 `qualities[品质].affixCount`）；未登记 → 0。
 static func affix_count_of(quality: String) -> int:
@@ -96,11 +96,13 @@ static func can_reforge(item: Dictionary) -> Dictionary:
 		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p001")}
 	if cost(Equipment.level_req(item)) <= 0:
 		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p004")}
-	var count := affix_count_of(quality_of(item))
+	var count := ReforgeAffixes.current_count(item)
 	if count <= 0:
 		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p002")}
 	var fixed: Variant = item.get("affixes", [])
 	var percent: Variant = item.get("pctAttrs", [])
+	if not fixed is Array or not percent is Array or not ReforgeAffixes.valid_state(item):
+		return {"ok": false, "reason": Localization.tr_key("msg.reforge.p003")}
 	var actual := 0
 	if fixed is Array:
 		actual += (fixed as Array).size()

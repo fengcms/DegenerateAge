@@ -33,7 +33,7 @@ func _ready() -> void:
 	old.erase("skillRanks")
 	_check(SaveManager._is_valid_save(old), "schema 14 存量角色可读")
 	var migrated := SaveManager._migrate(old)
-	_check(migrated.skillRanks.is_empty() and int(migrated.schemaVersion) == 15
+	_check(migrated.skillRanks.is_empty() and int(migrated.schemaVersion) == 16
 		and SaveManager._migrate(migrated) == migrated, "旧档幂等补空升阶记录")
 	SaveManager.apply_to_game_state(old)
 	_check(GameState.skill_ranks.is_empty() and GameState.skill_rank("earth_cleave") == 1,

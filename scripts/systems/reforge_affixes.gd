@@ -34,7 +34,17 @@ static func valid_state(item: Dictionary) -> bool:
 		return (item.get("affixes", []) as Array).size() + (item.get("pctAttrs", []) as Array).size() <= 4
 	if not eligible(item):
 		return false
-	return item.get("affixes", []).size() == 4 and item.get("pctAttrs", []).size() == 1
+	if item.get("affixes", []).size() != 4 or item.get("pctAttrs", []).size() != 1:
+		return false
+	var rules: Dictionary = DataLoader.get_table("equipmentRules")
+	var seen := {}
+	for key in ["affixes", "pctAttrs"]:
+		var allowed: Dictionary = rules.get("fixedAffixes" if key == "affixes" else "percentAffixes", {})
+		for entry in item.get(key, []):
+			if not entry is Dictionary or not allowed.has(entry.get("stat")) or seen.has(entry.get("stat")):
+				return false
+			seen[entry.stat] = true
+	return true
 
 static func validate_config(rules: Dictionary, equips: Array) -> Array[String]:
 	var errors: Array[String] = []

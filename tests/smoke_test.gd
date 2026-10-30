@@ -1833,7 +1833,7 @@ func _test_unclaimed_loot() -> void:
 	# ④ 存档往返 / schema 8 / v7 迁移 / 非法结构拒档
 	var saved := SaveManager._collect()
 	_expect(SaveManager._is_valid_save(saved), "含未领取记录的存档应合法")
-	_expect(SaveManager.CURRENT_SCHEMA == 15, "技能升阶后存档 schema 应为 15，实际 %d" % SaveManager.CURRENT_SCHEMA)
+	_expect(SaveManager.CURRENT_SCHEMA == 16, "满星重铸扩展后存档 schema 应为 16，实际 %d" % SaveManager.CURRENT_SCHEMA)
 	GameState.unclaimed_loot = {}
 	SaveManager.apply_to_game_state(saved)
 	_expect(GameState.unclaimed_count(GameState.current_map) == 1, "读档后未领取记录应恢复")

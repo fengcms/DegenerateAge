@@ -22,7 +22,8 @@ const MAX_SLOTS := 3
 ## v11（三轴装备模型）：装备实例结构破坏性升级；schema 0—10 不再读取，旧文件保留。
 ## v14（E1 / 工程文档 30 §4）新增：`questRewardPlans`（持久任务发奖计划，失败重试复用同一实例与词条）。
 ## v15（技能升阶）新增：`skillRanks`（只存已购买的 2—5 阶；旧档默认空，解锁技能按等级拥有 1 阶）。
-const CURRENT_SCHEMA := 15
+## v16：满星紫装重铸解锁第五词条；缺失标记保持原装备快照。
+const CURRENT_SCHEMA := 16
 ## 可读取的最低 schema 版本（0—10 明确拒读，产品 10.3）。`_is_valid_save` 与导入的前置检查共用同一下限，
 ## 避免两处写死 11 后出现「读档能读、导入不能导」的分裂。
 const MIN_READABLE_SCHEMA := 11
@@ -1506,7 +1507,7 @@ func _valid_item(item: Variant) -> bool:
 		if not _whole(item.get("equipmentRuleVersion"), 4, 5) or not item.get("rawBaseAttrs") is Dictionary or not item.get("affixes") is Array or not item.get("pctAttrs") is Array:
 			return false
 		if item.rawBaseAttrs.is_empty() or not _whole(item.get("count", 1), 1, 1) \
-				or item.affixes.size() + item.pctAttrs.size() > 4 or item.pctAttrs.size() > 1:
+				or not ReforgeAffixes.valid_state(item) or item.pctAttrs.size() > 1:
 			return false
 		if not _whole(item.get("requiredLevel"), 1) or not _whole(item.get("level"), 1) or int(item.level) != int(item.requiredLevel) \
 				or not _whole(item.get("star"), 0, 12) or not ItemUtil.is_valid_quality(str(item.get("quality", ""))):
