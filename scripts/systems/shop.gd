@@ -221,12 +221,20 @@ static func sell_price(item: Dictionary) -> int:
 	var count := maxi(1, int(item.get("count", 1)))
 	return int(round(unit)) * count
 
+## 工程 109：绑定物（金条 / 金砖）不可售 —— 数据侧 `bound: true` 是唯一判据。
+## 与 `questItem` 分开命名：任务物品的拒绝语义是「这是任务要用的」，
+## 绑定物的拒绝语义是「这是储值资产，只能走仓库兑换台」，玩家看到的理由必须对得上真实原因。
+static func is_bound(item: Dictionary) -> bool:
+	return bool(_template(item).get("bound", false))
+
 ## 该物品能否出售给货郎（6.4 修订：装备 / 药水 / 杂项 / 如意；任务物品与无价物品不收）。
 ## `base_value() <= 0` 一并拒绝 —— 宁可不收，也不静默卖 0 金币。
 static func can_sell(item: Dictionary) -> bool:
 	if not SELLABLE_KINDS.has(String(item.get("kind", ""))):
 		return false
 	if bool(item.get("favorite", false)):
+		return false
+	if is_bound(item):
 		return false
 	if is_quest_item(item):
 		return false

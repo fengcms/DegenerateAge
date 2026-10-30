@@ -52,6 +52,11 @@ static func resolve(skill_id: String, rank: int) -> Dictionary:
 			effective.coefficient = float(base.get("coefficient", 0.0)) * float(upgrade.coefficientMultiplier)
 		if upgrade.has("effects"):
 			effective.effects = (upgrade.effects as Dictionary).duplicate(true)
+		# 工程 107：减益也随阶成长（破甲幅度）。**整体替换**，与 effects 同语义 ——
+		# 逐键合并会让"高阶没写的键"悄悄沿用低阶值，是另一种静默漂移。
+		# 必须深拷贝：`_resolved` 是跨调用共享的缓存，裸引用会被下游改脏。
+		if upgrade.has("debuff"):
+			effective.debuff = (upgrade.debuff as Dictionary).duplicate(true)
 	_resolved[key] = effective
 	return effective
 

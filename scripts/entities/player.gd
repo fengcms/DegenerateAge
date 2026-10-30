@@ -26,6 +26,11 @@ const IDLE_MP_RATE := 0.02
 const SIT_HP_RATE := 0.03
 const SIT_MP_RATE := 0.05
 
+## 工程 107：减伤上限。数据侧（`data_loader._progression_effect_cap`）只放到 0.28，
+## 这里是**运行态防线** —— 数据被改坏或未来叠加多个减伤源时，不允许出现「无敌」。
+## 0.6 的含义：最坏情况仍有 40% 伤害进来，配合 `maxi(1, …)` 保证每次命中至少 1 点。
+const DAMAGE_REDUCE_CAP := 0.6
+
 ## 远程施法的投射物颜色（纯视觉，工程 98 §4.3）。缺省金黄。
 const SPELL_COLORS := {
 	"basic_fireball": "ffb347",
@@ -409,14 +414,34 @@ func apply_damage(amount: int) -> int:
 	_invuln = IFRAME
 	_stun = HITSTUN
 	_reset_regen_after_hit()
+	# 工程 107：减伤必须在**一切伤害分配之前**结算 —— 「减伤 20%」的产品语义是
+	# 「玩家总损失（血 + 蓝）下降 20%」。放到盾之后再减，被转嫁的那部分就吃不到减伤，
+	# 同样 20% 的数值实测总损失只降约 13%（乘法交换，但扣蓝份额不同）。
+	var reduced := _apply_damage_reduction(amount)
 	# 工程 98 Q4=A：魔法盾只把**一部分伤害**转成法力，余下照常扣血。
 	# 🔴 顺序不能反：先算转嫁（可能要读 mp），再扣血 —— 反过来会让「血已经归零」的帧去扣蓝。
-	var to_mana := _shield_absorb(amount)
-	var hp_amount := amount - to_mana
+	var to_mana := _shield_absorb(reduced)
+	var hp_amount := reduced - to_mana
 	var actual := mini(hp_amount, int(GameState.player.hp))
 	if hp_amount > 0 and GameState.damage_player(hp_amount):
 		_begin_death()
 	return actual
+
+## 工程 107：战意觉醒的减伤（`damageReducePct`）。返回减免后的伤害。
+##
+## 三条口径：
+## 1. **至少 1 点**：命中就该有代价。高减伤 + 高防御若能把伤害压到 0，等于造出一个
+##    安全区，而且会让 `apply_damage` 返回值 0 —— 那个 0 在既有调用点里表示「没打中/被无敌帧挡」，
+##    吸血与击退都会误判。
+## 2. **取整用 round**：与 `_shield_absorb` 的 `round` 一致，避免「减伤后转嫁」两处取整方向相反。
+## 3. 无该 buff 时**逐位返回原值**：武士不带战意觉醒、法师不带战意觉醒，路径与工程 98 完全相同。
+func _apply_damage_reduction(amount: int) -> int:
+	if amount <= 0:
+		return amount
+	var pct := clampf(GameState.buff_effect_total("damageReducePct"), 0.0, DAMAGE_REDUCE_CAP)
+	if pct <= 0.0:
+		return amount
+	return maxi(1, int(round(float(amount) * (1.0 - pct))))
 
 ## 魔法盾转嫁（工程 98 §4.5）。返回实际由法力承担的伤害（= 实际扣蓝量）。
 ##
@@ -649,6 +674,16 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 		GameState.spend_mp(mana_cost)
 		skill_cooldowns[skill_id] = GameState.cooldown_after_cdr(float(skill.get("cooldown", 0.0)))
 		_sync_magic_shield_visual()
+		# 工程 107：增益类技能也走同一张 `CAST_FX` 表。在此之前这里直接 `return`，
+		# **根本没有调用点** —— 数据里给战意觉醒写 `fx` 也不会出任何特效（配了等于没配）。
+		# 锚点取自身、半径传 0：`shape = self` 没有范围，声明 `DRAWS_AREA = true` 的 fx
+		# 会在守门测试里被判「自报半径与 range 不一致」，正好把误标挡住。
+		var self_aim := Vector2.RIGHT
+		if valid_target(locked_target):
+			self_aim = global_position.direction_to((locked_target as Node2D).global_position)
+			if self_aim == Vector2.ZERO:
+				self_aim = Vector2.RIGHT
+		_spawn_cast_fx(skill, skill_id, self, self_aim, 0.0)
 		return true
 	if _attack_cd > 0.0 or MapService.is_in_safe_area(GameState.current_map, global_position):
 		return false
@@ -663,12 +698,21 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	_attack_cd = effective_attack_interval()
 	if sample_art != null:
 		sample_art.attack((targets[0] as Node2D).global_position - global_position, _attack_cd)
-	var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
-	range_fx.shape = String(skill.get("shape", "circle"))
-	range_fx.radius = float(skill.get("range", 1.0)) * Iso.TILE_W
-	range_fx.facing = global_position.direction_to((target as Node2D).global_position) if String(skill.get("shape", "")) == "cone" else Vector2.RIGHT
-	add_child(range_fx)
-	_spawn_projectile(skill_id, (targets[0] as Node2D).global_position)
+	var shape := String(skill.get("shape", "circle"))
+	var reach := float(skill.get("range", 1.0)) * Iso.TILE_W
+	var aim := global_position.direction_to((targets[0] as Node2D).global_position)
+	if aim == Vector2.ZERO:
+		aim = Vector2.RIGHT
+	# 🔴 有 `fx` 的技能，范围提示**全权交给专属 fx**（工程 106 §4.2 规矩 2）。
+	#    否则陨石术会同时出现专属预警环与通用的 448px 静态盘 —— 两份提示互相对不上，
+	#    玩家不知道该信哪个。单体的 `fx` 技能（雷电术）本来就不画范围，这条对它无影响。
+	if String(skill.get("fx", "")) == "":
+		var range_fx := preload("res://scripts/systems/skill_range_fx.gd").new() as Node2D
+		range_fx.shape = shape
+		range_fx.radius = reach
+		range_fx.facing = aim if shape == "cone" else Vector2.RIGHT
+		add_child(range_fx)
+	_spawn_cast_fx(skill, skill_id, targets[0] as Node2D, aim, reach)
 	# R4-a：`defensePierce` 是**本击**减防，不进状态；`debuff` 才是持续状态（R4-c）。
 	var pierce := clampf(float(skill.get("defensePierce", 0.0)), 0.0, 1.0)
 	var hits := maxi(1, int(skill.get("hits", 1)))
@@ -722,6 +766,13 @@ func skill_targets(skill: Dictionary, target: Node = null) -> Array[Node2D]:
 		result.push_front(target)
 	if shape == "cone" and result.size() > int(skill.get("maxTargets", 3)):
 		result.resize(int(skill.get("maxTargets", 3)))
+	# 工程 107：圆形也支持上限（灵刃风暴 8 只）。缺省 **0 = 不限** ⇒ 既有的旋风斩 / 火焰喷发 /
+	# 陨石逐位不变。⚠ 缺省值与 cone 的 3 不同是刻意的：cone 历史上就有 3 这个上限，
+	# 而 circle 一直是「范围内全命中」，给 0 才是「没写就是旧行为」。
+	# 取的是**最近的 N 只**（result 已按距离升序排好），不是随机也不是血量最低。
+	var circle_cap := int(skill.get("maxTargets", 0))
+	if shape == "circle" and circle_cap > 0 and result.size() > circle_cap:
+		result.resize(circle_cap)
 	# 单体技能（`shape=single`）在实现上曾是「半径内全员」—— 那与技能描述的单体语义相反，
 	# 会让 25 级的「单体穿透重击」变成隐形势 AoE。这里收敛为：有显式目标取目标，否则取最近一只。
 	if shape == "single":
@@ -773,6 +824,72 @@ func perform_attack(target: Node) -> Dictionary:
 	target.take_hit(result, self)
 	return result
 
+## 施法视觉分派表（工程 106）：key = `skills.json` 的 `fx` 字段，value = fx 脚本。
+## 🔴 新增技能特效 = **表里加一行 + 数据里写 `fx`**，不改任何 `if`。
+##    靠 `if skill_id == "lightning"` 的话，每加一个技能都要改代码 —— 这正是 105 留下的模式，
+##    加到第三个就会退化成坑清单第 69 条「兜底分支承担语义分派」。
+const CAST_FX := {
+	"thunder": preload("res://scripts/systems/thunder_fx.gd"),
+	"meteor": preload("res://scripts/systems/meteor_fx.gd"),
+	"flame_burst": preload("res://scripts/systems/flame_burst_fx.gd"),
+	"frost_roar": preload("res://scripts/systems/frost_roar_fx.gd"),
+	# 工程 107：武士五个主动技能。表里加行 + 数据里写 `fx`，不碰任何判定代码。
+	"earth_cleave": preload("res://scripts/systems/earth_cleave_fx.gd"),
+	"whirlwind": preload("res://scripts/systems/whirlwind_fx.gd"),
+	"battle_focus": preload("res://scripts/systems/battle_focus_fx.gd"),
+	"armor_break": preload("res://scripts/systems/armor_break_fx.gd"),
+	"spirit_storm": preload("res://scripts/systems/spirit_storm_fx.gd"),
+}
+
+## 远程施法弹道速度（px/s）与时长上下限（工程 106 §3.1 / R3）。
+## 首版时长固定 0.14s：满射程 384px 的等效速度是 2743px/s，60fps 下每帧跳 45.7px
+## = 球径 6px 的 7.6 倍，玩家看到的不是「飞过去」而是「一闪」。
+const PROJECTILE_SPEED := 2000.0
+const PROJECTILE_MIN_DURATION := 0.10
+const PROJECTILE_MAX_DURATION := 0.20
+
+## 技能命中瞬间的施法视觉分派（工程 105 / 106）。读 `skills.json` 的 `fx` 字段。
+##   - 命中分派表：实例化对应的 fx 脚本，**跳过**飞行投射物 —— 这些技能有自己的「发生方式」，
+##     「一颗球飞过去」会把技能身份丢掉（105 玩家报障的观感问题就是这个）；
+##   - 未命中分派表：**报警后**回落投射物。不静默 —— 静默回落会让「数据里写了 fx
+##     但代码忘了加」退化成一颗球的观感问题，没人会发现（坑清单第 64 条同构）；
+##   - 没有 `fx` 字段：沿用通用飞行投射物（武士 5 技能全走这条，行为逐位不变）。
+func _spawn_cast_fx(skill: Dictionary, skill_id: String, target: Node2D,
+		facing: Vector2, radius: float) -> void:
+	var key := String(skill.get("fx", ""))
+	if key != "" and not CAST_FX.has(key):
+		push_warning("Player: skills.json 声明了未知的 fx「%s」（技能 %s），回落到投射物（工程 106）" % [key, skill_id])
+	if key == "" or not CAST_FX.has(key):
+		_spawn_projectile(skill_id, target.global_position)
+		return
+	_spawn_cast_node(CAST_FX[key] as Script, {
+		"origin": global_position,
+		"target": target.global_position,
+		"facing": facing,
+		"radius": radius,
+	})
+
+## 实例化 fx 并挂到**父级**（与投射物一致）：施法特效不该跟着施法者横移。
+## 🔴 `move_child(fx, 0)` 把地面系特效压到**所有角色之下**。`Entities` 没有开 `y_sort`，
+##    纯按子树顺序绘制，所以后加入的节点会盖在怪身上 —— 105 踩过「落点光斑把目标整只吞掉」。
+##    从天而降的 fx（雷电）自己设 `z_index = 1` 覆盖这条规则，不需要在这里特判。
+## 🔴 上下文只由 `setup()` 消费，**不在调用点分派**：105 时每个 fx 都要一个 `_spawn_xxx()` 特例函数。
+func _spawn_cast_node(script: Script, ctx: Dictionary) -> void:
+	if not is_inside_tree():
+		return
+	var host := get_parent()
+	if host == null:
+		return
+	var fx := script.new() as Node2D
+	host.add_child(fx)
+	host.move_child(fx, 0)
+	if not fx.has_method("setup"):
+		# 缺接口是**代码缺陷**，必须大声失败：静默丢掉等于「技能没有特效」，没人查得出来。
+		push_error("Player: fx 脚本缺少 setup(ctx)（工程 106 分派契约），已丢弃")
+		fx.queue_free()
+		return
+	fx.call("setup", ctx)
+
 ## 远程职业的施法视觉：一道纯视觉投射物飞向目标。
 ## 🔴 伤害**已在调用点结算完毕**（见 `player_projectile.gd` 顶端）。近战职业直接返回，
 ##    武士路径因此逐位不变 —— 这一条由 `tests/class_frame_test.gd` 断「武士不产生投射物节点」。
@@ -785,8 +902,13 @@ func _spawn_projectile(skill_id: String, to_point: Vector2) -> void:
 	var bolt := preload("res://scripts/systems/player_projectile.gd").new() as Node2D
 	host.add_child(bolt)
 	if bolt.has_method("setup"):
-		bolt.call("setup", global_position + Vector2(0, -18.0 * ART_SCALE), to_point,
-			Color(String(SPELL_COLORS.get(skill_id, "ffd479"))), 6.0)
+		var from := global_position + Vector2(0, -18.0 * ART_SCALE)
+		var duration := clampf(from.distance_to(to_point) / PROJECTILE_SPEED,
+			PROJECTILE_MIN_DURATION, PROJECTILE_MAX_DURATION)
+		# 球半径 8.0（原 6.0）：这是全法师最高频的视觉，6px 在 1280 宽的屏幕上只有 0.5% 宽，
+		# 加上辉光与彗尾后仍偏小（工程 106 §3.1 预览实测）。8.0 时辉光 20.8px、尾长 ≈ 65px。
+		bolt.call("setup", from, to_point,
+			Color(String(SPELL_COLORS.get(skill_id, "ffd479"))), 8.0, duration)
 
 func _reset_regen_after_hit() -> void:
 	_regen_elapsed = 0.0
@@ -842,7 +964,14 @@ func _apply_skill_debuff(t: Node, skill: Dictionary) -> void:
 	match String(row.get("type", "")):
 		"armorBreak":
 			if t.has_method("apply_armor_break"):
-				t.apply_armor_break(float(row.get("duration", 0.0)))
+				# 工程 107：幅度由数据给。**数据没写就不传**，让怪物侧用自己的缺省常量
+				# （`ARMOR_BREAK_SCALE = 0.7` ⇒ −30%，与工程 52 一致）—— 缺省值只留一处真相，
+				# 两处各写一份必然漂移。
+				var break_dur := float(row.get("duration", 0.0))
+				if row.has("defenseScale"):
+					t.apply_armor_break(break_dur, float(row.get("defenseScale")))
+				else:
+					t.apply_armor_break(break_dur)
 		"slow":
 			# 工程 98：冰咆哮。怪物侧 `apply_slow` 自己处理 Boss 减半（见 monster.gd），
 			# 这里不做职业 / 目标判断 —— 两个地方各写一份豁免规则必然漂移。

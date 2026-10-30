@@ -47,6 +47,14 @@ const TELEPORT_BREAK := 220.0
 ## 工程 93（D-31）：同批件数 ≥ 此值 ⇒ 稀有以上的地面名字只悬停显示（见 `batch_size` 注释）。
 const LABEL_CROWD_LIMIT := 20
 
+## 工程 104：动画重绘半径（格）。屏幕半宽 1920 时约 15 格、2560 时约 20 格，
+## 取 22 格保证「看得见的都在动」，同时把屏幕外的积压件彻底停掉重绘。
+const ANIM_RANGE_TILES := 22.0
+## 范围内重绘间隔（s）：浮动只有 ±2px，10 Hz 肉眼无差。
+const ANIM_REDRAW_INTERVAL := 0.1
+## 范围外复查间隔（s）：玩家走近后最多 0.3s 恢复动画。
+const ANIM_RANGE_CHECK := 0.3
+
 ## 工程 93：某件掉落是否**常显**地面名字（与 `_draw_label` 共用，供测试直接断言）。
 ## 稀有以上默认常显；但同批 ≥ `LABEL_CROWD_LIMIT` 件时改为悬停才显示，避免名字糊成一团。
 static func should_always_show_label(quality: String, batch_size: int) -> bool:
@@ -96,6 +104,11 @@ var claim_uid: String = ""
 ## 只读快照，供 `Monster._settle_rewards` 统计批次摘要里的「· 自动出售 N 件 +X 金币」。
 var auto_sold_gold: int = 0
 
+## 工程 104：本节点累计请求重绘的次数（只读，供距离门控的回归断言）。
+## 🔴 只统计 `_tick_redraw` 里的调度决策，**不含**出场 `_reveal()` 与悬停切换 —— 后者是一次性事件，
+##    混进来会让「远处静止件不重绘」这条断言失去意义。
+var redraw_count: int = 0
+
 var _life: float = LIFETIME
 var _blocked_cd: float = 0.0
 var _phase: float = 0.0
@@ -112,6 +125,9 @@ var _fly_to: Vector2 = Vector2.ZERO    # 抛物线终点（每帧追踪玩家）
 var _has_fly_to: bool = false
 var _claimed: bool = false
 var _pickup_msg: String = ""           # 待播的「拾取」提示（飞行结束时弹，Q2）
+var _redraw_t: float = 0.0             # 低频重绘计时（工程 104）
+var _range_t: float = 0.0              # 距玩家复查计时（工程 104）
+var _near_anim: bool = false           # 玩家是否在动画半径内（工程 104）
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -158,7 +174,7 @@ func _physics_process(delta: float) -> void:
 	if not _revealed:
 		_reveal()
 	_phase += delta * 3.0
-	queue_redraw()   # 浮动 / 落地 / 高亮 / 飞行需持续重绘
+	_tick_redraw(delta)   # 工程 104：不再无条件重绘（积压场景下的主要开销）
 
 	# 已认领（收益不可逆）→ 只推进表现：落地 → HOLD → FLY → 回收
 	if _claimed:
@@ -187,6 +203,43 @@ func _physics_process(delta: float) -> void:
 		if _try_pickup():
 			_claimed = true
 			queue_free()
+
+# ---- 重绘调度（工程 104）----
+
+## 把「每帧无条件 `queue_redraw()`」改成按需重绘。三类情况必须每帧：
+##   ① 已认领（落地 / HOLD / FLY 动画中，且 1 秒内就回收）；② 鼠标悬停；③ 出场 / 停驻高亮期。
+## 其余：玩家在 `ANIM_RANGE_TILES` 内 → 10 Hz 低频（浮动只有 ±2px，看不出跳帧）；
+## 更远 → **完全不重绘**，每 `ANIM_RANGE_CHECK` 复查一次距离，走近自动恢复。
+##
+## 🔴 为什么不干脆全部停掉：浮动 / 渐隐高亮是「这是掉落物」的视觉信号，静止会像装饰物。
+## 🔴 为什么不担心淡出：`_fade_out()` 用 tween 改 `modulate`，CanvasItem 属性变化不依赖 `_draw`。
+func _tick_redraw(delta: float) -> void:
+	# 已认领（动画中）与悬停必须每帧：这里不做任何距离判断，先短路掉。
+	if _claimed or _hovered:
+		redraw_count += 1
+		queue_redraw()
+		return
+	_redraw_t -= delta
+	_range_t -= delta
+	if _range_t <= 0.0:
+		_range_t = ANIM_RANGE_CHECK
+		_near_anim = _player_within(ANIM_RANGE_TILES * Iso.TILE_W)
+	# 🔴 远处 = 每帧只做两次减法与一次比较（探针实测 0.02 µs/件），
+	#    连 `_guard_ratio()` 都不算 —— 这是「屏幕外零成本」的关键。
+	if not _near_anim:
+		return
+	if _guard_ratio() > 0.0 or _redraw_t <= 0.0:
+		_redraw_t = ANIM_REDRAW_INTERVAL
+		redraw_count += 1
+		queue_redraw()
+
+## 玩家是否在给定像素半径内。玩家不可用（死亡 / 未生成）时保守返回 true：
+## 宁可多画，也不要在地图上留一堆冻住的残影。
+func _player_within(px: float) -> bool:
+	var p := _get_player()
+	if p == null:
+		return true
+	return p.global_position.distance_squared_to(global_position) <= px * px
 
 # ---- 认领（方案 C）----
 
@@ -317,6 +370,15 @@ func _air_ratio() -> float:
 		return 0.0
 	return 1.0 - _appear_t() / maxf(0.001, land_time)
 
+## 高亮圈强度（1 → 0）：地面阶段按保护期渐隐，停驻阶段按停驻期渐隐。
+## 工程 104：`_draw` 与 `_tick_redraw` 共用同一口径（后者要知道「是否还在高亮期」）。
+func _guard_ratio() -> float:
+	if _stage == Stage.GROUND:
+		return 1.0 - clampf(_appear_t() / maxf(0.001, land_time + hold_time), 0.0, 1.0)
+	if _stage == Stage.HOLD:
+		return 1.0 - clampf(_stage_t / maxf(0.001, _hold_until), 0.0, 1.0)
+	return 0.0
+
 # ---- 入包 ----
 
 ## 拾取一次。金币 → 入金币（受上限约束，不占背包）；其余 → 入背包。
@@ -433,19 +495,16 @@ func _draw() -> void:
 	# M6-0d（创意 07 §9）：稀有以上光柱 + 底座（在物品之下绘制）
 	_draw_quality_augment(kind, quality, col)
 	# M6-0d（§10 / §11）：未领取战利品仍须有可见地面标记（与动画开关无关）
+	# 工程 104：装饰环一律走 `GroundFx.ring()`（预渲染纹理）；折线描边在积压场景是主要瓶颈。
 	if persistent and not _claimed:
-		GroundFx.outline(self, Vector2(0, 8), 26.0, Color(1.0, 0.62, 0.30, 0.85), 2.0)
-		GroundFx.outline(self, Vector2(0, 8), 30.0, Color(1.0, 0.62, 0.30, 0.45), 1.2)
+		GroundFx.ring(self, Vector2(0, 8), 26.0, Color(1.0, 0.62, 0.30), 0.85)
+		GroundFx.ring(self, Vector2(0, 8), 30.0, Color(1.0, 0.62, 0.30), 0.45)
 	# 高亮圈：地面阶段＝保护期渐隐；停驻阶段＝停驻期渐隐（帮助玩家第一时间注意到掉落）
-	var guard := 0.0
-	if _stage == Stage.GROUND:
-		guard = 1.0 - clampf(_appear_t() / maxf(0.001, land_time + hold_time), 0.0, 1.0)
-	elif _stage == Stage.HOLD:
-		guard = 1.0 - clampf(_stage_t / maxf(0.001, _hold_until), 0.0, 1.0)
+	var guard := _guard_ratio()
 	if guard > 0.0:
 		var rr := 20.0 + 18.0 * (1.0 - guard)
 		# 圆心与阴影圆心（y=8）对齐，压扁后才不会错位（工程 53 D-3）
-		GroundFx.outline(self, Vector2(0, 8), rr, Color(1.0, 0.94, 0.70, 0.6 * guard * guard), 2.0, 30)
+		GroundFx.ring(self, Vector2(0, 8), rr, Color(1.0, 0.94, 0.70), 0.6 * guard * guard)
 	# 物品图形（上下浮动 + 出场弧线）：已接入图标等比显示为 32 像素，缺图继续回退图形。
 	var lift := sin(_phase) * 2.0 + _drop_offset()
 	var c := Vector2(0, -16 + lift)
@@ -495,9 +554,9 @@ func _draw_quality_augment(kind: String, quality: String, col: Color) -> void:
 	draw_rect(Rect2(foot.x - w * 0.5, foot.y - h, w, h), beam)
 	draw_line(foot, foot + Vector2(0.0, -h), Color(tint.r, tint.g, tint.b, 0.85), 1.5, true)
 	if quality == "epic":
-		# 双圈底座
-		GroundFx.outline(self, Vector2(0, 8), 16.0, Color(tint.r, tint.g, tint.b, 0.60), 1.8, 28)
-		GroundFx.outline(self, Vector2(0, 8), 23.0, Color(tint.r, tint.g, tint.b, 0.35), 1.3, 28)
+		# 双圈底座（工程 104：装饰环走预渲染纹理）
+		GroundFx.ring(self, Vector2(0, 8), 16.0, Color(tint.r, tint.g, tint.b), 0.60)
+		GroundFx.ring(self, Vector2(0, 8), 23.0, Color(tint.r, tint.g, tint.b), 0.35)
 	elif quality == "legendary":
 		# 星形底座
 		var star := PackedVector2Array()

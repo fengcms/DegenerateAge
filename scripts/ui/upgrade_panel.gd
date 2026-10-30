@@ -18,6 +18,10 @@ var _choices: Array[Dictionary] = []
 var _selected_id := ""
 var _rune_pickers: Array[OptionButton] = []
 var _rune_choices: Array[String] = ["", "", "", ""]
+## 服务费率来源（工程 108）：随身铁匠 ×1.2、回城铁匠原价。
+## 🔴 只在这里决定显示价，**提交时把同一个费率传给 `GameState.upgrade_equipment`** ——
+##    显示与扣费各算一次是这个项目的老结构，费率不一致就是「按钮写一个数、实扣另一个数」。
+var _portable := false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -36,7 +40,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
-func _on_requested() -> void:
+func _on_requested(portable: bool) -> void:
+	_portable = portable
 	set_open(true)
 
 func set_open(open: bool) -> void:
@@ -277,7 +282,7 @@ func _refresh_details() -> void:
 	next_item["star"] = star + 1
 	_preview.text = Localization.tr_key("ui.upgrade_panel.p010") % [", ".join(ItemUtil.attr_lines(item)),
 		", ".join(ItemUtil.attr_lines(next_item))]
-	var price := Upgrade.cost(star)
+	var price := ServiceFee.apply(Upgrade.cost(star), ServiceFee.rate_for(_portable))
 	var plan := Upgrade.rune_plan(GameState.inventory, _rune_choices)
 	var rune_bonus := float(plan.get("bonus", 0.0))
 	_price.text = Localization.tr_key("ui.upgrade_panel.p011") % [
@@ -311,7 +316,8 @@ func _on_upgrade() -> void:
 	if index < 0 or index >= _choices.size():
 		return
 	var choice := _choices[index]
-	var result := GameState.upgrade_equipment(String(choice.source), choice.key, String(choice.id), null, _rune_choices.duplicate())
+	var result := GameState.upgrade_equipment(String(choice.source), choice.key, String(choice.id), null,
+		_rune_choices.duplicate(), ServiceFee.rate_for(_portable))
 	_feedback.text = String(result.get("reason", ""))
 	_feedback.add_theme_color_override("font_color", COL_WARN if not result.get("success", false) else PanelChrome.GOLD_LIGHT)
 	_refresh_choices()

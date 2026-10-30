@@ -1,10 +1,18 @@
 extends Control
 ## 铁匠对话与功能菜单。NPC 的自我介绍来自地图配置，菜单打开升星、重铸及四种合成服务。
+##
+## 两种模式共用同一个面板节点（工程 108）：
+##   · 回城铁匠：问候卡 + 「继续」→ 服务菜单，全部原价；
+##   · 随身铁匠：跳过问候卡直接进菜单，修理 1.5× / 成长服务 ×1.2（`ServiceFee`）。
+## 服务按钮**一份**，不做第二套 —— 复用的意义就在这里，复制一份必然漏掉某个 `_refresh_*`。
 
 const PANEL_ID := "blacksmith"
 const COL_PANEL := Color(0.06, 0.07, 0.09, 0.97)
 const COL_BORDER := Color(0.36, 0.31, 0.26)
 
+## 是否为随身模式。由 `blacksmith_panel_requested` 第三参设置，**每次打开都重置** ——
+## 面板是常驻节点，只在打开时写一次会让「上一次随身、这一次回城」沿用旧状态。
+var _portable := false
 var _title: Label
 var _greeting: Label
 var _continue: Button
@@ -49,8 +57,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
-func _on_requested(npc_name: String, greeting: String) -> void:
-	_title.text = PanelChrome.title_text(npc_name if not npc_name.is_empty() else Localization.tr_key("ui.blacksmith_panel.p002"))
+## 第三参 `portable` 是**必填**（信号参数无默认值）。故意不给方法默认值：
+## 漏补 emit 时应当当场 `too few arguments` 炸出来，而不是静默走错模式。
+func _on_requested(npc_name: String, greeting: String, portable: bool) -> void:
+	_portable = portable
+	if _portable:
+		# 随身模式没有 NPC 可以称呼：标题取路由器里的「随身铁匠」。
+		# 若沿用 `npc_name` 的回退分支，标题会变成「铁匠」——玩家分不清自己开的是哪个。
+		_title.text = PanelChrome.title_text(PanelRouter.title(PANEL_ID))
+	else:
+		_title.text = PanelChrome.title_text(npc_name if not npc_name.is_empty() else Localization.tr_key("ui.blacksmith_panel.p002"))
 	_greeting.text = "「%s」" % greeting
 	set_open(true)
 
@@ -62,13 +78,24 @@ func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
-		_continue.visible = true
-		_upgrade.visible = false
-		_reforge.visible = false
-		for button in _fusion_buttons:
-			button.visible = false
-		_greeting_card.visible = true
-		_service_card.visible = false
+		# 「离开」只在回城模式有意义：随身模式没有对话可离开，右上角 × 足够；
+		# 底部留一个空按钮会让人以为漏了什么。
+		# 🔴 必须**每次**显式重置：只在随身分支里藏它的话，下一次回城打开会继承隐藏状态
+		#    （面板是常驻节点，`visible` 不会自己回到 true）。
+		_leave.visible = not _portable
+		if _portable:
+			# 直接进服务菜单：没有 NPC 可问候，一屏空话 + 一次多余点击是纯摩擦。
+			# 复用 `_show_menu()` 而不是复制它的几行 —— 那几行里有 `_refresh_repair_button()`
+			# 与 `set_content_scroll()`，复制一份必然漏掉其中一个。
+			_show_menu()
+		else:
+			_continue.visible = true
+			_upgrade.visible = false
+			_reforge.visible = false
+			for button in _fusion_buttons:
+				button.visible = false
+			_greeting_card.visible = true
+			_service_card.visible = false
 		EventBus.panel_opened.emit(PANEL_ID)
 		_center.show_window()
 
@@ -264,6 +291,9 @@ func _show_menu() -> void:
 
 ## 修理按钮：价格直接写在按钮上（点击即修，多一层确认就是纯摩擦）。
 ## 全身无破损置灰「装备完好」；重铸配置缺失时也置灰（费用算不出来）。
+## 🔴 显示价与 `_on_repair` 的扣费必须同源：两处都读 `ServiceFee.repair_rate_for(_portable)`，
+##    并且取整都走 `ServiceFee.apply_repair()`（与 `GameState.repair_equipment` 内部的 `round` 一致）。
+##    只改一处 = 按钮写一个数、实扣另一个数，玩家对账立刻发现。
 func _refresh_repair_button() -> void:
 	if _repair == null:
 		return
@@ -288,12 +318,13 @@ func _refresh_repair_button() -> void:
 		_repair.text = Localization.tr_key("ui.blacksmith_panel.repair_full")
 		_repair.disabled = true
 	else:
+		total = ServiceFee.apply_repair(total, ServiceFee.repair_rate_for(_portable))
 		_repair.text = Localization.tr_key("ui.blacksmith_panel.repair_cost", [total])
 		_repair.disabled = false
 
 ## 一键修理（工程 77）：只修身上 14 件；金币不足一件不修，与合成「校验失败不消耗」同口径。
 func _on_repair() -> void:
-	var result := GameState.repair_equipment(1.0)
+	var result := GameState.repair_equipment(ServiceFee.repair_rate_for(_portable))
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.durability.repair_done",
 			[int(result.get("repaired", 0)), int(result.get("cost", 0))]), "pickup")
@@ -303,14 +334,14 @@ func _on_repair() -> void:
 
 func _open_upgrade() -> void:
 	set_open(false)
-	EventBus.upgrade_panel_requested.emit()
+	EventBus.upgrade_panel_requested.emit(_portable)
 
 ## M10-8：铁匠服务菜单第二项。与升星同构 —— 先关铁匠再开重铸面板。
 func _open_reforge() -> void:
 	set_open(false)
-	EventBus.reforge_panel_requested.emit()
+	EventBus.reforge_panel_requested.emit(_portable)
 
 ## 铁匠菜单进入对应合成服务；对话窗口先关闭，避免层叠遮挡。
 func _open_fusion(mode: String) -> void:
 	set_open(false)
-	EventBus.equipment_fusion_panel_requested.emit(mode)
+	EventBus.equipment_fusion_panel_requested.emit(mode, _portable)

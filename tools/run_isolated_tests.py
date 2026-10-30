@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 75 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 94 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -79,6 +79,17 @@ DEFAULT_TESTS = [
     "BossMultiTargetTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。
     "PortableToolsTest",
+    # 工程 108 随身铁匠：道具契约 / 路由器登记 / 双击不消耗 / **面板双模式（回城零回归）**
+    # / 任务 C7S01 门槛与 unlocks 数组 / 不可丢弃与不上架 / 补领覆盖第四件
+    # / **升星·重铸·修理三处的「显示价 == 实扣」**（服务费 +20% 唯一守得住它的机制）。
+    "PortableBlacksmithTest",
+    # 工程 109 仓库兑换台：汇率契约（100 万 / 10 / 1000 万）/ 双向闭环 / 99 堆叠分格
+    # / **金币上限拒绝而非夹取** / **仓库满不扣钱** / 去余数 / bound 守卫（不可售可丢）
+    # / 图标已登记 / 产物形态。守住「显示可换次数 == 实际能换」与「一分不动」两条红线。
+    "GoldExchangeTest",
+    # 工程 110 批量兑换弹框：默认值全选 / 非数字过滤（「1e5」不能变 15）/ 超限禁用确认
+    # / 确认只发合法整数 / Esc 只关一层 / 打开必须聚焦。全是逻辑层测试抓不到的 UI 行为。
+    "PanelAmountDialogTest",
     # M10-5 追猎令牌：行集/过滤/倒计时同源 + ordinal 真进 key + 等级跟随 + 与 Spawner 序号一致
     # + _map_has_monster 认 bossSpawns + travel_anywhere / fee_anywhere + 落地意图。
     "BossTokenTest",
@@ -202,6 +213,18 @@ DEFAULT_TESTS = [
     # 工程 103 怪物重叠：追击与攻击两阶段都保持同类最小间距 / Boss 不可被推动但会挤开普通怪
     # / 碰撞层不变（玩家仍可穿过怪群，ActorCollisionTest 的断言继续成立）。
     "MonsterCrowdTest",
+    # 工程 104 地面掉落积压：装饰环走预渲染纹理（技能圈仍走折线）/ 背包满早退 +
+    # 只在背包满时节流 / 距离门控（远处静止件零重绘、悬停仍每帧）/ ClickArea 不参与重叠检测。
+    "GroundLootPerfTest",
+    # 工程 105 单体技能不画范围提示：`single` 一次地面几何都不画（逻辑 + 行为两层）/
+    # `circle`+`cone` 照常画（防一刀切）/ 雷电术按 skills.json 的 fx 分派、不产生飞行投射物 /
+    # 未知 shape 不画（防 else 兜底复活）。
+    "SkillFxShapeTest",
+    # 工程 106 法师技能特效：施法特效分派表覆盖 skills.json 的每个 fx / 每个 fx 技能产生
+    # 恰好 1 个专属节点且 0 投射物 0 通用范围提示 / 节点位置与自报 ANCHOR 一致 /
+    # DRAWS_AREA 与 shape 语义一致 / LIFETIME 短于 CD / 无 fx 的技能逐位不变 /
+    # fx 脚本不引用 GameState 与 Combat / 未知 fx key 回落投射物。
+    "MageFxCastingTest",
     "SmokeTest",
 ]
 

@@ -20,19 +20,19 @@
   {
     "skillId": "battle_focus",
     "ranks": [
-      {"rank": 2, "unlockLevel": 25, "goldCost": 3000, "effects": {"attackPct": 0.215, "attackSpeedPct": 0.16}},
-      {"rank": 3, "unlockLevel": 35, "goldCost": 5000, "effects": {"attackPct": 0.23, "attackSpeedPct": 0.17}},
-      {"rank": 4, "unlockLevel": 45, "goldCost": 8000, "effects": {"attackPct": 0.245, "attackSpeedPct": 0.18}},
-      {"rank": 5, "unlockLevel": 55, "goldCost": 12000, "effects": {"attackPct": 0.26, "attackSpeedPct": 0.19}}
+      {"rank": 2, "unlockLevel": 25, "goldCost": 3000, "effects": {"damageReducePct": 0.22, "attackSpeedPct": 0.16}},
+      {"rank": 3, "unlockLevel": 35, "goldCost": 5000, "effects": {"damageReducePct": 0.24, "attackSpeedPct": 0.17}},
+      {"rank": 4, "unlockLevel": 45, "goldCost": 8000, "effects": {"damageReducePct": 0.26, "attackSpeedPct": 0.18}},
+      {"rank": 5, "unlockLevel": 55, "goldCost": 12000, "effects": {"damageReducePct": 0.28, "attackSpeedPct": 0.19}}
     ]
   },
   {
     "skillId": "armor_break",
     "ranks": [
-      {"rank": 2, "unlockLevel": 35, "goldCost": 5000, "coefficientMultiplier": 1.03},
-      {"rank": 3, "unlockLevel": 45, "goldCost": 8000, "coefficientMultiplier": 1.06},
-      {"rank": 4, "unlockLevel": 55, "goldCost": 12000, "coefficientMultiplier": 1.09},
-      {"rank": 5, "unlockLevel": 65, "goldCost": 50000, "coefficientMultiplier": 1.12}
+      {"rank": 2, "unlockLevel": 35, "goldCost": 5000, "coefficientMultiplier": 1.03, "debuff": {"type": "armorBreak", "duration": 6.0, "defenseScale": 0.67}},
+      {"rank": 3, "unlockLevel": 45, "goldCost": 8000, "coefficientMultiplier": 1.06, "debuff": {"type": "armorBreak", "duration": 6.0, "defenseScale": 0.64}},
+      {"rank": 4, "unlockLevel": 55, "goldCost": 12000, "coefficientMultiplier": 1.09, "debuff": {"type": "armorBreak", "duration": 6.0, "defenseScale": 0.61}},
+      {"rank": 5, "unlockLevel": 65, "goldCost": 50000, "coefficientMultiplier": 1.12, "debuff": {"type": "armorBreak", "duration": 6.0, "defenseScale": 0.58}}
     ]
   },
   {

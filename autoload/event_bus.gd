@@ -79,12 +79,18 @@ signal boss_token_panel_requested(title: String)
 signal map_traveled(from_id: String, to_id: String)
 
 # ---- 铁匠 / 升星（M4）----
-signal blacksmith_panel_requested(npc_name: String, greeting: String)
-signal upgrade_panel_requested()
-## M10-8：铁匠服务菜单第二项（装备重铸）请求。
-signal reforge_panel_requested()
+## 第三参 `portable`（工程 108）：`false` 当地铁匠（问候卡 + 服务菜单，价格原价），
+## `true` 随身铁匠（跳过问候卡直接进菜单，修理 1.5× / 成长服务 ×1.2）。
+## 🔴 GDScript 信号参数**没有默认值**：加参必须同批补齐**所有** emit 点，
+## 漏一处只在真点开面板那一刻炸（`too few arguments`），`--import` 与 `--all` 都查不出来。
+signal blacksmith_panel_requested(npc_name: String, greeting: String, portable: bool)
+## 第二参 `portable`：随身铁匠里点升星 ⇒ 服务费 ×1.2。显示与扣费必须用同一个费率来源。
+signal upgrade_panel_requested(portable: bool)
+## M10-8：铁匠服务菜单第二项（装备重铸）请求。第二参同 `upgrade_panel_requested`。
+signal reforge_panel_requested(portable: bool)
 ## 铁匠三种合成服务共用窗口，mode 为 EquipmentFusion 中的稳定服务 ID。
-signal equipment_fusion_panel_requested(mode: String)
+## 第二参 `portable`：合成**无金币费**（只耗材料），传下来只为口径统一与将来扩费。
+signal equipment_fusion_panel_requested(mode: String, portable: bool)
 ## 合成工作台与背包的并排会话开关；预选材料不进入背包以外的容器。
 signal fusion_mode_changed(active: bool)
 signal equipment_fusion_close_requested()

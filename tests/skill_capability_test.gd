@@ -14,6 +14,9 @@ class DummyEnemy extends Node2D:
 	var defense := 0.0
 	var break_calls := 0
 	var break_duration := 0.0
+	## 工程 107：幅度也由数据给，mock 必须一起接住 —— 少一个形参就是运行时
+	## `Invalid call ... Expected 1 argument(s)`，整条用例链静默报废（只报「未输出完成标记」）。
+	var break_scale := -1.0
 	var die_after := 0
 
 	func _ready() -> void:
@@ -25,9 +28,10 @@ class DummyEnemy extends Node2D:
 	func get_dodge() -> float:
 		return 0.0
 
-	func apply_armor_break(duration: float) -> void:
+	func apply_armor_break(duration: float, scale: float = 0.7) -> void:
 		break_calls += 1
 		break_duration = duration
+		break_scale = scale
 
 	func take_hit(result: Dictionary, _from: Node = null) -> void:
 		if is_dead:
@@ -61,6 +65,7 @@ func _ready() -> void:
 	_check_single_shape()
 	_check_auto_battle()
 	_check_wiring()
+	_check_circle_cap()
 
 	_finish()
 
@@ -73,15 +78,30 @@ func _check_pierce() -> void:
 	var defense := 200.0
 	var enemy := _dummy(_player.global_position + Vector2(60, 0), defense)
 	var power := _player.effective_attack_power()
-	var pierced := maxi(1, int(floorf(power * 2.0 - defense * 0.7 * 0.5)))
-	var plain := maxi(1, int(floorf(power * 2.0 - defense * 0.5)))
+	# 系数与穿防比例**从数据取**：这两个值是平衡参数，写死会让每次调数值都红一遍，
+	# 而这条用例要守的是「defensePierce 有没有真的参与结算」。另配 `pierce > 0` 与
+	# `pierced > plain` 两条绝对判据，防止「数据把穿防改成 0 时本用例照样绿」。
+	var spec: Dictionary = SkillProgression.current("armor_break")
+	var coeff := float(spec.get("coefficient", 0.0))
+	var pierce := float(spec.get("defensePierce", 0.0))
+	_check(pierce > 0.0 and coeff > 0.0,
+		"数据应有正系数与正穿防比例（系数 %.2f / 穿防 %.2f）" % [coeff, pierce])
+	var pierced := maxi(1, int(floorf(power * coeff - defense * (1.0 - pierce) * 0.5)))
+	var plain := maxi(1, int(floorf(power * coeff - defense * 0.5)))
 	# 用例自身必须有区分度：两式相等时下面那条断言是假绿。
 	_check(pierced > plain, "穿防样本无区分度（攻 %.0f / 防 %.0f）：%d 对 %d" % [power, defense, pierced, plain])
 	_check(_player.cast_skill("armor_break", enemy), "Lv25 应可施放破甲重击")
 	_check(enemy.last_damage == pierced,
-		"破甲重击应按忽视 30%% 防御结算：实际 %d，期望 %d（未生效会是 %d）" % [enemy.last_damage, pierced, plain])
-	_check(enemy.break_calls == 1 and is_equal_approx(enemy.break_duration, 5.0),
-		"命中后应给目标挂 5 秒破甲：调用 %d 次 / %.1f 秒" % [enemy.break_calls, enemy.break_duration])
+		"破甲重击应按忽视 %.0f%% 防御结算：实际 %d，期望 %d（未生效会是 %d）" % [pierce * 100.0, enemy.last_damage, pierced, plain])
+	# 工程 107：破甲时长与幅度都从数据下发（1 阶 6.0 秒 / 0.70），不再是写死常量。
+	var want_dur := float((spec.get("debuff", {}) as Dictionary).get("duration", 0.0))
+	var want_scale := float((spec.get("debuff", {}) as Dictionary).get("defenseScale", 0.7))
+	_check(want_dur > 0.0 and want_scale > 0.0 and want_scale < 1.0,
+		"数据应有正时长且幅度在 (0,1) 内（时长 %.1f / 保留 %.2f）" % [want_dur, want_scale])
+	_check(enemy.break_calls == 1 and is_equal_approx(enemy.break_duration, want_dur),
+		"命中后应给目标挂 %.1f 秒破甲（读自数据）：调用 %d 次 / %.1f 秒" % [want_dur, enemy.break_calls, enemy.break_duration])
+	_check(is_equal_approx(enemy.break_scale, want_scale),
+		"破甲幅度应随数据下发（%.2f）：实际 %.2f（传丢会退回缺省 0.70）" % [want_scale, enemy.break_scale])
 	enemy.global_position = _player.global_position + Vector2(2000, 0)
 
 ## ② 破甲状态机：默认不触发、期间 ×0.7、到期恢复、重复命中取较长时长。
@@ -104,6 +124,18 @@ func _check_armor_break_state() -> void:
 	monster.apply_armor_break(5.0)
 	_check(is_equal_approx(monster.armor_break_remaining(), 5.0),
 		"重复命中取较长时长，不叠加也不缩短：%.2f" % monster.armor_break_remaining())
+	# 工程 107：幅度可被数据覆盖（破甲重击 5 阶 0.58），三条语义各断一次。
+	monster.apply_armor_break(5.0, 0.58)
+	_check(is_equal_approx(monster.get_defense(), 58.0),
+		"显式幅度应生效（0.58 ⇒ 58.0），实际 %.1f" % monster.get_defense())
+	monster.apply_armor_break(5.0, 0.7)
+	_check(is_equal_approx(monster.get_defense(), 58.0),
+		"弱幅度不得覆盖强幅度（否则谁最后打谁说了算，玩家无法预期）：实际 %.1f" % monster.get_defense())
+	monster.tick_status(99.0)
+	_check(is_equal_approx(monster.get_defense(), 100.0), "长期计时后破甲应自然到期")
+	monster.apply_armor_break(5.0)
+	_check(is_equal_approx(monster.get_defense(), 70.0),
+		"新一次破甲应回到缺省幅度（0.7 ⇒ 70.0），实际 %.1f" % monster.get_defense())
 	monster.free()
 
 ## ③ 多段：3 段独立结算、只扣一次蓝、只设一次攻击间隔；目标半途死亡即收手。
@@ -115,7 +147,12 @@ func _check_multi_hit() -> void:
 	var target := _dummy(_player.global_position + Vector2(60, 0), 0.0)
 	_check(_player.cast_skill("spirit_storm", target), "Lv40 应可施放灵刃风暴")
 	_check(target.hits == 3, "灵刃风暴应结算 3 段，实际 %d 段" % target.hits)
-	_check(int(GameState.player.mp) == 1000 - 60, "3 段只扣一次蓝，实际剩余 %d" % int(GameState.player.mp))
+	# 工程 107：武士耗蓝改成百分比，写死 60 会随蓝池漂移。这里守的是**次数**（3 段只扣一次），
+	# 所以用 `skill_mana_cost` 当单位是刻意的 —— 另配 `cost > 0` 防止「耗蓝被改成 0 照样绿」。
+	var storm_cost := GameState.skill_mana_cost(SkillProgression.current("spirit_storm"))
+	_check(storm_cost > 0, "灵刃风暴耗蓝应大于 0，实际 %d" % storm_cost)
+	_check(1000 - int(GameState.player.mp) == storm_cost,
+		"3 段只扣一次蓝（单次口径 %d），实际扣了 %d" % [storm_cost, 1000 - int(GameState.player.mp)])
 	_check(is_equal_approx(_player._attack_cd, _player.effective_attack_interval()),
 		"3 段只设一次攻击间隔，实际 %.3f" % _player._attack_cd)
 	target.global_position = _player.global_position + Vector2(2000, 0)
@@ -146,8 +183,11 @@ func _check_single_shape() -> void:
 func _check_auto_battle() -> void:
 	_check(is_equal_approx(AutoBattle.skill_value(DataLoader.get_entry("skills", "spirit_storm")), 3.0),
 		"灵刃风暴价值应为单段 1.0 × 3 段 = 3.0")
-	_check(is_equal_approx(AutoBattle.skill_value(DataLoader.get_entry("skills", "earth_cleave")), 1.4),
-		"单段技能价值应等于系数")
+	# 单段技能的价值 = 单段系数（这是同一性断言，系数必须从数据取；写死会在每次调数值时误红）。
+	var cleave_coeff := float(DataLoader.get_entry("skills", "earth_cleave").get("coefficient", 0.0))
+	_check(cleave_coeff > 0.0, "裂地斩系数应为正数")
+	_check(is_equal_approx(AutoBattle.skill_value(DataLoader.get_entry("skills", "earth_cleave")), cleave_coeff),
+		"单段技能价值应等于系数（%.2f）" % cleave_coeff)
 	var pilot := AutoBattle.new()
 	_player.add_child(pilot)
 	pilot.set_physics_process(false)
@@ -196,6 +236,33 @@ func _check_wiring() -> void:
 	_check(HotbarConfig.valid_entry({"kind": "skill", "id": "armor_break"}), "破甲重击应可拖入快捷栏")
 	_check(HotbarConfig.valid_entry({"kind": "skill", "id": "spirit_storm"}), "灵刃风暴应可拖入快捷栏")
 	_check(HotbarConfig.valid_entry({"kind": "skill", "id": "meteor"}), "陨石术应可拖入快捷栏")
+
+## ⑦ 圆形上限（工程 107 B2-b）：灵刃风暴 maxTargets 8，旋风斩缺省不限。
+## 守的是「circle 分支也开始吃 maxTargets 了」—— 107 之前该分支根本不读这个字段，
+## 写进数据也不生效且零报错，属于「配了等于没配」的静默失效。
+## 两个方向都要断：写上限必须停在上限，**没写必须仍然不限**（否则旧技能被偷偷削）。
+func _check_circle_cap() -> void:
+	# 前一组把等级压到 24 验证「未解锁回退普攻」，这里必须拉回 40 —— 否则
+	# `SkillProgression.current()` 返回空字典，上限读成 0，用例会以「构造前提不成立」失败
+	# （而这个失败指向的是等级，不是上限逻辑）。
+	GameState.player.level = 40
+	var center := _player.global_position
+	var swarm: Array[Node2D] = []
+	for i in range(12):
+		var angle := TAU * float(i) / 12.0
+		swarm.append(_dummy(center + Vector2(cos(angle), sin(angle)) * 100.0, 0.0))
+	var storm: Dictionary = SkillProgression.current("spirit_storm")
+	var cap := int(storm.get("maxTargets", 0))
+	_check(cap > 0 and cap < swarm.size(),
+		"构造前提：灵刃风暴应有上限且小于样本数（上限 %d / 样本 %d）" % [cap, swarm.size()])
+	_check(_player.skill_targets(storm, null).size() == cap,
+		"配了上限的圆形技能应停在 %d 只，实际 %d" % [cap, _player.skill_targets(storm, null).size()])
+	var whirl: Dictionary = SkillProgression.current("whirlwind")
+	_check(not whirl.has("maxTargets"), "构造前提：旋风斩不应配 maxTargets（缺省即不限）")
+	_check(_player.skill_targets(whirl, null).size() == swarm.size(),
+		"未配上限的圆形技能必须命中全部 %d 只，实际 %d" % [swarm.size(), _player.skill_targets(whirl, null).size()])
+	for e in swarm:
+		e.global_position = center + Vector2(5000, 0)
 
 func _dummy(at: Vector2, defense: float) -> DummyEnemy:
 	var enemy := DummyEnemy.new()

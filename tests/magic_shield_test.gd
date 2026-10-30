@@ -30,6 +30,7 @@ func _ready() -> void:
 	_test_expired()
 	_test_rank_effect()
 	_test_aura_lifecycle()
+	_test_aura_animation()
 	_test_warrior_unchanged()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
@@ -204,7 +205,43 @@ func _test_aura_lifecycle() -> void:
 	check(not back.visible and not front.visible, "死亡时即使 Buff 未清理也不显示护罩")
 	player.queue_free()
 
-## 武士路径逐位不变：没有任何 buff 提供 damageToManaPct ⇒ 全额扣血、蓝不动。
+## 工程 106 §3.5：护罩是持续 30 秒的状态，改前完全静止 —— 玩家只能靠 UI 图标判断盾在不在。
+## 现在靠「呼吸 + 能量网」自己证明自己活着。本用例守两件事：
+##   · 不可见时**不得**推进动画（30 秒常态下的每秒 8 条折线开销）；
+##   · 可见时两个观测量都必须真的在变（只断「函数被调用了」会被空实现骗过）。
+func _test_aura_animation() -> void:
+	GameState.reset_to_defaults("mage")
+	GameState.current_map = "wild_trial"
+	GameState.player.level = 60
+	GameState.player.mp = GameState.max_mp()
+	var player := (load("res://scenes/entities/Player.tscn") as PackedScene).instantiate() as PlayerCharacter
+	add_child(player)
+	player.set_physics_process(false)
+	var front := player.get_node("MagicShieldFront") as MagicShieldAura
+	check(not front.visible, "动画前提：新玩家节点无盾时护罩应隐藏")
+	var idle_breath := front.breath
+	var idle_phase := front.net_phase
+	for _i in range(10):
+		front._process(0.05)
+	check(is_equal_approx(front.breath, idle_breath) and is_equal_approx(front.net_phase, idle_phase),
+		"护罩隐藏时不得推进动画（否则无盾时也在白跑每秒 8 条折线的重绘）")
+	check(player.cast_skill("magic_shield"), "动画用例：应能开盾")
+	var b0 := front.breath
+	var p0 := front.net_phase
+	for _i in range(12):
+		front._process(0.05)
+	check(absf(front.breath - b0) > 0.01,
+		"呼吸：护罩亮度应随时间起伏（改前是恒定 alpha，这是「盾还活着」的唯一自证）")
+	check(absf(front.net_phase - p0) > 0.01,
+		"能量网：相位应随时间推进（否则网是静止的，等于没加）")
+	check(front.breath > 0.5 and front.breath < 0.9,
+		"呼吸幅度应落在 0.5—0.9：更高会盖住角色贴图，更低在静态截图里几乎看不见盾")
+	player.queue_free()
+
+## 武士路径：没有 `damageToManaPct` ⇒ 受击不扣蓝。
+## ⚠ 工程 107 起战意觉醒带 20% 减伤，所以「武士受击必全额扣血」**不再无条件成立**。
+## 这里必须把两种口径分开测：无 buff 走全额，有战意觉醒走 800 —— 只改数字会让这条
+## 测试变成「武士不许有减伤」的反向约束，与 107 的设计直接冲突。
 func _test_warrior_unchanged() -> void:
 	GameState.reset_to_defaults("warrior")
 	GameState.current_map = "wild_trial"
@@ -214,9 +251,16 @@ func _test_warrior_unchanged() -> void:
 	player.set_physics_process(false)
 	player.global_position = Vector2(4200, 4200)
 	GameState.player.hp = 100000
-	GameState.start_buff("battle_focus")
 	var mp_before := int(GameState.player.mp)
-	var taken := player.apply_damage(1000)
-	check(taken == 1000, "武士 1000 点伤害应全额扣血，实际 %d" % taken)
+	var bare := player.apply_damage(1000)
+	check(bare == 1000, "武士未开战意觉醒时 1000 点伤害应全额扣血，实际 %d" % bare)
 	check(int(GameState.player.mp) == mp_before, "武士受击不得扣蓝")
+
+	# 战意觉醒 1 阶 = 减伤 20%（`damageReducePct: 0.2`）⇒ 1000 → 800，且仍然一分蓝都不扣。
+	check(GameState.start_buff("battle_focus"), "战意觉醒应能开启")
+	check(int(GameState.player.mp) == mp_before, "开启战意觉醒本身不扣蓝（蓝耗在施放入口结算）")
+	player._invuln = 0.0   # 上一击的无敌帧会挡掉第二次受击，这里手动清掉
+	var focused := player.apply_damage(1000)
+	check(focused == 800, "战意觉醒 1 阶（减伤 20%）下 1000 点伤害应扣 800 血，实际 %d" % focused)
+	check(int(GameState.player.mp) == mp_before, "战意觉醒不是魔法盾，受击不得扣蓝")
 	player.queue_free()

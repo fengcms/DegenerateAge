@@ -21,6 +21,10 @@ const LOCK_BUTTON_WIDTH := 60.0
 const REFINE_SLOTS := 4
 const REFINE_SLOT_SIZE := Vector2(56.0, 56.0)
 
+## 服务费率来源（工程 108）：随身铁匠 ×1.2、回城铁匠原价。
+## 与 `upgrade_panel` 同一条约束 —— 显示价与提交时传给 `reforge_equipment` 的费率必须同源。
+var _portable := false
+
 var _picker: OptionButton
 var _hint: Label
 var _affix_title: Label
@@ -81,7 +85,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
-func _on_requested() -> void:
+func _on_requested(portable: bool) -> void:
+	_portable = portable
 	set_open(true)
 
 func set_open(open: bool) -> void:
@@ -399,7 +404,8 @@ func _refresh_details() -> void:
 	_refresh_score(item)
 	_lock_hint.visible = true
 	_refresh_refine(item)
-	var price := Reforge.cost(Equipment.level_req(item), _locked.size())
+	var price := ServiceFee.apply(Reforge.cost(Equipment.level_req(item), _locked.size()),
+		ServiceFee.rate_for(_portable))
 	var guard := Reforge.can_reforge(item)
 	var locks := Reforge.validate_locks(item, _locked)
 	_price.text = "" if price <= 0 else Localization.tr_key("ui.reforge_panel.p014") % [
@@ -689,7 +695,7 @@ func _on_reforge() -> void:
 		if not snapshot.is_empty():
 			refine_snapshot.append(String(snapshot.get("instanceId", "")))
 	var result := GameState.reforge_equipment(String(choice.source), choice.key, String(choice.id),
-		null, locked_snapshot, refine_snapshot)
+		null, locked_snapshot, refine_snapshot, ServiceFee.rate_for(_portable))
 	if not bool(result.get("ok", false)):
 		_feedback.text = String(result.get("reason", ""))
 		_feedback.add_theme_color_override("font_color", COL_WARN)

@@ -5,8 +5,17 @@ const PANEL_ID := "warehouse"
 const COLUMNS := 8
 const DOUBLE_CLICK_MS := 400
 const SLOT_MIN := Vector2(46, 46)
-## 双栏标题、计数、详情和底部操作所占的逻辑高度；缩放时优先缩短滚动区。
-const WAREHOUSE_VERTICAL_CHROME_BUDGET := 230.0
+## 双栏标题、计数、详情、兑换区和底部操作所占的逻辑高度；缩放时优先缩短滚动区。
+## 109 新增兑换区（标题 + 按钮行 + 两处 separation）约占 64px，230 → 294。
+const WAREHOUSE_VERTICAL_CHROME_BUDGET := 294.0
+
+## 兑换按钮顺序与文案键（工程 109）。顺序 = 玩家自然动线：先换条、再合砖、再兑回。
+const EXCHANGE_ROWS := [
+	["gold_to_ingot", "ui.warehouse_panel.p017"],
+	["ingot_to_brick", "ui.warehouse_panel.p018"],
+	["ingot_to_gold", "ui.warehouse_panel.p019"],
+	["brick_to_gold", "ui.warehouse_panel.p020"],
+]
 
 var _title: Label
 var _bag_count: Label
@@ -25,6 +34,13 @@ var _store_slots: Array[ItemSlot] = []
 var _last_side := ""
 var _last_index := -1
 var _last_click_ms := 0
+## 兑换按钮：pair_id → Button（工程 109）。
+var _exchange_buttons: Dictionary = {}
+## 批量数量弹框（工程 110）。最后 add_child，保证盖在面板之上。
+var _amount_dialog: PanelAmountDialog
+## 当前弹框在换哪一对。只有 `_on_exchange()` 会写它 —— 弹框本身不认识「兑换对」，
+## 它只认识一个整数，业务身份由面板自己记住。
+var _pending_pair := ""
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -57,9 +73,13 @@ func _on_panel_opened(panel_id: String) -> void:
 func _on_gold_changed(_amount: int) -> void:
 	if visible:
 		_refresh_summary()
+		_refresh_exchange()
 
 func set_open(open: bool) -> void:
 	visible = open
+	if not open and _amount_dialog != null:
+		# 面板收起时弹框必须一起收：否则输入框焦点留在隐藏控件上，键盘会继续往里送字符。
+		_amount_dialog.close()
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
 		_update_layout()
@@ -141,6 +161,23 @@ func _build() -> void:
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_detail)
 	_detail.add_theme_color_override("font_color", PanelChrome.MUTED)
+	# 兑换区（工程 109）：标题一行 + 四个按钮一行。按钮文案带「可换 N 次」，
+	# 禁用原因与提示共用一个 tooltip —— 不做第二套判断，避免「按钮灰了但说不出为什么」。
+	var exchange_head := Label.new()
+	exchange_head.text = Localization.tr_key("ui.warehouse_panel.p016")
+	root.add_child(exchange_head)
+	PanelChrome.style_section(exchange_head)
+	var exchange_row := HBoxContainer.new()
+	exchange_row.add_theme_constant_override("separation", 6)
+	root.add_child(exchange_row)
+	for spec in EXCHANGE_ROWS:
+		var pair_id := String(spec[0])
+		var button := Button.new()
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.pressed.connect(_on_exchange.bind(pair_id))
+		exchange_row.add_child(button)
+		PanelChrome.style_action(button)
+		_exchange_buttons[pair_id] = button
 	var footer := HBoxContainer.new()
 	root.add_child(footer)
 	_gold = Label.new()
@@ -151,6 +188,10 @@ func _build() -> void:
 	_expand.pressed.connect(_on_expand)
 	footer.add_child(_expand)
 	PanelChrome.style_action(_expand)
+	# 弹框放在最后 add_child：同层 Control 的绘制顺序按树序，后加即在最上。
+	_amount_dialog = PanelAmountDialog.new()
+	_amount_dialog.submitted.connect(_on_amount_submitted)
+	add_child(_amount_dialog)
 
 func _make_scroll(parent: VBoxContainer) -> ScrollContainer:
 	var scroll := ScrollContainer.new()
@@ -187,6 +228,7 @@ func _refresh() -> void:
 	_refresh_grid(_bag_grid, _bag_slots, GameState.inventory, "bag")
 	_refresh_grid(_store_grid, _store_slots, GameState.warehouse, "warehouse")
 	_refresh_summary()
+	_refresh_exchange()
 
 ## 容量变化时才增减格子；物品变化只刷新已有节点，保留拖放与滚动状态。
 func _refresh_grid(grid: GridContainer, slots: Array[ItemSlot], items: Array, side: String) -> void:
@@ -234,10 +276,71 @@ func _refresh_summary() -> void:
 	_expand.text = Localization.tr_key("ui.warehouse_panel.p010") if cost < 0 else Localization.tr_key("ui.warehouse_panel.p011") % [
 		Warehouse.capacity(GameState.warehouse_expansions + 1) - GameState.warehouse.size(), cost]
 
+## 兑换按钮的文案与禁用态（工程 109）。可换次数来自 `GoldExchange.max_times()`，
+## 禁用原因来自 `GoldExchange.check()` —— 与真正提交走同一套判定，不会出现
+## 「按钮能点但点了失败」或「明明够却不能点」两种错位。
+func _refresh_exchange() -> void:
+	for spec in EXCHANGE_ROWS:
+		var pair_id := String(spec[0])
+		var button: Variant = _exchange_buttons.get(pair_id)
+		if not button is Button:
+			continue
+		var times := GoldExchange.max_times(pair_id)
+		var label := Localization.tr_key(String(spec[1]))
+		button.text = Localization.tr_key("ui.warehouse_panel.p021") % [label, times]
+		button.disabled = times <= 0
+		var gate := GoldExchange.check(pair_id, 1)
+		var hint := Localization.tr_key("ui.warehouse_panel.p022")
+		if not bool(gate.get("ok", false)):
+			hint = "%s\n%s" % [hint, String(gate.get("reason", ""))]
+		button.tooltip_text = hint
+
+## 点兑换按钮 → 开批量数量弹框。
+## 🔑 刻意**取消**了「单击换 1 次、Shift 换到上限」：Shift 是玩家常按的修饰键，
+## 想换 1 块却手滑按着 Shift ⇒ 1 亿金币瞬间清零，且这一步不可逆。
+## 便捷性不该建立在「按住某个键就等于清空储值」上（110 方案 §1）。
+func _on_exchange(pair_id: String) -> void:
+	_reset_click()
+	var maximum := GoldExchange.max_times(pair_id)
+	if maximum <= 0:
+		return
+	var label_key := _exchange_label_key(pair_id)
+	_amount_dialog.title = Localization.tr_key(label_key) if not label_key.is_empty() else pair_id
+	_amount_dialog.rate_text = GoldExchange.rate_text(pair_id)
+	# 上限在打开时取一次快照，只用于「可换 N 次」提示与输入校验；
+	# 真正的可行性以 `GameState.exchange()` 落账前的重新校验为准（见 _do_exchange）。
+	_amount_dialog.max_times = maximum
+	_amount_dialog.preview_provider = func(times: int) -> Dictionary:
+		return {
+			"cost": GoldExchange.cost_text(pair_id, times),
+			"got": GoldExchange.got_text(pair_id, times),
+		}
+	_pending_pair = pair_id
+	_amount_dialog.popup()
+
+## 弹框确认后落账。弹框打开期间金币/仓库可能已经变了（仓库面板不屏蔽世界，
+## 挂机战斗照旧在跑），所以这里**以 `GameState.exchange()` 的返回为准**，
+## 绝不拿打开弹框时算的 max 去夹取玩家输入 —— 那等于用过期快照改写玩家的意图。
+func _on_amount_submitted(times: int) -> void:
+	_do_exchange(_pending_pair, times)
+
+func _do_exchange(pair_id: String, times: int) -> void:
+	if pair_id.is_empty() or times < 1:
+		return
+	var result := GameState.exchange(pair_id, times)
+	_detail.text = Localization.tr_key("msg.exchange.p006") % String(result.get("got", "")) \
+		if bool(result.get("ok", false)) else String(result.get("reason", ""))
+	_refresh()
+
+func _exchange_label_key(pair_id: String) -> String:
+	for spec in EXCHANGE_ROWS:
+		if String(spec[0]) == pair_id:
+			return String(spec[1])
+	return ""
+
 func _on_bag_organize() -> void:
 	_reset_click()
 	GameState.organize_inventory()
-
 func _on_store_organize() -> void:
 	_reset_click()
 	GameState.organize_warehouse()

@@ -72,6 +72,10 @@ const DEFAULT_POTION_THRESHOLD := 0.35
 const DANGER_TOAST_CD := 4.0           # 「危险血量」提示节流（s）
 ## 百 Boss 图预留至少 32 件单次掉落空间；达到阈值时停自动战斗，手动击杀仍保全奖励。
 const BOSS_LOOT_RESERVE := 32
+## 顺路拾取的重扫间隔（s，工程 104）。`_loot == null` 时原本**每个物理帧**都全表扫一遍；
+## 背包满时扫完必然还是 null，等于每秒白扫 60 次 × 上千件。0.25s 只让「发现新掉落」
+## 最多延迟 0.25s，玩家与挂机都无感。
+const LOOT_SCAN_INTERVAL := 0.25
 
 ## 已接线的自动施放范围技；普攻由攻击间隔单独驱动，不进此表。
 ## R4-d：`spirit_storm`（L40，circle × 3 段）在 `_best_area_skill` 里按「命中数 × 总系数」参评。
@@ -99,6 +103,11 @@ var _phase: String = ""
 
 var _target: Node = null
 var _loot: Node = null
+## 工程 104：顺路拾取的扫描节流与「背包已满」缓存。
+## `_bag_full` 每帧在 `_tick_loot()` 刷新一次（扫一遍格子，≈3 µs）；默认 false 只是
+## 「尚未刷新」，此时 `_can_pick()` 会退回逐件判定的旧口径，外部直接调用也安全。
+var _loot_scan_t: float = 0.0
+var _bag_full: bool = false
 
 var _search_t: float = 0.0
 var _repath_t: float = 0.0
@@ -203,6 +212,7 @@ func _loot_guard_map() -> String:
 
 func _physics_process(delta: float) -> void:
 	_tick_blacklist(delta)
+	_loot_scan_t = maxf(0.0, _loot_scan_t - delta)
 	if _player == null or not is_instance_valid(_player):
 		return
 
@@ -768,10 +778,19 @@ func _find_loot() -> GroundItem:
 	return best
 
 func _tick_loot() -> bool:
+	# 工程 104：背包满状态每帧刷新一次（≈3 µs），供 `_can_pick` / `_find_loot` 早退。
+	# 背包满时 2400 次 `has_space_for` 的 6.6 ms/帧 就是这么省掉的（探针 PROBE C）。
+	_bag_full = Inventory.is_full(GameState.inventory)
 	if _loot != null and (not is_instance_valid(_loot)
 			or (_loot as GroundItem).item.is_empty() or not _can_pick(_loot as GroundItem)):
 		_loot = null
 	if _loot == null:
+		# 🔴 节流**只在背包满时**生效：那时扫描结果恒为「找不到」，扫了也是白扫；
+		# 背包未满则保持每帧扫描的原行为 —— 掉落刚出现就要能立刻走向它
+		# （smoke T10「有怪物目标时也应先走向可拾取的地面装备」是这条的守门）。
+		if _bag_full and _loot_scan_t > 0.0:
+			return false
+		_loot_scan_t = LOOT_SCAN_INTERVAL
 		_loot = _find_loot()
 		if _loot == null:
 			return false
@@ -889,7 +908,11 @@ func _can_pick(gi: GroundItem) -> bool:
 	if gi.manual_only:
 		return false
 	if String(gi.item.get("kind", "")) == "coin":
-		return not GameState.gold_is_capped()
+		return not GameState.gold_is_capped()   # 金币不占背包，背包满也能捡
+	# 工程 104：背包满 ⇒ 装备 / 药水 / 材料**必然**入不了包，直接否掉，不去扫格子。
+	# 探针实测：2400 件 × 每件扫 137 格 = 6.6 ms/帧，而结论恒为 false。
+	if _bag_full:
+		return false
 	return Inventory.has_space_for(GameState.inventory, gi.item)
 
 # ---- 卡住检测与黑名单（3.14 ①，T08）----
@@ -1029,8 +1052,20 @@ func current_target() -> Node:
 static func skill_value(skill: Dictionary) -> float:
 	return float(skill.get("coefficient", 0.0)) * float(maxi(1, int(skill.get("hits", 1))))
 
+## 技能单次蓝耗。百分比口径必须知道**蓝池上限**才能算，所以这里把池子显式作为参数传进来，
+## 而不是在函数里偷读 `GameState.max_mp()` —— 后者会让 `choose_skill` 失去纯函数性质：
+## 调用方传进来的 `mp` 与函数内部假定的池子可能不是同一次结算的，无头回归也无法构造
+## 「刚好差 1 点蓝」这种边界（工程 107 踩过）。
+static func _skill_cost(skill: Dictionary, pool: int) -> int:
+	var pct := float(skill.get("manaCostPct", 0.0))
+	if pct > 0.0 and pool > 0:
+		return maxi(1, int(round(float(pool) * pct)))
+	return int(skill.get("manaCost", 0))
+
 static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictionary,
-		target_count: int) -> Dictionary:
+		target_count: int, pool: int = 0) -> Dictionary:
+	# `pool <= 0` ⇒ 取当前真实蓝池（生产路径的唯一调用方式）；测试可显式注入以脱离存档。
+	var capacity := pool if pool > 0 else GameState.max_mp()
 	var aoe := {}
 	var single := {}
 	for s in skills:
@@ -1045,13 +1080,16 @@ static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictiona
 			continue
 		if int(s.get("unlockLevel", 1)) > level:
 			continue                                   # 未解锁
-		if int(s.get("manaCost", 0)) > mp:
+		# 🔴 不能读 `manaCost` 字段：百分比耗蓝（法师全部 + 工程 107 起的武士）在 `manaCost`
+		# 里是 0，直接读会得到「蓝永远够」—— 低蓝时自动战斗会挑一个根本放不出的技能，
+		# 白白浪费一次决策，表现为「站着不动等回蓝」。工程 98 潜伏、107 才被武士暴露。
+		if _skill_cost(s, capacity) > mp:
 			continue                                   # MP 不足 → 不施放
 		if float(cooldowns.get(sid, 0.0)) > 0.0:
 			continue                                   # 冷却中 → 不施放
 		var is_aoe := String(s.get("shape", "single")) != "single"
 		if is_aoe and target_count >= 2:
-			if aoe.is_empty() or int(s.get("manaCost", 0)) < int(aoe.get("manaCost", 0)):
+			if aoe.is_empty() or _skill_cost(s, capacity) < _skill_cost(aoe, capacity):
 				aoe = s
 		elif String(s.get("shape", "single")) == "single":
 			if single.is_empty() or skill_value(s) > skill_value(single):

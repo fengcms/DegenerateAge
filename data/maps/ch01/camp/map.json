@@ -117,6 +117,7 @@
     },
     {
       "role": "blacksmith",
+      "npcId": "camp_smith",
       "npcName": "铁匠",
       "greeting": "炉火还旺。带上装备和金币，我替你试试升星。",
       "cell": [

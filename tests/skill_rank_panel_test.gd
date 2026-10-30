@@ -42,9 +42,13 @@ func _ready() -> void:
 	_check(summary.text.contains("1/5") and not summary.text.contains("下阶")
 		and tooltip._next.text.contains("下阶") and tooltip._next.text.contains("1500"),
 		"紧凑行卡仅保留阶数，效果和价格进入结构化浮层")
-	_check(tooltip._cooldown.text.contains("基础冷却 4.0")
-		and tooltip._cooldown.text.contains("%.1f" % GameState.cooldown_after_cdr(4.0)),
-		"浮层分别说明基础冷却与当前属性下次施放冷却")
+	# 工程 107：裂地斩 CD 4.0 → 3.0，所以「基础冷却」的期望值必须从数据取。
+	# 这条守的是「浮层同时给出基础值与 CDR 后的实际值」这个结构，不是那个数字。
+	var cleave_cd := float((DataLoader.get_entry("skills", "earth_cleave") as Dictionary).get("cooldown", 0.0))
+	_check(cleave_cd > 0.0, "裂地斩应有正冷却")
+	_check(tooltip._cooldown.text.contains("基础冷却 %.1f" % cleave_cd)
+		and tooltip._cooldown.text.contains("%.1f" % GameState.cooldown_after_cdr(cleave_cd)),
+		"浮层分别说明基础冷却与当前属性下次施放冷却（基础 %.1f）" % cleave_cd)
 	var player := get_tree().get_first_node_in_group("player") as PlayerCharacter
 	GameState.skill_cooldowns["earth_cleave"] = 2.8
 	panel._refresh_cooldowns()
@@ -71,7 +75,7 @@ func _ready() -> void:
 	GameState.active_buffs.erase("battle_focus")
 	GameState.skill_cooldowns["battle_focus"] = 0.0
 	source_icon.mouse_exited.emit()
-	_check((first_row.get_child(2) as Label).text.contains("CD 4"), "行卡显示基础冷却")
+	_check((first_row.get_child(2) as Label).text.contains("CD %d" % int(cleave_cd)), "行卡显示基础冷却")
 	upgrade.pressed.emit()
 	_check(GameState.skill_rank("earth_cleave") == 2 and GameState.gold == 0,
 		"面板升级按钮调用真实购买入口")
@@ -85,8 +89,20 @@ func _ready() -> void:
 	var updated_icon := updated_row.get_child(0) as SkillDragButton
 	updated_icon.mouse_entered.emit()
 	var updated_tooltip: SkillDetailTooltip = panel._detail_tooltip
-	_check(updated_summary.text.contains("2/5") and updated_tooltip._effect.text.contains("1.44"),
-		"购买后阶数更新且悬停说明给出 2 阶实际系数")
+	# 2 阶系数 = 基础系数 × 2 阶倍率，两个因子都从数据取：写死 1.44 会在
+	# 「基础系数」或「升阶倍率」任一侧调整时误红，而这条守的是「浮层给的是 2 阶实际值」。
+	var cleave_coeff := float((DataLoader.get_entry("skills", "earth_cleave") as Dictionary).get("coefficient", 0.0))
+	var rank2_mult := 1.0
+	var progression: Variant = DataLoader.get_entry("skillProgression", "earth_cleave")
+	if progression is Dictionary:
+		var ranks: Array = (progression as Dictionary).get("ranks", [])
+		if not ranks.is_empty() and ranks[0] is Dictionary:
+			rank2_mult = float((ranks[0] as Dictionary).get("coefficientMultiplier", 1.0))
+	var rank2_text := "%.2f" % (cleave_coeff * rank2_mult)
+	_check(cleave_coeff > 0.0 and rank2_mult > 1.0,
+		"构造前提：基础系数 %.2f / 2 阶倍率 %.2f 均应有效" % [cleave_coeff, rank2_mult])
+	_check(updated_summary.text.contains("2/5") and updated_tooltip._effect.text.contains(rank2_text),
+		"购买后阶数更新且悬停说明给出 2 阶实际系数（%s）" % rank2_text)
 	updated_icon.mouse_exited.emit()
 	GameState.set_hotbar_entry(4, {"kind": "skill", "id": "earth_cleave"})
 	var hotbar_tip := (hud._hotbar_buttons[4] as HotbarSlot).tooltip_text

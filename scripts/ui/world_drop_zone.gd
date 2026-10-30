@@ -139,6 +139,8 @@ func _fail(reason: String, item_name: String) -> Dictionary:
 			text = Localization.tr_key("msg.drop_to_ground.p003") % item_name
 		"tool":
 			text = Localization.tr_key("msg.drop_to_ground.p004") % item_name
+		"bound":
+			text = Localization.tr_key("msg.drop_to_ground.p008") % item_name
 		"stale":
 			text = Localization.tr_key("msg.drop_to_ground.p005")
 		"no_ground":

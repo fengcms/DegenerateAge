@@ -257,5 +257,33 @@
     "desc": "双击出发，去任何走过的地图。",
     "questItem": true,
     "price": 0
+  },
+  {
+    "id": "tool_portable_blacksmith",
+    "name": "随身铁匠",
+    "useType": "panel",
+    "panelId": "blacksmith",
+    "animation": "",
+    "desc": "双击就地开炉：升星、重铸、合成、献祭、修理，与城里铁匠同一套服务。修理按 1.5 倍收费，其余加价两成。",
+    "questItem": true,
+    "price": 0
+  },
+  {
+    "id": "gold_ingot",
+    "name": "金条",
+    "useType": "quest",
+    "animation": "",
+    "desc": "熔铸成条的金子，一块值一百万金币。可在任意仓库管理员处兑回金币，十块可合铸一块金砖。",
+    "price": 0,
+    "bound": true
+  },
+  {
+    "id": "gold_brick",
+    "name": "金砖",
+    "useType": "quest",
+    "animation": "",
+    "desc": "十块金条的合铸，一块值一千万金币。可在任意仓库管理员处直接兑回金币。",
+    "price": 0,
+    "bound": true
   }
 ]

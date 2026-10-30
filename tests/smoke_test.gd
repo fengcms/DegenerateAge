@@ -2660,27 +2660,34 @@ func _test_auto_battle() -> void:
 
 	# ---- T11：MP / 冷却 / 等级不足 → 不施放该技能（choose_skill 纯函数）----
 	var skills: Array = DataLoader.get_table("skills")
-	var earth := _skill_by_id(skills, "earth_cleave")     # Lv5 / 15MP / 范围(cone)
-	var armor := _skill_by_id(skills, "armor_break")      # Lv25 / 40MP / 单体
+	var earth := _skill_by_id(skills, "earth_cleave")     # Lv5 / 范围(cone)
+	var armor := _skill_by_id(skills, "armor_break")      # Lv25 / 单体
 	_expect(not earth.is_empty() and not armor.is_empty(),
 		"skills.json 应含 earth_cleave / armor_break")
+	# 工程 107：武士耗蓝改成按蓝池百分比，蓝耗不再是技能表里的常数。这里显式注入
+	# `pool = 1000`，让「够 / 差 1 点」变成与存档无关的确定值（裂地斩 1.5% ⇒ 15，
+	# 破甲重击 2.5% ⇒ 25）。不注入则会去读真实蓝池，边界用例会随等级漂移。
+	const POOL := 1000
+	_expect(AutoBattle._skill_cost(earth, POOL) == 15 and AutoBattle._skill_cost(armor, POOL) == 25,
+		"构造前提：注入蓝池 1000 时耗蓝应为 15 / 25（实际 %d / %d）"
+		% [AutoBattle._skill_cost(earth, POOL), AutoBattle._skill_cost(armor, POOL)])
 	# 3.14：优先可用范围技（命中 ≥2）
-	_expect(String(AutoBattle.choose_skill([earth], 5, 35, {}, 3).get("id", "")) == "earth_cleave",
+	_expect(String(AutoBattle.choose_skill([earth], 5, 35, {}, 3, POOL).get("id", "")) == "earth_cleave",
 		"命中≥2 时应优先范围技")
 	# 单体场景不选范围技（返回空 = 回退普攻）
-	_expect(AutoBattle.choose_skill([earth], 5, 35, {}, 1).is_empty(),
+	_expect(AutoBattle.choose_skill([earth], 5, 35, {}, 1, POOL).is_empty(),
 		"单体场景不应选范围技（应回退普攻）")
-	# MP 不足 → 不施放（T11）
-	_expect(AutoBattle.choose_skill([earth], 5, 14, {}, 3).is_empty(),
+	# MP 不足 → 不施放（T11）。差 1 点必须挡住 —— 这条是「便宜了 1 点就放得出」的反向验证。
+	_expect(AutoBattle.choose_skill([earth], 5, 14, {}, 3, POOL).is_empty(),
 		"MP 不足不应施放技能（T11）")
 	# 冷却中 → 不施放（T11）
-	_expect(AutoBattle.choose_skill([armor], 25, 40, {"armor_break": 3.0}, 1).is_empty(),
+	_expect(AutoBattle.choose_skill([armor], 25, 40, {"armor_break": 3.0}, 1, POOL).is_empty(),
 		"冷却中不应施放技能（T11）")
 	# 等级不足 → 不施放
-	_expect(AutoBattle.choose_skill([earth], 1, 999, {}, 3).is_empty(),
+	_expect(AutoBattle.choose_skill([earth], 1, 999, {}, 3, POOL).is_empty(),
 		"技能未解锁不应施放")
 	# 条件齐备 → 可施放单体
-	_expect(String(AutoBattle.choose_skill([armor], 25, 40, {}, 1).get("id", "")) == "armor_break",
+	_expect(String(AutoBattle.choose_skill([armor], 25, 40, {}, 1, POOL).get("id", "")) == "armor_break",
 		"条件齐备应可施放单体技能")
 
 	# ---- 状态机：实例化世界，开 F → 锚点搜怪 → 接近 / 攻击 ----

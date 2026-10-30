@@ -18,7 +18,12 @@ func _ready() -> void:
 	var base_interval := player.effective_attack_interval()
 	check(GameState.start_buff("battle_focus"), "增益可启动")
 	check(not GameState.start_buff("battle_focus"), "增益不可叠层")
-	check(is_equal_approx(player.effective_attack_power(), float(base_attack) * 1.2), "攻击力提升20%")
+	# 工程 107：战意觉醒从「攻击 +20% / 攻速 +15%」改成「减伤 20% / 攻速 +15%」。
+	# 这两条必须分开断 —— 只把 1.2 改成 1.0 会让「减伤有没有生效」完全没人看守。
+	check(is_equal_approx(player.effective_attack_power(), float(base_attack)),
+		"战意觉醒不再提升攻击力（107 起改为减伤，攻击面板必须逐位不变）")
+	check(is_equal_approx(GameState.buff_effect_total("damageReducePct"), 0.2),
+		"战意觉醒 1 阶应提供 20%% 减伤（实际 %.2f）" % GameState.buff_effect_total("damageReducePct"))
 	check(is_equal_approx(player.effective_attack_interval(), base_interval / 1.15), "攻击间隔缩短")
 	check(GameState.total_attack() == base_attack and is_equal_approx(float(GameState.player.attack), 12.0), "基础攻击未改写")
 	GameState.current_map = "camp"
@@ -31,14 +36,22 @@ func _ready() -> void:
 	GameState.player.mp = 100
 	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == 100, "未解锁不耗蓝")
 	GameState.player.level = 15
-	GameState.player.mp = 29
+	# 工程 107：耗蓝改成按蓝池百分比，蓝量与冷却都从数据取 —— 写死 29 / 70 / 30 会在
+	# 任何一次调价后误红，而这几条守的是「缺蓝挡住 / 只扣一次 / 不叠层」。
+	var focus_cost := GameState.skill_mana_cost(SkillProgression.current("battle_focus"))
+	var focus_cd := float((DataLoader.get_entry("skills", "battle_focus") as Dictionary).get("cooldown", 0.0))
+	check(focus_cost > 0, "战意觉醒耗蓝应大于 0（实际 %d）" % focus_cost)
+	GameState.player.mp = focus_cost - 1
 	check(not player.request_skill("battle_focus") and player.skill_cooldown("battle_focus") == 0.0, "缺蓝不进冷却")
-	GameState.player.mp = 100
+	GameState.player.mp = GameState.max_mp()
+	var full_mp := int(GameState.player.mp)
 	check(player.request_skill("battle_focus"), "安全区无目标可手动施放")
-	check(int(GameState.player.mp) == 70 and player.skill_cooldown("battle_focus") == 30.0, "手动施放耗蓝与冷却")
-	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == 70, "冷却时不重复扣蓝")
+	check(int(GameState.player.mp) == full_mp - focus_cost and is_equal_approx(player.skill_cooldown("battle_focus"), focus_cd),
+		"手动施放耗蓝与冷却（扣 %d，冷却 %.1f）" % [focus_cost, focus_cd])
+	var after_cast := int(GameState.player.mp)
+	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == after_cast, "冷却时不重复扣蓝")
 	player.skill_cooldowns.clear()
-	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == 70, "增益生效时不可叠层")
+	check(not player.request_skill("battle_focus") and int(GameState.player.mp) == after_cast, "增益生效时不可叠层")
 	GameState.clear_buffs()
 	GameState.start_buff("battle_focus")
 	player.set_sitting(true)

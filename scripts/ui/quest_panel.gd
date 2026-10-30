@@ -397,7 +397,8 @@ func _open_npc_service() -> void:
 		"shop":
 			EventBus.shop_open_requested.emit(String(_current_npc_spec.get("shopId", "")))
 		"blacksmith":
-			EventBus.blacksmith_panel_requested.emit(name, String(_current_npc_spec.get("greeting", "")))
+			# 第三参 false：从任务面板跳过去的是**当地**铁匠（随身铁匠不走这条路径）。
+			EventBus.blacksmith_panel_requested.emit(name, String(_current_npc_spec.get("greeting", "")), false)
 		"warehouse":
 			EventBus.warehouse_panel_requested.emit(name)
 		"carter":

@@ -50,19 +50,26 @@ func _ready() -> void:
 		_check(bool(GameState.buy_skill_rank("earth_cleave").get("ok", false)), "裂地斩可连续购买至 5 阶")
 	_check(player.cast_skill("earth_cleave", enemy), "升至 5 阶后仍可从同一入口施放")
 	var upgraded_damage := enemy.damage - base_damage
-	_check(upgraded_damage > base_damage and upgraded_damage == int(floorf(float(GameState.total_attack()) * 1.4 * 1.12)),
-		"实际伤害而非仅面板描述提高：原 %d、升级后 %d" % [base_damage, upgraded_damage])
+	# 系数从数据取：工程 107 把裂地斩 1.4 → 1.15，写死会让这条「升阶真的提高伤害」
+	# 的用例在每次调数值时误红。1.12 是数据校验钉住的 5 阶上限倍率，属契约不是平衡值。
+	var cleave_coeff := float((DataLoader.get_entry("skills", "earth_cleave") as Dictionary).get("coefficient", 0.0))
+	_check(cleave_coeff > 0.0, "裂地斩系数应为正数")
+	_check(upgraded_damage > base_damage
+		and upgraded_damage == int(floorf(float(GameState.total_attack()) * cleave_coeff * 1.12)),
+		"实际伤害而非仅面板描述提高：原 %d、升级后 %d（系数 %.2f）" % [base_damage, upgraded_damage, cleave_coeff])
 	_check(GameState.skill_rank("earth_cleave") == 5 and String(GameState.buy_skill_rank("earth_cleave").get("reason", "")) == "max",
 		"升满后不能继续扣金币")
+	# 工程 107：战意觉醒的效果键从 attackPct 换成 damageReducePct（减伤 20% → 5 阶 28%）。
+	# 断的是**同一个键**在 1 阶 / 快照期 / 5 阶三种状态下的值，所以三处必须一起改。
 	_check(GameState.start_buff("battle_focus"), "1 阶战意觉醒能启动")
-	_check(is_equal_approx(GameState.buff_effect_total("attackPct"), 0.2), "施放时攻击效果为 1 阶值")
+	_check(is_equal_approx(GameState.buff_effect_total("damageReducePct"), 0.2), "施放时减伤为 1 阶值")
 	for _rank in range(2, 6):
 		_check(bool(GameState.buy_skill_rank("battle_focus").get("ok", false)), "战意觉醒可连续购买至 5 阶")
-	_check(is_equal_approx(GameState.buff_effect_total("attackPct"), 0.2)
+	_check(is_equal_approx(GameState.buff_effect_total("damageReducePct"), 0.2)
 		and is_equal_approx(GameState.buff_effect_total("attackSpeedPct"), 0.15),
 		"持续中的 Buff 保留施放时效果快照")
 	GameState.tick_buffs(8.0)
-	_check(GameState.start_buff("battle_focus") and is_equal_approx(GameState.buff_effect_total("attackPct"), 0.26)
+	_check(GameState.start_buff("battle_focus") and is_equal_approx(GameState.buff_effect_total("damageReducePct"), 0.28)
 		and is_equal_approx(GameState.buff_effect_total("attackSpeedPct"), 0.19),
 		"下一次施放使用 5 阶增益")
 	var pilot := AutoBattle.new()

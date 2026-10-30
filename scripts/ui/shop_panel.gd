@@ -474,14 +474,15 @@ func _make_repair_row() -> Control:
 		var full := Durability.repair_full_price(it)
 		if full >= 0:
 			total += maxi(1, int(ceil(float(full) * float(missing) / float(maximum))))
-	total = maxi(1, int(round(float(total) * 1.5))) if damaged > 0 else 0
+	# 随身修理费率走 `ServiceFee`（工程 108）：与随身铁匠同价，两处不各写一个 1.5。
+	total = ServiceFee.apply_repair(total, ServiceFee.repair_rate_for(true)) if damaged > 0 else 0
 	if damaged == 0:
 		btn.text = Localization.tr_key("ui.blacksmith_panel.repair_full")
 		btn.disabled = true
 	else:
 		btn.text = Localization.tr_key("ui.shop_panel.repair_cost", [total])
 		btn.pressed.connect(func() -> void:
-			var result := GameState.repair_equipment(1.5)
+			var result := GameState.repair_equipment(ServiceFee.repair_rate_for(true))
 			if bool(result.get("ok", false)):
 				EventBus.toast_requested.emit(Localization.tr_key("ui.durability.repair_done",
 					[int(result.get("repaired", 0)), int(result.get("cost", 0))]), "pickup")

@@ -6,6 +6,9 @@ const GOLD := Color("b99a5b")
 const GOLD_LIGHT := Color("e3c17c")
 const TEXT := Color("e8d8ae")
 const MUTED := Color("a5adb0")
+## 失败 / 拒绝类文案色。与 `hud._toast_color("danger")` 刻意同色：
+## 同一个「不行」在两处出现时，颜色必须一致，否则玩家会以为是两种严重程度。
+const DANGER := Color("e0655a")
 const SURFACE := Color("111a1f")
 const SURFACE_LIGHT := Color("1b272c")
 const FRAME_CONTENT_INSET := 7

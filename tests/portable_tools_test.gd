@@ -12,6 +12,9 @@ extends Node
 const TOOL_BOSS_TOKEN := "tool_boss_token"
 const TOOL_SHOP := "tool_portable_shop"
 const TOOL_CARTER := "tool_portable_carter"
+## 工程 108：第四件。**必须显式列进来** —— 本测试的所有断言都是「遍历这张表」，
+## 不把新 id 加进来，它会全绿而新道具完全没被覆盖（08 坑 79 的同族）。
+const TOOL_BLACKSMITH := "tool_portable_blacksmith"
 
 var failures: Array[String] = []
 
@@ -41,12 +44,13 @@ func _ready() -> void:
 		print("[PortableToolsTest] 失败 %d 项" % failures.size())
 		get_tree().quit(1)
 
-## 用例 1：三件道具的数据契约（含「不许新增 bound 字段」）。
+## 用例 1：全部随身工具的数据契约（含「不许新增 bound 字段」）。
 func _test_item_contract() -> void:
 	var expected := {
 		TOOL_BOSS_TOKEN: "boss_token",
 		TOOL_SHOP: "shop",
 		TOOL_CARTER: "carter",
+		TOOL_BLACKSMITH: "blacksmith",
 	}
 	for item_id in expected:
 		var tpl: Variant = DataLoader.get_entry("miscItems", String(item_id))
@@ -64,7 +68,7 @@ func _test_item_contract() -> void:
 
 ## 用例 2：任务物品不可卖给货郎，单价恒 0。
 func _test_not_sellable() -> void:
-	for item_id in [TOOL_BOSS_TOKEN, TOOL_SHOP, TOOL_CARTER]:
+	for item_id in [TOOL_BOSS_TOKEN, TOOL_SHOP, TOOL_CARTER, TOOL_BLACKSMITH]:
 		var item := ItemFactory.make_any(String(item_id))
 		check(not item.is_empty(), "%s 应能经 ItemFactory 实例化" % item_id)
 		check(String(item.get("kind", "")) == "misc", "%s 的 kind 应为 misc" % item_id)

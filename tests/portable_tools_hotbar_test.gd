@@ -12,7 +12,9 @@ extends Node
 ## 4. **用例 9 钉死「过滤不回写规则层」** —— `BossToken.rows()` 恒 137（BossTokenTest 的锚点），
 ##    UI 侧过滤只能做视图裁剪。
 
-const TOOLS := ["tool_portable_carter", "tool_portable_shop", "tool_boss_token"]
+## 工程 108：加第四件。本测试的多数用例遍历这张表，不加 = 新工具无人覆盖。
+const TOOLS := ["tool_portable_carter", "tool_portable_shop", "tool_boss_token",
+	"tool_portable_blacksmith"]
 const CAMP := "camp"
 
 var failures: Array[String] = []
