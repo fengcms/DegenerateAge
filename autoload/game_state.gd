@@ -1438,7 +1438,7 @@ func find_owned_item(instance_id: String) -> Dictionary:
 ## 材料可来自背包或身上穿戴（工程 65）；产物**永远进背包**（D3：跨档后产物可能高于玩家等级）。
 ## 四紫升紫接受 2—4 件：件数换成功率，**期望材料消耗恒为 4 件**（见 `EquipmentFusion.success_rate`）。
 func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",
-		rng: RandomNumberGenerator = null) -> Dictionary:
+		rng: RandomNumberGenerator = null, rune_ids: Array = []) -> Dictionary:
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE,
 			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.PURPLE_UP_TIER,
 			EquipmentFusion.STAR_TRANSFER]:
@@ -1469,6 +1469,15 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		else EquipmentFusion.plan_four(items, mode, target_kind)
 	if not bool(plan.get("ok", false)):
 		return plan
+	# 工程 112：如意重掷只对**保星**开放。四紫升紫成功率是「件数换概率」的刻意设计（D2 拍板不吃），
+	# 四金合紫 / 四紫定向本来就是 100% 必成，投如意等于多一个灰按钮。
+	# 其余模式即使误传 `rune_ids` 也一律按未投处理（tries = 1、不扣除）。
+	var rune_charge := {"ok": true, "uses": [], "count": 0, "tries": 1}
+	if mode == EquipmentFusion.STAR_TRANSFER:
+		rune_charge = RuneCharge.plan(inventory, rune_ids)
+		if not bool(rune_charge.get("ok", false)):
+			return rune_charge
+	var tries := int(rune_charge.get("tries", 1))
 	var cost := int(plan.get("cost", 0))
 	if gold < cost:
 		return {"ok": false, "reason": "金币不足：需要 %d 金币" % cost}
@@ -1501,6 +1510,10 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		return {"ok": false, "reason": "目标装备生成失败，未消耗材料"}
 	if mode == EquipmentFusion.STAR_TRANSFER:
 		output.star = Upgrade.max_star()
+		# 工程 112：产物词条取优。第 1 次的词条已由 `make_output()` 掷出，
+		# 这里只补 `tries - 1` 次，总抽样次数与重铸侧同一口径；`tries == 1` 时一次都不多掷。
+		if tries > 1:
+			_reroll_output_best(output, rng, tries)
 	if not SaveManager._valid_item(output):
 		return {"ok": false, "reason": "目标装备校验失败，未消耗材料"}
 	# 产物落点：优先复用背包里被消耗的第一个格子，其次第一个空位；两处都没有就是背包满。
@@ -1519,6 +1532,9 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		inventory[index] = null
 	for slot_id in worn_slots:
 		equipment[slot_id] = null
+	# 如意必须在 `inventory[output_index] = output` **之前**扣：`output_index` 可能正是
+	# 某个被清空的材料格，而如意是另一个格子，先写产物会让「扣空置 null」覆盖掉产物（顺序反过来写就炸）。
+	_consume_rune_uses(rune_charge.get("uses", []))
 	inventory[output_index] = output
 	if cost > 0:
 		add_gold(-cost)
@@ -1528,7 +1544,26 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		# 吃掉身上的件后走完整收尾：广播装备变更，并把当前 HP / MP 收敛到降低后的上限。
 		_after_equip_change()
 	EventBus.trade_done.emit("forge", String(output.get("itemId", "")), cost)
-	return {"ok": true, "item": output, "index": output_index, "cost": cost, "reason": ""}
+	return {"ok": true, "item": output, "index": output_index, "cost": cost,
+		"runes": int(rune_charge.get("count", 0)), "tries": tries, "reason": ""}
+
+## 工程 112：保星产物词条取优。**只写回 `affixes` / `pctAttrs`** ——
+## 星级、品质、部位、实例 id、耐久都不动（与重铸侧 `_roll_affixes_best` 同一语义）。
+## 抽样中途失败就停手用已有的样本：保星已经耗掉两件紫装，不能因为一次词条重掷失败就整单作废。
+func _reroll_output_best(output: Dictionary, rng: RandomNumberGenerator, tries: int) -> void:
+	var samples: Array = [{
+		"affixes": output.get("affixes", []), "pctAttrs": output.get("pctAttrs", []),
+	}]
+	for _i in range(tries - 1):
+		var rolled := ItemFactory.reroll_affixes(output, rng, [], 0.0)
+		if not bool(rolled.get("ok", false)):
+			break
+		samples.append(rolled)
+	var best := RuneCharge.pick_best(samples, output)
+	if best.is_empty():
+		return
+	output["affixes"] = best.get("affixes", [])
+	output["pctAttrs"] = best.get("pctAttrs", [])
 
 ## 工程 87：紫装献祭换经验。**只吃背包**（身上的紫装不参与），任一件不合规就**整批不扣**。
 ## 经验按**装备需求等级**结算（`Sacrifice.xp_of`），不按玩家等级 —— 理由见该类注释。
@@ -1645,9 +1680,14 @@ func _upgrade_fail(reason: String) -> Dictionary:
 ## 工程 86：`refine_ids` 是投入的紫装材料实例 id 列表（只收背包件）。
 ## 材料只抬**未锁定**词条的数值下限（`Reforge.floor_ratio`），不改品质 / 星级 / 基底；
 ## 与金币一样是「先掷后扣」——校验失败、掷词条失败都一件不扣。
+## 工程 112：`rune_ids` 是投入的如意（四格，含空串）。**不抬下限、只加抽样**：
+## 掷 `RuneCharge.tries()` 次、取 `Equipment.score()` 最高的那一组写回。
+## 🔴 `rune_ids` 为空时 `tries == 1`，走的是**逐字未改**的原调用路径 ——
+## `ReforgeTest` 用例 14 用固定种子锁死了随机数调用顺序，多走一次都会让它红。
 func reforge_equipment(source: String, key: Variant, expected_id: String,
 		rng: RandomNumberGenerator = null, locked_stats: Array = [],
-		refine_ids: Array = [], fee_rate: float = 1.0) -> Dictionary:
+		refine_ids: Array = [], fee_rate: float = 1.0,
+		rune_ids: Array = []) -> Dictionary:
 	var item: Dictionary = {}
 	if source == "bag" and key is int and key >= 0 and key < inventory.size():
 		var candidate = inventory[key]
@@ -1670,6 +1710,11 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 		return _reforge_fail(String(material_plan.get("reason", "")))
 	var materials: Array = material_plan.get("items", [])
 	var material_indices: Array = material_plan.get("indices", [])
+	# 工程 112：如意只在这里**校验**，真正扣除推迟到结算成功之后（先掷后扣）。
+	var rune_charge := RuneCharge.plan(inventory, rune_ids)
+	if not bool(rune_charge.get("ok", false)):
+		return _reforge_fail(String(rune_charge.get("reason", "")))
+	var tries := int(rune_charge.get("tries", 1))
 	var effective := Reforge.refine_count(materials, item)
 	var lock_count := Reforge.lock_count(locked_stats)
 	var price := ServiceFee.apply(Reforge.cost(Equipment.level_req(item), lock_count), fee_rate)
@@ -1677,7 +1722,7 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 		return _reforge_fail(Localization.tr_key("msg.reforge.p004"))
 	if gold < price:
 		return _reforge_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
-	var rolled := ItemFactory.reroll_affixes(item, rng, locked_stats, Reforge.floor_ratio(effective))
+	var rolled := _roll_affixes_best(item, rng, locked_stats, Reforge.floor_ratio(effective), tries)
 	if not bool(rolled.get("ok", false)):
 		return _reforge_fail(Localization.tr_key("msg.reforge.p003"))
 	var unchanged := ItemUtil.affix_lines(item) == ItemUtil.affix_lines({
@@ -1688,23 +1733,67 @@ func reforge_equipment(source: String, key: Variant, expected_id: String,
 	for index in material_indices:
 		if index >= 0 and index < inventory.size():
 			inventory[index] = null
+	# 如意同理：`uses` 是扣费前算好的背包下标 + 件数快照，逐堆递减、扣空置 null。
+	_consume_rune_uses(rune_charge.get("uses", []))
 	item["affixes"] = rolled.affixes
 	item["pctAttrs"] = rolled.pctAttrs
 	var materials_used := (materials as Array).size()
+	var runes_used := int(rune_charge.get("count", 0))
 	if source == "worn":
 		EventBus.equipment_changed.emit()
 		EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 		EventBus.player_mp_changed.emit(int(player.mp), max_mp())
-		if materials_used > 0:
+		# 如意也是背包件：只投如意不投精炼料时同样要刷背包，否则界面上的如意数量停在旧值。
+		if materials_used > 0 or runes_used > 0:
 			EventBus.inventory_changed.emit()
 	else:
 		EventBus.inventory_changed.emit()
 	var message := (Localization.tr_key("msg.reforge.p009") % [
 		ItemUtil.display_name(item), price, materials_used] if materials_used > 0 else
 		Localization.tr_key("msg.reforge.p005") % [ItemUtil.display_name(item), price])
+	# 工程 112 D4：投了如意就必须说清「这次结果是最好的那一次」，
+	# 否则玩家花了四枚钻石如意，看到的和平时一模一样。
+	if tries > 1:
+		message += " · " + Localization.tr_key("msg.reforge.p015", [tries])
 	EventBus.toast_requested.emit(message, "pickup")
 	return {"ok": true, "cost": price, "affixes": rolled.affixes, "pctAttrs": rolled.pctAttrs,
-		"unchanged": unchanged, "locked": lock_count, "refined": effective, "reason": message}
+		"unchanged": unchanged, "locked": lock_count, "refined": effective,
+		"runes": runes_used, "tries": tries, "reason": message}
+
+## 工程 112：按 `RuneCharge.plan()` 算好的快照扣如意。逐堆递减，扣空置 null。
+## 🔴 只在**结算成功之后**调用；`uses` 里的下标是扣费前的背包快照，
+## 与精炼材料的 `inventory[index] = null` 互不干扰（如意与紫装是不同物品，下表不会重合）。
+func _consume_rune_uses(uses: Array) -> void:
+	for raw in uses:
+		if not raw is Dictionary:
+			continue
+		var index := int(raw.get("index", -1))
+		var take := int(raw.get("count", 0))
+		if index < 0 or index >= inventory.size() or take <= 0:
+			continue
+		var entry = inventory[index]
+		if not entry is Dictionary:
+			continue
+		var left := int(entry.get("count", 0)) - take
+		if left <= 0:
+			inventory[index] = null
+		else:
+			entry["count"] = left
+
+## 工程 112：重掷取优。`tries <= 1` 时**直接走原调用**，随机数序列逐字不变
+## （`ReforgeTest` 用例 14 用固定种子锁死了 `_roll_affixes` 的调用顺序）。
+## 抽样失败（词条池不足等）立刻原样返回那次的失败结果，不吞错也不拿旧结果凑数。
+func _roll_affixes_best(item: Dictionary, rng: RandomNumberGenerator, locked_stats: Array,
+		floor: float, tries: int) -> Dictionary:
+	if tries <= 1:
+		return ItemFactory.reroll_affixes(item, rng, locked_stats, floor)
+	var samples: Array = []
+	for _i in range(tries):
+		var rolled := ItemFactory.reroll_affixes(item, rng, locked_stats, floor)
+		if not bool(rolled.get("ok", false)):
+			return rolled
+		samples.append(rolled)
+	return RuneCharge.pick_best(samples, item)
 
 ## 精炼材料校验：去重、只收背包件、逐件过 `Reforge.can_refine`。
 ## 返回 `{ok, items, indices, reason}`；任何一件不合格整单拒绝 ——

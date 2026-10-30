@@ -31,6 +31,13 @@ var _selected: Array[Dictionary] = []
 var _risk_confirmed := false
 ## 献祭专用：12★ 是保星底件，默认不计入，需要显式勾选（勾了会在汇总里另起一行提示）。
 var _star12: CheckBox
+## 工程 112：如意压阵四格，**只在保星页显示**。四金 / 四紫定向本身 100% 必成，
+## 四紫升紫是「件数换概率」的刻意设计（D2 拍板不吃如意），三处都没有可优化的掷点。
+var _rune_title: Label
+var _rune_row: GridContainer
+var _rune_pickers: Array[OptionButton] = []
+var _rune_choices: Array[String] = ["", "", "", ""]
+var _rune_hint: Label
 
 ## 接入工作台会话和背包更新，不进行逐帧背包扫描。
 func _ready() -> void:
@@ -109,6 +116,10 @@ func set_open(open: bool) -> void:
 		_grid.visible = not batch_mode
 		_star12.visible = batch_mode
 		_star12.button_pressed = false
+		var rune_mode := _mode == EquipmentFusion.STAR_TRANSFER
+		_rune_title.visible = rune_mode
+		_rune_row.visible = rune_mode
+		_rune_hint.visible = rune_mode
 		_confirm.text = Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else
 			("ui.sacrifice.action" if batch_mode else "ui.fusion.forge_action"))
 		_refresh_slots()
@@ -272,6 +283,32 @@ func _build() -> void:
 		_refresh_preview())
 	_target_row.add_child(_target)
 	PanelChrome.style_action(_target)
+	# 工程 112：如意压阵。摆在材料格之后、汇总之前 —— 玩家看完两件材料就知道产物词条
+	# 要重随机，这里正好是"要不要加钱买个好一点的随机"的决策点。
+	_rune_title = Label.new()
+	_rune_title.text = Localization.tr_key("ui.fusion.rune_title")
+	PanelChrome.style_section(_rune_title)
+	form.add_child(_rune_title)
+	# 🔴 2×2 栅格，不是一行四格：四个下拉最小宽度合起来 588px，会把面板整体撑宽，
+	# 而面板定位算式仍按原宽度算（与重铸面板同一个坑）。两列时最小宽度只有 290px。
+	_rune_row = GridContainer.new()
+	_rune_row.columns = 2
+	_rune_row.add_theme_constant_override("h_separation", 8)
+	_rune_row.add_theme_constant_override("v_separation", 6)
+	form.add_child(_rune_row)
+	for i in range(RuneCharge.SLOTS):
+		var picker := OptionButton.new()
+		picker.custom_minimum_size.y = 32
+		picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		picker.item_selected.connect(_on_rune_selected.bind(i))
+		_rune_row.add_child(picker)
+		PanelChrome.style_option_button(picker)
+		_rune_pickers.append(picker)
+	_rune_hint = Label.new()
+	_rune_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_rune_hint.add_theme_font_size_override("font_size", 12)
+	_rune_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	form.add_child(_rune_hint)
 	_summary = Label.new()
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_summary)
@@ -430,6 +467,9 @@ func _on_random_fill() -> void:
 func _reset_materials() -> void:
 	for i in range(_selected.size()):
 		_selected[i] = {}
+	# 工程 112：如意同理 —— 面板里存的只是「想投哪四枚」，真正扣除在结算成功时。
+	for i in range(_rune_choices.size()):
+		_rune_choices[i] = ""
 	_risk_confirmed = false
 	if _feedback != null:
 		_feedback.text = ""
@@ -484,6 +524,9 @@ func _refresh_preview() -> void:
 	if _mode == EquipmentFusion.SACRIFICE:
 		_refresh_sacrifice()
 		return
+	# 工程 112：无论材料是否齐备都刷如意格 —— 先把"我有什么"摆出来，玩家才知道该不该去背包装。
+	if _mode == EquipmentFusion.STAR_TRANSFER:
+		_refresh_runes()
 	_confirm.text = Localization.tr_key("ui.fusion.confirm_again") if _risk_confirmed else \
 		Localization.tr_key("ui.fusion.transfer_action" if _mode == EquipmentFusion.STAR_TRANSFER else "ui.fusion.forge_action")
 	_confirm.disabled = true
@@ -532,6 +575,63 @@ func _refresh_out_level(plan: Dictionary) -> void:
 	if need <= 0:
 		return
 	_out_level.text = Localization.tr_key("ui.fusion.out_level", [need, level, need - level])
+
+## 工程 112：按背包实际枚数重填四格下拉（与重铸面板、升星面板同一范式）。
+## 缺货档位置灰不删 —— 玩家要能看到「金如意已经用完了」，删掉会变成「这档不存在」。
+func _refresh_runes() -> void:
+	if _rune_pickers.is_empty():
+		return
+	var counts := RuneCharge.inventory_counts(GameState.inventory)
+	var remaining := counts.duplicate()
+	for slot in range(_rune_choices.size()):
+		var rune_id := _rune_choices[slot]
+		if rune_id.is_empty():
+			continue
+		if int(remaining.get(rune_id, 0)) <= 0 or not DataLoader.get_entry("runes", rune_id) is Dictionary:
+			_rune_choices[slot] = ""
+			continue
+		remaining[rune_id] = int(remaining[rune_id]) - 1
+	var templates = DataLoader.get_table("runes")
+	for slot in range(_rune_pickers.size()):
+		var picker := _rune_pickers[slot]
+		picker.clear()
+		picker.add_item(Localization.tr_key("ui.fusion.rune_none"))
+		picker.set_item_metadata(0, "")
+		var selected_index := 0
+		if templates is Array:
+			for template in templates:
+				if not template is Dictionary:
+					continue
+				var rune_id := String(template.get("id", ""))
+				if rune_id.is_empty():
+					continue
+				var available := int(counts.get(rune_id, 0))
+				var index := picker.item_count
+				picker.add_item("%s ×%d" % [String(template.get("name", rune_id)), available])
+				picker.set_item_metadata(index, rune_id)
+				picker.set_item_disabled(index, available <= 0)
+				if _rune_choices[slot] == rune_id:
+					selected_index = index
+		picker.select(selected_index)
+	_refresh_rune_hint()
+
+func _refresh_rune_hint() -> void:
+	if _rune_hint == null:
+		return
+	if _rune_choices.count("") == _rune_choices.size():
+		_rune_hint.text = Localization.tr_key("ui.fusion.rune_missing")
+		return
+	_rune_hint.text = Localization.tr_key("ui.fusion.rune_hint", [RuneCharge.tries(_rune_choices)])
+
+func _on_rune_selected(choice_index: int, slot: int) -> void:
+	if slot < 0 or slot >= _rune_pickers.size():
+		return
+	var picker := _rune_pickers[slot]
+	_rune_choices[slot] = String(picker.get_item_metadata(choice_index)) if choice_index > 0 else ""
+	_refresh_rune_hint()
+	# 改了如意就等于改了"这一单要不要确认"，二次确认必须重来（与换材料同口径）。
+	_risk_confirmed = false
+	_refresh_preview()
 
 ## 带星材料、少于四件的赌局与保星交易都要二次确认，最终仍由 GameState 快照重核。
 func _on_confirm() -> void:
@@ -591,7 +691,7 @@ func _on_confirm() -> void:
 		_refresh_preview()
 		return
 	var kind := Equipment.slot_kinds()[_target.selected - 1] if _mode == EquipmentFusion.PURPLE_TARGET else ""
-	var result := GameState.forge_equipment(_mode, items, kind)
+	var result := GameState.forge_equipment(_mode, items, kind, null, _rune_choices.duplicate())
 	if bool(result.get("ok", false)):
 		# P3：用**产物实际等级**而不是上面的预估值 —— 万一口径哪天漂了，toast 也必须说真话。
 		# 🔴 只加短后缀：`hud.gd` 的 toast 是单行 Label、无 autowrap，长文案会横向溢出屏幕。
@@ -600,6 +700,10 @@ func _on_confirm() -> void:
 		var text := Localization.tr_key("ui.fusion.done", [ItemUtil.display_name(gained)])
 		if need > level:
 			text = Localization.tr_key("ui.fusion.done_locked", [ItemUtil.display_name(gained), need])
+		# 工程 112 D4：走了取优就必须说出来，否则四枚钻石如意的消耗在界面上不可见。
+		var tries := int(result.get("tries", 1))
+		if tries > 1:
+			text += Localization.tr_key("ui.fusion.rune_best", [tries])
 		EventBus.toast_requested.emit(text, "pickup")
 		_reset_materials()
 	elif bool(result.get("lost", false)):

@@ -52,6 +52,14 @@ var _refine_slots: Array[ItemSlot] = []
 var _refine_selected: Array[Dictionary] = []
 var _refine_hint: Label
 var _random_refine: Button
+## 工程 112：如意压阵四格。用下拉而不是 ItemSlot —— 如意是**可堆叠**的，
+## 一枚一枚拖进格子会让「四枚钻石如意」变成四次拖拽，而升星面板已经把「四格下拉」
+## 这套交互教给玩家了，重铸这边沿用同一范式（D3 拍板：不做输入数量的弹框）。
+var _rune_title: Label
+var _rune_row: GridContainer
+var _rune_pickers: Array[OptionButton] = []
+var _rune_choices: Array[String] = ["", "", "", ""]
+var _rune_hint: Label
 var _price: Label
 var _feedback: Label
 var _button: Button
@@ -110,6 +118,9 @@ func set_open(open: bool) -> void:
 	# 工程 86：精炼材料同口径，关面板即清空（材料在确认重铸时才扣除）。
 	for i in range(_refine_selected.size()):
 		_refine_selected[i] = {}
+	# 工程 112：如意同理 —— 面板里存的只是「想投哪四枚」，真正扣除在结算成功时。
+	for i in range(_rune_choices.size()):
+		_rune_choices[i] = ""
 	_refresh_refine_slots()
 	# 工程 87：只关重铸，背包保留（与合成工作台一致）。
 	EventBus.reforge_mode_changed.emit(false)
@@ -253,6 +264,34 @@ func _build() -> void:
 	_refine_hint.add_theme_font_size_override("font_size", 12)
 	_refine_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
 	_content.add_child(_refine_hint)
+	# 工程 112：如意压阵。紧跟精炼之后 —— 两者是同一件事的两半
+	# （紫装压下限、如意加抽样），分开摆会让玩家以为要二选一。
+	_rune_title = Label.new()
+	_rune_title.text = Localization.tr_key("ui.reforge_panel.p028")
+	PanelChrome.style_section(_rune_title)
+	_content.add_child(_rune_title)
+	# 🔴 必须用 2×2 栅格而不是一行四格：四个下拉的最小宽度（每个 ~141px，文字是
+	# 「钻石如意 ×12」）凑起来 588px，会把 `_content` 的最小宽度从 `WIDTH`（520）顶到 588，
+	# 面板随之变宽到 638 —— 而 `_resize()` 里的并排算式仍然按 520 算，窄屏时会和背包重叠。
+	# 栅格两列时最小宽度只有「2 个下拉 + 间距」= 290，不再抬高面板宽度。
+	_rune_row = GridContainer.new()
+	_rune_row.columns = 2
+	_rune_row.add_theme_constant_override("h_separation", 8)
+	_rune_row.add_theme_constant_override("v_separation", 6)
+	_content.add_child(_rune_row)
+	for i in range(RuneCharge.SLOTS):
+		var picker := OptionButton.new()
+		picker.custom_minimum_size.y = 32
+		picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		picker.item_selected.connect(_on_rune_selected.bind(i))
+		_rune_row.add_child(picker)
+		PanelChrome.style_option_button(picker)
+		_rune_pickers.append(picker)
+	_rune_hint = Label.new()
+	_rune_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_rune_hint.add_theme_font_size_override("font_size", 12)
+	_rune_hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	_content.add_child(_rune_hint)
 	_price = Label.new()
 	_price.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
 	_content.add_child(_price)
@@ -389,6 +428,9 @@ func _refresh_details() -> void:
 		_refine_head.visible = false
 		_refine_row.visible = false
 		_refine_hint.visible = false
+		_rune_title.visible = false
+		_rune_row.visible = false
+		_rune_hint.visible = false
 		_price.text = ""
 		_button.text = Localization.tr_key("ui.reforge_panel.p004")
 		_button.disabled = true
@@ -549,13 +591,76 @@ func _refresh_refine(target: Dictionary) -> void:
 	_refine_head.visible = true
 	_refine_row.visible = true
 	_refine_hint.visible = true
+	_rune_title.visible = true
+	_rune_row.visible = true
+	_rune_hint.visible = true
 	_prune_refine(target)
 	_refresh_refine_slots()
+	_refresh_runes()
 	var materials := refine_materials()
 	var effective := Reforge.refine_count(materials, target)
 	_refine_hint.text = Localization.tr_key("ui.reforge_panel.p019") if materials.is_empty() else \
 		Localization.tr_key("ui.reforge_panel.p020") % [
 			materials.size(), effective, int(round(Reforge.floor_ratio(effective) * 100.0))]
+
+## 工程 112：按背包实际枚数重填四格下拉。与 `upgrade_panel._refresh_runes` 同范式 ——
+## 先按当前选择顺序扣减剩余，选不出来的格清空；下拉里列出全部四档，缺货的置灰不删。
+## 🔑 置灰而不是删掉：玩家要能看到「我有金如意但已经用完了」，删掉就变成「这档不存在」。
+func _refresh_runes() -> void:
+	if _rune_pickers.is_empty():
+		return
+	var counts := RuneCharge.inventory_counts(GameState.inventory)
+	var remaining := counts.duplicate()
+	for slot in range(_rune_choices.size()):
+		var rune_id := _rune_choices[slot]
+		if rune_id.is_empty():
+			continue
+		if int(remaining.get(rune_id, 0)) <= 0 or not DataLoader.get_entry("runes", rune_id) is Dictionary:
+			_rune_choices[slot] = ""
+			continue
+		remaining[rune_id] = int(remaining[rune_id]) - 1
+	var templates = DataLoader.get_table("runes")
+	for slot in range(_rune_pickers.size()):
+		var picker := _rune_pickers[slot]
+		picker.clear()
+		picker.add_item(Localization.tr_key("ui.reforge_panel.p030"))
+		picker.set_item_metadata(0, "")
+		var selected_index := 0
+		if templates is Array:
+			for template in templates:
+				if not template is Dictionary:
+					continue
+				var rune_id := String(template.get("id", ""))
+				if rune_id.is_empty():
+					continue
+				var available := int(counts.get(rune_id, 0))
+				var index := picker.item_count
+				picker.add_item("%s ×%d" % [String(template.get("name", rune_id)), available])
+				picker.set_item_metadata(index, rune_id)
+				picker.set_item_disabled(index, available <= 0)
+				if _rune_choices[slot] == rune_id:
+					selected_index = index
+		picker.select(selected_index)
+	_refresh_rune_hint()
+
+func _refresh_rune_hint() -> void:
+	if _rune_hint == null:
+		return
+	if _rune_choices.count("") == _rune_choices.size():
+		_rune_hint.text = Localization.tr_key("ui.reforge_panel.p031")
+		return
+	_rune_hint.text = Localization.tr_key("ui.reforge_panel.p029", [RuneCharge.tries(_rune_choices)])
+
+func _on_rune_selected(choice_index: int, slot: int) -> void:
+	if slot < 0 or slot >= _rune_pickers.size():
+		return
+	var picker := _rune_pickers[slot]
+	_rune_choices[slot] = String(picker.get_item_metadata(choice_index)) if choice_index > 0 else ""
+	# 与升星面板 / 保星面板同范式：选完就重跑一遍 `_refresh_runes()`。
+	# 🔴 不能只刷提示：`_refresh_runes()` 里的 `remaining` 递减会把「超出库存的选择」清空
+	#    （只有 2 枚金如意却在 3 格里都选了金），只刷提示则会把不可能的组合一直留在界面上，
+	#    玩家点「重铸」才收到失败提示 —— 等于让玩家先做一次无用操作（与 108 的「显示≠实扣」同族）。
+	_refresh_runes()
 
 func _prune_refine(target: Dictionary) -> void:
 	for i in range(_refine_selected.size()):
@@ -695,7 +800,8 @@ func _on_reforge() -> void:
 		if not snapshot.is_empty():
 			refine_snapshot.append(String(snapshot.get("instanceId", "")))
 	var result := GameState.reforge_equipment(String(choice.source), choice.key, String(choice.id),
-		null, locked_snapshot, refine_snapshot, ServiceFee.rate_for(_portable))
+		null, locked_snapshot, refine_snapshot, ServiceFee.rate_for(_portable),
+		_rune_choices.duplicate())
 	if not bool(result.get("ok", false)):
 		_feedback.text = String(result.get("reason", ""))
 		_feedback.add_theme_color_override("font_color", COL_WARN)
@@ -730,4 +836,9 @@ func _on_reforge() -> void:
 		_feedback.text = Localization.tr_key("ui.reforge_panel.p015") % [
 			", ".join(kept_lines), ", ".join(old_lines), ", ".join(new_lines)]
 	_feedback.add_theme_color_override("font_color", PanelChrome.GOLD_LIGHT)
+	# 工程 112 D4：投了如意必须让玩家看见「这次是好几次里最好的那次」，
+	# 否则四枚钻石如意的消耗在界面上完全不可见（toast 会被下一句顶掉）。
+	var tries := int(result.get("tries", 1))
+	if tries > 1:
+		_feedback.text += "\n" + Localization.tr_key("msg.reforge.p015", [tries])
 	_refresh_choices()
