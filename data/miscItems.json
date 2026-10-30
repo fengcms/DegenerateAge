@@ -285,5 +285,15 @@
     "desc": "十块金条的合铸，一块值一千万金币。可在任意仓库管理员处直接兑回金币。",
     "price": 0,
     "bound": true
+  },
+  {
+    "id": "tool_super_portable_token",
+    "name": "超级随身令牌",
+    "useType": "panel",
+    "panelId": "super_portable",
+    "animation": "",
+    "desc": "五项随身服务合而为一：Boss、商店、铁匠、车夫、仓库。方向键选择，回车确认。",
+    "questItem": true,
+    "price": 0
   }
 ]

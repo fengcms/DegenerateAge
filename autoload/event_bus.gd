@@ -123,3 +123,5 @@ signal data_loaded()
 signal loading_changed(active: bool, message: String)
 signal settings_changed()
 signal hotbar_changed()
+
+signal super_portable_requested

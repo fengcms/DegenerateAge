@@ -331,6 +331,16 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		if row is Dictionary:
 			bonus_items.append(row as Dictionary)
 	var pending_inventory := GameState.inventory.duplicate(true)
+	var pending_warehouse := GameState.warehouse.duplicate(true)
+	var exchange: Array = tpl.get("exchangeTools", [])
+	for tool in exchange:
+		if not ToolReclaim.holds(pending_inventory, String(tool)) and not ToolReclaim.holds(pending_warehouse, String(tool)):
+			return _fail("缺少随身工具，请取回或重新读档补领后交付")
+	for container in [pending_inventory, pending_warehouse]:
+		for i in range(container.size()):
+			if container[i] is Dictionary and exchange.has(String(container[i].get("itemId", ""))):
+				container[i] = null
+
 	if not item.is_empty() and not Inventory.add(pending_inventory, item):
 		return _fail(Localization.tr_key("msg.quest.p012"))
 	for bonus in bonus_items:
@@ -343,10 +353,10 @@ static func deliver(quest_id: String, npc_id: String = "") -> Dictionary:
 		GameState.add_gold(gold)
 	if xp > 0:
 		GameState.add_xp(xp)
-	if not item.is_empty():
-		GameState.add_item(item)
-	for bonus in bonus_items:
-		GameState.add_item(bonus)
+	GameState.inventory = pending_inventory
+	GameState.warehouse = pending_warehouse
+	EventBus.inventory_changed.emit()
+	EventBus.warehouse_changed.emit()
 	if quest_item_count > 0:
 		var remaining := int(GameState.quest_items.get(quest_item, 0)) - quest_item_count
 		if remaining > 0:

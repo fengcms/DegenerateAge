@@ -53,7 +53,15 @@ static func holds(container: Array, item_id: String) -> bool:
 ## 缺失清单（纯函数）。`unlocks` 未置 true 的一律不算缺失 —— 那是「还没领」，不是「发了又没了」。
 static func missing_tools(unlocks: Dictionary, inventory: Array, warehouse: Array) -> Array[String]:
 	var out: Array[String] = []
+	var retired: Array = []
+	for quest in DataLoader.get_table("quests"):
+		if quest is Dictionary:
+			for granted in quest.get("reward", {}).get("unlocks", []):
+				if bool(unlocks.get(String(granted), false)):
+					retired.append_array(quest.get("exchangeTools", []))
 	for item_id in panel_tool_ids():
+		if retired.has(item_id):
+			continue
 		if not bool(unlocks.get(item_id, false)):
 			continue
 		if holds(inventory, item_id) or holds(warehouse, item_id):
