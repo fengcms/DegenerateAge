@@ -963,5 +963,6 @@
   "ui.super.shop": "随身商店",
   "ui.super.smith": "随身铁匠",
   "ui.super.carter": "随身车夫",
-  "ui.super.warehouse": "随身仓库"
+  "ui.super.warehouse": "随身仓库",
+  "ui.super.shortcuts": "按 1—5 打开服务 · Esc 关闭"
 }

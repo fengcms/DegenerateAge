@@ -1,6 +1,8 @@
 extends Control
 
 const PANEL_ID := "super_portable"
+const SERVICES := ["boss_token", "shop", "blacksmith", "carter", "warehouse"]
+
 var _first: Button
 var _window: FloatingWindow
 var _root: VBoxContainer
@@ -33,8 +35,19 @@ func set_open(open: bool) -> void:
 		if focus != null and is_ancestor_of(focus):
 			focus.release_focus()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("pause"):
+# 先于 GUI 与世界的 unhandled 输入接管数字键；仅最上层令牌菜单生效。
+func _input(event: InputEvent) -> void:
+	if not visible or not _window.is_top_window():
+		return
+	if event is InputEventKey and (event.alt_pressed or event.ctrl_pressed or event.meta_pressed or event.shift_pressed):
+		return
+	for i in range(SERVICES.size()):
+		if event.is_action_pressed("super_service_%d" % (i + 1)):
+			get_viewport().set_input_as_handled()
+			if not event.is_echo():
+				_open_service(SERVICES[i])
+			return
+	if event.is_action_pressed("pause"):
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
@@ -86,13 +99,18 @@ func _build() -> void:
 	_scroll.add_child(services)
 	for row in [["boss_token", "ui.super.boss"], ["shop", "ui.super.shop"], ["blacksmith", "ui.super.smith"], ["carter", "ui.super.carter"], ["warehouse", "ui.super.warehouse"]]:
 		var button := Button.new()
-		button.text = Localization.tr_key(row[1])
+		button.text = "%d  ·  %s" % [SERVICES.find(row[0]) + 1, Localization.tr_key(row[1])]
 		button.custom_minimum_size.y = 42
 		PanelChrome.style_action(button)
 		services.add_child(button)
 		if _first == null:
 			_first = button
 		button.pressed.connect(_open_service.bind(String(row[0])))
+	var hint := Label.new()
+	hint.text = Localization.tr_key("ui.super.shortcuts")
+	hint.add_theme_color_override("font_color", PanelChrome.MUTED)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_root.add_child(hint)
 	_window.set_content_scroll(_scroll)
 
 func _open_service(panel_id: String) -> void:

@@ -292,7 +292,7 @@
     "useType": "panel",
     "panelId": "super_portable",
     "animation": "",
-    "desc": "五项随身服务合而为一：Boss、商店、铁匠、车夫、仓库。方向键选择，回车确认。",
+    "desc": "五项随身服务合而为一：Boss、商店、铁匠、车夫、仓库。打开菜单后按 1—5 直达服务，Esc 关闭。",
     "questItem": true,
     "price": 0
   }
