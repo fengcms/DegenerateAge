@@ -36,6 +36,10 @@ func _ready() -> void:
 	_test_bound_guards()
 	_test_icon_registered()
 	_test_product_shape()
+	_test_rate_text_from_data()
+	_test_cost_text_scales()
+	_test_batch_full_success()
+	_test_batch_over_max_not_moved()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[GoldExchangeTest] 全部通过 ✅")
@@ -193,6 +197,50 @@ func _test_product_shape() -> void:
 	check(not bool(used.get("ok", true)), "金条不应可被使用")
 	check(GameState.inventory[0] != null, "使用失败不得吞掉物品")
 	GameState.inventory[0] = null
+
+# ---- 用例 11：汇率说明行必须从数据推导，不能是硬编码字符串 ----
+
+func _test_rate_text_from_data() -> void:
+	# 判据用**产品口径**（100 万）而不是读 exchange.json 再自比 ——
+	# 汇率被改成 150 万时，这里必须红（「不复用被测常量」）。
+	var text := GoldExchange.rate_text(PAIR_TO_INGOT)
+	check(text.find(str(UNIT)) >= 0, "汇率说明应含 %d，实际「%s」" % [UNIT, text])
+	check(text.find("金币") >= 0, "汇率说明应含来源「金币」，实际「%s」" % text)
+	check(text.find("金条") >= 0, "汇率说明应含目标「金条」，实际「%s」" % text)
+	var brick := GoldExchange.rate_text(PAIR_TO_BRICK)
+	check(brick.find("10") >= 0 and brick.find("金砖") >= 0,
+		"合砖说明应含 10 与「金砖」，实际「%s」" % brick)
+
+# ---- 用例 12：消耗文案随笔数缩放 ----
+
+func _test_cost_text_scales() -> void:
+	check(GoldExchange.cost_text(PAIR_TO_INGOT, 1).find(str(UNIT)) >= 0,
+		"1 次应写 %d，实际「%s」" % [UNIT, GoldExchange.cost_text(PAIR_TO_INGOT, 1)])
+	check(GoldExchange.cost_text(PAIR_TO_INGOT, 3).find(str(UNIT * 3)) >= 0,
+		"3 次应写 %d，实际「%s」" % [UNIT * 3, GoldExchange.cost_text(PAIR_TO_INGOT, 3)])
+	check(GoldExchange.cost_text(PAIR_TO_INGOT, 0).is_empty(), "0 次不应产生消耗文案")
+
+# ---- 用例 13：批量跑满上限必须成功（批量入口的核心承诺） ----
+
+func _test_batch_full_success() -> void:
+	_reset(7 * UNIT)
+	var maximum := GoldExchange.max_times(PAIR_TO_INGOT)
+	check(maximum == 7, "700 万金币最多换 7 次，max_times 实际 %d" % maximum)
+	var result := GameState.exchange(PAIR_TO_INGOT, 7)
+	check(bool(result.get("ok", false)), "跑满 7 次应成功，失败原因：%s" % result.get("reason", ""))
+	check(GameState.gold == 0, "跑满后金币应归零，实际 %d" % GameState.gold)
+	check(_count(INGOT) == 7, "应得 7 块金条，实际 %d" % _count(INGOT))
+
+# ---- 用例 14：批量超上限整笔拒绝，且一分不动 ----
+
+func _test_batch_over_max_not_moved() -> void:
+	_reset(7 * UNIT)
+	var gold_before := GameState.gold
+	var store_before: Array = GameState.warehouse.duplicate(true)
+	var result := GameState.exchange(PAIR_TO_INGOT, 8)
+	check(not bool(result.get("ok", false)), "超出可换次数必须整笔拒绝，而不是换 7 次")
+	check(GameState.gold == gold_before, "被拒时金币不得变动（实为 %d，原 %d）" % [GameState.gold, gold_before])
+	check(GameState.warehouse == store_before, "被拒时仓库必须原样（含格位与数量）")
 
 # ---- 助手 ----
 

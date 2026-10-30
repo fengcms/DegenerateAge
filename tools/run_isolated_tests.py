@@ -87,6 +87,9 @@ DEFAULT_TESTS = [
     # / **金币上限拒绝而非夹取** / **仓库满不扣钱** / 去余数 / bound 守卫（不可售可丢）
     # / 图标已登记 / 产物形态。守住「显示可换次数 == 实际能换」与「一分不动」两条红线。
     "GoldExchangeTest",
+    # 工程 110 批量兑换弹框：默认值全选 / 非数字过滤（「1e5」不能变 15）/ 超限禁用确认
+    # / 确认只发合法整数 / Esc 只关一层 / 打开必须聚焦。全是逻辑层测试抓不到的 UI 行为。
+    "PanelAmountDialogTest",
     # M10-5 追猎令牌：行集/过滤/倒计时同源 + ordinal 真进 key + 等级跟随 + 与 Spawner 序号一致
     # + _map_has_monster 认 bossSpawns + travel_anywhere / fee_anywhere + 落地意图。
     "BossTokenTest",
