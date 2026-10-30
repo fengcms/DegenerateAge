@@ -27,6 +27,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/EquipmentFusionPanel.tscn" id="25_fusion"]
 [ext_resource type="PackedScene" path="res://scenes/ui/WorldDropZone.tscn" id="26_drop_zone"]
 
+[ext_resource type="Script" path="res://scripts/ui/super_portable_panel.gd" id="27_super"]
+
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
 
@@ -116,3 +118,6 @@ mouse_filter = 2
 [node name="EquipmentConfirmation" type="Control" parent="UI"]
 layout_mode = 3
 script = ExtResource("22_equip_confirm")
+
+[node name="SuperPortablePanel" type="Control" parent="UI"]
+script = ExtResource("27_super")

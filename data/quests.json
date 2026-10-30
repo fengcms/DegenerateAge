@@ -2687,5 +2687,46 @@
     "desc": "「你越走越远，我这炉子追不上你。」铁匠把一柄巴掌大的小锤塞进你行囊，「带上它，走到哪儿都能开炉。先替我试二十下——聚金地脉的裂纹卫体，正缺人敲。」——随时回镇脉前哨找铁匠闻钧领锤。",
     "trackerText": "你需要到 {map:c7_gold_field} 击杀 {count} 只 {monster:c6_normal01}（{current}/{count}）。",
     "turnInText": "快到 {map:c6_map00} 找 {npc:c6_npc02} 交任务吧。"
+  },
+  {
+    "id": "C7S02",
+    "name": "万事随行",
+    "type": "side",
+    "giver": "c6_npc01",
+    "turnIn": "c6_npc01",
+    "objective": {
+      "kind": "talk",
+      "targetId": "c6_npc01",
+      "count": 1
+    },
+    "reward": {
+      "gold": 0,
+      "xp": 0,
+      "items": [
+        {
+          "itemId": "tool_super_portable_token",
+          "count": 1
+        }
+      ],
+      "unlocks": [
+        "tool_super_portable_token"
+      ]
+    },
+    "exchangeTools": [
+      "tool_boss_token",
+      "tool_portable_shop",
+      "tool_portable_blacksmith",
+      "tool_portable_carter"
+    ],
+    "requiresLevel": 100,
+    "mapScope": [
+      "c6_map00"
+    ],
+    "prev": "C7S01",
+    "abandonable": false,
+    "desc": "将四种随身工具交回，合铸超级随身令牌，新增随身仓库服务。背包与仓库中的旧工具会全部回收。",
+    "trackerText": "到 {map:c6_map00} 找 {npc:c6_npc01} 合铸令牌。",
+    "turnInText": "向 {npc:c6_npc01} 交付四种随身工具。",
+    "talkOnAccept": true
   }
 ]
