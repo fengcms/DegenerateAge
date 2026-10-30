@@ -166,7 +166,7 @@ static func make_equip_roll(item_id: String, tier_start: int, quality: String,
 ## 🔴 锁定了百分比词条时必须**跳过 `randf()` 判定**：否则 50% 概率整条消失，间歇性发作最难查。
 static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 		rng: RandomNumberGenerator, locked_fixed: Array = [], locked_pct: Array = [],
-		floor_ratio: float = 0.0) -> Dictionary:
+		floor_ratio: float = 0.0, target_count: int = -1) -> Dictionary:
 	var tpl: Variant = DataLoader.get_entry("equipments", item_id)
 	var cfg := rules()
 	var qualities: Variant = cfg.get("qualities", {})
@@ -175,7 +175,7 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 		return {"ok": false, "reason": "quality"}
 	var q: Dictionary = qualities[quality]
 	var r := rng if rng != null else _default_rng()
-	var affix_count := int(q.get("affixCount", 0))
+	var affix_count := target_count if target_count >= 0 else int(q.get("affixCount", 0))
 	var pool: Array = tpl.get("affixPool", [])
 	var fixed_cfg: Dictionary = cfg.get("fixedAffixes", {})
 	var pct_cfg: Dictionary = cfg.get("percentAffixes", {})
@@ -195,7 +195,7 @@ static func _roll_affixes(item_id: String, quality: String, affix_scale: float,
 		if fixed_cfg.has(String(stat)) and not locked_stats.has(String(stat)):
 			available.append(String(stat))
 	if (locked_pct as Array).is_empty():
-		if affix_count > 0 and float(q.get("percentChance", 0.0)) > 0.0 and r.randf() < float(q.percentChance):
+		if affix_count == 5 or (affix_count > 0 and float(q.get("percentChance", 0.0)) > 0.0 and r.randf() < float(q.percentChance)):
 			var pct_available: Array = []
 			for stat in pool:
 				if pct_cfg.has(String(stat)) and not locked_stats.has(String(stat)):
@@ -255,12 +255,12 @@ static func reroll_affixes(item: Dictionary, rng: RandomNumberGenerator = null,
 	var factor := Balance.scale(level - Balance.SOFTCAP_LEVEL) if dynamic else 1.0
 	var affix_scale := float((scale_values as Dictionary)[scale_key]) * factor
 	if (locked_stats as Array).is_empty():
-		return _roll_affixes(item_id, quality, affix_scale, rng, [], [], floor_ratio)
+		return _roll_affixes(item_id, quality, affix_scale, rng, [], [], floor_ratio, ReforgeAffixes.current_count(item))
 	var split := _split_locked_entries(item, locked_stats)
 	if not bool(split.get("ok", false)):
 		return {"ok": false, "reason": String(split.get("reason", "lock"))}
 	return _roll_affixes(item_id, quality, affix_scale, rng,
-		split.get("fixed", []) as Array, split.get("pct", []) as Array, floor_ratio)
+		split.get("fixed", []) as Array, split.get("pct", []) as Array, floor_ratio, ReforgeAffixes.current_count(item))
 
 ## 把「要保留的属性名」翻译成「要保留的**完整条目**」并分流到固定 / 百分比两组。
 ## 🔴 取 stat 时**连数值一起取**（`{stat, value}` 整体保留），不是只取属性名重新掷数值。

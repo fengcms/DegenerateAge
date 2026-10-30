@@ -635,6 +635,7 @@ func _validate_equipment_model() -> Array[String]:
 	if not _is_whole_level(cfg.get("maxStar")) or int(cfg.maxStar) != 12 \
 			or not (cfg.get("starMult") is int or cfg.get("starMult") is float) or float(cfg.starMult) < 0.0:
 		report.append("[equipmentRules] 星级参数非法")
+	report.append_array(ReforgeAffixes.validate_config(cfg, equips))
 	for quality in ItemUtil.QUALITIES:   # B-P3-6：品质枚举唯一来源在 ItemUtil
 		var q: Variant = qualities.get(quality)
 		if not q is Dictionary or not _is_whole_level(q.get("affixCount")) or int(q.affixCount) < 0 \

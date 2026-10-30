@@ -128,5 +128,11 @@
     "inverseKeys": [
       "attackInterval"
     ]
+  },
+  "fullStarReforge": {
+    "quality": "legendary",
+    "requiredStar": 12,
+    "extraCount": 1,
+    "percentCount": 1
   }
 }
