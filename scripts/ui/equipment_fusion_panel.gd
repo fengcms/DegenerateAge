@@ -138,7 +138,7 @@ func _on_panel_opened(panel_id: String) -> void:
 	if visible and not GameState.panels_coexist(panel_id, PANEL_ID):
 		set_open(false)
 
-## 背包整理可改变下标但不改变实例；物品本身变化则撤下对应预选。
+## 整理或耐久磨损/修理保留同一材料，耐久以外的实例内容变化仍撤下预选。
 ## 身上那件被换下 / 被消耗也走同一次检查（工程 65）—— 第一格可能来自穿戴槽。
 func _on_inventory_changed() -> void:
 	_revalidate_selection()
@@ -146,7 +146,7 @@ func _on_inventory_changed() -> void:
 func _on_equipment_changed() -> void:
 	_revalidate_selection()
 
-## 按实例 ID（先背包、后穿戴）核对每个预选是否仍原样存在；任一失效即整体提示。
+## 按实例 ID 核对材料；只允许耐久变化，并更新完整快照供提交时严格终验。
 func _revalidate_selection() -> void:
 	if not visible:
 		return
@@ -155,9 +155,11 @@ func _revalidate_selection() -> void:
 		if _selected[i].is_empty():
 			continue
 		var found := _find_item(String(_selected[i].get("instanceId", "")))
-		if found.is_empty() or found != _selected[i]:
+		if found.is_empty() or not _same_material_except_durability(found, _selected[i]):
 			_selected[i] = {}
 			invalid = true
+		elif found != _selected[i]:
+			_selected[i] = found.duplicate(true)
 	_risk_confirmed = false
 	_refresh_slots()
 	_refresh_preview()
@@ -361,6 +363,21 @@ func _build() -> void:
 func _find_item(id: String) -> Dictionary:
 	return GameState.find_owned_item(id).get("item", {})
 
+## 战斗会持续磨损穿戴装备；耐久不影响材料资格，不能把它视为换了材料。
+## 仅排除耐久，身份、星级、词条、收藏等其余字段继续完整比较。
+func _same_material_except_durability(current: Dictionary, snapshot: Variant) -> bool:
+	if not snapshot is Dictionary:
+		return false
+	if current == snapshot:
+		return true
+	if current.get("kind") != "equip" or snapshot.get("kind") != "equip":
+		return false
+	var left := current.duplicate(true)
+	var right: Dictionary = snapshot.duplicate(true)
+	left.erase("durability")
+	right.erase("durability")
+	return left == right
+
 ## 验证拖拽载荷仍指向原背包装备，防止拖动期间整理或变更后误选。
 func _source_item(payload: Dictionary) -> Dictionary:
 	if int(payload.get("from", -1)) != ItemSlot.ROLE_BAG:
@@ -369,7 +386,7 @@ func _source_item(payload: Dictionary) -> Dictionary:
 	if index < 0 or index >= GameState.inventory.size() or not GameState.inventory[index] is Dictionary:
 		return {}
 	var current: Dictionary = GameState.inventory[index]
-	if current != payload.get("item", {}) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+	if not _same_material_except_durability(current, payload.get("item", {})) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
 		return {}
 	return current
 
@@ -382,7 +399,7 @@ func _source_equipped(payload: Dictionary) -> Dictionary:
 	if not worn is Dictionary:
 		return {}
 	var current: Dictionary = worn
-	if current != payload.get("item", {}) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
+	if not _same_material_except_durability(current, payload.get("item", {})) or not Warehouse.token_matches(current, String(payload.get("token", ""))):
 		return {}
 	return current
 

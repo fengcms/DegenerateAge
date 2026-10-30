@@ -219,7 +219,7 @@ func _ready() -> void:
 	GameState.equipment["weapon"] = worn_old
 	GameState.inventory[0] = ItemFactory.make_equip_dynamic("c6_equip_weapon", 61, "legendary", rng)
 	GameState.gold = EquipmentFusion.full_star_cost()
-	panel._on_requested(EquipmentFusion.STAR_TRANSFER, false)
+	panel._on_requested(EquipmentFusion.STAR_TRANSFER, true)
 	check(panel._slots[0].accept_equip_source and not panel._slots[1].accept_equip_source,
 		"只有保星第一格接收穿戴载荷")
 	var worn_payload := {"from": ItemSlot.ROLE_EQUIP, "slot_id": "weapon",
@@ -235,6 +235,41 @@ func _ready() -> void:
 	panel._on_material_dropped(0, worn_payload)
 	check(String(panel._selected[0].get("instanceId", "")) == String(worn_old.instanceId),
 		"第一格接收身上那件")
+	# 随身工作台后台继续战斗：击杀磨损不能把已拖入的旧装备踢出。
+	var before_wear := Durability.current(worn_old)
+	GameState.wear_equipment("normal")
+	check(Durability.current(worn_old) < before_wear
+		and String(panel._selected[0].get("instanceId", "")) == String(worn_old.instanceId),
+		"击杀磨损后保留穿戴材料预选")
+	check(int(panel._selected[0].get("durability", -1)) == Durability.current(worn_old),
+		"耐久变化同步到预选快照")
+	# 拖动期间击杀：载荷仍指向同一件装备，放下时取最新耐久。
+	panel._clear_material(0)
+	panel._on_material_dropped(0, worn_payload)
+	check(not panel._selected[0].is_empty() and int(panel._selected[0].get("durability", -1)) == Durability.current(worn_old),
+		"拖动期间耐久变化仍可放入同一件穿戴装备")
+	var repair_gold := GameState.gold
+	GameState.gold += 100000
+	var repaired := GameState.repair_equipment()
+	check(bool(repaired.get("ok", false)) and int(panel._selected[0].get("durability", -1)) == Durability.max_durability(),
+		"自动或手动修理后保留选择并更新完整快照")
+	GameState.gold = repair_gold
+	var picked := GameState.pickup_loot(ItemFactory.make_any("potion_hp_small", 1))
+	check(bool(picked.get("ok", false)) and String(panel._selected[0].get("instanceId", "")) == String(worn_old.instanceId),
+		"拾取无关物品不清空穿戴材料")
+	for changed_field in ["favorite", "star", "reforgeAffixTier"]:
+		var changed := worn_old.duplicate(true)
+		changed.durability = maxi(0, Durability.current(worn_old) - 1)
+		changed[changed_field] = true if changed_field == "favorite" else (11 if changed_field == "star" else 1)
+		check(not panel._same_material_except_durability(changed, worn_old),
+			"同时变更耐久和关键字段仍应失效：" + changed_field)
+	# 测试拾取的药水不参与后续既有产物数量断言。
+	for bag_index in range(GameState.inventory.size()):
+		if GameState.inventory[bag_index] is Dictionary and GameState.inventory[bag_index].get("kind") == "potion":
+			GameState.inventory[bag_index] = null
+	EventBus.inventory_changed.emit()
+	# 重新选回当前载荷供后续既有换装断言使用。
+	worn_payload.item = worn_old.duplicate(true)
 	GameState.equipment["weapon"] = null
 	EventBus.equipment_changed.emit()
 	check(panel._selected[0].is_empty(), "身上那件被换下后预选自动失效")
@@ -252,6 +287,10 @@ func _ready() -> void:
 	check(not panel._confirm.disabled, "身上 + 背包两件凑齐后可确认保星")
 	panel._on_confirm()
 	check(panel._feedback.text.contains("穿在身上"), "首次确认明确提示该部位将空出")
+	GameState.wear_equipment("boss")
+	check(panel._material_snapshots().size() == 2 and not panel._risk_confirmed,
+		"战斗磨损后两件材料保留但重新确认消耗风险")
+	panel._on_confirm()
 	panel._on_confirm()
 	check(GameState.equipment.get("weapon") == null and GameState.gold == 0
 		and GameState.inventory_used() == 1 and panel.visible and character.visible,
