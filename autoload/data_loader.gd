@@ -517,12 +517,28 @@ func validate_all() -> Array[String]:
 		# 工程 111：如意按 `accent` 分档上色。这里的合法集合直接取
 		# `ItemUtil.ACCENT_COLOR` 的键 —— 单一来源，不在校验器里再抄一份。
 		var seen_accent := {}
+		# 工程 112：`rerollWeight` 是重掷取优的权重（每枚折算多少次重掷）。
+		# 🔴 两档权重相同 = 两档在重掷里完全等价，玩家会只买便宜的那个，等于白做（坑 65 同族）；
+		# 故与 `accent` 一样做「非空 + 不重复」双校验。
+		var seen_weight := {}
 		for rune in runes:
 			if not rune is Dictionary:
 				continue
 			var rune_id := String(rune.get("id", ""))
 			if not (rune.get("successBonus") is float or rune.get("successBonus") is int) or float(rune.get("successBonus", 0.0)) <= 0.0 or float(rune.get("successBonus", 0.0)) > 1.0:
 				report.append("[runes] %s 的 successBonus 应在 (0,1]" % rune_id)
+			var weight := 0.0
+			if not (rune.get("rerollWeight") is float or rune.get("rerollWeight") is int):
+				report.append("[runes] %s 缺少 rerollWeight（重掷权重）" % rune_id)
+			else:
+				weight = float(rune.get("rerollWeight"))
+				if weight <= 0.0 or weight > float(RuneCharge.MAX_TRIES - 1):
+					report.append("[runes] %s 的 rerollWeight 应在 (0,%d]" % [rune_id, RuneCharge.MAX_TRIES - 1])
+				elif seen_weight.has(weight):
+					report.append("[runes] %s 与 %s 的 rerollWeight 重复（%s）"
+						% [rune_id, String(seen_weight[weight]), str(weight)])
+				else:
+					seen_weight[weight] = rune_id
 			if not rune.get("dropBossOnly") is bool:
 				report.append("[runes] %s 的 dropBossOnly 必须为布尔值" % rune_id)
 			var accent := String(rune.get("accent", ""))
