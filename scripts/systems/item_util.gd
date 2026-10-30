@@ -64,11 +64,59 @@ static func is_valid_quality(q: String) -> bool:
 static func quality_color(q: String) -> Color:
 	return QUALITY_COLOR.get(q, QUALITY_COLOR["common"])
 
+## 装备品质唯一解析口径：优先实例自带，缺失回退模板 `defaultQuality`（工程 111 收敛）。
+## 原先这段逻辑只存在于 `Shop.item_quality()`，导致背包 / 地面掉落用的是裸
+## `item.get("quality","common")` —— 同一件装备在货郎托盘按模板品质上色、
+## 在地上按白色上色。三处口径统一走这里，`Shop.item_quality()` 改为委托。
+static func quality_of(item: Dictionary) -> String:
+	var q := String(item.get("quality", ""))
+	if q.is_empty():
+		var tpl = DataLoader.get_entry("equipments", String(item.get("itemId", "")))
+		if tpl is Dictionary:
+			q = String(tpl.get("defaultQuality", "common"))
+	return q if not q.is_empty() else "common"
+
 static func quality_name(q: String) -> String:
 	return QUALITY_NAME.get(q, "普通")
 
 static func kind_color(kind: String) -> Color:
 	return KIND_COLOR.get(kind, Color("cccccc"))
+
+## ---- 如意分档强调色（工程 111，方案 A：复用装备品质色） ----
+## 四档如意的图标几乎一模一样（四张图平均色明度差不到 10%），而格内文字又被
+## `SampleArt.decorate()` 在有图标时清成空串 ⇒ **边框色是这个界面唯一真实可见的区分**。
+## 取值刻意与 `QUALITY_COLOR` 的 uncommon/rare/epic/legendary 同值：蓝/绿/金/紫是
+## 玩家已熟悉的品质语汇，不另造一套色号。
+## 🔴 若将来调整 `QUALITY_COLOR`，须同步这四个值 —— `RuneAccentTest` 断言两者相等。
+const ACCENT_COLOR := {
+	"steel": Color("4aa3e0"),    # = uncommon 蓝
+	"jade": Color("46c46a"),     # = rare 绿
+	"gold": Color("e0c04a"),     # = epic 金
+	"diamond": Color("b46ae0"),  # = legendary 紫
+}
+
+## 界面强调色唯一入口：格子边框 / 格内文字 / 地面装备名牌与光柱 / 缺图色块全用它。
+## （地面只有**装备**有名字与光柱，如意落地看不到分色 —— 见工程 111 §9.2 / 坑 100。）
+## 🔴 禁止在面板里再写 `if kind == "rune"`：背包 / 仓库 / 货郎托盘 / 地面掉落四处
+## 各写一份判定，就是四份必须同步维护的分支（111 §2.1，08 坑 64 的老相识）。
+static func item_accent_color(item: Dictionary) -> Color:
+	# 缺 `kind` 时按 `misc` 兜底：四处消费点原本三处就是这么写的，
+	# 空串会落到 `kind_color()` 的 `#cccccc`，等于把「没有 kind 的杂项」从土黄变成灰。
+	var kind := String(item.get("kind", "misc"))
+	if kind == "equip":
+		return quality_color(quality_of(item))
+	if kind == "rune":
+		return rune_accent_color(String(item.get("itemId", "")))
+	return kind_color(kind)
+
+## 如意按模板 `accent` 分档。未配置（老档 / 将来新增未登记）回落品类青绿，
+## 不落白框也不会崩 —— 兜底色仍是 `KIND_COLOR["rune"]`。
+## 🔑 按 itemId 查模板、不读实例字段：老存档里的如意没有 `accent` 也照样正确上色，
+## 不需要任何存档迁移（111 R-6）。
+static func rune_accent_color(rune_id: String) -> Color:
+	var tpl = DataLoader.get_entry("runes", rune_id)
+	var accent := String(tpl.get("accent", "")) if tpl is Dictionary else ""
+	return ACCENT_COLOR.get(accent, KIND_COLOR["rune"])
 
 ## ---- 星级角标（工程 76） ----
 ## 颜色取「亮化版」品质色：品质框本身是 蓝/绿/金/紫，星级若用同色会出现

@@ -193,13 +193,11 @@ static func is_quest_item(item: Dictionary) -> bool:
 	return bool(_template(item).get("questItem", false))
 
 ## 实例品质：优先实例自带，缺失时回退模板（5.7）。模板字段名为 `defaultQuality`（B-P3-3）。
+## 工程 111 起实体实现收敛到 `ItemUtil.quality_of()`（背包 / 地面掉落也要这个兜底，
+## 否则同一件装备在托盘按模板品质上色、在地上按白色上色）；此处保留为委托，
+## 调用点无需改动。
 static func item_quality(item: Dictionary) -> String:
-	var q := String(item.get("quality", ""))
-	if q.is_empty():
-		var tpl = DataLoader.get_entry("equipments", String(item.get("itemId", "")))
-		if tpl is Dictionary:
-			q = String(tpl.get("defaultQuality", "common"))
-	return q if not q.is_empty() else "common"
+	return ItemUtil.quality_of(item)
 
 ## 6.2 售价公式：round(baseValue × qualityMult × (1 + star×0.08))，非装备再 × 回收比例。
 ## 工程 39 G2：**整叠计价** —— 此前忽略 `count`，一叠 99 瓶只算 1 瓶钱（装备 count 恒 1，故未暴露）。

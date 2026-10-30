@@ -483,10 +483,12 @@ func is_claimed() -> bool:
 
 func _draw() -> void:
 	var kind := String(item.get("kind", "misc"))
-	var quality := String(item.get("quality", "common"))
-	var col := ItemUtil.kind_color(kind)
-	if kind == "equip":
-		col = ItemUtil.quality_color(quality)
+	var quality := ItemUtil.quality_of(item)
+	# 强调色统一走唯一入口（工程 111），同一件物品不该在各界面各算一套。
+	# 🔴 但**别以为如意落地会分色**：`_draw_label()` 与 `_draw_quality_augment()`
+	# 第一行都是 `if kind != "equip": return` —— 如意掉在地上既无名牌也无光柱，
+	# 这里的 `col` 对非装备只落到「缺图标时的兜底色块」上（工程 111 §9.2 / 坑 100）。
+	var col := ItemUtil.item_accent_color(item)
 	# 地面阴影：空中时更小更淡，落地后还原（纵向比走 Iso.GROUND_SQUASH 唯一来源）
 	var air := _air_ratio()
 	draw_set_transform(Vector2(0, 8), 0.0, Vector2(1.0, Iso.GROUND_SQUASH))

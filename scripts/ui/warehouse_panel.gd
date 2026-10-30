@@ -253,8 +253,9 @@ func _refresh_grid(grid: GridContainer, slots: Array[ItemSlot], items: Array, si
 			button.item = item
 			button.draggable = true
 			button.text = ItemUtil.template_name(item).left(2)
-			var color := ItemUtil.quality_color(String(item.get("quality", "common"))) if String(item.get("kind", "")) == "equip" \
-				else ItemUtil.kind_color(String(item.get("kind", "misc")))
+			# 描边 / 文字色统一走唯一入口（工程 111）：如意按档分色后才不会出现
+			# 「背包紫框、仓库青框」这种同一件物品两副面孔。
+			var color := ItemUtil.item_accent_color(item)
 			button.add_theme_color_override("font_color", color)
 			button.apply_grid_style(color, true)
 			button.tooltip_text = "%s\n%s" % [ItemUtil.display_name(item), "\n".join(ItemUtil.attr_lines(item))]

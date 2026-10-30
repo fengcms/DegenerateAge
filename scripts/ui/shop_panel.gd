@@ -583,12 +583,9 @@ func _refresh_tray() -> void:
 	_stage_potions_btn.disabled = not _has_stageable_potion()
 	_return_all_btn.disabled = _tray.is_empty()
 
-## 托盘格描边 / 文字色：装备按品质，其余按品类（药水红 / 如意青 / 材料土黄）。
+## 托盘格描边 / 文字色：统一走 `ItemUtil.item_accent_color()`（工程 111）。
 func _item_tint(item: Dictionary) -> Color:
-	var kind := String(item.get("kind", ""))
-	if kind == "equip":
-		return ItemUtil.quality_color(Shop.item_quality(item))
-	return ItemUtil.kind_color(kind)
+	return ItemUtil.item_accent_color(item)
 
 # ---- 交互 ----
 

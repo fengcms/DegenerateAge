@@ -514,6 +514,9 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_loot_pools())
 	var runes = tables.get("runes")
 	if runes is Array:
+		# 工程 111：如意按 `accent` 分档上色。这里的合法集合直接取
+		# `ItemUtil.ACCENT_COLOR` 的键 —— 单一来源，不在校验器里再抄一份。
+		var seen_accent := {}
 		for rune in runes:
 			if not rune is Dictionary:
 				continue
@@ -522,6 +525,16 @@ func validate_all() -> Array[String]:
 				report.append("[runes] %s 的 successBonus 应在 (0,1]" % rune_id)
 			if not rune.get("dropBossOnly") is bool:
 				report.append("[runes] %s 的 dropBossOnly 必须为布尔值" % rune_id)
+			var accent := String(rune.get("accent", ""))
+			if not ItemUtil.ACCENT_COLOR.has(accent):
+				report.append("[runes] %s 的 accent「%s」不合法（应为 %s 之一）"
+					% [rune_id, accent, ", ".join(PackedStringArray(ItemUtil.ACCENT_COLOR.keys()))])
+			elif seen_accent.has(accent):
+				# 重复不报错也不会崩，但玩家会看到两档一模一样的如意 —— 等于白做（坑 65 同族）。
+				report.append("[runes] %s 与 %s 的 accent 重复（%s）"
+					% [rune_id, String(seen_accent[accent]), accent])
+			else:
+				seen_accent[accent] = rune_id
 	var mounts = tables.get("mounts")
 	if mounts is Array:
 		for mount in mounts:

@@ -409,10 +409,11 @@ func _short_name(item: Dictionary) -> String:
 	var nm: String = ItemUtil.template_name(item)
 	return nm.substr(0, 2) if nm.length() > 2 else nm
 
+## 格子文字 / 描边色：统一走 `ItemUtil.item_accent_color()`（工程 111）。
+## 原先这里是一份「装备看品质、其余看品类」的判定，与仓库 / 托盘 / 地面共四份；
+## 如意要按档分色后，四份各加一个分支就是四份得同步维护的代码。
 func _item_color(item: Dictionary) -> Color:
-	if String(item.get("kind", "")) == "equip":
-		return ItemUtil.quality_color(String(item.get("quality", "common")))
-	return ItemUtil.kind_color(String(item.get("kind", "misc")))
+	return ItemUtil.item_accent_color(item)
 
 func _bag_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = []
