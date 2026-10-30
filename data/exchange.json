@@ -1,0 +1,32 @@
+{
+  "pairs": [
+    {
+      "id": "gold_to_ingot",
+      "from": "gold",
+      "to": "gold_ingot",
+      "fromCount": 1000000,
+      "toCount": 1
+    },
+    {
+      "id": "ingot_to_brick",
+      "from": "gold_ingot",
+      "to": "gold_brick",
+      "fromCount": 10,
+      "toCount": 1
+    },
+    {
+      "id": "ingot_to_gold",
+      "from": "gold_ingot",
+      "to": "gold",
+      "fromCount": 1,
+      "toCount": 1000000
+    },
+    {
+      "id": "brick_to_gold",
+      "from": "gold_brick",
+      "to": "gold",
+      "fromCount": 1,
+      "toCount": 10000000
+    }
+  ]
+}

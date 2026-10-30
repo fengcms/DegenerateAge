@@ -604,6 +604,10 @@ func can_drop_item(item: Dictionary) -> Dictionary:
 		return {"ok": false, "reason": "empty"}
 	if ToolReclaim.panel_tool_ids().has(String(item.get("itemId", ""))):
 		return {"ok": false, "reason": "tool"}
+	# 工程 109：绑定物（金条 / 金砖）不可丢地。100 万一枚的资产掉在地上，
+	# 地面物品到点消失就是让玩家亲手删钱，且没有任何"找回"手段。
+	if Shop.is_bound(item):
+		return {"ok": false, "reason": "bound"}
 	if Shop.is_quest_item(item):
 		return {"ok": false, "reason": "quest_item"}
 	if bool(item.get("favorite", false)):
@@ -1044,6 +1048,37 @@ func warehouse_expand() -> Dictionary:
 	return {"ok": true, "cost": cost, "capacity": warehouse.size(), "reason": ""}
 
 func _warehouse_fail(reason: String) -> Dictionary:
+	EventBus.toast_requested.emit(reason, "danger")
+	return {"ok": false, "reason": reason}
+
+# ---- 仓库兑换台（工程 109：金币 ↔ 金条 ↔ 金砖）----
+
+## 按 `data/exchange.json` 的汇率在「金币 / 金条 / 金砖」之间兑换。
+## 返回 `{ok, reason, got}`；失败时**一分不动**并广播原因。
+##
+## 🔑 落账方式刻意是「一次性赋值」：`GoldExchange.plan()` 已算出目标仓库与目标金币，
+## 这里只做 `warehouse = ... / gold = ...`。这样「钱扣了货没到」（先扣后判）与
+## 「货到了钱没扣」（先给后判）在结构上都不可能出现 —— 不靠顺序小心，是没有中间态。
+##
+## 🔴 金币上限由 `plan()` 前置拒绝，**不依赖 `add_gold` 的 `clampi`**：
+## 那个夹取会把玩家兑回却超出上限的部分静默吞掉，等于删掉储值（109 方案 §5.1）。
+##
+## 🔴 源物只认仓库：兑换台挂在仓库 NPC 身上，语义就是「只处理库存资产」。
+## 背包里的金条要先存仓一步（`warehouse_store()`），否则要维护两套落点。
+func exchange(pair_id: String, times: int = 1) -> Dictionary:
+	var plan := GoldExchange.plan(pair_id, times)
+	if not bool(plan.get("ok", false)):
+		return _exchange_fail(String(plan.get("reason", "")))
+	gold = int(plan.get("gold", gold))
+	warehouse = plan.get("store", warehouse)
+	var got := GoldExchange.got_text(pair_id, times)
+	EventBus.gold_changed.emit(gold)
+	EventBus.inventory_changed.emit()
+	EventBus.warehouse_changed.emit()
+	EventBus.toast_requested.emit(Localization.tr_key("msg.exchange.p006") % got, "pickup")
+	return {"ok": true, "reason": "", "got": got}
+
+func _exchange_fail(reason: String) -> Dictionary:
 	EventBus.toast_requested.emit(reason, "danger")
 	return {"ok": false, "reason": reason}
 

@@ -923,5 +923,20 @@
   "ui.save_panel.class_desc": "%s｜血量 %d%% · 法力 %d%% · 普攻射程 %.1f 格",
   "ui.skill_panel.detail_meta_pct": "耗蓝系数 %s%% · 当前 %d 点（按法力容量折算）· 范围 %s",
   "ui.skill_panel.detail_meta_shield": "开盾耗蓝 %s%% 法力上限（当前 %d 点）· 范围 %s",
-  "ui.skill_panel.detail_shield": "受伤 %.1f%% 转由法力承担 · 持续 %.0f 秒"
+  "ui.skill_panel.detail_shield": "受伤 %.1f%% 转由法力承担 · 持续 %.0f 秒",
+  "ui.warehouse_panel.p016": "兑换（双向 1:1，无手续费）",
+  "ui.warehouse_panel.p017": "金币 → 金条",
+  "ui.warehouse_panel.p018": "金条 → 金砖",
+  "ui.warehouse_panel.p019": "金条 → 金币",
+  "ui.warehouse_panel.p020": "金砖 → 金币",
+  "ui.warehouse_panel.p021": "%s（%d 次）",
+  "ui.warehouse_panel.p022": "单击换 1 次，按住 Shift 单击换到上限",
+  "msg.exchange.p001": "金币不足（需 %d 金币）",
+  "msg.exchange.p002": "仓库里的金条不足（需 %d 块）",
+  "msg.exchange.p003": "仓库里的金砖不足（需 %d 块）",
+  "msg.exchange.p004": "仓库已满，先腾出空位再兑换",
+  "msg.exchange.p005": "金币已达上限，先花掉一些再兑回金币",
+  "msg.exchange.p006": "兑换完成：%s",
+  "msg.exchange.p007": "兑换失败，请重试",
+  "msg.drop_to_ground.p008": "贵重物品不能丢弃：%s"
 }

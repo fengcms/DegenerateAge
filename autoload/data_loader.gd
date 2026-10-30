@@ -26,6 +26,7 @@ const TABLES := {
 	"mounts": "mounts.json",
 	"runes": "runes.json",
 	"warehouse": "warehouse.json",
+	"exchange": "exchange.json",
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",
 	"endgame": "endgame.json",
@@ -542,6 +543,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_potions())
 	report.append_array(_validate_misc_items())
 	report.append_array(_validate_sellable_prices())
+	report.append_array(_validate_exchange())
 	report.append_array(_validate_upgrade())
 	report.append_array(_validate_endgame())
 	report.append_array(_validate_durability())
@@ -1598,6 +1600,11 @@ func _validate_misc_items() -> Array[String]:
 			report.append("[miscItems] %s 的 useType '%s' 不应带 panelId" % [mid, use_type])
 		if not entry.get("animation", "") is String:
 			report.append("[miscItems] %s 的 animation 应为字符串" % mid)
+		# 工程 109：`bound` 是「绑定」标记（不可丢 / 不可售），金条金砖用它把
+		# 「能换成金币」和「能卖成金币」两条通道分开。类型写错会静默失效（bool(null)=false），
+		# 所以这里按字段存在即校验，而不是只在 true 时校验。
+		if entry.has("bound") and not entry.get("bound") is bool:
+			report.append("[miscItems] %s 的 bound 必须为布尔值" % mid)
 	return report
 
 ## 可售品类必须配正价格（工程 39 D-7 / G3）：否则 `Shop.base_value()` 返回 0，
@@ -1615,9 +1622,60 @@ func _validate_sellable_prices() -> Array[String]:
 			if bool((entry as Dictionary).get("questItem", false)):
 				continue
 			var eid := String((entry as Dictionary).get("id", "?"))
+			# 工程 109：绑定物（金条 / 金砖）刻意不可售 —— 价值只能走仓库兑换台，
+			# 否则玩家能在货郎处把金条再卖一次，同一个资产两条换钱通道。
+			# 绑定物必须 price 0（写了正价说明作者意图混乱，一并报出来）。
+			if bool((entry as Dictionary).get("bound", false)):
+				if int((entry as Dictionary).get("price", 0)) != 0:
+					report.append("[%s] %s 是绑定物，price 必须为 0" % [table_name, eid])
+				continue
 			if not _is_whole_level((entry as Dictionary).get("price", null)) \
 					or int((entry as Dictionary).get("price", 0)) <= 0:
 				report.append("[%s] %s 缺少可售价格 price（可售品类必须为正整数）" % [table_name, eid])
+	return report
+
+## exchange.json：仓库兑换对（工程 109）。
+## 🔴 这四条汇率就是玩家资产的交换比例，写错一位（100 万写成 10 万）**运行时不会报错**，
+## 只会变成「白送金条」。启动期一次性把关，比事后对账便宜得多。
+func _validate_exchange() -> Array[String]:
+	var report: Array[String] = []
+	var cfg: Variant = tables.get("exchange")
+	if cfg == null:
+		return report
+	if not cfg is Dictionary:
+		report.append("[exchange] 需要对象")
+		return report
+	var rows: Variant = (cfg as Dictionary).get("pairs", null)
+	if not rows is Array or (rows as Array).is_empty():
+		report.append("[exchange] pairs 需要非空数组")
+		return report
+	var seen := {}
+	for row in (rows as Array):
+		if not row is Dictionary:
+			report.append("[exchange] pairs 成员必须为对象")
+			continue
+		var rid := String((row as Dictionary).get("id", ""))
+		if rid.is_empty():
+			report.append("[exchange] 存在缺少 id 的兑换对")
+			continue
+		if seen.has(rid):
+			report.append("[exchange] 兑换对 id 重复：%s" % rid)
+		seen[rid] = true
+		var from_id := String((row as Dictionary).get("from", ""))
+		var to_id := String((row as Dictionary).get("to", ""))
+		for pair in [["from", from_id], ["to", to_id]]:
+			var key := String(pair[0])
+			var target := String(pair[1])
+			if target.is_empty():
+				report.append("[exchange] %s 缺少 %s" % [rid, key])
+			elif target != "gold" and not (get_entry("miscItems", target) is Dictionary):
+				report.append("[exchange] %s 的 %s '%s' 既不是 gold 也不在 miscItems" % [rid, key, target])
+		if not from_id.is_empty() and from_id == to_id:
+			report.append("[exchange] %s 的 from 与 to 不能相同" % rid)
+		for key in ["fromCount", "toCount"]:
+			if not _is_whole_level((row as Dictionary).get(key, null)) \
+					or int((row as Dictionary).get(key, 0)) <= 0:
+				report.append("[exchange] %s 的 %s 应为正整数" % [rid, key])
 	return report
 
 ## upgrade.json：成功表长度 / 取值 / 费用参数（B 共性-5、E-P3-3）。
