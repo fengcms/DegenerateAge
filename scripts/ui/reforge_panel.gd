@@ -55,6 +55,8 @@ var _random_refine: Button
 ## 工程 112：如意压阵四格。用下拉而不是 ItemSlot —— 如意是**可堆叠**的，
 ## 一枚一枚拖进格子会让「四枚钻石如意」变成四次拖拽，而升星面板已经把「四格下拉」
 ## 这套交互教给玩家了，重铸这边沿用同一范式（D3 拍板：不做输入数量的弹框）。
+var _rune_head: HBoxContainer
+var _auto_runes: Button
 var _rune_title: Label
 var _rune_row: GridContainer
 var _rune_pickers: Array[OptionButton] = []
@@ -269,7 +271,17 @@ func _build() -> void:
 	_rune_title = Label.new()
 	_rune_title.text = Localization.tr_key("ui.reforge_panel.p028")
 	PanelChrome.style_section(_rune_title)
-	_content.add_child(_rune_title)
+	_rune_head = HBoxContainer.new()
+	_rune_head.add_theme_constant_override("separation", 8)
+	_content.add_child(_rune_head)
+	_rune_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rune_head.add_child(_rune_title)
+	_auto_runes = Button.new()
+	_auto_runes.text = Localization.tr_key("ui.reforge_panel.auto_runes")
+	_auto_runes.tooltip_text = Localization.tr_key("ui.reforge_panel.auto_runes_tip")
+	_auto_runes.pressed.connect(_on_auto_runes)
+	PanelChrome.style_action(_auto_runes)
+	_rune_head.add_child(_auto_runes)
 	# 🔴 必须用 2×2 栅格而不是一行四格：四个下拉的最小宽度（每个 ~141px，文字是
 	# 「钻石如意 ×12」）凑起来 588px，会把 `_content` 的最小宽度从 `WIDTH`（520）顶到 588，
 	# 面板随之变宽到 638 —— 而 `_resize()` 里的并排算式仍然按 520 算，窄屏时会和背包重叠。
@@ -428,7 +440,7 @@ func _refresh_details() -> void:
 		_refine_head.visible = false
 		_refine_row.visible = false
 		_refine_hint.visible = false
-		_rune_title.visible = false
+		_rune_head.visible = false
 		_rune_row.visible = false
 		_rune_hint.visible = false
 		_price.text = ""
@@ -591,7 +603,7 @@ func _refresh_refine(target: Dictionary) -> void:
 	_refine_head.visible = true
 	_refine_row.visible = true
 	_refine_hint.visible = true
-	_rune_title.visible = true
+	_rune_head.visible = true
 	_rune_row.visible = true
 	_rune_hint.visible = true
 	_prune_refine(target)
@@ -610,6 +622,7 @@ func _refresh_runes() -> void:
 	if _rune_pickers.is_empty():
 		return
 	var counts := RuneCharge.inventory_counts(GameState.inventory)
+	_auto_runes.disabled = counts.is_empty()
 	var remaining := counts.duplicate()
 	for slot in range(_rune_choices.size()):
 		var rune_id := _rune_choices[slot]
@@ -842,3 +855,10 @@ func _on_reforge() -> void:
 	if tries > 1:
 		_feedback.text += "\n" + Localization.tr_key("msg.reforge.p015", [tries])
 	_refresh_choices()
+
+## 只替换如意预选，重铸成功后由原结算入口统一扣除。
+func _on_auto_runes() -> void:
+	if _selected_item().is_empty() or _auto_runes.disabled:
+		return
+	_rune_choices = RuneCharge.best_available(GameState.inventory)
+	_refresh_runes()

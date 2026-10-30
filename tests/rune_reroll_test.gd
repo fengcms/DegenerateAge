@@ -334,6 +334,15 @@ func _test_ui_rows() -> void:
 	# 🔴 高度**不在这里断**：内容区里有自动换行的 Label，独立测试的宿主根控件宽度为 0 时
 	# 每个字换一行，最小高度会算出 3387 这种数（实测），是测试环境伪影、不是真实布局。
 	# 面板高度的实际余量见 `tools/rune_reroll_preview` 的输出（1280×800 下 764，上下各 18px）。
+	var before_auto := GameState.inventory.duplicate(true)
+	panel._auto_runes.pressed.emit()
+	check(panel._rune_choices == ["rune_gold", "rune_gold", "rune_gold", ""],
+		"重铸如意如意按钮不足四枚时填入全部库存")
+	check(GameState.inventory == before_auto, "重铸自动预选不提前消耗库存")
+	check(String(panel._rune_pickers[0].get_item_metadata(panel._rune_pickers[0].selected)) == "rune_gold"
+		and String(panel._rune_hint.text).contains("7"), "重铸自动预选同步下拉与重掷次数")
+	panel._rune_choices.fill("")
+	panel._refresh_runes()
 	var hint := String(panel._rune_hint.text)
 	check(hint.contains("1"), "未投入如意时提示应说明只掷 1 次，实际「%s」" % hint)
 	# 选中一格金如意 → 提示应变成 3 次（round(1+2)）。
