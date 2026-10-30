@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 99 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 100 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -119,6 +119,7 @@ DEFAULT_TESTS = [
     "PortableCarterTest",
     # M10-8 装备重铸：费用四点 + 除词条外逐键不变 + 条数/区间/实例等级缩放 + 扣费与三种拒绝
     # + 穿戴/背包广播 + **随机流快照（重构安全网）** + D-15 回收价三段与不外溢。
+    "PotionRuneStackTest",
     "ReforgeTest",
     # 满星紫装第五词条：生成、锁定、失败原子性、保星和存档兼容。
     "FullStarReforgeTest",

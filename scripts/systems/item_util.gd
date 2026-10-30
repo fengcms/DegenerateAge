@@ -39,7 +39,7 @@ const KIND_COLOR := {
 ## 可堆叠物品（药品 / 杂项 / 如意 / 任务物）；装备不可堆叠（5.8）。
 const STACKABLE_KINDS := ["potion", "misc", "rune", "quest"]
 
-## 默认堆叠上限（无 stackMax 配置时，5.8：药品 / 材料堆叠 99）。
+## 未配置模板上限时默认99；正式药品和如意均显式配置999。
 const DEFAULT_STACK_MAX := 99
 
 ## 药品始终以形状文字区分；友好预设同时换成色弱更容易辨识的黄/青组合。

@@ -165,7 +165,7 @@ func _test_inventory_sort() -> void:
 	rare.quality = "rare"
 	var common := _equip_instance("weapon_iron", "sort_common", {"atk": 6})
 	GameState.inventory[3] = common
-	GameState.inventory[7] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
+	GameState.inventory[7] = {"kind": "potion", "itemId": "potion_hp_small", "count": 998}
 	GameState.inventory[9] = rare
 	GameState.inventory[11] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
 	GameState.inventory[13] = {"kind": "potion", "itemId": "potion_hp_small", "count": 5, "batch": "special"}
@@ -175,7 +175,7 @@ func _test_inventory_sort() -> void:
 	panel.get("_organize_button").pressed.emit()
 	_expect(GameState.inventory[0].instanceId == "sort_rare" and GameState.inventory[1].instanceId == "sort_common",
 		"背包整理应先排装备，同模板高品质在前且保留实例")
-	_expect(GameState.inventory[2].count == 99 and GameState.inventory[3].count == 2
+	_expect(GameState.inventory[2].count == 999 and GameState.inventory[3].count == 2
 		and GameState.inventory[4].count == 5 and GameState.inventory[4].batch == "special",
 		"相同药品应安全合堆，不同元数据的堆叠不得混合")
 	_expect(GameState.inventory[5] == null and GameState.inventory.size() == 40,
@@ -287,7 +287,7 @@ func _test_warehouse_sort() -> void:
 	GameState.reset_to_defaults()
 	var equipment := _equip_instance("weapon_iron", "stored_sorted", {"atk": 8})
 	GameState.warehouse[6] = equipment
-	GameState.warehouse[12] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
+	GameState.warehouse[12] = {"kind": "potion", "itemId": "potion_hp_small", "count": 998}
 	GameState.warehouse[15] = {"kind": "potion", "itemId": "potion_hp_small", "count": 3}
 	GameState.inventory[5] = {"kind": "potion", "itemId": "potion_hp_small", "count": 2}
 	var panel := preload("res://scenes/ui/WarehousePanel.tscn").instantiate()
@@ -295,12 +295,12 @@ func _test_warehouse_sort() -> void:
 	panel.set_open(true)
 	panel.get("_store_organize").pressed.emit()
 	_expect(GameState.warehouse[0].instanceId == "stored_sorted"
-		and GameState.warehouse[1].count == 99 and GameState.warehouse[2].count == 2
+		and GameState.warehouse[1].count == 999 and GameState.warehouse[2].count == 2
 		and GameState.warehouse[3] == null, "仓库整理应保留装备实例、合并药品并把空位移后")
 	_expect(GameState.inventory[5].count == 2 and GameState.inventory[0] == null,
 		"仓库整理不得改变背包")
 	panel.get("_bag_organize").pressed.emit()
-	_expect(GameState.inventory[0].count == 2 and GameState.warehouse[1].count == 99,
+	_expect(GameState.inventory[0].count == 2 and GameState.warehouse[1].count == 999,
 		"仓库窗口的背包整理按钮应只整理背包")
 	_expect(not GameState.organize_warehouse(), "重复整理仓库应保持稳定顺序")
 	panel.set_open(false)
@@ -403,9 +403,9 @@ func _test_warehouse() -> void:
 	var taken := GameState.warehouse_take(0, "store_once", 2)
 	_expect(taken.ok and GameState.warehouse[0] == null and GameState.inventory[2] == item,
 		"取出仓库应放入指定空格并保留实例属性")
-	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 98}
+	GameState.inventory[1] = {"kind": "potion", "itemId": "potion_hp_small", "count": 998}
 	_expect(GameState.warehouse_take(1, Warehouse.item_token(GameState.warehouse[1])).ok
-		and GameState.inventory[1].count == 99 and GameState.warehouse[1] == null,
+		and GameState.inventory[1].count == 999 and GameState.warehouse[1] == null,
 		"背包无空格但有足够同类堆叠空间时，应能整堆取出药品")
 	var stale_stack_token := Warehouse.item_token(GameState.warehouse[2])
 	GameState.warehouse[2].count = 3
@@ -1946,7 +1946,7 @@ func _test_equipment() -> void:
 	_expect(GameState.equipment["weapon"] != null, "Lv10 应能穿戴 Lv10 武器")
 	for i in range(GameState.inventory.size()):
 		if GameState.inventory[i] == null:
-			GameState.inventory[i] = {"kind": "potion", "itemId": "potion_hp_small", "count": 99}
+			GameState.inventory[i] = {"kind": "potion", "itemId": "potion_hp_small", "count": 999}
 	var full_un := GameState.unequip_slot("weapon")
 	_expect(not bool(full_un.get("ok", false)), "背包满时卸下应失败（5.1）")
 	_expect(GameState.equipment["weapon"] != null, "卸下失败不应清空槽位")

@@ -18,26 +18,26 @@ func _ready() -> void:
 
 func _test_inventory() -> void:
 	var inv := Inventory.create(3)
-	inv[0] = ItemFactory.make_any("potion_hp_small", 98)
-	var incoming := ItemFactory.make_any("potion_hp_small", 105)
+	inv[0] = ItemFactory.make_any("potion_hp_small", 998)
+	var incoming := ItemFactory.make_any("potion_hp_small", 1005)
 	var original := incoming.duplicate(true)
 	check(Inventory.has_space_for(inv, incoming) and Inventory.add(inv, incoming), "整批入包应成功")
-	check(inv[0].count == 99 and inv[1].count == 99 and inv[2].count == 5, "数量完整分配：98+105=203")
+	check(inv[0].count == 999 and inv[1].count == 999 and inv[2].count == 5, "数量完整分配：998+1005=2003")
 	check(incoming == original, "不修改调用方物品")
 	var snapshot := inv.duplicate(true)
-	var too_many := ItemFactory.make_any("potion_hp_small", 95)
-	check(not Inventory.has_space_for(inv, too_many) and not Inventory.add(inv, too_many), "余量94不足95必须失败")
+	var too_many := ItemFactory.make_any("potion_hp_small", 995)
+	check(not Inventory.has_space_for(inv, too_many) and not Inventory.add(inv, too_many), "余量994不足995必须失败")
 	check(inv == snapshot, "失败不能部分入包")
-	check(Inventory.add(inv, ItemFactory.make_any("potion_hp_small", 94)) and inv[2].count == 99, "恰好装满")
+	check(Inventory.add(inv, ItemFactory.make_any("potion_hp_small", 994)) and inv[2].count == 999, "恰好装满")
 	for count in [0, -1, 1.5]:
 		check(not Inventory.add(Inventory.create(), {"kind":"potion", "itemId":"potion_hp_small", "count":count}), "非法数量拒绝")
 	var alias := ItemFactory.make_any("potion_hp_small", 2)
 	var aliased: Array = [alias, null]
 	check(Inventory.add(aliased, alias) and alias.count == 2 and aliased[0].count == 4, "别名输入也不被修改")
 	var multiple := Inventory.create(2)
-	multiple[0] = ItemFactory.make_any("potion_hp_small", 98)
-	multiple[1] = ItemFactory.make_any("potion_hp_small", 95)
-	check(Inventory.add(multiple, ItemFactory.make_any("potion_hp_small", 5)) and multiple[1].count == 99, "无空格时合并多个未满堆")
+	multiple[0] = ItemFactory.make_any("potion_hp_small", 998)
+	multiple[1] = ItemFactory.make_any("potion_hp_small", 995)
+	check(Inventory.add(multiple, ItemFactory.make_any("potion_hp_small", 5)) and multiple[1].count == 999, "无空格时合并多个未满堆")
 
 func _test_equipment() -> void:
 	var inv := Inventory.create()

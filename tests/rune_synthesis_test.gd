@@ -37,7 +37,7 @@ func _ready() -> void:
 	check(RuneSynthesis.plan(full).ok, "满仓释放格位成功")
 	full = [ItemFactory.make_any("rune_iron", 5), ItemFactory.make_any("rune_jade", 1)]
 	check(RuneSynthesis.plan(full).ok, "满仓合堆成功")
-	check(ItemUtil.stack_max(ItemFactory.make_any("rune_diamond")) == 999 and ItemUtil.stack_max(ItemFactory.make_any("rune_gold")) == 99, "仅钻石提升到999")
+	check(ItemUtil.stack_max(ItemFactory.make_any("rune_diamond")) == 999 and ItemUtil.stack_max(ItemFactory.make_any("rune_gold")) == 999, "钻石和金如意统一999")
 	var packed: Array = [null, null]
 	check(Inventory.add(packed, ItemFactory.make_any("rune_diamond", 1000)) and packed[0].count == 999 and packed[1].count == 1, "钻石跨堆叠999边界")
 	var overflow := RuneSynthesis.plan([ItemFactory.make_any("rune_gold", 80), ItemFactory.make_any("rune_diamond", 998)])
