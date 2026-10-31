@@ -38,7 +38,7 @@ func _ready() -> void:
 	var camera := player.get_node("Camera2D") as Camera2D
 	camera.position_smoothing_enabled = false
 	camera.zoom = Vector2(2, 2)
-	camera.reset_smoothing()
+	StableFollowCamera.snap(camera)
 	camera.force_update_scroll()
 	var enemy := spawn(world, player.global_position + Vector2(600, 0))
 	check(not world.visible_enemies().has(enemy), "600像素样本确实在屏外")

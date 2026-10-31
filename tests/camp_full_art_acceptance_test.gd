@@ -168,7 +168,7 @@ func _walk(world: Node2D, ground: IsoGround, player: PlayerCharacter,
 	var target := ground.clamp_to_map(ground._camp_canvas_to_world(route["end"]))
 	player.clear_travel_intent()
 	player.global_position = start
-	camera.reset_smoothing()
+	StableFollowCamera.snap(camera)
 	assert(ground.route(start, target).size() > 1 and player.request_map_move(target),
 		"新增整体实体观察路线不可达：%s" % id)
 	var traveled := 0.0
@@ -190,6 +190,7 @@ func _walk(world: Node2D, ground: IsoGround, player: PlayerCharacter,
 
 ## 在固定矩形镜头保存全图与 200% 地表画面，检查纹理、围栏和整体实体。
 func _save_overview(world: Node2D, ground: IsoGround, camera: Camera2D) -> void:
+	camera.set_process(false) # 固定截图镜头，避免正式跟随覆盖测试取景
 	camera.top_level = true
 	camera.global_position = ground.get_world_bounds().get_center()
 	var size := get_viewport().get_visible_rect().size

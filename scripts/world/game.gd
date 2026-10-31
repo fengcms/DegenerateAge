@@ -175,7 +175,7 @@ func _ready() -> void:
 	_camera.limit_bottom = int(b.end.y)
 	# M5-9b（09-A）：切图 reload 会重建 Player/Camera2D，故在装配相机处补应用一次地图倍率。
 	SettingsRuntime.apply_map_scale_to(_camera)
-	_camera.reset_smoothing()
+	StableFollowCamera.snap(_camera)
 
 	# 怪物实例生成前准备本图正式动画；切图释放由 _exit_tree 对应处理。
 	_animation_map_id = GameState.current_map

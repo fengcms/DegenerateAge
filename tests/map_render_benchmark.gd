@@ -28,6 +28,7 @@ func sample(label: String, player: PlayerCharacter, maps: Array[MapCanvas]) -> v
 	var refresh_at := last
 	for i in range(140):
 		player.position = origin + Vector2(sin(i * 0.025) * 60.0, 0)
+		StableFollowCamera.snap(player.get_node("Camera2D") as Camera2D)
 		var now := Time.get_ticks_usec()
 		if now - refresh_at >= 200000:
 			refresh_at = now

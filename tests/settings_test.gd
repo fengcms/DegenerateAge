@@ -593,7 +593,7 @@ func _check_panels_matrix() -> void:
 		var smoothing := cam.position_smoothing_enabled
 		cam.position_smoothing_enabled = false
 		player.global_position = target.global_position + Vector2(48.0, 0.0)
-		cam.reset_smoothing()
+		StableFollowCamera.snap(cam)
 		await get_tree().process_frame
 		var npc_target: Npc = null
 		var npcs_node := main.get_node_or_null("Game/Npcs")
@@ -605,7 +605,7 @@ func _check_panels_matrix() -> void:
 		for factor in [1.0, 0.8, 1.5]:
 			GameState.settings["mapScale"] = factor
 			SettingsRuntime.apply_map_scale_to(cam)
-			cam.reset_smoothing()
+			StableFollowCamera.snap(cam)
 			await get_tree().process_frame
 			# 敌人在世界坐标不动 ⇒ 屏幕坐标随 zoom 变；按屏幕坐标点选应命中同一敌人
 			var screen_pos: Vector2 = target.get_global_transform_with_canvas().origin

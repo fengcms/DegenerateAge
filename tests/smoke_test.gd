@@ -4379,7 +4379,7 @@ func _test_scale_invariance() -> void:
 	# 关相机平滑求确定性（平滑速度一帧赶不完位移，留残差；settings_test 同法）
 	var smoothing := cam.position_smoothing_enabled
 	cam.position_smoothing_enabled = false
-	cam.reset_smoothing()
+	StableFollowCamera.snap(cam)
 	await get_tree().process_frame
 
 	# ① 点击链往返：mapScale 各档 × 手动显示系数 1.25（总倍率 = 两者乘积）
