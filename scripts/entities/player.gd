@@ -718,9 +718,11 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 	var hits := maxi(1, int(skill.get("hits", 1)))
 	var power := effective_attack_power()
 	var player_level := int(GameState.player.get("level", 1))
+	var equipment_context := EquipmentGap.current_context()
 	for enemy in targets:
 		# A2 越级伤害（03 §3.13）：逐目标取等级差放大攻击项——同一技能可同时打到不同等级的怪。
 		var gap_power := power * LevelGap.damage_multiplier(player_level, _target_level(enemy))
+		var equipment_level := EquipmentGap.target_level(enemy)
 		for _hit in range(hits):
 			# 前置段已打死目标：后续段不再结算，避免死怪重复受击、飘字与事件计数虚高。
 			if _target_is_dead(enemy):
@@ -728,6 +730,7 @@ func cast_skill(skill_id: String, target: Node = null) -> bool:
 			var result := Combat.resolve(gap_power, _target_defense(enemy) * (1.0 - pierce),
 				float(skill.get("coefficient", 1.0)), GameState.total_crit_chance(),
 				GameState.total_crit_multiplier(), _target_dodge(enemy))
+			result = EquipmentGap.apply(result, equipment_context, equipment_level)
 			Fx.damage_number(get_tree(), enemy, result)
 			EventBus.damage_dealt.emit(enemy, int(result.get("damage", 0)), bool(result.get("critical", false)))
 			enemy.take_hit(result, self)
@@ -817,6 +820,7 @@ func perform_attack(target: Node) -> Dictionary:
 		GameState.total_crit_multiplier(),
 		_target_dodge(target))
 
+	result = EquipmentGap.apply(result, EquipmentGap.current_context(), EquipmentGap.target_level(target))
 	Fx.damage_number(get_tree(), target as Node2D, result)
 	EventBus.damage_dealt.emit(target, int(result.get("damage", 0)), bool(result.get("critical", false)))
 	if locked_target != target:

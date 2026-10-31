@@ -48,6 +48,11 @@ static func summary(ctx: Dictionary, monster_level: int) -> Dictionary:
 	ctx.memo[monster_level] = result
 	return result
 
+## 无实际等级的练习桩/测试目标不套用人物等级，防止制造虚假的装备惩罚。
+static func target_level(target: Node) -> int:
+	var level: Variant = target.get("level")
+	return maxi(0,int(level)) if level is int or level is float else 0
+
 ## 最终伤害仅缩放一次，闪避保持0、暴击标记与其他键原样保留；不消耗随机数。
 static func apply(result: Dictionary, ctx: Dictionary, monster_level: int) -> Dictionary:
 	var factor := float(summary(ctx, monster_level).factor)
