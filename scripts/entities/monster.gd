@@ -477,6 +477,7 @@ func _update_chapter_boss(delta: float) -> bool:
 	queue_redraw()
 	return true
 
+## 在原预警到期点结算一次；多爆圈命中只触发一次原有攻击。
 func _resolve_chapter_boss_warn() -> void:
 	var geos := _chapter_boss_geometries()
 	_chapter_boss_warn = ""
@@ -1349,6 +1350,7 @@ func _draw() -> void:
 	_draw_head_hp_bar()
 	_draw_head_name()
 
+## 从原剩余时间和同一份锁定几何绘制第二章预警。
 func _draw_chapter_boss_warn(canvas: Node2D) -> void:
 	var progress := 1.0 - _chapter_boss_warn_left / maxf(0.001, _chapter_boss_warn_total)
 	for geo in _chapter_boss_geometries():
@@ -1483,7 +1485,7 @@ func _stomp_geometry() -> Dictionary:
 func _boss_visual_impact(geo: Dictionary) -> void:
 	if _boss_visual == null:
 		return
-	_boss_visual.impact(geo)
+	_boss_visual.impact(geo, _boss_ground != null and BossSkillVisual.visible_geometry(_boss_ground, geo))
 	if _boss_ground != null:
 		_boss_ground.queue_redraw()
 	queue_redraw()

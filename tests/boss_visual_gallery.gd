@@ -8,11 +8,15 @@ func _ready() -> void:
 	DisplayServer.window_set_size(Vector2i(1600, 1000))
 	RenderingServer.set_default_clear_color(Color("111b20"))
 	DirAccess.make_dir_recursive_absolute("/tmp/boss_visual_gallery")
+	var camera := Camera2D.new()
+	add_child(camera)
+	var overlay := CanvasLayer.new()
+	add_child(overlay)
 	var label := Label.new()
 	label.position = Vector2(35, 22)
 	label.add_theme_font_size_override("font_size", 24)
 	label.add_theme_color_override("font_color", PanelChrome.TEXT)
-	add_child(label)
+	overlay.add_child(label)
 	for id in DataLoader.get_table("bossVisuals").bosses:
 		var boss := preload("res://scenes/entities/Monster.tscn").instantiate()
 		boss.monster_id = id
@@ -43,6 +47,7 @@ func _ready() -> void:
 			boss._chapter_boss_warn_total = 1.0
 			boss._chapter_boss_warn_left = 0.1
 			geos = boss._chapter_boss_geometries()
+		_fit(camera, boss, geos)
 		boss.queue_redraw()
 		boss._boss_ground.queue_redraw()
 		await RenderingServer.frame_post_draw
@@ -54,6 +59,7 @@ func _ready() -> void:
 		for geo in geos:
 			boss._boss_visual_impact(geo)
 		boss._boss_visual.tick(0.07)
+		_fit(camera, boss, geos)
 		boss.queue_redraw()
 		boss._boss_ground.queue_redraw()
 		await RenderingServer.frame_post_draw
@@ -67,3 +73,20 @@ func _draw() -> void:
 	for x in range(-2000, 3500, 64):
 		draw_line(Vector2(x, 0), Vector2(x + 2000, 1000), Color("253239"), 1)
 		draw_line(Vector2(x, 0), Vector2(x - 2000, 1000), Color("253239"), 1)
+
+## 包含实体和全部锁定范围自动取景，避免偏移圈与长线被截图边界裁切。
+func _fit(camera: Camera2D, boss: Monster, geos: Array) -> void:
+	var bounds := Rect2(boss.position - Vector2(80, 160), Vector2(160, 200))
+	for geo in geos:
+		if geo.kind == "line":
+			for point in BossSkillVisual.line_points(geo):
+				bounds = bounds.expand(Iso.from_ground(point))
+		else:
+			var center := Iso.from_ground(geo.center)
+			var extent := Vector2(geo.radius, geo.radius * Iso.GROUND_SQUASH)
+			bounds = bounds.expand(center - extent).expand(center + extent)
+	bounds = bounds.grow(60.0)
+	camera.position = bounds.get_center()
+	var zoom := minf(1.0, minf(1280.0 / bounds.size.x, 680.0 / bounds.size.y))
+	camera.zoom = Vector2(zoom, zoom)
+	camera.force_update_scroll()

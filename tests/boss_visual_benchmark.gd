@@ -60,8 +60,8 @@ func _draw() -> void:
 			match geo.kind:
 				"ring":
 					GroundFx.band(self, center, geo.inner, geo.radius, fill, 48)
-					GroundFx.outline(self, center, geo.radius, edge, 2.0, 48)
-					GroundFx.outline(self, center, geo.inner, edge, 2.0, 40)
+					GroundFx.outline(self, center, geo.radius, Color("ffb454"), 3.0, 48)
+					GroundFx.outline(self, center, geo.inner, Color("ffb454"), 2.0, 32)
 				"circle":
 					GroundFx.fill(self, center, geo.radius, fill)
 					GroundFx.outline(self, center, geo.radius, edge, 2.0, 48)
