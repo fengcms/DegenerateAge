@@ -781,6 +781,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p019"), "danger")
 		return
 	data = _migrate(data)
+	GameState.cancel_gold_batch()
 	_suppress_autosave = true
 	GameState.reset_equipment_prompt_session()
 	GameState.skill_cooldowns = {}

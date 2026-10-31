@@ -63,7 +63,8 @@ static func make_output(tier: int, kind: String, rng: RandomNumberGenerator = nu
 
 ## 校验 2—4 件材料并返回输出档；目标部位仅在四紫定向使用。
 ## 件数区间由 `material_range()` 决定；四紫升紫额外返回 `count` 与 `rate`（成功率）。
-static func plan_four(items: Array[Dictionary], mode: String, target_kind: String = "") -> Dictionary:
+static func plan_four(items: Array[Dictionary], mode: String, target_kind: String = "",
+		checked_templates: Variant = null) -> Dictionary:
 	if mode not in [GOLD_TO_PURPLE, PURPLE_TARGET, PURPLE_UP_TIER]:
 		return {"ok": false, "reason": "未知的合成模式"}
 	var limits := material_range(mode)
@@ -100,9 +101,14 @@ static func plan_four(items: Array[Dictionary], mode: String, target_kind: Strin
 	if mode == PURPLE_UP_TIER and output_tier > transfer_max_tier():
 		return {"ok": false, "reason": "目标档已超出装备等级上限"}
 	var kinds := [target_kind] if mode == PURPLE_TARGET else Equipment.slot_kinds()
-	for kind in kinds:
-		if template_for(output_tier, String(kind)).is_empty():
-			return {"ok": false, "reason": "目标等级档缺少装备型号"}
+	# 仅供单次批量计划复用模板校验；调用方每轮新建，禁止跨数据重载持久化。
+	var cache: Dictionary = checked_templates if checked_templates is Dictionary else {}
+	var cache_key := "%s:%d:%s" % [mode, output_tier, target_kind]
+	if not cache.has(cache_key):
+		for kind in kinds:
+			if template_for(output_tier, String(kind)).is_empty():
+				return {"ok": false, "reason": "目标等级档缺少装备型号"}
+		cache[cache_key] = true
 	return {"ok": true, "tier": output_tier, "target_kind": target_kind,
 		"count": items.size(),
 		"rate": success_rate(items.size()) if mode == PURPLE_UP_TIER else 1.0, "reason": ""}

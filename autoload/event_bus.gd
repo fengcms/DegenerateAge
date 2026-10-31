@@ -125,3 +125,6 @@ signal settings_changed()
 signal hotbar_changed()
 
 signal super_portable_requested
+
+## 四金批量一次提交的聚合次数，避免逐组刷新。
+signal gold_batch_completed(count: int)

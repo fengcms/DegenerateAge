@@ -984,5 +984,9 @@
   "msg.reforge.fifth_unlocked": "已解锁第五词条！",
   "ui.item.fifth_unlocked": "满星重铸：第五词条已解锁",
   "ui.fusion.worn_auto_equip": "其中 %s 正穿在身上，升级成功后会自动穿回原槽位。",
-  "ui.fusion.done_equipped": "保星升级成功并已穿戴：%s"
+  "ui.fusion.done_equipped": "保星升级成功并已穿戴：%s",
+  "ui.batch.expired": "批量会话已失效，请重新读取背包。",
+  "ui.batch.changed": "已选材料发生变化，请重新读取背包并确认。",
+  "ui.batch.empty": "当前没有可合成的四件金装。",
+  "ui.batch.failed": "产物生成或放入失败，本批次未消耗任何材料。"
 }

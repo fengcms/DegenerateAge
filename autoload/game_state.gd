@@ -291,6 +291,7 @@ func default_settings() -> Dictionary:
 ## `class_id` 留空 = 默认职业（武士）。存档面板「新的旅程」按玩家选择传入。
 ## 🔴 职业必须在**建快捷栏之前**落到 `player.classId` —— `HotbarConfig.defaults()` 要按职业取普攻 id。
 func reset_to_defaults(class_id: String = "") -> void:
+	cancel_gold_batch()
 	reset_equipment_prompt_session()
 	player = default_player()
 	player.classId = PlayerClass.normalize(class_id)
@@ -1449,6 +1450,76 @@ func find_owned_item(instance_id: String) -> Dictionary:
 ## UI 传入打开预览时的完整实例字典，确认时按 instanceId 重定位，避免整理后误耗。
 ## 保星旧料来自穿戴时，产物满足等级则回原槽；其他情况进背包。
 ## 四紫升紫接受 2—4 件：件数换成功率，**期望材料消耗恒为 4 件**（见 `EquipmentFusion.success_rate`）。
+# 批量会话只存运行态，不落档；新会话取代旧会话，序号不在reset时复用。
+var _gold_batch_serial := 0
+var _gold_batch_session: Dictionary = {}
+
+func begin_gold_batch() -> Dictionary:
+	_gold_batch_serial += 1
+	_gold_batch_session = {"token": _gold_batch_serial, "items": GoldBatchFusion.candidates(inventory), "seed": randi()}
+	return _gold_batch_session.duplicate(true)
+
+func cancel_gold_batch() -> void:
+	_gold_batch_session = {}
+
+func preview_gold_batch(token: int, include_starred: bool = false, excluded: Array = []) -> Dictionary:
+	if _gold_batch_session.is_empty() or int(_gold_batch_session.token) != token:
+		return {"ok": false, "reason": Localization.tr_key("ui.batch.expired")}
+	var plan := GoldBatchFusion.plan(_gold_batch_session.items, include_starred, excluded)
+	if not bool(plan.get("ok", false)):
+		return plan
+	var indices := {}
+	for i in range(inventory.size()):
+		var entry: Variant = inventory[i]
+		if entry is Dictionary and entry.has("instanceId"):
+			var id := String(entry.instanceId)
+			if indices.has(id):
+				return {"ok": false, "reason": Localization.tr_key("ui.batch.changed")}
+			indices[id] = i
+	for group in plan.groups:
+		for snapshot in group:
+			var index := int(indices.get(String(snapshot.instanceId), -1))
+			if index < 0 or inventory[index] != snapshot:
+				return {"ok": false, "reason": Localization.tr_key("ui.batch.changed")}
+	plan["indices"] = indices
+	return plan
+
+func forge_gold_batch(token: int, include_starred: bool = false, excluded: Array = []) -> Dictionary:
+	var plan := preview_gold_batch(token, include_starred, excluded)
+	if not bool(plan.get("ok", false)):
+		return plan
+	var count := (plan.groups as Array).size()
+	if count == 0:
+		return {"ok": false, "reason": Localization.tr_key("ui.batch.empty")}
+	var pending := inventory.duplicate(true)
+	for group in plan.groups:
+		for snapshot in group:
+			pending[int(plan.indices[String(snapshot.instanceId)])] = null
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(_gold_batch_session.seed)
+	var kinds := Equipment.slot_kinds()
+	var produced: Array[Dictionary] = []
+	var ids := (plan.indices as Dictionary).duplicate()
+	for entry in equipment.values():
+		if entry is Dictionary:
+			ids[String(entry.get("instanceId", ""))] = true
+	for group in plan.groups:
+		var tier := EquipmentFusion.tier_start(group[0])
+		var kind := String(kinds[rng.randi_range(0, kinds.size() - 1)])
+		var output := EquipmentFusion.make_output(tier, kind, rng)
+		if output.is_empty() or not SaveManager._valid_item(output) or ids.has(output.get("instanceId")):
+			return {"ok": false, "reason": Localization.tr_key("ui.batch.failed")}
+		ids[output.instanceId] = true
+		if not Inventory.add(pending, output):
+			return {"ok": false, "reason": Localization.tr_key("ui.batch.failed")}
+		produced.append(output)
+	inventory = pending
+	cancel_gold_batch()
+	EventBus.inventory_changed.emit()
+	EventBus.gold_batch_completed.emit(count)
+	return {"ok": true, "count": count, "consumed": count * 4, "remaining": int(plan.remaining), "items": produced}
+
+
 func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",
 		rng: RandomNumberGenerator = null, rune_ids: Array = []) -> Dictionary:
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE,
