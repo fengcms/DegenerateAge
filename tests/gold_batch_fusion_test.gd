@@ -12,6 +12,9 @@ func gear(tier: int, star: int = 0) -> Dictionary:
 	return item
 func seed_bag(tiers: Array) -> void:
 	GameState.reset_to_defaults()
+	if tiers.size() > 40:
+		GameState.inventory_expansions = Warehouse.max_expansions()
+		GameState.inventory.resize(400)
 	for i in range(tiers.size()):
 		GameState.inventory[i] = gear(tiers[i])
 func _ready() -> void:
@@ -22,6 +25,11 @@ func _ready() -> void:
 			inputs.append(gear(61))
 		var plan := GoldBatchFusion.plan(inputs)
 		check(plan.ok and plan.groups.size() == n / 4 and plan.remaining == n % 4, "件数边界 " + str(n))
+	seed_bag([61, 61, 61, 61, 61, 61, 61, 61])
+	GameState.inventory[0].favorite = true
+	var protected_session := GameState.begin_gold_batch()
+	check(protected_session.items.size() == 7 and protected_session.favorites == 1
+		and GameState.preview_gold_batch(protected_session.token).groups.size() == 1, "收藏从初始候选排除并计数")
 	seed_bag([61, 71, 71, 71, 71, 71, 71, 71])
 	var session := GameState.begin_gold_batch()
 	var plan := GameState.preview_gold_batch(session.token)
@@ -45,6 +53,7 @@ func _ready() -> void:
 	var before := GameState.inventory.duplicate(true)
 	check(not GameState.forge_gold_batch(session.token, true).ok and GameState.inventory == before, "收藏变更拒绝整批")
 	GameState.inventory[0].favorite = false
+	check(not GameState.preview_gold_batch(session.token, true).ok, "曾失效会话必须重新读取，不能自动恢复")
 	GameState.equipment.weapon = GameState.inventory[0]
 	GameState.inventory[0] = null
 	check(not GameState.forge_gold_batch(session.token, true).ok, "材料穿到身上后拒绝")
@@ -56,6 +65,27 @@ func _ready() -> void:
 	before = GameState.inventory.duplicate(true)
 	check(not GameState.forge_gold_batch(session.token).ok and GameState.inventory == before, "模板失效整批不消耗")
 	tpl.tierBases = bases
+	var many: Array = []
+	many.resize(100)
+	many.fill(61)
+	seed_bag(many)
+	seed(9331)
+	var expected := randi()
+	seed(9331)
+	session = GameState.begin_gold_batch()
+	check(randi() == expected, "预览种子不扰动全局随机流")
+	check(GameState.start_gold_batch(session.token).ok, "开始分帧准备")
+	var step := GameState.advance_gold_batch(session.token)
+	check(step.ok and not step.done and GameState.inventory_used() == 100, "首步准备不消耗")
+	GameState.inventory[0].star = 1
+	before = GameState.inventory.duplicate(true)
+	while bool(step.get("ok", false)) and not bool(step.get("done", false)):
+		step = GameState.advance_gold_batch(session.token)
+	check(not step.ok and GameState.inventory == before, "准备中变更材料最终拒绝整批")
+	seed_bag([61, 61, 61, 61])
+	session = GameState.begin_gold_batch()
+	GameState.cancel_gold_batch()
+	check(not GameState.start_gold_batch(session.token).ok, "取消会话不能提交")
 	GameState.reset_to_defaults()
 	GameState.inventory_expansions = Warehouse.max_expansions()
 	GameState.inventory.resize(Warehouse.capacity(GameState.inventory_expansions))
@@ -74,6 +104,27 @@ func _ready() -> void:
 	var doc := SaveManager._collect()
 	doc.slotId = 1
 	check(SaveManager._is_valid_save(JSON.parse_string(JSON.stringify(doc))), "批量产物可保存")
+	SaveManager.apply_to_game_state(JSON.parse_string(JSON.stringify(doc)))
+	check(GameState.inventory_used() == 100, "批量产物存档往返100件不丢失")
+	var durations: Array = []
+	for trial in range(12):
+		GameState.reset_to_defaults()
+		GameState.inventory_expansions = Warehouse.max_expansions()
+		GameState.inventory.resize(400)
+		for i in range(400):
+			GameState.inventory[i] = gear(61 + (i % 4) * 10)
+		session = GameState.begin_gold_batch()
+		GameState.start_gold_batch(session.token)
+		while true:
+			var tick := Time.get_ticks_usec()
+			var phase := GameState.advance_gold_batch(session.token)
+			durations.append(Time.get_ticks_usec() - tick)
+			if not phase.ok or phase.get("done", false):
+				check(phase.ok, "满包分步提交成功")
+				break
+	durations.sort()
+	print("[PERF] GoldBatchStep us p50=", durations[durations.size()/2], " p95=", durations[int(durations.size()*0.95)], " p99=", durations[int(durations.size()*0.99)], " max=", durations.back())
+
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[GoldBatchFusionTest] 全部通过 ✅")

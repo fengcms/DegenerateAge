@@ -1469,8 +1469,11 @@ func cancel_gold_batch() -> void:
 func preview_gold_batch(token: int, include_starred: bool = false, excluded: Array = []) -> Dictionary:
 	if _gold_batch_session.is_empty() or int(_gold_batch_session.token) != token:
 		return {"ok": false, "reason": Localization.tr_key("ui.batch.expired")}
+	if bool(_gold_batch_session.get("invalid", false)):
+		return {"ok": false, "reason": Localization.tr_key("ui.batch.changed")}
 	var plan := GoldBatchFusion.plan(_gold_batch_session.items, include_starred, excluded)
 	if not bool(plan.get("ok", false)):
+		_gold_batch_session["invalid"] = true
 		return plan
 	var indices := {}
 	for i in range(inventory.size()):
@@ -1478,12 +1481,14 @@ func preview_gold_batch(token: int, include_starred: bool = false, excluded: Arr
 		if entry is Dictionary and entry.has("instanceId"):
 			var id := String(entry.instanceId)
 			if indices.has(id):
+				_gold_batch_session["invalid"] = true
 				return {"ok": false, "reason": Localization.tr_key("ui.batch.changed")}
 			indices[id] = i
 	for group in plan.groups:
 		for snapshot in group:
 			var index := int(indices.get(String(snapshot.instanceId), -1))
 			if index < 0 or inventory[index] != snapshot:
+				_gold_batch_session["invalid"] = true
 				return {"ok": false, "reason": Localization.tr_key("ui.batch.changed")}
 	plan["indices"] = indices
 	plan["favorites"] = int(_gold_batch_session.get("favorites", 0))

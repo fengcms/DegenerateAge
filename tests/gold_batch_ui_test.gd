@@ -25,7 +25,7 @@ func _ready() -> void:
 	var manual: Dictionary = panel._selected[0].duplicate(true)
 	panel._batch.pressed.emit()
 	var dialog: GoldBatchDialog = panel._batch_dialog
-	check(dialog.visible and not dialog._include.button_pressed and not dialog._confirm.disabled, "打开默认排除带星且可确认")
+	check(dialog.visible and not GameState.world_controls_blocked() and not dialog._include.button_pressed and not dialog._confirm.disabled, "打开默认排除带星且可确认")
 	var before := GameState.inventory.duplicate(true)
 	var esc := InputEventKey.new()
 	esc.physical_keycode = KEY_ESCAPE
@@ -36,6 +36,7 @@ func _ready() -> void:
 	panel._batch.pressed.emit()
 	GameState.inventory[0].favorite = true
 	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
 	check(dialog._confirm.disabled and dialog._status.text.contains("发生变化"), "收藏变化使确认失效")
 	dialog._reload.pressed.emit()
 	check(not dialog._status.text.contains("发生变化"), "重新读取恢复当前计划")
@@ -59,6 +60,7 @@ func _ready() -> void:
 	panel._batch.pressed.emit()
 	before = GameState.inventory.duplicate(true)
 	dialog._confirm.pressed.emit()
+	await get_tree().process_frame
 	dialog.close()
 	await get_tree().process_frame
 	check(GameState.inventory == before, "准备期间取消不消耗不发奖")
@@ -82,6 +84,8 @@ func _ready() -> void:
 			var box: Control = dialog._window.panel_box
 			var rect := Rect2(box.get_global_transform_with_canvas().origin, box.size * float(spec[1]))
 			check(get_viewport().get_visible_rect().grow(1).encloses(rect), "批量浮层不越界 " + str(spec))
+			var confirm_rect := Rect2(dialog._confirm.get_global_transform_with_canvas().origin, dialog._confirm.size * float(spec[1]))
+			check(get_viewport().get_visible_rect().encloses(confirm_rect), "批量确认按钮固定在可见底部")
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png("/tmp/gold_batch_ui_%d_%d.png" % [spec[0].x, int(float(spec[1]) * 100)])
 	dialog.close()

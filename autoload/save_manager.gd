@@ -311,6 +311,7 @@ func _connect_events() -> void:
 	EventBus.inventory_organized.connect(func() -> void: request_autosave())
 	EventBus.inventory_expanded.connect(func() -> void: request_autosave())
 	EventBus.trade_done.connect(func(_k: String, _i: String, _p: int) -> void: request_autosave())
+	EventBus.gold_batch_completed.connect(func(_count: int) -> void: request_autosave())
 	EventBus.map_changed.connect(func(_m: String) -> void: request_autosave())
 	EventBus.fog_changed.connect(func(_m: String) -> void: request_autosave())
 	EventBus.quest_accepted.connect(func(_q: String) -> void: request_autosave())

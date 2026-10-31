@@ -4,6 +4,7 @@ var _token := 0
 var _frozen: Array = []
 var _excluded: Array = []
 var _busy := false
+var _refresh_pending := false
 var _include: CheckBox
 var _summary: Label
 var _status: Label
@@ -78,10 +79,10 @@ func _ready() -> void:
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.add_theme_color_override("font_color", PanelChrome.DANGER)
-	body.add_child(_status)
+	_root.add_child(_status)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
-	body.add_child(actions)
+	_root.add_child(actions)
 	_reload = Button.new()
 	_reload.text = Localization.tr_key("ui.batch.reload")
 	_reload.pressed.connect(_read_inventory)
@@ -98,12 +99,8 @@ func _ready() -> void:
 	PanelChrome.style_action(cancel)
 	actions.add_child(cancel)
 	visible = false
-	EventBus.inventory_changed.connect(func() -> void:
-		if visible and not _busy:
-			_refresh(false))
-	EventBus.equipment_changed.connect(func() -> void:
-		if visible and not _busy:
-			_refresh(false))
+	EventBus.inventory_changed.connect(_queue_recheck)
+	EventBus.equipment_changed.connect(_queue_recheck)
 	EventBus.panels_close_requested.connect(close)
 	get_viewport().size_changed.connect(_resize)
 	EventBus.settings_changed.connect(_resize)
@@ -195,8 +192,11 @@ func _add_material(parent: TreeItem, item: Dictionary) -> void:
 	row.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
 	row.set_text(0, ItemUtil.display_name(item))
 	row.set_metadata(0, String(item.instanceId))
-	row.set_checked(0, not _excluded.has(String(item.instanceId)))
-	row.set_editable(0, true)
+	var protected_star := int(item.star) > 0 and not _include.button_pressed
+	row.set_checked(0, not protected_star and not _excluded.has(String(item.instanceId)))
+	row.set_editable(0, not protected_star)
+	if protected_star:
+		row.set_custom_color(0, PanelChrome.MUTED)
 	row.set_tooltip_text(0, "\n".join(ItemUtil.attr_lines(item)))
 
 func _on_item_edited() -> void:
@@ -226,6 +226,8 @@ func _submit() -> void:
 	_reload.disabled = true
 	_confirm.disabled = true
 	_tree.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status.text = Localization.tr_key("ui.batch.progress", [0, started.count])
+	await get_tree().process_frame
 	while visible and _token == token:
 		var step := GameState.advance_gold_batch(token)
 		if not bool(step.get("ok", false)):
@@ -244,3 +246,16 @@ func _submit() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event is InputEventKey:
 		get_viewport().set_input_as_handled()
+
+## 同轮拾取/磨损的密集事件合并一次，只终验可用态，不重建详情树。
+func _queue_recheck() -> void:
+	if not visible or _busy or _refresh_pending:
+		return
+	_confirm.disabled = true
+	_refresh_pending = true
+	_finish_recheck.call_deferred()
+
+func _finish_recheck() -> void:
+	_refresh_pending = false
+	if visible and not _busy:
+		_refresh(false)
