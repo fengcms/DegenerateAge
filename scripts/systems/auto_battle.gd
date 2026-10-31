@@ -65,6 +65,7 @@ const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
 const LOOT_ARRIVE_EPS := 6.0           # 现有手动点击行走也使用这个到达阈值；不可改成拾取半径
 const STOP_GAP := 8.0                  # 攻击范围内提前停步（px，避免与目标互相顶开）
+const ROAM_REJOIN_PX := 760.0          # 长距离追击后重新接续路线的世界像素阈值
 const ROAM_GRID_STEP := 12               # 巡游采样间隔（格），往返覆盖地图有效区域
 const ROAM_ARRIVE_EPS := 12.0
 ## 喝药阈值兜底值（3.14 设置项）。正式取值一律读 `GameState.settings.potionThreshold`，
@@ -125,6 +126,8 @@ var _roam_builder: AutoRoamPlan
 var _roam_primary_count := 0
 var _roam_fill_active := false
 var _roam_blocks: Array = []
+var _roam_resume_pending := false
+var _roam_departure := Vector2.ZERO
 var _roam_index: int = -1
 var _roam_built := false
 var _roam_ground: IsoGround
@@ -170,10 +173,12 @@ func _on_auto_state_changed(battle: bool, _pickup: bool) -> void:
 		_sticky_target = null
 		_sticky_left = 0.0
 		_roam_index = -1
+		_roam_resume_pending = false
 	else:
 		_target = null
 		_loot = null
 		_roam_index = -1
+		_roam_resume_pending = false
 
 ## 切图/读档后丢弃旧世界的目标、走位与攻击意图；保留 F/G 开关。
 func reset_after_travel() -> void:
@@ -186,6 +191,7 @@ func reset_after_travel() -> void:
 	_sticky_target = null
 	_sticky_left = 0.0
 	_roam_index = -1
+	_roam_resume_pending = false
 	_roam_points.clear()
 	_roam_built = false
 	_roam_ground = null
@@ -292,6 +298,7 @@ func begin_manual_override() -> void:
 	_sticky_target = null
 	_sticky_left = 0.0
 	_roam_index = -1
+	_roam_resume_pending = false
 	_manual_t = MANUAL_RESUME_DELAY if GameState.auto_battle_on else 0.0
 	if GameState.auto_battle_on:
 		_set_state(State.MANUAL_OVERRIDE, Localization.tr_key("ui.auto.manual_wait"))
@@ -354,7 +361,7 @@ func _tick(delta: float) -> void:
 			_search_t = SEARCH_INTERVAL
 			_target = _find_target()
 			if _target != null:
-				_roam_index = -1
+				_interrupt_roam()
 				# A new target must not inherit the previous roam/target direction.
 				_repath_t = 0.0
 				_player.set_auto_move(Vector2.ZERO)
@@ -808,6 +815,7 @@ func _tick_loot() -> bool:
 	if d <= GroundItem.PICKUP_RANGE_PX:
 		_loot = null
 		return false # 保护期内也不阻塞战斗；GroundItem 会在到期后自行收取
+	_interrupt_roam()
 	_set_state(State.PATH_TO_LOOT)
 	var direction := _direction_to((_loot as Node2D).global_position)
 	_player.set_auto_move(direction)
@@ -833,6 +841,8 @@ func _tick_roam(delta: float) -> void:
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.SEARCH_TARGET)
 		return
+	if _roam_resume_pending:
+		_resume_roam()
 	if _roam_index < 0:
 		var nearest := INF
 		for i in range(_roam_primary_count):
@@ -873,6 +883,29 @@ func _cave_ground() -> IsoGround:
 	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	return ground if ground != null and ground.cave != null else null
 
+## 战斗或拾取打断时只记一次出发点，保留巡游游标；不复用旧移动方向。
+func _interrupt_roam() -> void:
+	if _roam_index >= 0 and not _roam_resume_pending:
+		_roam_resume_pending = true
+		_roam_departure = _player.global_position
+
+## 短距离打断原点接续；长追击按前进代价选择接续点，避免跨图回头。
+func _resume_roam() -> void:
+	_roam_resume_pending = false
+	if _roam_index >= 0 and _player.global_position.distance_to(_roam_departure) > ROAM_REJOIN_PX:
+		var count := _roam_points.size() if _roam_fill_active else _roam_primary_count
+		var best := _roam_index
+		var score := INF
+		for offset in range(count):
+			var candidate := (_roam_index + offset) % count
+			var value := _player.global_position.distance_to(_roam_points[candidate]) + offset * Iso.TILE_W
+			if value < score:
+				score = value
+				best = candidate
+		_roam_index = best
+	_cave_nav.clear()
+	_reset_roam_progress()
+
 ## 候选仅查缓存连通分量，不建立A*路线。
 func _route_reachable(point: Vector2) -> bool:
 	var ground := _cave_ground()
@@ -891,6 +924,7 @@ func _build_roam_points() -> void:
 	var origin_cell := Vector2i(Iso.world_to_grid(_player.global_position).round())
 	_roam_component = ground.cave.component_at(origin_cell) if ground.cave != null else 0
 	_roam_index = -1
+	_roam_resume_pending = false
 	_roam_builder = AutoRoamPlan.new(ground, origin_cell, ROAM_GRID_STEP)
 	_roam_primary_count = 0
 	_roam_blocks.clear()
