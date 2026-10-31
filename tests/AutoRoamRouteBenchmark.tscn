@@ -1,0 +1,4 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://tests/auto_roam_route_benchmark.gd" id="1"]
+[node name="AutoRoamRouteBenchmark" type="Node"]
+script = ExtResource("1")

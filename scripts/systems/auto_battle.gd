@@ -753,6 +753,9 @@ func _find_target() -> Node:
 		if not _player.valid_target(e) or not e.is_visible_in_tree():
 			continue
 		var d := _player.global_position.distance_to((e as Node2D).global_position)
+		# 已有更近的合格目标时不再做迷雾/连通性查询，仍保留等距低血量判据。
+		if d > best_dist + 0.001:
+			continue
 		if not rect.has_point(e.get_global_transform_with_canvas().origin):
 			if d > OFFSCREEN_SEARCH_PX or not Fog.is_explored(GameState.current_map, Vector2i(Iso.world_to_grid(e.global_position).round())):
 				continue
@@ -762,11 +765,11 @@ func _find_target() -> Node:
 			var tpl = e.get("template")
 			if tpl is Dictionary and String(tpl.get("kind", "normal")) == "boss":
 				continue
-		if not _route_reachable((e as Node2D).global_position):
-			continue
 		var hp_v = e.get("hp")           # Node.get 只接受 1 个参数（无默认值重载）
 		var hp := float(hp_v) if hp_v != null else 0.0
 		if d < best_dist - 0.001 or (absf(d - best_dist) <= 0.001 and hp < best_hp):
+			if not _route_reachable((e as Node2D).global_position):
+				continue
 			best_dist = d
 			best_hp = hp
 			best = e

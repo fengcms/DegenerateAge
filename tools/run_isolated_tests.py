@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 103 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 106 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -34,6 +34,7 @@ DEFAULT_TESTS = [
     "BluePotionDropTest",
     # 工程 69 §6.3 的有牙用例：绕障追击期间「与目标的直线距离不降、但角色在沿路径推进」不得拉黑改选。
     "CaveAutoBattleTest",
+    "AutoSearchRangeTest", "AutoRoamPlanTest", "AutoRoamResumeTest",
     "CaveNavigationTest", "ReviewRegressionTest", "SaveTransferTest",
     "BossReviewTest", "BossActionTest", "BossSkillVisualTest", "QuestRewardPlanTest", "MapGateTest",
     "MapRouteOverlayTest", "MinimapViewportTest",
@@ -360,8 +361,17 @@ def main() -> int:
                     continue
                 scene = f"res://tests/{test}.tscn"
                 # Async physics tests must finish, not silently hit a render-frame cap.
-                ok, output = run(project, ["--scene", scene, "--max-fps", "120",
-                                           "--quit-after", "14400"], timeout=240, rendered=args.rendered)
+                if test == "AutoRoamSoakTest":
+                    # 无头长跑推进30分钟游戏时间；窗口短跑按真实墙钟运行三图各30秒。
+                    if args.rendered:
+                        ok, output = run(project, ["--scene", scene, "--max-fps", "60", "--quit-after", "12000",
+                                                   "--", "--seconds-per-map=30"], timeout=180, rendered=True)
+                    else:
+                        ok, output = run(project, ["--scene", scene, "--fixed-fps", "60", "--max-fps", "0",
+                                                   "--quit-after", "125000"], timeout=900)
+                else:
+                    ok, output = run(project, ["--scene", scene, "--max-fps", "120",
+                                               "--quit-after", "14400"], timeout=240, rendered=args.rendered)
                 completed = has_completion_marker(output)
                 ok = ok and completed
                 if not completed:

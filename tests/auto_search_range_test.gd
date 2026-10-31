@@ -53,7 +53,7 @@ func _ready() -> void:
 	enemy.position = player.global_position + Vector2(761, 0)
 	Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(enemy.global_position).round()))
 	check(pilot._find_target() == null, "屏外范围不超过760像素")
-	camera.zoom = Vector2(0.5, 0.5)
+	camera.zoom = Vector2(0.8, 0.8)
 	camera.force_update_scroll()
 	check(world.visible_enemies().has(enemy) and pilot._find_target() == enemy, "原可视远目标不被760裁掉")
 	camera.zoom = Vector2(2, 2)
@@ -69,5 +69,48 @@ func _ready() -> void:
 	check(pilot._find_target() == null, "隐藏节点不参与搜索")
 	boss.queue_free()
 	await get_tree().process_frame
+	for i in range(100):
+		var point := player.global_position + Vector2.from_angle(i * TAU / 100.0) * (250.0 + (i % 6) * 100.0)
+		spawn(world, point)
+		Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(point).round()))
+	for scale in [0.8, 1.0, 2.0]:
+		camera.zoom = Vector2(scale, scale)
+		camera.force_update_scroll()
+		var old_us: Array[float] = []
+		var new_us: Array[float] = []
+		for i in range(120):
+			var tick := Time.get_ticks_usec()
+			_legacy_find(world, player, pilot)
+			old_us.append(float(Time.get_ticks_usec() - tick))
+			tick = Time.get_ticks_usec()
+			pilot._find_target()
+			new_us.append(float(Time.get_ticks_usec() - tick))
+		check(pilot._find_target() != null, "三档倍率均能选怪")
+		old_us.sort()
+		new_us.sort()
+		print("[PERF] search100 scale=", scale, " old_us=", _percentiles(old_us), " new_us=", _percentiles(new_us))
 	print("[AutoSearchRangeTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 冻结对象集对照改造前的可视收集/排序/筛选入口；不参与正式玩法。
+func _legacy_find(world: Node, player: PlayerCharacter, pilot: AutoBattle) -> Node:
+	var best: Node = null
+	var distance := INF
+	var hp := INF
+	for enemy in world.visible_enemies():
+		if pilot._is_blacklisted(enemy):
+			continue
+		if not GameState.settings.allowBoss and enemy.template.get("kind", "normal") == "boss":
+			continue
+		if not pilot._route_reachable(enemy.global_position):
+			continue
+		var d := player.global_position.distance_to(enemy.global_position)
+		if d < distance - 0.001 or (absf(d - distance) <= 0.001 and enemy.hp < hp):
+			best = enemy
+			distance = d
+			hp = enemy.hp
+	return best
+
+## 输出微秒P50/P95/P99/峰值，不把无头搜索CPU时间当成整帧表现。
+func _percentiles(values: Array[float]) -> Array:
+	return [values[int(values.size() * 0.5)], values[int(values.size() * 0.95)], values[int(values.size() * 0.99)], values[-1]]
