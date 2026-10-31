@@ -1,0 +1,21 @@
+{
+  "minMonsterLevel": 61,
+  "graceLevels": 20,
+  "halfDamageEveryExtraLevels": 20,
+  "weights": {
+    "weapon": 0.25,
+    "armor": 0.10,
+    "shield": 0.10,
+    "helmet": 0.08,
+    "shoes": 0.07,
+    "necklace": 0.08,
+    "bracer_1": 0.04,
+    "bracer_2": 0.04,
+    "knee_1": 0.04,
+    "knee_2": 0.04,
+    "bracelet_1": 0.04,
+    "bracelet_2": 0.04,
+    "ring_1": 0.04,
+    "ring_2": 0.04
+  }
+}

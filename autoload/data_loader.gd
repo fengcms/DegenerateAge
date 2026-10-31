@@ -27,6 +27,7 @@ const TABLES := {
 	"runes": "runes.json",
 	"warehouse": "warehouse.json",
 	"bossVisuals": "bossVisuals.json",
+	"equipmentGap": "equipmentGap.json",
 	"exchange": "exchange.json",
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",
@@ -578,6 +579,7 @@ func validate_all() -> Array[String]:
 	report.append_array(_validate_sellable_prices())
 	report.append_array(_validate_exchange())
 	report.append_array(BossSkillVisual.validate_config(tables.get("bossVisuals")))
+	report.append_array(EquipmentGap.validate_config(tables.get("equipmentGap")))
 	report.append_array(RuneSynthesis.validate_config(Warehouse.config()))
 	report.append_array(_validate_upgrade())
 	report.append_array(_validate_endgame())
