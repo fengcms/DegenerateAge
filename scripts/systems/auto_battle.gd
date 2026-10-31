@@ -45,6 +45,7 @@ enum State {
 }
 
 # ---- 节流与阈值（初始参数，试玩校准）----
+const OFFSCREEN_SEARCH_PX := 760.0   # 已探索屏外候选范围（世界像素），不随镜头倍率改变
 const SEARCH_INTERVAL := 0.35          # 搜怪节流（s）：无目标待机时不得每帧搜索
 const REPATH_INTERVAL := 0.25          # 接近方向重算节流（s）
 const STUCK_INTERVAL := 0.3            # 卡住检测间隔（s）
@@ -713,7 +714,7 @@ func _try_drink(kind: String) -> bool:
 
 # ---- 目标搜索 ----
 
-## 当前画面可见区域内搜索敌人（3.14）。排除 Boss（除非设置允许）、黑名单目标。
+## 自动搜索保留可视目标，额外接纳760世界像素内已探索的屏外目标；不改变Tab范围。
 ## M1 目标优先级：距离最近；同距离取血量更低者（「优先低代价 / 弱目标」的最小实现）。
 ## P2：「原目标仍有效且可达」这一档**优先于**「距离最近」——先回到原来那只，再谈就近（工程文档 69 §5）。
 func _find_target() -> Node:
@@ -733,11 +734,16 @@ func _find_target() -> Node:
 	var best_dist := INF
 	var best_hp := INF
 	var world := get_tree().get_first_node_in_group("map_world")
-	if world == null or not world.has_method("visible_enemies"):
+	if world == null:
 		return null
-	for e in world.visible_enemies():
-		if not is_instance_valid(e) or e.get("is_dead") == true or not (e is Node2D):
+	var rect := get_viewport().get_visible_rect()
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not _player.valid_target(e) or not e.is_visible_in_tree():
 			continue
+		var d := _player.global_position.distance_to((e as Node2D).global_position)
+		if not rect.has_point(e.get_global_transform_with_canvas().origin):
+			if d > OFFSCREEN_SEARCH_PX or not Fog.is_explored(GameState.current_map, Vector2i(Iso.world_to_grid(e.global_position).round())):
+				continue
 		if _is_blacklisted(e):
 			continue
 		if not allow_boss:
@@ -746,7 +752,6 @@ func _find_target() -> Node:
 				continue
 		if not _route_reachable((e as Node2D).global_position):
 			continue
-		var d := _player.global_position.distance_to((e as Node2D).global_position)
 		var hp_v = e.get("hp")           # Node.get 只接受 1 个参数（无默认值重载）
 		var hp := float(hp_v) if hp_v != null else 0.0
 		if d < best_dist - 0.001 or (absf(d - best_dist) <= 0.001 and hp < best_hp):
