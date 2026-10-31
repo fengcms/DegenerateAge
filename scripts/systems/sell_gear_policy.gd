@@ -110,7 +110,7 @@ static func rank_context(inventory: Array, player_level: int, equipment: Diction
 			continue
 		if not groups.has(kind):
 			groups[kind] = []
-		groups[kind].append(_rank_row(item, i))
+		groups[kind].append(_rank_row(item, i, EquipmentGap.upgrade_priority(item,equipment,player_level)))
 	var keep := {}
 	for kind in groups.keys():
 		var rows: Array = groups[kind]
@@ -120,8 +120,8 @@ static func rank_context(inventory: Array, player_level: int, equipment: Diction
 	return {"ready": true, "keep": keep, "groups": groups}
 
 ## 排位用的最小记录：背包格序 + 评分 + 实例 ID（+ 自动出售时附原物品用于驱逐）。
-static func _rank_row(item: Dictionary, bag_index: int) -> Dictionary:
-	return {"index": bag_index, "score": Equipment.score(item),
+static func _rank_row(item: Dictionary, bag_index: int, gap_priority: int = 0) -> Dictionary:
+	return {"gap_priority":gap_priority, "index": bag_index, "score": Equipment.score(item),
 		"id": String(item.get("instanceId", "")), "item": item}
 
 ## 🔴 排位必须是**全序**：评分降序 + 背包格序升序。
@@ -132,6 +132,10 @@ static func _rank_row(item: Dictionary, bag_index: int) -> Dictionary:
 ##   任一处漏传就会整行翻转（工程 102 R2）。
 static func _sort_rank(rows: Array) -> void:
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var ga := int(a.get("gap_priority",0))
+		var gb := int(b.get("gap_priority",0))
+		if ga != gb:
+			return ga > gb
 		var left := float(a.get("score", 0.0))
 		var right := float(b.get("score", 0.0))
 		if not is_equal_approx(left, right):
@@ -167,7 +171,7 @@ static func _judge(item: Dictionary, player_level: int, equipment: Dictionary,
 	if not sellable and not favorite:
 		reasons.append("unsellable")
 	# V1：空槽（评分基准 0）不计入保护 —— 该槽类还有空位时不再整类卖不掉。
-	var stronger := not bool(preview.get("empty", true)) and bool(preview.get("score_increase", false))
+	var stronger := not bool(preview.get("empty", true)) and (bool(preview.get("score_increase", false)) or EquipmentGap.upgrade_priority(item,equipment,player_level)>0)
 	var quota_on := bool(quota.get("ready", false))
 	var keep: Dictionary = quota.get("keep", {})
 	# 工程 102：「评分可提升」从**绝对保护**改成**相对排位** —— 只有同部位排名前 N 的候选
@@ -279,7 +283,7 @@ static func auto_sell(item: Dictionary, player_level: int, equipment: Dictionary
 	# 新件还没入包，必须和「已在背包里的更优候选 + 自己」一起排，否则永远判成「额度没满」。
 	var candidates: Array = (quota.get("groups", {}) as Dictionary).get(kind, [])
 	var merged := candidates.duplicate()
-	var mine := _rank_row(item, inventory.size())   # 格序取 `size()` ⇒ 同分时新件排最后
+	var mine := _rank_row(item, inventory.size(), EquipmentGap.upgrade_priority(item,equipment,player_level))   # 格序取 `size()` ⇒ 同分时新件排最后
 	merged.append(mine)
 	_sort_rank(merged)
 	var rank := 0

@@ -38,6 +38,7 @@ const COL_AUTO_OVERRIDE := Color("8fd07a")
 @onready var _quest_list: VBoxContainer = %QuestList
 
 var _target: Node = null
+var _equipment_gap_hint: Label
 var _target_hint: Label
 var _auto_battle: bool = false
 var _auto_pickup: bool = false
@@ -47,6 +48,13 @@ var _panel_buttons: Array[Button] = []
 
 func _ready() -> void:
 	_build_target_hint()
+	_equipment_gap_hint = Label.new()
+	_equipment_gap_hint.position = Vector2(0,70)
+	_equipment_gap_hint.size = Vector2(280,36)
+	_equipment_gap_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_equipment_gap_hint.add_theme_font_size_override("font_size",11)
+	_equipment_gap_hint.add_theme_color_override("font_color",Color("e8bc77"))
+	$TargetPanel.add_child(_equipment_gap_hint)
 	resized.connect(_layout_bottom_hud)
 	EventBus.player_hp_changed.connect(_on_hp)
 	EventBus.player_mp_changed.connect(_on_mp)
@@ -338,14 +346,19 @@ func _update_target() -> void:
 	var valid: bool = is_instance_valid(_target) and not _target.is_queued_for_deletion() and _target.get("is_dead") != true
 	# Boss 由顶部专用血条展示，同一目标无需再占用普通目标卡。
 	$TargetPanel.visible = valid and not _target_is_boss(_target)
+	var ctx := EquipmentGap.current_context() if valid and not _target is Npc else {}
+	var level := EquipmentGap.target_level(_target) if valid and not _target is Npc else 0
+	_equipment_gap_hint.text = EquipmentGap.hint(ctx,level) if valid and not _target is Npc else ""
+	_equipment_gap_hint.visible = not _equipment_gap_hint.text.is_empty()
 	_target_hint.visible = valid and _target is Npc
 	_target_hp.visible = valid and not _target is Npc
 	if valid and _target is Npc:
 		_target_name.text = (_target as Npc).npc_name
+		_target_name.tooltip_text = _target_name.text
 		return
 	if valid:
 		_target_name.text = String(_target.get("display_name"))
-		_target_name.tooltip_text = _target_name.text
+		_target_name.tooltip_text = _target_name.text + "\n" + EquipmentGap.details(ctx,level)
 		_target_hp.max_value = maxi(1, int(_target.get("max_hp")))
 		_target_hp.value = int(_target.get("hp"))
 		_target_hp.tooltip_text = "%d / %d" % [int(_target.get("hp")), int(_target.get("max_hp"))]

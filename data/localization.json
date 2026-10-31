@@ -166,7 +166,7 @@
   "ui.sale_preview.preset_reset": "已按新预设重新勾选，本次手动修改已清除。",
   "ui.sale_preview.reason_favorite": "已收藏，先取消收藏才能出售",
   "ui.sale_preview.reason_unsellable": "不可出售",
-  "ui.sale_preview.reason_upgrade": "评分可提升",
+  "ui.sale_preview.reason_upgrade": "评分或装备等级可提升",
   "ui.sale_preview.score_delta": "装备评分提升 +%d",
   "ui.sale_preview.reason_starred": "已升星",
   "ui.sale_preview.reason_quality": "品质高于预设",
@@ -1004,5 +1004,8 @@
   "ui.batch.done": "批量合成%d次：消耗%d件，获得%d件紫装，余数%d件",
   "ui.batch.progress": "准备随机产物 %d / %d，可取消；尚未扣除材料。",
   "ui.batch.busy": "批量合成正在准备，请勿重复提交。",
-  "ui.batch.protected": "另保护收藏 %d 件，手动排除 %d 件。"
+  "ui.batch.protected": "另保护收藏 %d 件，手动排除 %d 件。",
+  "ui.equipment_gap.hint": "跨级：目标%d级/武器%d级 · 伤害保留%.1f%% · 建议≥%d级",
+  "ui.equipment_gap.details": "目标%d级 · 主武器%d级\n装备超额差%.2f级，伤害保留%.1f%%\n20级内不额外衰减，建议各部位提升至%d级以上。",
+  "ui.equipment_gap.preview": "跨级预览：%s · 目标%d级\n伤害保留 %.1f%% → %.1f%%\n可拖到此槽替换。"
 }

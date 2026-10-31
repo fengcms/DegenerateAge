@@ -514,6 +514,10 @@ func _populate_equipment_tooltip(row: GridContainer) -> void:
 			if bool(preview.lower_quality):
 				text += "\n" + Localization.tr_key("ui.equip_tip.lower_quality")
 		text += "\n" + Localization.tr_key("ui.equip_tip.score_note")
+		if can_wear:
+			var gap := EquipmentGap.comparison_hint(item,GameState.equipment,EquipmentGap.reference_level(),int(GameState.player.level))
+			if not gap.is_empty():
+				text += "\n" + gap
 		hint.text = text
 		column.add_child(hint)
 		if not can_wear and not score_increase:

@@ -3,6 +3,7 @@ extends Control
 ## 展示形象随当前武器的阶段形象更换（CharacterLook）；头像固定一张，不由本面板维护。
 
 var _slots: Dictionary = {}
+var _gap_hint: Label
 var _stats: Label
 var _portrait: TextureRect
 var _look_id := ""
@@ -13,6 +14,8 @@ var _last_slot_id := ""
 var _last_slot_click_ms := 0
 
 func _ready() -> void:
+	# 切换目标时刷新跨级参考等级，不增加逐帧轮询。
+	EventBus.target_changed.connect(_on_gap_target_changed)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
@@ -170,6 +173,12 @@ func _build() -> void:
 	_stats.add_theme_constant_override("line_spacing", 5)
 	_stats.add_theme_color_override("font_color", PanelChrome.TEXT)
 	stats_card.add_child(_stats)
+	_gap_hint = Label.new()
+	_gap_hint.custom_minimum_size.x = 245
+	_gap_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_gap_hint.add_theme_font_size_override("font_size",11)
+	_gap_hint.add_theme_color_override("font_color",Color("e8bc77"))
+	stats_card.add_child(_gap_hint)
 
 func _refresh() -> void:
 	if _title == null:
@@ -178,6 +187,8 @@ func _refresh() -> void:
 	_title.text = PanelChrome.title_text("人物 · %s" % player_name)
 	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
 	_apply_look()
+	_gap_hint.text = EquipmentGap.details(EquipmentGap.current_context(),EquipmentGap.reference_level())
+	_gap_hint.visible = not _gap_hint.text.is_empty()
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
@@ -305,3 +316,8 @@ func _equipment_tooltip(item: Dictionary) -> String:
 	# 工程 78 Q3：与背包卡片信息对等 —— 身上装备也带评分行（复用 ui.equip_tip.score）。
 	lines.append(Localization.tr_key("ui.equip_tip.score", [Equipment.score(item)]))
 	return "\n".join(PackedStringArray(lines))
+
+## 人物面板开启时才随锁定目标刷新参考等级，隐藏时不额外重建整张面板。
+func _on_gap_target_changed(_target: Node) -> void:
+	if visible:
+		_refresh()

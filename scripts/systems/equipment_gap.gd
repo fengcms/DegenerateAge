@@ -91,3 +91,60 @@ static func validate_config(cfg: Variant) -> Array[String]:
 	if not is_equal_approx(sum,1.0):
 		errors.append("[equipmentGap] 权重和必须为1")
 	return errors
+
+## 目标旁的短提示，只在确有装备压制时显示；不改变面板总攻击。
+static func hint(ctx: Dictionary, level: int) -> String:
+	var state := summary(ctx,level)
+	return Localization.tr_key("ui.equipment_gap.hint",[level,int(state.weapon),float(state.factor)*100.0,int(state.recommended)]) if float(state.factor)<0.999999 else ""
+
+## 详细提示公开目标与武器等级，避免把人物等级误认为装备等级。
+static func details(ctx: Dictionary, level: int) -> String:
+	var state := summary(ctx,level)
+	return Localization.tr_key("ui.equipment_gap.details",[level,int(state.weapon),float(state.excess),float(state.factor)*100.0,int(state.recommended)]) if float(state.factor)<0.999999 else ""
+
+## 寻找能补足当前等级装备差的同类型槽；只读穿戴等级，双槽允许手动选较旧的一侧。
+static func upgrade_slot(item: Dictionary, equipment: Dictionary, reference_level: int, wear_level: int = -1) -> String:
+	var cfg: Dictionary = DataLoader.get_table("equipmentGap")
+	if reference_level<int(cfg.minMonsterLevel) or not Equipment.meets_level(item,wear_level if wear_level>=0 else reference_level):
+		return ""
+	var best := ""
+	var gain := 0
+	var candidate := Equipment.level_req(item)
+	for slot in Equipment.slots_for_kind(Equipment.item_kind(item)):
+		var worn: Variant = equipment.get(slot)
+		if not worn is Dictionary:
+			continue
+		var old := Equipment.level_req(worn)
+		var value := mini(candidate, reference_level-int(cfg.graceLevels))-old
+		if value>gain:
+			gain=value
+			best=slot
+	return best
+
+## 出售候选优先按可补足的等级差排序，仍复用原有每部位有限额度，不无限保留。
+static func upgrade_priority(item: Dictionary, equipment: Dictionary, reference_level: int) -> int:
+	var slot := upgrade_slot(item,equipment,reference_level)
+	if slot.is_empty():
+		return 0
+	var cfg: Dictionary = DataLoader.get_table("equipmentGap")
+	return mini(Equipment.level_req(item),reference_level-int(cfg.graceLevels))-Equipment.level_req(equipment[slot])
+
+## 预览默认取真实锁定目标等级，无有效战斗目标时明确按人物当前等级作参考。
+static func reference_level() -> int:
+	var player := GameState.get_tree().get_first_node_in_group("player")
+	if player != null:
+		var target: Variant = player.get("locked_target")
+		if is_instance_valid(target):
+			var level := target_level(target)
+			if level > 0:
+				return level
+	return int(GameState.player.level)
+
+## 背包原生与结构化提示共用短行，避免对比弹窗被一条长预览撑出视口。
+static func comparison_hint(item: Dictionary, equipment: Dictionary, reference: int, wear_level: int) -> String:
+	var slot := upgrade_slot(item,equipment,reference,wear_level)
+	if slot.is_empty():
+		return ""
+	var before := summary(current_context(),reference)
+	var after := preview(equipment,item,slot,reference)
+	return Localization.tr_key("ui.equipment_gap.preview",[Equipment.slot_label(slot),reference,float(before.factor)*100.0,float(after.factor)*100.0])

@@ -435,6 +435,10 @@ func _bag_tooltip(item: Dictionary) -> String:
 			[Durability.current(item), Durability.max_durability()]))
 	if Durability.is_broken(item):
 		lines.append(Localization.tr_key("ui.durability.broken"))
+	if ok:
+		var gap_text := EquipmentGap.comparison_hint(item,GameState.equipment,EquipmentGap.reference_level(),level)
+		if not gap_text.is_empty():
+			lines.append(gap_text)
 	lines.append_array(ItemUtil.attr_lines(item))
 	lines.append("")
 	lines.append((Localization.tr_key("ui.inventory_panel.p025") if _character_visible() else Localization.tr_key("ui.inventory_panel.p026")) if ok else Localization.tr_key("ui.inventory_panel.p027"))

@@ -22,8 +22,8 @@ const FADE_TIME := 0.3            # 淡出时长（s）
 const BAR_W := 480.0
 const BAR_H := 18.0
 const TOP_Y := 22.0
-## 条间距：一条血条 = 18px 条体 + 名称行，40px 足够不叠字。
-const PITCH := 40.0
+## 条间距：一条血条 = 18px 条体 + 名称行，56px 包含额外的装备跨级提示行。
+const PITCH := 56.0
 ## 同时最多几条（同区 2 只 + 「刚打死一只、旁边又来一只」的过渡）。
 const MAX_BARS := 3
 ## 三阶段名（对应 monsters.json 的 bossSkill.phases 0/1/2，创意 07 §4）。
@@ -43,6 +43,8 @@ var _bars: Array[Dictionary] = []
 var _dying := false
 
 func _ready() -> void:
+	EventBus.equipment_changed.connect(_refresh_gap_rows)
+	EventBus.data_loaded.connect(_refresh_gap_rows)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	EventBus.boss_hp_changed.connect(_on_boss_hp)
@@ -71,6 +73,8 @@ func _process(delta: float) -> void:
 
 func _on_boss_hp(boss_id: int, boss_name: String, hp: int, max_hp: int, phase: int) -> void:
 	var index := _index_of(boss_id)
+	var monster := instance_from_id(boss_id) if is_instance_id_valid(boss_id) else null
+	var level := EquipmentGap.target_level(monster) if monster is Node else 0
 	if hp <= 0:
 		if index < 0:
 			return
@@ -106,6 +110,11 @@ func _on_boss_hp(boss_id: int, boss_name: String, hp: int, max_hp: int, phase: i
 			"alpha": 1.0,
 		})
 		_evict_overflow()
+	if level > 0:
+		var updated := _index_of(boss_id)
+		if updated >= 0:
+			_bars[updated]["level"] = level
+	_refresh_gap_rows()
 	_sync_visibility()
 	queue_redraw()
 
@@ -194,8 +203,18 @@ func _draw_one(left: float, top: float, entry: Dictionary) -> void:
 	draw_string(MONO_FONT, Vector2(left + 8.0, top + BAR_H - 4.0),
 		"%d / %d" % [int(entry["hp"]), int(entry["max_hp"])],
 		HORIZONTAL_ALIGNMENT_LEFT, BAR_W - 16.0, 11, hp_color)
+	var gap_text := String(entry.get("gap_text",""))
+	if not gap_text.is_empty():
+		draw_string(MONO_FONT, Vector2(left,top+BAR_H+13.0), gap_text, HORIZONTAL_ALIGNMENT_CENTER,BAR_W,11,Color(0.96,0.75,0.45,alpha))
 	var phase_color := COL_PHASE
 	phase_color.a *= alpha
 	var phase_name := Localization.tr_key(PHASE_KEYS[clampi(int(entry["phase"]), 0, PHASE_KEYS.size() - 1)])
 	draw_string(MONO_FONT, Vector2(left, top + BAR_H - 4.0), phase_name,
 		HORIZONTAL_ALIGNMENT_CENTER, BAR_W, 11, phase_color)
+
+## 每次血量/装备/规则事件刷新最多三条提示，不在绘制或逐帧扫描装备属性。
+func _refresh_gap_rows() -> void:
+	var ctx := EquipmentGap.current_context()
+	for entry in _bars:
+		entry["gap_text"] = EquipmentGap.hint(ctx,int(entry.get("level",0)))
+	queue_redraw()
