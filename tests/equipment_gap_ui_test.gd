@@ -58,15 +58,21 @@ func _ready() -> void:
 	main.get_node("UI").add_child(source)
 	var card:=source._make_custom_tooltip("fallback") as Control
 	check(text_of(card).contains("跨级预览"),"实际结构化对比卡也显示预览")
+	main.get_node("UI").add_child(card)
+	boss.level=450
+	player.select_target(boss,false)
+	check(not text_of(card).contains("跨级预览"),"悬停时切到低级目标即时清除旧预览")
+	boss.level=517
+	player.select_target(boss,false)
+	check(text_of(card).contains("跨级预览"),"切回高级目标重新显示实际影响")
 	if DisplayServer.get_name()!="headless":
 		source.hide()
-		main.get_node("UI").add_child(card)
 		card.position=Vector2(440,150)
 		for frame in range(3):
 			await get_tree().process_frame
 		RenderingServer.force_draw(false)
 		get_viewport().get_texture().get_image().save_png("/tmp/equipment_gap_hint.png")
-		main.get_node("UI").remove_child(card)
+	main.get_node("UI").remove_child(card)
 	card.free()
 	source.queue_free()
 	for slot in Equipment.SLOT_DEFS:

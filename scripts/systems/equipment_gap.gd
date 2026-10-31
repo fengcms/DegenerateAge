@@ -75,9 +75,10 @@ static func validate_config(cfg: Variant) -> Array[String]:
 		return ["[equipmentGap] 需要规则对象与weights"]
 	for key in ["minMonsterLevel","graceLevels","halfDamageEveryExtraLevels"]:
 		var n: Variant = cfg.get(key)
-		if not (n is int or n is float) or not is_finite(float(n)) or float(n)!=floor(float(n)) or float(n)<(0.0 if key=="graceLevels" else 1.0):
+		if not (n is int or n is float) or not is_finite(float(n)) or float(n)!=floor(float(n)) or float(n)>float(GameState.PLAYER_LEVEL_CAP) or float(n)<(0.0 if key=="graceLevels" else 1.0):
 			errors.append("[equipmentGap] 非法参数："+key)
-	if int(cfg.get("minMonsterLevel", 0)) < 61:
+	var minimum: Variant = cfg.get("minMonsterLevel")
+	if (minimum is int or minimum is float) and float(minimum) < 61.0:
 		errors.append("[equipmentGap] 不得影响前60级主线")
 	if cfg.weights.size()!=Equipment.SLOT_DEFS.size():
 		errors.append("[equipmentGap] 权重必须覆盖14槽")

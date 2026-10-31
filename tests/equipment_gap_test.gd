@@ -42,6 +42,10 @@ func _ready() -> void:
 	var bad: Dictionary=DataLoader.get_table("equipmentGap").duplicate(true)
 	bad.halfDamageEveryExtraLevels=0
 	check(not EquipmentGap.validate_config(bad).is_empty(),"拒绝除零")
+	bad.minMonsterLevel={}
+	check(not EquipmentGap.validate_config(bad).is_empty(),"异常类型由校验报告而不是转换崩溃")
+	bad.minMonsterLevel=1e30
+	check(not EquipmentGap.validate_config(bad).is_empty(),"拒绝整数溢出的配置")
 	trial=ctx(450)
 	for level in range(61,300):EquipmentGap.summary(trial,level)
 	check(trial.memo.size()<=64,"目标等级缓存有界")
@@ -51,5 +55,27 @@ func _ready() -> void:
 	var after:=EquipmentGap.current_context()
 	check(before.levels!=after.levels,"直接读档替换也识别等级变化，不依赖信号先后")
 	check(is_same(after,EquipmentGap.current_context()),"同签名复用上下文")
+	benchmark()
 	print("[EquipmentGapTest] ","全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 固定100目标×3段比较新增层CPU成本；真实攻击上限更低，此样本不代表整帧性能。
+func benchmark() -> void:
+	for slot in Equipment.SLOT_DEFS:
+		GameState.equipment[slot.id]={"kind":"equip","requiredLevel":450}
+	var states: Array[int]=[]
+	for enabled in [false,true]:
+		var rng:=RandomNumberGenerator.new()
+		rng.seed=8811
+		var samples: Array[float]=[]
+		for sample in range(120):
+			var start:=Time.get_ticks_usec()
+			var captured:=EquipmentGap.current_context() if enabled else {}
+			for i in range(300):
+				var result:=Combat.resolve(1000000.0,50000.0,1.4,0.07,2.1,4.0,rng)
+				if enabled:EquipmentGap.apply(result,captured,510+i%3)
+			samples.append((Time.get_ticks_usec()-start)/1000.0)
+		samples.sort()
+		states.append(rng.state)
+		print("[PERF] equipment_gap enabled=",enabled," targets100_hits3_ms=",[samples[60],samples[114],samples[118],samples[-1]])
+	check(states[0]==states[1],"新增层不改变真实Combat随机消耗")
