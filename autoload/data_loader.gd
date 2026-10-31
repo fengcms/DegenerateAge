@@ -26,6 +26,7 @@ const TABLES := {
 	"mounts": "mounts.json",
 	"runes": "runes.json",
 	"warehouse": "warehouse.json",
+	"bossVisuals": "bossVisuals.json",
 	"exchange": "exchange.json",
 	"miscItems": "miscItems.json",
 	"potions": "potions.json",

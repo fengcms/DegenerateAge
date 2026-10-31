@@ -24,6 +24,8 @@ extends RefCounted
 ##
 ## 状态全部自持（含首放 / 复刷倒计时），宿主只需每帧调用 [method update] 并转交伤害。
 
+signal visual_impact(geo: Dictionary)
+
 const MIN_LOCK := 1.0   # 公共动作锁（创意：≥1 秒）
 
 ## 等面积补偿：屏幕圆半径 r → 地面半径 r·√2（横向 1.414r、纵向 0.707r，椭圆面积 = πr²）。
@@ -184,6 +186,7 @@ func _begin_telegraph() -> void:
 
 ## 一次命中结算（每段 / 环击各一次）。随后按是否有后续段决定进入段间间隔或后摇。
 func _resolve_hit(on_hit: Callable) -> void:
+	visual_impact.emit(geometry().duplicate(true))
 	if move == Move.B:
 		on_hit.call(float(phase_b.get("coeff", 1.3)))
 		_t = float(phase_b.get("window", 2.0))
@@ -280,41 +283,9 @@ func _offset(item: Dictionary) -> Vector2:
 ## 绘制当前预警（在宿主 `_draw` 内调用）。
 ## 几何来自 `geometry()`（地面空间），这里只做 `Iso.from_ground` 投影 + `GroundFx` 落笔，
 ## 所以「画出来的形状」与「判定命中的范围」在数学上是同一个集合（工程 53 §4.2）。
-func draw(canvas: CanvasItem) -> void:
-	var geo := geometry()
-	if geo.is_empty():
-		return
-	var fill := Color(1.0, 0.18, 0.08, 0.24)
-	var edge := Color("ff7744")
-	match String(geo.kind):
-		"line":
-			# 地面矩形带 → 屏幕上是平行四边形，因此走 band_quad 而不是自拼四点。
-			var g_from: Vector2 = geo["from"]
-			var g_to: Vector2 = geo["to"]
-			var s_from: Vector2 = canvas.to_local(Iso.from_ground(g_from))
-			var s_to: Vector2 = canvas.to_local(Iso.from_ground(g_to))
-			if s_from.distance_to(s_to) < 0.001:
-				return
-			GroundFx.band_quad(canvas, s_from, s_to, float(geo.half), fill)
-			canvas.draw_line(s_from, s_to, edge, 2.0, true)
-		"circle":
-			var gc: Vector2 = geo["center"]
-			var cpos: Vector2 = canvas.to_local(Iso.from_ground(gc))
-			GroundFx.fill(canvas, cpos, float(geo.radius), fill)
-			GroundFx.outline(canvas, cpos, float(geo.radius), edge, 2.0, 48)
-		"fan":
-			var fc: Vector2 = geo["center"]
-			var fpos: Vector2 = canvas.to_local(Iso.from_ground(fc))
-			# 地面方向 → 屏幕方向（`from_ground` 的纵向压缩会把指向还原成设计意图）。
-			var sdir: Vector2 = Iso.from_ground(geo["dir"])
-			GroundFx.sector(canvas, fpos, sdir, float(geo.radius), float(geo.arc), fill, 12)
-			GroundFx.sector_outline(canvas, fpos, sdir, float(geo.radius), float(geo.arc),
-				edge, 2.0, 12)
-		"ring":
-			var rc: Vector2 = geo["center"]
-			var rpos: Vector2 = canvas.to_local(Iso.from_ground(rc))
-			# 环带切片填充；**不要**再在外圆之上叠一块近黑实心圆「挖洞」——
-			# Canvas 无法挖洞，那会在地面上留一块黑斑（工程 53 D-2）。
-			GroundFx.band(canvas, rpos, float(geo.inner), float(geo.radius), fill, 48)
-			GroundFx.outline(canvas, rpos, float(geo.radius), Color("ffb454"), 3.0, 48)
-			GroundFx.outline(canvas, rpos, float(geo.inner), Color("ffb454"), 2.0, 32)
+func warning_progress() -> float:
+	var total := float(phase_b.get("warn", 1.3)) if move == Move.B else warn_t
+	return clampf(1.0 - _t / maxf(0.001, total), 0.0, 1.0)
+
+func draw(canvas: Node2D, skin: Dictionary = {}) -> void:
+	BossSkillVisual.warning(canvas, geometry(), warning_progress(), skin)

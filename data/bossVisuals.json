@@ -1,0 +1,10 @@
+{
+  "styles": {
+    "corruption": {"color": "cf7994", "motif": "crack"},
+    "gate": {"color": "e1c48a", "motif": "metal"}
+  },
+  "bosses": {
+    "boss_corrupted_beast": "corruption",
+    "c3_boss01": "gate"
+  }
+}

@@ -170,6 +170,9 @@ var _stomp_center := Vector2.ZERO
 var _stomp_radius := 0.0
 ## E1：共享线 / 扇 / 圈预警动作组件（新结构 `bossSkill` 才装配；c1/c2 沿用既有实现）。
 var boss_action: BossAction = null
+var _boss_visual: BossSkillVisual
+var _boss_skin: Dictionary = {}
+var _stomp_total := 0.8
 var _boss_retreating := false
 var _boss_retreat_t := 0.0
 var suppress_rewards := false
@@ -265,6 +268,10 @@ func _load_template() -> void:
 		if not is_ranged and _kind() != "boss":
 			range_tiles = maxf(range_tiles, MELEE_RANGE_FLOOR)
 		attack_range_px = range_tiles * Iso.TILE_W
+	if _kind() == "boss":
+		_boss_visual = BossSkillVisual.new()
+		_boss_skin = BossSkillVisual.profile(monster_id)
+		EventBus.data_loaded.connect(_refresh_boss_skin)
 	_setup_boss_action()
 
 ## E1：仅**新结构** `bossSkill`（带 `shape`）装配共享动作组件；c1（phases）/ c2 沿用既有实现。
@@ -277,6 +284,7 @@ func _setup_boss_action() -> void:
 	if not (skill is Dictionary) or not (skill as Dictionary).has("shape"):
 		return
 	boss_action = BossAction.new(skill)
+	boss_action.visual_impact.connect(_boss_visual_impact)
 	leash_range = BOSS_ARENA_TILES * Iso.TILE_W
 
 ## 每次出生独立抽取，不修改共享模板，不重复抽取同一词缀。
@@ -382,6 +390,7 @@ func _update_boss(delta: float) -> bool:
 		queue_redraw()
 		if _stomp_remaining <= 0:
 			_stomp_pending = false
+			_boss_visual_impact(_stomp_geometry())
 			if sample_art is MonsterActorArt:
 				(sample_art as MonsterActorArt).finish_stomp()
 			var target := _get_player()
@@ -402,6 +411,7 @@ func _update_boss(delta: float) -> bool:
 				and Iso.ground_distance(global_position, player.global_position) <= _stomp_radius * BossAction.COMPENSATE:
 			_stomp_center = global_position
 			_stomp_remaining = float(phase.get("warnDelay", 0.8))
+			_stomp_total = _stomp_remaining
 			_stomp_cooldown = _stomp_remaining + float(phase.get("cooldown", attack_interval))
 			_stomp_pending = true
 			if sample_art is MonsterActorArt:
@@ -514,8 +524,12 @@ func _update_boss_action(delta: float) -> bool:
 	if player == null:
 		return false
 	var facing := player.global_position - global_position
-	return boss_action.update(delta, global_position, facing, true, hp_ratio(),
+	var was_warning := boss_action.is_warning()
+	var busy := boss_action.update(delta, global_position, facing, true, hp_ratio(),
 		func(c: float) -> void: _skill_hit(c))
+	if was_warning or boss_action.is_warning():
+		queue_redraw()
+	return busy
 
 ## 招式命中：以 `attack × coeff` 沿现有 Combat 公式结算，同段只由动作组件调用一次。
 ## 命中由**锁定几何**判定（预警结束后到点才算命中），不使用实时追踪位置。
@@ -653,6 +667,8 @@ func _announce_boss_hp() -> void:
 # ---- 物理 / 状态机 ----
 
 func _physics_process(delta: float) -> void:
+	if _boss_visual != null and _boss_visual.tick(delta):
+		queue_redraw()
 	# 白闪计时（受击反馈）
 	if _flash_t > 0.0:
 		_flash_t = maxf(0.0, _flash_t - delta)
@@ -699,6 +715,7 @@ func _enter(s: int) -> void:
 	if s == State.RETURN or s == State.IDLE:
 		_ranged_windup = 0.0
 		_chapter_boss_warn = ""
+		_clear_boss_visual()
 		if boss_action != null:
 			boss_action.cancel()
 	# E1：首次仇恨（非从普攻/追击折返）时重置首领动作计时（首放 4 秒）。
@@ -1037,6 +1054,7 @@ func _die() -> void:
 		if collision != null:
 			collision.set_deferred("disabled", true)
 	_stomp_pending = false
+	_clear_boss_visual()
 	_chapter_boss_warn = ""
 	_special_warn = ""
 	_charge_left = 0.0
@@ -1291,14 +1309,11 @@ func _draw() -> void:
 			var end := to_local(global_position + (_special_target - global_position).normalized() * 230.0)
 			draw_line(Vector2.ZERO, end, Color("ff9c53"), 22.0, true)
 	if _stomp_pending and not is_dead:
-		var center := to_local(_stomp_center)
-		var stomp_r := _stomp_radius * BossAction.COMPENSATE
-		GroundFx.fill(self, center, stomp_r, Color(1.0, 0.18, 0.05, 0.18))
-		GroundFx.outline(self, center, stomp_r, Color("ff623a"), 3.0, 64)
-		# 文案锚到椭圆的**上顶点**（纵向半轴 = 地面半径 × GROUND_SQUASH），否则会飘在圈上方 60px
-		draw_string(MONO_FONT, center + Vector2(-50, -stomp_r * Iso.GROUND_SQUASH - 8), Localization.tr_key("msg.monster.p005"), HORIZONTAL_ALIGNMENT_CENTER, 100, 16, Color("ffb65c"))
+		BossSkillVisual.warning(self, _stomp_geometry(), 1.0 - _stomp_remaining / maxf(0.001, _stomp_total), _boss_skin)
 	if boss_action != null and boss_action.is_warning() and not is_dead:
-		boss_action.draw(self)
+		boss_action.draw(self, _boss_skin)
+	if _boss_visual != null:
+		_boss_visual.draw_impacts(self, _boss_skin)
 	if selected and not is_dead:
 		GroundFx.outline(self, Vector2.ZERO, radius + 7.0, Color("6eebe6"), 2.5, 40)
 	if sample_art != null or dummy_art != null:
@@ -1471,3 +1486,24 @@ func _head_hp_size() -> Vector2:
 			return Vector2(100.0, 8.0)
 		_:
 			return Vector2(34.0, 4.0)
+
+func _stomp_geometry() -> Dictionary:
+	return {"kind": "circle", "space": "ground", "center": Iso.to_ground(_stomp_center), "radius": _stomp_radius * BossAction.COMPENSATE}
+
+func _boss_visual_impact(geo: Dictionary) -> void:
+	if _boss_visual == null:
+		return
+	_boss_visual.impact(geo)
+	queue_redraw()
+
+func _clear_boss_visual() -> void:
+	if _boss_visual != null:
+		_boss_visual.clear()
+
+func _exit_tree() -> void:
+	_clear_boss_visual()
+
+func _refresh_boss_skin() -> void:
+	_boss_skin = BossSkillVisual.profile(monster_id)
+	_clear_boss_visual()
+	queue_redraw()
