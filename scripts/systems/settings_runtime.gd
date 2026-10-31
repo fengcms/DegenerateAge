@@ -370,6 +370,7 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 	if camera == null or not is_instance_valid(camera):
 		return
 	camera.zoom = Vector2.ONE * map_scale_value()
+	StableFollowCamera.snap(camera)
 
 ## 地图显示倍率（0.8–2.0 × 显示适配系数）。缺键取默认 1.0，无需 schema 升级。
 ## M5-9c：最终值 = clamp(mapScale) × display_scale_factor()（自动模式下后者恒为 1.0）。

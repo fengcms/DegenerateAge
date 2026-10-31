@@ -27,8 +27,12 @@ func _process(_scaled_delta: float) -> void:
 func advance_follow(real_delta: float) -> void:
 	if not is_instance_valid(_target):
 		return
-	var alpha := 1.0 - exp(-FOLLOW_RATE * clampf(real_delta, 0.0, MAX_REAL_STEP))
-	_follow_position = _follow_position.lerp(_target.global_position, alpha)
+	if not _follow_position.is_finite() or not global_position.is_finite():
+		snap_to_target()
+		return
+	var dt := clampf(real_delta, 0.0, MAX_REAL_STEP) if is_finite(real_delta) else 0.0
+	var alpha := 1.0 - exp(-FOLLOW_RATE * dt)
+	_follow_position = _bounded(_follow_position).lerp(_bounded(_target.global_position), alpha)
 	global_position = _follow_position
 	force_update_scroll()
 
@@ -36,8 +40,33 @@ func advance_follow(real_delta: float) -> void:
 func snap_to_target() -> void:
 	if not is_instance_valid(_target):
 		return
-	_follow_position = _target.global_position
+	_follow_position = _bounded(_target.global_position)
 	global_position = _follow_position
 	_last_usec = Time.get_ticks_usec()
 	reset_smoothing()
 	force_update_scroll()
+
+## 缩放/窗口变化时同时约束内部状态；地图小于视口时居中，不产生反向clamp区间。
+func _bounded(point: Vector2) -> Vector2:
+	if not point.is_finite():
+		point = _follow_position if _follow_position.is_finite() else Vector2.ZERO
+	if not limit_enabled:
+		return point
+	var safe_zoom := zoom.abs()
+	if not safe_zoom.is_finite() or safe_zoom.x < 0.0001 or safe_zoom.y < 0.0001:
+		safe_zoom = Vector2.ONE
+	var half := get_viewport_rect().size / safe_zoom * 0.5
+	return Vector2(_axis_bound(point.x, limit_left, limit_right, half.x), _axis_bound(point.y, limit_top, limit_bottom, half.y))
+
+## 单轴镜头中心必须让整个视口留在矩形边界；超大视口按地图中心显示。
+static func _axis_bound(value: float, low: float, high: float, half: float) -> float:
+	return (low + high) * 0.5 if high - low <= half * 2.0 else clampf(value, low + half, high - half)
+
+## 正式传送/缩放与测试夹具共用的明确复位入口；普通Camera2D仍保持原语义。
+static func snap(camera: Camera2D) -> void:
+	if camera == null or not camera.is_inside_tree():
+		return
+	if camera is StableFollowCamera:
+		(camera as StableFollowCamera).snap_to_target()
+	else:
+		camera.reset_smoothing()

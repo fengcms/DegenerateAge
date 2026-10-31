@@ -41,6 +41,30 @@ func _ready() -> void:
 		target.position = Vector2(100, 0)
 		camera.advance_follow(delta)
 		check(camera.global_position.is_finite() and camera.global_position.x >= 0.0 and camera.global_position.x <= 100.0, "大步长无发散")
+	get_viewport().size = Vector2i(1280, 800)
+	camera.limit_left = -3840
+	camera.limit_right = 6400
+	camera.limit_top = -5104
+	camera.limit_bottom = 16
+	target.position = Vector2(1380, -2544)
+	camera._follow_position = Vector2(INF, NAN)
+	camera.advance_follow(0.2667)
+	check(camera._follow_position.is_finite() and camera.global_position.is_finite(), "损坏内部状态自动恢复")
+	for scale in [0.8, 1.0, 2.0]:
+		camera.zoom = Vector2.ONE * scale
+		for position in [Vector2(-1e9, -1e9), Vector2(1e9, 1e9)]:
+			target.position = position
+			camera.snap_to_target()
+			camera.advance_follow(INF)
+			var center := camera.get_screen_center_position()
+			var half: Vector2 = Vector2(640, 400) / scale
+			check(center.x - half.x >= -3840.01 and center.x + half.x <= 6400.01 and center.y - half.y >= -5104.01 and center.y + half.y <= 16.01, "三档缩放保持完整矩形视口边界")
+	camera.limit_left = -100
+	camera.limit_right = 100
+	camera.limit_top = -100
+	camera.limit_bottom = 100
+	camera.snap_to_target()
+	check(camera.global_position.is_equal_approx(Vector2.ZERO), "地图小于视口时合法居中")
 	Engine.time_scale = original
 	target.queue_free()
 	await get_tree().process_frame

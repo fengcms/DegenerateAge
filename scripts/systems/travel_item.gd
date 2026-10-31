@@ -65,7 +65,7 @@ static func use_random_ticket(inv_index: int, rng: RandomNumberGenerator = null)
 	player.global_position = destination
 	var camera := GameState.get_tree().get_first_node_in_group("player_camera") as Camera2D
 	if camera != null:
-		camera.reset_smoothing()
+		StableFollowCamera.snap(camera)
 	EventBus.toast_requested.emit(Localization.tr_key("msg.travel_item.p014"), "info")
 	SaveManager.request_autosave()
 	return {"ok": true, "reason": "", "itemId": HotbarConfig.RANDOM_TICKET, "position": destination}

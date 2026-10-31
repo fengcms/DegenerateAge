@@ -98,12 +98,13 @@ func _ready() -> void:
 		assert(get_viewport().get_texture().get_image().save_png(screenshot) == OK,
 			"正式营地窗口截图失败")
 		player.global_position = ground._camp_canvas_to_world([450, 400])
-		camera.reset_smoothing()
+		StableFollowCamera.snap(camera)
 		for _frame in range(4):
 			await get_tree().process_frame
 		await RenderingServer.frame_post_draw
 		assert(get_viewport().get_texture().get_image().save_png("/tmp/degenerateage_camp_merchant_occlusion.png") == OK,
 			"货郎摊前景遮挡截图失败")
+		camera.set_process(false) # 固定截图镜头，避免正式跟随覆盖测试取景
 		camera.top_level = true
 		camera.global_position = ground.get_world_bounds().get_center()
 		var viewport_size := get_viewport().get_visible_rect().size
