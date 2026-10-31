@@ -1456,7 +1456,11 @@ var _gold_batch_session: Dictionary = {}
 
 func begin_gold_batch() -> Dictionary:
 	_gold_batch_serial += 1
-	_gold_batch_session = {"token": _gold_batch_serial, "items": GoldBatchFusion.candidates(inventory), "seed": randi()}
+	var favorites := 0
+	for entry in inventory:
+		if entry is Dictionary and entry.get("kind") == "equip" and entry.get("quality") == "epic" and entry.get("favorite", false):
+			favorites += 1
+	_gold_batch_session = {"token": _gold_batch_serial, "items": GoldBatchFusion.candidates(inventory), "favorites": favorites, "seed": Crypto.new().generate_random_bytes(8).decode_s64(0)}
 	return _gold_batch_session.duplicate(true)
 
 func cancel_gold_batch() -> void:
@@ -1482,42 +1486,71 @@ func preview_gold_batch(token: int, include_starred: bool = false, excluded: Arr
 			if index < 0 or inventory[index] != snapshot:
 				return {"ok": false, "reason": Localization.tr_key("ui.batch.changed")}
 	plan["indices"] = indices
+	plan["favorites"] = int(_gold_batch_session.get("favorites", 0))
 	return plan
 
-func forge_gold_batch(token: int, include_starred: bool = false, excluded: Array = []) -> Dictionary:
+func start_gold_batch(token: int, include_starred: bool = false, excluded: Array = []) -> Dictionary:
 	var plan := preview_gold_batch(token, include_starred, excluded)
 	if not bool(plan.get("ok", false)):
 		return plan
-	var count := (plan.groups as Array).size()
-	if count == 0:
+	if (plan.groups as Array).is_empty():
 		return {"ok": false, "reason": Localization.tr_key("ui.batch.empty")}
-	var pending := inventory.duplicate(true)
-	for group in plan.groups:
-		for snapshot in group:
-			pending[int(plan.indices[String(snapshot.instanceId)])] = null
-	var rng := RandomNumberGenerator.new()
-	rng.seed = int(_gold_batch_session.seed)
-	var kinds := Equipment.slot_kinds()
-	var produced: Array[Dictionary] = []
+	if _gold_batch_session.has("job"):
+		return {"ok": false, "reason": Localization.tr_key("ui.batch.busy")}
 	var ids := (plan.indices as Dictionary).duplicate()
 	for entry in equipment.values():
 		if entry is Dictionary:
 			ids[String(entry.get("instanceId", ""))] = true
+	_gold_batch_session["job"] = GoldBatchWork.new(plan.groups, int(_gold_batch_session.seed), ids)
+	_gold_batch_session["include"] = include_starred
+	_gold_batch_session["excluded"] = excluded.duplicate()
+	return {"ok": true, "count": plan.groups.size()}
+
+func advance_gold_batch(token: int) -> Dictionary:
+	if _gold_batch_session.is_empty() or int(_gold_batch_session.token) != token or not _gold_batch_session.has("job"):
+		return {"ok": false, "reason": Localization.tr_key("ui.batch.expired")}
+	var job: GoldBatchWork = _gold_batch_session.job
+	job.advance()
+	if job.failed:
+		cancel_gold_batch()
+		return {"ok": false, "reason": Localization.tr_key("ui.batch.failed")}
+	if not job.done():
+		return {"ok": true, "done": false, "generated": job.outputs.size(), "count": job.groups.size()}
+	# 准备期间战斗和拾取可继续，最终从当前背包建立副本，保留新增物品。
+	var plan := preview_gold_batch(token, bool(_gold_batch_session.include), _gold_batch_session.excluded)
+	if not bool(plan.get("ok", false)):
+		cancel_gold_batch()
+		return plan
+	var pending := inventory.duplicate(true)
 	for group in plan.groups:
-		var tier := EquipmentFusion.tier_start(group[0])
-		var kind := String(kinds[rng.randi_range(0, kinds.size() - 1)])
-		var output := EquipmentFusion.make_output(tier, kind, rng)
-		if output.is_empty() or not SaveManager._valid_item(output) or ids.has(output.get("instanceId")):
+		for snapshot in group:
+			pending[int(plan.indices[String(snapshot.instanceId)])] = null
+	var ids := (plan.indices as Dictionary).duplicate()
+	for entry in equipment.values():
+		if entry is Dictionary:
+			ids[String(entry.get("instanceId", ""))] = true
+	for output in job.outputs:
+		if ids.has(output.instanceId) or not SaveManager._valid_item(output) or not Inventory.add(pending, output):
+			cancel_gold_batch()
 			return {"ok": false, "reason": Localization.tr_key("ui.batch.failed")}
 		ids[output.instanceId] = true
-		if not Inventory.add(pending, output):
-			return {"ok": false, "reason": Localization.tr_key("ui.batch.failed")}
-		produced.append(output)
+	var count := job.outputs.size()
 	inventory = pending
 	cancel_gold_batch()
 	EventBus.inventory_changed.emit()
 	EventBus.gold_batch_completed.emit(count)
-	return {"ok": true, "count": count, "consumed": count * 4, "remaining": int(plan.remaining), "items": produced}
+	return {"ok": true, "done": true, "count": count, "consumed": count * 4, "remaining": int(plan.remaining), "items": job.outputs}
+
+## 同步门面用于逻辑调用；界面使用start/advance分帧准备，最终仍只有一次提交。
+func forge_gold_batch(token: int, include_starred: bool = false, excluded: Array = []) -> Dictionary:
+	var result := start_gold_batch(token, include_starred, excluded)
+	if not bool(result.get("ok", false)):
+		return result
+	while true:
+		result = advance_gold_batch(token)
+		if not bool(result.get("ok", false)) or bool(result.get("done", false)):
+			return result
+	return {"ok": false}
 
 
 func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: String = "",

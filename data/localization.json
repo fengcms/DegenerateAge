@@ -988,5 +988,21 @@
   "ui.batch.expired": "批量会话已失效，请重新读取背包。",
   "ui.batch.changed": "已选材料发生变化，请重新读取背包并确认。",
   "ui.batch.empty": "当前没有可合成的四件金装。",
-  "ui.batch.failed": "产物生成或放入失败，本批次未消耗任何材料。"
+  "ui.batch.failed": "产物生成或放入失败，本批次未消耗任何材料。",
+  "ui.batch.title": "批量合成",
+  "ui.batch.include": "包含带星金装（投入的星级将全部消失）",
+  "ui.batch.hint": "仅处理本次读取的背包金装，收藏与穿戴不参与。展开分组可取消材料；期间新拾取下次处理。确认后不可撤销。",
+  "ui.batch.reload": "重新读取背包",
+  "ui.batch.cancel": "取消",
+  "ui.batch.confirm": "确认合成 %d 次",
+  "ui.batch.output": "%d档紫装 ×%d",
+  "ui.batch.summary": "消耗 %d 件金装 → %d 件随机紫装，余数 %d 件；保护带星 %d 件。",
+  "ui.batch.downgrade": "跨档 %d 组：%d 件高档材料按组内最低档合成。",
+  "ui.batch.starred": "本次消耗带星金装 %d 件，星级不会保留。",
+  "ui.batch.group": "第 %d 组 → %d档随机紫装（展开查看材料）",
+  "ui.batch.other": "未参与材料（余数、排除或受保护）",
+  "ui.batch.done": "批量合成%d次：消耗%d件，获得%d件紫装，余数%d件",
+  "ui.batch.progress": "准备随机产物 %d / %d，可取消；尚未扣除材料。",
+  "ui.batch.busy": "批量合成正在准备，请勿重复提交。",
+  "ui.batch.protected": "另保护收藏 %d 件，手动排除 %d 件。"
 }

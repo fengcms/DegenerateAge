@@ -1,0 +1,4 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://tests/gold_batch_ui_test.gd" id="1"]
+[node name="GoldBatchUiTest" type="Node"]
+script = ExtResource("1")

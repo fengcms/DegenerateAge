@@ -22,6 +22,8 @@ var _summary: Label
 var _out_level: Label
 var _feedback: Label
 var _confirm: Button
+var _batch: Button
+var _batch_dialog: GoldBatchDialog
 var _random: Button
 var _target_row: Control
 var _target: OptionButton
@@ -90,6 +92,8 @@ func set_open(open: bool) -> void:
 	if not open and not visible:
 		return
 	visible = open
+	if _batch_dialog != null:
+		_batch_dialog.close()
 	GameState.set_panel_open(PANEL_ID, open)
 	_reset_materials()
 	if open:
@@ -113,6 +117,7 @@ func set_open(open: bool) -> void:
 		# 献祭不选材料：材料格、目标类型、随机放入一律隐藏，只留汇总 + 确认。
 		var batch_mode := _mode == EquipmentFusion.SACRIFICE
 		_target_row.visible = _mode == EquipmentFusion.PURPLE_TARGET
+		_batch.visible = _mode == EquipmentFusion.GOLD_TO_PURPLE
 		_random.visible = _mode not in [EquipmentFusion.STAR_TRANSFER, EquipmentFusion.SACRIFICE]
 		_grid.visible = not batch_mode
 		_star12.visible = batch_mode
@@ -356,6 +361,13 @@ func _build() -> void:
 	_random.pressed.connect(_on_random_fill)
 	actions.add_child(_random)
 	PanelChrome.style_action(_random)
+	_batch = Button.new()
+	_batch.text = Localization.tr_key("ui.batch.title")
+	_batch.pressed.connect(func() -> void: _batch_dialog.open())
+	actions.add_child(_batch)
+	PanelChrome.style_action(_batch)
+	_batch_dialog = GoldBatchDialog.new()
+	add_child(_batch_dialog)
 	_refresh_slots()
 
 ## 用实际实例 ID 定位玩家拥有的那件（先背包、后身上穿戴，口径见 `GameState.find_owned_item`），
