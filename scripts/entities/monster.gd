@@ -170,9 +170,11 @@ var _stomp_center := Vector2.ZERO
 var _stomp_radius := 0.0
 ## E1：共享线 / 扇 / 圈预警动作组件（新结构 `bossSkill` 才装配；c1/c2 沿用既有实现）。
 var boss_action: BossAction = null
+var _boss_ground: BossSkillCanvas
 var _boss_visual: BossSkillVisual
 var _boss_skin: Dictionary = {}
 var _stomp_total := 0.8
+var _boss_visual_phase := 0
 var _boss_retreating := false
 var _boss_retreat_t := 0.0
 var suppress_rewards := false
@@ -182,6 +184,7 @@ var _chapter_boss_origin := Vector2.ZERO
 var _chapter_boss_target := Vector2.ZERO
 var _chapter_boss_centers: Array[Vector2] = []
 var _chapter_boss_skill_cd := 3.0
+var _chapter_boss_warn_total := 1.0
 var _chapter_boss_casts := 0
 var _chapter_boss_summons: Array[Monster] = []
 var _special_warn := ""
@@ -270,6 +273,9 @@ func _load_template() -> void:
 		attack_range_px = range_tiles * Iso.TILE_W
 	if _kind() == "boss":
 		_boss_visual = BossSkillVisual.new()
+		_boss_ground = BossSkillCanvas.new()
+		_boss_ground.name = "BossSkillGround"
+		add_child(_boss_ground)
 		_boss_skin = BossSkillVisual.profile(monster_id)
 		EventBus.data_loaded.connect(_refresh_boss_skin)
 	_setup_boss_action()
@@ -383,6 +389,7 @@ func _update_boss(delta: float) -> bool:
 					(sample_art as MonsterActorArt).play_enrage()
 				EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p001") % display_name, "danger")
 	if boss_phase != prev_phase:
+		_boss_phase_pulse()
 		_announce_boss_hp()
 	_stomp_cooldown = maxf(0.0, _stomp_cooldown - delta)
 	if _stomp_pending:
@@ -425,6 +432,7 @@ func _update_chapter_boss(delta: float) -> bool:
 	var next_phase := 2 if hp_ratio() < 0.3 else 1 if hp_ratio() < 0.6 else 0
 	if next_phase > boss_phase:
 		boss_phase = next_phase
+		_boss_phase_pulse()
 		_announce_boss_hp()
 		if boss_phase == 2 and not _boss_enraged:
 			_boss_enraged = true
@@ -464,44 +472,44 @@ func _update_chapter_boss(delta: float) -> bool:
 		_:
 			_chapter_boss_warn = "circle" if boss_phase == 0 or _chapter_boss_casts % 2 == 0 else "line"
 			_chapter_boss_warn_left = 1.2 if _chapter_boss_warn == "circle" else 1.5
+	_chapter_boss_warn_total = _chapter_boss_warn_left
 	_chapter_boss_skill_cd = _chapter_boss_warn_left + 2.2
 	queue_redraw()
 	return true
 
 func _resolve_chapter_boss_warn() -> void:
-	var shape := _chapter_boss_warn
+	var geos := _chapter_boss_geometries()
 	_chapter_boss_warn = ""
 	queue_redraw()
 	if is_dead or not is_inside_tree():
 		return
+	for geo in geos:
+		_boss_visual_impact(geo)
 	var player := _get_player()
 	if player == null:
 		return
-	var player_pos := player.global_position
-	var gp := Iso.to_ground(player_pos)
-	var hit := false
+	for geo in geos:
+		if BossAction.hits_geometry(geo, player.global_position):
+			_do_attack(player, false, true)
+			break
+
+## 第二章锁定几何唯一来源，沿用原半径/长度/半角和世界锁定点。
+func _chapter_boss_geometries() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
 	var c := BossAction.COMPENSATE
-	match shape:
+	var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
+	var origin := Iso.to_ground(_chapter_boss_origin)
+	match _chapter_boss_warn:
 		"sweep":
-			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var toward := gp - Iso.to_ground(_chapter_boss_origin)
-			# 半角与绘制共用 68°（此前判据是 dot>=0.35 ≈ 69.5°，比画的宽 1.5°，属于「圈外挨打」）
-			hit = (toward.length() <= 170.0 * c
-				and absf(Iso.ground_dir(direction).angle_to(toward)) <= deg_to_rad(68.0))
+			result.append({"kind": "fan", "space": "ground", "center": origin, "dir": Iso.ground_dir(direction), "radius": 170.0 * c, "arc": deg_to_rad(136.0)})
 		"line":
-			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var g0 := Iso.to_ground(_chapter_boss_origin)
-			var g1 := g0 + Iso.ground_dir(direction) * 340.0 * c
-			hit = Geometry2D.get_closest_point_to_segment(gp, g0, g1).distance_to(gp) <= 48.0 * c
+			result.append({"kind": "line", "space": "ground", "from": origin, "to": origin + Iso.ground_dir(direction) * 340.0 * c, "half": 48.0 * c})
 		"circle":
-			hit = gp.distance_to(Iso.to_ground(_chapter_boss_target)) <= 88.0 * c
+			result.append({"kind": "circle", "space": "ground", "center": Iso.to_ground(_chapter_boss_target), "radius": 88.0 * c})
 		"blasts":
 			for center in _chapter_boss_centers:
-				if gp.distance_to(Iso.to_ground(center as Vector2)) <= 66.0 * c:
-					hit = true
-					break
-	if hit:
-		_do_attack(player, false, true)
+				result.append({"kind": "circle", "space": "ground", "center": Iso.to_ground(center), "radius": 66.0 * c})
+	return result
 
 ## E1（创意 第三章/03）：共享动作组件驱动的新章首领。
 ## 脱战判据：玩家离场 / 死亡，或首领离场心超过 18 格 → 锁存脱战态，5 秒后归位回满。
@@ -523,6 +531,15 @@ func _update_boss_action(delta: float) -> bool:
 		return true
 	if player == null:
 		return false
+	var ratio := hp_ratio()
+	var visual_phase := 0
+	if boss_action.has_b and ratio <= float(boss_action.phase_b.get("triggerHp", 0.5)):
+		visual_phase = 1
+	if boss_action.has_c and ratio <= float(boss_action.phase_c.get("hpBelow", 0.25)):
+		visual_phase = 2
+	if visual_phase > _boss_visual_phase:
+		_boss_visual_phase = visual_phase
+		_boss_phase_pulse()
 	var facing := player.global_position - global_position
 	var was_warning := boss_action.is_warning()
 	var busy := boss_action.update(delta, global_position, facing, true, hp_ratio(),
@@ -705,6 +722,8 @@ func _physics_process(delta: float) -> void:
 			_boss_beat = 1.0
 			if state == State.CHASE or state == State.ATTACK:
 				_announce_boss_hp()
+	if _boss_ground != null:
+		_boss_ground.sync(_stomp_pending or not _chapter_boss_warn.is_empty() or (boss_action != null and boss_action.is_warning()) or not _boss_visual.impacts.is_empty())
 	move_and_slide()
 
 func _enter(s: int) -> void:
@@ -716,6 +735,7 @@ func _enter(s: int) -> void:
 		_ranged_windup = 0.0
 		_chapter_boss_warn = ""
 		_clear_boss_visual()
+		_boss_visual_phase = 0
 		if boss_action != null:
 			boss_action.cancel()
 	# E1：首次仇恨（非从普攻/追击折返）时重置首领动作计时（首放 4 秒）。
@@ -930,6 +950,8 @@ func _do_attack(player: Node2D, play_attack_art: bool = true, from_skill: bool =
 		sample_art.attack(player.global_position - global_position, attack_interval)
 	if attack_power <= 0.0:
 		return
+	if monster_id == "boss_corrupted_beast" and not from_skill:
+		_boss_visual_impact({"kind": "claw", "space": "ground", "center": Iso.to_ground(player.global_position), "dir": Iso.ground_dir(player.global_position - global_position)})
 	var res := Combat.resolve(
 		attack_power * _level_damage_multiplier(),
 		float(GameState.total_defense()),
@@ -1297,8 +1319,6 @@ func _clamp_to_map(pos: Vector2) -> Vector2:
 	return ground.clamp_to_map(pos)
 
 func _draw() -> void:
-	if not _chapter_boss_warn.is_empty() and not is_dead:
-		_draw_chapter_boss_warn()
 	if not _special_warn.is_empty() and not is_dead:
 		if _special_warn == "sweep":
 			# 地面圆：地面半径 = 屏幕半径 × √2（横向 1.414r、纵向 0.707r，面积不变）
@@ -1308,12 +1328,6 @@ func _draw() -> void:
 		else:
 			var end := to_local(global_position + (_special_target - global_position).normalized() * 230.0)
 			draw_line(Vector2.ZERO, end, Color("ff9c53"), 22.0, true)
-	if _stomp_pending and not is_dead:
-		BossSkillVisual.warning(self, _stomp_geometry(), 1.0 - _stomp_remaining / maxf(0.001, _stomp_total), _boss_skin)
-	if boss_action != null and boss_action.is_warning() and not is_dead:
-		boss_action.draw(self, _boss_skin)
-	if _boss_visual != null:
-		_boss_visual.draw_impacts(self, _boss_skin)
 	if selected and not is_dead:
 		GroundFx.outline(self, Vector2.ZERO, radius + 7.0, Color("6eebe6"), 2.5, 40)
 	if sample_art != null or dummy_art != null:
@@ -1335,36 +1349,10 @@ func _draw() -> void:
 	_draw_head_hp_bar()
 	_draw_head_name()
 
-func _draw_chapter_boss_warn() -> void:
-	var red := Color(1.0, 0.18, 0.08, 0.24)
-	var edge := Color("ff7744")
-	# 四种形态一律「地面几何 + GroundFx」：半径乘 √2 做等面积补偿、纵向压到 0.5。
-	# 判定见 `_resolve_chapter_boss_warn()`，两侧必须同源（工程 53 §4.2）。
-	var c := BossAction.COMPENSATE
-	match _chapter_boss_warn:
-		"sweep":
-			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var origin_local := to_local(_chapter_boss_origin)
-			GroundFx.sector(self, origin_local, direction, 170.0 * c, deg_to_rad(136.0), red, 16)
-			GroundFx.sector_outline(self, origin_local, direction, 170.0 * c, deg_to_rad(136.0),
-				edge, 2.0, 16)
-		"line":
-			var direction := (_chapter_boss_target - _chapter_boss_origin).normalized()
-			var g0 := Iso.to_ground(_chapter_boss_origin)
-			var g1 := g0 + Iso.ground_dir(direction) * 340.0 * c
-			var s0 := to_local(Iso.from_ground(g0))
-			var s1 := to_local(Iso.from_ground(g1))
-			GroundFx.band_quad(self, s0, s1, 48.0 * c, red)
-			draw_line(s0, s1, edge, 2.0, true)
-		"circle":
-			var center := to_local(_chapter_boss_target)
-			GroundFx.fill(self, center, 88.0 * c, red)
-			GroundFx.outline(self, center, 88.0 * c, edge, 2.0, 48)
-		"blasts":
-			for blast_center in _chapter_boss_centers:
-				var bc := to_local(blast_center as Vector2)
-				GroundFx.fill(self, bc, 66.0 * c, red)
-				GroundFx.outline(self, bc, 66.0 * c, edge, 2.0, 40)
+func _draw_chapter_boss_warn(canvas: Node2D) -> void:
+	var progress := 1.0 - _chapter_boss_warn_left / maxf(0.001, _chapter_boss_warn_total)
+	for geo in _chapter_boss_geometries():
+		BossSkillVisual.warning(canvas, geo, progress, _boss_skin)
 
 ## 受击白闪 / 仇恨变色的统一体色。
 func _current_body(base: Color) -> Color:
@@ -1487,23 +1475,49 @@ func _head_hp_size() -> Vector2:
 		_:
 			return Vector2(34.0, 4.0)
 
+## 提供第一章践踏的锁定地面几何，沿用原半径补偿。
 func _stomp_geometry() -> Dictionary:
 	return {"kind": "circle", "space": "ground", "center": Iso.to_ground(_stomp_center), "radius": _stomp_radius * BossAction.COMPENSATE}
 
+## 接收既有结算事件，只创建短暂表现并请求重绘。
 func _boss_visual_impact(geo: Dictionary) -> void:
 	if _boss_visual == null:
 		return
 	_boss_visual.impact(geo)
+	if _boss_ground != null:
+		_boss_ground.queue_redraw()
 	queue_redraw()
 
+## 释放Boss装饰预算，并清除地面层缓存。
 func _clear_boss_visual() -> void:
 	if _boss_visual != null:
 		_boss_visual.clear()
+	if _boss_ground != null:
+		_boss_ground.queue_redraw()
 
+## 退出场景时清理本实体持有的全部技能表现。
 func _exit_tree() -> void:
 	_clear_boss_visual()
 
+## 数据重载时更新主题副本并取消旧残纹。
 func _refresh_boss_skin() -> void:
 	_boss_skin = BossSkillVisual.profile(monster_id)
 	_clear_boss_visual()
 	queue_redraw()
+
+## 非危险色的小范围阶段符印，无填充、不产生碰撞与伤害。
+func _boss_phase_pulse() -> void:
+	_boss_visual_impact({"kind": "aura", "space": "ground", "center": Iso.to_ground(global_position), "radius": 58.0})
+
+## 由独立地面层调用，按原锁定几何绘制预警和命中。
+func draw_boss_skill_ground(canvas: Node2D) -> void:
+	if is_dead:
+		return
+	if not _chapter_boss_warn.is_empty():
+		_draw_chapter_boss_warn(canvas)
+	if _stomp_pending and not is_dead:
+		BossSkillVisual.warning(canvas, _stomp_geometry(), 1.0 - _stomp_remaining / maxf(0.001, _stomp_total), _boss_skin)
+	if boss_action != null and boss_action.is_warning() and not is_dead:
+		boss_action.draw(canvas, _boss_skin)
+	if _boss_visual != null:
+		_boss_visual.draw_impacts(canvas, _boss_skin)

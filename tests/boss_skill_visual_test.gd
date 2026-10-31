@@ -1,9 +1,12 @@
 extends Node
+## 验证表现事件、预算回收、完整主题映射与第二章旧判定兼容性。
 var failures: Array[String] = []
+## 聚合断言失败，确保异步场景输出真实完成标记。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
 		push_error(label)
+## 独立验证锁定事件、生命周期和旧公式，不改玩家存档。
 func _ready() -> void:
 	var skill: Dictionary = DataLoader.get_entry("monsters", "c3_boss01").bossSkill
 	var action := BossAction.new(skill)
@@ -43,6 +46,54 @@ func _ready() -> void:
 	boss.queue_free()
 	await get_tree().process_frame
 	check(BossSkillVisual.detail_count == 0, "宿主释放清理预算")
+	check(BossSkillVisual.validate_config(DataLoader.get_table("bossVisuals")).is_empty(), "正式表现配置合法")
+	var boss_count := 0
+	for tpl in DataLoader.get_table("monsters"):
+		if tpl.get("kind") == "boss":
+			boss_count += 1
+			check(DataLoader.get_table("bossVisuals").bosses.has(tpl.id), "Boss有主题映射 " + tpl.id)
+	check(boss_count == 17, "17个Boss主题全部登记")
+	var bad: Dictionary = DataLoader.get_table("bossVisuals").duplicate(true)
+	bad.styles.corruption.motif = "bad"
+	check(not BossSkillVisual.validate_config(bad).is_empty(), "拒绝未知纹样")
+	var second := preload("res://scenes/entities/Monster.tscn").instantiate()
+	second.monster_id = "c2_boss_iron_foreman"
+	second.ai_enabled = false
+	add_child(second)
+	second._chapter_boss_origin = Vector2(1000, 1000)
+	second._chapter_boss_target = Vector2(1150, 1040)
+	second._chapter_boss_centers.assign([Vector2(1000, 1000), Vector2(1150, 1040), Vector2(1300, 1100)])
+	for shape in ["sweep", "line", "circle", "blasts"]:
+		second._chapter_boss_warn = shape
+		var geos: Array = second._chapter_boss_geometries()
+		for x in range(500, 1600, 37):
+			for y in range(600, 1400, 37):
+				var point := Vector2(x, y)
+				var hit := false
+				for geo in geos:
+					hit = hit or BossAction.hits_geometry(geo, point)
+				check(hit == _old_chapter_hit(shape, point, second), "第二章新旧判定一致 " + shape)
+	second.queue_free()
+	await get_tree().process_frame
 	if failures.is_empty():
 		print("[BossSkillVisualTest] 全部通过 ✅")
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 原第二章公式的独立对照，不调用新几何构造器，锁定旧数值与命中语义。
+func _old_chapter_hit(shape: String, point: Vector2, boss: Monster) -> bool:
+	var c := 1.4142135623730951
+	var g := Iso.to_ground(point)
+	var origin := Iso.to_ground(Vector2(1000, 1000))
+	var direction := Iso.ground_dir(Vector2(150, 40).normalized())
+	match shape:
+		"sweep":
+			return g.distance_to(origin) <= 170.0 * c and absf(direction.angle_to(g - origin)) <= deg_to_rad(68.0)
+		"line":
+			return Geometry2D.get_closest_point_to_segment(g, origin, origin + direction * 340.0 * c).distance_to(g) <= 48.0 * c
+		"circle":
+			return g.distance_to(Iso.to_ground(Vector2(1150, 1040))) <= 88.0 * c
+		"blasts":
+			for center in boss._chapter_boss_centers:
+				if g.distance_to(Iso.to_ground(center)) <= 66.0 * c:
+					return true
+	return false

@@ -1,10 +1,108 @@
 {
   "styles": {
-    "corruption": {"color": "cf7994", "motif": "crack"},
-    "gate": {"color": "e1c48a", "motif": "metal"}
+    "corruption": {
+      "color": "cf7994",
+      "motif": "crack",
+      "marks": 8
+    },
+    "iron": {
+      "color": "e3ba79",
+      "motif": "metal",
+      "marks": 8
+    },
+    "slag": {
+      "color": "f9a54b",
+      "motif": "crack",
+      "marks": 7
+    },
+    "extractor": {
+      "color": "78cfc2",
+      "motif": "seal",
+      "marks": 12
+    },
+    "gate": {
+      "color": "e1c48a",
+      "motif": "metal",
+      "marks": 8
+    },
+    "sand": {
+      "color": "d4b68a",
+      "motif": "sand",
+      "marks": 7
+    },
+    "hollow": {
+      "color": "ccc6ae",
+      "motif": "bone",
+      "marks": 9
+    },
+    "forest": {
+      "color": "93ba9e",
+      "motif": "wind",
+      "marks": 6
+    },
+    "spore": {
+      "color": "c4cc79",
+      "motif": "spore",
+      "marks": 10
+    },
+    "roots": {
+      "color": "b6a77b",
+      "motif": "root",
+      "marks": 7
+    },
+    "tide": {
+      "color": "86c5ce",
+      "motif": "wave",
+      "marks": 8
+    },
+    "bone": {
+      "color": "d3c6aa",
+      "motif": "bone",
+      "marks": 9
+    },
+    "wind": {
+      "color": "b5d0c2",
+      "motif": "wind",
+      "marks": 6
+    },
+    "lamp": {
+      "color": "ce99d6",
+      "motif": "seal",
+      "marks": 8
+    },
+    "judgment": {
+      "color": "edda9a",
+      "motif": "seal",
+      "marks": 12
+    },
+    "echo": {
+      "color": "9cbed4",
+      "motif": "wind",
+      "marks": 5
+    },
+    "eye": {
+      "color": "c59de0",
+      "motif": "eye",
+      "marks": 12
+    }
   },
   "bosses": {
     "boss_corrupted_beast": "corruption",
-    "c3_boss01": "gate"
+    "c2_boss_iron_foreman": "iron",
+    "c2_boss_slag_devourer": "slag",
+    "c2_boss_hundred_arm_extractor": "extractor",
+    "c3_boss01": "gate",
+    "c3_boss02": "sand",
+    "c3_boss03": "hollow",
+    "c4_boss01": "forest",
+    "c4_boss02": "spore",
+    "c4_boss03": "roots",
+    "c5_boss01": "tide",
+    "c5_boss02": "bone",
+    "c5_boss03": "wind",
+    "c5_boss04": "lamp",
+    "c6_boss01": "judgment",
+    "c6_boss02": "echo",
+    "c6_boss03": "eye"
   }
 }

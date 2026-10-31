@@ -253,7 +253,9 @@ func geometry() -> Dictionary:
 ## 某点（**世界坐标**）在当前预警几何内是否会被命中。
 ## 先转地面坐标再算 —— 漏掉这一步就是「屏幕上在圈外、判定却在圈内」（工程 53 N-4）。
 func hits(point: Vector2) -> bool:
-	var geo := geometry()
+	return hits_geometry(geometry(), point)
+
+static func hits_geometry(geo: Dictionary, point: Vector2) -> bool:
 	if geo.is_empty():
 		return false
 	var g := Iso.to_ground(point)
