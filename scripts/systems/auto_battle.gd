@@ -65,7 +65,7 @@ const BLOCKED_TIME := 1.0             # 受阻停留（s）
 const LOOT_SEARCH_RADIUS := 6.0        # 顺路拾取搜索半径（格）
 const LOOT_ARRIVE_EPS := 6.0           # 现有手动点击行走也使用这个到达阈值；不可改成拾取半径
 const STOP_GAP := 8.0                  # 攻击范围内提前停步（px，避免与目标互相顶开）
-const ROAM_GRID_STEP := 7               # 巡游采样间隔（格），往返覆盖地图有效区域
+const ROAM_GRID_STEP := 12               # 巡游采样间隔（格），往返覆盖地图有效区域
 const ROAM_ARRIVE_EPS := 12.0
 ## 喝药阈值兜底值（3.14 设置项）。正式取值一律读 `GameState.settings.potionThreshold`，
 ## 本常量仅在该字段缺失时生效——避免「常量 + 设置」两个事实源（M2.5 收敛，见工程文档 12 §3.4）。
@@ -121,6 +121,10 @@ var _danger_t: float = 0.0
 ## 否则一开开关会把背包里 20 组存量料连合成渣，金币瞬间见底。
 var _auto_forge_t: float = 0.0
 var _roam_points: Array[Vector2] = []
+var _roam_builder: AutoRoamPlan
+var _roam_primary_count := 0
+var _roam_fill_active := false
+var _roam_blocks: Array = []
 var _roam_index: int = -1
 var _roam_built := false
 var _roam_ground: IsoGround
@@ -185,6 +189,7 @@ func reset_after_travel() -> void:
 	_roam_points.clear()
 	_roam_built = false
 	_roam_ground = null
+	_roam_builder = null
 	_cave_nav.clear()
 	_last_position = Vector2.INF
 	_manual_t = 0.0
@@ -818,13 +823,19 @@ func _tick_roam(delta: float) -> void:
 	var component := ground.cave.component_at(Vector2i(Iso.world_to_grid(_player.global_position).round())) if ground != null else 0
 	if not _roam_built or ground != _roam_ground or revision != _roam_revision or component != _roam_component:
 		_build_roam_points()
+	if _roam_builder != null:
+		if _roam_builder.advance():
+			_finish_roam_build()
+		elif _roam_points.is_empty() and _roam_builder.primary_ready():
+			_roam_points.assign(_roam_builder.primary)
+			_roam_primary_count = _roam_points.size()
 	if _roam_points.is_empty():
 		_player.set_auto_move(Vector2.ZERO)
 		_set_state(State.SEARCH_TARGET)
 		return
 	if _roam_index < 0:
 		var nearest := INF
-		for i in range(_roam_points.size()):
+		for i in range(_roam_primary_count):
 			var d := _player.global_position.distance_squared_to(_roam_points[i])
 			if d < nearest:
 				nearest = d
@@ -852,19 +863,23 @@ func _tick_roam(delta: float) -> void:
 	_player.set_auto_move(direction)
 	_set_state(State.ROAM)
 
+## 仅为最终移动目标使用共享导航器，返回世界空间移动方向。
 func _direction_to(point: Vector2) -> Vector2:
 	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	return _cave_nav.direction(ground, _player.global_position, point)
 
+## 获取当前带通行掩码的地图；无障碍地图返回null。
 func _cave_ground() -> IsoGround:
 	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	return ground if ground != null and ground.cave != null else null
 
+## 候选仅查缓存连通分量，不建立A*路线。
 func _route_reachable(point: Vector2) -> bool:
 	var ground := _cave_ground()
 	return ground == null or ground.cave.reachable(
 		Vector2i(Iso.world_to_grid(_player.global_position).round()), Vector2i(Iso.world_to_grid(point).round()))
 
+## 导航版本或连通区域变化时重建主路线和补点，宿主持有规划缓存。
 func _build_roam_points() -> void:
 	_roam_points.clear()
 	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
@@ -876,29 +891,39 @@ func _build_roam_points() -> void:
 	var origin_cell := Vector2i(Iso.world_to_grid(_player.global_position).round())
 	_roam_component = ground.cave.component_at(origin_cell) if ground.cave != null else 0
 	_roam_index = -1
-	var xs: Array[int] = []
-	var ys: Array[int] = []
-	for x in range(2, maxi(3, ground.grid_size.x - 2), ROAM_GRID_STEP):
-		xs.append(x)
-	for y in range(2, maxi(3, ground.grid_size.y - 2), ROAM_GRID_STEP):
-		ys.append(y)
-	if xs.is_empty() or xs.back() != ground.grid_size.x - 3:
-		xs.append(maxi(2, ground.grid_size.x - 3))
-	if ys.is_empty() or ys.back() != ground.grid_size.y - 3:
-		ys.append(maxi(2, ground.grid_size.y - 3))
-	for row in range(ys.size()):
-		for col in range(xs.size()):
-			var x: int = xs[col] if row % 2 == 0 else xs[xs.size() - col - 1]
-			var cell := Vector2i(x, ys[row])
-			if ground.is_walkable_cell(cell):
-				var point := Iso.grid_to_world(cell)
-				if ground.cave == null or ground.cave.reachable(origin_cell, cell):
-					_roam_points.append(point)
+	_roam_builder = AutoRoamPlan.new(ground, origin_cell, ROAM_GRID_STEP)
+	_roam_primary_count = 0
+	_roam_blocks.clear()
+	_roam_fill_active = false
 
+## 发布已完成的分帧规划，原子替换宿主列表；不触发移动或完整路线构建。
+func _finish_roam_build() -> void:
+	_roam_points.assign(_roam_builder.primary)
+	_roam_primary_count = _roam_points.size()
+	_roam_points.append_array(_roam_builder.supplements)
+	_roam_blocks = _roam_builder.blocks.keys()
+	_roam_builder = null
+
+## 推进主路线；粗巡一轮后仍有未知区块才访问支路补点，已探索地图不反复细扫。
 func _advance_roam() -> void:
-	_roam_index = (_roam_index + 1) % _roam_points.size()
+	_roam_index += 1
+	if _roam_index == _roam_primary_count and not _roam_fill_active:
+		_roam_fill_active = _roam_points.size() > _roam_primary_count and _roam_needs_fill()
+		if not _roam_fill_active:
+			_roam_index = 0
+	if _roam_index >= _roam_points.size():
+		_roam_index = 0
+		_roam_fill_active = false
 	_reset_roam_progress()
 
+## 一轮末尾检查已探索区块；不揭示迷雾，不进行寻路。
+func _roam_needs_fill() -> bool:
+	for block in _roam_blocks:
+		if not Fog.is_explored(GameState.current_map, block * Fog.BLOCK_SIZE):
+			return true
+	return false
+
+## 切换巡游目标时重置卡住判据，计时单位为玩法秒。
 func _reset_roam_progress() -> void:
 	_roam_last_dist = INF
 	_roam_stuck_t = 0.0

@@ -1,17 +1,21 @@
 extends Node
+## 验证连通性等价A*、动态门禁失效，以及分帧巡游不按候选构造完整路线。
 
 class CountingLayout extends CaveLayout:
 	var path_calls := 0
+	## 记录完整路线调用次数，保持原A*结果。
 	func path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 		path_calls += 1
 		return super.path(from_cell, to_cell)
 
 class CountingPilot extends AutoBattle:
 	var builds := 0
+	## 统计规划重建次数，验证空结果仍被缓存。
 	func _build_roam_points() -> void:
 		builds += 1
 		super._build_roam_points()
 
+## 在隔离user目录创建小型连通性夹具。
 func fixture(path: String, rows: Array, points: Dictionary = {}) -> CaveLayout:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(JSON.stringify({"grid_size": [rows[0].length(), rows.size()],
@@ -19,12 +23,14 @@ func fixture(path: String, rows: Array, points: Dictionary = {}) -> CaveLayout:
 	file.close()
 	return CaveLayout.new(path)
 
+## 递归冻结玩法，防止测试坐标和刷新状态被物理帧改变。
 func freeze(node: Node) -> void:
 	node.set_process(false)
 	node.set_physics_process(false)
 	for child in node.get_children():
 		freeze(child)
 
+## 依次验证连通、门禁与候选不寻路，全部完成才输出成功标记。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	var diagonal := fixture("user://connectivity-diagonal.json", ["100", "010", "001"])
@@ -68,12 +74,14 @@ func _ready() -> void:
 	real_ground.cave = counting
 	var pilot := main.get_node("Game/Entities/Player/AutoPilot") as AutoBattle
 	pilot._build_roam_points()
-	assert(pilot._roam_points.size() == 624)
+	pilot._roam_builder.advance(0)
+	pilot._finish_roam_build()
+	assert(pilot._roam_primary_count == 226 and pilot._roam_points.size() == 228, "12格主路线与两处补点的正式地图契约")
 	assert(counting.path_calls == 0, "Roam candidates must not construct full routes")
 	assert(pilot._roam_built)
-	# A reachable island with no 7-grid sample is a valid empty result.
+	# 完全封闭布局是合法空结果；可达孤岛现由AutoRoamPlanTest验证补点回退。
 	var empty_samples := fixture("user://connectivity-empty-samples.json", [
-		"0000000", "0000000", "0000000", "0001000", "0000000", "0000000", "0000000"])
+		"0000000", "0000000", "0000000", "0000000", "0000000", "0000000", "0000000"])
 	real_ground.cave = empty_samples
 	real_ground.grid_size = empty_samples.size
 	var player := main.get_node("Game/Entities/Player") as PlayerCharacter
