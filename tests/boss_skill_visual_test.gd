@@ -53,6 +53,22 @@ func _ready() -> void:
 			boss_count += 1
 			check(DataLoader.get_table("bossVisuals").bosses.has(tpl.id), "Boss有主题映射 " + tpl.id)
 	check(boss_count == 17, "17个Boss主题全部登记")
+	BossSkillVisual._warning_frame = -1
+	var admitted := 0
+	for i in range(100):
+		if BossSkillVisual._admit_warning():
+			admitted += 1
+	check(admitted == 8, "同帧次要纹样预算有界")
+	var mesh := BossSkillVisual.ring_mesh(30.0, 80.0)
+	check(mesh == BossSkillVisual.ring_mesh(30.0, 80.0), "同半径共享环带网格")
+	var vertices: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	check(vertices.size() == 192, "环带仍为48片四边形")
+	for vertex in vertices:
+		var radius := Vector2(vertex.x, vertex.y / Iso.GROUND_SQUASH).length()
+		check(is_equal_approx(radius, 30.0) or is_equal_approx(radius, 80.0), "合批不填安全中心")
+	for i in range(40):
+		BossSkillVisual.ring_mesh(float(i), 100.0 + i)
+	check(BossSkillVisual._rings.size() <= 32, "不同半径缓存有界")
 	var bad: Dictionary = DataLoader.get_table("bossVisuals").duplicate(true)
 	bad.styles.corruption.motif = "bad"
 	check(not BossSkillVisual.validate_config(bad).is_empty(), "拒绝未知纹样")

@@ -255,6 +255,7 @@ func geometry() -> Dictionary:
 func hits(point: Vector2) -> bool:
 	return hits_geometry(geometry(), point)
 
+## 用锁定地面几何检查世界坐标点；供旧技能适配和独立兼容性测试复用。
 static func hits_geometry(geo: Dictionary, point: Vector2) -> bool:
 	if geo.is_empty():
 		return false

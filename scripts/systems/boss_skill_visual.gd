@@ -4,7 +4,12 @@ extends RefCounted
 const EDGE := Color("ffad66")
 const IMPACT_LIFE := 0.56
 const MAX_DETAILS := 24
+const MAX_WARNING_DETAILS := 8
 static var detail_count := 0
+# 仅缓存不可变半径网格，与地图和配色无关；进程级最多32项，超限整批释放。
+static var _rings: Dictionary = {}
+static var _warning_frame := -1
+static var _warning_details := 0
 var impacts: Array[Dictionary] = []
 
 ## 读取Boss主题副本；只在宿主初始化或数据重载时调用。
@@ -52,7 +57,7 @@ func draw_impacts(canvas: Node2D, skin: Dictionary) -> void:
 		var geo: Dictionary = entry.geo
 		var color := Color(String(skin.get("color", "c78a65")))
 		if geo.kind == "claw":
-			if entry.details:
+			if entry.details and visible_geometry(canvas, geo):
 				var center := _local(canvas, geo.center) + Vector2(0, -16)
 				var direction := Iso.from_ground(geo.dir).normalized()
 				for i in range(-1, 2):
@@ -64,7 +69,7 @@ func draw_impacts(canvas: Node2D, skin: Dictionary) -> void:
 		# 命中亮芯短促，之后降为非危险暗纹，绝不延长伤害窗口。
 		var flash := maxf(0.0, 1.0 - t * 5.0)
 		_shape(canvas, geo, Color(color, 0.10 * (1.0 - t) + flash * 0.22), Color(color.lerp(Color.WHITE, flash), (1.0 - t) * 0.85), 2.0 + flash * 3.0)
-		if entry.details:
+		if entry.details and visible_geometry(canvas, geo):
 			_motif(canvas, geo, skin, color, 1.0 - t, t, true)
 
 ## 按原计时进度绘制完整危险边界和主题纹样。
@@ -72,9 +77,8 @@ static func warning(canvas: Node2D, geo: Dictionary, progress: float, skin: Dict
 	if geo.is_empty():
 		return
 	var p := clampf(progress, 0.0, 1.0)
-	_shape(canvas, geo, Color(0.75, 0.10, 0.045, 0.09 + p * 0.10), Color(EDGE, 0.16), 7.0)
-	_shape(canvas, geo, Color(0, 0, 0, 0), EDGE, 1.8)
-	if detailed:
+	_shape(canvas, geo, Color(0.75, 0.10, 0.045, 0.09 + p * 0.10), EDGE, 2.0)
+	if detailed and visible_geometry(canvas, geo) and _admit_warning():
 		var color := Color(String(skin.get("color", "c78a65")))
 		_motif(canvas, geo, skin, color, 0.45 + 0.5 * p, p, false)
 
@@ -103,21 +107,25 @@ static func _shape(canvas: Node2D, geo: Dictionary, fill: Color, edge: Color, wi
 			var points := line_points(geo)
 			for i in range(points.size()):
 				points[i] = _local(canvas, points[i])
-			canvas.draw_colored_polygon(points, fill)
+			if fill.a > 0.0:
+				canvas.draw_colored_polygon(points, fill)
 			points.append(points[0])
 			canvas.draw_polyline(points, edge, width, true)
 		"circle":
 			var center := _local(canvas, geo.center)
-			GroundFx.fill(canvas, center, float(geo.radius), fill)
+			if fill.a > 0.0:
+				GroundFx.fill(canvas, center, float(geo.radius), fill)
 			GroundFx.outline(canvas, center, float(geo.radius), edge, width, 48)
 		"fan":
 			var center := _local(canvas, geo.center)
 			var dir := Iso.from_ground(geo.dir)
-			GroundFx.sector(canvas, center, dir, float(geo.radius), float(geo.arc), fill, 24)
+			if fill.a > 0.0:
+				GroundFx.sector(canvas, center, dir, float(geo.radius), float(geo.arc), fill, 24)
 			GroundFx.sector_outline(canvas, center, dir, float(geo.radius), float(geo.arc), edge, width, 24)
 		"ring":
 			var center := _local(canvas, geo.center)
-			GroundFx.band(canvas, center, float(geo.inner), float(geo.radius), fill, 48)
+			if fill.a > 0.0:
+				canvas.draw_mesh(ring_mesh(float(geo.inner), float(geo.radius)), null, Transform2D(0.0, center), fill)
 			GroundFx.outline(canvas, center, float(geo.radius), edge, width, 48)
 			GroundFx.outline(canvas, center, float(geo.inner), edge, width, 40)
 
@@ -227,3 +235,43 @@ static func validate_config(config: Variant) -> Array[String]:
 		if not tpl is Dictionary or tpl.get("kind") != "boss" or not config.styles.has(config.bosses[id]):
 			errors.append("[bossVisuals] Boss或样式引用非法：" + String(id))
 	return errors
+
+## 同帧最多8份预警纹样；完整危险边界与渐强填色不受限额影响。
+static func _admit_warning() -> bool:
+	var frame := Engine.get_process_frames()
+	if frame != _warning_frame:
+		_warning_frame = frame
+		_warning_details = 0
+	if _warning_details >= MAX_WARNING_DETAILS:
+		return false
+	_warning_details += 1
+	return true
+
+## 复用现有四边形合批器；48片环带一次绘制，不填充安全中心。
+static func ring_mesh(inner: float, outer: float) -> ArrayMesh:
+	var key := Vector2(inner, outer)
+	if _rings.has(key):
+		return _rings[key]
+	if _rings.size() >= 32:
+		_rings.clear()
+	var batch := FlatTileMesh.new(48)
+	for i in range(48):
+		var a := Vector2.from_angle(TAU * i / 48.0)
+		var b := Vector2.from_angle(TAU * (i + 1) / 48.0)
+		batch.add_quad(PackedVector2Array([Iso.from_ground(a * inner), Iso.from_ground(b * inner), Iso.from_ground(b * outer), Iso.from_ground(a * outer)]))
+	var mesh := batch.build()
+	_rings[key] = mesh
+	return mesh
+
+## 保守剔除屏外装饰；只检查视口包围盒，不参与命中或隐藏主轮廓。
+static func visible_geometry(canvas: Node2D, geo: Dictionary) -> bool:
+	var center: Vector2 = geo.get("center", Vector2.ZERO)
+	var radius := float(geo.get("radius", 40.0))
+	if geo.kind == "line":
+		center = (geo["from"] + geo["to"]) * 0.5
+		radius = (geo["from"] as Vector2).distance_to(geo["to"]) * 0.5 + float(geo.half)
+	var transform := canvas.get_viewport_transform()
+	var point := transform * Iso.from_ground(center)
+	var scale := maxf(transform.x.length(), transform.y.length())
+	var extent := Vector2(radius, radius * Iso.GROUND_SQUASH) * scale + Vector2(48, 48)
+	return Rect2(point - extent, extent * 2.0).intersects(canvas.get_viewport_rect())

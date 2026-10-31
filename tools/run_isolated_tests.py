@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 102 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 103 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -35,7 +35,7 @@ DEFAULT_TESTS = [
     # 工程 69 §6.3 的有牙用例：绕障追击期间「与目标的直线距离不降、但角色在沿路径推进」不得拉黑改选。
     "CaveAutoBattleTest",
     "CaveNavigationTest", "ReviewRegressionTest", "SaveTransferTest",
-    "BossReviewTest", "BossActionTest", "QuestRewardPlanTest", "MapGateTest",
+    "BossReviewTest", "BossActionTest", "BossSkillVisualTest", "QuestRewardPlanTest", "MapGateTest",
     "MapRouteOverlayTest", "MinimapViewportTest",
     "ChapterOneAcceptance",
     # 营地四项长期不在默认集，等发现时已集体腐烂（硬编码画布坐标 / PASS 不独占行尾 /
@@ -248,7 +248,7 @@ FIXTURE_SCENES = {"CampWhitebox", "CampStyleSample", "CampStyleBenchmark"}
 ## 必须 `--rendered` 才有意义：headless 下 `get_viewport().get_texture()` 取不到图，
 ## 或性能基准拿不到真实帧时间。它们在无头 `--all` 里**必然假红**，不是功能缺陷。
 ## 单独复核：`python3 tools/run_isolated_tests.py --rendered ChapterOneMapArtCapture`。
-RENDER_ONLY_SCENES = {"MapRenderBenchmark", "ChapterOneMapArtCapture", "BossVisualSamples", "BossVisualGallery"}
+RENDER_ONLY_SCENES = {"MapRenderBenchmark", "ChapterOneMapArtCapture", "BossVisualSamples", "BossVisualGallery", "BossVisualBenchmark"}
 
 ## 已知美术欠账：**断言本身是对的，红的原因是素材/布局数据过时**，需要重做美术而不是改代码。
 ## `--all` 时单独打印 SKIP 且不计入退出码，保证「既不被当成新回归，也不会悄悄消失」。
