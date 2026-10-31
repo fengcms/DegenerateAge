@@ -1,7 +1,15 @@
 extends Node
-## Deterministic CPU benchmark; use the isolated runner to protect real saves.
-## Timings are diagnostics, not hardware-dependent pass/fail thresholds.
+## 隔离CPU基准：验证分帧巡游、地图投影与刷新预算，保护真实存档。
+## 耗时仅作诊断，不用硬件相关阈值判定通过；构建候选不得执行完整A*。
 
+class CountingLayout extends CaveLayout:
+	var path_calls := 0
+	## 统计完整路线调用，沿用生产A*结果。
+	func path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
+		path_calls += 1
+		return super.path(from_cell,to_cell)
+
+## 明确推进分帧规划再检查结果，保留非空、投影往返与刷新预算断言。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	GameState.current_map = "c2_lower_works"
@@ -14,8 +22,20 @@ func _ready() -> void:
 	var world := main.get_node("Game")
 	var player := world.get_node("Entities/Player") as PlayerCharacter
 	var pilot := player.get_node("AutoPilot") as AutoBattle
+	var ground := world.get_node("Ground") as IsoGround
+	var counting := CountingLayout.new(String(MapService.data_for(GameState.current_map).layoutPath))
+	ground.cave = counting
+	counting.prepare_connectivity()
 	start = Time.get_ticks_usec()
 	pilot._build_roam_points()
+	var slices := 0
+	while pilot._roam_builder != null:
+		var done := pilot._roam_builder.advance()
+		slices += 1
+		if done:
+			pilot._finish_roam_build()
+	assert(counting.path_calls == 0,"Roam candidates must not build full routes")
+	print("[PERF] bounded roam slices: ",slices)
 	print("[PERF] roam build: %.3f ms, %d points" % [
 		(Time.get_ticks_usec() - start) / 1000.0, pilot._roam_points.size()])
 	assert(not pilot._roam_points.is_empty(), "Largest map needs reachable roam points")
