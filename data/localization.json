@@ -1005,6 +1005,11 @@
   "ui.batch.progress": "准备随机产物 %d / %d，可取消；尚未扣除材料。",
   "ui.batch.busy": "批量合成正在准备，请勿重复提交。",
   "ui.batch.protected": "另保护收藏 %d 件，手动排除 %d 件。",
+  "ui.equipment_gap.card_title": "装备适配",
+  "ui.equipment_gap.card_player": "按人物等级 Lv%d参考",
+  "ui.equipment_gap.card_target": "参考目标：Lv%d",
+  "ui.equipment_gap.card_damage": "对该参考等级伤害保留：%.1f%%",
+  "ui.equipment_gap.card_advice": "建议各部位装备达到Lv%d及以上",
   "ui.equipment_gap.hint": "跨级：目标%d级/武器%d级 · 伤害保留%.1f%% · 建议≥%d级",
   "ui.equipment_gap.details": "目标%d级 · 主武器%d级\n装备超额差%.2f级，伤害保留%.1f%%\n20级内不额外衰减，建议各部位提升至%d级以上。",
   "ui.equipment_gap.preview": "跨级预览：%s · 目标%d级\n伤害保留 %.1f%% → %.1f%%\n可拖到此槽替换。"
