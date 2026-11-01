@@ -3,6 +3,9 @@ extends Control
 ## 展示形象随当前武器的阶段形象更换（CharacterLook）；头像固定一张，不由本面板维护。
 
 var _slots: Dictionary = {}
+var _gap_card: PanelContainer
+var _gap_reference: Label
+var _gap_advice: Label
 var _gap_hint: Label
 var _stats: Label
 var _portrait: TextureRect
@@ -13,9 +16,11 @@ var _center: FloatingWindow
 var _last_slot_id := ""
 var _last_slot_click_ms := 0
 
+## 初始化人物面板并订阅装备、目标及属性变化。
 func _ready() -> void:
 	# 切换目标时刷新跨级参考等级，不增加逐帧轮询。
 	EventBus.target_changed.connect(_on_gap_target_changed)
+	EventBus.data_loaded.connect(_refresh)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
@@ -27,6 +32,7 @@ func _ready() -> void:
 	EventBus.player_hp_changed.connect(func(_hp: int, _max: int) -> void: _refresh())
 	EventBus.player_mp_changed.connect(func(_mp: int, _max: int) -> void: _refresh())
 
+## 通过既有输入映射切换面板，遵守浮窗层级。
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("panel_character") and not event.is_echo():
 		set_open(not visible)
@@ -37,6 +43,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
+## 切换人物面板并同步背包与浮窗状态。
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("character", open)
@@ -56,6 +63,7 @@ func _on_panel_opened(panel_id: String) -> void:
 	if visible and not GameState.panels_coexist(panel_id, "character"):
 		set_open(false)
 
+## 构建装备、形象、独立适配提示和战斗属性的容器布局。
 func _build() -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -173,13 +181,33 @@ func _build() -> void:
 	_stats.add_theme_constant_override("line_spacing", 5)
 	_stats.add_theme_color_override("font_color", PanelChrome.TEXT)
 	stats_card.add_child(_stats)
+	# 独立卡片由左侧VBox自然排布，禁止与属性Label共用PanelContainer内容矩形。
+	_gap_card = PanelContainer.new()
+	PanelChrome.style_card(_gap_card)
+	equip.add_child(_gap_card)
+	var gap_body := VBoxContainer.new()
+	gap_body.add_theme_constant_override("separation", 6)
+	_gap_card.add_child(gap_body)
+	var gap_title := Label.new()
+	gap_title.text = Localization.tr_key("ui.equipment_gap.card_title")
+	PanelChrome.style_section(gap_title)
+	gap_body.add_child(gap_title)
+	_gap_reference = Label.new()
+	_gap_reference.add_theme_font_size_override("font_size", 13)
+	gap_body.add_child(_gap_reference)
 	_gap_hint = Label.new()
-	_gap_hint.custom_minimum_size.x = 245
+	_gap_hint.custom_minimum_size.x = 350
 	_gap_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_gap_hint.add_theme_font_size_override("font_size",11)
+	_gap_hint.add_theme_font_size_override("font_size",13)
 	_gap_hint.add_theme_color_override("font_color",Color("e8bc77"))
-	stats_card.add_child(_gap_hint)
+	gap_body.add_child(_gap_hint)
+	_gap_hint.add_theme_constant_override("line_spacing", 5)
+	_gap_advice = Label.new()
+	_gap_advice.add_theme_font_size_override("font_size", 13)
+	_gap_advice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	gap_body.add_child(_gap_advice)
 
+## 读取当前人物数据刷新显示，不修改装备或战斗数值。
 func _refresh() -> void:
 	if _title == null:
 		return
@@ -187,8 +215,7 @@ func _refresh() -> void:
 	_title.text = PanelChrome.title_text("人物 · %s" % player_name)
 	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
 	_apply_look()
-	_gap_hint.text = EquipmentGap.details(EquipmentGap.current_context(),EquipmentGap.reference_level())
-	_gap_hint.visible = not _gap_hint.text.is_empty()
+	_refresh_gap_card()
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
@@ -251,6 +278,7 @@ func _set_bonus_text() -> String:
 			[int(info.get("next_star", 0)), int(info.get("next_star_need", 0))]))
 	return "\n\n" + "\n".join(PackedStringArray(lines))
 
+## 格式化套装加成比例供属性说明使用。
 func _pct_text(value: float) -> String:
 	return "+%.1f%%" % (value * 100.0)
 
@@ -262,6 +290,7 @@ func _apply_look() -> void:
 	_look_id = next
 	_portrait.texture = CharacterLook.panel_texture(next)
 
+## 按物品品质装饰装备槽，保留现有品质框。
 func _style_equipment_slot(button: EquipmentSlot, item: Variant) -> void:
 	var empty := not item is Dictionary
 	var border := Color("737b83") if empty else ItemUtil.quality_color(String(item.get("quality", "common")))
@@ -278,10 +307,12 @@ func _style_equipment_slot(button: EquipmentSlot, item: Variant) -> void:
 	button.add_theme_color_override("font_color", Color("8d959d") if empty else Color.WHITE)
 	button.add_theme_font_size_override("font_size", 12)
 
+## 查询背包是否开启，供拖放和卸装判断。
 func _bag_visible() -> bool:
 	var bag := get_node_or_null("../InventoryPanel")
 	return bag != null and bag.visible
 
+## 背包开启时允许双击卸装，沿用统一卸装入口。
 func _on_slot_pressed(slot_id: String) -> void:
 	var now := Time.get_ticks_msec()
 	if slot_id == _last_slot_id and now - _last_slot_click_ms <= 400:
@@ -293,6 +324,7 @@ func _on_slot_pressed(slot_id: String) -> void:
 		_last_slot_id = slot_id
 		_last_slot_click_ms = now
 
+## 校验背包拖放令牌后通过统一装备入口穿戴。
 func _on_equipment_dropped(_index: int, payload: Dictionary, slot_id: String) -> void:
 	if not visible or not _bag_visible() or int(payload.get("from", -1)) != ItemSlot.ROLE_BAG:
 		return
@@ -305,6 +337,7 @@ func _on_equipment_dropped(_index: int, payload: Dictionary, slot_id: String) ->
 		return
 	GameState.equip_from_inventory(index, slot_id)
 
+## 组合身上装备的原生回退提示。
 func _equipment_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = [ItemUtil.display_name(item)]
 	if item.has("durability"):
@@ -321,3 +354,22 @@ func _equipment_tooltip(item: Dictionary) -> String:
 func _on_gap_target_changed(_target: Node) -> void:
 	if visible:
 		_refresh()
+
+## 以统一规则更新简明卡片；无有效目标时明确按人物等级参考，不更改属性值。
+func _refresh_gap_card() -> void:
+	var context := EquipmentGap.current_context()
+	var level := EquipmentGap.reference_level()
+	var state := EquipmentGap.summary(context, level)
+	_gap_card.visible = float(state.factor) < 0.999999
+	if not _gap_card.visible:
+		return
+	var reference_key := "ui.equipment_gap.card_player"
+	var player := get_tree().get_first_node_in_group("player")
+	if player != null:
+		var target: Variant = player.get("locked_target")
+		if is_instance_valid(target) and EquipmentGap.target_level(target) > 0:
+			reference_key = "ui.equipment_gap.card_target"
+	_gap_reference.text = Localization.tr_key(reference_key, [level])
+	_gap_hint.text = Localization.tr_key("ui.equipment_gap.card_damage", [float(state.factor)*100.0])
+	_gap_advice.text = Localization.tr_key("ui.equipment_gap.card_advice", [int(state.recommended)])
+	_gap_card.tooltip_text = EquipmentGap.details(context, level)
