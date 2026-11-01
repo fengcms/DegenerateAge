@@ -19,6 +19,8 @@ func item(kind: String, level: int, quality: String, star: int = 0) -> Dictionar
 
 ## 先在真实Main复核事件与提示，再以纯规则验证不会无限保留替代品。
 func _ready() -> void:
+	get_window().content_scale_size = Vector2i.ZERO
+	get_window().size = Vector2i(1280,1200)
 	GameState.reset_to_defaults("mage")
 	GameState.player.level=517
 	GameState.current_map="c7_boss_field"
@@ -113,10 +115,19 @@ func check_character_layout(main: Node, player: PlayerCharacter, boss: Monster) 
 	panel.set_open(true)
 	var card: Control = panel.get("_gap_card")
 	var stats: Label = panel.get("_stats")
-	for dimensions in [Vector2i(1280,800), Vector2i(960,640)]:
+	for dimensions in [Vector2i(1280,1200), Vector2i(1280,800), Vector2i(960,640)]:
 		window.size = dimensions
 		for frame in range(12):
 			await get_tree().process_frame
+		if dimensions.y == 1200:
+			var stretched: FloatingWindow = panel.get("_center")
+			stretched.size.y = 1100
+			stretched.panel_box.size.y = 1100
+			EventBus.equipment_changed.emit()
+			for frame in range(3):
+				await get_tree().process_frame
+			print("[PERF] height allocated=",stretched.size.y," frame=",stretched.panel_box.size.y," natural=",stretched.panel_box.get_combined_minimum_size().y)
+			check(stretched.panel_box.size.y <= stretched.panel_box.get_combined_minimum_size().y + 1.0, "大窗口旧分配高度不能拉长面板外框")
 		var figure: Control = card.get_parent().get_child(1)
 		check(card.visible, "落后装备显示独立卡片")
 		check(not card.get_global_rect().intersects(stats.get_global_rect()), "提示与属性实际矩形不相交")
@@ -132,7 +143,7 @@ func check_character_layout(main: Node, player: PlayerCharacter, boss: Monster) 
 			check(card.get_global_rect().end.y <= scroll.get_global_rect().end.y + 1.0, "小窗口滚动可读完整提示卡")
 		if DisplayServer.get_name() != "headless":
 			RenderingServer.force_draw(false)
-			get_viewport().get_texture().get_image().save_png("/tmp/character_gap_%d.png" % dimensions.x)
+			get_viewport().get_texture().get_image().save_png("/tmp/character_gap_%d_%d.png" % [dimensions.x, dimensions.y])
 	boss.level = 450
 	player.select_target(boss, false)
 	check(not card.visible, "低等级目标无衰减时隐藏整卡")

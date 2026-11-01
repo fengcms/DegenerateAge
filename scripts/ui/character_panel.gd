@@ -216,6 +216,7 @@ func _refresh() -> void:
 	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
 	_apply_look()
 	_refresh_gap_card()
+	_fit_window_to_content.call_deferred()
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
@@ -373,3 +374,14 @@ func _refresh_gap_card() -> void:
 	_gap_hint.text = Localization.tr_key("ui.equipment_gap.card_damage", [float(state.factor)*100.0])
 	_gap_advice.text = Localization.tr_key("ui.equipment_gap.card_advice", [int(state.recommended)])
 	_gap_card.tooltip_text = EquipmentGap.details(context, level)
+
+## 内容最小尺寸稳定后清除外框残留高度，避免热更新或旧分配空间留下大块空白。
+## 只修正超出内容的实际尺寸；滚动区仍由FloatingWindow按可用视口限高，不置前或重置拖动位置。
+func _fit_window_to_content() -> void:
+	if not visible or _center == null:
+		return
+	var box := _center.panel_box
+	if box.size.y > box.get_combined_minimum_size().y + 1.0:
+		box.reset_size()
+		_center.reset_size()
+		_center._layout()
