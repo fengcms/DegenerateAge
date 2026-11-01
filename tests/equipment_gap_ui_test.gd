@@ -48,6 +48,7 @@ func _ready() -> void:
 	var bar:=main.get_node("UI/BossHealthBar")
 	check(bar.bar_state(boss.get_instance_id()).get("level")==517,"Boss条用真实目标等级")
 	check(String(bar.bar_state(boss.get_instance_id()).get("gap_text","")).contains("19.6"),"Boss持续显示实际装备影响")
+	await check_character_layout(main, player, boss)
 	var fresh:=item("weapon",510,"common")
 	check(Equipment.score(fresh)<Equipment.score(GameState.equipment.weapon),"夹具确实是低分高等级过渡装")
 	var inv:=main.get_node("UI/InventoryPanel")
@@ -100,3 +101,46 @@ func text_of(node: Node) -> String:
 	for child in node.get_children():
 		text += "\n"+text_of(child)
 	return text
+
+## 真实人物面板布局完成后检查矩形，不以父子节点结构替代防遮挡验收。
+func check_character_layout(main: Node, player: PlayerCharacter, boss: Monster) -> void:
+	var panel: Control = main.get_node("UI/CharacterPanel")
+	var window := get_window()
+	var original_size := window.size
+	var original_scale := window.content_scale_size
+	window.content_scale_size = Vector2i.ZERO
+	player.select_target(boss, false)
+	panel.set_open(true)
+	var card: Control = panel.get("_gap_card")
+	var stats: Label = panel.get("_stats")
+	for dimensions in [Vector2i(1280,800), Vector2i(960,640)]:
+		window.size = dimensions
+		for frame in range(12):
+			await get_tree().process_frame
+		var figure: Control = card.get_parent().get_child(1)
+		check(card.visible, "落后装备显示独立卡片")
+		check(not card.get_global_rect().intersects(stats.get_global_rect()), "提示与属性实际矩形不相交")
+		check(card.global_position.y >= figure.get_global_rect().end.y, "提示位于人物展示与装备槽下方")
+		check(card.size.y >= card.get_combined_minimum_size().y, "卡片高度容纳完整文字")
+		var floating: FloatingWindow = panel.get("_center")
+		check(floating.header.get_global_rect().end.y <= panel.get_viewport_rect().end.y, "小窗口标题与关闭入口可见")
+		if dimensions.x == 960:
+			var scroll: ScrollContainer = floating.content_scroll
+			scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+			for frame in range(3):
+				await get_tree().process_frame
+			check(card.get_global_rect().end.y <= scroll.get_global_rect().end.y + 1.0, "小窗口滚动可读完整提示卡")
+		if DisplayServer.get_name() != "headless":
+			RenderingServer.force_draw(false)
+			get_viewport().get_texture().get_image().save_png("/tmp/character_gap_%d.png" % dimensions.x)
+	boss.level = 450
+	player.select_target(boss, false)
+	check(not card.visible, "低等级目标无衰减时隐藏整卡")
+	player.select_target(null, false)
+	check(card.visible and String(panel.get("_gap_reference").text).contains("人物等级"), "无目标明确按人物等级参考")
+	boss.level = 517
+	player.select_target(boss, false)
+	check(String(panel.get("_gap_reference").text).contains("参考目标"), "切回目标更新来源说明")
+	panel.set_open(false)
+	window.content_scale_size = original_scale
+	window.size = original_size
