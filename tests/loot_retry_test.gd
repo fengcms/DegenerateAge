@@ -3,6 +3,12 @@ extends Node
 class Probe extends GroundItem:
 	var attempts := 0
 	var succeeds := false
+	var player_queries := 0
+	var probe_player: Node2D
+	## 记录自动物理入口是否仍查找玩家，避免仅测交易缓存却漏掉前置空转。
+	func _get_player() -> Node2D:
+		player_queries += 1
+		return probe_player
 	## 只统计交易入口调用，避免测试本身依赖掉落动画和随机装备。
 	func _try_pickup(_announce: bool = true, _quiet: bool = false) -> bool:
 		attempts += 1
@@ -39,6 +45,25 @@ func _ready() -> void:
 	item._try_auto_pickup()
 	item._try_auto_pickup()
 	assert(item.attempts == before + 2, "金币不被背包失败结论阻挡")
+	GameState.set_auto_pickup(true)
+	item.item = {"kind":"equip"}
+	item._try_auto_pickup()
+	item._range_t = 1000.0
+	item._spawn_t = 10.0
+	item.probe_player = Node2D.new()
+	add_child(item.probe_player)
+	add_child(item)
+	item.set_physics_process(false)
+	item._range_t = 1000.0
+	var queries_before := item.player_queries
+	for i in range(1000):
+		item._physics_process(0.016)
+	assert(item.player_queries == queries_before, "同状态失败掉落不再逐帧查询玩家")
+	EventBus.inventory_changed.emit()
+	item.succeeds = true
+	item._physics_process(0.016)
+	assert(item.player_queries == queries_before+1 and item.is_claimed(), "腾格后下一物理步恢复附近认领")
+	item.probe_player.free()
 	item.free()
 	GameState.reset_to_defaults()
 	GameState.inventory = Inventory.create(1)

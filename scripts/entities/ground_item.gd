@@ -134,6 +134,8 @@ var _cached_ground_id := ""
 var _cached_ground_quality := ""
 var _cached_ground_persistent := false
 var _cached_drawn := false
+var _idle_service: GroundLootIdle
+var _idle_started := 0.0
 var _failed_pickup_revision := -1
 var _near_anim: bool = false           # 玩家是否在动画半径内（工程 104）
 
@@ -206,9 +208,15 @@ func _physics_process(delta: float) -> void:
 		return
 	# 工程 89：玩家丢弃物只认点击 —— 否则丢在脚边会被立刻捡回去。
 	if manual_only:
+		_park_if_static()
 		return
 	# G 关闭时任何地面物都必须由玩家点击拾取。工程 101 起面板打开不作限制。
 	if not GameState.auto_pickup_on:
+		_park_if_static()
+		return
+	# 已知失败时在玩家组查询和距离计算之前短路；腾格/策略变化仍按共享版本立即恢复。
+	if _failed_pickup_revision >= 0 and String(item.get("kind", "")) not in ["coin", "mount"] and _failed_pickup_revision == LootRetryState.revision():
+		_park_if_static()
 		return
 	# 靠近自动拾取（9.9）
 	var player := _get_player()
@@ -216,6 +224,8 @@ func _physics_process(delta: float) -> void:
 		if _try_auto_pickup():
 			_claimed = true
 			queue_free()
+			return
+	_park_if_static()
 
 # ---- 重绘调度（工程 104）----
 
@@ -487,6 +497,7 @@ func _get_player() -> Node2D:
 
 ## 悬停状态变化时重绘，使密集缓存装备也可显示名称。
 func _on_hover(state: bool) -> void:
+	_resume_idle()
 	if _hovered == state:
 		return
 	_hovered = state
@@ -494,6 +505,7 @@ func _on_hover(state: bool) -> void:
 
 ## 左键点击拾取（9.9）。已认领（飞行中）的物品不再响应点击。
 func _on_click_area_input_event(viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	_resume_idle()
 	if _claimed:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -644,3 +656,19 @@ func _try_auto_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 ## 低频检查模板、品质、持久标记和数据版本，避免静止缓存掩盖运行时数据变化。
 func _cached_visual_matches() -> bool:
 	return _cached_ground_revision == DataLoader.revision and _cached_ground_id == String(item.get("itemId","")) and _cached_ground_quality == ItemUtil.quality_of(item) and _cached_ground_persistent == persistent
+
+## 输入时同步恢复静止节点和提示冷却，不在点击栈中额外执行自动拾取。
+func _resume_idle() -> void:
+	if is_instance_valid(_idle_service):
+		_idle_service.wake(self)
+
+## 主动领取/切图释放时从地图调度器注销，不能保留失效节点引用。
+func _exit_tree() -> void:
+	if is_instance_valid(_idle_service):
+		_idle_service.forget(self)
+
+## 当前步完成且仍未认领才静止，防止成功拾取又被登记回调度器。
+## 调用方已检查保护期；普通掉落、飞行与悬停始终保留原物理路径。
+func _park_if_static() -> void:
+	if persistent and _cached_drawn and not _claimed and not _hovered and _idle_service == null:
+		GroundLootIdle.park(self)
