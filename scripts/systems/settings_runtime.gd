@@ -255,16 +255,31 @@ static func _apply_ui_scale() -> void:
 		return
 	apply_ui_scale_to(ui)
 
+## 布局尺寸是否可用。**唯一判据，不要在各处重写 `size <= 0`。**
+## 🔴 工程 115：只写 `size.x <= 0.0` 是**错的** —— NaN / INF 与 0 比较恒为 false
+## （实测 `NAN <= 0.0 == false`），守卫会把非法尺寸放行 ⇒ `control.size = inf/nan`
+## ⇒ 引擎报 `!isfinite(p_size)`、子控件 `_draw` 里 `INF - INF = NaN` ⇒ C++ 层闪退。
+## 触发源：`reload_current_scene()` 期间旧场景正在释放，视口可见尺寸尚未就绪。
+static func is_usable_layout_size(size: Vector2) -> bool:
+	return is_finite(size.x) and is_finite(size.y) and size.x > 0.0 and size.y > 0.0
+
 ## 使用 UI 实际所在 Viewport 的可见尺寸。嵌入式试玩时 SceneTree.root 是编辑器窗口，
 ## 与游戏 SubViewport 尺寸不同；拿 root.size 会让右/下锚点随窗口改变而漂出游戏区域。
 ## M5-9c：最终倍率 = clamp(uiScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
 static func apply_ui_scale_to(ui: CanvasLayer) -> void:
 	var scale_value := ui_scale_value()
-	var viewport_size := ui.get_viewport().get_visible_rect().size
-	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+	if not is_finite(scale_value) or scale_value <= 0.0:
+		return
+	var viewport := ui.get_viewport()
+	if viewport == null:
+		return
+	var viewport_size := viewport.get_visible_rect().size
+	if not is_usable_layout_size(viewport_size):
 		return
 	# 根控件使用当前游戏画布的逻辑尺寸，四边锚点才能始终贴住可见区域。
 	var logical_size := viewport_size / scale_value
+	if not is_usable_layout_size(logical_size):
+		return
 	for child in ui.get_children():
 		if child is Control:
 			var control := child as Control
@@ -273,8 +288,16 @@ static func apply_ui_scale_to(ui: CanvasLayer) -> void:
 			control.size = logical_size
 	ui.transform = Transform2D(Vector2(scale_value, 0), Vector2(0, scale_value), Vector2.ZERO)
 
+## 🔴 工程 115：`clampf(NAN, min, max)` 会**原样返回 nan**（实测），clamp 不能当有限性兜底。
+## 这里被 20+ 处用来算「逻辑视口」，一旦透传 nan 会把整条 UI 尺寸链带崩。
 static func ui_scale_value() -> float:
-	return clampf(float(GameState.settings.get("uiScale", 1.0)), UI_SCALE_MIN, UI_SCALE_MAX) * display_scale_factor()
+	var raw := float(GameState.settings.get("uiScale", 1.0))
+	var factor := display_scale_factor()
+	if not is_finite(raw):
+		raw = 1.0
+	if not is_finite(factor) or factor <= 0.0:
+		factor = 1.0
+	return clampf(raw, UI_SCALE_MIN, UI_SCALE_MAX) * factor
 
 ## 把界面倍率补到 Window 类弹层（FileDialog / Popup 等）上。
 ## 界面轴挂在 UI CanvasLayer 的 transform，而 transform 只作用于 CanvasItem；Window 不是

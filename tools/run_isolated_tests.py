@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GODOT = Path("/Applications/Godot.app/Contents/MacOS/Godot")
 DEFAULT_TESTS = [
     "EquipmentAxesTest",
-    "SettingsTest", "PotionAccessibilityTest", "AudioCuesTest", "FlowFeedbackTest",
+    "SettingsTest", "NanGuardTest", "PotionAccessibilityTest", "AudioCuesTest", "FlowFeedbackTest",
     "DeathChoiceTest", "DeathDropTest", "RandomTicketTest", "TownScrollTest",
     "HotbarConfigTest", "HotbarUiTest", "InputFeedbackTest", "MenuFlowTest",
     "SkillCombatTest", "AutoControlAcceptance", "AutoExplorationSurvival",

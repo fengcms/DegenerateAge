@@ -63,6 +63,8 @@ func _process(_delta: float) -> void:
 	if cell != _explored_cell:
 		_explored_cell = cell
 		Fog.reveal(GameState.current_map, cell)
+	# 工程 116：逐帧心跳（内部 0.5s 节流，每帧只做一次 msec 比较）。
+	CrashTrace.tick(_player.global_position)
 
 func request_map_move(point: Vector2) -> bool:
 	if _ground.is_locked_boss_area(point):
@@ -143,10 +145,12 @@ func _tick_quest_navigation() -> void:
 
 ## 按当前地图装配世界，并在 NPC 生成后初始化和订阅任务标记刷新。
 func _ready() -> void:
+	CrashTrace.mark("game.ready.begin", "map=" + GameState.current_map)
 	# 出行事务只在目标地图地面与必要节点就绪后提交；失败则恢复源图。
 	if not MapService.pending_travel.is_empty() and (not MapService.exists(GameState.current_map)
 			or _ground.map_id != GameState.current_map or _ground.grid_size.x <= 0
 			or _ground.grid_size.y <= 0 or _player == null or _spawner == null):
+		CrashTrace.mark("game.ready.rollback_travel")
 		MapService.rollback_travel()
 		MapService.reload_world()
 		return
@@ -161,6 +165,7 @@ func _ready() -> void:
 		GameState.clear_save_pos()
 	else:
 		_player.global_position = _ground.get_map_center_world()
+	CrashTrace.mark("game.ready.spawn", "pos=" + str(_player.global_position))
 
 	var pilot := _player.get_node_or_null("AutoPilot") as AutoBattle
 	if pilot != null:
@@ -187,6 +192,9 @@ func _ready() -> void:
 	var bosses := MapService.current_bosses()
 	if not bosses.is_empty():
 		_spawner.spawn_from_specs(bosses, GameState.current_map)
+	CrashTrace.mark("game.ready.monsters",
+		"points=%d alive=%d bosses=%d" % [
+			_spawner.point_count(), _spawner.alive_count(), bosses.size()])
 
 	# 各图 NPC（M3-1：由 maps.json 的 npcs 驱动）
 	_spawn_npcs()
@@ -197,9 +205,12 @@ func _ready() -> void:
 
 	# M6-0c（创意 07 §11.2）：重建本图未领取战利品 —— 切图 / 读档后恢复，跨档不丢
 	_rebuild_unclaimed_loot()
+	CrashTrace.mark("game.ready.loot_rebuilt")
 	if not MapService.commit_arrival():
+		CrashTrace.mark("game.ready.commit_arrival_failed")
 		MapService.reload_world()
 		return
+	CrashTrace.mark("game.ready.arrived")
 
 	# 抵达提示（切图 / 读档后给一次系统提示；延后一帧等 HUD 就绪）
 	_notify_arrival.call_deferred()
@@ -209,6 +220,7 @@ func _ready() -> void:
 
 	add_to_group("map_world")
 	Fog.reveal(GameState.current_map, Vector2i(Iso.world_to_grid(_player.global_position).round()))
+	CrashTrace.mark("game.ready.end")
 
 ## 世界退场时释放本图正式动画缓存；若切图事务已改变全局地图 ID，仍按旧图身份释放。
 func _exit_tree() -> void:
