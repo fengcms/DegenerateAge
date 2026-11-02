@@ -127,6 +127,7 @@ var _claimed: bool = false
 var _pickup_msg: String = ""           # 待播的「拾取」提示（飞行结束时弹，Q2）
 var _redraw_t: float = 0.0             # 低频重绘计时（工程 104）
 var _range_t: float = 0.0              # 距玩家复查计时（工程 104）
+var _failed_pickup_revision := -1
 var _near_anim: bool = false           # 玩家是否在动画半径内（工程 104）
 
 func _ready() -> void:
@@ -200,7 +201,7 @@ func _physics_process(delta: float) -> void:
 	# 靠近自动拾取（9.9）
 	var player := _get_player()
 	if player != null and player.global_position.distance_to(global_position) <= PICKUP_RANGE_PX:
-		if _try_pickup():
+		if _try_auto_pickup():
 			_claimed = true
 			queue_free()
 
@@ -219,8 +220,10 @@ func _tick_redraw(delta: float) -> void:
 		redraw_count += 1
 		queue_redraw()
 		return
-	_redraw_t -= delta
-	_range_t -= delta
+	# 装饰更新按现实时间预算，不随战斗倍速将10Hz推成每物理帧重绘。
+	var real_delta := delta / maxf(Engine.time_scale, 0.000001)
+	_redraw_t -= real_delta
+	_range_t -= real_delta
 	if _range_t <= 0.0:
 		_range_t = ANIM_RANGE_CHECK
 		_near_anim = _player_within(ANIM_RANGE_TILES * Iso.TILE_W)
@@ -246,7 +249,7 @@ func _player_within(px: float) -> bool:
 ## 生成瞬间尝试入包。成功 → 脱离 `ground_items` 组并进入表现阶段；
 ## 失败（背包满 / 金币满）→ 保持未认领，回退旧留地语义（不静默丢失）。
 func _try_claim() -> void:
-	if not _try_pickup(false, persistent):        # 静默入包：拾取提示改在飞行结束时弹（Q2）
+	if not _try_auto_pickup(false, persistent):        # 静默入包：拾取提示改在飞行结束时弹（Q2）
 		# M6-0c：精英 / Boss 入包失败 ⇒ 登记未领取战利品（§11.1）。
 		# ⚠ 延后一帧登记：掉落方在 `add_child` **之后**才设最终落点（`Monster._spawn_drop`），
 		#   立即登记会记到默认位置。deferred 在当前帧末 flush，此时落点已定。
@@ -582,3 +585,16 @@ func _draw_label(kind: String, quality: String, col: Color, center: Vector2) -> 
 	var font_size := 13.0 * SettingsRuntime.world_text_scale_value()
 	draw_string(MONO_FONT, Vector2(center.x - 120.0, center.y - 20.0), ItemUtil.display_name(item),
 		HORIZONTAL_ALIGNMENT_CENTER, 240.0, font_size, col)
+
+## 自动入口只缓存失败；手动点击仍走原入口。状态未变时不反复扫描背包或计算出售。
+## 金币与坐骑沿用原逻辑，装备/物品的成功结算仍由GameState唯一门面负责。
+func _try_auto_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
+	if String(item.get("kind", "")) in ["coin", "mount"]:
+		return _try_pickup(announce,quiet_block)
+	var revision := LootRetryState.revision()
+	if _failed_pickup_revision == revision:
+		return false
+	var success := _try_pickup(announce,quiet_block)
+	if not success:
+		_failed_pickup_revision = revision
+	return success

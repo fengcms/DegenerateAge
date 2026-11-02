@@ -224,7 +224,8 @@ func _loot_guard_map() -> String:
 
 func _physics_process(delta: float) -> void:
 	_tick_blacklist(delta)
-	_loot_scan_t = maxf(0.0, _loot_scan_t - delta)
+	# 满包候选复查属查询预算，使用现实时间；移动、技能和战斗仍沿原delta。
+	_loot_scan_t = maxf(0.0, _loot_scan_t - delta / maxf(Engine.time_scale, 0.000001))
 	if _player == null or not is_instance_valid(_player):
 		return
 
