@@ -127,10 +127,21 @@ var _claimed: bool = false
 var _pickup_msg: String = ""           # 待播的「拾取」提示（飞行结束时弹，Q2）
 var _redraw_t: float = 0.0             # 低频重绘计时（工程 104）
 var _range_t: float = 0.0              # 距玩家复查计时（工程 104）
+var _bake_source := false
+var _cached_ground_texture: Texture2D
+var _cached_ground_revision := -1
+var _cached_ground_id := ""
+var _cached_ground_quality := ""
+var _cached_ground_persistent := false
+var _cached_drawn := false
 var _failed_pickup_revision := -1
 var _near_anim: bool = false           # 玩家是否在动画半径内（工程 104）
 
+## 注册真实掉落的交互与认领；离屏合成源仅参与绘制，不加入任何玩法组。
 func _ready() -> void:
+	if _bake_source:
+		set_physics_process(false)
+		return
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_to_group("ground_items")
 	# M6-0d（创意 07 §9）：名称等世界文字 —— 入组供改地图倍率时重绘（_draw 按当时倍率取字号）。
@@ -224,6 +235,13 @@ func _tick_redraw(delta: float) -> void:
 	var real_delta := delta / maxf(Engine.time_scale, 0.000001)
 	_redraw_t -= real_delta
 	_range_t -= real_delta
+	if _cached_drawn and not _claimed:
+		if _range_t <= 0.0:
+			_range_t = ANIM_RANGE_CHECK
+			if not GroundLootVisualCache.dense(get_tree()) or not _cached_visual_matches():
+				_cached_drawn = false
+				queue_redraw()
+		return
 	if _range_t <= 0.0:
 		_range_t = ANIM_RANGE_CHECK
 		_near_anim = _player_within(ANIM_RANGE_TILES * Iso.TILE_W)
@@ -484,7 +502,24 @@ func _on_click_area_input_event(viewport: Node, event: InputEvent, _shape_idx: i
 func is_claimed() -> bool:
 	return _claimed
 
+## 密集静止装备可复用合成纹理；动画、悬停文字及低密度场景保留原画法。
 func _draw() -> void:
+	if not _bake_source and not _claimed and _guard_ratio() <= 0.0 and String(item.get("kind","")) == "equip" and GroundLootVisualCache.dense(get_tree()):
+		if not _cached_visual_matches():
+			_cached_ground_texture = null
+			_cached_ground_revision = DataLoader.revision
+			_cached_ground_id = String(item.get("itemId",""))
+			_cached_ground_quality = ItemUtil.quality_of(item)
+			_cached_ground_persistent = persistent
+		if _cached_ground_texture == null:
+			_cached_ground_texture = GroundLootVisualCache.texture_for(item,persistent,get_tree())
+		if _cached_ground_texture != null:
+			draw_texture(_cached_ground_texture,_cached_ground_texture.get_meta("loot_offset",-GroundLootVisualCache.ORIGIN))
+			if _hovered:
+				_draw_label("equip",ItemUtil.quality_of(item),ItemUtil.item_accent_color(item),Vector2(0,-16))
+			_cached_drawn = true
+			return
+	_cached_drawn = false
 	var kind := String(item.get("kind", "misc"))
 	var quality := ItemUtil.quality_of(item)
 	# 强调色统一走唯一入口（工程 111），同一件物品不该在各界面各算一套。
@@ -598,3 +633,7 @@ func _try_auto_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 	if not success:
 		_failed_pickup_revision = revision
 	return success
+
+## 低频检查模板、品质、持久标记和数据版本，避免静止缓存掩盖运行时数据变化。
+func _cached_visual_matches() -> bool:
+	return _cached_ground_revision == DataLoader.revision and _cached_ground_id == String(item.get("itemId","")) and _cached_ground_quality == ItemUtil.quality_of(item) and _cached_ground_persistent == persistent

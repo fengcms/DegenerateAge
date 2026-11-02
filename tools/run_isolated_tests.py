@@ -251,7 +251,7 @@ FIXTURE_SCENES = {"CampWhitebox", "CampStyleSample", "CampStyleBenchmark"}
 ## 必须 `--rendered` 才有意义：headless 下 `get_viewport().get_texture()` 取不到图，
 ## 或性能基准拿不到真实帧时间。它们在无头 `--all` 里**必然假红**，不是功能缺陷。
 ## 单独复核：`python3 tools/run_isolated_tests.py --rendered ChapterOneMapArtCapture`。
-RENDER_ONLY_SCENES = {"MapRenderBenchmark", "ChapterOneMapArtCapture", "BossVisualSamples", "BossVisualGallery", "BossVisualBenchmark", "CameraStressTest"}
+RENDER_ONLY_SCENES = {"LootBacklogBenchmark","GroundLootVisualCacheTest","MapRenderBenchmark", "ChapterOneMapArtCapture", "BossVisualSamples", "BossVisualGallery", "BossVisualBenchmark", "CameraStressTest"}
 
 ## 已知美术欠账：**断言本身是对的，红的原因是素材/布局数据过时**，需要重做美术而不是改代码。
 ## `--all` 时单独打印 SKIP 且不计入退出码，保证「既不被当成新回归，也不会悄悄消失」。
