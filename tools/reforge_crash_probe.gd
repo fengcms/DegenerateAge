@@ -131,16 +131,20 @@ func _ready() -> void:
 
 	# --- 玩家操作细节：鼠标停在按钮上，会弹出 tooltip ---
 	# 真实玩家点完「如意」再点「重铸」，全程鼠标都压在控件上，于是引擎会挂一个
-	# tooltip 弹窗。而重铸成功会 `_refresh_choices()`（clear + 重建 151 项）与
-	# `_refresh_refine_slots()`（换掉格子的 item）—— 正在显示的 tooltip 若指向被换掉的
-	# 控件，就是最典型的「渲染时访问已释放对象」。探针不模拟悬停就永远碰不到这条路径。
+	# tooltip 弹窗。而重铸成功会 `_refresh_choices()`（clear + 重建 147 项）并把
+	# `_button.tooltip_text` 清空 —— 正在显示的 tooltip 若指向被清掉/换掉的控件，
+	# 就是最典型的「渲染时访问已释放对象」。
+	#
+	# 🔴 `Input.warp_mouse()` 靠不住：后台窗口没有焦点时 macOS 根本不派发 mouse move，
+	# 于是 hover 从未建立、tooltip 从未弹出 —— 前几次「同样操作不崩」很可能是这个假阴性。
+	# 改为直接 `Input.parse_input_event()` 注入 mouse motion，走完整的 Viewport GUI 分发。
 	var trigger: Button = panel.get("_button")
 	if trigger != null:
-		Input.warp_mouse(trigger.get_global_rect().get_center())
-		await get_tree().create_timer(1.5).timeout
-		# 🔴 不要在这里调 `_gui_show_tooltip()`：它会让 tooltip 反复重建并**卡死主循环**
-		# （已踩，探针挂 60 秒不退出）。悬停只能靠真实鼠标事件，探针模拟不到。
-		print("[Probe] 鼠标已停在重铸按钮上 %.1fs" % 1.5)
+		for _k in range(3):
+			_hover(trigger)
+			await get_tree().create_timer(0.6).timeout
+		print("[Probe] 悬停 1.8s 后：可见子窗口 %s | 按钮 tooltip=%s" % [
+			str(_visible_windows()), str(trigger.tooltip_text).left(30)])
 
 	# --- 玩家操作第三步：点重铸（真实按钮信号 + 焦点）---
 	for i in range(ATTEMPTS):
@@ -160,13 +164,36 @@ func _ready() -> void:
 			elapsed += get_process_delta_time()
 		var after: Dictionary = GameState.equipment.get("weapon", {})
 		var feedback: Label = panel.get("_feedback")
-		print("[Probe] #%d 存活 %.1fs frame=%d affixes=%d feedback_len=%d" % [
+		print("[Probe] #%d 存活 %.1fs frame=%d affixes=%d feedback_len=%d 可见窗=%s" % [
 			i, elapsed, Engine.get_process_frames(),
 			(after.get("affixes", []) as Array).size(),
-			feedback.text.length() if feedback != null else -1])
+			feedback.text.length() if feedback != null else -1,
+			str(_visible_windows())])
 
 	print("[Probe] === 未崩溃，%d 次重铸全部完成 ===" % ATTEMPTS)
 	get_tree().quit(0)
+
+## 注入一次真实的鼠标移动，让引擎走完整的 hover / tooltip 判定。
+## 🔴 不要用 `Input.warp_mouse()`：后台窗口无焦点时 macOS 不派发 mouse move（已踩）。
+func _hover(control: Control) -> void:
+	var at: Vector2 = control.get_screen_position() + control.size * 0.5
+	var ev := InputEventMouseMotion.new()
+	ev.position = at
+	ev.global_position = at
+	Input.parse_input_event(ev)
+
+## 收集当前可见的、非主窗口的 Window（tooltip 是 PopupPanel，内嵌模式下也挂在这里）。
+## 用来确认「tooltip 到底有没有弹出来」—— 没弹出来的话，悬停实验等于没做。
+func _visible_windows() -> Array[String]:
+	var out: Array[String] = []
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child in node.get_children():
+			if child is Window and child != get_tree().root and (child as Window).visible:
+				out.append(String(child.name))
+			stack.append(child)
+	return out
 
 ## 面板当前选中的目标件（`_selected_item()` 是私有的读法，走同一个口径）。
 func _current_target(panel: Node) -> Dictionary:
