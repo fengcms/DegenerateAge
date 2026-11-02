@@ -26,6 +26,10 @@ const RING_BASE_RADIUS := 48.0
 const RING_BASE_WIDTH := 4.0
 
 static var _ring_texture: Texture2D = null
+## 不变几何仅缓存相对原点的点集/网格，不缓存世界位置、颜色或节点。
+const GEOMETRY_LIMIT := 256
+static var _ellipses: Dictionary = {}
+static var _sectors: Dictionary = {}
 
 ## 白色椭圆环纹理（懒生成，全项目共享一张；颜色一律由 `modulate` 给）。
 static func ring_texture() -> Texture2D:
@@ -97,9 +101,10 @@ static func outline(canvas: CanvasItem, center: Vector2, radius: float, color: C
 	if radius <= 0.0:
 		return
 	var n := segments if segments > 0 else segments_for(radius)
-	var pts := Iso.ground_ellipse(center, radius, n)
-	pts.append(pts[0])
+	var pts := ellipse_outline(radius,n)
+	canvas.draw_set_transform(center)
 	canvas.draw_polyline(pts, color, width, true)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 ## 地面环带填充：拆成 `segments` 个凸四边形逐片填充。
 ## **不要**写成「外圈正向 + 内圈逆向」的单个多边形 —— 那是自交多边形，
@@ -126,19 +131,28 @@ static func band(canvas: CanvasItem, center: Vector2, inner: float, outer: float
 ## 地面扇形填充（`dir` 为屏幕朝向，按地面空间展开 `arc_rad` 张角）。
 static func sector(canvas: CanvasItem, center: Vector2, dir: Vector2, radius: float,
 		arc_rad: float, color: Color, segments: int = 20) -> void:
-	var pts := _sector_points(center, dir, radius, arc_rad, segments)
-	if pts.is_empty():
+	if radius <= 0.0 or arc_rad <= 0.0:
 		return
-	canvas.draw_colored_polygon(pts, color)
+	if segments > 128:
+		canvas.draw_colored_polygon(_sector_points(center,dir,radius,arc_rad,segments),color)
+		return
+	var geometry := sector_geometry(dir,radius,arc_rad,segments)
+	canvas.draw_mesh(geometry.mesh,null,Transform2D(0.0,center),color)
 
 ## 地面扇形描边（两条半径边 + 外弧）。
 static func sector_outline(canvas: CanvasItem, center: Vector2, dir: Vector2, radius: float,
 		arc_rad: float, color: Color, width: float = 2.0, segments: int = 20) -> void:
-	var pts := _sector_points(center, dir, radius, arc_rad, segments)
-	if pts.is_empty():
+	if radius <= 0.0 or arc_rad <= 0.0:
 		return
-	pts.append(pts[0])
-	canvas.draw_polyline(pts, color, width, true)
+	var pts: PackedVector2Array
+	if segments > 128:
+		pts = _sector_points(Vector2.ZERO,dir,radius,arc_rad,segments)
+		pts.append(pts[0])
+	else:
+		pts = sector_geometry(dir,radius,arc_rad,segments).outline
+	canvas.draw_set_transform(center)
+	canvas.draw_polyline(pts,color,width,true)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 ## 地面矩形带填充（`from` / `to` 为屏幕坐标，`half_width` 为地面半宽）。
 ## 用于 `line` 预警：四点在地面空间构造再投影，屏幕上得到平行四边形（不是矩形）。
@@ -171,3 +185,46 @@ static func _sector_points(center: Vector2, dir: Vector2, radius: float, arc_rad
 		var a := -half + arc_rad * float(i) / float(n)
 		pts.append(Iso.from_ground(c + d.rotated(a) * radius))
 	return pts
+
+## 缓存以原点为中心的闭合椭圆；只平移不压缩线宽，保留原段数和抗锯齿。
+## 大于128段的非标准调用不驻留，缓存最多256条，调用方不能修改返回数组。
+static func ellipse_outline(radius: float, segments: int) -> PackedVector2Array:
+	var key := Vector2(radius,segments)
+	if _ellipses.has(key):
+		return _ellipses[key]
+	var points := Iso.ground_ellipse(Vector2.ZERO,radius,segments)
+	points.append(points[0])
+	if segments <= 128:
+		if _ellipses.size() >= GEOMETRY_LIMIT:
+			_ellipses.erase(_ellipses.keys()[0])
+		_ellipses[key] = points
+	return points
+
+## 锁定方向/半径/张角/段数对应同一扇形，缓存投影点和三角扇填充；颜色与位置每次传入。
+## 最多256份、每份最多128段；过大调用由上层回退原画法，不改变几何精度。
+static func sector_geometry(dir: Vector2, radius: float, arc_rad: float, segments: int) -> Dictionary:
+	var direction := Iso.ground_dir(dir)
+	var count := maxi(2,segments)
+	var key := Vector4(radius,arc_rad,count,direction.angle())
+	if _sectors.has(key):
+		return _sectors[key]
+	var points := _sector_points(Vector2.ZERO,dir,radius,arc_rad,count)
+	var vertices := PackedVector3Array()
+	for point in points:
+		vertices.append(Vector3(point.x,point.y,0.0))
+	var indices := PackedInt32Array()
+	for i in range(1,points.size()-1):
+		indices.append_array(PackedInt32Array([0,i,i+1]))
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+	points.append(points[0])
+	var result := {"outline":points,"mesh":mesh}
+	if count <= 128:
+		if _sectors.size() >= GEOMETRY_LIMIT:
+			_sectors.erase(_sectors.keys()[0])
+		_sectors[key] = result
+	return result
