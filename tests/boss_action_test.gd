@@ -213,6 +213,7 @@ func _test_retreat_and_no_damage() -> void:
 	add_child(boss)
 	boss.set_physics_process(false)
 	boss.spawn_position = Vector2(1000.0, 1000.0)
+	boss._enter(Monster.State.CHASE)
 	check(boss.boss_action != null, "c3 首领装配共享动作组件")
 	check(is_equal_approx(boss.leash_range, 18.0 * Iso.TILE_W), "首领场参考半径 18 格")
 	var hp := stub.hp

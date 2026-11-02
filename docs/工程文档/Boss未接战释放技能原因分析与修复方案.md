@@ -42,3 +42,7 @@ BossAction.update的target_valid当前只限制IDLE阶段的新动作，已开�
 3. 回归13个共享模板的未接战状态，并用代表Boss验证进入仇恨后首放延迟、CHASE/ATTACK、合法受击拉怪、玩家死亡/休息区、RETURN、再接战、多段间隙及固定预警。复核BossActionTest、BossReviewTest、BossSkillVisualTest、ChapterTwoEncountersTest、BossFieldDamageTest等；实际窗口确认闲置Boss无预警、交战Boss预警仍完整。归档结果并git commit。
 
 新增判断应为固定数量状态/有效性检查，复用原冷却、状态机、几何和取消入口；不增加按Boss扫描全场玩家/敌人、独立定时器或每帧日志，不改技能伤害、形状、奖励或存档结构。测试必须使用隔离user目录，不能写玩家存档。临时探针与日志用后删除，不作为正式资源提交。
+
+## 实施节点一（2026-11-02）
+
+共享宿主仅在CHASE/ATTACK推进动作和阶段；其他状态取消异常残留动作并返回普通AI，不消耗首放计时。原无有效玩家/超出出生点牵引的5秒脱战归位路径保留。新增BossEngagementTest逐个覆盖13个共享模板：闲置/巡逻/返回、普通物理入口索敌、首放延迟、预警、目标死亡取消、归位后重新接战。BossEngagementTest与BossActionTest通过。BossActionTest原宿主夹具增加明确_enter(CHASE)，原首放/伤害/归位断言保留，属于适配合法前置条件和扩展覆盖，未放宽断言。初次隔离编辑器导入发生引擎线程崩溃，重新导入成功；新增夹具的空bossSkill类型检查已补齐。

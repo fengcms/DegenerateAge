@@ -530,7 +530,11 @@ func _update_boss_action(delta: float) -> bool:
 		if _boss_retreat_t >= BOSS_RESET_DELAY:
 			_reset_boss_to_arena()
 		return true
-	if player == null:
+	# 场景内存在玩家不等于已接战；闲置/归途不推进首放倒计时，让普通AI继续索敌。
+	if state != State.CHASE and state != State.ATTACK:
+		if boss_action.is_busy():
+			boss_action.cancel()
+			_clear_boss_visual()
 		return false
 	var ratio := hp_ratio()
 	var visual_phase := 0
