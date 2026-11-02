@@ -261,8 +261,7 @@ KNOWN_ART_DEBT = {
                            "（tools/build_camp_style_sample.py 的 LAYOUT 与 OBJECTS 是 v1 手工标注）"
                            "⇒ 需按 v2 重做样板美术。见素材设计 17/18。",
     "CampStyleTraversalTest": "同上：依赖 `tests/CampStyleSample.tscn`，样板过时导致装配断言先失败。",
-    "QualityFrameTest": "`SampleArt.decorate()` 固定 icon_max_width=34，与格宽 46/52 不符；"
-                        "图标裁透明边也未做 ⇒ 需重做槽位图标裁边。见素材设计 48。",
+
 }
 
 ## 成功完成标记只认**行尾**形态，避免无关文本里裸含 "PASS" 被误命中。

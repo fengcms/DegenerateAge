@@ -1,8 +1,9 @@
 extends Node
-## Validate the visible quality animation on both inventory and equipment slots.
+## 背包与穿戴格品质框验收：图标透明裁边、格宽适配、共享缓存及原动画输入契约。
 
 var failures: Array[String] = []
 
+## 在两类真实格子中验证图标、品质动画与输入边界，保留原尺寸与透明裁边断言。
 func _ready() -> void:
 	for role in [ItemSlot.ROLE_BAG, ItemSlot.ROLE_EQUIP]:
 		var slot := ItemSlot.new() if role == ItemSlot.ROLE_BAG else EquipmentSlot.new()
@@ -17,6 +18,9 @@ func _ready() -> void:
 			var item := ItemFactory.make_equip_roll("weapon_iron", 1, quality)
 			slot.item = item
 			SampleArt.decorate(slot, SampleArt.icon_for(item))
+			var first_icon := slot.icon
+			SampleArt.decorate(slot, SampleArt.icon_for(item))
+			check(is_same(first_icon,slot.icon), "同一装备纹理复用裁边缓存")
 			var frame := slot._quality_frame as QualityFrameOverlay
 			check(frame.visible and frame.texture is AtlasTexture, "%s %s animated frame" % [role, quality])
 			check(frame.mouse_filter == Control.MOUSE_FILTER_IGNORE, "frame does not intercept input")
@@ -49,6 +53,7 @@ func _ready() -> void:
 			push_error("FAIL: " + failure)
 	get_tree().quit(0 if failures.is_empty() else 1)
 
+## 聚合视觉契约失败，不以正常退出掩盖断言错误。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
