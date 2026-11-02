@@ -148,6 +148,7 @@ func _on_panel_opened(panel_id: String) -> void:
 func _on_inventory_changed() -> void:
 	_revalidate_selection()
 
+## 穿戴变化时校验保星旧装备引用，不因其他槽位改变清空有效预选。
 func _on_equipment_changed() -> void:
 	_revalidate_selection()
 
@@ -191,7 +192,6 @@ func _resize() -> void:
 	var bag: Variant = get_node_or_null("../InventoryPanel")
 	var width := minf(WIDTH, logical.x * 0.9)
 	_box.custom_minimum_size.x = width
-	var region := Vector2(width, logical.y)
 	var bag_width := 540.0
 	if bag != null and bag._center != null:
 		bag_width = bag._center.panel_box.get_combined_minimum_size().x
@@ -202,14 +202,12 @@ func _resize() -> void:
 		_center.set_pinned(false)
 		var panel_width := _box.get_combined_minimum_size().x
 		_center.set_origin(Vector2((left + bag_width + GAP) / maxf(1.0, logical.x - panel_width), 0.5), true)
-		region = Vector2(width, logical.y)
 	else:
 		if bag != null and bag.visible:
 			bag._center.set_docked(true, 0.0, 1.0, 0.0, 0.48)
 		_center.set_pinned(true, Rect2(0.0, logical.y * 0.48, logical.x, logical.y * 0.52))
-		region = Vector2(logical.x, logical.y * 0.52)
-	_scroll.custom_minimum_size.y = clampf(region.y - 195.0, 32.0, 250.0)
-	FloatingWindow.fit_content(region, _box, _scroll)
+	# 内容容器排版稳定后由浮窗统一适配，不能只在打开时用旧尺寸算一次。
+	_center.request_layout()
 
 ## 构建两列材料格和可滚动目标类型，按钮始终留在滚动区之外。
 func _build() -> void:
@@ -242,14 +240,16 @@ func _build() -> void:
 	_center.setup(self, _box, header, Vector2(0.5, 0.5))
 	_hint = Label.new()
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_hint)
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(_scroll)
+	_center.set_content_scroll(_scroll)
 	var form := VBoxContainer.new()
 	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form.add_theme_constant_override("separation", 8)
 	_scroll.add_child(form)
+	# 小窗口/大UI缩放时说明与预览一同滚动，为材料格保留可访问空间。
+	form.add_child(_hint)
 	_grid = FusionMaterialGrid.new()
 	_grid.columns = 2
 	_grid.add_theme_constant_override("h_separation", 10)
@@ -327,13 +327,13 @@ func _build() -> void:
 	form.add_child(_rune_hint)
 	_summary = Label.new()
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(_summary)
+	form.add_child(_summary)
 	# 橙色而非红色：产物穿不上是跨档保星的**正常设计**（D3 产物永远进背包），
 	# 不是错误状态。用 danger 红会让玩家以为操作失败了。
 	_out_level = Label.new()
 	_out_level.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_out_level.add_theme_color_override("font_color", Color("ffbd88"))
-	root.add_child(_out_level)
+	form.add_child(_out_level)
 	# 献祭专用开关：12★ 是保星底件，默认不计入（只在献祭模式显示）。
 	_star12 = CheckBox.new()
 	_star12.text = Localization.tr_key("ui.sacrifice.star12")
@@ -342,12 +342,12 @@ func _build() -> void:
 	_star12.toggled.connect(func(_pressed: bool) -> void:
 		_risk_confirmed = false
 		_refresh_preview())
-	root.add_child(_star12)
-	root.move_child(_star12, _summary.get_index())
+	form.add_child(_star12)
+	form.move_child(_star12, _summary.get_index())
 	_feedback = Label.new()
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_feedback.add_theme_color_override("font_color", Color("ffbd88"))
-	root.add_child(_feedback)
+	form.add_child(_feedback)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	root.add_child(actions)
@@ -654,6 +654,7 @@ func _refresh_runes() -> void:
 		picker.select(selected_index)
 	_refresh_rune_hint()
 
+## 根据当前四格如意计算取优次数并刷新说明，不消费材料。
 func _refresh_rune_hint() -> void:
 	if _rune_hint == null:
 		return
@@ -662,6 +663,7 @@ func _refresh_rune_hint() -> void:
 		return
 	_rune_hint.text = Localization.tr_key("ui.fusion.rune_hint", [RuneCharge.tries(_rune_choices)])
 
+## 更新一格如意选择并同步可选数量与预览。
 func _on_rune_selected(choice_index: int, slot: int) -> void:
 	if slot < 0 or slot >= _rune_pickers.size():
 		return

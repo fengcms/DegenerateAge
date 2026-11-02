@@ -199,13 +199,15 @@ func _layout() -> void:
 	if _pinned:
 		position = _pinned_rect.position
 		size = _pinned_rect.size
-		fit_content(size, panel_box, content_scroll)
+		fit_content(_pinned_rect.size, panel_box, content_scroll)
 		return
 	if _docked:
 		position = Vector2(area.x * _dock_left, area.y * _dock_top)
-		size = Vector2(area.x * (_dock_right - _dock_left),
+		var region := Vector2(area.x * (_dock_right - _dock_left),
 			area.y * (_dock_bottom - _dock_top))
-		fit_content(size, panel_box, content_scroll)
+		size = region
+		# Container.size可能被旧最小尺寸夹大；适配必须用目标分区，才能缩回新边界。
+		fit_content(region, panel_box, content_scroll)
 		return
 	fit_content(area, panel_box, content_scroll)
 	size = panel_box.get_combined_minimum_size()

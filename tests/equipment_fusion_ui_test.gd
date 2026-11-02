@@ -64,6 +64,9 @@ func _ready() -> void:
 	dialogue._open_fusion(EquipmentFusion.GOLD_TO_PURPLE)
 	await get_tree().process_frame
 	panel._resize()
+	# 浮窗统一调度跨帧收敛；限12帧后仍使用原分区/溢出断言，不接受容器中间态。
+	for i in range(12):
+		await get_tree().process_frame
 	# 工程 101：工作台不再算「NPC 会话」，不接管世界输入 ⇒ 背后挂机照跑。
 	check(panel.visible and bag.visible and not GameState.world_controls_blocked(),
 		"合成与背包并开且不接管世界输入")

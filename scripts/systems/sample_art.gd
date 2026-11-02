@@ -3,8 +3,6 @@ extends RefCounted
 ## 运行时预载正式装备与物品图标，保证 JSON 配置的资源进入导出包。
 ## 尚未制作的素材继续走既有文字或程序绘制回退；旧专名图标不再独立入表。
 
-static var _trimmed_icons: Dictionary = {}
-
 const ICONS := {
 	"weapon_iron": preload("res://assets/sprites/equip/weapon_starter.png"),
 	"armor_cloth": preload("res://assets/sprites/equip/armor_starter.png"),
@@ -171,44 +169,17 @@ static func binding_icon(binding: Variant) -> Texture2D:
 		return ICONS.potion_hp_small if binding.get("id") == "red" else ICONS.potion_mp_small if binding.get("id") == "blue" else null
 	return ICONS.get(String(binding.get("id", ""))) as Texture2D
 
-## 将图标应用到快捷栏按钮；只调整视觉，不改变绑定行为。
+## 共用格子保留原始图标画布并限制34逻辑像素，避免透明裁边后放大铺满。
+## 只调整视觉，不改变快捷栏绑定或物品数据。
 static func decorate(button: Button, texture: Texture2D) -> void:
 	if button is HotbarSlot and (button as HotbarSlot).entry is Dictionary:
 		var binding: Dictionary = (button as HotbarSlot).entry
 		if String(binding.get("kind", "")) == "skill":
 			texture = skill_icon(String(binding.get("id", "")))
-	var width := 34
-	if button is ItemSlot:
-		width = maxi(1, roundi(button.custom_minimum_size.x))
-		var item: Variant = (button as ItemSlot).item
-		if item is Dictionary and String(item.get("kind", "")) == "equip":
-			texture = _trim_equipment_icon(texture)
 	button.icon = texture
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", width)
+	button.add_theme_constant_override("icon_max_width", 34)
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	if texture != null:
 		button.text = ""
-
-## 装备图标仅首次读取alpha边界，缓存共享AtlasTexture，不改源PNG或在绘制热路径扫描像素。
-## 缓存最多256种纹理；现有格子持有的AtlasTexture在淘汰后仍由格子负责生命周期。
-static func _trim_equipment_icon(texture: Texture2D) -> Texture2D:
-	if texture == null:
-		return null
-	var key := texture.get_instance_id()
-	if _trimmed_icons.has(key):
-		return _trimmed_icons[key]
-	var image := texture.get_image()
-	if image == null:
-		return texture
-	var used := image.get_used_rect()
-	if not used.has_area():
-		return texture
-	var result := AtlasTexture.new()
-	result.atlas = texture
-	result.region = Rect2(used)
-	if _trimmed_icons.size() >= 256:
-		_trimmed_icons.clear()
-	_trimmed_icons[key] = result
-	return result

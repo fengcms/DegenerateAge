@@ -1,9 +1,9 @@
 extends Node
-## 背包与穿戴格品质框验收：图标透明裁边、格宽适配、共享缓存及原动画输入契约。
+## 背包与穿戴格品质框验收：图标原画布与34像素边距，以及原动画输入契约。
 
 var failures: Array[String] = []
 
-## 在两类真实格子中验证图标、品质动画与输入边界，保留原尺寸与透明裁边断言。
+## 在两类真实格子中验证图标、品质动画与输入边界，验证回归后的原画布显示尺寸。
 func _ready() -> void:
 	for role in [ItemSlot.ROLE_BAG, ItemSlot.ROLE_EQUIP]:
 		var slot := ItemSlot.new() if role == ItemSlot.ROLE_BAG else EquipmentSlot.new()
@@ -18,9 +18,9 @@ func _ready() -> void:
 			var item := ItemFactory.make_equip_roll("weapon_iron", 1, quality)
 			slot.item = item
 			SampleArt.decorate(slot, SampleArt.icon_for(item))
-			var first_icon := slot.icon
+			var original_icon := SampleArt.icon_for(item)
 			SampleArt.decorate(slot, SampleArt.icon_for(item))
-			check(is_same(first_icon,slot.icon), "同一装备纹理复用裁边缓存")
+			check(is_same(original_icon,slot.icon), "复用原画布纹理，不裁边放大")
 			var frame := slot._quality_frame as QualityFrameOverlay
 			check(frame.visible and frame.texture is AtlasTexture, "%s %s animated frame" % [role, quality])
 			check(frame.mouse_filter == Control.MOUSE_FILTER_IGNORE, "frame does not intercept input")
@@ -28,9 +28,9 @@ func _ready() -> void:
 			check((frame.texture as AtlasTexture).region == Rect2(0, 0, 64, 64), "initial frame for " + quality)
 			frame._process(0.2)
 			check((frame.texture as AtlasTexture).region != Rect2(0, 0, 64, 64), "frame advances for " + quality)
-			check(slot.get_theme_constant("icon_max_width") == int(slot.custom_minimum_size.x), "slot artwork fills canvas")
-			check(slot.icon is AtlasTexture and (slot.icon as AtlasTexture).region.size.x < 48,
-				"equipment icon trims transparent padding")
+			check(slot.get_theme_constant("icon_max_width") == 34, "图标保留34像素上限，不铺满格子")
+			check(slot.get_theme_constant("icon_max_width") < int(slot.custom_minimum_size.x),
+				"背包及穿戴格保留图标边距")
 			if role == ItemSlot.ROLE_BAG:
 				var bag_panel := preload("res://scripts/ui/inventory_panel.gd").new()
 				bag_panel._apply_slot_style(slot, ItemUtil.quality_color(quality), true)
