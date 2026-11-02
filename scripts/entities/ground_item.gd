@@ -177,6 +177,7 @@ func _reveal() -> void:
 func _appear_t() -> float:
 	return maxf(0.0, _spawn_t - appear_delay)
 
+## 按游戏秒推进掉落生命周期和认领；装饰检查内部使用未缩放预算。
 func _physics_process(delta: float) -> void:
 	_spawn_t += delta
 	_blocked_cd = maxf(0.0, _blocked_cd - delta)
@@ -311,6 +312,7 @@ func _clear_unclaimed_record() -> void:
 func _fly_enabled() -> bool:
 	return bool(GameState.settings.get("dropFlyAnim", true))
 
+## 认领后按游戏秒推进落地、停驻和飞行阶段，不再次结算奖励。
 func _stage_step(delta: float) -> void:
 	if _stage == Stage.GROUND:
 		# M6-0d：出场落地动画（`land_time`）结束 → 进入停驻
@@ -365,12 +367,14 @@ func _finish_fly() -> void:
 	_announce_pickup()
 	queue_free()
 
+## 发送一次待播拾取提示并清空文本，避免飞行结束重复播报。
 func _announce_pickup() -> void:
 	if _pickup_msg.is_empty():
 		return
 	EventBus.toast_requested.emit(_pickup_msg, "pickup")
 	_pickup_msg = ""   # 防重复播报
 
+## 返回存活玩家世界坐标；玩家不可用时使用当前掉落位置。
 func _player_pos() -> Vector2:
 	var p := _get_player()
 	return p.global_position if p != null else global_position
@@ -467,18 +471,21 @@ func _try_pickup(announce: bool = true, quiet_block: bool = false) -> bool:
 		EventBus.toast_requested.emit(Localization.tr_key("msg.ground_item.p006") + ItemUtil.display_name(item), "danger")
 	return false
 
+## 停止物理处理并在淡出结束释放非持久掉落节点。
 func _fade_out() -> void:
 	set_physics_process(false)
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(queue_free)
 
+## 查询当前场景存活玩家，缺失或死亡返回空。
 func _get_player() -> Node2D:
 	var p := get_tree().get_first_node_in_group("player")
 	if p == null or p.get("is_dead") == true:
 		return null
 	return p as Node2D
 
+## 悬停状态变化时重绘，使密集缓存装备也可显示名称。
 func _on_hover(state: bool) -> void:
 	if _hovered == state:
 		return
