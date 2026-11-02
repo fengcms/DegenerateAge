@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/nan_guard_test.gd" id="1_nan_guard_test"]
+
+[node name="NanGuardTest" type="Node"]
+script = ExtResource("1_nan_guard_test")
