@@ -243,6 +243,12 @@ func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	m.died.connect(func(_id: String) -> void: _on_monster_died(point))
 	add_child(m)
 	point.entry = m
+	# 只记 Boss：普通怪在高密度图上会有上百次，写盘开销不划算。
+	# 🔴 判据用 `kind`，不能用 id 前缀 —— `c6_boss03` 这类章节 Boss 不以 `boss_` 开头，
+	# 按前缀判会全部漏记（本轮已踩）。
+	if String(point.get("kind", "normal")) == "boss":
+		CrashTrace.mark("spawner.boss_spawned",
+			m.monster_id + " pos=" + str(m.position) + " lv=" + str(m.spawn_level))
 	return true
 
 ## 本图存活怪物数（按 kind 分桶）—— 刷新预算快照用。
@@ -286,6 +292,13 @@ func _on_monster_died(point: Dictionary) -> void:
 	if node != null and is_instance_valid(node):
 		pos = node.global_position
 	point.position = pos
+	# 工程 116：读出「谁死了、当时有没有实体」。entry 为空说明不是被打死，
+	# 而是生成流程里异常进入死亡登记（本轮怀疑有 Boss 一生成就死）。
+	CrashTrace.mark("spawner.died",
+		String(point.get("monster_id", "")) + " ord=" + str(int(point.get("ordinal", 0)))
+		+ " entry=" + ("yes" if node != null and is_instance_valid(node) else "null")
+		+ " rt=" + str(float(point.get("respawn_time", 0.0)))
+		+ " pos=" + str(pos))
 	# M4-10：登记刷新状态（到点时刻 + 死亡位置）→ 跨图 / 跨档保持
 	GameState.mark_spawn_dead(
 		_state_map_id(),
@@ -303,6 +316,14 @@ func _place_tombstone(point: Dictionary, remaining: float) -> void:
 		point.marker.set_remaining(remaining)
 		return
 	var pos := _tombstone_position(point)
+	var mid := String(point.get("monster_id", ""))
+	var ord := int(point.get("ordinal", 0))
+	var state_map := _state_map_id()
+	var has_state := GameState.spawn_respawn.has(GameState.spawn_key(state_map, mid, ord))
+	CrashTrace.mark("spawner.tombstone.new",
+		mid + " ord=" + str(ord) + " rem=" + str(remaining)
+		+ " map=" + state_map + " has_state=" + str(has_state)
+		+ " entry=" + ("yes" if point.entry != null else "null"))
 	var marker := BossTombstone.new()
 	marker.position = pos
 	marker.set_remaining(remaining)

@@ -674,6 +674,7 @@ func _reload_world_now() -> void:
 	# 给遮罩一帧实际绘制机会；进度条为不定进度，不伪造百分比。
 	await get_tree().process_frame
 	var token := _loading_token
+	CrashTrace.mark("map.reload.begin", "map=" + GameState.current_map)
 	var err := get_tree().reload_current_scene()
 	if err != OK and not pending_travel.is_empty():
 		var source_scene := String(pending_travel.get("scene_path", ""))

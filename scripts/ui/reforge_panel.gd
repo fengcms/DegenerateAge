@@ -802,8 +802,10 @@ func drop_refine_material(row: int, bag_index: int) -> void:
 		"item": item, "token": Warehouse.item_token(item)})
 
 func _on_reforge() -> void:
+	CrashTrace.mark("reforge.begin")
 	var index := _picker.selected
 	if index < 0 or index >= _choices.size():
+		CrashTrace.mark("reforge.end", "no_selection")
 		return
 	var choice := _choices[index]
 	var before := _selected_item()
@@ -820,7 +822,10 @@ func _on_reforge() -> void:
 	var result := GameState.reforge_equipment(String(choice.source), choice.key, String(choice.id),
 		null, locked_snapshot, refine_snapshot, ServiceFee.rate_for(_portable),
 		_rune_choices.duplicate())
+	CrashTrace.mark("reforge.result", "ok=" + str(result.get("ok", false))
+		+ " tries=" + str(int(result.get("tries", 1))))
 	if not bool(result.get("ok", false)):
+		CrashTrace.mark("reforge.end", "failed")
 		_feedback.text = String(result.get("reason", ""))
 		_feedback.add_theme_color_override("font_color", COL_WARN)
 		_refresh_details()
@@ -862,6 +867,7 @@ func _on_reforge() -> void:
 	if tries > 1:
 		_feedback.text += "\n" + Localization.tr_key("msg.reforge.p015", [tries])
 	_refresh_choices()
+	CrashTrace.mark("reforge.end", "ok tries=" + str(tries))
 
 ## 只替换如意预选，重铸成功后由原结算入口统一扣除。
 func _on_auto_runes() -> void:
