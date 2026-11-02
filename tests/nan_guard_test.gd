@@ -1,10 +1,8 @@
 extends Node
 ## 工程 115：UI 尺寸非法值防线（NaN / INF）。
 ##
-## 背景：实机重铸后闪退，崩溃是 SIGSEGV（C++ 层空指针）。剥掉所有表象后有一条链：
-## `viewport` 或 `uiScale` 变成 inf/nan → 守卫只写了 `<= 0.0`，而 `NAN <= 0.0` 恒为 false
-## （浮点语义）⇒ 放行 → `control.size = nan` → 引擎报 `!isfinite(p_size)`
-## → 子控件 `_draw` 里 `INF - INF = NaN` → 绘制层拿到 NaN 顶点 ⇒ 崩。
+## 此为输入边界回归，原重铸闪退NaN假设已被第三轮布局自激结论替代。
+## 非有限值不能进入控件尺寸，但本测试不证明正常场景重载会生成NaN。
 ##
 ## 断言分工（每条咬住一个真实错法，负向注入后必须**红在这条上**）：
 ## A. `is_usable_layout_size()` 是唯一判据 —— 写成 `size.x <= 0.0` 就拦不住 NaN/INF。

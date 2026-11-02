@@ -34,11 +34,8 @@ func _ready() -> void:
 ## 于是本回调从"几乎不触发"变为"高频触发"；重排 UI 根控件会牵连 15 个面板的布局失效。
 ## 处置：同一帧内的多次触发只重算一次（call_deferred 合并），不做时间去抖 ——
 ## 时间去抖会让拖动过程中面板尺寸滞后于窗口，属可见的劣化。
-## 工程 115：`reload_current_scene()` 期间 `current_scene` 可能仍指向正在释放的旧场景，
-## 此时 `UI.get_viewport()` 的可见尺寸是非法值（inf / nan）。原先直接 `apply_all` 会把
-## 非法尺寸铺满整棵 UI 树、最终在绘制层算出 NaN 而导致引擎 C++ 层闪退（审阅报告 §5）。
-## 处置：延后一帧等新场景完全接管，再由 `apply_ui_scale_to` 的有限性守卫兜底 —— 即便
-## 一帧后仍非法也只会「本次不重排」，绝不再把 inf/nan 写进控件尺寸。
+## 场景装配完成后再应用设置，有限性守卫作为独立边界防御。
+## 原NaN根因假设已被第三轮布局自激取证替代，不能据此断言重载必然产生NaN。
 func _apply_settings_after_scene_ready() -> void:
 	await get_tree().process_frame
 	if not is_inside_tree():

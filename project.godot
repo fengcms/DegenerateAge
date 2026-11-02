@@ -230,23 +230,6 @@ mouse_context={
 ]
 }
 
-[memory]
-
-; 工程 116：消息队列上限。默认 4MB，这里放到 16MB（默认值的 4 倍）。
-;
-; 🔴 这**不是**那次重铸闪退的修复手段，别误读。真因是
-; `FloatingWindow` 的「`_layout()` → 改 `scroll.custom_minimum_size` →
-; `panel_box.minimum_size_changed` → 再排一条 deferred」自激闭环 ——
-; deferred 在**当帧** flush 里执行，于是同帧排了 10 万次布局，
-; 每条布局都带一堆 `queue_redraw`，把消息队列彻底撑爆，引擎随后在
-; `CanvasItem::_redraw_callback` 里访问已失效队列内存 → SIGSEGV 闪退。
-; 已实测：上限调到 32MB、128MB 照样崩。所以修复落在
-; `scripts/ui/floating_window.gd::_schedule_layout()` 的按帧号去重。
-;
-; 这里留 16MB 只是**余量加固**：面板一次性重建（156 项下拉 + 词条行 + 材料格）
-; 的重绘洪峰在默认 4MB 下贴得太近。属按需分配，非常驻内存。
-limits/message_queue/max_size_mb=16
-
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

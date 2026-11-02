@@ -256,10 +256,7 @@ static func _apply_ui_scale() -> void:
 	apply_ui_scale_to(ui)
 
 ## 布局尺寸是否可用。**唯一判据，不要在各处重写 `size <= 0`。**
-## 🔴 工程 115：只写 `size.x <= 0.0` 是**错的** —— NaN / INF 与 0 比较恒为 false
-## （实测 `NAN <= 0.0 == false`），守卫会把非法尺寸放行 ⇒ `control.size = inf/nan`
-## ⇒ 引擎报 `!isfinite(p_size)`、子控件 `_draw` 里 `INF - INF = NaN` ⇒ C++ 层闪退。
-## 触发源：`reload_current_scene()` 期间旧场景正在释放，视口可见尺寸尚未就绪。
+## 拦截非有限值与非正尺寸，避免异常输入扩散；不将其视作本次重铸闪退的已证实根因。
 static func is_usable_layout_size(size: Vector2) -> bool:
 	return is_finite(size.x) and is_finite(size.y) and size.x > 0.0 and size.y > 0.0
 

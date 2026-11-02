@@ -7,8 +7,7 @@ extends Node
 ## 运行（**必须**带隔离 HOME，否则会读写玩家真实存档）：
 ##   HOME=/tmp/deg_iso Godot --path . res://tools/ReforgeCrashProbe.tscn
 ##
-## 🔴 必须**窗口模式**：崩溃发生在渲染层（栈里全是 CanvasItem 重绘与 GL 驱动），
-## `--headless` 根本不提交绘制，永远复现不了 —— 这也是前几轮「连打 40 次不崩」的原因。
+## 窗口模式用于复核真实绘制路径；无头只能验证逻辑与调度，不能替代视觉验收。
 ## 🔴 为什么必须隔离：`--headless` 启动时 `SaveManager` 仍会读 `last_slot` 并在退出回写
 ## （工程 114 已踩过一次，直接覆盖了玩家主档）。见 MEMORY 坑 106。
 
@@ -18,12 +17,7 @@ const ATTEMPTS := 2
 ## 每次重铸后继续渲染的时长（秒）。崩溃发生在按钮回调返回**之后**，必须留足观察窗口。
 const WATCH_SECONDS := 4.0
 
-## 🔑 复现的**决定性条件**：内嵌子窗口。
-## 玩家的日志里 `display=embedded`（从编辑器内嵌窗口跑），那种模式下
-## `get_tree().root.gui_embed_subwindows` 为真 —— 所有 tooltip / 弹窗都渲染成
-## 内嵌子窗口而不是独立 OS 窗口。独立窗口跑时该值为假，tooltip 走的是完全
-## 另一条代码路径，所以前几次「同样的操作」从来不崩（假阴性）。
-## 这里在独立模式下把它打开，用最少的变量还原内嵌路径。
+## 覆盖内嵌子窗口路径；第三轮已确认独立窗口也可触发布局自激，内嵌并非必要条件。
 const EMBED_SUBWINDOWS := true
 
 ## 四枚钻石如意 ⇒ `tries = 17`（工程 112 封顶），覆盖抽样取优全路径。
