@@ -1,7 +1,7 @@
 class_name FrameLayoutScheduler
 extends RefCounted
 ## 按帧合并容器布局请求，保留执行期间产生的末次更新，禁止同帧deferred自激。
-## 每个宿主持有一个实例；仅脏时连接一次process_frame，宿主释放后安全放弃回调。
+## 每个宿主持有一个实例；首轮同帧合并，后续脏更新跨帧，宿主释放后安全放弃回调。
 
 var _owner: WeakRef
 var _action: Callable
@@ -29,14 +29,17 @@ func flush_now() -> void:
 		return
 	_run()
 
-## 仅在确有脏更新时订阅下一次帧信号；不持有宿主节点的强引用。
+## 首轮走同帧deferred保持响应；已经执行过布局则订阅下一帧，不持有宿主强引用。
 func _arm() -> void:
 	var owner: Node = _owner.get_ref()
 	if not is_instance_valid(owner) or not owner.is_inside_tree() or owner.is_queued_for_deletion():
 		_dirty = false
 		return
 	_pending = true
-	owner.get_tree().process_frame.connect(_on_frame, CONNECT_ONE_SHOT)
+	if _last_frame == Engine.get_process_frames():
+		owner.get_tree().process_frame.connect(_on_frame, CONNECT_ONE_SHOT)
+	else:
+		_on_frame.call_deferred()
 
 ## 帧开始时处理待更新状态；多次请求合并，销毁后的宿主不再执行。
 func _on_frame() -> void:
