@@ -26,6 +26,7 @@ func _ready() -> void:
 				assert(not panel._grid.visible)
 				continue
 			assert(panel._scroll.size.y >= 78.0, "材料视窗不能压成0或小于一格")
+			assert(panel._grid.position.y <= 1.0, "打开即显示材料行，不被长说明顶出首屏")
 			# 滚动到材料行，用裁剪区域的交集验证可见性，而非只断言visible=true。
 			panel._scroll.scroll_vertical = int(panel._grid.position.y)
 			for i in range(3):

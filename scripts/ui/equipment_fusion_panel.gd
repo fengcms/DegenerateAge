@@ -257,6 +257,8 @@ func _build() -> void:
 	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_grid.item_dropped.connect(_on_material_dropped)
 	form.add_child(_grid)
+	# 材料放首屏，长说明位于其下；高倍率窄窗打开时也先看到投放格。
+	form.move_child(_grid, 0)
 	for i in range(4):
 		var slot := ItemSlot.new()
 		slot.role = ItemSlot.ROLE_TRAY
