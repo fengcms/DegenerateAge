@@ -4,6 +4,7 @@ extends Node
 ## 常态每0.1未缩放秒共享玩家查询；库存版本变化下一物理步唤醒，点击/悬停立即退出静止。
 const INTERVAL := 0.1
 var game_clock := 0.0
+var _clock_frame := -1
 var _remaining := 0.0
 var _revision := -1
 var _sleepers: Dictionary = {}
@@ -21,7 +22,9 @@ static func park(item: GroundItem) -> void:
 	service.set_physics_process(true)
 	service._sleepers[item.get_instance_id()] = item
 	item._idle_service = service
-	item._idle_started = service.game_clock
+	# 物品本步已累加delta；若服务排在其后，本步尚未计入共享钟，起点需抵消这一步。
+	var pending_step := service.get_physics_process_delta_time() if Engine.is_in_physics_frame() and service._clock_frame != Engine.get_physics_frames() else 0.0
+	item._idle_started = service.game_clock+pending_step
 	item.set_physics_process(false)
 
 ## 从静止状态恢复精确累计的游戏秒；tick用于调度唤醒，输入入口仅恢复不自动抢交易。
@@ -48,6 +51,7 @@ func forget(item: GroundItem) -> void:
 ## 共享版本/玩家查询后扫描静止装备；只恢复附近可重试、表现失效或交互中的节点。
 func _physics_process(delta: float) -> void:
 	game_clock += delta
+	_clock_frame = Engine.get_physics_frames()
 	_remaining -= delta/maxf(Engine.time_scale,0.000001)
 	var revision := LootRetryState.revision()
 	var changed := revision != _revision

@@ -24,6 +24,22 @@ class Item extends GroundItem:
 		attempts += 1
 		return success
 
+class Boundary extends Node:
+	signal finished
+	var service: Service
+	var target: Item
+	## 在真实物理回调中模拟物品先执行、服务后执行，验证恢复时间不重复累加本步。
+	func _physics_process(delta: float) -> void:
+		set_physics_process(false)
+		service.game_clock = 5.0
+		service._clock_frame = -1
+		var before := target._spawn_t
+		GroundLootIdle.park(target)
+		service._physics_process(delta)
+		service.wake(target)
+		assert(is_equal_approx(target._spawn_t,before), "静止首步不能重复累计游戏秒")
+		finished.emit()
+
 ## 共享服务每步检查库存版本，走近仅等0.1未缩放秒；输入不等待定时扫描。
 func _ready() -> void:
 	GameState.reset_to_defaults()
@@ -86,6 +102,18 @@ func _ready() -> void:
 	service._remaining = 0.0
 	service._physics_process(0.0)
 	assert(service._sleepers.is_empty(), "密度降低恢复全部节点")
+	var boundary_item := Item.new()
+	boundary_item.item = {"kind":"equip","itemId":"fixed"}
+	boundary_item._cached_drawn = true
+	boundary_item._spawn_t = 100.0
+	boundary_item.position = Vector2(100000,0)
+	root.add_child(boundary_item)
+	service.dense = true
+	var boundary := Boundary.new()
+	boundary.service = service
+	boundary.target = boundary_item
+	root.add_child(boundary)
+	await boundary.finished
 	Engine.time_scale = old_scale
 	print("[GroundLootIdleTest] PASS")
 	get_tree().quit()
