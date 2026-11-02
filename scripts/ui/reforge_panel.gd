@@ -867,7 +867,22 @@ func _on_reforge() -> void:
 	if tries > 1:
 		_feedback.text += "\n" + Localization.tr_key("msg.reforge.p015", [tries])
 	_refresh_choices()
+	# 工程 116：重铸成功后落一条布局快照。
+	# 这条闪退的根因是浮窗布局自激（见 `FloatingWindow._schedule_layout`），崩前最后
+	# 能看到的就是「视口 / 面板 / 内容」三者的尺寸关系。保留它 —— 以后遇到
+	# 「面板越大越容易崩」这类问题，可以直接从日志判断是不是同一个环。
+	CrashTrace.mark("reforge.layout", "vh=%.0f boxh=%.0f contenth=%.0f fb=%d" % [
+		get_viewport_rect().size.y, _box.size.y, _content.size.y, _feedback.text.length()])
 	CrashTrace.mark("reforge.end", "ok tries=" + str(tries))
+	# 上面那条是**重建完但布局尚未重算**时的尺寸（`size` 还是旧值）；
+	# 真正有意义的是这一帧排完版之后的值，用 deferred 补一条。
+	_report_layout_deferred.call_deferred()
+
+## 帧末（渲染提交之前）回报布局后的真实尺寸。🔴 只读，不改任何状态。
+func _report_layout_deferred() -> void:
+	CrashTrace.mark("rf.layout2", "vh=%.0f box=%.0f content=%.0f scrollmin=%.0f fb=%.0f" % [
+		get_viewport_rect().size.y, _box.size.y, _content.size.y,
+		_scroll.custom_minimum_size.y, _feedback.size.y])
 
 ## 只替换如意预选，重铸成功后由原结算入口统一扣除。
 func _on_auto_runes() -> void:
