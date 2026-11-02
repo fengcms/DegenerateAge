@@ -256,13 +256,7 @@ RENDER_ONLY_SCENES = {"MapRenderBenchmark", "ChapterOneMapArtCapture", "BossVisu
 ## 已知美术欠账：**断言本身是对的，红的原因是素材/布局数据过时**，需要重做美术而不是改代码。
 ## `--all` 时单独打印 SKIP 且不计入退出码，保证「既不被当成新回归，也不会悄悄消失」。
 ## 修好一条就从这里删除并确认复绿；新增条目必须写明「缺什么素材 + 对应文档」。
-KNOWN_ART_DEBT = {
-    "CampStyleSampleTest": "A/B 局部样板的 manifest 仍为 camp_whitebox_v1，正式营地已升 v2"
-                           "（tools/build_camp_style_sample.py 的 LAYOUT 与 OBJECTS 是 v1 手工标注）"
-                           "⇒ 需按 v2 重做样板美术。见素材设计 17/18。",
-    "CampStyleTraversalTest": "同上：依赖 `tests/CampStyleSample.tscn`，样板过时导致装配断言先失败。",
-
-}
+KNOWN_ART_DEBT = {}
 
 ## 成功完成标记只认**行尾**形态，避免无关文本里裸含 "PASS" 被误命中。
 ## 覆盖两种既有打印约定：`[XxxTest] 全部通过 ✅` 与 `XxxTest: PASS` / `[XxxTest] PASS`。

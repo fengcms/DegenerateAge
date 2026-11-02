@@ -3,13 +3,13 @@ extends Node2D
 ## 玩家、NPC、地图尺寸、导航和障碍直接复用当前营地；此场景不会写入正式地图入口。
 
 const GAME_SCENE := preload("res://scenes/Game.tscn")
-const MANIFEST_A := "res://assets/maps/camp_style_sample/a/manifest.json"
-const MANIFEST_B := "res://assets/maps/camp_style_sample/b/manifest.json"
+const MANIFEST_A := "res://assets/maps/camp_style_sample_v2/a/manifest.json"
+const MANIFEST_B := "res://assets/maps/camp_style_sample_v2/b/manifest.json"
 const FOCUS := {
 	"blacksmith": [125, 300],
 	"elder_tree": [1000, 450],
-	"western_rocks": [125, 610],
-	"northwest_palisade": [120, 170],
+	"merchant": [300, 490],
+	"training_gate": [900, 560],
 }
 
 var world: Node2D
@@ -66,13 +66,14 @@ func _build_style(style: String) -> Node2D:
 	layer.add_child(base)
 	_add_sprite(layer, "ground", String(manifest["ground"]), manifest["patch"], -4095, style)
 	for entry: Dictionary in manifest["objects"]:
+		var filter_style := "a" if bool(entry.get("pixel_art",false)) else style
 		var rect: Array = entry["rect"]
 		if entry.has("back"):
-			_add_sprite(layer, String(entry["id"]) + "_back", String(entry["back"]), rect, -3500, style)
+			_add_sprite(layer, String(entry["id"]) + "_back", String(entry["back"]), rect, -3500, filter_style)
 		if entry.has("front"):
 			var foot: Array = [rect[0], entry["foot_y"]]
 			var z := clampi(roundi(_canvas_to_world(foot).y), -3499, 3500)
-			_add_sprite(layer, String(entry["id"]) + "_front", String(entry["front"]), rect, z, style)
+			_add_sprite(layer, String(entry["id"]) + "_front", String(entry["front"]), rect, z, filter_style)
 	return layer
 
 ## 把一张带透明边的样板图放在原画参考矩形；B 的 2 倍像素只改变清晰度。
@@ -131,7 +132,7 @@ func _build_help() -> void:
 ## 更新当前风格和倍率说明；截图测试可隐藏此标签获得相同构图。
 func _update_help() -> void:
 	if _help != null:
-		_help.text = "营地样板 %s · 地图 %.0f%%   F5 A / F6 B   F1 铁匠 / F2 长老树 / F3 岩石 / F4 栅栏   F7/F8/F9 倍率" % [
+		_help.text = "营地样板 %s · 地图 %.0f%%   F5 A / F6 B   F1 铁匠 / F2 长老树 / F3 货郎 / F4 训练场   F7/F8/F9 倍率" % [
 			active_style.to_upper(), float(GameState.settings.get("mapScale", 1.0)) * 100.0]
 
 ## 响应样板快捷键；WASD/鼠标仍交给真实玩家移动与交互。
@@ -141,8 +142,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	match event.keycode:
 		KEY_F1: _focus("blacksmith")
 		KEY_F2: _focus("elder_tree")
-		KEY_F3: _focus("western_rocks")
-		KEY_F4: _focus("northwest_palisade")
+		KEY_F3: _focus("merchant")
+		KEY_F4: _focus("training_gate")
 		KEY_F5: _show_style("a")
 		KEY_F6: _show_style("b")
 		KEY_F7: _set_zoom(1.0)

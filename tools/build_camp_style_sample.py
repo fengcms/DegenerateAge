@@ -1,5 +1,7 @@
 """从八张营地局部源图重建 A/B 可运行样板贴图。
 
+本工具保留重建正式旧素材依赖，不再作为当前A/B对照入口；当前对照使用build_camp_style_sample_v2.py。
+
 输入为 art_source/environment/camp_style_sample/ 与现有营地布局；只写
 assets/maps/camp_style_sample/。地面不包含任何立体物件，整体实体拆成
 互不重叠的背层与前沿遮挡层；依赖 ImageMagick，不改正式地图素材。

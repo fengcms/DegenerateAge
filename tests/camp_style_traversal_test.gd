@@ -1,13 +1,13 @@
 extends Node
-## 幸存者营地 B 样板真实行走复核，沿正式导航与物理驱动玩家绕过屋檐、树、栅栏和岩带。
+## 幸存者营地 B 样板真实行走复核，沿正式导航与物理驱动玩家绕过屋檐、树、货郎与训练场栅栏。
 ## 只在隔离测试项目中运行；窗口模式保存每条路线的中途截图，不修改正式布局或存档。
 
 const SAMPLE := preload("res://tests/CampStyleSample.tscn")
 const ROUTES := [
 	{"id": "blacksmith", "start": [125, 300], "end": [610, 335]},
 	{"id": "elder_tree", "start": [1000, 450], "end": [1185, 345]},
-	{"id": "northwest_palisade", "start": [120, 170], "end": [650, 180]},
-	{"id": "western_rocks", "start": [125, 610], "end": [125, 780]},
+	{"id": "merchant", "start": [300, 490], "end": [650, 430]},
+	{"id": "training_gate", "start": [700, 480], "end": [900, 660]},
 ]
 
 ## 逐条向真实玩家发出移动命令，并在每个物理帧验证脚底属于既有可走格。

@@ -12,7 +12,7 @@ func _ready() -> void:
 	assert(sample.ground.get_world_bounds().size == Vector2(3200, 1800), "样板改变了营地尺寸")
 	var layout: Dictionary = sample.ground._camp_whitebox
 	var solids := (layout["entities"] as Array).size() + (layout["fences"] as Array).size()
-	assert(solids == 22 and sample.ground.get_node("CaveWalls").get_child_count() == solids,
+	assert(solids == 11 and sample.ground.get_node("CaveWalls").get_child_count() == solids,
 		"样板必须继续使用原有整体障碍")
 	assert(sample.world.get_node("Npcs").get_child_count() == 5,
 		"样板必须保留正式 NPC 位置与数量")
@@ -21,12 +21,15 @@ func _ready() -> void:
 	for style in ["a", "b"]:
 		var layer := sample._styles[style] as Node2D
 		assert(layer.get_node("ground") != null, "样板纯地面层缺失")
+		for id in ["training_north","training_west","training_south","training_east_lower"]:
+			assert(layer.get_node_or_null(id + "_front") != null, "v2训练场栅栏缺失")
+		assert(layer.get_node_or_null("northwest_palisade_front") == null and layer.get_node_or_null("western_rocks_front") == null, "不能把v2已开放外围画回假障碍")
 		for id in ["blacksmith", "merchant", "elder_tree"]:
 			assert(layer.get_node(id + "_back") != null and layer.get_node(id + "_front") != null,
 				"整体实体缺少背层或前沿遮挡：%s/%s" % [style, id])
 			_check_split_alpha(style, id)
 		var image := Image.new()
-		assert(image.load("res://assets/maps/camp_style_sample/%s/ground.png" % style) == OK,
+		assert(image.load("res://assets/maps/camp_style_sample_v2/%s/ground.png" % style) == OK,
 			"样板地面图片不可读")
 		assert(image.get_pixel(0, 0).a == 0.0 and image.get_pixel(image.get_width() / 2,
 			image.get_height() / 2).a > 0.98, "地面局部边缘必须真正透明")
@@ -35,7 +38,7 @@ func _ready() -> void:
 	for zoom in [1.0, 1.5, 2.0]:
 		sample._set_zoom(zoom)
 		assert(is_equal_approx(sample.camera.zoom.x, zoom), "地图倍率不正确")
-	for focus in ["blacksmith", "elder_tree", "western_rocks", "northwest_palisade"]:
+	for focus in ["blacksmith", "elder_tree", "merchant", "training_gate"]:
 		sample._focus(focus)
 		assert(sample.ground.cave.is_walkable(Vector2i(Iso.world_to_grid(sample.player.global_position).round())),
 			"观察点不应落在障碍内：%s" % focus)
@@ -55,23 +58,25 @@ func _ready() -> void:
 			await _save_view(sample, "a", "blacksmith", 2.0, "camp_style_a_blacksmith_200")
 			await _save_view(sample, "b", "blacksmith", 2.0, "camp_style_b_blacksmith_200")
 			await _save_view(sample, "b", "elder_tree", 1.5, "camp_style_b_tree")
-			await _save_view(sample, "b", "western_rocks", 1.5, "camp_style_b_rocks")
-			await _save_view(sample, "b", "northwest_palisade", 1.5, "camp_style_b_fence")
+			await _save_view(sample, "b", "merchant", 1.5, "camp_style_b_rocks")
+			await _save_view(sample, "b", "training_gate", 1.5, "camp_style_b_fence")
 			await _save_occlusion(sample, "blacksmith", [300, 173], "camp_style_b_roof_occlusion")
 			await _save_occlusion(sample, "elder_tree", [1050, 340], "camp_style_b_canopy_occlusion")
-	print("[CampStyleSampleTest] PASS · A/B 同场景分层与固定障碍通过")
+	print("[CampStyleSampleTest] A/B 同场景分层与固定障碍全部通过 ✅")
 	get_tree().quit()
 
 ## 逐格核对样板中五个立体物体的承重区，须完全落在既有不可走掩码。
 ## 屋檐、树冠等非承重外伸部分允许覆盖可走格，由前沿层负责遮挡。
 func _scan_solid_supports(sample: Node2D) -> Dictionary:
-	var supports := {
-		"blacksmith": [[240, 205], [510, 205], [520, 285], [245, 295]],
-		"merchant": [[320, 447], [595, 447], [600, 465], [320, 470]],
-		"elder_tree": [[1063, 388], [1084, 388], [1090, 405], [1063, 408]],
-		"northwest_palisade": [[10, 104], [220, 92], [520, 106], [740, 100], [740, 104], [520, 111], [220, 99], [10, 113]],
-		"western_rocks": [[6, 470], [25, 470], [75, 695], [45, 800], [6, 830]],
-	}
+	# v2已取消外围墙带，使用当前完整承重足迹与四段训练栅栏，保留逐格不可走检查。
+	var supports: Dictionary = {}
+	var layout: Dictionary = sample.ground._camp_whitebox
+	for entry: Dictionary in layout.entities:
+		if entry.id in ["blacksmith","merchant","elder_tree"]:
+			supports[entry.id] = entry.footprint
+	for entry: Dictionary in layout.fences:
+		supports[entry.id] = entry.polygon
+	assert(supports.size() == 7, "样板需覆盖三个实体和四段训练场栅栏")
 	var totals: Dictionary = {}
 	for id: String in supports:
 		var polygon := PackedVector2Array()
@@ -94,8 +99,8 @@ func _scan_solid_supports(sample: Node2D) -> Dictionary:
 func _check_split_alpha(style: String, id: String) -> void:
 	var back := Image.new()
 	var front := Image.new()
-	assert(back.load("res://assets/maps/camp_style_sample/%s/%s_back.png" % [style, id]) == OK)
-	assert(front.load("res://assets/maps/camp_style_sample/%s/%s_front.png" % [style, id]) == OK)
+	assert(back.load("res://assets/maps/camp_style_sample_v2/%s/%s_back.png" % [style, id]) == OK)
+	assert(front.load("res://assets/maps/camp_style_sample_v2/%s/%s_front.png" % [style, id]) == OK)
 	assert(back.get_size() == front.get_size(), "实体分层像素尺寸不同：%s/%s" % [style, id])
 	for y in range(back.get_height()):
 		for x in range(back.get_width()):
