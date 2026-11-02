@@ -1,4 +1,5 @@
 extends Node
+## 必须通过tools/run_isolated_probe.py启动；隔离由项目身份强制检查，不能只依赖HOME约定。
 ## 工程 116：**玩家完整路径**崩溃复现探针（只读，必须隔离 HOME）。
 ##
 ## 路径：读档 → `reload_world()`（整场景重载）→ 新场景建世界 → 打开重铸面板
@@ -22,6 +23,8 @@ const STAGE_FILE := "user://full_path_probe_stage.txt"
 const RUNE_ID := "rune_diamond"
 
 func _ready() -> void:
+	if not DiagnosticProbeGuard.require_isolated(self):
+		return
 	var stage := _read_stage()
 	print("[Probe] _ready 阶段=%d" % stage)
 	if stage == 0:

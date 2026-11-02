@@ -98,6 +98,10 @@ var _known_boss_ids: Dictionary = {}
 var _legal_keys_ready: bool = false
 
 func _ready() -> void:
+	# 诊断探针拒绝正式身份时，不创建目录、不迁移显示偏好、不连接自动存事件。
+	if DiagnosticProbeGuard.unsafe_startup():
+		autosave_enabled = false
+		return
 	_ensure_dir()
 	_connect_events()
 	# 首次升级时导入最近使用角色的显示倍率，主菜单随即按该倍率展示。

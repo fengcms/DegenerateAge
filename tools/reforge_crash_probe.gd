@@ -1,4 +1,5 @@
 extends Node
+## 必须通过tools/run_isolated_probe.py启动；隔离由项目身份强制检查，不能只依赖HOME约定。
 ## 工程 116：重铸闪退复现探针（**只读复现，不写入任何真实存档**）。
 ##
 ## 用途：在隔离的 user:// 下加载指定槽位，真实打开重铸面板，**按玩家操作顺序**
@@ -29,6 +30,8 @@ const REFINE_SLOTS := 4
 const REFINE_QUALITY := "legendary"
 
 func _ready() -> void:
+	if not DiagnosticProbeGuard.require_isolated(self):
+		return
 	print("[Probe] === 重铸崩溃复现开始（headless=%s）===" % DisplayServer.get_name())
 	# 必须在建任何窗口之前切换：运行期若已有子窗口在显示，引擎会拒绝修改并报
 	# 「Can't change "gui_embed_subwindows" while a child window is displayed」。

@@ -1,6 +1,9 @@
 extends Node
+## 必须通过tools/run_isolated_probe.py启动；隔离由项目身份强制检查，不能只依赖HOME约定。
 ## 对照探针：只加载世界 + 打开面板，不重铸。用于判定崩溃是否需要重铸触发。
 func _ready() -> void:
+	if not DiagnosticProbeGuard.require_isolated(self):
+		return
 	var mode := OS.get_cmdline_user_args()
 	print("[Noop] args=", mode)
 	SaveManager.active_slot = -1

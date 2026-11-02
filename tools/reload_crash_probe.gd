@@ -1,4 +1,5 @@
 extends Node
+## 必须通过tools/run_isolated_probe.py启动；隔离由项目身份强制检查，不能只依赖HOME约定。
 ## 工程 116：**读档重载**崩溃复现探针（只读，必须隔离 HOME）。
 ##
 ## 复现的是玩家真实路径：读档 → `MapService.reload_world()` → `reload_current_scene()`
@@ -20,6 +21,8 @@ const WATCH_SECONDS := 12.0
 const STAGE_FILE := "user://reload_probe_stage.txt"
 
 func _ready() -> void:
+	if not DiagnosticProbeGuard.require_isolated(self):
+		return
 	var stage := _read_stage()
 	print("[Probe] 进入 _ready，阶段=%d（headless=%s）" % [stage, DisplayServer.get_name()])
 	if stage == 0:

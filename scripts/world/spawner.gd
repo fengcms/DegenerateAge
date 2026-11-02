@@ -294,11 +294,14 @@ func _on_monster_died(point: Dictionary) -> void:
 	point.position = pos
 	# 工程 116：读出「谁死了、当时有没有实体」。entry 为空说明不是被打死，
 	# 而是生成流程里异常进入死亡登记（本轮怀疑有 Boss 一生成就死）。
-	CrashTrace.mark("spawner.died",
-		String(point.get("monster_id", "")) + " ord=" + str(int(point.get("ordinal", 0)))
-		+ " entry=" + ("yes" if node != null and is_instance_valid(node) else "null")
-		+ " rt=" + str(float(point.get("respawn_time", 0.0)))
-		+ " pos=" + str(pos))
+	if String(point.get("kind", "")) == "boss" or CrashTrace.verbose_enabled():
+		CrashTrace.mark("spawner.died",
+			String(point.get("monster_id", "")) + " ord=" + str(int(point.get("ordinal", 0)))
+			+ " entry=" + ("yes" if node != null and is_instance_valid(node) else "null")
+			+ " rt=" + str(float(point.get("respawn_time", 0.0)))
+			+ " pos=" + str(pos))
+	else:
+		CrashTrace.count_event("spawner.nonboss_died")
 	# M4-10：登记刷新状态（到点时刻 + 死亡位置）→ 跨图 / 跨档保持
 	GameState.mark_spawn_dead(
 		_state_map_id(),

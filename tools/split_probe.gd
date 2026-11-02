@@ -1,4 +1,5 @@
 extends Node
+## 必须通过tools/run_isolated_probe.py启动；隔离由项目身份强制检查，不能只依赖HOME约定。
 ## 工程 116：重铸闪退的**分步拆分**探针。
 ##
 ## 目的：把「重铸」这一个动作拆成互不重叠的几段，分别单独执行，
@@ -14,6 +15,8 @@ extends Node
 ##    这正是前几轮「同样操作连打几十次不崩」的原因（假阴性）。
 
 func _ready() -> void:
+	if not DiagnosticProbeGuard.require_isolated(self):
+		return
 	var argv := OS.get_cmdline_user_args()
 	# 🔑 关键变量：不带材料时只点重铸（tries=1）**不崩**；带上 4 件紫装 + 4 枚钻石
 	# 如意（tries=17）才崩。所以「是否投料」必须单独可控，否则会把两件事混为一谈。
