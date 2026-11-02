@@ -35,6 +35,8 @@ const COL_GOLD := Color(0.94, 0.78, 0.38)
 const COL_WARN := Color(0.88, 0.42, 0.36)
 const COL_ALIVE := Color(0.55, 0.82, 0.52)
 
+var _layout_scheduler: FrameLayoutScheduler
+
 var _title: Label
 var _list: VBoxContainer
 var _hint: Label
@@ -62,8 +64,8 @@ func _ready() -> void:
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.gold_changed.connect(_on_gold_changed)
-	resized.connect(func() -> void: _update_layout.call_deferred())
-	EventBus.settings_changed.connect(func() -> void: _update_layout.call_deferred())
+	resized.connect(func() -> void: _request_layout())
+	EventBus.settings_changed.connect(func() -> void: _request_layout())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -183,7 +185,7 @@ func _build() -> void:
 	content.add_theme_constant_override("separation", 8)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(content)
-	_box.minimum_size_changed.connect(func() -> void: _update_layout.call_deferred())
+	_box.minimum_size_changed.connect(func() -> void: _request_layout())
 
 	content.add_child(_make_filter_bar())
 
@@ -197,7 +199,7 @@ func _build() -> void:
 	_hint.add_theme_font_size_override("font_size", 12)
 	content.add_child(_hint)
 
-	_update_layout()
+	_request_layout()
 
 func _update_layout() -> void:
 	if _center == null or _box == null or _scroll == null:
@@ -222,13 +224,13 @@ func _rebuild() -> void:
 	var rows := BossToken.rows()
 	if rows.is_empty():
 		_list.add_child(_empty_label(Localization.tr_key("ui.boss_token_panel.p001")))
-		_update_layout.call_deferred()
+		_request_layout()
 		return
 	# 过滤是**视图裁剪**，规则层 `BossToken.rows()` 一行不动（BossTokenTest 的锚点是 137 行）。
 	var shown := _apply_filter(rows)
 	if shown.is_empty():
 		_list.add_child(_empty_label(Localization.tr_key("ui.boss_token_panel.p014")))
-		_update_layout.call_deferred()
+		_request_layout()
 		return
 	var groups := _fold_groups(shown)
 	if not groups.is_empty():
@@ -249,7 +251,7 @@ func _rebuild() -> void:
 			continue
 		_list.add_child(_make_row(row))
 		_visible_row_count += 1
-	_update_layout.call_deferred()
+	_request_layout()
 
 func _empty_label(text: String) -> Control:
 	var l := Label.new()
@@ -510,3 +512,9 @@ func _on_action(row: Dictionary) -> void:
 	MapService.arm_landing_move(target)
 	set_open(false)
 	MapService.reload_world()
+
+## 面板私有布局也复用按帧调度，跨调用变化留到下一帧，避免最小尺寸信号自激。
+func _request_layout() -> void:
+	if _layout_scheduler == null:
+		_layout_scheduler = FrameLayoutScheduler.new(self, _update_layout)
+	_layout_scheduler.request()

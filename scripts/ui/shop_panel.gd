@@ -32,6 +32,8 @@ const COL_TEXT_DIM := Color(0.52, 0.55, 0.60)
 const COL_GOLD := Color(0.94, 0.78, 0.38)
 const COL_WARN := Color(0.92, 0.68, 0.34)
 
+var _layout_scheduler: FrameLayoutScheduler
+
 var _shop_id: String = ""
 ## 交易会话是否进行中（由本面板发起，退出时同步关闭背包面板）。
 var _trade_active: bool = false
@@ -74,8 +76,8 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_on_inventory_changed)
 	EventBus.equipment_changed.connect(_on_inventory_changed)
 	EventBus.player_leveled.connect(func(_level: int) -> void: _on_inventory_changed())
-	resized.connect(func() -> void: _update_layout.call_deferred())
-	EventBus.settings_changed.connect(func() -> void: _update_layout.call_deferred())
+	resized.connect(func() -> void: _request_layout())
+	EventBus.settings_changed.connect(func() -> void: _request_layout())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -105,7 +107,7 @@ func set_open(open: bool) -> void:
 		EventBus.trade_mode_changed.emit(true)   # 先拉起背包面板
 		EventBus.panel_opened.emit("shop")
 		_refresh()
-		_update_layout.call_deferred()
+		_request_layout()
 	else:
 		_return_tray()
 		_trade_active = false
@@ -232,7 +234,7 @@ func _build() -> void:
 	content.add_theme_constant_override("separation", 8)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(content)
-	_box.minimum_size_changed.connect(func() -> void: _update_layout.call_deferred())
+	_box.minimum_size_changed.connect(func() -> void: _request_layout())
 
 	_tabs = TabContainer.new()
 	_tabs.custom_minimum_size = Vector2(BUY_ROW_MIN.x, 400)
@@ -247,7 +249,7 @@ func _build() -> void:
 	_tabs.set_tab_title(1, Localization.tr_key("ui.shop_panel.p003"))
 	# 工程 60：`TabContainer` 的最小尺寸只统计**当前可见页**，切页会改变整块内容的最小宽高；
 	# 不接这支信号，切到出售页后外层既不会重算滚动区、也不会重排并列窗口。
-	_tabs.tab_changed.connect(func(_tab: int) -> void: _update_layout.call_deferred())
+	_tabs.tab_changed.connect(func(_tab: int) -> void: _request_layout())
 
 	var hint := Label.new()
 	hint.text = Localization.tr_key("ui.shop_panel.p004")
@@ -841,3 +843,9 @@ func _unit_price(item: Dictionary) -> int:
 	var one := item.duplicate(true)
 	one["count"] = 1
 	return Shop.sell_price(one)
+
+## 面板私有布局也复用按帧调度，跨调用变化留到下一帧，避免最小尺寸信号自激。
+func _request_layout() -> void:
+	if _layout_scheduler == null:
+		_layout_scheduler = FrameLayoutScheduler.new(self, _update_layout)
+	_layout_scheduler.request()

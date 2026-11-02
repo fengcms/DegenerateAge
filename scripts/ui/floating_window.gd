@@ -31,8 +31,8 @@ var _dock_right := 1.0
 var _dock_top := 0.0
 var _dock_bottom := 1.0
 var _floating_position := Vector2.ZERO
-## 🔴 布局限流用的帧号，防自激。详见 `_schedule_layout()`。
-var _layout_frame := -1
+## 每个浮窗独立合并请求，执行期间的变化保留到下一帧。
+var _layout_scheduler: FrameLayoutScheduler
 
 func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> void:
 	owner_panel = host
@@ -59,7 +59,7 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 	_schedule_layout()
 
 func show_window() -> void:
-	_layout()
+	request_layout(true)
 	bring_forward()
 
 ## 注入内容区滚动容器（F-P2-3）并重算布局；未超出可见区时布局与不加滚动完全一致。
@@ -132,7 +132,7 @@ func set_origin(start: Vector2, reset := false) -> void:
 	origin = start
 	if reset:
 		_user_moved = false
-	_layout()
+	request_layout(true)
 
 ## 按**逻辑视口绝对坐标**把浮窗钉在固定分区（窄屏分裂布局）：位置与尺寸由调用方给定，
 ## 不参与拖动、不随内容最小尺寸浮动。与 `set_docked` 的差别：后者的比例是「占父容器多少」，
@@ -144,7 +144,7 @@ func set_pinned(active: bool, rect := Rect2()) -> void:
 		_dragging = false
 		_pinned_rect = rect
 	_user_moved = false
-	_layout()
+	request_layout(true)
 
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 		top: float = 0.0, bottom: float = 1.0) -> void:
@@ -162,7 +162,7 @@ func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 	_dock_right = right
 	_dock_top = top
 	_dock_bottom = bottom
-	_layout()
+	request_layout(true)
 
 ## 浮窗的可用空间：常态下就是宿主面板自身的矩形（游戏内面板根控件由界面倍率撑成逻辑视口）。
 ## 宿主尺寸为 0 时（独立测试里的根控件没有那份尺寸）退回逻辑视口，避免落点与分区被夹成 0 而失真。
@@ -173,31 +173,20 @@ func layout_space() -> Vector2:
 		return owner_panel.size
 	return owner_panel.get_viewport_rect().size / SettingsRuntime.ui_scale_value()
 
-## 🔴 布局请求**合并**入口 —— 本文件唯一允许触发 `_layout()` 的延迟入口。
-##
-## 为什么必须合并：`_layout() → fit_content() → 改 scroll.custom_minimum_size
-## → panel_box 最小尺寸变化 → minimum_size_changed` 是一条闭环。每次闭环都排一条
-## deferred 进消息队列，而队列在**同一帧内**是排不空的 —— 上不封顶。
-## 实测单帧触发 10 万次，直接把消息队列撑爆（引擎报
-## `Message queue out of memory`，随后崩在 `CanvasItem::_redraw_callback`）。
-## 这也是「编辑器 Game 面板一放大就闪退」的真因：窗口越高，`fit_content` 越容易
-## 在「装得下」与「需要滚动」之间振荡，闭环每轮都成立。
-##
-## 合并后每帧最多算一次。布局是幂等的，多算没有收益；真需要再算，下一帧的
-## `resized` / `minimum_size_changed` 会再次触发。
-func _schedule_layout() -> void:
-	# 🔴 按**帧号**去重，不是布尔标记。
-	# 布尔标记会在 `_layout()` 结束时清掉，于是同帧内下一次
-	# `minimum_size_changed` 又能排一条 deferred —— 而 deferred 正是在**当前帧**的
-	# flush 里执行的，于是「排进去 → 立刻执行 → 又排放」同帧无限循环。
-	# 实测单帧 10 万次，把消息队列（128MB 也不够）彻底撑爆。
-	# 帧号判定才是真正的「每帧最多一次」：振荡仍在，但每帧只算一次，队列不再增长。
-	var frame := Engine.get_process_frames()
-	if frame == _layout_frame:
-		return
-	_layout_frame = frame
-	_layout.call_deferred()
+## 公开布局请求入口：同步操作与信号共用调度，不丢末次变化，不同帧内反复排deferred。
+func request_layout(immediate := false) -> void:
+	if _layout_scheduler == null:
+		_layout_scheduler = FrameLayoutScheduler.new(self, _layout)
+	if immediate:
+		_layout_scheduler.flush_now()
+	else:
+		_layout_scheduler.request()
 
+## 兼容既有信号入口，统一进入有dirty保留的按帧调度。
+func _schedule_layout() -> void:
+	request_layout()
+
+## 由调度器执行布局，保留固定分区、用户拖动和视口边界语义。
 func _layout() -> void:
 	if owner_panel == null or panel_box == null:
 		return
@@ -222,45 +211,25 @@ func _layout() -> void:
 		position = _floating_position
 	_clamp()
 
-## F-P2-3：把内容区尺寸收敛到 `available` 之内（CenterContainer 会强制面板本体等于最小尺寸）。
-##   未超出可用区时 `wanted` 恰为内容自然最小尺寸 ⇒ 布局与「不加滚动」逐像素一致；
-##   超出时把最小尺寸压到可用空间，其余交给内容滚动条承载，保证含关闭键的标题行仍留在可见区。
-## 迭代 4 次以收敛：首轮父容器最小尺寸里还含「内容滚动条占位 0」的旧值，一次算不准。
+## 按实际已排版的外框/滚动区差值计算固定边距，避免最小尺寸缓存互相追尾。
+## 冷启动实际尺寸未就绪时先给保守空间，后续容器信号会触发下一帧校正。
 static func fit_content(available: Vector2, box: Control, scroll: ScrollContainer) -> void:
-	if box == null or scroll == null or scroll.get_child_count() == 0:
-		return
-	if available.x <= 0.0 or available.y <= 0.0:
+	if box == null or scroll == null or scroll.get_child_count() == 0 or not SettingsRuntime.is_usable_layout_size(available):
 		return
 	var inner := scroll.get_child(0) as Control
 	if inner == null:
 		return
 	var natural := inner.get_combined_minimum_size()
+	var overhead := (box.size - scroll.size).max(Vector2.ZERO)
+	var room := (available - overhead).max(Vector2.ZERO)
+	var height := minf(natural.y, room.y)
 	var bar := scroll.get_v_scroll_bar().get_combined_minimum_size().x
-	for _i in range(4):
-		var overhead := box.get_combined_minimum_size() - scroll.custom_minimum_size
-		var room := Vector2(maxf(0.0, available.x - overhead.x), maxf(0.0, available.y - overhead.y))
-		var height := minf(natural.y, room.y)
-		var width := minf(natural.x, room.x)
-		# 纵向出现滚动条后会扣减内容宽度，预留同宽避免文字被挤到横向滚动。
-		if height < natural.y - 0.5:
-			width = minf(natural.x + bar, room.x)
-		var wanted := Vector2(width, height)
-		if scroll.custom_minimum_size.is_equal_approx(wanted):
-			return
-		# 🔴 从第 2 轮起只允许**收小**，不允许回弹。
-		# 原因：`overhead` 是用 `box.get_combined_minimum_size()` 减去 `scroll` 的
-		# 当前最小尺寸算的，而 `box` 的最小尺寸要等容器重排才反映刚设进去的值 ——
-		# 两者互相追尾。实测 `wanted` 在 930 / 956 之间来回跳（差 26，正好一行文字），
-		# `is_equal_approx` 那道刹车永不成立，于是本函数每轮都改一次尺寸，
-		# 每次都触发 `minimum_size_changed` → `_layout`，自激到消息队列耗尽。
-		# 单调化之后一定在 4 轮内停住：要么相等而 return，要么被截断到当前值而 return。
-		# 代价是可能比「理论最优」小几像素 —— 有滚动条兜底，可接受；崩溃不可接受。
-		if _i > 0:
-			wanted = Vector2(minf(wanted.x, scroll.custom_minimum_size.x),
-				minf(wanted.y, scroll.custom_minimum_size.y))
-			if scroll.custom_minimum_size.is_equal_approx(wanted):
-				return
+	var width := minf(natural.x + (bar if height < natural.y - 0.5 else 0.0), room.x)
+	var wanted := Vector2(width, height)
+	if not scroll.custom_minimum_size.is_equal_approx(wanted):
 		scroll.custom_minimum_size = wanted
+
+## 在可用视口内保留用户拖动后的浮窗位置。
 
 func _clamp() -> void:
 	var area := layout_space()

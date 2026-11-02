@@ -29,6 +29,8 @@ const COL_TITLE := Color(0.62, 0.80, 0.94)
 const COL_GOLD := Color(0.94, 0.78, 0.38)
 const COL_WARN := Color(0.88, 0.42, 0.36)
 
+var _layout_scheduler: FrameLayoutScheduler
+
 var _title: Label
 var _list: VBoxContainer
 var _hint: Label
@@ -60,8 +62,8 @@ func _ready() -> void:
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 	EventBus.gold_changed.connect(_on_gold_changed)
 	# F-P2-3：窗口 / 倍率 / 线路列表变化都可能改变内容自然高度，重新收敛尺寸。
-	resized.connect(func() -> void: _update_layout.call_deferred())
-	EventBus.settings_changed.connect(func() -> void: _update_layout.call_deferred())
+	resized.connect(func() -> void: _request_layout())
+	EventBus.settings_changed.connect(func() -> void: _request_layout())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
@@ -158,7 +160,7 @@ func _build() -> void:
 	content.add_theme_constant_override("separation", 6)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(content)
-	_box.minimum_size_changed.connect(func() -> void: _update_layout.call_deferred())
+	_box.minimum_size_changed.connect(func() -> void: _request_layout())
 
 	var greet := Label.new()
 	greet.text = Localization.tr_key("ui.carter_panel.p003")
@@ -181,7 +183,7 @@ func _build() -> void:
 	_hint.add_theme_font_size_override("font_size", 12)
 	content.add_child(_hint)
 
-	_update_layout()
+	_request_layout()
 
 ## F-P2-3：把面板收敛到逻辑视口内；未超出时布局不变，超出部分由内容滚动条承载。
 func _update_layout() -> void:
@@ -254,7 +256,7 @@ func _refresh() -> void:
 				continue
 			_list.add_child(_make_row(d as Dictionary))
 			_visible_row_count += 1
-	_update_layout.call_deferred()
+	_request_layout()
 
 ## 默认展开「玩家等级所在档 + 满级循环组」，其余收起。
 ## 当地模式不参与折叠（`_collapsed` 留空 ⇒ 全展开，与原行为逐字一致）。
@@ -414,3 +416,9 @@ func _on_travel(map_id: String) -> void:
 	_hint.add_theme_color_override("font_color", COL_WARN)
 	EventBus.toast_requested.emit(reason, "danger")
 	_refresh()
+
+## 面板私有布局也复用按帧调度，跨调用变化留到下一帧，避免最小尺寸信号自激。
+func _request_layout() -> void:
+	if _layout_scheduler == null:
+		_layout_scheduler = FrameLayoutScheduler.new(self, _update_layout)
+	_layout_scheduler.request()

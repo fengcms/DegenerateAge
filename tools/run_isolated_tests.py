@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 112 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 114 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GODOT = Path("/Applications/Godot.app/Contents/MacOS/Godot")
 DEFAULT_TESTS = [
     "EquipmentAxesTest",
-    "SettingsTest", "NanGuardTest", "PotionAccessibilityTest", "AudioCuesTest", "FlowFeedbackTest",
+    "SettingsTest", "NanGuardTest", "FrameLayoutSchedulerTest", "ReforgeLayoutStabilityTest", "PotionAccessibilityTest", "AudioCuesTest", "FlowFeedbackTest",
     "DeathChoiceTest", "DeathDropTest", "RandomTicketTest", "TownScrollTest",
     "HotbarConfigTest", "HotbarUiTest", "InputFeedbackTest", "MenuFlowTest",
     "SkillCombatTest", "AutoControlAcceptance", "AutoExplorationSurvival",

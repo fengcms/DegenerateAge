@@ -384,4 +384,4 @@ func _fit_window_to_content() -> void:
 	if box.size.y > box.get_combined_minimum_size().y + 1.0:
 		box.reset_size()
 		_center.reset_size()
-		_center._layout()
+		_center.request_layout()
