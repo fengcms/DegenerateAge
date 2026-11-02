@@ -137,6 +137,7 @@ static func sector(canvas: CanvasItem, center: Vector2, dir: Vector2, radius: fl
 		canvas.draw_colored_polygon(_sector_points(center,dir,radius,arc_rad,segments),color)
 		return
 	var geometry := sector_geometry(dir,radius,arc_rad,segments)
+	_hold_mesh(canvas,geometry.mesh)
 	canvas.draw_mesh(geometry.mesh,null,Transform2D(0.0,center),color)
 
 ## 地面扇形描边（两条半径边 + 外弧）。
@@ -228,3 +229,16 @@ static func sector_geometry(dir: Vector2, radius: float, arc_rad: float, segment
 			_sectors.erase(_sectors.keys()[0])
 		_sectors[key] = result
 	return result
+
+## CanvasItem绘制命令只保存RID，FIFO淘汰不得释放仍显示的网格。
+## 每个画布保留本轮引用，新帧再次绘制扇形时替换；静态画布随节点释放，最多保留其绘制用量。
+static func _hold_mesh(canvas: CanvasItem, mesh: ArrayMesh) -> void:
+	var frame := Engine.get_process_frames()
+	var refs: Array
+	if int(canvas.get_meta("ground_fx_mesh_frame",-1)) != frame:
+		refs = []
+		canvas.set_meta("ground_fx_mesh_frame",frame)
+		canvas.set_meta("ground_fx_mesh_refs",refs)
+	else:
+		refs = canvas.get_meta("ground_fx_mesh_refs")
+	refs.append(mesh)

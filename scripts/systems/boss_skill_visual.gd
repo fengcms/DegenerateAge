@@ -125,7 +125,9 @@ static func _shape(canvas: Node2D, geo: Dictionary, fill: Color, edge: Color, wi
 		"ring":
 			var center := _local(canvas, geo.center)
 			if fill.a > 0.0:
-				canvas.draw_mesh(ring_mesh(float(geo.inner), float(geo.radius)), null, Transform2D(0.0, center), fill)
+				var mesh := ring_mesh(float(geo.inner), float(geo.radius))
+				GroundFx._hold_mesh(canvas,mesh)
+				canvas.draw_mesh(mesh, null, Transform2D(0.0, center), fill)
 			GroundFx.outline(canvas, center, float(geo.radius), edge, width, 48)
 			GroundFx.outline(canvas, center, float(geo.inner), edge, width, 40)
 
