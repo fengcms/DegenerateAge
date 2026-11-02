@@ -373,6 +373,8 @@ func _update_boss(delta: float) -> bool:
 		return _update_chapter_boss(delta)
 	if boss_action != null:
 		return _update_boss_action(delta)
+	if _legacy_boss_target() == null:
+		return false
 	var skill: Dictionary = template.get("bossSkill", {})
 	var phases: Array = skill.get("phases", [])
 	var prev_phase := boss_phase
@@ -384,7 +386,7 @@ func _update_boss(delta: float) -> bool:
 				_boss_enraged = true
 				queue_redraw()
 				attack_interval = maxf(Combat.MIN_ATTACK_INTERVAL, attack_interval / (1.0 + float(phase.get("addAttackSpeedPct", 0))))
-				_spawn_summons.call_deferred(String(phase.get("summon", "")), int(phase.get("summonCount", 0)))
+				_spawn_engaged_boss_summons.call_deferred(String(phase.get("summon", "")), int(phase.get("summonCount", 0)))
 				if sample_art is MonsterActorArt:
 					(sample_art as MonsterActorArt).play_enrage()
 				EventBus.toast_requested.emit(Localization.tr_key("msg.monster.p001") % display_name, "danger")
@@ -429,6 +431,8 @@ func _update_boss(delta: float) -> bool:
 
 ## 第二章三种 Boss 使用固定预警时序；警示形状在命中前不会追踪玩家。
 func _update_chapter_boss(delta: float) -> bool:
+	if _legacy_boss_target() == null:
+		return false
 	var next_phase := 2 if hp_ratio() < 0.3 else 1 if hp_ratio() < 0.6 else 0
 	if next_phase > boss_phase:
 		boss_phase = next_phase
@@ -438,9 +442,9 @@ func _update_chapter_boss(delta: float) -> bool:
 			_boss_enraged = true
 			attack_interval /= 1.15 if monster_id != "c2_boss_slag_devourer" else 1.10
 			if monster_id == "c2_boss_iron_foreman":
-				_spawn_summons.call_deferred("c2_broken_guard", 2, false, true)
+				_spawn_engaged_boss_summons.call_deferred("c2_broken_guard", 2, true)
 			elif monster_id == "c2_boss_hundred_arm_extractor":
-				_spawn_summons.call_deferred("c2_spirit_larva", 3, false, true)
+				_spawn_engaged_boss_summons.call_deferred("c2_spirit_larva", 3, true)
 	_chapter_boss_skill_cd = maxf(0.0, _chapter_boss_skill_cd - delta)
 	if not _chapter_boss_warn.is_empty():
 		_chapter_boss_warn_left -= delta
@@ -738,7 +742,12 @@ func _enter(s: int) -> void:
 	state = s
 	if s == State.RETURN or s == State.IDLE:
 		_ranged_windup = 0.0
+		_stomp_pending = false
+		_stomp_remaining = 0.0
+		_chapter_boss_warn_left = 0.0
 		_chapter_boss_warn = ""
+		if sample_art is MonsterActorArt:
+			(sample_art as MonsterActorArt).cancel_stomp()
 		_clear_boss_visual()
 		_boss_visual_phase = 0
 		if boss_action != null:
@@ -1527,3 +1536,29 @@ func draw_boss_skill_ground(canvas: Node2D) -> void:
 		boss_action.draw(canvas, _boss_skin)
 	if _boss_visual != null:
 		_boss_visual.draw_impacts(canvas, _boss_skin)
+
+## 首章/第二章技能先验证接战再推进预警与阶段；失去目标或越过牵引线先回归普通RETURN。
+## 无效状态清理旧预警，不延长技能距离，也不改变已接战且目标有效时的锁定几何。
+func _legacy_boss_target() -> Node2D:
+	var player := _get_player()
+	var engaged := state == State.CHASE or state == State.ATTACK
+	if engaged and (player == null or global_position.distance_to(spawn_position) > leash_range):
+		_enter(State.RETURN)
+		return null
+	if not engaged:
+		if _stomp_pending or not _chapter_boss_warn.is_empty():
+			_stomp_pending = false
+			_stomp_remaining = 0.0
+			_chapter_boss_warn = ""
+			_chapter_boss_warn_left = 0.0
+			if sample_art is MonsterActorArt:
+				(sample_art as MonsterActorArt).cancel_stomp()
+			_clear_boss_visual()
+		return null
+	return player
+
+## 延迟阶段召唤真正执行前复查接战与目标，死亡掉落型召唤仍走原入口。
+func _spawn_engaged_boss_summons(id: String, count: int, no_rewards: bool = false) -> void:
+	if is_dead or _legacy_boss_target() == null:
+		return
+	_spawn_summons(id, count, false, no_rewards)

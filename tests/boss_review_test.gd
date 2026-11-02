@@ -37,6 +37,7 @@ func _ready() -> void:
 	spawner.set_process(false)
 	var boss: Monster = spawner._points[0].entry
 	boss.global_position = player.global_position + Vector2(60, 0)
+	boss.spawn_position = boss.global_position
 	boss.set_physics_process(false)
 	player.select_target(boss)
 	var hud: Control = main.get_node("UI/Hud")
@@ -44,6 +45,7 @@ func _ready() -> void:
 	boss._announce_boss_hp()
 	check(main.get_node("UI/BossHealthBar").visible, "锁定 Boss 时仍显示专用大血条")
 	var hp := int(GameState.player.hp)
+	boss._enter(Monster.State.CHASE)
 	boss.hp = 1800
 	boss._update_boss(0)
 	check(boss.boss_phase == 0 and not boss._stomp_pending, "60%边界保持第一阶段")

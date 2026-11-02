@@ -46,3 +46,9 @@ BossAction.update的target_valid当前只限制IDLE阶段的新动作，已开�
 ## 实施节点一（2026-11-02）
 
 共享宿主仅在CHASE/ATTACK推进动作和阶段；其他状态取消异常残留动作并返回普通AI，不消耗首放计时。原无有效玩家/超出出生点牵引的5秒脱战归位路径保留。新增BossEngagementTest逐个覆盖13个共享模板：闲置/巡逻/返回、普通物理入口索敌、首放延迟、预警、目标死亡取消、归位后重新接战。BossEngagementTest与BossActionTest通过。BossActionTest原宿主夹具增加明确_enter(CHASE)，原首放/伤害/归位断言保留，属于适配合法前置条件和扩展覆盖，未放宽断言。初次隔离编辑器导入发生引擎线程崩溃，重新导入成功；新增夹具的空bossSkill类型检查已补齐。
+
+## 实施节点二（2026-11-02）
+
+首章/第二章阶段、预警、狂暴与召唤入口统一先验证CHASE/ATTACK及有效目标；死亡/离场或越过原牵引线时先进入RETURN。RETURN/IDLE清除践踏计时、第二章预警及表现；新增cancel_stomp只撤销抬臂，不伪造落地命中。延迟阶段召唤执行前再次检查接战，避免同一轮进入RETURN后仍追加召唤。死亡掉落型召唤保持原入口。
+
+BossEngagementTest补四个旧模板的闲置低血不触发阶段、接战可预警、目标死亡清理、延迟召唤不越过脱战；与BossReviewTest、ChapterTwoCombatTest、BossSkillVisualTest全部通过。BossReview原夹具曾瞬移Boss却不更新出生点，新增牵引检查后触发合法RETURN；现同步夹具出生点并显式接战，全部原伤害、狂暴、召唤断言保留，没有放宽。

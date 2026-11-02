@@ -55,6 +55,38 @@ func _ready() -> void:
 		boss.free()
 		tested += 1
 	check(tested == 13, "覆盖当前13个共享Boss模板")
+	await test_legacy(player)
 	player.free()
 	print("[BossEngagementTest] ","全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 首章及第二章的阶段、预警和召唤必须受接战与目标生命周期约束。
+func test_legacy(player: StubPlayer) -> void:
+	for id in ["boss_corrupted_beast","c2_boss_iron_foreman","c2_boss_slag_devourer","c2_boss_hundred_arm_extractor"]:
+		var boss := load("res://scenes/entities/Monster.tscn").instantiate() as Monster
+		boss.monster_id = id
+		boss.position = player.position + Vector2(60,0)
+		add_child(boss)
+		boss.set_physics_process(false)
+		boss.spawn_position = boss.position
+		boss.hp = int(boss.max_hp * 0.2)
+		boss._update_boss(30.0)
+		check(boss.boss_phase == 0 and not boss._boss_enraged and not boss._stomp_pending and boss._chapter_boss_warn.is_empty(), "旧入口闲置不推进阶段或技能 " + id)
+		boss.hp = int(boss.max_hp * 0.55)
+		boss._enter(Monster.State.CHASE)
+		boss._chapter_boss_skill_cd = 0.0
+		boss._update_boss(0.01)
+		check(boss._stomp_pending or not boss._chapter_boss_warn.is_empty(), "旧入口合法接战仍有预警 " + id)
+		player.is_dead = true
+		boss._update_boss(0.01)
+		check(boss.state == Monster.State.RETURN and not boss._stomp_pending and boss._chapter_boss_warn.is_empty(), "旧入口目标死亡即时撤销预警 " + id)
+		if boss.sample_art is MonsterActorArt:
+			check(not boss.sample_art._warning_pose, "取消践踏不残留抬臂姿势")
+		player.is_dead = false
+		boss._enter(Monster.State.CHASE)
+		boss.hp = int(boss.max_hp * 0.2)
+		boss._update_boss(0.01)
+		boss._enter(Monster.State.RETURN)
+		await get_tree().process_frame
+		check(get_tree().get_nodes_in_group("enemies").size() == 1, "延迟阶段召唤不越过脱战 " + id)
+		boss.free()
