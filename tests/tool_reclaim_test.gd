@@ -14,6 +14,14 @@ extends Node
 ## （那是同义反复的假绿）。数据里新增 panel 类道具时，这里要跟着加 id ——
 ## 用例 1 会红着提醒你「补领范围得重新评估」，这正是它存在的意义。
 ## 工程 108 加第四件（随身铁匠）时，本清单从 3 变 4，下面所有计数都改为按它推导。
+const EXPECTED_CATALOG := [
+	"tool_super_portable_token",
+	"tool_boss_token",
+	"tool_portable_shop",
+	"tool_portable_carter",
+	"tool_portable_blacksmith",
+]
+## 合铸前仍持有四种旧工具，不能用全目录解锁来伪造该阶段。
 const EXPECTED_TOOLS := [
 	"tool_boss_token",
 	"tool_portable_shop",
@@ -37,6 +45,8 @@ func _ready() -> void:
 	_test_both_full_records_failed()
 	_test_load_self_heal()
 	_test_no_notice_when_complete()
+	_test_merged_reclaim()
+	_test_merged_load_self_heal()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[ToolReclaimTest] 全部通过 ✅")
@@ -77,9 +87,9 @@ func _holds_any(container: Array, ids: Array[String]) -> int:
 ## 反过来，清单里写了数据里没有的 id 也会红（防止「清单自我膨胀」）。
 func _test_panel_ids() -> void:
 	var ids := ToolReclaim.panel_tool_ids()
-	check(ids.size() == EXPECTED_TOOLS.size(),
-		"panel 类道具应为 %d 件，实际 %d" % [EXPECTED_TOOLS.size(), ids.size()])
-	for item_id in EXPECTED_TOOLS:
+	check(ids.size() == EXPECTED_CATALOG.size(),
+		"panel 类道具应为 %d 件，实际 %d" % [EXPECTED_CATALOG.size(), ids.size()])
+	for item_id in EXPECTED_CATALOG:
 		check(ids.has(item_id), "panel 类道具应包含 " + String(item_id))
 
 ## 用例 2：全部键已解锁且两处都没有 ⇒ 全补，且补完再判为空（幂等）。
@@ -103,7 +113,7 @@ func _test_missing_reclaim() -> void:
 func _test_owned_not_reclaimed() -> void:
 	var inv := Inventory.create(40)
 	var wh := Inventory.create(40)
-	var ids := ToolReclaim.panel_tool_ids()
+	var ids := EXPECTED_TOOLS
 	Inventory.add(inv, ItemFactory.make_any(ids[0], 1))
 	var missing := ToolReclaim.missing_tools(_all_unlocked(), inv, wh)
 	check(not missing.has(ids[0]), "已在背包的工具不得再判缺失")
@@ -166,7 +176,37 @@ func _test_no_notice_when_complete() -> void:
 	GameState.reset_to_defaults()
 	SaveManager._last_reclaim_notice = ""
 	GameState.unlocks = _all_unlocked()
-	for item_id in ToolReclaim.panel_tool_ids():
+	for item_id in EXPECTED_TOOLS:
 		Inventory.add(GameState.inventory, ItemFactory.make_any(item_id, 1))
 	SaveManager.apply_to_game_state(SaveManager._collect())
 	check(SaveManager._last_reclaim_notice == "", "全部齐全时不得弹补领提示")
+
+## 合铸后只补超级令牌；背包、仓库、满容量与重复调用均不能把已回收工具重新发出。
+func _test_merged_reclaim() -> void:
+	var unlocks := _all_unlocked()
+	unlocks.tool_super_portable_token = true
+	var inv := Inventory.create(40)
+	var wh := Inventory.create(40)
+	check(ToolReclaim.missing_tools(unlocks, inv, wh) == ["tool_super_portable_token"], "合铸后只缺超级令牌")
+	var result := ToolReclaim.reclaim(unlocks, inv, wh)
+	check(result.given == ["tool_super_portable_token"], "不补回已兑换四工具")
+	check(ToolReclaim.reclaim(unlocks, inv, wh).given.is_empty(), "超级令牌补领幂等")
+	for id in EXPECTED_TOOLS:
+		check(not ToolReclaim.holds(inv,id), "旧工具不复活：" + id)
+	inv = _filled(40)
+	result = ToolReclaim.reclaim(unlocks, inv, wh)
+	check(result.to_warehouse == ["tool_super_portable_token"], "合铸后背包满走仓库")
+	check(ToolReclaim.missing_tools(unlocks,inv,wh).is_empty(), "仓库已有超级令牌不再补")
+	wh = _filled(40)
+	check(ToolReclaim.reclaim(unlocks,inv,wh).failed == ["tool_super_portable_token"], "合铸后两处满仅记录令牌失败")
+
+## 真实读档门面沿用合铸退休语义，不把历史unlock键当成旧工具仍需补回。
+func _test_merged_load_self_heal() -> void:
+	GameState.reset_to_defaults()
+	SaveManager._last_reclaim_notice = ""
+	GameState.unlocks = _all_unlocked()
+	GameState.unlocks.tool_super_portable_token = true
+	SaveManager.apply_to_game_state(SaveManager._collect())
+	check(ToolReclaim.holds(GameState.inventory,"tool_super_portable_token"), "合铸后读档自愈超级令牌")
+	for id in EXPECTED_TOOLS:
+		check(not ToolReclaim.holds(GameState.inventory,id) and not ToolReclaim.holds(GameState.warehouse,id), "读档不补回已兑换工具：" + id)

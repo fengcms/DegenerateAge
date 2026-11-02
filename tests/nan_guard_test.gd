@@ -33,6 +33,7 @@ func _ready() -> void:
 			push_error(failure)
 		print("[NanGuardTest] 失败 %d 项" % failures.size())
 		print("NanGuardTest: FAIL")
+	get_tree().quit(0 if failures.is_empty() else 1)
 
 ## 前置事实：整条分析成立的前提就是「NaN / INF 与 0 比较为 false」。
 ## 若某天换引擎或换浮点语义让这条不再成立，本用例先红，提示整份分析需重审。

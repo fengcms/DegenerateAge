@@ -33,5 +33,5 @@ func _ready() -> void:
 	if not _opened.is_empty():
 		get_tree().quit(1)
 		return
-	print("[SuperPortablePanelTest] 五项数字键及隐藏状态隔离通过")
+	print("[SuperPortablePanelTest] 五项数字键及隐藏状态隔离全部通过 ✅")
 	get_tree().quit()
