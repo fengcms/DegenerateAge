@@ -75,6 +75,8 @@ func _test_boss_warning_wiring() -> void:
 		_player.global_position = ORIGIN + Vector2(240.0, 0.0)
 		var boss := _spawn_monster(id)
 		boss.ai_enabled = true
+		# 宿主技能回归必须先进入合法战斗，保留原首放、几何与逐段伤害断言。
+		boss._enter(Monster.State.CHASE)
 		boss.hp = boss.max_hp
 		boss._update_boss(STEP)
 		check(_player.hits == 0, "%s 首放前不发招、不伤害" % id)

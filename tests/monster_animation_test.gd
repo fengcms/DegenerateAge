@@ -63,6 +63,8 @@ func _ready() -> void:
 	var boss := monsters[-1]
 	var boss_art := boss.sample_art as MonsterActorArt
 	boss.global_position = player.global_position + Vector2(50, 0)
+	boss.spawn_position = boss.global_position
+	boss._enter(Monster.State.CHASE)
 	boss.hp = int(boss.max_hp * 0.5)
 	GameState.player.dodge = 0.0
 	GameState.player.hp = GameState.max_hp()

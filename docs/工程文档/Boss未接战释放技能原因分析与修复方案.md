@@ -52,3 +52,17 @@ BossAction.update的target_valid当前只限制IDLE阶段的新动作，已开�
 首章/第二章阶段、预警、狂暴与召唤入口统一先验证CHASE/ATTACK及有效目标；死亡/离场或越过原牵引线时先进入RETURN。RETURN/IDLE清除践踏计时、第二章预警及表现；新增cancel_stomp只撤销抬臂，不伪造落地命中。延迟阶段召唤执行前再次检查接战，避免同一轮进入RETURN后仍追加召唤。死亡掉落型召唤保持原入口。
 
 BossEngagementTest补四个旧模板的闲置低血不触发阶段、接战可预警、目标死亡清理、延迟召唤不越过脱战；与BossReviewTest、ChapterTwoCombatTest、BossSkillVisualTest全部通过。BossReview原夹具曾瞬移Boss却不更新出生点，新增牵引检查后触发合法RETURN；现同步夹具出生点并显式接战，全部原伤害、狂暴、召唤断言保留，没有放宽。
+
+## 实施节点三：回归与窗口验收（2026-11-02）
+
+BossEngagementTest继续扩展：13个共享模板的合法受击拉怪、有效战斗期间移动目标不改变锁定几何、进入城镇免战区取消动作；c3代表首段真实结算进入GAP后失去目标，后续段取消。四个旧模板的阶段/预警/延迟召唤验证保留。该测试纳入默认回归，默认集由111增至112项，无新发布资源或调试开关。
+
+17项定向回归全部通过：BossEngagementTest、BossActionTest、BossReviewTest、ChapterTwoCombatTest、ChapterTwoEncountersTest、ChapterThreeCombatTest、ChapterFourCombatTest、ChapterFiveCombatTest、ChapterSixCombatTest、BossSkillVisualTest、BossMultiTargetTest、BossFieldDamageTest、SoloBossFieldTest、MonsterAnimationTest、MonsterAnimationCacheTest、SkillCombatTest、SmokeTest。未执行全量扫描，不据此宣称全部测试全绿。
+
+初次扩大回归发现第三至第六章技能宿主夹具、MonsterAnimation夹具仍直接在IDLE推进技能。现只补_enter(CHASE)，动画夹具同步瞬移后的出生点；首放秒数、几何、每段一次、承伤、狂暴和动画生命周期断言全部保留。这些共享测试属于适配正确前置条件，新BossEngagementTest另行验证未接战不释放，不能删除旧断言来造绿。
+
+实际窗口BossReviewTest、MonsterAnimationTest通过，已查看腐化巨兽待机/交战两张截图：玩家选中Boss但Boss未接战时无技能预警，合法接战后原践踏圈与抬臂正常出现。代表截图不是13个模板逐一视觉录制；13模板由宿主逻辑回归覆盖。临时截图和日志在归档后清理。
+
+成本与兼容：新增门槛为固定数量状态/目标检查，不扫描背包、全场敌人或重建路径；取消复用原动作和表现清理，仅增加一次延迟召唤执行前复核。无新常驻节点、计时器、配置表或持久化字段，未重调伤害/技能几何/冷却/奖励。未做GPU/整帧性能基准，不承诺帧率变化。
+
+推荐复核：`python3 tools/run_isolated_tests.py BossEngagementTest BossActionTest BossReviewTest ChapterTwoCombatTest ChapterThreeCombatTest ChapterFourCombatTest ChapterFiveCombatTest ChapterSixCombatTest`；窗口复核：`python3 tools/run_isolated_tests.py --rendered BossReviewTest MonsterAnimationTest`。

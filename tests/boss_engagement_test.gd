@@ -5,6 +5,9 @@ var failures: Array[String] = []
 class StubPlayer extends Node2D:
 	## 只提供宿主查找玩家与取消动作需要的生命周期，不参与伤害数值测试。
 	var is_dead := false
+	## 承接可能发生的段命中，供真实组件推进；不替换战斗结算。
+	func apply_damage(amount: int) -> int:
+		return amount
 
 ## 收集契约失败，隔离user目录内运行，不接触玩家存档。
 func check(ok: bool, message: String) -> void:
@@ -45,6 +48,14 @@ func _ready() -> void:
 		check(not boss.boss_action.is_busy(), "接战保留首放延迟 " + String(template))
 		boss._update_boss(0.11)
 		check(boss.boss_action.is_warning(), "接战后正常预警 " + String(template))
+		var locked_geometry := boss.boss_action.geometry().duplicate(true)
+		player.position += Vector2(10,0)
+		boss._update_boss(0.0)
+		check(boss.boss_action.geometry() == locked_geometry, "有效战斗中预警不追踪玩家 " + String(template))
+		player.position -= Vector2(10,0)
+		if template == "c3_boss01":
+			boss._update_boss(boss.boss_action.warn_t + 0.01)
+			check(boss.boss_action.stage == BossAction.Stage.GAP, "真实首段结算进入段间隙")
 		player.is_dead = true
 		boss._update_boss(0.01)
 		check(boss._boss_retreating and not boss.boss_action.is_busy(), "目标死亡立即取消技能 " + String(template))
@@ -52,6 +63,17 @@ func _ready() -> void:
 		player.is_dead = false
 		boss._physics_process(0.0)
 		check(boss.state == Monster.State.CHASE and is_equal_approx(boss.boss_action._a_countdown,boss.boss_action.first_delay), "再接战重新首放计时 " + String(template))
+		boss._enter(Monster.State.IDLE)
+		boss.take_hit({"damage":1,"miss":false},player)
+		check(boss.state == Monster.State.CHASE, "合法受击仍可拉怪 " + String(template))
+		boss._update_boss(boss.boss_action.first_delay + 0.01)
+		GameState.current_map = "c3_map00"
+		player.position = Iso.grid_pt(MapService.safe_area_cells("c3_map00").get_center().x, MapService.safe_area_cells("c3_map00").get_center().y)
+		check(MapService.is_in_rest_zone(GameState.current_map,player.position), "休息区夹具有效")
+		boss._update_boss(0.01)
+		check(boss._boss_retreating and not boss.boss_action.is_busy(), "进入休息区取消后续技能 " + String(template))
+		GameState.current_map = "c3_map02"
+		player.position = Vector2(1000,1000)
 		boss.free()
 		tested += 1
 	check(tested == 13, "覆盖当前13个共享Boss模板")

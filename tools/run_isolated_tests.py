@@ -1,6 +1,6 @@
 """在独立 Godot 项目名和 user:// 下运行测试，保护真实存档。
 
-默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 111 项），
+默认集（DEFAULT_TESTS）只是 tests/ 下全部测试场景中的**常用子集**（当前 112 项），
 不代表全量覆盖；需要跑全量时用 `--all`，它扫描 `tests/*.tscn` 并排除：
 `FIXTURE_SCENES`（仅作夹具）、`RENDER_ONLY_SCENES`（必须 `--rendered`），
 以及单列打印但不计入退出码的 `KNOWN_ART_DEBT`（断言正确、素材过时的美术欠账）。
@@ -38,7 +38,7 @@ DEFAULT_TESTS = [
     "StableCameraTest", "CameraLifecycleTest",
     "EquipmentGapTest", "EquipmentGapCombatTest", "EquipmentGapUiTest",
     "CaveNavigationTest", "ReviewRegressionTest", "SaveTransferTest",
-    "BossReviewTest", "BossActionTest", "BossSkillVisualTest", "QuestRewardPlanTest", "MapGateTest",
+    "BossReviewTest", "BossActionTest", "BossEngagementTest", "BossSkillVisualTest", "QuestRewardPlanTest", "MapGateTest",
     "MapRouteOverlayTest", "MinimapViewportTest",
     "ChapterOneAcceptance",
     # 营地四项长期不在默认集，等发现时已集体腐烂（硬编码画布坐标 / PASS 不独占行尾 /

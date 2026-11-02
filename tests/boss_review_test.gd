@@ -45,6 +45,10 @@ func _ready() -> void:
 	boss._announce_boss_hp()
 	check(main.get_node("UI/BossHealthBar").visible, "锁定 Boss 时仍显示专用大血条")
 	var hp := int(GameState.player.hp)
+	boss.hp = 1799
+	boss._update_boss(10.0)
+	check(boss.boss_phase == 0 and not boss._stomp_pending, "锁定显示Boss不等于Boss已接战")
+	await capture("idle_no_warning")
 	boss._enter(Monster.State.CHASE)
 	boss.hp = 1800
 	boss._update_boss(0)
