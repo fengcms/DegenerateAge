@@ -437,7 +437,7 @@ func _check_extreme_scale(ui: CanvasLayer, embedded: SubViewport) -> void:
 	EventBus.settings_changed.emit()
 	await get_tree().process_frame
 	var value := SettingsRuntime.ui_scale_value()
-	_check(is_equal_approx(value, 3.0), "uiScale 200% × 显示系数 150% 应为 3.0 倍率，实际 %.2f" % value)
+	_check(is_equal_approx(value, 3.0), "uiScale 200%% × 显示系数 150%% 应为 3.0 倍率，实际 %.2f" % value)
 	var extent := Vector2(embedded.size) / value
 	for name in ["InventoryPanel", "CharacterPanel", "SkillPanel", "MountPanel"]:
 		var panel: Variant = ui.get_node_or_null(name)
