@@ -4,6 +4,7 @@ extends Node2D
 ## M5-9c：同帧合并窗口尺寸变化（见 `_on_viewport_size_changed`）。
 var _resize_queued := false
 
+## 初始化显示策略、主菜单及配置反馈，并挂载诊断心跳。
 func _ready() -> void:
 	# 工程 116：闪退取证。崩溃是引擎 C++ 层 SIGSEGV，GDScript 不报错，
 	# 只能靠「崩溃前最后一条埋点」定位，见 `scripts/systems/crash_trace.gd`。
@@ -42,12 +43,14 @@ func _apply_settings_after_scene_ready() -> void:
 		return
 	SettingsRuntime.apply_all()
 	CrashTrace.mark("main.settings.applied")
+## 合并同轮视口变化，避免重复重排整棵界面。
 func _on_viewport_size_changed() -> void:
 	if _resize_queued:
 		return
 	_resize_queued = true
 	_reapply_for_viewport.call_deferred()
 
+## 清除排队标记并按当前视口重新应用显示策略。
 func _reapply_for_viewport() -> void:
 	_resize_queued = false
 	SettingsRuntime.reapply_for_viewport()

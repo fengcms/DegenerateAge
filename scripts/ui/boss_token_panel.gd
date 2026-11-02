@@ -55,6 +55,7 @@ var _filter_bar: HBoxContainer
 var _filter_buttons: Array[Button] = []
 var _visible_row_count := 0
 
+## 构建追猎列表并订阅面板、金币与布局变化。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -67,6 +68,7 @@ func _ready() -> void:
 	resized.connect(func() -> void: _request_layout())
 	EventBus.settings_changed.connect(func() -> void: _request_layout())
 
+## 处理当前打开面板的关闭快捷键。
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -94,6 +96,7 @@ func _process(delta: float) -> void:
 
 # ---- 开关 ----
 
+## 按请求标题打开追猎服务面板。
 func _on_requested(title: String) -> void:
 	if not title.is_empty():
 		_title.text = PanelChrome.title_text(title)
@@ -106,11 +109,13 @@ func _on_panel_opened(panel_id: String) -> void:
 	if visible:
 		set_open(false)
 
+## 金币变化时更新服务可用状态。
 func _on_gold_changed(_amount: int) -> void:
 	if visible:
 		_reset_hint()
 		_rebuild()
 
+## 同步面板可见状态和全局面板登记。
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("boss_token", open)
@@ -131,6 +136,7 @@ func _default_expanded() -> String:
 
 # ---- 构建 ----
 
+## 构建标题、筛选栏和可滚动追猎列表。
 func _build() -> void:
 	_dim = ColorRect.new()
 	_dim.color = Color(0, 0, 0, 0.35)
@@ -201,6 +207,7 @@ func _build() -> void:
 
 	_request_layout()
 
+## 由调度器按现有可用区域收敛追猎面板。
 func _update_layout() -> void:
 	if _center == null or _box == null or _scroll == null:
 		return
@@ -208,6 +215,7 @@ func _update_layout() -> void:
 
 # ---- 刷新 ----
 
+## 恢复追猎服务的默认说明。
 func _reset_hint() -> void:
 	_hint.text = Localization.tr_key("ui.boss_token_panel.p009") % GameState.gold
 	_hint.add_theme_color_override("font_color", COL_TEXT_DIM)
@@ -253,6 +261,7 @@ func _rebuild() -> void:
 		_visible_row_count += 1
 	_request_layout()
 
+## 创建空列表占位文字。
 func _empty_label(text: String) -> Control:
 	var l := Label.new()
 	l.text = text
@@ -342,6 +351,7 @@ func _toggle_group(key: String) -> void:
 	_expanded_group = "" if _expanded_group == key else key
 	_rebuild()
 
+## 构建追猎列表筛选按钮。
 func _make_filter_bar() -> Control:
 	_filter_bar = HBoxContainer.new()
 	_filter_bar.add_theme_constant_override("separation", 6)
@@ -357,6 +367,7 @@ func _make_filter_bar() -> Control:
 	_refresh_filter_buttons()
 	return _filter_bar
 
+## 更新筛选状态并重建列表。
 func _on_filter(mode: int) -> void:
 	if _filter == mode:
 		return
@@ -364,6 +375,7 @@ func _on_filter(mode: int) -> void:
 	_refresh_filter_buttons()
 	_rebuild()
 
+## 同步筛选按钮的选中外观。
 func _refresh_filter_buttons() -> void:
 	for i in range(_filter_buttons.size()):
 		_filter_buttons[i].add_theme_color_override(
@@ -373,18 +385,23 @@ func _refresh_filter_buttons() -> void:
 func visible_row_count() -> int:
 	return _visible_row_count
 
+## 返回当前筛选模式供调用方查询。
 func filter_mode() -> int:
 	return _filter
 
+## 通过统一筛选入口设置模式。
 func set_filter(mode: int) -> void:
 	_on_filter(mode)
 
+## 返回当前展开的分组。
 func expanded_group() -> String:
 	return _expanded_group
 
+## 切换分组折叠状态并刷新可见行。
 func toggle_group(key: String) -> void:
 	_toggle_group(key)
 
+## 为一项Boss记录构建信息与操作行。
 func _make_row(row: Dictionary) -> Control:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _row_style())
@@ -432,6 +449,7 @@ func _make_row(row: Dictionary) -> Control:
 	line.add_child(_make_action(row))
 	return panel
 
+## 按刷新剩余秒数更新状态文字和颜色。
 func _set_status(label: Label, remaining: float) -> void:
 	if remaining <= 0.0:
 		label.text = Localization.tr_key("ui.boss_token_panel.p002")
@@ -440,10 +458,12 @@ func _set_status(label: Label, remaining: float) -> void:
 	label.text = Localization.tr_key("ui.boss_token_panel.p003") % _mmss(remaining)
 	label.add_theme_color_override("font_color", COL_TEXT_DIM)
 
+## 将剩余秒数格式化为分秒文本。
 func _mmss(seconds: float) -> String:
 	var total := maxi(0, ceili(seconds))
 	return "%02d:%02d" % [total / 60, total % 60]
 
+## 按当前地图与费用规则构建追猎操作按钮。
 func _make_action(row: Dictionary) -> Button:
 	var is_current := bool(row.get("is_current_map", false))
 	var cost := 0 if is_current else MapService.fee_anywhere(String(row.get("map_id", "")))
@@ -475,6 +495,7 @@ func _make_action(row: Dictionary) -> Button:
 	b.pressed.connect(_on_action.bind(row))
 	return b
 
+## 创建追猎列表行的共享视觉样式。
 func _row_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.set_corner_radius_all(4)

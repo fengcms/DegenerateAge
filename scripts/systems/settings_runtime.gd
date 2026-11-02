@@ -55,6 +55,7 @@ const NUMERIC_RANGES := {
 	"lowGearLevelLimit": [1.0, 9999.0],
 }
 
+## 读取独立显示偏好，不修改角色进度。
 static func read_display_preferences() -> Dictionary:
 	if not FileAccess.file_exists(DISPLAY_PREFS_PATH):
 		return {}
@@ -79,6 +80,7 @@ static func read_display_preferences() -> Dictionary:
 			out[key] = value
 	return out
 
+## 返回叠加本机显示偏好的设置副本。
 static func with_display_preferences(settings: Dictionary) -> Dictionary:
 	var result := settings.duplicate(true)
 	var preferences := read_display_preferences()
@@ -86,6 +88,7 @@ static func with_display_preferences(settings: Dictionary) -> Dictionary:
 		result[key] = preferences[key]
 	return result
 
+## 保存显示偏好；隔离测试按既有开关决定是否允许写入。
 static func save_display_preferences(force_in_tests: bool = false) -> bool:
 	# 测试场景会频繁切换倍率，不能把测试值留作下一次启动偏好。
 	var tree := Engine.get_main_loop() as SceneTree
@@ -124,6 +127,7 @@ static func display_scale_factor() -> float:
 		return 1.0
 	return clampf(float(GameState.settings.get("displayScale", 1.0)), DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX)
 
+## 校验输入绑定字段是否符合现有动作规则。
 static func valid_bindings(value: Dictionary) -> bool:
 	var used := {}
 	for action in value:
@@ -149,6 +153,7 @@ static func choice_values(key: String) -> Array:
 static func is_choice_key(key: String) -> bool:
 	return not choice_values(key).is_empty()
 
+## 检查枚举型设置值是否位于登记选项中。
 static func valid_choice(key: String, value: String) -> bool:
 	return choice_values(key).has(value)
 
@@ -162,6 +167,7 @@ static func valid_setting_number(key: String, value: float) -> bool:
 		return value >= float(bounds[0]) and value <= float(bounds[1])
 	return value >= 0.0
 
+## 返回动作默认键位，供恢复绑定使用。
 static func default_key(action: String) -> int:
 	var raw: Variant = ProjectSettings.get_setting("input/" + action, {})
 	if raw is Dictionary:
@@ -170,16 +176,19 @@ static func default_key(action: String) -> int:
 				return int((event as InputEventKey).physical_keycode)
 	return 0
 
+## 读取动作的有效当前键位。
 static func key_for(action: String) -> int:
 	var bindings: Dictionary = GameState.settings.get("keyBindings", {})
 	return int(bindings.get(action, default_key(action)))
 
+## 查找当前键位对应的动作。
 static func action_for_key(code: int, except_action: String = "") -> String:
 	for action in ACTIONS:
 		if action != except_action and key_for(action) == code:
 			return action
 	return ""
 
+## 更新动作绑定，沿用现有冲突处理规则。
 static func set_binding(action: String, code: int) -> bool:
 	if not ACTIONS.has(action) or code <= 0:
 		return false
@@ -193,6 +202,7 @@ static func set_binding(action: String, code: int) -> bool:
 	EventBus.settings_changed.emit()
 	return true
 
+## 将当前设置统一应用到输入、显示、界面及声音。
 static func apply_all() -> void:
 	InputMap.load_from_project_settings()
 	var bindings: Dictionary = GameState.settings.get("keyBindings", {})
@@ -228,6 +238,7 @@ static func apply_display_strategy() -> void:
 		return
 	tree.root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 
+## 将音量和静音设置应用到现有声音总线。
 static func apply_audio() -> void:
 	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index("Master"), clampf(float(GameState.settings.get("masterVolume", 1.0)), 0.0, 1.0))
 	for name in ["Music", "SFX"]:
@@ -243,6 +254,7 @@ static func apply_audio() -> void:
 static func reapply_for_viewport() -> void:
 	_apply_ui_scale()
 
+## 查找当前场景界面并应用统一倍率。
 static func _apply_ui_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
@@ -318,6 +330,7 @@ static func dialog_popup_size(viewport_size: Vector2, design_size: Vector2i) -> 
 	var design := Vector2(design_size).min(design_space * DIALOG_FIT_RATIO)
 	return Vector2i((design * scale_value).round())
 
+## 按当前文字倍率刷新界面文字，不重复叠乘历史字号。
 static func _apply_text_scale() -> void:
 	# 引擎的原生悬浮提示不在 UI CanvasLayer 下，必须单独给 TooltipLabel 设置字号。
 	var theme := ThemeDB.get_project_theme()
@@ -360,6 +373,7 @@ static func apply_text_scale_to(ui: Node) -> void:
 	# 因此界面 150% + 文字 150% 的最终字体仍为 150%，不会叠成 225%。
 	_text_scale_node(ui, text_scale_value() / ui_scale_value())
 
+## 递归应用文字倍率，缓存原始字号作为计算基准。
 static func _text_scale_node(node: Node, factor: float) -> void:
 	if node is TabContainer:
 		# TabBar 是 TabContainer 的内部子节点，默认 get_children() 不会遍历到。
@@ -397,6 +411,7 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 static func map_scale_value() -> float:
 	return clampf(float(GameState.settings.get("mapScale", 1.0)), MAP_SCALE_MIN, MAP_SCALE_MAX) * display_scale_factor()
 
+## 返回文字相对地图缩放的反向补偿倍率。
 static func world_text_scale_value() -> float:
 	return text_scale_value() / map_scale_value()
 
@@ -431,6 +446,7 @@ static func apply_world_text_scale_to(node: Node) -> void:
 	elif node is CanvasItem:
 		(node as CanvasItem).queue_redraw()
 
+## 将窗口设置应用到当前显示环境。
 static func _apply_window() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or is_headless():

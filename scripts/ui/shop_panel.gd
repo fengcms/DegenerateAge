@@ -61,6 +61,7 @@ var _box: PanelContainer
 var _scroll: ScrollContainer
 var _dim: ColorRect
 
+## 构建货郎交易界面并订阅背包、金币与显示变化。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	# 根节点不吃鼠标：交易会话中与背包面板并列，只有面板本体（PanelContainer）拦截，
@@ -79,6 +80,7 @@ func _ready() -> void:
 	resized.connect(func() -> void: _request_layout())
 	EventBus.settings_changed.connect(func() -> void: _request_layout())
 
+## 处理交易面板可见时的关闭输入。
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -88,10 +90,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ---- 开关 ----
 
+## 按商店标识开启交易会话。
 func _on_shop_requested(shop_id: String) -> void:
 	_shop_id = shop_id
 	set_open(true)
 
+## 经统一入口关闭交易会话。
 func _on_shop_close_requested() -> void:
 	if visible:
 		set_open(false)
@@ -157,17 +161,20 @@ func _align_trade_windows() -> void:
 	_center.offset_left = 0.0
 	_center.offset_right = 0.0
 
+## 刷新余额和购买可用状态。
 func _on_gold_changed(_amount: int) -> void:
 	_refresh_gold()
 	if visible:
 		_refresh_buy_prices()
 
+## 背包或装备变化时刷新可见货郎界面。
 func _on_inventory_changed() -> void:
 	if visible:
 		_refresh()
 
 # ---- 构建 ----
 
+## 构建标题、购买页和出售页及统一布局入口。
 func _build() -> void:
 	_dim = ColorRect.new()
 	_dim.color = Color(0, 0, 0, 0.35)
@@ -270,6 +277,7 @@ func _build_buy_page() -> Control:
 	page.add_child(_buy_list)
 	return page
 
+## 构建出售托盘与确认操作区。
 func _build_sell_page() -> Control:
 	var page := VBoxContainer.new()
 	page.name = "Sell"
@@ -377,6 +385,7 @@ func _tray_grid_holder(page: VBoxContainer) -> void:
 		grid.add_child(b)
 		_tray_slots.append(b)
 
+## 创建交易格子的基础外观。
 func _slot_style(bg: Color, border: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
@@ -385,6 +394,7 @@ func _slot_style(bg: Color, border: Color) -> StyleBoxFlat:
 	sb.set_corner_radius_all(4)
 	return sb
 
+## 为格子应用品质、占用与交互外观。
 func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 	var bg := COL_SLOT_BG if filled else COL_SLOT_EMPTY
 	b.add_theme_stylebox_override("normal", _slot_style(bg, border))
@@ -395,6 +405,7 @@ func _apply_slot_style(b: Button, border: Color, filled: bool) -> void:
 
 # ---- 刷新 ----
 
+## 同步商店内容、余额和托盘显示。
 func _refresh() -> void:
 	if not visible:
 		return
@@ -403,6 +414,7 @@ func _refresh() -> void:
 	_rebuild_buy()
 	_refresh_tray()
 
+## 刷新当前金币标签。
 func _refresh_gold() -> void:
 	if _gold_label != null:
 		_gold_label.text = Localization.tr_key("ui.shop_panel.p011") % GameState.gold
@@ -414,6 +426,7 @@ func _shop_title_name() -> String:
 		return Localization.tr_key("ui.panel.portable_shop")
 	return Shop.display_name(_shop_id)
 
+## 按当前商店数据重建购买列表。
 func _rebuild_buy() -> void:
 	for c in _buy_list.get_children():
 		_buy_list.remove_child(c)
@@ -494,6 +507,7 @@ func _make_repair_row() -> Control:
 	row.add_child(btn)
 	return row
 
+## 为一项商品构建信息与购买操作。
 func _make_buy_row(e: Dictionary) -> Control:
 	var item_id := String(e.get("itemId", ""))
 	var price := int(e.get("price", 0))
@@ -540,6 +554,7 @@ func _make_buy_row(e: Dictionary) -> Control:
 
 	return row
 
+## 刷新已暂存物品与成交金额。
 func _refresh_tray() -> void:
 	_sale_risk_confirmed = false
 	GameState.set_trade_staged_count(_tray.size())   # E-P3-4：供 SaveManager 挂起自动存档
@@ -591,6 +606,7 @@ func _item_tint(item: Dictionary) -> Color:
 
 # ---- 交互 ----
 
+## 通过统一购买交易入口处理商品。
 func _on_buy_pressed(item_id: String) -> void:
 	GameState.shop_buy(_shop_id, item_id)   # 失败原因由 GameState 广播 toast
 	_refresh()
@@ -711,6 +727,7 @@ func _on_stage_potions_pressed() -> void:
 func _is_stageable_potion(item: Dictionary) -> bool:
 	return String(item.get("kind", "")) == "potion" and Shop.can_sell(item)
 
+## 查询背包是否存在可暂存出售的药品。
 func _has_stageable_potion() -> bool:
 	for it in GameState.inventory:
 		if it is Dictionary and _is_stageable_potion(it):
@@ -724,6 +741,7 @@ func _on_return_all_pressed() -> void:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p024") % back, "info")
 	_refresh_tray()
 
+## 确认出售托盘物品并沿原交易入口结算。
 func _on_confirm_pressed() -> void:
 	if _tray.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p025"), "danger")
@@ -792,6 +810,7 @@ func _return_tray() -> int:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.shop_panel.p027") % _tray.size(), "danger")
 	return back
 
+## 返回托盘首个空位，无空位时返回负值。
 func _first_free_tray_slot() -> int:
 	for i in range(_tray_slots.size()):
 		if not _tray.has(i):
@@ -800,6 +819,7 @@ func _first_free_tray_slot() -> int:
 
 # ---- 文本 ----
 
+## 生成格子使用的简短物品名。
 func _short_name(item: Dictionary) -> String:
 	var nm: String = ItemUtil.template_name(item)
 	return nm.substr(0, 2) if nm.length() > 2 else nm
@@ -822,6 +842,7 @@ func _index_of_instance(instance_id: String) -> int:
 			return i
 	return -1
 
+## 组合出售托盘物品的回退提示。
 func _tray_tooltip(item: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append(ItemUtil.display_name(item))

@@ -13,11 +13,13 @@ extends Node
 
 var failures: Array[String] = []
 
+## 收集边界校验失败。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
 		push_error("[NanGuardTest] " + label)
 
+## 逐项验证有限性与正常倍率，最后主动返回测试结果。
 func _ready() -> void:
 	_test_guard_semantics()
 	_test_usable_layout_size()

@@ -22,6 +22,7 @@ const REFORGE_INTERVAL := 0.2
 const STAGE_FILE := "user://full_path_probe_stage.txt"
 const RUNE_ID := "rune_diamond"
 
+## 隔离身份通过后按阶段继续完整路径探针。
 func _ready() -> void:
 	if not DiagnosticProbeGuard.require_isolated(self):
 		return
@@ -32,6 +33,7 @@ func _ready() -> void:
 	else:
 		await _stage_b()
 
+## 在隔离目录读取副本并发起场景重载。
 func _stage_a() -> void:
 	_write_stage(1)
 	SaveManager.active_slot = -1
@@ -42,6 +44,7 @@ func _stage_a() -> void:
 	await get_tree().create_timer(30.0).timeout
 	print("[Probe][A] ⚠ 30 秒未发生重载")
 
+## 重载后打开真实面板并持续操作。
 func _stage_b() -> void:
 	print("[Probe][B] 重载完成，建世界")
 	SaveManager.active_slot = 1
@@ -93,12 +96,14 @@ func _stage_b() -> void:
 	_write_stage(0)
 	get_tree().quit(0)
 
+## 读取隔离user目录的探针阶段标记。
 func _read_stage() -> int:
 	if not FileAccess.file_exists(STAGE_FILE):
 		return 0
 	var f := FileAccess.open(STAGE_FILE, FileAccess.READ)
 	return 0 if f == null else int(f.get_as_text().strip_edges())
 
+## 写入本次隔离探针的重载阶段标记。
 func _write_stage(value: int) -> void:
 	var f := FileAccess.open(STAGE_FILE, FileAccess.WRITE)
 	if f != null:

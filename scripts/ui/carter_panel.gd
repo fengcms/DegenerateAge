@@ -52,6 +52,7 @@ var _group_counts: Dictionary = {}
 ## 当前**实际建出来**的行数（折叠组不计）。与 `row_count()`（统计口径，恒 35）分工不同。
 var _visible_row_count := 0
 
+## 构建车夫面板并订阅服务与显示变化。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -65,6 +66,7 @@ func _ready() -> void:
 	resized.connect(func() -> void: _request_layout())
 	EventBus.settings_changed.connect(func() -> void: _request_layout())
 
+## 处理面板开启时的关闭按键。
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -89,10 +91,12 @@ func _on_panel_opened(panel_id: String) -> void:
 	if visible:
 		set_open(false)
 
+## 金币变化后刷新当前线路费用状态。
 func _on_gold_changed(_amount: int) -> void:
 	if visible:
 		_refresh()
 
+## 同步车夫面板状态并恢复默认分组。
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("carter", open)
@@ -105,6 +109,7 @@ func set_open(open: bool) -> void:
 
 # ---- 构建 ----
 
+## 构建标题、线路分组和滚动内容。
 func _build() -> void:
 	_dim = ColorRect.new()
 	_dim.color = Color(0, 0, 0, 0.35)
@@ -191,6 +196,7 @@ func _update_layout() -> void:
 		return
 	FloatingWindow.fit_content(_center.size, _box, _scroll)
 
+## 创建车夫面板背景样式。
 func _panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = COL_PANEL
@@ -201,6 +207,7 @@ func _panel_style() -> StyleBoxFlat:
 
 # ---- 刷新 ----
 
+## 按当地或随身服务恢复费用提示。
 func _reset_hint() -> void:
 	# 随身价（20 × 等级、下限 50）与当地 `carterFares` 是**两套价**：
 	# 同一目的地会出现两个数字，必须解释来源，否则玩家会当成 bug（工程 48 R-4）。
@@ -210,6 +217,7 @@ func _reset_hint() -> void:
 		_hint.text = Localization.tr_key("ui.carter_panel.p004") % GameState.gold
 	_hint.add_theme_color_override("font_color", COL_TEXT_DIM)
 
+## 重建当前可见线路列表并请求布局。
 func _refresh() -> void:
 	if _list == null:
 		return
@@ -302,6 +310,7 @@ func _section_title(key: String) -> String:
 func toggle_section(key: String) -> void:
 	_on_section_pressed(key)
 
+## 切换线路分组折叠状态。
 func _on_section_pressed(key: String) -> void:
 	_collapsed[key] = not bool(_collapsed.get(key, false))
 	_refresh()
@@ -310,6 +319,7 @@ func _on_section_pressed(key: String) -> void:
 func section_keys() -> Array[String]:
 	return _section_keys.duplicate()
 
+## 返回当前列表行数供界面契约检查。
 func row_count() -> int:
 	return _row_count
 
@@ -326,6 +336,7 @@ func is_collapsed(key: String) -> bool:
 func hint_text() -> String:
 	return _hint.text if _hint != null else ""
 
+## 构建一条目的地线路及出行按钮。
 func _make_row(d: Dictionary) -> Control:
 	var map_id := String(d.get("id", ""))
 	var unlocked := bool(d.get("unlocked", true))
@@ -384,6 +395,7 @@ func _make_travel_button(d: Dictionary, unlocked: bool, afford: bool) -> Button:
 	PanelChrome.style_action(b, unlocked and afford)
 	return b
 
+## 创建线路列表行的外观。
 func _row_style(unlocked: bool, afford: bool) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.set_corner_radius_all(4)
@@ -399,11 +411,13 @@ func _row_style(unlocked: bool, afford: bool) -> StyleBoxFlat:
 		sb.border_color = COL_BORDER
 	return sb
 
+## 按现有费用计算结果生成显示文本。
 func _fee_text(cost: int) -> String:
 	return Localization.tr_key("ui.carter_panel.p009") if cost <= 0 else Localization.tr_key("ui.carter_panel.p010") % cost
 
 # ---- 交互 ----
 
+## 经统一出行入口处理选中目的地。
 func _on_travel(map_id: String) -> void:
 	# 随身车夫不要求拓扑相邻（M10-5 的 `travel_anywhere`；两者共用 `_travel_checks`）。
 	var res := MapService.travel_anywhere(map_id) if _portable else MapService.travel_to(map_id)

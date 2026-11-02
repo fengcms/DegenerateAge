@@ -2,6 +2,7 @@ extends Node
 
 var _opened := ""
 
+## 验证五项数字快捷键及隐藏面板的输入隔离。
 func _ready() -> void:
 	EventBus.boss_token_panel_requested.connect(func(_title: String) -> void: _opened = "boss_token")
 	EventBus.shop_open_requested.connect(func(_id: String) -> void: _opened = "shop")

@@ -14,6 +14,7 @@ extends Node
 ##    而玩家是在编辑器 Game 面板里玩的，面板高度超过 1000。默认 1280x800 永远不崩，
 ##    这正是前几轮「同样操作连打几十次不崩」的原因（假阴性）。
 
+## 隔离身份通过后执行指定步骤的拆分对照。
 func _ready() -> void:
 	if not DiagnosticProbeGuard.require_isolated(self):
 		return

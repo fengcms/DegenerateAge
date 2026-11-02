@@ -29,6 +29,7 @@ const RUNE_SLOTS := 4
 const REFINE_SLOTS := 4
 const REFINE_QUALITY := "legendary"
 
+## 隔离身份通过后复刻材料、如意、悬停和重铸顺序。
 func _ready() -> void:
 	if not DiagnosticProbeGuard.require_isolated(self):
 		return

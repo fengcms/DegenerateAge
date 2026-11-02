@@ -41,6 +41,7 @@ var _level_min := 0
 ## 地图级字段 `damageCapPct`，缺省 0 = 关闭 —— 存量图与 Boss 档全部零影响。
 var _damage_cap_pct := 0.0
 
+## 绑定地面与玩家，供后续刷新预算和落点查询使用。
 func setup(ground: IsoGround, player: Node2D) -> void:
 	_ground = ground
 	_player = player
@@ -146,6 +147,7 @@ func alive_count() -> int:
 func point_count() -> int:
 	return _points.size()
 
+## 按既有预算推进刷新与退场，不额外遍历候选。
 func _process(_delta: float) -> void:
 	# Each pass owns a budget snapshot; never rescan all sites for each candidate.
 	var active := _active_counts()
@@ -189,6 +191,7 @@ func marker_points() -> Array[Dictionary]:
 			out.append({"monster_id": point.monster_id, "position": point.position})
 	return out
 
+## 校验预算与落点后实例化一个怪物刷新点。
 func _spawn(point: Dictionary, active: Variant = null) -> bool:
 	var unlock := String(point.get("requires_unlock", ""))
 	if not unlock.is_empty() and not bool(GameState.unlocks.get(unlock, false)):
@@ -286,6 +289,7 @@ func _load_caps() -> void:
 	# 工程 82：打金图普通怪的超杀保护比例；未配的图保持 0（关闭）。
 	_damage_cap_pct = clampf(float((m as Dictionary).get("damageCapPct", 0.0)), 0.0, 1.0)
 
+## 登记死亡刷新状态，并将非Boss诊断事件聚合。
 func _on_monster_died(point: Dictionary) -> void:
 	var pos := Vector2.ZERO
 	var node := point.entry as Node2D

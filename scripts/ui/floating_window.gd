@@ -34,6 +34,7 @@ var _floating_position := Vector2.ZERO
 ## 每个浮窗独立合并请求，执行期间的变化保留到下一帧。
 var _layout_scheduler: FrameLayoutScheduler
 
+## 绑定宿主、外框和拖动标题，订阅合并布局与浮窗层级。
 func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> void:
 	owner_panel = host
 	panel_box = box
@@ -58,6 +59,7 @@ func setup(host: Control, box: PanelContainer, bar: Control, start: Vector2) -> 
 			_dragging = false)
 	_schedule_layout()
 
+## 请求即时布局并将当前浮窗置前。
 func show_window() -> void:
 	request_layout(true)
 	bring_forward()
@@ -67,9 +69,11 @@ func set_content_scroll(scroll: ScrollContainer) -> void:
 	content_scroll = scroll
 	_schedule_layout()
 
+## 通过统一层级服务置前当前浮窗。
 func bring_forward() -> void:
 	raise_panel(owner_panel)
 
+## 查询当前浮窗是否应接管关闭操作。
 func is_top_window() -> bool:
 	return is_top_panel(owner_panel)
 
@@ -146,6 +150,7 @@ func set_pinned(active: bool, rect := Rect2()) -> void:
 	_user_moved = false
 	request_layout(true)
 
+## 进入或退出比例分区布局，保留用户浮动位置。
 func set_docked(active: bool, left: float = 0.0, right: float = 1.0,
 		top: float = 0.0, bottom: float = 1.0) -> void:
 	if active:
@@ -231,12 +236,14 @@ static func fit_content(available: Vector2, box: Control, scroll: ScrollContaine
 
 ## 在可用视口内保留用户拖动后的浮窗位置。
 
+## 把浮动位置夹紧到当前逻辑视口。
 func _clamp() -> void:
 	var area := layout_space()
 	position = Vector2(clampf(position.x, 0.0, maxf(0.0, area.x - size.x)),
 		clampf(position.y, 0.0, maxf(0.0, area.y - size.y)))
 	_floating_position = position
 
+## 点击外框时通过统一服务置前浮窗。
 func _on_box_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.pressed:
@@ -251,6 +258,7 @@ func _on_box_input(event: InputEvent) -> void:
 		elif not event.pressed:
 			_dragging = false
 
+## 从标题栏输入开始拖动或更新焦点。
 func _on_header_input(event: InputEvent) -> void:
 	if _docked:
 		return
@@ -261,6 +269,7 @@ func _on_header_input(event: InputEvent) -> void:
 		else:
 			_dragging = false
 
+## 拖动期间继续接收移动与释放事件。
 func _input(event: InputEvent) -> void:
 	if not _dragging:
 		return
@@ -270,14 +279,17 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 		_dragging = false
 
+## 记录鼠标与浮窗的逻辑坐标偏移。
 func _start_drag(event: InputEventMouse) -> void:
 	_dragging = true
 	_user_moved = true
 	_drag_offset = _owner_mouse_position(event) - position
 
+## 按当前鼠标位置移动浮窗并夹紧边界。
 func _move_drag(event: InputEventMouse) -> void:
 	position = _owner_mouse_position(event) - _drag_offset
 	_clamp()
 
+## 将鼠标位置转换到宿主逻辑坐标。
 func _owner_mouse_position(event: InputEventMouse) -> Vector2:
 	return owner_panel.get_global_transform_with_canvas().affine_inverse() * event.global_position

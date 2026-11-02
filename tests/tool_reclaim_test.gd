@@ -31,11 +31,13 @@ const EXPECTED_TOOLS := [
 
 var failures: Array[String] = []
 
+## 收集补领契约失败。
 func check(ok: bool, label: String) -> void:
 	if not ok:
 		failures.append(label)
 		push_error("[ToolReclaimTest] " + label)
 
+## 分别验证合铸前后补领、容量与读档自愈。
 func _ready() -> void:
 	_test_panel_ids()
 	_test_missing_reclaim()
@@ -57,6 +59,7 @@ func _ready() -> void:
 
 # ---- 夹具 ----
 
+## 生成仅旧四工具解锁的合铸前夹具。
 func _all_unlocked() -> Dictionary:
 	var out := {}
 	for item_id in EXPECTED_TOOLS:
@@ -73,6 +76,7 @@ func _filled(size: int) -> Array:
 		out[i] = ItemFactory.make_any("potion_hp_mid", cap)
 	return out
 
+## 统计容器中实际持有的指定工具种类。
 func _holds_any(container: Array, ids: Array[String]) -> int:
 	var n := 0
 	for item_id in ids:

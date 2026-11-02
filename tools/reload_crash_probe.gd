@@ -20,6 +20,7 @@ const WATCH_SECONDS := 12.0
 
 const STAGE_FILE := "user://reload_probe_stage.txt"
 
+## 隔离身份通过后复核读档与世界重载。
 func _ready() -> void:
 	if not DiagnosticProbeGuard.require_isolated(self):
 		return
@@ -85,6 +86,7 @@ func _stage_b(stage: int) -> void:
 	_write_stage(0)
 	get_tree().quit(0)
 
+## 读取隔离重载探针的阶段标记。
 func _read_stage() -> int:
 	if not FileAccess.file_exists(STAGE_FILE):
 		return 0
@@ -93,6 +95,7 @@ func _read_stage() -> int:
 		return 0
 	return int(f.get_as_text().strip_edges())
 
+## 保存隔离重载探针的阶段标记。
 func _write_stage(value: int) -> void:
 	var f := FileAccess.open(STAGE_FILE, FileAccess.WRITE)
 	if f == null:

@@ -97,6 +97,7 @@ var _known_unlock_ids: Dictionary = {}
 var _known_boss_ids: Dictionary = {}
 var _legal_keys_ready: bool = false
 
+## 初始化存档服务；危险诊断身份在任何目录或偏好写入前返回。
 func _ready() -> void:
 	# 诊断探针拒绝正式身份时，不创建目录、不迁移显示偏好、不连接自动存事件。
 	if DiagnosticProbeGuard.unsafe_startup():
@@ -120,6 +121,7 @@ func _ready() -> void:
 					SettingsRuntime.apply_all()
 	# M4-7：启动先显示主菜单；玩家选择「继续」后才读取上次存档。
 
+## 推进既有定时与关键事件去抖自动存，未开档时不写盘。
 func _process(delta: float) -> void:
 	if active_slot < 0:
 		return
@@ -141,13 +143,16 @@ func _notification(what: int) -> void:
 
 # ---- 路径 ----
 
+## 建立本项目user目录中的存档子目录。
 func _ensure_dir() -> void:
 	if not DirAccess.dir_exists_absolute(SAVE_DIR):
 		DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 
+## 按槽号返回主存档路径。
 func slot_path(slot: int) -> String:
 	return SAVE_DIR + "slot_%d.json" % slot
 
+## 按槽号返回配套备份路径。
 func backup_path(slot: int) -> String:
 	return slot_path(slot) + ".bak"
 
@@ -305,6 +310,7 @@ func _is_test_scene() -> bool:
 	var cs := get_tree().current_scene
 	return cs != null and String(cs.scene_file_path).begins_with("res://tests/")
 
+## 订阅会影响持久化的游戏事件，复用统一自动存请求。
 func _connect_events() -> void:
 	EventBus.boss_first_clear.connect(func(_id: String) -> void: request_autosave())
 	EventBus.player_leveled.connect(func(_lv: int) -> void: request_autosave())
@@ -417,6 +423,7 @@ func resume_last() -> bool:
 		_resume_toast = Localization.tr_key("msg.save_manager.p017") % slot
 	return true
 
+## 在界面就绪后广播续档或补领结果。
 func _emit_resume_toast() -> void:
 	# G-P3-1：日志不输出可变进度数值（等级 / 金币 / 背包占用），仅留槽位与地图便于定位；
 	# 正式构建下 stdout 可能留在玩家机器上，进度摘要属敏感存档内容。
@@ -716,6 +723,7 @@ func _prune_unrecognized_equipment(data: Dictionary) -> void:
 func _is_unrecognized_equipment(item: Variant) -> bool:
 	return item is Dictionary and String(item.get("kind", "")) == "equip" and not _valid_item(item)
 
+## 将旧版地图坐标和探索状态迁移到横向布局。
 func _migrate_landscape_positions(data: Dictionary) -> void:
 	var old_sizes := {
 		"camp": Vector2(40, 40), "wild_trial": Vector2(60, 60),
@@ -764,6 +772,7 @@ func _migrate_c7_gold_positions(data: Dictionary) -> void:
 				record.pos = _remap_landscape_position(record.pos, LEGACY_C7_GOLD_SIZE, map_id)
 	data.c7GoldLayoutVersion = CURRENT_C7_GOLD_LAYOUT_VERSION
 
+## 按旧新格网比例映射坐标，并落到新图合法范围。
 func _remap_landscape_position(raw: Array, old_size: Vector2, map_id: String) -> Array:
 	if raw.size() != 2:
 		return raw
@@ -934,6 +943,7 @@ func _migrate_player(raw: Dictionary) -> Dictionary:
 		out["manaFormulaVersion"] = 0
 	return _deep_int(out) as Dictionary
 
+## 补齐并校正旧版存档的设置字段。
 func _migrate_settings(raw: Dictionary) -> Dictionary:
 	var out := GameState.default_settings()
 	for k in raw.keys():
@@ -951,6 +961,7 @@ func _migrate_inventory(raw, expansions: int = 0) -> Array:
 			out[i] = _deep_int((arr[i] as Dictionary).duplicate(true))
 	return out
 
+## 规范旧仓库数据，使容量与容器结构满足当前规则。
 func _migrate_warehouse(raw, expansions: int) -> Array:
 	var out := Warehouse.create(expansions)
 	if not raw is Array:
@@ -1045,6 +1056,7 @@ func map_display_name(map_id: String) -> String:
 		return String((m as Dictionary).get("name", map_id))
 	return map_id
 
+## 将存档时间转换为便于面板阅读的文本。
 func _pretty_time(iso: String) -> String:
 	return iso.replace("T", " ") if not iso.is_empty() else ""
 
@@ -1060,10 +1072,12 @@ func delete_slot(slot: int) -> void:
 		_write_last_slot(-1)
 	print("[SaveManager] 已删除槽 %d 的存档" % slot)
 
+## 切换活动槽并保存最近槽位标记。
 func set_active_slot(slot: int) -> void:
 	active_slot = slot
 	_write_last_slot(slot if slot >= 0 else -1)
 
+## 返回可继续的有效最近槽位，无可用角色时返回负值。
 func continue_slot() -> int:
 	var slot := _read_last_slot()
 	return slot if slot >= 1 and slot <= MAX_SLOTS and bool(read_slot(slot).get("ok", false)) else -1
@@ -1489,12 +1503,15 @@ func _ensure_legal_keys() -> void:
 func _invalidate_legal_keys() -> void:
 	_legal_keys_ready = false
 
+## 验证字段为有限整数或浮点数，不将字符串当数字。
 func _number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value))
 
+## 验证有限整数及上下界，供存档边界检查复用。
 func _whole(value: Variant, minimum: float, maximum: float = 9007199254740991.0) -> bool:
 	return _number(value) and float(value) == floor(float(value)) and float(value) >= minimum and float(value) <= maximum
 
+## 校验物品模板、实例字段与词条合法性，不修复非法实例。
 func _valid_item(item: Variant) -> bool:
 	if not item is Dictionary or not item.get("kind") is String or not item.get("itemId") is String:
 		return false
@@ -1629,6 +1646,7 @@ func _copy_over(src: String, dst: String) -> bool:
 		DirAccess.remove_absolute(temp)
 	return error == OK
 
+## 写入最近使用的槽位标记，失败沿用错误反馈。
 func _write_last_slot(slot: int) -> void:
 	if slot < 0:
 		if FileAccess.file_exists(LAST_SLOT_FILE):
@@ -1642,6 +1660,7 @@ func _write_last_slot(slot: int) -> void:
 	f.store_string(JSON.stringify({"slot": slot}))
 	f.close()
 
+## 读取最近槽位标记，不加载角色进度。
 func _read_last_slot() -> int:
 	var v: Variant = _read_file(LAST_SLOT_FILE)
 	if not (v is Dictionary):
