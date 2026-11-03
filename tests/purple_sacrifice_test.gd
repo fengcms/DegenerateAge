@@ -34,6 +34,7 @@ func _ready() -> void:
 	_test_worn_rejected()
 	_test_low_level()
 	_test_atomic_batch()
+	_test_locked_batch()
 	_test_level_up()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
@@ -317,3 +318,25 @@ func _test_level_up() -> void:
 	check(int(GameState.player.xp) < GameState.xp_to_next(int(GameState.player.level)),
 		"结转后剩余经验必须低于下一级门槛")
 	check(int(GameState.player.level) <= GameState.PLAYER_LEVEL_CAP, "等级不得越过上限")
+
+func _test_locked_batch() -> void:
+	_fresh(80)
+	var first := _purple(71)
+	var second := _purple(71)
+	GameState.inventory[0] = first
+	GameState.inventory[1] = second
+	var locked := Sacrifice.plan(GameState.inventory)
+	second.star = 1
+	check(not GameState.sacrifice_purple(locked.ids, locked.terms).ok
+		and GameState.inventory[0] == first and GameState.inventory[1] == second
+		and GameState.player.xp == 0, "锁定后升星必须整批拒绝")
+	second.star = 0
+	var newcomer := _purple(61)
+	GameState.inventory[0] = newcomer
+	GameState.inventory[2] = first
+	var settled := GameState.sacrifice_purple(locked.ids, locked.terms)
+	check(settled.ok and settled.xp == locked.xp and GameState.inventory[0] == newcomer
+		and GameState.inventory[1] == null and GameState.inventory[2] == null,
+		"整理和新增低档装备后只扣锁定批次")
+	check(not GameState.sacrifice_purple(locked.ids, locked.terms).ok
+		and GameState.player.xp == locked.xp, "同一批不能重复结算")

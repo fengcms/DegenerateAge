@@ -89,12 +89,15 @@ static func plan(inventory: Array, include_max_star: bool = false) -> Dictionary
 	var buckets := {}
 	var total := 0
 	var ids := PackedStringArray()
+	var terms := {}
 	for i in range(take):
 		var item: Dictionary = normal[i]
 		var tier := ItemFactory.suit_start(Equipment.level_req(item))
 		var gain := xp_of(item)
 		total += gain
-		ids.append(String(item.get("instanceId", "")))
+		var id := String(item.get("instanceId", ""))
+		ids.append(id)
+		terms[id] = item_terms(item, gain)
 		if not buckets.has(tier):
 			buckets[tier] = {"tier": tier, "count": 0, "xp": 0}
 		var bucket: Dictionary = buckets[tier]
@@ -111,8 +114,14 @@ static func plan(inventory: Array, include_max_star: bool = false) -> Dictionary
 		"count": take,
 		"xp": total,
 		"ids": ids,
+		"terms": terms,
 		"groups": groups,
 		"star12_count": maxed.size(),
 		"star12_xp": maxed_xp,
 		"remaining": normal.size() - take,
 	}
+
+
+## 只锁定影响消耗意图的字段，背包位置和耐久允许变化。
+static func item_terms(item: Dictionary, gain: int) -> Array:
+	return [String(item.get("itemId", "")), Equipment.level_req(item), int(item.get("star", 0)), gain]
