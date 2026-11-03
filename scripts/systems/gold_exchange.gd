@@ -95,7 +95,7 @@ static func xp_offer(exchange_id: String, times: int) -> Dictionary:
 		next_level += 1
 	return {"ok": reason.is_empty(), "reason": reason, "times": times, "exchange_id": exchange_id, "cost": batch * times if reason.is_empty() else 0,
 		"maximum": maximum if level >= int(rules.unlockLevel) and level < GameState.PLAYER_LEVEL_CAP else 0,
-		"stock": stock, "allowance": allowance, "level": level, "xp": xp, "per_batch": per_batch,
+		"stock": stock, "allowance": allowance, "used": used, "level": level, "xp": xp, "per_batch": per_batch,
 		"gain": gain, "next_level": next_level, "next_xp": next_xp}
 
 static func xp_store_after(exchange_id: String, cost: int) -> Array:

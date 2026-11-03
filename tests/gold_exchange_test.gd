@@ -280,21 +280,25 @@ func _test_brick_xp() -> void:
 	check(offer.ok and offer.gain == 69720 and offer.maximum == 20, "100 级按每块 1% 向下取整")
 	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 21, offer).ok and _count(BRICK) == 21, "超额度整笔拒绝")
 	GameState.add_xp(1)
-	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and _count(BRICK) == 21, "进度变化使旧预览失效")
-	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 20)
-	check(GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and _count(BRICK) == 1
-		and GameState.inventory[0].count == 5 and int(GameState.player.xp) == 69721, "跨堆扣仓库并发经验")
+	GameState.warehouse[1].count += 1
+	check(GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and _count(BRICK) == 2
+		and GameState.inventory[0].count == 5 and int(GameState.player.xp) == 69721, "同级经验增长且仓库变化仍足额时按原报价成交")
 	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and not GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1).ok,
 		"同级额度耗尽，旧确认不可重放")
 	var saved := SaveManager._collect()
 	check(SaveManager._is_valid_save(saved) and saved.brickXpUsed == 20, "额度与交易结果同批存档")
 	GameState.reset_to_defaults()
 	SaveManager.apply_to_game_state(saved)
-	check(GameState.brick_xp_used == 20 and _count(BRICK) == 1, "读档恢复本级已用额度")
+	check(GameState.brick_xp_used == 20 and _count(BRICK) == 2, "读档恢复本级已用额度")
 	saved.erase("brickXpUsed")
 	check(SaveManager._is_valid_save(saved), "旧档允许缺少额度字段")
 	SaveManager.apply_to_game_state(saved)
 	check(GameState.brick_xp_used == 0, "旧档从零开始")
+	var prior_level := GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1)
+	GameState.player.level = 101
+	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, prior_level).ok
+		and _count(BRICK) == 2, "升级后必须重确认")
+	GameState.player.level = 100
 	GameState.player.xp = GameState.xp_to_next(100) - 10
 	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1)
 	check(GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, offer).ok and GameState.player.level == 101
@@ -302,8 +306,13 @@ func _test_brick_xp() -> void:
 	GameState.player.level = GameState.PLAYER_LEVEL_CAP - 1
 	GameState.player.xp = GameState.xp_to_next(GameState.PLAYER_LEVEL_CAP - 1) - 7
 	GameState.warehouse[0] = GoldExchange.stack_item(BRICK, 2)
+	GameState.warehouse[1] = null
 	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1)
-	check(offer.maximum == 1 and offer.gain == 7 and GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, offer).ok
+	GameState.add_xp(1)
+	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, offer).ok
+		and _count(BRICK) == 2, "满级前实际到账变化必须重确认")
+	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1)
+	check(offer.maximum == 1 and offer.gain == 6 and GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, offer).ok
 		and GameState.player.level == GameState.PLAYER_LEVEL_CAP and GameState.player.xp == 0
 		and _count(BRICK) == 1 and not GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1).ok, "满级边界仅扣一块并按实际经验入账")
 

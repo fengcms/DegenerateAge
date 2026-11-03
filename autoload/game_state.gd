@@ -1085,15 +1085,18 @@ func exchange(pair_id: String, times: int = 1) -> Dictionary:
 	return {"ok": true, "reason": "", "got": got}
 
 
-## 校验确认快照，再同步扣除仓库金砖并按正常升级规则入账。
+## 复核交易条件，再按最新经验进度结转。
 func exchange_warehouse_xp(exchange_id: String, times: int, confirmed: Dictionary) -> Dictionary:
 	if _xp_exchange_committing:
 		return {"ok": false, "reason": Localization.tr_key("msg.exchange.p007")}
 	var offer := GoldExchange.xp_offer(exchange_id, times)
 	if not bool(offer.ok):
 		return _exchange_fail(String(offer.reason))
-	if offer != confirmed:
+	if not bool(confirmed.get("ok", false)):
 		return _exchange_fail(Localization.tr_key("msg.brick_xp.stale"))
+	for key in ["exchange_id", "times", "cost", "level", "gain", "used"]:
+		if offer[key] != confirmed.get(key):
+			return _exchange_fail(Localization.tr_key("msg.brick_xp.stale"))
 	_xp_exchange_committing = true
 	warehouse = GoldExchange.xp_store_after(exchange_id, int(offer.cost))
 	if exchange_id == GoldExchange.DIAMOND_XP:

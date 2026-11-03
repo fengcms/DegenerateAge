@@ -52,20 +52,20 @@ func _ready() -> void:
 	_check(dialog.visible and dialog._edit.text == "1" and dialog._got_label.text.contains("3486"),
 		"数量框默认一块并预览到账经验")
 	GameState.add_xp(1)
+	EventBus.inventory_changed.emit()
 	dialog._on_confirm()
-	_check(dialog.visible and GameState.warehouse[0].count == 3 and dialog._got_label.text.contains("3487"),
-		"旧进度确认不扣金砖，重新显示当前进度")
-	dialog._on_confirm()
+	_check(not dialog.visible and GameState.warehouse[0].count == 2, "同级战斗经验和背包刷新后一次确认成功")
 	dialog._on_confirm()
 	_check(not dialog.visible and GameState.warehouse[0].count == 2 and GameState.player.xp == 3487,
-		"第二次确认入账一次，重复确认不扣第二块")
+		"重复确认不扣第二块")
 	GameState.warehouse[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 8}
 	EventBus.warehouse_changed.emit()
 	panel._xp_buttons[GoldExchange.DIAMOND_XP].pressed.emit()
 	_check(dialog.visible and dialog._cost_label.text.contains("钻石如意") and dialog._cost_label.text.contains("4"),
 		"如意入口预览一批四个")
+	GameState.add_xp(2)
 	dialog._on_confirm()
-	_check(GameState.warehouse[1].count == 4 and GameState.diamond_xp_used == 1 and GameState.brick_xp_used == 1,
+	_check(not dialog.visible and GameState.player.xp == 6975 and GameState.warehouse[1].count == 4 and GameState.diamond_xp_used == 1 and GameState.brick_xp_used == 1,
 		"如意和金砖使用独立额度")
 	panel.queue_free()
 	if _failures.is_empty():
