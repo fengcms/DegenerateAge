@@ -32,7 +32,7 @@ func _ready() -> void:
 	_test_risk_text_folding()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
-		print("[ShopLayoutTest] 全部通过 ✅")
+		print("[PortableShopLayoutTest] 全部通过 ✅")
 		get_tree().quit(0)
 	else:
 		for failure in failures:

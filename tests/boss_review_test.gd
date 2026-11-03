@@ -137,7 +137,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	check(ref.get_ref() == null, "世界释放清理刷新点与墓碑")
 	GameState.reset_to_defaults()
-	print("[BossReview] ", "全部通过 ✅" if failures.is_empty() else str(failures))
+	print("[BossReviewTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 func _disable_input(node: Node) -> void:

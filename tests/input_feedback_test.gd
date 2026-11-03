@@ -290,5 +290,5 @@ func _ready() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
-	print("[InputFeedback] ", "全部通过 ✅" if failures.is_empty() else str(failures))
+	print("[InputFeedbackTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)

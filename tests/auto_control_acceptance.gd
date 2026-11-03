@@ -157,5 +157,5 @@ func _ready() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
-	print("[AutoControl] ", "全部通过 ✅" if _failures.is_empty() else str(_failures))
+	print("[AutoControlAcceptance] ", "全部通过 ✅" if _failures.is_empty() else str(_failures))
 	get_tree().quit(0 if _failures.is_empty() else 1)

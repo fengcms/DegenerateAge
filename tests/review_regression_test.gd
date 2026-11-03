@@ -13,7 +13,7 @@ func _ready() -> void:
 	_test_save()
 	_test_economy()
 	_test_cdr()
-	print("[ReviewRegression] ", "全部通过 ✅" if failures.is_empty() else str(failures))
+	print("[ReviewRegressionTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 func _test_inventory() -> void:

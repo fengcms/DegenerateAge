@@ -113,5 +113,5 @@ func _ready() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	if failures.is_empty():
-		print("[MonsterAnimation] PASS: directional states, clicks, warning/impact, roar, death lifecycle")
+		print("[MonsterAnimationTest] PASS: directional states, clicks, warning/impact, roar, death lifecycle")
 	get_tree().quit(0 if failures.is_empty() else 1)

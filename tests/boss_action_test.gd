@@ -60,7 +60,7 @@ func _ready() -> void:
 	_test_fan_boss()
 	_test_phase_b()
 	_test_retreat_and_no_damage()
-	print("[BossAction] ", "全部通过 ✅" if failures.is_empty() else str(failures))
+	print("[BossActionTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 ## 地面几何原语（工程 53 R1）：2:1 椭圆比例、包含判定、环带、投影往返。

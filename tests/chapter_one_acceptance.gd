@@ -93,7 +93,7 @@ func _finish() -> void:
 	if live_main != self and is_instance_valid(live_main):
 		live_main.queue_free()
 	GameState.reset_to_defaults()
-	print("[ChapterOne] ", "全部通过 ✅" if _failures.is_empty() else str(_failures))
+	print("[ChapterOneAcceptance] ", "全部通过 ✅" if _failures.is_empty() else str(_failures))
 	get_tree().quit(0 if _failures.is_empty() else 1)
 
 func _ready() -> void:

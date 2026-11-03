@@ -22,7 +22,7 @@ func _ready() -> void:
 	_test_save_round_trip(quest_id)
 	_test_migration_pruning()
 	GameState.reset_to_defaults()
-	print("[QuestRewardPlan] ", "全部通过 ✅" if failures.is_empty() else str(failures))
+	print("[QuestRewardPlanTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 

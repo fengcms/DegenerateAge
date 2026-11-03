@@ -25,7 +25,7 @@ func _ready() -> void:
 	await _test_ui_one_click()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
-		print("[BrutalPresetTest] 全部通过 ✅")
+		print("[SellPresetBrutalTest] 全部通过 ✅")
 		get_tree().quit(0)
 	else:
 		for failure in failures:

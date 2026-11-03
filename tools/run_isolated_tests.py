@@ -263,9 +263,11 @@ KNOWN_ART_DEBT = {}
 _COMPLETION_TAIL = re.compile(r"(?:全部通过|全部断言通过|✅)$|(?:^|[\]\[:\s])PASS$")
 
 
-def has_completion_marker(output: str) -> bool:
-    """输出中是否存在位于**行尾**的成功完成标记（行中裸含 PASS 不算通过）。"""
-    return any(_COMPLETION_TAIL.search(line.rstrip()) for line in output.splitlines())
+def has_completion_marker(output: str, test: str) -> bool:
+    """仅接受当前场景的行首身份与行尾成功标记，启动日志及其他测试不能代签。"""
+    identity = re.compile(r"^(?:\[" + re.escape(test) + r"\]\s*|" + re.escape(test) + r":\s*)")
+    return any(identity.match(line) and _COMPLETION_TAIL.search(line.rstrip())
+               for line in output.splitlines())
 
 
 def discover_all_tests() -> list[str]:
@@ -367,7 +369,7 @@ def main() -> int:
                 else:
                     ok, output = run(project, ["--scene", scene, "--max-fps", "120",
                                                "--quit-after", "14400"], timeout=240, rendered=args.rendered)
-                completed = has_completion_marker(output)
+                completed = has_completion_marker(output, test)
                 ok = ok and completed
                 if not completed:
                     output += "\nFAIL: 测试未输出成功完成标记，不能视为通过\n"

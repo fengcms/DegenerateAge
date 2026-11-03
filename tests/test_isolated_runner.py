@@ -1,0 +1,20 @@
+"""隔离运行器完成协议回归：防主场景日志、其他场景和中途信息冒充完成。"""
+import importlib.util
+from pathlib import Path
+import unittest
+
+spec = importlib.util.spec_from_file_location("runner", Path(__file__).resolve().parents[1] / "tools/run_isolated_tests.py")
+runner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(runner)
+
+class CompletionTest(unittest.TestCase):
+    """仅目标测试自己的最终成功标记允许通过。"""
+    def test_identity(self):
+        """无最终标记、外来标记和行中成功词都不能通过。"""
+        for output in ["[Main] 配置校验通过 ✅", "[OtherTest] PASS", "prefix [FooTest] PASS", "[FooTest] PASS halfway", ""]:
+            self.assertFalse(runner.has_completion_marker(output, "FooTest"))
+        for output in ["[FooTest] PASS", "FooTest: PASS", "[FooTest] 全部通过 ✅"]:
+            self.assertTrue(runner.has_completion_marker(output, "FooTest"))
+
+if __name__ == "__main__":
+    unittest.main()

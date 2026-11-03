@@ -158,5 +158,5 @@ func _finish() -> void:
 	for reason in _failures:
 		print("[M4-9] ❌ ", reason)
 	if _failures.is_empty():
-		print("[M4-9] 全部断言通过 ✅")
+		print("[AutoExplorationSurvival] 全部断言通过 ✅")
 	get_tree().quit(0 if _failures.is_empty() else 1)
