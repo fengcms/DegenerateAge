@@ -29,6 +29,11 @@ func _ready() -> void:
 	saved.erase("tradeTray")
 	SaveManager.apply_to_game_state(saved)
 	assert(GameState.trade_tray.is_empty())
+	GameState.trade_tray[0] = item
+	GameState.set_trade_staged_count(1)
+	assert(GameState.commit_trade_tray().ok)
+	var balance := GameState.gold
+	assert(not GameState.commit_trade_tray().ok and GameState.gold == balance)
 	SaveManager.active_slot = -1
 	print("[TradeTraySaveTest] PASS")
 	get_tree().quit()

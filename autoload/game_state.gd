@@ -2330,74 +2330,23 @@ func set_trade_staged_count(count: int) -> void:
 ## 向货郎购买一件商品。返回 {ok, reason, item, price}。
 ## 失败原因明确广播提示（金币不足 / 背包满 / 不售此物），不静默。
 func shop_buy(shop_id: String, item_id: String) -> Dictionary:
-	var price := Shop.buy_price(shop_id, item_id)
-	if price < 0:
-		return _trade_fail(Localization.tr_key("msg.game_state.p047"))
-	var item := Shop.make_item(item_id)
-	if item.is_empty():
-		return _trade_fail(Localization.tr_key("msg.game_state.p048") % item_id)
-	if not Inventory.has_space_for(inventory, item):
-		return _trade_fail(Localization.tr_key("msg.game_state.p049"))
-	if gold < price:
-		return _trade_fail(Localization.tr_key("msg.game_state.p037") % [price, gold])
-	add_gold(-price)
-	# E-P3-1：预检与提交同为同步逻辑，单线程下不会失败；一旦将来插入 await（异步入包动画）
-	# 便可能「扣钱不给货」，此处显式校验并退还金币，不静默。
-	if not add_item(item):
-		add_gold(price)
-		return _trade_fail(Localization.tr_key("msg.game_state.p049"))
-	EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p050") % [ItemUtil.display_name(item), price], "pickup")
-	EventBus.trade_done.emit("buy", item_id, price)
-	return {"ok": true, "reason": "", "item": item, "price": price}
+	return TradeService.shop_buy(shop_id, item_id)
 
 ## 出售背包中指定格的装备（6.4：货郎只收购装备）。返回 {ok, reason, item, price}。
 ## silent = true 时不广播单件 toast（供面板批量出售后自行汇总，避免刷屏）。
 ## 金币容量不足时不扣物；成功返回的 price 与实际入账同值。
 func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
-	if inv_index < 0 or inv_index >= inventory.size() or inventory[inv_index] == null:
-		return _trade_fail(Localization.tr_key("msg.game_state.p026"))
-	var item: Dictionary = inventory[inv_index]
-	if not Shop.can_sell(item):
-		return _trade_fail(Localization.tr_key("msg.game_state.p051"))
-	var price := Shop.sell_price(item)
-	var label := ItemUtil.display_name(item)
-	remove_item_at(inv_index)
-	var gained := _gold_gain(price)
-	if not silent:
-		EventBus.toast_requested.emit(Localization.tr_key("msg.game_state.p052") % [label, gained], "pickup")
-		_notify_gold_gap(price, gained)
-	EventBus.trade_done.emit("sell", String(item.get("itemId", "")), gained)
-	return {"ok": true, "reason": "", "item": item, "price": gained, "capped": gained < price}
+	return TradeService.shop_sell(inv_index, silent)
 
 ## 结算一批暂存待售的装备（6.4「确认出售」）。托盘内容由出售界面持有，本函数只做算价与入账。
 ## 返回 {ok, count, gold, reason}；空托盘、不可售物或金币上限失败时不结算。
 func shop_sell_staged(items: Array) -> Dictionary:
-	var total := 0
-	var n := 0
-	for it in items:
-		if not it is Dictionary or not Shop.can_sell(it):
-			return {"ok": false, "count": 0, "gold": 0, "reason": Localization.tr_key("ui.review.game_state.017")}
-		total += Shop.sell_price(it)
-		n += 1
-	if n == 0:
-		return {"ok": false, "count": 0, "gold": 0, "reason": Localization.tr_key("ui.review.game_state.018")}
-	# 工程 56 / 口径 A：不再因金币上限整批拒绝。托盘内容由界面持有，本函数只算价与入账。
-	var gained := _gold_gain(total)
-	EventBus.trade_done.emit("sell", "", gained)
-	return {"ok": true, "count": n, "gold": gained, "reason": "", "capped": gained < total}
+	return TradeService.shop_sell_staged(items)
 
 ## 把暂存装备退回背包（关闭面板未确认 / 点托盘格取回）。会就地移除已退回项。
 ## 返回实际退回件数；背包满的件保留在托盘由调用方提示（不静默丢失，6.4）。
 func shop_unstage(items: Array) -> int:
-	var back := 0
-	var i := items.size() - 1
-	while i >= 0:
-		var it = items[i]
-		if it is Dictionary and add_item(it):
-			items.remove_at(i)
-			back += 1
-		i -= 1
-	return back
+	return TradeService.shop_unstage(items)
 
 ## 该装备是否优于同类型已穿戴装备（6.4 一键出售排除判据 / 5.9 评分）。
 ## 同类型槽全空 → 不算升级件（可出售）。
@@ -2501,3 +2450,7 @@ func emit_all() -> void:
 	EventBus.player_hp_changed.emit(int(player.hp), max_hp())
 	EventBus.player_mp_changed.emit(int(player.mp), max_mp())
 	EventBus.player_xp_changed.emit(int(player.xp), xp_to_next(int(player.level)))
+
+## 正式托盘一次性消费入口；重复确认只能得到空托盘失败，不会重复入账。
+func commit_trade_tray() -> Dictionary:
+	return TradeService.commit_tray()

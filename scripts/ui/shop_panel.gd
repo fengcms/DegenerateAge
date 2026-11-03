@@ -756,7 +756,7 @@ func _on_confirm_pressed() -> void:
 			_append_warn_line(Localization.tr_key("ui.sale_preview.risk",
 				[EquipmentSalePreview.risk_names_text(risky_names)]))
 			return
-	var res := GameState.shop_sell_staged(_tray.values())
+	var res := GameState.commit_trade_tray()
 	if not bool(res.get("ok", false)):
 		EventBus.toast_requested.emit(String(res.get("reason", Localization.tr_key("ui.review.shop_panel.003"))), "danger")
 		return
