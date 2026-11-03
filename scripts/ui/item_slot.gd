@@ -194,7 +194,7 @@ func _ready() -> void:
 	add_child(_upgrade_marker)
 	_refresh_upgrade_marker()
 	_fusion_marker = Label.new()
-	_fusion_marker.text = "已选"
+	_fusion_marker.text = Localization.tr_key("ui.review.item_slot.001")
 	_fusion_marker.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_fusion_marker.offset_left = 3
 	_fusion_marker.offset_right = 35

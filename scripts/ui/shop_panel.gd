@@ -505,7 +505,7 @@ func _make_repair_row() -> Control:
 				EventBus.toast_requested.emit(Localization.tr_key("ui.durability.repair_done",
 					[int(result.get("repaired", 0)), int(result.get("cost", 0))]), "pickup")
 			else:
-				EventBus.toast_requested.emit(String(result.get("reason", "修理失败")), "danger")
+				EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("ui.review.shop_panel.001"))), "danger")
 			_rebuild_buy())
 	row.add_child(btn)
 	return row
@@ -686,7 +686,7 @@ func _on_stage_all_pressed() -> void:
 func _stage_selected_equipment(rows: Array[Dictionary], allow_risky: bool,
 		preset_override: String = "") -> Dictionary:
 	if not visible or not _trade_active or not Shop.sell_enabled(_shop_id):
-		return {"ok": false, "reason": "货郎交易已结束，请重新打开"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.shop_panel.002")}
 	var free_slots := _tray_slots.size() - _tray.size()
 	var result := GameState.take_equipment_for_sale(rows, free_slots, allow_risky, preset_override)
 	if not bool(result.get("ok", false)):
@@ -758,7 +758,7 @@ func _on_confirm_pressed() -> void:
 			return
 	var res := GameState.shop_sell_staged(_tray.values())
 	if not bool(res.get("ok", false)):
-		EventBus.toast_requested.emit(String(res.get("reason", "出售失败，请重新核对")), "danger")
+		EventBus.toast_requested.emit(String(res.get("reason", Localization.tr_key("ui.review.shop_panel.003"))), "danger")
 		return
 	var n := int(res.get("count", 0))
 	var gold := int(res.get("gold", 0))

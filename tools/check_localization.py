@@ -9,11 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "data/localization.json"
-CALL = re.compile(r'Localization\.tr_key\("([^"]+)"\)')
+CALL = re.compile(r'Localization\.tr_key\(\s*"([^"]+)"\s*(?=[,)])')
 CHINESE_LITERAL = re.compile(r'"[^"\n]*[\u4e00-\u9fff][^"\n]*"')
 
 
 def main() -> int:
+    """核对所有静态文案键（含带参数调用）与 UI 中文字面量，失败返回非零。"""
     table = json.loads(CATALOG.read_text(encoding="utf-8"))
     issues: list[str] = []
     scripts = [*(ROOT / "scripts").rglob("*.gd"), *(ROOT / "autoload").rglob("*.gd")]

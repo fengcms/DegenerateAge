@@ -239,7 +239,7 @@ func _add_row(row: Dictionary) -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	var price := Label.new()
-	price.text = "%d 金币" % int(row.price)
+	price.text = Localization.tr_key("msg.quest.p013") % int(row.price)
 	header.add_child(price)
 	var reason := Label.new()
 	reason.text = _reasons_text(row)

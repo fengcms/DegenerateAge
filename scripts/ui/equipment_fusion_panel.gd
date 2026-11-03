@@ -888,7 +888,7 @@ func _on_confirm() -> void:
 		EventBus.toast_requested.emit(String(result.get("reason", "")), "danger")
 		_reset_materials()
 	else:
-		_feedback.text = String(result.get("reason", "合成失败"))
+		_feedback.text = String(result.get("reason", Localization.tr_key("ui.review.equipment_fusion_panel.001")))
 		_locked_transfer = {}
 		_risk_confirmed = false
 		_refresh_preview()

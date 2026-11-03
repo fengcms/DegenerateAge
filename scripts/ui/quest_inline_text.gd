@@ -54,7 +54,7 @@ static func _npc_map_prefix(source: String, npc_start: int, npc_id: String) -> S
 	var map_name := _display_name("map", map_id)
 	if map_name.is_empty():
 		return ""
-	return "[url=map:%s][color=#70d9eb][u]%s[/u][/color][/url] 的 " % [map_id, _escape(map_name)]
+	return Localization.tr_key("ui.review.quest_inline_text.001") % [map_id, _escape(map_name)]
 
 ## 从现有数据服务解析行内标记的名称；未知 ID 返回空串，让界面保留原标记。
 static func _display_name(kind: String, target_id: String) -> String:

@@ -295,7 +295,7 @@ func _build() -> void:
 	content.add_child(divider)
 
 	var hint := Label.new()
-	hint.text = "左键查看 · 与人物面板并开时可拖放装备"
+	hint.text = Localization.tr_key("ui.review.inventory_panel.001")
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", PanelChrome.MUTED)
 	content.add_child(hint)

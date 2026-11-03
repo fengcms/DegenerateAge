@@ -72,7 +72,7 @@ func _build() -> void:
 	root.add_child(head)
 	PanelChrome.style_header_layout(margin, head)
 	_title = Label.new()
-	_title.text = "坐骑"
+	_title.text = Localization.tr_key("ui.action.panel_mount")
 	_title.add_theme_font_size_override("font_size", 20)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)

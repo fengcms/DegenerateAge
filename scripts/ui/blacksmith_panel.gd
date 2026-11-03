@@ -330,7 +330,7 @@ func _on_repair() -> void:
 			[int(result.get("repaired", 0)), int(result.get("cost", 0))]), "pickup")
 		_refresh_repair_button()
 	else:
-		EventBus.toast_requested.emit(String(result.get("reason", "修理失败")), "danger")
+		EventBus.toast_requested.emit(String(result.get("reason", Localization.tr_key("ui.review.shop_panel.001"))), "danger")
 
 func _open_upgrade() -> void:
 	set_open(false)

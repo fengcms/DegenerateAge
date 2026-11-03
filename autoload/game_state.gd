@@ -910,7 +910,7 @@ func preview_equipment_sale(preset_override: String = "") -> Array[Dictionary]:
 func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false,
 		preset_override: String = "") -> Dictionary:
 	if rows.is_empty():
-		return {"ok": false, "reason": "请选择要处理的装备"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.001")}
 	var by_id := {}
 	for i in range(inventory.size()):
 		if inventory[i] is Dictionary and String(inventory[i].get("kind", "")) == "equip":
@@ -927,20 +927,20 @@ func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false,
 	for row in rows:
 		var instance_id := String(row.get("instance_id", ""))
 		if instance_id.is_empty() or seen.has(instance_id) or not by_id.has(instance_id):
-			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.002")}
 		seen[instance_id] = true
 		var i: int = by_id[instance_id]
 		var item: Dictionary = inventory[i]
 		if item != row.get("item_snapshot", {}) or not Shop.can_sell(item) \
 				or level != int(row.get("player_level", -1)) or preset != String(row.get("preset", "")):
-			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.002")}
 		var current := SellGearPolicy.entry(item, i, level, equipment, preset, quota)
 		if int(current.get("price", -1)) != int(row.get("price", -2)) \
 				or bool(current.get("protected_upgrade", false)) != bool(row.get("protected_upgrade", false)) \
 				or bool(current.get("default_selected", false)) != bool(row.get("default_selected", false)):
-			return {"ok": false, "reason": "装备清单已变化，请重新核对"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.002")}
 		if not bool(current.get("default_selected", false)) and not allow_risky:
-			return {"ok": false, "reason": "所选装备需要再次确认"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.003")}
 		indices.append(i)
 		items.append(item)
 		total += Shop.sell_price(item)
@@ -950,7 +950,7 @@ func validate_equipment_sale(rows: Array[Dictionary], allow_risky: bool = false,
 func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false,
 		preset_override: String = "") -> Dictionary:
 	if int(player.get("level", 1)) < 15:
-		return {"ok": false, "reason": "达到 15 级后才可在背包直接出售装备"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.004")}
 	var checked := validate_equipment_sale(rows, allow_risky, preset_override)
 	if not bool(checked.get("ok", false)):
 		return checked
@@ -968,7 +968,7 @@ func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false,
 func take_equipment_for_sale(rows: Array[Dictionary], available_slots: int,
 		allow_risky: bool = false, preset_override: String = "") -> Dictionary:
 	if rows.size() > available_slots:
-		return {"ok": false, "reason": "出售托盘空位不足，请减少勾选"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.005")}
 	var checked := validate_equipment_sale(rows, allow_risky, preset_override)
 	if not bool(checked.get("ok", false)):
 		return checked
@@ -1358,10 +1358,10 @@ func repair_equipment(rate_multiplier: float = 1.0) -> Dictionary:
 		total += maxi(1, piece)
 		repaired += 1
 	if repaired == 0:
-		return {"ok": false, "cost": 0, "repaired": 0, "reason": "装备完好"}
+		return {"ok": false, "cost": 0, "repaired": 0, "reason": Localization.tr_key("ui.blacksmith_panel.repair_full")}
 	total = maxi(1, int(round(float(total) * maxf(1.0, rate_multiplier))))
 	if gold < total:
-		return {"ok": false, "cost": total, "repaired": 0, "reason": "金币不足：需要 %d 金币" % total}
+		return {"ok": false, "cost": total, "repaired": 0, "reason": Localization.tr_key("ui.review.game_state.006") % total}
 	gold -= total
 	for slot_id in equipment.keys():
 		var it = equipment[slot_id]
@@ -1398,7 +1398,7 @@ func auto_repair_pending() -> int:
 ## 费用、只修身上、按缺失比例计价、金币不足一件不修 —— 全部复用 `repair_equipment`。
 func try_auto_repair() -> Dictionary:
 	if auto_repair_pending() <= 0:
-		return {"ok": false, "cost": 0, "repaired": 0, "reason": "未到阈值"}
+		return {"ok": false, "cost": 0, "repaired": 0, "reason": Localization.tr_key("ui.review.game_state.007")}
 	var result := repair_equipment(Durability.auto_repair_fee_rate())
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key(
@@ -1414,14 +1414,14 @@ func try_auto_repair() -> Dictionary:
 ##    （改了会让铁匠跟着涨价，与需求完全相反）。
 func auto_forge_gold() -> Dictionary:
 	if not auto_forge_enabled():
-		return {"ok": false, "reason": "未开启"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.008")}
 	var mats := EquipmentFusion.random_materials(inventory, EquipmentFusion.GOLD_TO_PURPLE)
 	if mats.is_empty():
 		return {"ok": false, "reason": ""}
 	var fee := auto_forge_fee(mats)
 	if gold < fee:
 		_auto_warn(false, fee)
-		return {"ok": false, "cost": fee, "reason": "金币不足"}
+		return {"ok": false, "cost": fee, "reason": Localization.tr_key("ui.reforge_panel.p007")}
 	# 先校验金币 → 再合成（`forge_equipment` 内部失败零消耗）→ 最后扣费。
 	# 产物落点天然安全：4 进 1 出，优先复用被消耗的格子，不存在「背包满放不下」。
 	var result := forge_equipment(EquipmentFusion.GOLD_TO_PURPLE, mats)
@@ -1597,10 +1597,10 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	if mode not in [EquipmentFusion.GOLD_TO_PURPLE,
 			EquipmentFusion.PURPLE_TARGET, EquipmentFusion.PURPLE_UP_TIER,
 			EquipmentFusion.STAR_TRANSFER]:
-		return {"ok": false, "reason": "不支持的合成服务"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.009")}
 	var limits := EquipmentFusion.material_range(mode)
 	if selected.size() < limits.x or selected.size() > limits.y:
-		return {"ok": false, "reason": "请选择正确数量的装备"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.010")}
 	var bag_indices: Array[int] = []
 	var worn_slots: Array[String] = []
 	var old_worn_slot := ""
@@ -1609,13 +1609,13 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	for snapshot in selected:
 		var id := String(snapshot.get("instanceId", ""))
 		if id.is_empty() or seen.has(id):
-			return {"ok": false, "reason": "材料已变化，请重新选择"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.011")}
 		seen[id] = true
 		var found := find_owned_item(id)
 		if found.is_empty() or found.item != snapshot:
-			return {"ok": false, "reason": "材料已变化，请重新选择"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.011")}
 		if mode == EquipmentFusion.PURPLE_UP_TIER and String(found.loc) != "bag":
-			return {"ok": false, "reason": "四紫升紫只能使用背包装备"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.012")}
 		if String(found.loc) == "bag":
 			bag_indices.append(int(found.index))
 		else:
@@ -1638,7 +1638,7 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 	var tries := int(rune_charge.get("tries", 1))
 	var cost := int(plan.get("cost", 0))
 	if gold < cost:
-		return {"ok": false, "reason": "金币不足：需要 %d 金币" % cost}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.006") % cost}
 	# ★ 掷骰必须在造产物与落点判定**之前**：失败时不该留下「产物生成了又被丢掉」的中间态，
 	# 也不该白吃一段 RNG 影响后续随机。rate == 1.0（4 件、四金、四紫定向、保星）完全不碰 rng，
 	# 既有路径逐字节不变。
@@ -1658,14 +1658,14 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 				_after_equip_change()
 			# 概率模式当前只有四紫升紫（cost 恒 0）；不另收手续费，材料已经是最重的惩罚。
 			return {"ok": false, "lost": true, "consumed": selected.size(),
-				"reason": "合成失败，%d 件材料已消耗" % selected.size()}
+				"reason": Localization.tr_key("ui.review.game_state.013") % selected.size()}
 	var output_kind := String(plan.get("target_kind", ""))
 	if mode in [EquipmentFusion.GOLD_TO_PURPLE, EquipmentFusion.PURPLE_UP_TIER]:
 		var kinds := Equipment.slot_kinds()
 		output_kind = kinds[(rng.randi_range(0, kinds.size() - 1) if rng != null else randi_range(0, kinds.size() - 1))]
 	var output := EquipmentFusion.make_output(int(plan.tier), output_kind, rng)
 	if output.is_empty():
-		return {"ok": false, "reason": "目标装备生成失败，未消耗材料"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.014")}
 	if mode == EquipmentFusion.STAR_TRANSFER:
 		output.star = Upgrade.max_star()
 		# 工程 112：产物词条取优。第 1 次的词条已由 `make_output()` 掷出，
@@ -1673,7 +1673,7 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 		if tries > 1:
 			_reroll_output_best(output, rng, tries)
 	if not SaveManager._valid_item(output):
-		return {"ok": false, "reason": "目标装备校验失败，未消耗材料"}
+		return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.015")}
 	# 先确定落点再提交。穿戴旧料升级后回原槽，不重新挑选双槽部位。
 	var equip_slot := ""
 	if (not old_worn_slot.is_empty() and Equipment.meets_level(output, int(player.level))
@@ -1689,7 +1689,7 @@ func forge_equipment(mode: String, selected: Array[Dictionary], target_kind: Str
 					output_index = i
 					break
 		if output_index < 0:
-			return {"ok": false, "reason": "背包已满，产物没有空位，未消耗材料"}
+			return {"ok": false, "reason": Localization.tr_key("ui.review.game_state.016")}
 	for index in bag_indices:
 		inventory[index] = null
 	for slot_id in worn_slots:
@@ -2376,11 +2376,11 @@ func shop_sell_staged(items: Array) -> Dictionary:
 	var n := 0
 	for it in items:
 		if not it is Dictionary or not Shop.can_sell(it):
-			return {"ok": false, "count": 0, "gold": 0, "reason": "托盘内存在不可出售的物品"}
+			return {"ok": false, "count": 0, "gold": 0, "reason": Localization.tr_key("ui.review.game_state.017")}
 		total += Shop.sell_price(it)
 		n += 1
 	if n == 0:
-		return {"ok": false, "count": 0, "gold": 0, "reason": "出售托盘为空"}
+		return {"ok": false, "count": 0, "gold": 0, "reason": Localization.tr_key("ui.review.game_state.018")}
 	# 工程 56 / 口径 A：不再因金币上限整批拒绝。托盘内容由界面持有，本函数只算价与入账。
 	var gained := _gold_gain(total)
 	EventBus.trade_done.emit("sell", "", gained)

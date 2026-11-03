@@ -148,7 +148,7 @@ func _build() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
 	_service_button = Button.new()
-	_service_button.text = "打开服务"
+	_service_button.text = Localization.tr_key("ui.review.quest_panel.001")
 	_service_button.visible = false
 	_service_button.pressed.connect(_open_npc_service)
 	head.add_child(_service_button)

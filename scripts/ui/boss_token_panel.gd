@@ -336,7 +336,7 @@ func _make_group_bar(groups: Array) -> Control:
 			var d: Dictionary = g as Dictionary
 			var key := String(d.get("key", ""))
 			var b := Button.new()
-			b.text = "%s 组 · %d" % [String(d.get("group", "")), int(d.get("count", 0))]
+			b.text = Localization.tr_key("ui.review.boss_token_panel.001") % [String(d.get("group", "")), int(d.get("count", 0))]
 			b.custom_minimum_size = Vector2(64, 24)
 			b.add_theme_font_size_override("font_size", 11)
 			b.add_theme_color_override("font_color", COL_TITLE if key == _expanded_group else COL_TEXT_DIM)
@@ -477,7 +477,7 @@ func _make_action(row: Dictionary) -> Button:
 	b.text = Localization.tr_key("ui.boss_token_panel.p006")
 	if not MapService.entry_gate_reason(String(row.get("map_id", "")), "carter").is_empty():
 		b.disabled = true
-		b.tooltip_text = "请从无尽回廊入口步行进入"
+		b.tooltip_text = Localization.tr_key("ui.review.boss_token_panel.002")
 		PanelChrome.style_action(b, false)
 		return b
 	if not bool(row.get("unlocked", true)) or cost < 0:

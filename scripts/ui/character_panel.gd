@@ -136,7 +136,7 @@ func _build() -> void:
 	equip.custom_minimum_size.x = 378
 	equipment_card.add_child(equip)
 	var equipment_title := Label.new()
-	equipment_title.text = "穿戴装备"
+	equipment_title.text = Localization.tr_key("ui.review.character_panel.001")
 	PanelChrome.style_section(equipment_title)
 	equip.add_child(equipment_title)
 	var figure := HBoxContainer.new()
@@ -263,7 +263,7 @@ func _refresh() -> void:
 	_gap_dirty = false
 	_vitals_dirty = false
 	var player_name := String(GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")))
-	_title.text = PanelChrome.title_text("人物 · %s" % player_name)
+	_title.text = PanelChrome.title_text(Localization.tr_key("ui.review.character_panel.002") % player_name)
 	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
 	_apply_look()
 	_refresh_gap_card()
