@@ -42,8 +42,9 @@ var _amount_dialog: PanelAmountDialog
 ## 当前弹框在换哪一对。只有 `_on_exchange()` 会写它 —— 弹框本身不认识「兑换对」，
 ## 它只认识一个整数，业务身份由面板自己记住。
 var _pending_pair := ""
-var _brick_xp_preview: Dictionary = {}
-var _brick_xp_button: Button
+var _xp_preview: Dictionary = {}
+const XP_EXCHANGES := [GoldExchange.BRICK_XP, GoldExchange.DIAMOND_XP]
+var _xp_buttons: Dictionary = {}
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -81,7 +82,7 @@ func _on_gold_changed(_amount: int) -> void:
 
 func _on_player_leveled(_level: int) -> void:
 	if visible:
-		_refresh_brick_xp_button()
+		_refresh_xp_buttons()
 
 func set_open(open: bool) -> void:
 	visible = open
@@ -184,10 +185,12 @@ func _build() -> void:
 	exchange_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	exchange_header.add_child(exchange_head)
 	PanelChrome.style_section(exchange_head)
-	_brick_xp_button = Button.new()
-	_brick_xp_button.pressed.connect(_open_brick_xp)
-	exchange_header.add_child(_brick_xp_button)
-	PanelChrome.style_action(_brick_xp_button)
+	for exchange_id in XP_EXCHANGES:
+		var button := Button.new()
+		button.pressed.connect(_open_xp_exchange.bind(exchange_id))
+		exchange_header.add_child(button)
+		PanelChrome.style_action(button)
+		_xp_buttons[exchange_id] = button
 	var exchange_row := HBoxContainer.new()
 	exchange_row.add_theme_constant_override("separation", 6)
 	root.add_child(exchange_row)
@@ -303,7 +306,7 @@ func _refresh_summary() -> void:
 ## 禁用原因来自 `GoldExchange.check()` —— 与真正提交走同一套判定，不会出现
 ## 「按钮能点但点了失败」或「明明够却不能点」两种错位。
 func _refresh_exchange() -> void:
-	_refresh_brick_xp_button()
+	_refresh_xp_buttons()
 	for spec in EXCHANGE_ROWS:
 		var pair_id := String(spec[0])
 		var button: Variant = _exchange_buttons.get(pair_id)
@@ -319,38 +322,48 @@ func _refresh_exchange() -> void:
 			hint = "%s\n%s" % [hint, String(gate.get("reason", ""))]
 		button.tooltip_text = hint
 
-func _refresh_brick_xp_button() -> void:
-	var offer := GoldExchange.brick_xp_offer(1)
-	_brick_xp_button.text = Localization.tr_key("ui.warehouse_panel.p021") % [
-		Localization.tr_key("ui.brick_xp.action"), offer.maximum]
-	_brick_xp_button.disabled = not bool(offer.ok)
-	_brick_xp_button.tooltip_text = String(offer.reason)
+func _xp_label(exchange_id: String) -> String:
+	return Localization.tr_key("ui.diamond_xp.action" if exchange_id == GoldExchange.DIAMOND_XP else "ui.brick_xp.action")
 
-func _open_brick_xp(initial_times: int = 1) -> void:
+func _refresh_xp_buttons() -> void:
+	for exchange_id in XP_EXCHANGES:
+		var offer := GoldExchange.xp_offer(exchange_id, 1)
+		var button: Button = _xp_buttons[exchange_id]
+		button.text = Localization.tr_key("ui.warehouse_panel.p021") % [_xp_label(exchange_id), offer.maximum]
+		button.disabled = not bool(offer.ok)
+		button.tooltip_text = String(offer.reason)
+
+func _open_xp_exchange(exchange_id: String, initial_times: int = 1) -> void:
 	_reset_click()
-	var offer := GoldExchange.brick_xp_offer(1)
+	var offer := GoldExchange.xp_offer(exchange_id, 1)
 	if not bool(offer.ok):
 		return
-	_pending_pair = GoldExchange.BRICK_XP
-	_brick_xp_preview = {}
-	_amount_dialog.title = Localization.tr_key("ui.brick_xp.action")
-	_amount_dialog.preview_provider = _preview_brick_xp
+	_pending_pair = exchange_id
+	_xp_preview = {}
+	_amount_dialog.title = _xp_label(exchange_id)
+	_amount_dialog.preview_provider = _preview_xp.bind(exchange_id)
 	_amount_dialog.max_times = int(offer.maximum)
 	_amount_dialog.popup(initial_times if initial_times <= int(offer.maximum) else 1)
 
-func _preview_brick_xp(times: int) -> Dictionary:
-	_brick_xp_preview = GoldExchange.brick_xp_offer(times)
-	var offer := _brick_xp_preview
-	_amount_dialog.rate_text = Localization.tr_key("ui.brick_xp.rate") % [
-		int(GoldExchange.brick_xp_rules().percentPerBrick), offer.stock, offer.allowance]
+func _preview_xp(times: int, exchange_id: String) -> Dictionary:
+	_xp_preview = GoldExchange.xp_offer(exchange_id, times)
+	var offer := _xp_preview
+	var rules := GoldExchange.xp_rules(exchange_id)
+	var diamond := exchange_id == GoldExchange.DIAMOND_XP
+	if diamond:
+		_amount_dialog.rate_text = Localization.tr_key("ui.diamond_xp.rate") % [
+			int(rules.batchSize), int(rules.percentPerBatch), offer.stock, offer.allowance]
+	else:
+		_amount_dialog.rate_text = Localization.tr_key("ui.brick_xp.rate") % [
+			int(rules.percentPerBatch), offer.stock, offer.allowance]
 	if not bool(offer.ok):
 		return {"cost": Localization.tr_key("msg.brick_xp.stale"), "got": offer.reason}
 	var progress := Localization.tr_key("ui.brick_xp.preview_cap") % [offer.gain, offer.next_level] \
 		if int(offer.next_level) == GameState.PLAYER_LEVEL_CAP else \
 		Localization.tr_key("ui.brick_xp.preview") % [offer.gain, offer.next_level,
 			offer.next_xp, GameState.xp_to_next(int(offer.next_level))]
-	return {"cost": ItemUtil.display_name(GoldExchange.stack_item(GoldExchange.BRICK, times)),
-		"got": progress}
+	return {"cost": ItemUtil.display_name({"kind": "rune" if diamond else "misc",
+		"itemId": GoldExchange.xp_source(exchange_id), "count": offer.cost}), "got": progress}
 
 ## 点兑换按钮 → 开批量数量弹框。
 ## 🔑 刻意**取消**了「单击换 1 次、Shift 换到上限」：Shift 是玩家常按的修饰键，
@@ -381,15 +394,15 @@ func _on_exchange(pair_id: String) -> void:
 func _on_amount_submitted(times: int) -> void:
 	var pair_id := _pending_pair
 	_pending_pair = ""
-	if pair_id == GoldExchange.BRICK_XP:
-		var offer := _brick_xp_preview
-		_brick_xp_preview = {}
-		var result := GameState.exchange_brick_xp(times, offer)
+	if pair_id in XP_EXCHANGES:
+		var offer := _xp_preview
+		_xp_preview = {}
+		var result := GameState.exchange_warehouse_xp(pair_id, times, offer)
 		if bool(result.ok):
 			_detail.text = Localization.tr_key("msg.exchange.p006") % String(result.got)
 		else:
 			_detail.text = String(result.reason)
-			_open_brick_xp(times)
+			_open_xp_exchange(pair_id, times)
 		return
 	_do_exchange(pair_id, times)
 

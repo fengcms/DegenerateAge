@@ -43,11 +43,11 @@ func _ready() -> void:
 		"扩容只补建新格子，不重建已有格子")
 	GameState.warehouse[0] = GoldExchange.stack_item(GoldExchange.BRICK, 3)
 	panel._refresh()
-	_check(panel._brick_xp_button.disabled, "低等级仓库按钮置灰")
+	_check(panel._xp_buttons[GoldExchange.BRICK_XP].disabled, "低等级仓库按钮置灰")
 	GameState.player.level = 100
 	EventBus.player_leveled.emit(100)
-	_check(not panel._brick_xp_button.disabled, "达到解锁等级时按钮更新")
-	panel._brick_xp_button.pressed.emit()
+	_check(not panel._xp_buttons[GoldExchange.BRICK_XP].disabled, "达到解锁等级时按钮更新")
+	panel._xp_buttons[GoldExchange.BRICK_XP].pressed.emit()
 	var dialog: PanelAmountDialog = panel._amount_dialog
 	_check(dialog.visible and dialog._edit.text == "1" and dialog._got_label.text.contains("3486"),
 		"数量框默认一块并预览到账经验")
@@ -59,6 +59,14 @@ func _ready() -> void:
 	dialog._on_confirm()
 	_check(not dialog.visible and GameState.warehouse[0].count == 2 and GameState.player.xp == 3487,
 		"第二次确认入账一次，重复确认不扣第二块")
+	GameState.warehouse[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 8}
+	EventBus.warehouse_changed.emit()
+	panel._xp_buttons[GoldExchange.DIAMOND_XP].pressed.emit()
+	_check(dialog.visible and dialog._cost_label.text.contains("钻石如意") and dialog._cost_label.text.contains("4"),
+		"如意入口预览一批四个")
+	dialog._on_confirm()
+	_check(GameState.warehouse[1].count == 4 and GameState.diamond_xp_used == 1 and GameState.brick_xp_used == 1,
+		"如意和金砖使用独立额度")
 	panel.queue_free()
 	if _failures.is_empty():
 		print("[WarehouseSlotVisualTest] 全部通过 ✅")
