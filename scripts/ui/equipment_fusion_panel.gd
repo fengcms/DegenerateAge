@@ -42,11 +42,14 @@ var _rune_pickers: Array[OptionButton] = []
 var _rune_choices: Array[String] = ["", "", "", ""]
 var _rune_hint: Label
 
+var _sacrifice_refresh_scheduler: FrameLayoutScheduler
+
 ## 接入工作台会话和背包更新，不进行逐帧背包扫描。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
+	_sacrifice_refresh_scheduler = FrameLayoutScheduler.new(self, _refresh_sacrifice_if_visible)
 	visible = false
 	EventBus.equipment_fusion_panel_requested.connect(_on_requested)
 	EventBus.equipment_fusion_close_requested.connect(func() -> void: set_open(false))
@@ -146,11 +149,25 @@ func _on_panel_opened(panel_id: String) -> void:
 ## 整理或耐久磨损/修理保留同一材料，耐久以外的实例内容变化仍撤下预选。
 ## 身上那件被换下 / 被消耗也走同一次检查（工程 65）—— 第一格可能来自穿戴槽。
 func _on_inventory_changed() -> void:
+	if visible and _mode == EquipmentFusion.SACRIFICE:
+		_request_sacrifice_refresh()
+		return
 	_revalidate_selection()
+
+## 旧确认同步失效，展示扫描与本帧其他变化合并。
+func _request_sacrifice_refresh() -> void:
+	_risk_confirmed = false
+	_confirm.text = Localization.tr_key("ui.sacrifice.action")
+	_sacrifice_refresh_scheduler.request()
+
+## 延迟回调只更新仍在显示的献祭预览。
+func _refresh_sacrifice_if_visible() -> void:
+	if visible and _mode == EquipmentFusion.SACRIFICE:
+		_refresh_preview()
 
 ## 穿戴变化时校验保星旧装备引用，不因其他槽位改变清空有效预选。
 func _on_equipment_changed() -> void:
-	_revalidate_selection()
+	_on_inventory_changed()
 
 ## 按实例 ID 核对材料；只允许耐久变化，并更新完整快照供提交时严格终验。
 func _revalidate_selection() -> void:
@@ -174,6 +191,9 @@ func _revalidate_selection() -> void:
 
 ## 金币变化重算可支付状态，并取消旧的风险确认。
 func _on_gold_changed(_amount: int) -> void:
+	if visible and _mode == EquipmentFusion.SACRIFICE:
+		_request_sacrifice_refresh()
+		return
 	if visible:
 		_risk_confirmed = false
 		_refresh_preview()
@@ -824,7 +844,7 @@ func _on_confirm_sacrifice() -> void:
 		_feedback.text = ""
 	else:
 		_feedback.text = String(result.get("reason", ""))
-	_refresh_preview()
+	_sacrifice_refresh_scheduler.request()
 
 ## 自动预选与手动换如意共用预览及二次确认失效流程。
 func _on_auto_runes() -> void:

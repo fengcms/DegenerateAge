@@ -42,14 +42,21 @@ var _fusion_active: bool = false
 var _reforge_active: bool = false
 var _fusion_selected_ids := PackedStringArray()
 
+var _refresh_scheduler: FrameLayoutScheduler
+var _slot_snapshots: Array = []
+var _comparison_context: Array = []
+
+## 初始化背包与按帧刷新的入口。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	visible = false
-	EventBus.inventory_changed.connect(_refresh)
-	EventBus.equipment_changed.connect(_refresh)
-	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
+	_refresh_scheduler = FrameLayoutScheduler.new(self, _refresh_if_visible)
+	EventBus.inventory_changed.connect(_request_refresh)
+	EventBus.equipment_changed.connect(_request_refresh)
+	EventBus.player_leveled.connect(func(_level: int) -> void: _request_refresh())
+	EventBus.data_loaded.connect(_invalidate_rendered_slots)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
@@ -328,11 +335,39 @@ func _on_organize_pressed() -> void:
 	_last_click_ms = 0
 	GameState.organize_inventory()
 
+## 连续交易只安排一次展示刷新，打开面板时由 set_open 同步补齐。
+func _request_refresh() -> void:
+	if visible:
+		_refresh_scheduler.request()
+
+## 面板可能在刷新前关闭。
+func _refresh_if_visible() -> void:
+	if visible:
+		_refresh()
+
+## 模板重载后重新生成依赖模板的格子展示。
+func _invalidate_rendered_slots() -> void:
+	_slot_snapshots.clear()
+	_request_refresh()
+
+## 比较独立快照，捕捉原地叠加、耐久修改以及穿戴对比条件变化。
 func _refresh() -> void:
 	_ensure_bag_slots()
+	var context := [GameState.equipment, int(GameState.player.level), EquipmentGap.reference_level(), _character_visible()]
+	var comparison_changed := context != _comparison_context
+	if comparison_changed:
+		_comparison_context = context.duplicate(true)
+	var previous_count := _slot_snapshots.size()
+	_slot_snapshots.resize(_bag_buttons.size())
 	for i in range(_bag_buttons.size()):
 		var b2: ItemSlot = _bag_buttons[i]
 		var it2 = GameState.inventory[i] if i < GameState.inventory.size() else null
+		if i < previous_count and it2 == _slot_snapshots[i]:
+			if not comparison_changed or not it2 is Dictionary or String(it2.get("kind", "")) != "equip":
+				continue
+		_slot_snapshots[i] = it2.duplicate(true) if it2 is Dictionary else null
+		if _last_click_index == i:
+			_last_click_index = -1
 		if it2 is Dictionary:
 			var col2 := _item_color(it2)
 			b2.item = it2          # 供拖拽载荷携带（ItemSlot._get_drag_data）
@@ -389,7 +424,7 @@ func _on_sell_low_pressed() -> void:
 func _on_bag_slot_input(event: InputEvent, index: int) -> void:
 	if not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_RIGHT or not event.pressed:
 		return
-	if index >= 0 and index < GameState.inventory.size() and GameState.inventory[index] is Dictionary:
+	if _slot_matches_view(index) and GameState.inventory[index] is Dictionary:
 		var item: Dictionary = GameState.inventory[index]
 		if String(item.get("kind", "")) == "equip":
 			GameState.set_equipment_favorite(String(item.get("instanceId", "")), not bool(item.get("favorite", false)))
@@ -512,6 +547,9 @@ func _non_equip_tooltip(item: Dictionary) -> Array[String]:
 ## M2.5：改走 `GameState.use_item`，由它按品类分流（药水 → 使用；装备 → 穿戴），
 ## 保证「双击装备仍穿戴」行为完全不变（工程文档 12 §5 R-b）。
 func _on_bag_pressed(index: int) -> void:
+	if not _slot_matches_view(index):
+		_last_click_index = -1
+		return
 	var now := Time.get_ticks_msec()
 	if index == _last_click_index and now - _last_click_ms <= DOUBLE_CLICK_MS:
 		_last_click_index = -1
@@ -530,7 +568,15 @@ func _character_visible() -> bool:
 	var character := get_node_or_null("../CharacterPanel")
 	return character != null and character.visible
 
+## 延迟展示期间阻止索引操作落到尚未显示的新物品。
+func _slot_matches_view(index: int) -> bool:
+	return index >= 0 and index < GameState.inventory.size() and index < _slot_snapshots.size() \
+		and GameState.inventory[index] == _slot_snapshots[index]
+
+## 投放前确认目标格仍与玩家看到的内容一致。
 func _on_bag_item_dropped(_target_index: int, payload: Dictionary, index: int) -> void:
+	if not _slot_matches_view(index):
+		return
 	if visible and int(payload.get("from", -1)) == ItemSlot.ROLE_BAG:
 		_last_click_index = -1
 		_last_click_ms = 0

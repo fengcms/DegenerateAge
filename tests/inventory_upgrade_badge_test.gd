@@ -19,6 +19,7 @@ func _ready() -> void:
 	GameState.inventory[0] = better_shoes
 	var panel := preload("res://scripts/ui/inventory_panel.gd").new()
 	add_child(panel)
+	panel.set_open(true)
 	var slot: ItemSlot = panel._bag_buttons[0]
 	var preview := Equipment.replacement_preview(GameState.equipment, better_shoes)
 	check(bool(preview.get("score_increase", false)) and String(preview.get("slot_id", "")) == "shoes", "默认鞋槽评分确实提高")
@@ -33,21 +34,31 @@ func _ready() -> void:
 		"灰箭头不绕过穿戴等级校验")
 	GameState.player.level = 12
 	EventBus.player_leveled.emit(12)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.READY, "升级到门槛后由灰转绿")
 	check(slot._upgrade_marker.get_theme_color("font_color").is_equal_approx(ItemSlot.UPGRADE_READY_COLOR), "绿箭头使用可穿戴色")
 	GameState.equipment.shoes = better_shoes.duplicate(true)
 	EventBus.equipment_changed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.NONE, "同分装备不显示箭头")
 	GameState.inventory[0] = old_shoes
 	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.NONE, "低分装备不显示箭头")
 	GameState.inventory[0] = null
 	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.NONE and not slot._upgrade_marker.visible, "移走物品后清除箭头")
 	GameState.equipment = Equipment.create()
 	GameState.player.level = 1
 	GameState.inventory[0] = old_shoes
 	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.LEVEL_LOCKED, "空槽但等级未达也显示灰箭头")
 	check(_labels_text(slot._make_custom_tooltip("")).contains("默认目标空槽"), "空槽浮层不声称胜过已穿装备")
 	GameState.equipment = Equipment.create()
@@ -55,6 +66,8 @@ func _ready() -> void:
 	GameState.player.level = 18
 	GameState.inventory[0] = better_ring
 	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var ring_preview := Equipment.replacement_preview(GameState.equipment, better_ring)
 	check(String(ring_preview.get("slot_id", "")) == "ring_2" and slot.upgrade_badge_state == ItemSlot.UpgradeBadge.LEVEL_LOCKED,
 		"双槽优先选择空槽并显示灰箭头")
