@@ -43,7 +43,7 @@ func _ready() -> void:
 		for i in range(panel._choices.size()):
 			if panel._choices[i].source == "worn" and panel._choices[i].key == "weapon":
 				picked = i
-		check(picked >= 0 and panel._choices.size() == 151, "大候选夹具有效")
+		check(picked >= 0 and panel._choices.size() == 1, "大候选夹具有效")
 		panel.select_choice(picked)
 		for i in range(4):
 			panel.drop_refine_material(i,i)

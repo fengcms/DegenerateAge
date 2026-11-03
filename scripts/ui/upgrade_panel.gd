@@ -49,7 +49,7 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open(PANEL_ID, open)
 	if open:
 		_feedback.text = Localization.tr_key("ui.upgrade_panel.p001")
-		_refresh_choices()
+		_refresh_choices(true)
 		EventBus.panel_opened.emit(PANEL_ID)
 		_center.show_window()
 
@@ -167,7 +167,7 @@ func _build() -> void:
 	_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_feedback)
 
-func _refresh_choices() -> void:
+func _refresh_choices(select_first := false) -> void:
 	_choices.clear()
 	_picker.clear()
 	for slot in Equipment.SLOT_DEFS:
@@ -175,23 +175,19 @@ func _refresh_choices() -> void:
 		var item = GameState.equipment.get(sid)
 		if item is Dictionary:
 			_add_choice("worn", sid, item, Localization.tr_key("ui.upgrade.worn_slot") % String(slot.label))
-	for index in range(GameState.inventory.size()):
-		var item = GameState.inventory[index]
-		if item is Dictionary and String(item.get("kind", "")) == "equip":
-			_add_choice("bag", index, item, Localization.tr_key("ui.upgrade.bag_slot") % (index + 1))
 	if _choices.is_empty():
 		_picker.add_item(Localization.tr_key("ui.upgrade_panel.p005"))
 		_picker.disabled = true
 		_selected_id = ""
 	else:
 		_picker.disabled = false
-		var choice_index := 0
+		var choice_index := 0 if select_first else -1
 		for i in range(_choices.size()):
 			if String(_choices[i].id) == _selected_id:
 				choice_index = i
 				break
 		_picker.select(choice_index)
-		_selected_id = String(_choices[choice_index].id)
+		_selected_id = String(_choices[choice_index].id) if choice_index >= 0 else ""
 	_refresh_runes()
 	_refresh_details()
 
@@ -254,8 +250,7 @@ func _selected_item() -> Dictionary:
 	if index < 0 or index >= _choices.size():
 		return {}
 	var choice := _choices[index]
-	var candidate = GameState.inventory[choice.key] if choice.source == "bag" \
-		else GameState.equipment.get(choice.key)
+	var candidate = GameState.equipment.get(choice.key)
 	if candidate is Dictionary and String(candidate.get("instanceId", "")) == String(choice.id):
 		return candidate
 	return {}

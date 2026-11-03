@@ -161,7 +161,7 @@ func _test_ui() -> void:
 	GameState.gold = 10000000
 	var item := make_item("c6_equip_weapon", 944, 100)
 	item.star = 12
-	GameState.inventory[0] = item
+	GameState.equipment.weapon = item
 	var ui := CanvasLayer.new()
 	add_child(ui)
 	var panel := preload("res://scenes/ui/ReforgePanel.tscn").instantiate()

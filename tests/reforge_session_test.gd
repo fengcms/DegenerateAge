@@ -52,7 +52,7 @@ func _setup_inventory(material_count: int) -> Dictionary:
 	GameState.reset_to_defaults()
 	GameState.gold = 1000000
 	var target := _make("c6_equip_necklace", 100, "legendary", 3001)
-	GameState.inventory[0] = target
+	GameState.equipment.weapon = target
 	for i in range(material_count):
 		GameState.inventory[1 + i] = _make("c6_equip_weapon", 100, "legendary", 3100 + i)
 	return target

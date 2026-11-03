@@ -334,12 +334,13 @@ func _test_ui_lock_rows() -> void:
 	GameState.reset_to_defaults()
 	GameState.gold = 1000000
 	var item := _make("c6_equip_necklace", 60, "legendary", 1901)
-	GameState.inventory[0] = item
+	GameState.equipment.necklace = item
 	# 第二件只作「切换装备」用：验证锁定是**按装备**记的，换一件即清空（§2.6）。
-	GameState.inventory[1] = _make("c6_equip_weapon", 60, "rare", 1902)
+	GameState.equipment.weapon = _make("c6_equip_weapon", 60, "rare", 1902)
 	var panel: Control = (load("res://scenes/ui/ReforgePanel.tscn") as PackedScene).instantiate()
 	add_child(panel)
 	panel.set_open(true)
+	panel.select_choice(1)
 	var buttons: Array[Button] = panel.lock_buttons()
 	check(buttons.size() == 4, "传说装备应有 4 个锁按钮，实际 %d" % buttons.size())
 	if buttons.size() != 4:
@@ -375,10 +376,10 @@ func _test_ui_lock_rows() -> void:
 		check(String(panel._button.tooltip_text).contains("锁定"),
 			"禁用时的 tooltip 应说明锁定原因，实际「%s」" % String(panel._button.tooltip_text))
 	# 换一件装备 ⇒ 锁定清空（锁定属于「这一件」，不跟着面板走到下一件上）。
-	panel._picker.select(1)
+	panel._picker.select(0)
 	# headless 下 OptionButton.select 不保证发信号，显式走一次选中处理（等价用户点击）。
 	panel._on_selected(panel._picker.selected)
-	check(panel._picker.selected == 1, "应能切到第二件装备")
+	check(panel._selected_item() == GameState.equipment.weapon, "应能切到另一件穿戴装备")
 	check(panel.locked_stats().is_empty(),
 		"切换装备后锁定应清空，实际 %s" % str(panel.locked_stats()))
 	check(panel.lock_buttons().size() == 2, "稀有装备应有 2 个锁按钮，实际 %d" % panel.lock_buttons().size())

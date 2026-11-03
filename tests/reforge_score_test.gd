@@ -66,7 +66,7 @@ func _reset(item_list: Array) -> void:
 	_clear_bag()
 	GameState.gold = 5000000
 	for i in range(item_list.size()):
-		GameState.inventory[i] = item_list[i]
+		GameState.equipment["necklace" if i == 0 else "weapon"] = item_list[i]
 	_open_panel()
 	_panel.set_open(false)
 	_panel.set_open(true)
@@ -121,10 +121,10 @@ func _test_score_follows_selection() -> void:
 	var a := _make("c6_equip_necklace", "legendary", 9002)
 	var b := _make("c6_equip_weapon", "rare", 9003)
 	_reset([a, b])
-	_panel.select_choice(0)
+	_panel.select_choice(1)
 	check(_score_text().begins_with(Localization.tr_key("ui.equip_tip.score", [_round1(Equipment.score(a))])),
 		"选第一件时评分应与之一致，实际「%s」" % _score_text())
-	_panel.select_choice(1)
+	_panel.select_choice(0)
 	check(_score_text().begins_with(Localization.tr_key("ui.equip_tip.score", [_round1(Equipment.score(b))])),
 		"换到第二件后评分必须跟着变，实际「%s」" % _score_text())
 
@@ -133,9 +133,9 @@ func _test_delta_after_reforge() -> void:
 	var item := _make("c6_equip_necklace", "legendary", 9004)
 	_reset([item])
 	_panel.select_choice(0)
-	var before := Equipment.score(GameState.inventory[0])
+	var before := Equipment.score(GameState.equipment.necklace)
 	_panel._on_reforge()
-	var after := Equipment.score(GameState.inventory[0])
+	var after := Equipment.score(GameState.equipment.necklace)
 	var expect := _expect_delta(before, after)
 	check(_score_text().contains(expect),
 		"重铸后应显示「%s」（%.1f → %.1f），实际「%s」" % [
@@ -149,17 +149,17 @@ func _test_baseline_advances() -> void:
 	_reset([item])
 	_panel.select_choice(0)
 	# 先掷到一次「评分真的变了」的重铸，否则 c−a 与 c−b 恰好相等，本用例退化成空断言。
-	var a := Equipment.score(GameState.inventory[0])
+	var a := Equipment.score(GameState.equipment.necklace)
 	var b := a
 	for _i in range(6):
 		_panel._on_reforge()
-		b = Equipment.score(GameState.inventory[0])
+		b = Equipment.score(GameState.equipment.necklace)
 		if absf(_round1(b) - _round1(a)) >= 0.1:
 			break
 	check(absf(_round1(b) - _round1(a)) >= 0.1,
 		"前置条件不满足：6 次重铸都没改变评分（%.1f），本用例无法区分基准新旧" % a)
 	_panel._on_reforge()
-	var c := Equipment.score(GameState.inventory[0])
+	var c := Equipment.score(GameState.equipment.necklace)
 	check(_score_text().contains(_expect_delta(b, c)),
 		"第二次重铸的基准应是第一次之后 %.1f（而非最初 %.1f），实际「%s」" % [b, a, _score_text()])
 
@@ -189,7 +189,7 @@ func _test_broken_item() -> void:
 	var full_score := Equipment.score(repaired)
 	# 这次顺序要反：`_reset` 里 reset_to_defaults 会重建物品，故先重置再塞破损件。
 	_reset([item])
-	GameState.inventory[0] = item
+	GameState.equipment.necklace = item
 	_panel.set_open(false)
 	_panel.set_open(true)
 	check(_score_text().begins_with(Localization.tr_key("ui.equip_tip.score", [_round1(broken_score)])),

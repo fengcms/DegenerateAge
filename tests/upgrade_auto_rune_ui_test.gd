@@ -14,10 +14,16 @@ func _ready() -> void:
 	var weapon := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
 	weapon.star = 1
 	GameState.inventory[0] = weapon
+	EventBus.inventory_changed.emit()
+	_check(panel._choices.is_empty(), "背包装备不进入升星候选")
+	GameState.inventory[0] = null
+	GameState.equipment.weapon = weapon
 	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_iron", "count": 2}
 	GameState.inventory[2] = {"kind": "rune", "itemId": "rune_iron", "count": 2}
 	GameState.inventory[3] = {"kind": "rune", "itemId": "rune_diamond", "count": 4}
 	EventBus.inventory_changed.emit()
+	panel._picker.select(0)
+	panel._on_selected(0)
 	_check(not panel._auto_rune_button.disabled, "装备可升且有如意时按钮可用")
 	var before := GameState.inventory.duplicate(true)
 	panel._on_auto_runes()
@@ -59,7 +65,11 @@ func _ready() -> void:
 	GameState.reset_to_defaults()
 	var last_weapon := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "legendary", rng)
 	last_weapon.star = 8
-	GameState.inventory[0] = last_weapon
+	GameState.equipment.weapon = last_weapon
+	EventBus.equipment_changed.emit()
+	_check(panel._picker.selected == -1 and panel._upgrade_button.disabled, "同槽换装后须重新选择")
+	panel._picker.select(0)
+	panel._on_selected(0)
 	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 4}
 	GameState.gold = Upgrade.cost(8) + Upgrade.cost(9)
 	EventBus.inventory_changed.emit()
