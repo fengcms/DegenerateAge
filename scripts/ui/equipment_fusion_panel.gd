@@ -86,6 +86,8 @@ func _on_requested(mode: String, portable: bool) -> void:
 			EquipmentFusion.PURPLE_UP_TIER, EquipmentFusion.STAR_TRANSFER,
 			EquipmentFusion.SACRIFICE]:
 		return
+	if visible and _mode == EquipmentFusion.STAR_TRANSFER and mode != _mode:
+		set_open(false)
 	_mode = mode
 	_portable = portable
 	set_open(true)
@@ -134,10 +136,19 @@ func set_open(open: bool) -> void:
 			("ui.sacrifice.action" if batch_mode else "ui.fusion.forge_action"))
 		_refresh_slots()
 		EventBus.fusion_mode_changed.emit(true)
+		if _mode == EquipmentFusion.STAR_TRANSFER:
+			var character: Variant = get_node_or_null("../CharacterPanel")
+			if character != null and not character.visible:
+				character.set_open(true)
 		_resize.call_deferred()
 		EventBus.panel_opened.emit(PANEL_ID)
 		_center.show_window()
 	else:
+		if _mode == EquipmentFusion.STAR_TRANSFER:
+			_center.set_docked(false)
+			var character: Variant = get_node_or_null("../CharacterPanel")
+			if character != null:
+				character._center.set_docked(false)
 		EventBus.fusion_mode_changed.emit(false)
 		EventBus.fusion_selection_changed.emit(PackedStringArray())
 
@@ -204,7 +215,7 @@ func _on_gold_changed(_amount: int) -> void:
 ## 注意：面板根控件在游戏内由 `SettingsRuntime.apply_ui_scale_to` 撑成逻辑视口，故下述比例
 ## 与绝对坐标在游戏内逐像素一致；独立测试里的根控件没有那份尺寸，但它们本就不参与断言。
 func _resize() -> void:
-	if _box == null:
+	if _box == null or not visible:
 		return
 	var logical := get_viewport_rect().size / SettingsRuntime.ui_scale_value()
 	if logical.x <= 0.0 or logical.y <= 0.0:
@@ -215,6 +226,10 @@ func _resize() -> void:
 	var bag_width := 540.0
 	if bag != null and bag._center != null:
 		bag_width = bag._center.panel_box.get_combined_minimum_size().x
+	var character: Variant = get_node_or_null("../CharacterPanel")
+	if _mode == EquipmentFusion.STAR_TRANSFER and character != null and character.visible and bag != null and bag.visible:
+		_layout_star_transfer(logical, bag._center, character._center, width)
+		return
 	if logical.x >= bag_width + width + GAP + 24.0:
 		var left := (logical.x - bag_width - width - GAP) * 0.5
 		if bag != null and bag.visible:
@@ -228,6 +243,27 @@ func _resize() -> void:
 		_center.set_pinned(true, Rect2(0.0, logical.y * 0.48, logical.x, logical.y * 0.52))
 	# 内容容器排版稳定后由浮窗统一适配，不能只在打开时用旧尺寸算一次。
 	_center.request_layout()
+
+## 保星升级需要两侧的装备来源。空间不足时把工作台放在上方，来源面板在下方并列。
+func _layout_star_transfer(logical: Vector2, bag: FloatingWindow,
+		character: FloatingWindow, work_width: float) -> void:
+	var bag_content := bag.content_scroll.get_child(0) as Control
+	var bag_width := bag_content.get_combined_minimum_size().x + 56.0
+	var character_content := character.content_scroll.get_child(0) as Control
+	var character_width := character_content.get_combined_minimum_size().x + 56.0
+	var total_width := bag_width + work_width + character_width + GAP * 2.0
+	if logical.x >= total_width:
+		var left := (logical.x - total_width) * 0.5
+		var work_left := left + bag_width + GAP
+		var character_left := work_left + work_width + GAP
+		bag.set_docked(true, left / logical.x, (left + bag_width) / logical.x)
+		_center.set_docked(true, work_left / logical.x, (work_left + work_width) / logical.x)
+		character.set_docked(true, character_left / logical.x, (character_left + character_width) / logical.x)
+	else:
+		const WORK_HEIGHT := 0.55
+		_center.set_docked(true, 0.0, 1.0, 0.0, WORK_HEIGHT)
+		bag.set_docked(true, 0.0, 0.5, WORK_HEIGHT, 1.0)
+		character.set_docked(true, 0.5, 1.0, WORK_HEIGHT, 1.0)
 
 ## 构建两列材料格和可滚动目标类型，按钮始终留在滚动区之外。
 func _build() -> void:

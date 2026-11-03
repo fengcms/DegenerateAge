@@ -3,6 +3,7 @@ extends Node
 
 ## 以实际CanvasLayer应用倍率，验证冷启动、缩放和清空重开后的材料可访问性。
 func _ready() -> void:
+	get_window().content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 	get_window().size = Vector2i(1280,800)
 	GameState.reset_to_defaults()
 	var ui := CanvasLayer.new()
@@ -11,7 +12,13 @@ func _ready() -> void:
 	ui.add_child(bag)
 	var panel = load("res://scenes/ui/EquipmentFusionPanel.tscn").instantiate()
 	ui.add_child(panel)
-	for scale_value in [1.0,1.25,2.0,1.0]:
+	var character = load("res://scenes/ui/CharacterPanel.tscn").instantiate()
+	ui.add_child(character)
+	for spec in [[Vector2i(2304, 900), 1.0], [Vector2i(1280, 800), 1.0],
+			[Vector2i(1280, 800), 1.25], [Vector2i(1280, 800), 2.0]]:
+		get_window().size = spec[0]
+		await get_tree().process_frame
+		var scale_value: float = spec[1]
 		GameState.settings.uiScale = scale_value
 		SettingsRuntime.apply_ui_scale_to(ui)
 		for mode in [EquipmentFusion.SACRIFICE,EquipmentFusion.STAR_TRANSFER,EquipmentFusion.GOLD_TO_PURPLE,EquipmentFusion.STAR_TRANSFER]:
@@ -19,9 +26,23 @@ func _ready() -> void:
 			panel._scroll.scroll_vertical = 0
 			for i in range(25):
 				await get_tree().process_frame
-			var logical: Vector2 = Vector2(get_window().size)/scale_value
+			var logical: Vector2 = get_viewport().get_visible_rect().size / SettingsRuntime.ui_scale_value()
 			assert(panel._box.size.y <= panel._center.size.y+1.0, "面板不能超出分区")
 			assert(panel._center.position.y+panel._center.size.y <= logical.y+1.0, "面板不能漂出视口")
+			if mode == EquipmentFusion.STAR_TRANSFER:
+				assert(character.visible and bag.visible and panel.visible, "保星升级一次打开三窗")
+				var bounds := Rect2(Vector2.ZERO, logical).grow(1.0)
+				var work_rect: Rect2 = panel._box.get_global_rect()
+				var bag_rect: Rect2 = bag._center.panel_box.get_global_rect()
+				var character_rect: Rect2 = character._center.panel_box.get_global_rect()
+				assert(bounds.encloses(work_rect) and bounds.encloses(bag_rect) and bounds.encloses(character_rect), "三窗均须留在视口内")
+				if logical.x >= 2000.0:
+					assert(bag_rect.end.x <= work_rect.position.x and work_rect.end.x <= character_rect.position.x,
+						"宽屏三窗横排")
+				else:
+					assert(work_rect.end.y <= bag_rect.position.y + 1.0, "窄屏来源区位于工作台下方")
+				assert(not work_rect.intersects(character_rect) and not work_rect.intersects(bag_rect)
+					and not character_rect.intersects(bag_rect), "三个操作区互不遮挡")
 			if mode == EquipmentFusion.SACRIFICE:
 				assert(not panel._grid.visible)
 				continue
@@ -39,6 +60,7 @@ func _ready() -> void:
 				var overlap := slot.get_global_rect().intersection(panel._scroll.get_global_rect())
 				assert(overlap.size.y >= 77.0 and overlap.size.x >= 77.0, "材料必须实际落在可见裁剪区")
 		panel.set_open(false)
+		assert(character.visible and bag.visible and not character._center._docked, "关闭工作台恢复人物浮窗")
 	# 库存变化与第二次点击发生在同一帧，不能沿用旧批次确认。
 	GameState.player.level = 600
 	var rng := RandomNumberGenerator.new()
