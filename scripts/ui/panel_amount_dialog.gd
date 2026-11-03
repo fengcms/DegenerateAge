@@ -52,7 +52,7 @@ var _confirm: Button
 
 ## 建立覆盖父面板的遮罩与共用切角外框，初始保持隐藏。
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# 遮罩必须吃鼠标：否则弹框打开时还能点穿到底下的仓库格子。
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
@@ -90,14 +90,14 @@ func _input(event: InputEvent) -> void:
 
 func _build() -> void:
 	var shade := ColorRect.new()
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0, 0, 0, 0.55)
 	shade.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(shade)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var chrome := PanelChrome.new()
 	center.add_child(chrome)
 	var margin := MarginContainer.new()

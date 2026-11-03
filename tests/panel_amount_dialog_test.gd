@@ -23,6 +23,7 @@ func _ready() -> void:
 	await _test_confirm_emits()
 	await _test_escape_only_closes_dialog()
 	await _test_focus_on_open()
+	await _test_warehouse_center()
 	if failures.is_empty():
 		print("[PanelAmountDialogTest] 全部通过 ✅")
 		get_tree().quit(0)
@@ -132,3 +133,36 @@ func _test_focus_on_open() -> void:
 	check(dialog._edit.has_focus(), "打开时应聚焦输入框（否则玩家敲的数字进不去，全变成快捷栏操作）")
 	dialog.close()
 	dialog.queue_free()
+
+## 走实际仓库入口，在同一弹框开启期间切换窗口尺寸和 UI 缩放。
+func _test_warehouse_center() -> void:
+	GameState.reset_to_defaults()
+	GameState.gold = 1000000
+	var ui := CanvasLayer.new()
+	add_child(ui)
+	var panel := preload("res://scenes/ui/WarehousePanel.tscn").instantiate()
+	ui.add_child(panel)
+	EventBus.warehouse_panel_requested.emit("仓库管理员")
+	panel._on_exchange("gold_to_ingot")
+	var dialog: PanelAmountDialog = panel._amount_dialog
+	var shade := dialog.get_child(0) as Control
+	var chrome := dialog.get_child(1).get_child(0) as Control
+	for spec in [[Vector2i(1280, 800), 1.0], [Vector2i(1050, 700), 1.25], [Vector2i(1280, 800), 2.0]]:
+		if DisplayServer.get_name() != "headless":
+			get_window().size = spec[0]
+		GameState.settings.uiScale = spec[1]
+		await get_tree().process_frame
+		SettingsRuntime.apply_ui_scale_to(ui)
+		EventBus.settings_changed.emit()
+		for _frame in range(4):
+			await get_tree().process_frame
+		var viewport_rect := get_viewport().get_visible_rect()
+		var center := chrome.get_global_transform_with_canvas() * (chrome.size * 0.5)
+		var error := (center - viewport_rect.get_center()).abs()
+		check(dialog.visible and error.x <= 1.0 and error.y <= 1.0,
+			"视口 %s 缩放 %s 的居中误差 %s" % [viewport_rect.size, spec[1], error])
+		var shade_transform := shade.get_global_transform_with_canvas()
+		check((shade_transform * Vector2.ZERO).distance_to(viewport_rect.position) <= 1.0
+			and (shade_transform * shade.size).distance_to(viewport_rect.end) <= 1.0, "遮罩铺满可见视口")
+	ui.queue_free()
+	GameState.reset_to_defaults()
