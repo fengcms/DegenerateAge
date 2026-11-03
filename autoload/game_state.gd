@@ -462,9 +462,9 @@ func total_crit_chance() -> float:
 func total_crit_multiplier() -> float:
 	return clampf(_scaled(float(player.get("criticalMultiplier", 1.0))), 1.0, Combat.MAX_CRIT_MULT)
 
-## 闪避 / 格挡是比例值（0–1），放大后截断到 1.0。
+## 闪避是评分点数，套装缩放后交由 Combat.miss_chance 转成概率；旧档字段单位不变。
 func total_dodge() -> float:
-	return clampf(_scaled(float(player.get("dodge", 0.0))), 0.0, 1.0)
+	return maxf(0.0, _scaled(float(player.get("dodge", 0.0))))
 
 func total_block() -> float:
 	return clampf(_scaled(float(player.get("block", 0.0))), 0.0, 1.0)

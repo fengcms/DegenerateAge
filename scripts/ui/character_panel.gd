@@ -307,7 +307,7 @@ func _refresh() -> void:
 		100.0 * GameState.total_crit_chance(),
 		GameState.total_crit_multiplier(),
 		GameState.total_attack_interval(),
-		100.0 * GameState.total_dodge(),
+		100.0 * Combat.miss_chance(GameState.total_dodge()),
 		100.0 * GameState.total_block(),
 		100.0 * GameState.total_cdr()]
 	_bonus_text = _set_bonus_text()

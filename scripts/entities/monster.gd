@@ -572,7 +572,7 @@ func _skill_hit(coeff: float) -> void:
 		attack_power * coeff * _level_damage_multiplier(),
 		float(GameState.total_defense()),
 		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
-		float(GameState.player.get("dodge", 0.0)), null, _min_hit_on_player())
+		GameState.total_dodge(), null, _min_hit_on_player())
 	Fx.damage_number(get_tree(), player, res)
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))
@@ -970,7 +970,7 @@ func _do_attack(player: Node2D, play_attack_art: bool = true, from_skill: bool =
 		attack_power * _level_damage_multiplier(),
 		float(GameState.total_defense()),
 		1.0, Combat.ENEMY_CRIT_CHANCE, Combat.ENEMY_CRIT_MULT,
-		float(GameState.player.get("dodge", 0.0)), null, _min_hit_on_player())
+		GameState.total_dodge(), null, _min_hit_on_player())
 	Fx.damage_number(get_tree(), player, res)
 	if not bool(res.get("miss", false)) and player.has_method("apply_damage"):
 		var actual := int(player.call("apply_damage", int(res.get("damage", 0))))

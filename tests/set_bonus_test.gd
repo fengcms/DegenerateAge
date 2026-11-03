@@ -47,6 +47,7 @@ func _ready() -> void:
 	_test_inverse_attr()
 	_test_speed_follows_equipment()
 	_test_panel_text()
+	_test_dodge_units()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[SetBonusTest] 全部通过 ✅")
@@ -341,4 +342,18 @@ func _test_panel_text() -> void:
 	check(broken.contains("未成套（13/14）"), "卸一件应显示未成套（13/14），实际末段：%s"
 		% broken.substr(maxi(0, broken.length() - 60)))
 	check(broken.contains("穿满 14 个槽位后生效"), "未成套应给出生效条件")
+	panel.queue_free()
+
+## 非零闪避按评分缩放，面板与战斗使用同一概率转换，不改变旧档点数。
+func _test_dodge_units() -> void:
+	_setup(60)
+	GameState.player.dodge = 50
+	check(is_equal_approx(GameState.total_dodge(), 50.0), "无套装闪避保留50点")
+	check(is_equal_approx(Combat.miss_chance(GameState.total_dodge()), 0.5), "50点对应50%闪避")
+	_dress("legendary", 12)
+	check(is_equal_approx(GameState.total_dodge(), 70.0), "全套40%加成将50点变70点")
+	var panel := preload("res://scenes/ui/CharacterPanel.tscn").instantiate()
+	add_child(panel)
+	panel.set_open(true)
+	check(is_equal_approx(float(panel._stats_values[11]), 100.0 * Combat.miss_chance(70.0)), "面板闪避概率与战斗同源")
 	panel.queue_free()
