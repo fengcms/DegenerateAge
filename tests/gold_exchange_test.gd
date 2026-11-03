@@ -41,6 +41,7 @@ func _ready() -> void:
 	_test_batch_full_success()
 	_test_batch_over_max_not_moved()
 	_test_brick_xp()
+	_test_diamond_xp()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[GoldExchangeTest] 全部通过 ✅")
@@ -273,17 +274,17 @@ func _test_brick_xp() -> void:
 	GameState.warehouse[0] = GoldExchange.stack_item(BRICK, 7)
 	GameState.warehouse[1] = GoldExchange.stack_item(BRICK, 14)
 	GameState.inventory[0] = GoldExchange.stack_item(BRICK, 5)
-	check(not GoldExchange.brick_xp_offer(1).ok, "99 级不可兑换")
+	check(not GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1).ok, "99 级不可兑换")
 	GameState.player.level = 100
-	var offer := GoldExchange.brick_xp_offer(20)
+	var offer := GoldExchange.xp_offer(GoldExchange.BRICK_XP, 20)
 	check(offer.ok and offer.gain == 69720 and offer.maximum == 20, "100 级按每块 1% 向下取整")
-	check(not GameState.exchange_brick_xp(21, offer).ok and _count(BRICK) == 21, "超额度整笔拒绝")
+	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 21, offer).ok and _count(BRICK) == 21, "超额度整笔拒绝")
 	GameState.add_xp(1)
-	check(not GameState.exchange_brick_xp(20, offer).ok and _count(BRICK) == 21, "进度变化使旧预览失效")
-	offer = GoldExchange.brick_xp_offer(20)
-	check(GameState.exchange_brick_xp(20, offer).ok and _count(BRICK) == 1
+	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and _count(BRICK) == 21, "进度变化使旧预览失效")
+	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 20)
+	check(GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and _count(BRICK) == 1
 		and GameState.inventory[0].count == 5 and int(GameState.player.xp) == 69721, "跨堆扣仓库并发经验")
-	check(not GameState.exchange_brick_xp(20, offer).ok and not GoldExchange.brick_xp_offer(1).ok,
+	check(not GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 20, offer).ok and not GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1).ok,
 		"同级额度耗尽，旧确认不可重放")
 	var saved := SaveManager._collect()
 	check(SaveManager._is_valid_save(saved) and saved.brickXpUsed == 20, "额度与交易结果同批存档")
@@ -295,13 +296,36 @@ func _test_brick_xp() -> void:
 	SaveManager.apply_to_game_state(saved)
 	check(GameState.brick_xp_used == 0, "旧档从零开始")
 	GameState.player.xp = GameState.xp_to_next(100) - 10
-	offer = GoldExchange.brick_xp_offer(1)
-	check(GameState.exchange_brick_xp(1, offer).ok and GameState.player.level == 101
+	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1)
+	check(GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, offer).ok and GameState.player.level == 101
 		and GameState.player.xp == 3476 and GameState.brick_xp_used == 0, "跨级保留经验余量并重置额度")
 	GameState.player.level = GameState.PLAYER_LEVEL_CAP - 1
 	GameState.player.xp = GameState.xp_to_next(GameState.PLAYER_LEVEL_CAP - 1) - 7
 	GameState.warehouse[0] = GoldExchange.stack_item(BRICK, 2)
-	offer = GoldExchange.brick_xp_offer(1)
-	check(offer.maximum == 1 and offer.gain == 7 and GameState.exchange_brick_xp(1, offer).ok
+	offer = GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1)
+	check(offer.maximum == 1 and offer.gain == 7 and GameState.exchange_warehouse_xp(GoldExchange.BRICK_XP, 1, offer).ok
 		and GameState.player.level == GameState.PLAYER_LEVEL_CAP and GameState.player.xp == 0
-		and _count(BRICK) == 1 and not GoldExchange.brick_xp_offer(1).ok, "满级边界仅扣一块并按实际经验入账")
+		and _count(BRICK) == 1 and not GoldExchange.xp_offer(GoldExchange.BRICK_XP, 1).ok, "满级边界仅扣一块并按实际经验入账")
+
+func _test_diamond_xp() -> void:
+	_reset(0)
+	var id := GoldExchange.DIAMOND_XP
+	GameState.player.level = 100
+	GameState.warehouse[0] = {"kind": "rune", "itemId": "rune_diamond", "count": 3}
+	check(not GoldExchange.xp_offer(id, 1).ok, "三个钻石如意不足一批")
+	GameState.warehouse[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 41}
+	GameState.brick_xp_used = 20
+	var offer := GoldExchange.xp_offer(id, 10)
+	check(offer.ok and offer.maximum == 10 and offer.cost == 40 and offer.gain == 34860, "独立额度及四个一批")
+	check(not GameState.exchange_warehouse_xp(id, 11, offer).ok, "拒绝超额")
+	check(GameState.exchange_warehouse_xp(id, 10, offer).ok and GameState.warehouse[0] == null
+		and GameState.warehouse[1].count == 4 and GameState.player.xp == 34860, "跨堆扣除四十个")
+	check(not GameState.exchange_warehouse_xp(id, 10, offer).ok, "旧确认不可重放")
+	var saved := SaveManager._collect()
+	SaveManager.apply_to_game_state(saved)
+	check(GameState.diamond_xp_used == 10 and GameState.brick_xp_used == 20, "保存两项额度")
+	saved.erase("diamondXpUsed")
+	SaveManager.apply_to_game_state(saved)
+	check(GameState.diamond_xp_used == 0 and GameState.brick_xp_used == 20, "旧档保留金砖额度")
+	GameState.add_xp(GameState.xp_to_next(100))
+	check(GameState.diamond_xp_used == 0 and GameState.brick_xp_used == 0, "升级重置两项额度")

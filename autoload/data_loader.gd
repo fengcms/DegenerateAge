@@ -1683,15 +1683,17 @@ func _validate_exchange() -> Array[String]:
 	if not cfg is Dictionary:
 		report.append("[exchange] 需要对象")
 		return report
-	var xp_rules: Variant = cfg.get("brickExperience")
-	if not xp_rules is Dictionary:
-		report.append("[exchange] brickExperience 需要对象")
-	elif not _is_whole_level(xp_rules.get("unlockLevel")) or int(xp_rules.unlockLevel) < 1 \
-			or int(xp_rules.unlockLevel) >= GameState.PLAYER_LEVEL_CAP \
-			or not _is_whole_level(xp_rules.get("percentPerBrick")) or int(xp_rules.percentPerBrick) < 1 \
-			or not _is_whole_level(xp_rules.get("perLevelLimit")) or int(xp_rules.perLevelLimit) < 1 \
-			or int(xp_rules.percentPerBrick) * int(xp_rules.perLevelLimit) >= 100:
-		report.append("[exchange] 金砖经验兑换等级、比例和额度非法，每级兑换总比例须低于 100%")
+	for key in ["brickExperience", "diamondExperience"]:
+		var xp_rules: Variant = cfg.get(key)
+		if not xp_rules is Dictionary:
+			report.append("[exchange] %s 需要对象" % key)
+		elif not _is_whole_level(xp_rules.get("unlockLevel")) or int(xp_rules.unlockLevel) < 1 \
+				or int(xp_rules.unlockLevel) >= GameState.PLAYER_LEVEL_CAP \
+				or not _is_whole_level(xp_rules.get("percentPerBatch")) or int(xp_rules.percentPerBatch) < 1 \
+				or not _is_whole_level(xp_rules.get("perLevelLimit")) or int(xp_rules.perLevelLimit) < 1 \
+				or int(xp_rules.percentPerBatch) * int(xp_rules.perLevelLimit) >= 100 \
+				or not _is_whole_level(xp_rules.get("batchSize", 1)) or int(xp_rules.get("batchSize", 1)) < 1:
+			report.append("[exchange] 经验兑换等级、比例和额度非法，每级兑换总比例须低于 100%")
 	var rows: Variant = (cfg as Dictionary).get("pairs", null)
 	if not rows is Array or (rows as Array).is_empty():
 		report.append("[exchange] pairs 需要非空数组")

@@ -47,21 +47,30 @@ static func pair(pair_id: String) -> Dictionary:
 	return {}
 
 const BRICK_XP := "brick_to_xp"
+const DIAMOND_XP := "diamond_to_xp"
 const BRICK := "gold_brick"
 
-static func brick_xp_rules() -> Dictionary:
-	return DataLoader.get_table(TABLE).get("brickExperience", {})
+static func xp_rules(exchange_id: String) -> Dictionary:
+	return DataLoader.get_table(TABLE).get(
+		"diamondExperience" if exchange_id == DIAMOND_XP else "brickExperience", {})
+
+static func xp_source(exchange_id: String) -> String:
+	return "rune_diamond" if exchange_id == DIAMOND_XP else BRICK
 
 ## 仅计算预览与数量边界，刷新按钮时不复制仓库。
-static func brick_xp_offer(times: int) -> Dictionary:
-	var rules := brick_xp_rules()
+static func xp_offer(exchange_id: String, times: int) -> Dictionary:
+	if exchange_id not in [BRICK_XP, DIAMOND_XP]:
+		return _fail(Localization.tr_key("msg.exchange.p007"))
+	var rules := xp_rules(exchange_id)
+	var batch := int(rules.get("batchSize", 1))
+	var used := GameState.diamond_xp_used if exchange_id == DIAMOND_XP else GameState.brick_xp_used
 	var level := int(GameState.player.level)
 	var xp := int(GameState.player.xp)
 	var need := GameState.xp_to_next(level)
-	var per_brick := need * int(rules.percentPerBrick) / 100
-	var allowance := maxi(0, int(rules.perLevelLimit) - GameState.brick_xp_used)
-	var stock := count_in(GameState.warehouse, BRICK)
-	var maximum := mini(stock, allowance)
+	var per_batch := need * int(rules.percentPerBatch) / 100
+	var allowance := maxi(0, int(rules.perLevelLimit) - used)
+	var stock := count_in(GameState.warehouse, xp_source(exchange_id))
+	var maximum := mini(stock / batch, allowance)
 	var reason := ""
 	if level < int(rules.unlockLevel):
 		reason = Localization.tr_key("msg.brick_xp.locked") % int(rules.unlockLevel)
@@ -69,14 +78,14 @@ static func brick_xp_offer(times: int) -> Dictionary:
 		reason = Localization.tr_key("msg.brick_xp.capped")
 	elif allowance <= 0:
 		reason = Localization.tr_key("msg.brick_xp.quota")
-	elif stock < times:
-		reason = Localization.tr_key("msg.exchange.p003") % times
+	elif stock / batch < times:
+		reason = Localization.tr_key("msg.diamond_xp.short" if exchange_id == DIAMOND_XP else "msg.exchange.p003") % (batch * clampi(times, 1, int(rules.perLevelLimit)))
 	if level == GameState.PLAYER_LEVEL_CAP - 1:
-		maximum = mini(maximum, (maxi(0, need - xp) + per_brick - 1) / per_brick)
+		maximum = mini(maximum, (maxi(0, need - xp) + per_batch - 1) / per_batch)
 	if times < 1 or times > maximum:
 		if reason.is_empty():
 			reason = Localization.tr_key("msg.exchange.p007")
-	var gain := per_brick * times if reason.is_empty() else 0
+	var gain := per_batch * times if reason.is_empty() else 0
 	if level == GameState.PLAYER_LEVEL_CAP - 1:
 		gain = mini(gain, maxi(0, need - xp))
 	var next_level := level
@@ -84,13 +93,13 @@ static func brick_xp_offer(times: int) -> Dictionary:
 	if gain > 0 and next_xp >= need:
 		next_xp -= need
 		next_level += 1
-	return {"ok": reason.is_empty(), "reason": reason, "times": times,
+	return {"ok": reason.is_empty(), "reason": reason, "times": times, "exchange_id": exchange_id, "cost": batch * times if reason.is_empty() else 0,
 		"maximum": maximum if level >= int(rules.unlockLevel) and level < GameState.PLAYER_LEVEL_CAP else 0,
-		"stock": stock, "allowance": allowance, "level": level, "xp": xp, "per_brick": per_brick,
+		"stock": stock, "allowance": allowance, "level": level, "xp": xp, "per_batch": per_batch,
 		"gain": gain, "next_level": next_level, "next_xp": next_xp}
 
-static func brick_xp_store_after(times: int) -> Array:
-	return _store_without(GameState.warehouse.duplicate(), BRICK, times)
+static func xp_store_after(exchange_id: String, cost: int) -> Array:
+	return _store_without(GameState.warehouse.duplicate(), xp_source(exchange_id), cost)
 
 # ---- 物品与容器探针 ----
 

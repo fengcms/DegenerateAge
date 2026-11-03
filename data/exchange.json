@@ -1,5 +1,6 @@
 {
-  "brickExperience": {"unlockLevel": 100, "percentPerBrick": 1, "perLevelLimit": 20},
+  "brickExperience": {"unlockLevel": 100, "percentPerBatch": 1, "perLevelLimit": 20},
+  "diamondExperience": {"unlockLevel": 100, "percentPerBatch": 1, "perLevelLimit": 10, "batchSize": 4},
   "pairs": [
     {
       "id": "gold_to_ingot",

@@ -186,6 +186,7 @@ func _collect() -> Dictionary:
 		"warehouse": GameState.warehouse.duplicate(true),
 		"warehouseExpansions": GameState.warehouse_expansions,
 		"brickXpUsed": GameState.brick_xp_used,
+		"diamondXpUsed": GameState.diamond_xp_used,
 		"ownedMounts": GameState.owned_mounts.duplicate(),
 		"activeMount": GameState.active_mount,
 		"equipment": GameState.equipment.duplicate(true),
@@ -822,6 +823,7 @@ func apply_to_game_state(data: Dictionary) -> void:
 	GameState.apply_unclaimed_loot(_deep_int(data.get("unclaimedLoot", {})))
 	GameState.inventory_expansions = int(data.get("inventoryExpansions", 0))
 	GameState.inventory = _migrate_inventory(data.get("inventory", []), GameState.inventory_expansions)
+	GameState.diamond_xp_used = int(data.get("diamondXpUsed", 0))
 	GameState.brick_xp_used = int(data.get("brickXpUsed", 0))
 	GameState.warehouse_expansions = int(data.get("warehouseExpansions", 0))
 	GameState.warehouse = _migrate_warehouse(data.get("warehouse", []), GameState.warehouse_expansions)
@@ -1316,6 +1318,8 @@ func _is_valid_save(raw: Variant) -> bool:
 		return _reject("gold 非法")
 	if not _whole(raw.get("brickXpUsed", 0), 0):
 		return _reject("brickXpUsed 非法")
+	if not _whole(raw.get("diamondXpUsed", 0), 0):
+		return _reject("diamondXpUsed 非法")
 	var data := _migrate(raw)
 	for key in ["player", "equipment", "questStates", "firstClear", "unlocks", "settings", "exploredMaps", "questRewardPlans", "skillRanks"]:
 		if not data.get(key) is Dictionary:
