@@ -102,10 +102,8 @@ static func _prefetch_monster(monster_id: String, seen: Dictionary) -> void:
 		get_pack(String((appearance as Dictionary).get("assetKey", "")))
 	elif appearance is Dictionary and String((appearance as Dictionary).get("renderer", "")) == "directional_preview":
 		get_preview_texture(appearance_id, String((appearance as Dictionary).get("texture", "")))
-	if monster_id == "c2_boss_iron_foreman":
-		_prefetch_monster("c2_broken_guard", seen)
-	elif monster_id == "c2_boss_hundred_arm_extractor":
-		_prefetch_monster("c2_spirit_larva", seen)
+	var abilities: Dictionary = entry.get("abilities", {})
+	_prefetch_monster(String(abilities.get("summon", "")), seen)
 	var skill: Variant = entry.get("bossSkill", null)
 	if skill is Dictionary:
 		for phase: Variant in (skill as Dictionary).get("phases", []):

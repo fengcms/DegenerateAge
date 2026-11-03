@@ -313,6 +313,7 @@ func get_summary() -> String:
 func validate_all() -> Array[String]:
 	var report: Array[String] = []
 	report.append_array(errors)
+	report.append_array(MonsterAbilities.validate(get_table("monsters")))
 
 	# 1) ID 唯一性
 	for table_name in ID_UNIQUE_TABLES:

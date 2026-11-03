@@ -26,3 +26,7 @@
 <!-- MONSTER LIST END -->
 
 修改名称、等级、类型、掉落、能力或新增怪物时，同步维护本清单与设计用途；数值以 `monsters.json` 为唯一事实源。地图刷新点仍在 `data/maps/`，任务目标仍在 `data/quests.json`。
+
+## 能力配置
+
+第二章 Boss 以 abilities.bossPattern 选择预警序列，enrageSpeed 与 summon/summonCount 定义狂暴。special 选择冲锋/横扫，projectiles 定义弹数；heal 按 supportGroup 选择治疗对象并定义秒/像素/生命比例。ID 仅作身份与跨表引用，复制能力到其他身份不再依赖 c2_ 前缀。原有数值和奖励保持不变。

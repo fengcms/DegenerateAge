@@ -26,7 +26,8 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_spirit_larva"
+    "appearanceId": "c2_spirit_larva",
+    "supportGroup": "well"
   },
   {
     "id": "c2_copper_worm",
@@ -55,7 +56,8 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_copper_worm"
+    "appearanceId": "c2_copper_worm",
+    "supportGroup": "well"
   },
   {
     "id": "c2_broken_guard",
@@ -84,7 +86,8 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_broken_guard"
+    "appearanceId": "c2_broken_guard",
+    "supportGroup": "well"
   },
   {
     "id": "c2_slag_leech",
@@ -113,7 +116,8 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_slag_leech"
+    "appearanceId": "c2_slag_leech",
+    "supportGroup": "well"
   },
   {
     "id": "c2_badge_wraith",
@@ -142,7 +146,8 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_badge_wraith"
+    "appearanceId": "c2_badge_wraith",
+    "supportGroup": "well"
   },
   {
     "id": "c2_ash_beast",
@@ -171,7 +176,11 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_ash_beast"
+    "appearanceId": "c2_ash_beast",
+    "supportGroup": "well",
+    "abilities": {
+      "special": "charge"
+    }
   },
   {
     "id": "c2_spirit_attendant",
@@ -200,7 +209,16 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_spirit_attendant"
+    "appearanceId": "c2_spirit_attendant",
+    "supportGroup": "well",
+    "abilities": {
+      "heal": {
+        "group": "well",
+        "interval": 4.0,
+        "range": 180.0,
+        "fraction": 0.1
+      }
+    }
   },
   {
     "id": "c2_purple_parasite",
@@ -229,7 +247,8 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 normal；数值待实机校准。",
-    "appearanceId": "c2_purple_parasite"
+    "appearanceId": "c2_purple_parasite",
+    "supportGroup": "well"
   },
   {
     "id": "c2_elite_copper_matriarch",
@@ -307,7 +326,10 @@
       1,
       2
     ],
-    "appearanceId": "c2_elite_broken_inspector"
+    "appearanceId": "c2_elite_broken_inspector",
+    "abilities": {
+      "special": "sweep"
+    }
   },
   {
     "id": "c2_elite_gray_scribe",
@@ -346,7 +368,10 @@
       1,
       2
     ],
-    "appearanceId": "c2_elite_gray_scribe"
+    "appearanceId": "c2_elite_gray_scribe",
+    "abilities": {
+      "projectiles": 2
+    }
   },
   {
     "id": "c2_elite_spirit_guard",
@@ -424,7 +449,10 @@
       1,
       2
     ],
-    "appearanceId": "c2_elite_ash_leader"
+    "appearanceId": "c2_elite_ash_leader",
+    "abilities": {
+      "special": "charge"
+    }
   },
   {
     "id": "c2_boss_iron_foreman",
@@ -453,7 +481,13 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 boss；数值待实机校准。",
-    "appearanceId": "c2_boss_iron_foreman"
+    "appearanceId": "c2_boss_iron_foreman",
+    "abilities": {
+      "bossPattern": "foreman",
+      "enrageSpeed": 1.15,
+      "summon": "c2_broken_guard",
+      "summonCount": 2
+    }
   },
   {
     "id": "c2_boss_slag_devourer",
@@ -482,7 +516,13 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 boss；数值待实机校准。",
-    "appearanceId": "c2_boss_slag_devourer"
+    "appearanceId": "c2_boss_slag_devourer",
+    "abilities": {
+      "bossPattern": "devourer",
+      "enrageSpeed": 1.1,
+      "summon": "",
+      "summonCount": 0
+    }
   },
   {
     "id": "c2_boss_hundred_arm_extractor",
@@ -511,6 +551,12 @@
     "bossSkill": null,
     "spawnWeight": 1.0,
     "desc": "第二章 boss；数值待实机校准。",
-    "appearanceId": "c2_boss_hundred_arm_extractor"
+    "appearanceId": "c2_boss_hundred_arm_extractor",
+    "abilities": {
+      "bossPattern": "extractor",
+      "enrageSpeed": 1.15,
+      "summon": "c2_spirit_larva",
+      "summonCount": 3
+    }
   }
 ]

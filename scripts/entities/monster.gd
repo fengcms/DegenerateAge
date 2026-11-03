@@ -369,7 +369,7 @@ func _spawn_summons(id: String, count: int, after_death: bool = false, no_reward
 func _update_boss(delta: float) -> bool:
 	if is_dead or template.get("kind", "") != "boss":
 		return false
-	if monster_id.begins_with("c2_boss_"):
+	if not String(template.get("abilities", {}).get("bossPattern", "")).is_empty():
 		return _update_chapter_boss(delta)
 	if boss_action != null:
 		return _update_boss_action(delta)
@@ -440,11 +440,9 @@ func _update_chapter_boss(delta: float) -> bool:
 		_announce_boss_hp()
 		if boss_phase == 2 and not _boss_enraged:
 			_boss_enraged = true
-			attack_interval /= 1.15 if monster_id != "c2_boss_slag_devourer" else 1.10
-			if monster_id == "c2_boss_iron_foreman":
-				_spawn_engaged_boss_summons.call_deferred("c2_broken_guard", 2, true)
-			elif monster_id == "c2_boss_hundred_arm_extractor":
-				_spawn_engaged_boss_summons.call_deferred("c2_spirit_larva", 3, true)
+			var abilities: Dictionary = template.get("abilities", {})
+			attack_interval /= float(abilities.get("enrageSpeed", 1.0))
+			_spawn_engaged_boss_summons.call_deferred(String(abilities.get("summon", "")), int(abilities.get("summonCount", 0)), true)
 	_chapter_boss_skill_cd = maxf(0.0, _chapter_boss_skill_cd - delta)
 	if not _chapter_boss_warn.is_empty():
 		_chapter_boss_warn_left -= delta
@@ -463,11 +461,11 @@ func _update_chapter_boss(delta: float) -> bool:
 	_chapter_boss_origin = global_position
 	_chapter_boss_target = player.global_position
 	_chapter_boss_centers.clear()
-	match monster_id:
-		"c2_boss_iron_foreman":
+	match String(template.get("abilities", {}).get("bossPattern", "")):
+		"foreman":
 			_chapter_boss_warn = "sweep" if boss_phase == 0 or _chapter_boss_casts % 2 == 0 else "line"
 			_chapter_boss_warn_left = 1.0 if _chapter_boss_warn == "sweep" else 1.2
-		"c2_boss_slag_devourer":
+		"devourer":
 			_chapter_boss_warn = "line" if boss_phase == 0 else "blasts"
 			_chapter_boss_warn_left = 1.0 if boss_phase == 0 else 1.4
 			if _chapter_boss_warn == "blasts":
@@ -719,7 +717,7 @@ func _physics_process(delta: float) -> void:
 		_ranged_windup -= delta
 		if _ranged_windup <= 0.0 and state == State.ATTACK:
 			_fire_projectile()
-	if monster_id == "c2_spirit_attendant":
+	if template.get("abilities", {}).has("heal"):
 		_update_support_heal(delta)
 	velocity = Vector2.ZERO
 	if ai_enabled and not _update_boss(delta) and not _update_chapter_special(delta):
@@ -904,8 +902,10 @@ func _get_player() -> Node2D:
 		return null
 	return p as Node2D
 
+## 按能力类型推进冲锋或横扫，保持既有预警时序和画判同源几何。
 func _update_chapter_special(delta: float) -> bool:
-	if not monster_id in ["c2_ash_beast", "c2_elite_ash_leader", "c2_elite_broken_inspector"]:
+	var special := String(template.get("abilities", {}).get("special", ""))
+	if special.is_empty():
 		return false
 	_special_cd = maxf(0.0, _special_cd - delta)
 	var player := _get_player()
@@ -935,9 +935,9 @@ func _update_chapter_special(delta: float) -> bool:
 		return true
 	if _special_cd > 0.0 or state not in [State.CHASE, State.ATTACK]:
 		return false
-	if player.global_position.distance_to(global_position) > (220.0 if monster_id != "c2_elite_broken_inspector" else 135.0):
+	if player.global_position.distance_to(global_position) > (135.0 if special == "sweep" else 220.0):
 		return false
-	_special_warn = "sweep" if monster_id == "c2_elite_broken_inspector" else "charge"
+	_special_warn = special
 	_special_target = player.global_position
 	_special_warn_left = 0.8 if _special_warn == "sweep" else 0.7
 	_special_cd = 4.5
@@ -1017,7 +1017,7 @@ func _fire_projectile() -> void:
 	var facing := (_ranged_target - global_position).normalized()
 	if facing == Vector2.ZERO:
 		return
-	var count := 2 if monster_id == "c2_elite_gray_scribe" else 1
+	var count := int(template.get("abilities", {}).get("projectiles", 1))
 	for i in range(count):
 		var bolt := MonsterProjectile.new()
 		bolt.source = self
@@ -1027,24 +1027,26 @@ func _fire_projectile() -> void:
 		get_parent().add_child(bolt)
 		bolt.global_position = global_position + bolt.direction * 22.0
 
+## 按能力配置治疗同支援组的受伤普通怪，单位为秒、像素和生命比例。
 func _update_support_heal(delta: float) -> void:
+	var heal: Dictionary = template.get("abilities", {}).get("heal", {})
 	_support_heal_cd -= delta
 	if _support_heal_cd > 0.0:
 		return
-	_support_heal_cd = 4.0
+	_support_heal_cd = float(heal.get("interval", 4.0))
 	var best: Monster = null
-	var nearest := 180.0 * 180.0
+	var nearest := pow(float(heal.get("range", 180.0)), 2.0)
 	for candidate in get_tree().get_nodes_in_group("enemies"):
 		var ally := candidate as Monster
 		if ally == null or ally == self or ally.is_dead or ally._kind() != "normal" \
-				or ally.hp >= ally.max_hp or not ally.monster_id.begins_with("c2_"):
+				or ally.hp >= ally.max_hp or String(ally.template.get("supportGroup", "")) != String(heal.get("group", "")):
 			continue
 		var distance := global_position.distance_squared_to(ally.global_position)
 		if distance < nearest:
 			nearest = distance
 			best = ally
 	if best != null:
-		best.hp = mini(best.max_hp, best.hp + maxi(1, roundi(best.max_hp * 0.10)))
+		best.hp = mini(best.max_hp, best.hp + maxi(1, roundi(best.max_hp * float(heal.get("fraction", 0.1)))))
 		best.queue_redraw()
 
 # ---- 受击 / 死亡 ----
