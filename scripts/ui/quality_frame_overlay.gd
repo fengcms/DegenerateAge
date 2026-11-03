@@ -1,5 +1,6 @@
 class_name QualityFrameOverlay
 extends TextureRect
+## 装备品质边框动画：复用品质图集，以真实时钟选帧；节点隐藏时停更，不处理装备规则。
 ## Animated square border for an equipment instance's quality.
 
 const ATLASES := {

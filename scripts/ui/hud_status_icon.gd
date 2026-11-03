@@ -1,5 +1,6 @@
 class_name HudStatusIcon
 extends Control
+## HUD 状态图标：绘制状态装饰和反馈，业务状态由调用方提供，不独立推进战斗计时。
 ## Small HUD status glyphs. Off, active and paused have different silhouettes
 ## and colors; their exact meaning remains available through tooltips.
 

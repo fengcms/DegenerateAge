@@ -1,5 +1,6 @@
 class_name FlatTileMesh
 extends RefCounted
+## 同色静态地形合批：按等距投影生成共享网格，依赖布局输入，仅负责绘制，不修改通行和碰撞。
 ## Batch convex quads into one 2D draw surface, preserving insertion order.
 
 var _vertices := PackedVector3Array()

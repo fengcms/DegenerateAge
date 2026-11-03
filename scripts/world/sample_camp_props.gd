@@ -1,4 +1,5 @@
 extends Node2D
+## 营地样板静态装饰：复用图集与投影构建表现，不建立正式交互与奖励规则。
 ## Decorative sample props; they do not add interaction or blocking geometry.
 
 func _ready() -> void:

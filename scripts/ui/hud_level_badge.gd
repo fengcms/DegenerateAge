@@ -1,4 +1,5 @@
 extends Control
+## HUD 等级徽章：呈现角色等级与装饰边缘，依赖界面主题，不改变经验或升级状态。
 ## A small medallion attached to the portrait rim.
 
 func _draw() -> void:

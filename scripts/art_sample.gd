@@ -1,4 +1,5 @@
 extends Node2D
+## 美术样板场景：装配角色与地面预览，依赖样板素材，仅用于开发验收，不承担正式玩法入口。
 ## Isolated playable art review: uses real combat/UI without touching save files.
 
 func _prepare() -> void:

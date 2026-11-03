@@ -247,6 +247,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if visible and event is InputEventKey:
 		get_viewport().set_input_as_handled()
 
+## 批量四金合紫会话对话框：展示 GameState 批次进度和取消操作，不直接计算或扣除材料。
 ## 同轮拾取/磨损的密集事件合并一次，只终验可用态，不重建详情树。
 func _queue_recheck() -> void:
 	if not visible or _busy or _refresh_pending:

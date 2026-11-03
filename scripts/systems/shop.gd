@@ -2,8 +2,8 @@ class_name Shop
 extends RefCounted
 ## 货郎交易逻辑层（产品文档 6.4 购买 / 出售，6.2 售价公式）。
 ##
-## 本层只做交易语义——读 shops.json、算价、构造物品实例；不依赖 UI 与 Autoload 单例，
-## 由 GameState.shop_* 调用后统一广播事件（金币 / 背包 / 提示），便于单测与解耦。
+## 本层只做交易语义——读 shops.json、算价、构造物品实例；不依赖 UI，通过 DataLoader 查询模板，
+## 由 TradeService 经 GameState.shop_* 门面调用后统一广播事件（金币 / 背包 / 提示），便于单测与解耦。
 ## 数据驱动（10.2）：新增货郎 / 改价 = 改 shops.json，无需改代码。
 
 ## 6.2 品质售价倍率：普 1 / 优 1.5 / 稀 3 / 史 6 / 传 12。

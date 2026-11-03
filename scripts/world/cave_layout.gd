@@ -1,5 +1,6 @@
 class_name CaveLayout
 extends RefCounted
+## 洞窟布局事实源：组织通行掩码、连通性与路径查询，为碰撞和显示提供一致几何，不负责实体战斗。
 ## One authoritative orthographic grid for cave rendering, collision and routing.
 
 const PATH := "res://data/cave_layout.json"

@@ -92,9 +92,8 @@ var menu_mode: String = "menu"
 var auto_battle_on: bool = false
 var auto_pickup_on: bool = false
 
-## 货郎交易托盘内的暂存件数（E-P3-4）。托盘物品已从背包移出却尚未落档，
-## 故 > 0 时 SaveManager 挂起自动存档（否则交易中被触发的自动存档会把它们漏掉）。
-## 由 ShopPanel 在托盘变更 / 退回处同步；面板关闭退回后自然归 0。运行态，不落档。
+## 托盘提交中的暂存计数；大于已登记物品数时统一保存入口拒绝半笔交易。
+## 已登记物品通过 tradeTray 落档，计数本身为运行态，由面板/交易服务同步。
 var trade_staged_count: int = 0
 ## 未成交物品的唯一所有者；面板仅展示，跨场景与存档保留。
 var trade_tray: Dictionary = {}
@@ -964,7 +963,7 @@ func sell_selected_equipment(rows: Array[Dictionary], allow_risky: bool = false,
 	return {"ok": true, "count": rows.size(), "gold": gained, "reason": "", "capped": gained < total}
 
 ## 货郎在托盘空格足够时整批取出已核对装备；先增暂存计数防止中途自动存档。
-## 托盘最终归属仍由 ShopPanel 负责；调用前须确认交易会话有效且托盘确有空格。
+## 返回物品须同步登记到全局 trade_tray；调用前确认交易会话有效且有空格。
 func take_equipment_for_sale(rows: Array[Dictionary], available_slots: int,
 		allow_risky: bool = false, preset_override: String = "") -> Dictionary:
 	if rows.size() > available_slots:
@@ -2334,12 +2333,12 @@ func shop_buy(shop_id: String, item_id: String) -> Dictionary:
 
 ## 出售背包中指定格的装备（6.4：货郎只收购装备）。返回 {ok, reason, item, price}。
 ## silent = true 时不广播单件 toast（供面板批量出售后自行汇总，避免刷屏）。
-## 金币容量不足时不扣物；成功返回的 price 与实际入账同值。
+## 金币封顶也成交；成功返回的 price 为实际入账，差额由 capped 标记。
 func shop_sell(inv_index: int, silent: bool = false) -> Dictionary:
 	return TradeService.shop_sell(inv_index, silent)
 
 ## 结算一批暂存待售的装备（6.4「确认出售」）。托盘内容由出售界面持有，本函数只做算价与入账。
-## 返回 {ok, count, gold, reason}；空托盘、不可售物或金币上限失败时不结算。
+## 返回 {ok, count, gold, reason}；空托盘或不可售物不结算，金币上限只限制实际入账。
 func shop_sell_staged(items: Array) -> Dictionary:
 	return TradeService.shop_sell_staged(items)
 

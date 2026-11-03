@@ -1,5 +1,6 @@
 extends Control
 
+## 超级便携服务面板：根据道具能力分发已登记面板入口，不实现具体交易或锻造规则。
 const PANEL_ID := "super_portable"
 const SERVICES := ["boss_token", "shop", "blacksmith", "carter", "warehouse"]
 

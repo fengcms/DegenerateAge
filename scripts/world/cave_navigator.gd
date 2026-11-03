@@ -1,5 +1,6 @@
 class_name CaveNavigator
 extends RefCounted
+## 洞窟实体导航：缓存移动目标路线与导航修订，依赖 CaveLayout，负责碰撞安全转向而不选择战斗目标。
 ## Cached collision-safe route for moving targets inside the cave.
 
 var _layout: CaveLayout

@@ -1,4 +1,5 @@
 extends Control
+## HUD 头像装饰绘制：依赖界面尺寸与主题颜色，仅负责视觉，不参与人物属性结算。
 ## Thin engraved brass work around the portrait; the centre stays transparent.
 
 func _draw() -> void:

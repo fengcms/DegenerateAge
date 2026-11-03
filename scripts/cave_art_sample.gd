@@ -1,4 +1,5 @@
 extends Node2D
+## 洞窟美术样板：展示洞壁、地面与角色遮挡，复用正式投影和素材，不修改地图通行规则。
 ## F6 review entry for the playable cave without changing a save slot.
 
 func _ready() -> void:
