@@ -275,3 +275,13 @@ static func worn_count(slots: Dictionary) -> int:
 		if slots[sid] is Dictionary:
 			n += 1
 	return n
+
+## 根据 UI 选择快照定位已穿戴实例；索引越界、槽被替换或卸下时返回空，禁止操作新物品。
+static func selected_worn(choices: Array, index: int, equipment: Dictionary) -> Dictionary:
+	if index < 0 or index >= choices.size():
+		return {}
+	var choice: Dictionary = choices[index]
+	var candidate: Variant = equipment.get(choice.key)
+	if candidate is Dictionary and String(candidate.get("instanceId", "")) == String(choice.id):
+		return candidate
+	return {}

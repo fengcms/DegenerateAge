@@ -246,14 +246,7 @@ func _on_selected(index: int) -> void:
 		_refresh_details()
 
 func _selected_item() -> Dictionary:
-	var index := _picker.selected
-	if index < 0 or index >= _choices.size():
-		return {}
-	var choice := _choices[index]
-	var candidate = GameState.equipment.get(choice.key)
-	if candidate is Dictionary and String(candidate.get("instanceId", "")) == String(choice.id):
-		return candidate
-	return {}
+	return Equipment.selected_worn(_choices, _picker.selected, GameState.equipment)
 
 func _refresh_details() -> void:
 	var item := _selected_item()

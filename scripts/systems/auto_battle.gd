@@ -1166,9 +1166,3 @@ static func choose_skill(skills: Array, level: int, mp: int, cooldowns: Dictiona
 		return aoe
 	return single
 
-## 自动战斗是否愿意施放该技能（按职业白名单）。
-## R4-d：单体技能走独立白名单，与范围技同名同权；工程 98 增法师两表与魔法盾。
-func can_cast(skill_id: String) -> bool:
-	return WIRED_SKILLS.has(skill_id) or WIRED_SINGLE_SKILLS.has(skill_id) \
-		or MAGE_AREA_SKILLS.has(skill_id) or MAGE_SINGLE_SKILLS.has(skill_id) \
-		or skill_id == "magic_shield"

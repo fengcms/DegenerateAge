@@ -69,13 +69,6 @@ static func lock_count(locked: Array) -> int:
 static func max_lock_count(item: Dictionary) -> int:
 	return maxi(0, ReforgeAffixes.current_count(item) - 1)
 
-## 品质的词条条数（读 `equipmentRules.json` 的 `qualities[品质].affixCount`）；未登记 → 0。
-static func affix_count_of(quality: String) -> int:
-	var qualities: Variant = ItemFactory.rules().get("qualities", {})
-	if not qualities is Dictionary or not (qualities as Dictionary).has(quality):
-		return 0
-	return int(((qualities as Dictionary)[quality] as Dictionary).get("affixCount", 0))
-
 ## 实例品质：优先实例自带，缺失回退模板 `defaultQuality`（与 `Shop.item_quality` 同口径，
 ## 但**不引 `Shop`** —— 反向依赖会成环）。
 static func quality_of(item: Dictionary) -> String:

@@ -447,12 +447,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _try_interact():
 			get_viewport().set_input_as_handled()
 
-## 玩家身上的自动战斗决策机（M1-9；测试场景中可能不存在 → 返回 null）。
-func auto_pilot() -> AutoBattle:
-	if _player == null or not is_instance_valid(_player):
-		return null
-	return _player.get_node_or_null("AutoPilot") as AutoBattle
-
 ## 就近与 NPC 交互：成功派发返回 true（6.3 通用交互入口，后续对话系统 9.8 在此扩展）。
 ## M2：按 NPC role 派发 —— quest = 任务面板，shop = 货郎面板；
 ## M3-2：carter = 车夫面板（跨图出行）；M4-2：blacksmith = 铁匠对话。
