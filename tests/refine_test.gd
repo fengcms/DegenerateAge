@@ -245,7 +245,7 @@ func _test_ui_material_slots() -> void:
 	var target := _make("c6_equip_necklace", 100, "legendary", 2471)
 	var m0 := _make("c6_equip_weapon", 100, "legendary", 2472)
 	var m1 := _make("c6_equip_shoes", 100, "legendary", 2473)
-	GameState.inventory[0] = target
+	GameState.equipment.necklace = target
 	GameState.inventory[1] = m0
 	GameState.inventory[2] = m1
 	var panel: Control = (load("res://scenes/ui/ReforgePanel.tscn") as PackedScene).instantiate()

@@ -259,7 +259,7 @@ func _test_upgrade_and_reforge_price_matches_charge() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 108
 	var rf_item := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "epic", rng)
-	GameState.inventory[0] = rf_item
+	GameState.equipment.weapon = rf_item
 	rf._on_requested(false)
 	# 从装备自身取一条真实词条（不写死 stat 名 —— 数据变了这条要能自适应）。
 	var lock_stat := ""
@@ -297,7 +297,7 @@ func _test_upgrade_and_reforge_price_matches_charge() -> void:
 		"随身重铸**实扣 %d ≠ 按钮显示 %d**" % [spent_rf, rf_portable])
 	rf.queue_free()
 
-## 造一个只有一件背包装备、金币充足的干净局面。
+## 造一个只有一件已穿戴武器、金币充足的干净局面。
 func _game_with_one_equip(star: int) -> void:
 	GameState.reset_to_defaults()
 	GameState.gold = 10000000
@@ -305,7 +305,7 @@ func _game_with_one_equip(star: int) -> void:
 	rng.seed = 1081
 	var item := ItemFactory.make_equip_roll("c6_equip_weapon", 51, "epic", rng)
 	item["star"] = star
-	GameState.inventory[0] = item
+	GameState.equipment.weapon = item
 
 ## 从价签文本里抓「<token><数字><unit>」的数字；抓不到返回 -1（会让断言红，不静默）。
 ## `unit` 必须由调用方给：升星/重铸写「金币」，而修理按钮写的是「金）」——

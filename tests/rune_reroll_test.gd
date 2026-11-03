@@ -36,6 +36,7 @@ func _ready() -> void:
 		for failure in failures:
 			push_error(failure)
 		print("[RuneRerollTest] 失败 %d 项" % failures.size())
+	get_tree().quit(0 if failures.is_empty() else 1)
 
 # ---- 1) 权重表：四档读数据，递增且不重复 ----
 

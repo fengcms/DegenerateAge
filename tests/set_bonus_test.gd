@@ -323,6 +323,7 @@ func _test_panel_text() -> void:
 	_dress("legendary", 12)
 	var panel := preload("res://scenes/ui/CharacterPanel.tscn").instantiate()
 	add_child(panel)
+	panel.set_open(true)
 	panel._refresh()
 	var text := String(panel._stats.text)
 	check(text.contains("套装  "), "面板应含套装行，实际末段：%s" % text.substr(maxi(0, text.length() - 90)))

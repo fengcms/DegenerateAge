@@ -42,6 +42,8 @@ func _ready() -> void:
 	preview._on_confirm()
 	check(GameState.inventory[0] is Dictionary and not bool(preview._selected.get(String(old_shoes.instanceId), true)),
 		"旧清单首次确认只刷新，收藏装备不再被勾选")
+	# 下一次真实输入前完成合帧刷新；同帧过期输入另由快照守卫测试覆盖。
+	await get_tree().process_frame
 	panel._on_bag_slot_input(right_click, 0)
 	check(not bool(GameState.inventory[0].get("favorite", true)), "右键可取消收藏")
 	preview._on_confirm()

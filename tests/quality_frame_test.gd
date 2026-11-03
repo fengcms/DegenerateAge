@@ -26,7 +26,8 @@ func _ready() -> void:
 			check(frame.mouse_filter == Control.MOUSE_FILTER_IGNORE, "frame does not intercept input")
 			check((frame.texture as AtlasTexture).atlas == QualityFrameOverlay.ATLASES[quality], "correct atlas for " + quality)
 			check((frame.texture as AtlasTexture).region == Rect2(0, 0, 64, 64), "initial frame for " + quality)
-			frame._process(0.2)
+			frame._started_usec = Time.get_ticks_usec() - 200000
+			frame._process(0.0)
 			check((frame.texture as AtlasTexture).region != Rect2(0, 0, 64, 64), "frame advances for " + quality)
 			check(slot.get_theme_constant("icon_max_width") == 34, "图标保留34像素上限，不铺满格子")
 			check(slot.get_theme_constant("icon_max_width") < int(slot.custom_minimum_size.x),
