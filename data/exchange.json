@@ -1,4 +1,5 @@
 {
+  "brickExperience": {"unlockLevel": 100, "percentPerBrick": 1, "perLevelLimit": 20},
   "pairs": [
     {
       "id": "gold_to_ingot",

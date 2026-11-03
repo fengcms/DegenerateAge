@@ -53,6 +53,8 @@ var inventory: Array = []           # 背包物品实例（40 格，见 Inventor
 var inventory_expansions: int = 0
 var warehouse: Array = []           # 仓库物品，空位为 null（6.8）
 var warehouse_expansions: int = 0
+var brick_xp_used := 0
+var _brick_xp_committing := false
 var owned_mounts: Array[String] = [] # 独立坐骑收藏，不占背包格（M4-4）
 var active_mount: String = ""
 ## 本次会话最近骑过的坐骑；下马后快捷键优先重新骑它，不另增存档字段。
@@ -301,6 +303,7 @@ func reset_to_defaults(class_id: String = "") -> void:
 	inventory = Inventory.create(INVENTORY_SIZE)
 	inventory_expansions = 0
 	warehouse_expansions = 0
+	brick_xp_used = 0
 	warehouse = Warehouse.create()
 	owned_mounts = []
 	active_mount = ""
@@ -1079,6 +1082,26 @@ func exchange(pair_id: String, times: int = 1) -> Dictionary:
 	EventBus.toast_requested.emit(Localization.tr_key("msg.exchange.p006") % got, "pickup")
 	return {"ok": true, "reason": "", "got": got}
 
+
+## 校验确认快照，再同步扣除仓库金砖并按正常升级规则入账。
+func exchange_brick_xp(times: int, confirmed: Dictionary) -> Dictionary:
+	if _brick_xp_committing:
+		return {"ok": false, "reason": Localization.tr_key("msg.exchange.p007")}
+	var offer := GoldExchange.brick_xp_offer(times)
+	if not bool(offer.ok):
+		return _exchange_fail(String(offer.reason))
+	if offer != confirmed:
+		return _exchange_fail(Localization.tr_key("msg.brick_xp.stale"))
+	_brick_xp_committing = true
+	warehouse = GoldExchange.brick_xp_store_after(times)
+	brick_xp_used += times
+	add_xp(int(offer.gain))
+	EventBus.warehouse_changed.emit()
+	SaveManager.request_autosave()
+	_brick_xp_committing = false
+	var got := Localization.tr_key("ui.brick_xp.gain") % int(offer.gain)
+	EventBus.toast_requested.emit(Localization.tr_key("msg.exchange.p006") % got, "pickup")
+	return {"ok": true, "got": got}
 
 ## 仓库如意合成：同步重算计划后一次提交，失败不改变任何真实物品。
 func synthesize_warehouse_runes() -> Dictionary:
@@ -2417,6 +2440,7 @@ func _level_up() -> void:
 	var hp_ratio := float(player.hp) / float(max(1, prev_hp))
 	var mp_ratio := float(player.mp) / float(max(1, prev_mp))
 	player.level = int(player.level) + 1
+	brick_xp_used = 0
 	# M10-0：L ≤ 60 走逐级成长（与 4.4 逐位等价，见工程 40 §4.4 的证明）；
 	# L > 60 抬到 `Balance` 曲线基线，与怪物同乘 S ⇒ 击杀次数恒定（产品 13 §2.3）。
 	# 用 maxi 而非直接赋值，避免覆盖将来可能出现的其他基线来源。

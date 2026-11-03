@@ -40,6 +40,7 @@ func _ready() -> void:
 	_test_cost_text_scales()
 	_test_batch_full_success()
 	_test_batch_over_max_not_moved()
+	_test_brick_xp()
 	GameState.reset_to_defaults()
 	if failures.is_empty():
 		print("[GoldExchangeTest] 全部通过 ✅")
@@ -263,3 +264,44 @@ func _stacks(item_id: String) -> Array:
 	for entry in _entries(item_id):
 		out.append(int(entry.get("count", 0)))
 	return out
+
+
+## 金砖经验验证仓库来源、确认快照、升级结转与额度存档。
+func _test_brick_xp() -> void:
+	_reset(0)
+	GameState.player.level = 99
+	GameState.warehouse[0] = GoldExchange.stack_item(BRICK, 7)
+	GameState.warehouse[1] = GoldExchange.stack_item(BRICK, 14)
+	GameState.inventory[0] = GoldExchange.stack_item(BRICK, 5)
+	check(not GoldExchange.brick_xp_offer(1).ok, "99 级不可兑换")
+	GameState.player.level = 100
+	var offer := GoldExchange.brick_xp_offer(20)
+	check(offer.ok and offer.gain == 69720 and offer.maximum == 20, "100 级按每块 1% 向下取整")
+	check(not GameState.exchange_brick_xp(21, offer).ok and _count(BRICK) == 21, "超额度整笔拒绝")
+	GameState.add_xp(1)
+	check(not GameState.exchange_brick_xp(20, offer).ok and _count(BRICK) == 21, "进度变化使旧预览失效")
+	offer = GoldExchange.brick_xp_offer(20)
+	check(GameState.exchange_brick_xp(20, offer).ok and _count(BRICK) == 1
+		and GameState.inventory[0].count == 5 and int(GameState.player.xp) == 69721, "跨堆扣仓库并发经验")
+	check(not GameState.exchange_brick_xp(20, offer).ok and not GoldExchange.brick_xp_offer(1).ok,
+		"同级额度耗尽，旧确认不可重放")
+	var saved := SaveManager._collect()
+	check(SaveManager._is_valid_save(saved) and saved.brickXpUsed == 20, "额度与交易结果同批存档")
+	GameState.reset_to_defaults()
+	SaveManager.apply_to_game_state(saved)
+	check(GameState.brick_xp_used == 20 and _count(BRICK) == 1, "读档恢复本级已用额度")
+	saved.erase("brickXpUsed")
+	check(SaveManager._is_valid_save(saved), "旧档允许缺少额度字段")
+	SaveManager.apply_to_game_state(saved)
+	check(GameState.brick_xp_used == 0, "旧档从零开始")
+	GameState.player.xp = GameState.xp_to_next(100) - 10
+	offer = GoldExchange.brick_xp_offer(1)
+	check(GameState.exchange_brick_xp(1, offer).ok and GameState.player.level == 101
+		and GameState.player.xp == 3476 and GameState.brick_xp_used == 0, "跨级保留经验余量并重置额度")
+	GameState.player.level = GameState.PLAYER_LEVEL_CAP - 1
+	GameState.player.xp = GameState.xp_to_next(GameState.PLAYER_LEVEL_CAP - 1) - 7
+	GameState.warehouse[0] = GoldExchange.stack_item(BRICK, 2)
+	offer = GoldExchange.brick_xp_offer(1)
+	check(offer.maximum == 1 and offer.gain == 7 and GameState.exchange_brick_xp(1, offer).ok
+		and GameState.player.level == GameState.PLAYER_LEVEL_CAP and GameState.player.xp == 0
+		and _count(BRICK) == 1 and not GoldExchange.brick_xp_offer(1).ok, "满级边界仅扣一块并按实际经验入账")

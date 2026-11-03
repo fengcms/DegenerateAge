@@ -46,6 +46,52 @@ static func pair(pair_id: String) -> Dictionary:
 			return row as Dictionary
 	return {}
 
+const BRICK_XP := "brick_to_xp"
+const BRICK := "gold_brick"
+
+static func brick_xp_rules() -> Dictionary:
+	return DataLoader.get_table(TABLE).get("brickExperience", {})
+
+## 仅计算预览与数量边界，刷新按钮时不复制仓库。
+static func brick_xp_offer(times: int) -> Dictionary:
+	var rules := brick_xp_rules()
+	var level := int(GameState.player.level)
+	var xp := int(GameState.player.xp)
+	var need := GameState.xp_to_next(level)
+	var per_brick := need * int(rules.percentPerBrick) / 100
+	var allowance := maxi(0, int(rules.perLevelLimit) - GameState.brick_xp_used)
+	var stock := count_in(GameState.warehouse, BRICK)
+	var maximum := mini(stock, allowance)
+	var reason := ""
+	if level < int(rules.unlockLevel):
+		reason = Localization.tr_key("msg.brick_xp.locked") % int(rules.unlockLevel)
+	elif level >= GameState.PLAYER_LEVEL_CAP:
+		reason = Localization.tr_key("msg.brick_xp.capped")
+	elif allowance <= 0:
+		reason = Localization.tr_key("msg.brick_xp.quota")
+	elif stock < times:
+		reason = Localization.tr_key("msg.exchange.p003") % times
+	if level == GameState.PLAYER_LEVEL_CAP - 1:
+		maximum = mini(maximum, (maxi(0, need - xp) + per_brick - 1) / per_brick)
+	if times < 1 or times > maximum:
+		if reason.is_empty():
+			reason = Localization.tr_key("msg.exchange.p007")
+	var gain := per_brick * times if reason.is_empty() else 0
+	if level == GameState.PLAYER_LEVEL_CAP - 1:
+		gain = mini(gain, maxi(0, need - xp))
+	var next_level := level
+	var next_xp := xp + gain
+	if gain > 0 and next_xp >= need:
+		next_xp -= need
+		next_level += 1
+	return {"ok": reason.is_empty(), "reason": reason, "times": times,
+		"maximum": maximum if level >= int(rules.unlockLevel) and level < GameState.PLAYER_LEVEL_CAP else 0,
+		"stock": stock, "allowance": allowance, "level": level, "xp": xp, "per_brick": per_brick,
+		"gain": gain, "next_level": next_level, "next_xp": next_xp}
+
+static func brick_xp_store_after(times: int) -> Array:
+	return _store_without(GameState.warehouse.duplicate(), BRICK, times)
+
 # ---- 物品与容器探针 ----
 
 ## 兑换目标的物品实例；`gold`（不是物品）与非法 id 返回空字典。
