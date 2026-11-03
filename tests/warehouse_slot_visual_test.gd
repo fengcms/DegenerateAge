@@ -41,6 +41,24 @@ func _ready() -> void:
 	panel._refresh()
 	_check(panel._store_slots.size() == 50 and panel._store_slots[0] == store,
 		"扩容只补建新格子，不重建已有格子")
+	GameState.warehouse[0] = GoldExchange.stack_item(GoldExchange.BRICK, 3)
+	panel._refresh()
+	_check(panel._brick_xp_button.disabled, "低等级仓库按钮置灰")
+	GameState.player.level = 100
+	EventBus.player_leveled.emit(100)
+	_check(not panel._brick_xp_button.disabled, "达到解锁等级时按钮更新")
+	panel._brick_xp_button.pressed.emit()
+	var dialog: PanelAmountDialog = panel._amount_dialog
+	_check(dialog.visible and dialog._edit.text == "1" and dialog._got_label.text.contains("3486"),
+		"数量框默认一块并预览到账经验")
+	GameState.add_xp(1)
+	dialog._on_confirm()
+	_check(dialog.visible and GameState.warehouse[0].count == 3 and dialog._got_label.text.contains("3487"),
+		"旧进度确认不扣金砖，重新显示当前进度")
+	dialog._on_confirm()
+	dialog._on_confirm()
+	_check(not dialog.visible and GameState.warehouse[0].count == 2 and GameState.player.xp == 3487,
+		"第二次确认入账一次，重复确认不扣第二块")
 	panel.queue_free()
 	if _failures.is_empty():
 		print("[WarehouseSlotVisualTest] 全部通过 ✅")

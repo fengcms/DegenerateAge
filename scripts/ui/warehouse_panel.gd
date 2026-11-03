@@ -6,8 +6,8 @@ const COLUMNS := 8
 const DOUBLE_CLICK_MS := 400
 const SLOT_MIN := Vector2(46, 46)
 ## 双栏标题、计数、详情、兑换区和底部操作所占的逻辑高度；缩放时优先缩短滚动区。
-## 109 新增兑换区（标题 + 按钮行 + 两处 separation）约占 64px，230 → 294。
-const WAREHOUSE_VERTICAL_CHROME_BUDGET := 294.0
+## 109 新增兑换区（标题 + 按钮行 + 两处 separation）约占 64px，经验兑换按钮与区标题同行。
+const WAREHOUSE_VERTICAL_CHROME_BUDGET := 304.0
 
 ## 兑换按钮顺序与文案键（工程 109）。顺序 = 玩家自然动线：先换条、再合砖、再兑回。
 const EXCHANGE_ROWS := [
@@ -42,6 +42,8 @@ var _amount_dialog: PanelAmountDialog
 ## 当前弹框在换哪一对。只有 `_on_exchange()` 会写它 —— 弹框本身不认识「兑换对」，
 ## 它只认识一个整数，业务身份由面板自己记住。
 var _pending_pair := ""
+var _brick_xp_preview: Dictionary = {}
+var _brick_xp_button: Button
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -57,6 +59,7 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_refresh)
 	EventBus.warehouse_changed.connect(_refresh)
 	EventBus.gold_changed.connect(_on_gold_changed)
+	EventBus.player_leveled.connect(_on_player_leveled)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("interact") or event.is_action_pressed("pause")):
@@ -75,6 +78,10 @@ func _on_gold_changed(_amount: int) -> void:
 	if visible:
 		_refresh_summary()
 		_refresh_exchange()
+
+func _on_player_leveled(_level: int) -> void:
+	if visible:
+		_refresh_brick_xp_button()
 
 func set_open(open: bool) -> void:
 	visible = open
@@ -170,10 +177,17 @@ func _build() -> void:
 	_detail.add_theme_color_override("font_color", PanelChrome.MUTED)
 	# 兑换区（工程 109）：标题一行 + 四个按钮一行。按钮文案带「可换 N 次」，
 	# 禁用原因与提示共用一个 tooltip —— 不做第二套判断，避免「按钮灰了但说不出为什么」。
+	var exchange_header := HBoxContainer.new()
+	root.add_child(exchange_header)
 	var exchange_head := Label.new()
 	exchange_head.text = Localization.tr_key("ui.warehouse_panel.p016")
-	root.add_child(exchange_head)
+	exchange_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	exchange_header.add_child(exchange_head)
 	PanelChrome.style_section(exchange_head)
+	_brick_xp_button = Button.new()
+	_brick_xp_button.pressed.connect(_open_brick_xp)
+	exchange_header.add_child(_brick_xp_button)
+	PanelChrome.style_action(_brick_xp_button)
 	var exchange_row := HBoxContainer.new()
 	exchange_row.add_theme_constant_override("separation", 6)
 	root.add_child(exchange_row)
@@ -289,6 +303,7 @@ func _refresh_summary() -> void:
 ## 禁用原因来自 `GoldExchange.check()` —— 与真正提交走同一套判定，不会出现
 ## 「按钮能点但点了失败」或「明明够却不能点」两种错位。
 func _refresh_exchange() -> void:
+	_refresh_brick_xp_button()
 	for spec in EXCHANGE_ROWS:
 		var pair_id := String(spec[0])
 		var button: Variant = _exchange_buttons.get(pair_id)
@@ -303,6 +318,39 @@ func _refresh_exchange() -> void:
 		if not bool(gate.get("ok", false)):
 			hint = "%s\n%s" % [hint, String(gate.get("reason", ""))]
 		button.tooltip_text = hint
+
+func _refresh_brick_xp_button() -> void:
+	var offer := GoldExchange.brick_xp_offer(1)
+	_brick_xp_button.text = Localization.tr_key("ui.warehouse_panel.p021") % [
+		Localization.tr_key("ui.brick_xp.action"), offer.maximum]
+	_brick_xp_button.disabled = not bool(offer.ok)
+	_brick_xp_button.tooltip_text = String(offer.reason)
+
+func _open_brick_xp(initial_times: int = 1) -> void:
+	_reset_click()
+	var offer := GoldExchange.brick_xp_offer(1)
+	if not bool(offer.ok):
+		return
+	_pending_pair = GoldExchange.BRICK_XP
+	_brick_xp_preview = {}
+	_amount_dialog.title = Localization.tr_key("ui.brick_xp.action")
+	_amount_dialog.preview_provider = _preview_brick_xp
+	_amount_dialog.max_times = int(offer.maximum)
+	_amount_dialog.popup(initial_times if initial_times <= int(offer.maximum) else 1)
+
+func _preview_brick_xp(times: int) -> Dictionary:
+	_brick_xp_preview = GoldExchange.brick_xp_offer(times)
+	var offer := _brick_xp_preview
+	_amount_dialog.rate_text = Localization.tr_key("ui.brick_xp.rate") % [
+		int(GoldExchange.brick_xp_rules().percentPerBrick), offer.stock, offer.allowance]
+	if not bool(offer.ok):
+		return {"cost": Localization.tr_key("msg.brick_xp.stale"), "got": offer.reason}
+	var progress := Localization.tr_key("ui.brick_xp.preview_cap") % [offer.gain, offer.next_level] \
+		if int(offer.next_level) == GameState.PLAYER_LEVEL_CAP else \
+		Localization.tr_key("ui.brick_xp.preview") % [offer.gain, offer.next_level,
+			offer.next_xp, GameState.xp_to_next(int(offer.next_level))]
+	return {"cost": ItemUtil.display_name(GoldExchange.stack_item(GoldExchange.BRICK, times)),
+		"got": progress}
 
 ## 点兑换按钮 → 开批量数量弹框。
 ## 🔑 刻意**取消**了「单击换 1 次、Shift 换到上限」：Shift 是玩家常按的修饰键，
@@ -331,7 +379,19 @@ func _on_exchange(pair_id: String) -> void:
 ## 挂机战斗照旧在跑），所以这里**以 `GameState.exchange()` 的返回为准**，
 ## 绝不拿打开弹框时算的 max 去夹取玩家输入 —— 那等于用过期快照改写玩家的意图。
 func _on_amount_submitted(times: int) -> void:
-	_do_exchange(_pending_pair, times)
+	var pair_id := _pending_pair
+	_pending_pair = ""
+	if pair_id == GoldExchange.BRICK_XP:
+		var offer := _brick_xp_preview
+		_brick_xp_preview = {}
+		var result := GameState.exchange_brick_xp(times, offer)
+		if bool(result.ok):
+			_detail.text = Localization.tr_key("msg.exchange.p006") % String(result.got)
+		else:
+			_detail.text = String(result.reason)
+			_open_brick_xp(times)
+		return
+	_do_exchange(pair_id, times)
 
 func _do_exchange(pair_id: String, times: int) -> void:
 	if pair_id.is_empty() or times < 1:

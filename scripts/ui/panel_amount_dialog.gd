@@ -59,11 +59,11 @@ func _ready() -> void:
 	visible = false
 
 ## 打开弹框：输入框默认填 1 并全选，玩家直接敲数字即可覆盖。
-func popup() -> void:
+func popup(initial_times: int = 1) -> void:
 	visible = true
 	_title_label.text = PanelChrome.title_text(title)
 	_rate_label.text = rate_text
-	_edit.text = "1"
+	_edit.text = str(initial_times)
 	_refresh_state()
 	# 延后一帧：节点刚 visible 时焦点与选区操作会被布局顶掉。
 	_edit.grab_focus.call_deferred()
@@ -202,6 +202,8 @@ func _on_max_pressed() -> void:
 	_refresh_state()
 
 func _on_confirm() -> void:
+	if not is_visible_in_tree():
+		return
 	# 🔑 不拿 `_confirm.disabled` 当判据：那只是渲染结果，任何一次漏刷新
 	# 都会让非法值被提交（输入过滤与禁用态是两层，这里必须自己再判一次）。
 	var times := _parse_amount()
