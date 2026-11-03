@@ -39,5 +39,22 @@ func _ready() -> void:
 				var overlap := slot.get_global_rect().intersection(panel._scroll.get_global_rect())
 				assert(overlap.size.y >= 77.0 and overlap.size.x >= 77.0, "材料必须实际落在可见裁剪区")
 		panel.set_open(false)
+	# 库存变化与第二次点击发生在同一帧，不能沿用旧批次确认。
+	GameState.player.level = 600
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4513
+	GameState.inventory[0] = ItemFactory.make_equip_exact("c6_equip_weapon", 500, "legendary", rng)
+	panel._on_requested(EquipmentFusion.SACRIFICE, true)
+	panel._on_confirm()
+	assert(panel._risk_confirmed)
+	assert(GameState.add_item(ItemFactory.make_equip_exact("c6_equip_weapon", 500, "legendary", rng)))
+	assert(not panel._risk_confirmed, "库存信号立即撤销旧确认")
+	panel._on_confirm()
+	assert(panel._risk_confirmed and GameState.inventory_used() == 2, "重新确认时仍保留两件装备")
+	panel._on_confirm()
+	assert(GameState.inventory_used() == 0, "确认最新批次后才消耗装备")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert(bag._bag_buttons[0].item.is_empty() and bag._bag_buttons[1].item.is_empty())
 	print("[EquipmentLayoutRegressionTest] PASS")
 	get_tree().quit()
