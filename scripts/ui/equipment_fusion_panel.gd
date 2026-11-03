@@ -42,6 +42,8 @@ var _rune_pickers: Array[OptionButton] = []
 var _rune_choices: Array[String] = ["", "", "", ""]
 var _rune_hint: Label
 
+var _locked_transfer: Dictionary = {}
+var _transfer_refresh_scheduler: FrameLayoutScheduler
 var _locked_sacrifice: Dictionary = {}
 var _sacrifice_refresh_scheduler: FrameLayoutScheduler
 
@@ -51,6 +53,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	_sacrifice_refresh_scheduler = FrameLayoutScheduler.new(self, _refresh_sacrifice_if_visible)
+	_transfer_refresh_scheduler = FrameLayoutScheduler.new(self, _refresh_transfer_if_visible)
 	visible = false
 	EventBus.equipment_fusion_panel_requested.connect(_on_requested)
 	EventBus.equipment_fusion_close_requested.connect(func() -> void: set_open(false))
@@ -60,6 +63,7 @@ func _ready() -> void:
 	# 换装 / 卸下也走同一次失效检查（工程 65）：第一格可能来自穿戴槽。
 	EventBus.equipment_changed.connect(_on_equipment_changed)
 	EventBus.gold_changed.connect(_on_gold_changed)
+	EventBus.player_leveled.connect(_on_transfer_level_changed)
 	EventBus.settings_changed.connect(_resize)
 	get_viewport().size_changed.connect(_resize)
 	_resize.call_deferred()
@@ -194,19 +198,68 @@ func _revalidate_selection() -> void:
 			invalid = true
 		elif found != _selected[i]:
 			_selected[i] = found.duplicate(true)
-	_risk_confirmed = false
-	_refresh_slots()
-	_refresh_preview()
+	if _mode == EquipmentFusion.STAR_TRANSFER:
+		_validate_transfer_lock()
+		_transfer_refresh_scheduler.request()
+	else:
+		_risk_confirmed = false
+		_refresh_slots()
+		_refresh_preview()
 	if invalid:
 		_feedback.text = Localization.tr_key("ui.fusion.stale")
 
-## 金币变化重算可支付状态，并取消旧的风险确认。
+## 锁定交易条款，不纳入耐久、背包格位或余额，避免无关战斗事件打断确认。
+func _transfer_terms() -> Dictionary:
+	var items := _material_snapshots()
+	if items.size() != 2:
+		return {}
+	var plan := EquipmentFusion.plan_transfer(items[0], items[1])
+	if not bool(plan.get("ok", false)):
+		return {}
+	var materials: Array[Dictionary] = []
+	var locations: Array[String] = []
+	for i in range(items.size()):
+		var found := GameState.find_owned_item(String(items[i].get("instanceId", "")))
+		var loc := String(found.get("loc", ""))
+		if loc not in ["bag", "worn"] or (i == 1 and loc != "bag"):
+			return {}
+		var material := items[i].duplicate(true)
+		material.erase("durability")
+		materials.append(material)
+		locations.append(loc + String(found.get("slot", "")) if loc == "worn" else loc)
+	return {"materials": materials, "locations": locations, "runes": _rune_choices.duplicate(),
+		"cost": int(plan.cost), "level": int(plan.outputLevel),
+		"wearable": EquipmentFusion.transfer_locked_level(int(plan.outputLevel), int(GameState.player.get("level", 1))) == 0}
+
+## 实质条款改变才撤销确认；金币和如意暂时不足交给预览与结算拦截。
+func _validate_transfer_lock() -> void:
+	if not _locked_transfer.is_empty() and _transfer_terms() != _locked_transfer:
+		_locked_transfer = {}
+		_risk_confirmed = false
+		_feedback.text = Localization.tr_key("ui.fusion.stale")
+
+## 等级变化只在影响穿戴结果时取消确认，不监听同级经验增长。
+func _on_transfer_level_changed(_level: int) -> void:
+	if visible and _mode == EquipmentFusion.STAR_TRANSFER:
+		_validate_transfer_lock()
+		_transfer_refresh_scheduler.request()
+
+## 合并同一渲染帧内的战斗与拾取通知，关闭后不再重建控件。
+func _refresh_transfer_if_visible() -> void:
+	if visible and _mode == EquipmentFusion.STAR_TRANSFER:
+		_refresh_slots()
+		_refresh_preview()
+
+## 金币只改变保星交易的可支付状态，其他合成模式保持原行为。
 func _on_gold_changed(_amount: int) -> void:
 	if _mode == EquipmentFusion.SACRIFICE:
 		return
 	if visible:
-		_risk_confirmed = false
-		_refresh_preview()
+		if _mode == EquipmentFusion.STAR_TRANSFER:
+			_transfer_refresh_scheduler.request()
+		else:
+			_risk_confirmed = false
+			_refresh_preview()
 
 ## 宽屏并列、窄屏上下排列；分区比例一律按**缩放后的逻辑视口**折算。
 ## 并列分支把工作台做成**可拖动浮窗**，默认落在背包右侧（工程 74 §7）；玩家拖走后以实际位置为准。
@@ -530,6 +583,7 @@ func _on_material_dropped(row: int, payload: Dictionary) -> void:
 		_feedback.text = error
 		return
 	_selected[row] = item.duplicate(true)
+	_locked_transfer = {}
 	_risk_confirmed = false
 	_feedback.text = ""
 	_refresh_slots()
@@ -540,6 +594,7 @@ func _clear_material(row: int) -> void:
 	if row < 0 or row >= _selected.size() or _selected[row].is_empty():
 		return
 	_selected[row] = {}
+	_locked_transfer = {}
 	_risk_confirmed = false
 	_feedback.text = ""
 	_refresh_slots()
@@ -555,6 +610,7 @@ func _on_random_fill() -> void:
 		return
 	for i in range(_selected.size()):
 		_selected[i] = picked[i] if i < picked.size() else {}
+	_locked_transfer = {}
 	_risk_confirmed = false
 	_feedback.text = ""
 	_refresh_slots()
@@ -568,6 +624,7 @@ func _reset_materials() -> void:
 	# 工程 112：如意同理 —— 面板里存的只是「想投哪四枚」，真正扣除在结算成功时。
 	for i in range(_rune_choices.size()):
 		_rune_choices[i] = ""
+	_locked_transfer = {}
 	_risk_confirmed = false
 	if _feedback != null:
 		_feedback.text = ""
@@ -662,6 +719,11 @@ func _refresh_preview() -> void:
 		_summary.text += "\n" + Localization.tr_key("ui.fusion.cost", [int(plan.cost), GameState.gold])
 		_refresh_out_level(plan)
 	_confirm.disabled = GameState.gold < int(plan.get("cost", 0))
+	if _mode == EquipmentFusion.STAR_TRANSFER:
+		var charge := RuneCharge.plan(GameState.inventory, _rune_choices)
+		if not bool(charge.get("ok", false)):
+			_confirm.disabled = true
+			_rune_hint.text = String(charge.get("reason", ""))
 
 ## 工程 96 P1：产物穿不上时把提示搬到独立高亮行。
 ## 判据来自规则层 `EquipmentFusion.transfer_locked_level`，UI 不自己写 `<`。
@@ -686,10 +748,10 @@ func _refresh_runes() -> void:
 		var rune_id := _rune_choices[slot]
 		if rune_id.is_empty():
 			continue
-		if int(remaining.get(rune_id, 0)) <= 0 or not DataLoader.get_entry("runes", rune_id) is Dictionary:
+		if _locked_transfer.is_empty() and (int(remaining.get(rune_id, 0)) <= 0 or not DataLoader.get_entry("runes", rune_id) is Dictionary):
 			_rune_choices[slot] = ""
 			continue
-		remaining[rune_id] = int(remaining[rune_id]) - 1
+		remaining[rune_id] = int(remaining.get(rune_id, 0)) - 1
 	var templates = DataLoader.get_table("runes")
 	for slot in range(_rune_pickers.size()):
 		var picker := _rune_pickers[slot]
@@ -731,11 +793,16 @@ func _on_rune_selected(choice_index: int, slot: int) -> void:
 	_rune_choices[slot] = String(picker.get_item_metadata(choice_index)) if choice_index > 0 else ""
 	_refresh_rune_hint()
 	# 改了如意就等于改了"这一单要不要确认"，二次确认必须重来（与换材料同口径）。
+	_locked_transfer = {}
 	_risk_confirmed = false
 	_refresh_preview()
 
 ## 带星材料、少于四件的赌局与保星交易都要二次确认，最终仍由 GameState 快照重核。
 func _on_confirm() -> void:
+	# 输入时同步终验，不能依赖尚未执行的按帧预览；结算同步执行且内部再次核对材料与费用。
+	if _mode == EquipmentFusion.STAR_TRANSFER:
+		_revalidate_selection()
+		_refresh_preview()
 	if _confirm.disabled:
 		return
 	if _mode == EquipmentFusion.SACRIFICE:
@@ -769,6 +836,10 @@ func _on_confirm() -> void:
 		if bool(plan.get("ok", false)):
 			locked_level = EquipmentFusion.transfer_locked_level(int(plan.get("outputLevel", 0)), level)
 	if risk and not _risk_confirmed:
+		if _mode == EquipmentFusion.STAR_TRANSFER:
+			_locked_transfer = _transfer_terms()
+			if _locked_transfer.is_empty():
+				return
 		_risk_confirmed = true
 		var lines: Array[String] = []
 		if _mode == EquipmentFusion.STAR_TRANSFER:
@@ -818,6 +889,7 @@ func _on_confirm() -> void:
 		_reset_materials()
 	else:
 		_feedback.text = String(result.get("reason", "合成失败"))
+		_locked_transfer = {}
 		_risk_confirmed = false
 		_refresh_preview()
 
@@ -876,6 +948,7 @@ func _on_confirm_sacrifice() -> void:
 		return
 	var locked := _locked_sacrifice
 	_locked_sacrifice = {}
+	_locked_transfer = {}
 	_risk_confirmed = false
 	_confirm.disabled = true
 	_confirm.text = Localization.tr_key("ui.sacrifice.action")
@@ -893,6 +966,7 @@ func _on_auto_runes() -> void:
 	if _mode != EquipmentFusion.STAR_TRANSFER or _auto_runes.disabled:
 		return
 	_rune_choices = RuneCharge.best_available(GameState.inventory)
+	_locked_transfer = {}
 	_risk_confirmed = false
 	_feedback.text = ""
 	_refresh_preview()

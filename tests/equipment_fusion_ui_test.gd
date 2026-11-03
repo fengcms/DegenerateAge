@@ -291,9 +291,47 @@ func _ready() -> void:
 	panel._on_confirm()
 	check(panel._feedback.text.contains("穿在身上"), "首次确认明确提示该部位将空出")
 	GameState.wear_equipment("boss")
-	check(panel._material_snapshots().size() == 2 and not panel._risk_confirmed,
-		"战斗磨损后两件材料保留但重新确认消耗风险")
+	check(panel._material_snapshots().size() == 2 and panel._risk_confirmed,
+		"战斗磨损后两件材料及风险确认保持有效")
+	var transfer_gold := GameState.gold
+	for i in range(32):
+		EventBus.inventory_changed.emit()
+		EventBus.gold_changed.emit(GameState.gold)
+	check(panel._risk_confirmed, "连续拾取和金币通知不打断确认")
+	GameState.gold = 0
+	EventBus.gold_changed.emit(0)
 	panel._on_confirm()
+	check(panel._risk_confirmed and not GameState.find_owned_item(String(worn_old.instanceId)).is_empty(),
+		"金币暂缺保留确认且不消耗装备")
+	GameState.gold = transfer_gold
+	EventBus.gold_changed.emit(transfer_gold)
+	# 移动旧装备改变自动穿戴条款，必须重新确认。
+	GameState.equipment.weapon = null
+	GameState.inventory[2] = worn_old
+	EventBus.inventory_changed.emit()
+	check(not panel._risk_confirmed, "旧料从身上移入背包使确认失效")
+	GameState.inventory[2] = null
+	GameState.equipment.weapon = worn_old
+	EventBus.equipment_changed.emit()
+	panel._on_confirm()
+	GameState.player.level = 200
+	EventBus.player_leveled.emit(200)
+	check(not panel._risk_confirmed, "升级跨过穿戴门槛使风险确认失效")
+	GameState.player.level = 1
+	EventBus.player_leveled.emit(1)
+	GameState.inventory[2] = ItemFactory.make_any("rune_diamond", 4)
+	EventBus.inventory_changed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	panel._on_auto_runes()
+	panel._on_confirm()
+	GameState.inventory[2] = null
+	EventBus.inventory_changed.emit()
+	panel._on_confirm()
+	check(panel._risk_confirmed and panel._rune_choices.count("rune_diamond") == 4
+		and GameState.gold == transfer_gold, "如意不足不降档、不扣费且保留四格锁定")
+	GameState.inventory[2] = ItemFactory.make_any("rune_diamond", 4)
+	EventBus.inventory_changed.emit()
 	panel._on_confirm()
 	check(GameState.equipment.get("weapon") == null and GameState.gold == 0
 		and GameState.inventory_used() == 1 and panel.visible and character.visible,
