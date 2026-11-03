@@ -61,22 +61,34 @@ func _ready() -> void:
 				assert(overlap.size.y >= 77.0 and overlap.size.x >= 77.0, "材料必须实际落在可见裁剪区")
 		panel.set_open(false)
 		assert(character.visible and bag.visible and not character._center._docked, "关闭工作台恢复人物浮窗")
-	# 库存变化与第二次点击发生在同一帧，不能沿用旧批次确认。
+	# 同帧拾取、背包整理和击杀磨损均不替换第一次确认的装备。
 	GameState.player.level = 600
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 4513
-	GameState.inventory[0] = ItemFactory.make_equip_exact("c6_equip_weapon", 500, "legendary", rng)
+	var locked := ItemFactory.make_equip_exact("c6_equip_weapon", 500, "legendary", rng)
+	var newcomer := ItemFactory.make_equip_exact("c6_equip_weapon", 490, "legendary", rng)
+	GameState.inventory[0] = locked
+	GameState.equipment.weapon = ItemFactory.make_equip_exact("c6_equip_weapon", 500, "legendary", rng)
 	panel._on_requested(EquipmentFusion.SACRIFICE, true)
 	panel._on_confirm()
 	assert(panel._risk_confirmed)
-	assert(GameState.add_item(ItemFactory.make_equip_exact("c6_equip_weapon", 500, "legendary", rng)))
-	assert(not panel._risk_confirmed, "库存信号立即撤销旧确认")
+	var expected_xp := Sacrifice.xp_of(locked)
+	assert(GameState.pickup_loot(newcomer).ok)
+	GameState.organize_inventory()
+	GameState.wear_equipment("normal")
+	GameState.add_xp(1)
+	assert(panel._risk_confirmed, "拾取与磨损保留已锁定确认")
 	panel._on_confirm()
-	assert(panel._risk_confirmed and GameState.inventory_used() == 2, "重新确认时仍保留两件装备")
-	panel._on_confirm()
-	assert(GameState.inventory_used() == 0, "确认最新批次后才消耗装备")
+	assert(GameState.inventory_used() == 1 and not GameState.find_owned_item(newcomer.instanceId).is_empty()
+		and GameState.find_owned_item(locked.instanceId).is_empty() and GameState.player.xp == expected_xp + 1,
+		"第二次点击只扣旧批，新拾取的低档装备仍在")
 	await get_tree().process_frame
 	await get_tree().process_frame
-	assert(bag._bag_buttons[0].item.is_empty() and bag._bag_buttons[1].item.is_empty())
+	panel._on_confirm()
+	assert(panel._risk_confirmed)
+	GameState.set_equipment_favorite(newcomer.instanceId, true)
+	panel._on_confirm()
+	assert(GameState.inventory_used() == 1 and GameState.player.xp == expected_xp + 1
+		and not panel._risk_confirmed, "锁定装备被收藏后整批拒绝")
 	print("[EquipmentLayoutRegressionTest] PASS")
 	get_tree().quit()

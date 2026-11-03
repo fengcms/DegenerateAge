@@ -42,6 +42,7 @@ var _rune_pickers: Array[OptionButton] = []
 var _rune_choices: Array[String] = ["", "", "", ""]
 var _rune_hint: Label
 
+var _locked_sacrifice: Dictionary = {}
 var _sacrifice_refresh_scheduler: FrameLayoutScheduler
 
 ## 接入工作台会话和背包更新，不进行逐帧背包扫描。
@@ -165,15 +166,14 @@ func _on_inventory_changed() -> void:
 		return
 	_revalidate_selection()
 
-## 旧确认同步失效，展示扫描与本帧其他变化合并。
+## 只有未锁定的实时预览需要响应背包变化。
 func _request_sacrifice_refresh() -> void:
-	_risk_confirmed = false
-	_confirm.text = Localization.tr_key("ui.sacrifice.action")
-	_sacrifice_refresh_scheduler.request()
+	if _locked_sacrifice.is_empty():
+		_sacrifice_refresh_scheduler.request()
 
 ## 延迟回调只更新仍在显示的献祭预览。
 func _refresh_sacrifice_if_visible() -> void:
-	if visible and _mode == EquipmentFusion.SACRIFICE:
+	if visible and _mode == EquipmentFusion.SACRIFICE and _locked_sacrifice.is_empty():
 		_refresh_preview()
 
 ## 穿戴变化时校验保星旧装备引用，不因其他槽位改变清空有效预选。
@@ -202,8 +202,7 @@ func _revalidate_selection() -> void:
 
 ## 金币变化重算可支付状态，并取消旧的风险确认。
 func _on_gold_changed(_amount: int) -> void:
-	if visible and _mode == EquipmentFusion.SACRIFICE:
-		_request_sacrifice_refresh()
+	if _mode == EquipmentFusion.SACRIFICE:
 		return
 	if visible:
 		_risk_confirmed = false
@@ -398,6 +397,8 @@ func _build() -> void:
 	_star12.tooltip_text = Localization.tr_key("ui.sacrifice.star12_tip")
 	_star12.visible = false
 	_star12.toggled.connect(func(_pressed: bool) -> void:
+		_locked_sacrifice = {}
+		_feedback.text = ""
 		_risk_confirmed = false
 		_refresh_preview())
 	form.add_child(_star12)
@@ -561,6 +562,7 @@ func _on_random_fill() -> void:
 
 ## 仅重置预选引用与风险状态，绝不扣除背包物品。
 func _reset_materials() -> void:
+	_locked_sacrifice = {}
 	for i in range(_selected.size()):
 		_selected[i] = {}
 	# 工程 112：如意同理 —— 面板里存的只是「想投哪四枚」，真正扣除在结算成功时。
@@ -829,7 +831,9 @@ func _refresh_sacrifice() -> void:
 	if level < Sacrifice.OPEN_LEVEL:
 		_summary.text = Localization.tr_key("ui.sacrifice.low_level", [Sacrifice.OPEN_LEVEL])
 		return
-	var plan := Sacrifice.plan(GameState.inventory, _star12.button_pressed)
+	var plan := _locked_sacrifice
+	if plan.is_empty():
+		plan = Sacrifice.plan(GameState.inventory, _star12.button_pressed)
 	var count := int(plan.get("count", 0))
 	if count <= 0:
 		_summary.text = Localization.tr_key("ui.sacrifice.empty")
@@ -854,26 +858,28 @@ func _refresh_sacrifice() -> void:
 	_summary.text = "\n".join(PackedStringArray(lines))
 	_confirm.disabled = false
 
-## 献祭结算：确认时**重新扫背包**（面板可能开很久），按实例 ID 交回 GameState 二次复核。
-## 紫装献祭不可逆，所以第一次点击只做风险确认，第二次才真正消耗。
+## 第一次锁定实例和报价，第二次只结算同一批。
 func _on_confirm_sacrifice() -> void:
 	if int(GameState.player.get("level", 1)) < Sacrifice.OPEN_LEVEL:
 		_feedback.text = Localization.tr_key("ui.sacrifice.low_level", [Sacrifice.OPEN_LEVEL])
 		return
-	var plan := Sacrifice.plan(GameState.inventory, _star12.button_pressed)
-	var ids := PackedStringArray(plan.get("ids", PackedStringArray()))
-	if ids.is_empty():
-		_feedback.text = Localization.tr_key("ui.sacrifice.empty")
-		_refresh_preview()
-		return
-	if not _risk_confirmed:
+	if _locked_sacrifice.is_empty():
+		var plan := Sacrifice.plan(GameState.inventory, _star12.button_pressed)
+		if not bool(plan.ok):
+			_feedback.text = Localization.tr_key("ui.sacrifice.empty")
+			_refresh_preview()
+			return
+		_locked_sacrifice = plan
 		_risk_confirmed = true
-		_feedback.text = Localization.tr_key("ui.sacrifice.warning",
-			[int(plan.get("count", 0)), int(plan.get("xp", 0))])
+		_feedback.text = Localization.tr_key("ui.sacrifice.warning", [plan.count, plan.xp])
 		_refresh_preview()
 		return
-	var result := GameState.sacrifice_purple(ids)
+	var locked := _locked_sacrifice
+	_locked_sacrifice = {}
 	_risk_confirmed = false
+	_confirm.disabled = true
+	_confirm.text = Localization.tr_key("ui.sacrifice.action")
+	var result := GameState.sacrifice_purple(locked.ids, locked.terms)
 	if bool(result.get("ok", false)):
 		EventBus.toast_requested.emit(Localization.tr_key("ui.sacrifice.done",
 			[int(result.get("count", 0)), int(result.get("xp", 0))]), "pickup")
