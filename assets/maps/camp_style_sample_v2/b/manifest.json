@@ -11,7 +11,7 @@
     1250,
     790
   ],
-  "ground": "res://assets/maps/camp_style_sample_v2/b/ground.png",
+  "ground": "res://assets/maps/camp_style_sample/b/ground.png",
   "objects": [
     {
       "id": "blacksmith",

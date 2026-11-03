@@ -35,8 +35,14 @@ def main():
                     result[layer] = result[layer].replace("camp_style_sample/","camp_style_sample_v2/")
                 generated.append(result)
         generated.extend(objects[f["id"]] for f in layout["fences"])
+        # 相同地面复用旧样板路径；生成差异时才保留新纹理。
+        ground = output / "ground.png"
+        shared = ROOT / f"assets/maps/camp_style_sample/{style}/ground.png"
+        if shared.is_file() and ground.read_bytes() == shared.read_bytes():
+            ground.unlink()
+            ground = shared
         manifest = {"style":style.upper(),"layout_id":layout["id"],"canvas":layout["reference_canvas"],
-                    "patch":[0,60,1250,790],"ground":f"res://assets/maps/camp_style_sample_v2/{style}/ground.png","objects":generated}
+                    "patch":[0,60,1250,790],"ground":"res://" + ground.relative_to(ROOT).as_posix(),"objects":generated}
         (output / "manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n")
         print(f"v2样板{style}: 三个整体实体与四段正式训练栅栏")
 

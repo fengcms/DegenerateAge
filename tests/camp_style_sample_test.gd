@@ -29,7 +29,9 @@ func _ready() -> void:
 				"整体实体缺少背层或前沿遮挡：%s/%s" % [style, id])
 			_check_split_alpha(style, id)
 		var image := Image.new()
-		assert(image.load("res://assets/maps/camp_style_sample_v2/%s/ground.png" % style) == OK,
+		var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
+			"res://assets/maps/camp_style_sample_v2/%s/manifest.json" % style))
+		assert(image.load(String(manifest.ground)) == OK,
 			"样板地面图片不可读")
 		assert(image.get_pixel(0, 0).a == 0.0 and image.get_pixel(image.get_width() / 2,
 			image.get_height() / 2).a > 0.98, "地面局部边缘必须真正透明")
