@@ -11,6 +11,7 @@ const GOLD_FIELD_ID := "c6_normal01"
 const GOLD_FIELD_HALF_WIDTH := 34.5
 var failures: Array[String] = []
 
+## 按顺序验收物理站位，前一夹具释放完成后才进入下一场景。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	await _test_chase_spacing()
@@ -34,7 +35,7 @@ func _test_chase_spacing() -> void:
 		_check(wolf.state == Monster.State.CHASE or wolf.state == Monster.State.ATTACK,
 			"追击中的怪应处于 CHASE/ATTACK，实际 %d" % wolf.state)
 	_check(wolves[0].collision_mask == 1, "怪物仍只与地形层碰撞（玩家可穿过怪群）")
-	_cleanup(player, wolves)
+	await _cleanup(player, wolves)
 
 ## 五只怪从同一像素点起步且已经够得到玩家：站桩输出期间也必须被推开。
 func _test_attack_spacing() -> void:
@@ -48,7 +49,7 @@ func _test_attack_spacing() -> void:
 	_check_apart(wolves, "攻击")
 	for wolf in wolves:
 		_check(wolf.state == Monster.State.ATTACK, "够得到玩家的怪应进入 ATTACK，实际 %d" % wolf.state)
-	_cleanup(player, wolves)
+	await _cleanup(player, wolves)
 
 ## Boss 不可被推动，但普通怪不能叠进 Boss 身体里。
 func _test_boss_anchor() -> void:
@@ -71,7 +72,7 @@ func _test_boss_anchor() -> void:
 		# Boss 不按美术体宽计间距：普通怪按自身可见半宽 + Boss 玩法半径就够了。
 		_check(gap >= (wolf.separation_radius + boss.radius) * Monster.SEPARATION_KEEP * KEEP_RATIO,
 			"普通怪被 Boss 挤开：间距 %.1f" % gap)
-	_cleanup(player, wolves + [boss])
+	await _cleanup(player, wolves + [boss])
 
 ## 工程 103-b：打金图怪物必须按「可见体宽」分离，而不是按玩法半径。
 ## 同时锁定近战射程补偿：这类怪模板写 range=1.0，装配后应为 1.25 格（80px）。
@@ -91,8 +92,9 @@ func _test_visible_body_spacing() -> void:
 	var gap := first.global_position.distance_to(second.global_position)
 	_check(gap >= (first.separation_radius + second.separation_radius) * Monster.SEPARATION_KEEP * KEEP_RATIO,
 		"打金图怪按体宽分离：间距 %.1f" % gap)
-	_cleanup(player, [first, second])
+	await _cleanup(player, [first, second])
 
+## 装配实际打金图模板，保留体宽与射程，仅关闭攻击伤害。
 func _spawn_gold_field(at: Vector2) -> Monster:
 	var monster := (load("res://scenes/entities/Monster.tscn") as PackedScene).instantiate() as Monster
 	monster.monster_id = GOLD_FIELD_ID
@@ -103,6 +105,7 @@ func _spawn_gold_field(at: Vector2) -> Monster:
 	monster.attack_power = 0.0
 	return monster
 
+## 创建原点玩家作为所有站位场景的追击目标。
 func _add_player() -> PlayerCharacter:
 	var player := (load("res://scenes/entities/Player.tscn") as PackedScene).instantiate() as PlayerCharacter
 	player.position = Vector2.ZERO
@@ -124,6 +127,7 @@ func _spawn_wolves(starts: Array[Vector2]) -> Array[Monster]:
 		out.append(wolf)
 	return out
 
+## 检查每对怪物的真实间距，不以配置存在代替行为验收。
 func _check_apart(wolves: Array[Monster], phase: String) -> void:
 	for i in range(wolves.size()):
 		for j in range(i + 1, wolves.size()):
@@ -133,6 +137,7 @@ func _check_apart(wolves: Array[Monster], phase: String) -> void:
 			var dist := a.global_position.distance_to(b.global_position)
 			_check(dist >= min_dist, "%s期同类重叠：%d 与 %d 间距 %.1f < %.1f" % [phase, i, j, dist, min_dist])
 
+## 等待延迟释放完成，防止后续用例查到旧玩家与旧敌人。
 func _cleanup(player: Node2D, monsters: Array) -> void:
 	player.queue_free()
 	for node in monsters:

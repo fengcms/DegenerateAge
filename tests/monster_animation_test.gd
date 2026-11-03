@@ -1,12 +1,15 @@
 extends Node
+## 怪物动画集成验收：在隔离主场景检查方向、预警、命中及死亡生命周期。
 
 var failures: Array[String] = []
 
+## 累积行为断言，失败时由场景返回非零退出码。
 func expect(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
 		print("[MonsterAnimation] FAIL: " + message)
 
+## 装配真实战斗节点并在生命周期断言全部完成后输出结束标记。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	SaveManager.active_slot = -1
@@ -113,5 +116,5 @@ func _ready() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	if failures.is_empty():
-		print("[MonsterAnimationTest] PASS: directional states, clicks, warning/impact, roar, death lifecycle")
+		print("[MonsterAnimationTest] 方向、点击、预警命中、狂暴及死亡生命周期全部通过")
 	get_tree().quit(0 if failures.is_empty() else 1)
