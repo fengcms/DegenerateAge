@@ -61,14 +61,21 @@ static func attach(actor: Node2D, appearance_id: String) -> CanvasItem:
 ## 这里量第 0 张图集所有帧的 alpha 包围盒最大宽度；取不到（程序占位、纹理缺失）返回 0，
 ## 由调用方回退玩法半径。结果按 appearanceId 缓存，只有首次装配时解码一次。
 static var _body_half_width_cache: Dictionary = {}
+static var _body_width_revision := -1
 
+## 同配置修订内复用体宽；重载后重新测量，失败的零值不缓存。
 static func body_half_width(appearance_id: String, art: CanvasItem) -> float:
+	if _body_width_revision != DataLoader.revision:
+		_body_half_width_cache.clear()
+		_body_width_revision = DataLoader.revision
 	if _body_half_width_cache.has(appearance_id):
 		return float(_body_half_width_cache[appearance_id])
 	var measured := _measure_body_half_width(art)
-	_body_half_width_cache[appearance_id] = measured
+	if measured > 0.0:
+		_body_half_width_cache[appearance_id] = measured
 	return measured
 
+## 首次装配时测量所有帧的最大可见半宽，返回屏幕像素；不持有图像引用。
 static func _measure_body_half_width(art: CanvasItem) -> float:
 	var sprite := art as Sprite2D
 	if sprite == null or sprite.texture == null:

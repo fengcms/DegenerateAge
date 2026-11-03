@@ -34,5 +34,19 @@ func _ready() -> void:
 	check(String(wolf.template.get("dropTableId", "")) != String(shell.template.get("dropTableId", "")), "掉落表仍按各自模板")
 	check(wolf.sample_art != shell.sample_art, "动画状态节点属于各自实例")
 	check(DataLoader.validate_all().is_empty(), "还原模板后配置引用有效")
+	_test_width_reload()
 	print("[MonsterAppearanceReuseTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+## 同 ID 修改外观后重载，体宽不能沿用旧值；首次缺失也不能永久缓存零。
+func _test_width_reload() -> void:
+	var sprite := Sprite2D.new()
+	check(MonsterAppearance.body_half_width("probe", sprite) == 0.0, "缺图返回零")
+	var image := Image.create(20, 10, false, Image.FORMAT_RGBA8)
+	image.fill(Color.WHITE)
+	sprite.texture = ImageTexture.create_from_image(image)
+	check(MonsterAppearance.body_half_width("probe", sprite) == 10.0, "缺图恢复后重新测量")
+	sprite.scale.x = 2.0
+	DataLoader.load_all()
+	check(MonsterAppearance.body_half_width("probe", sprite) == 20.0, "重载修订后更新半宽")
+	sprite.free()
