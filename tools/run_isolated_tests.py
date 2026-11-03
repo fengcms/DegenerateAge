@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import shutil
 import subprocess
@@ -25,6 +26,26 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GODOT = Path("/Applications/Godot.app/Contents/MacOS/Godot")
+
+
+def find_godot(explicit: str | None = None) -> Path:
+    """优先命令行、环境变量、PATH，最后兼容既有 macOS 安装位置。"""
+    candidate = explicit or os.environ.get("GODOT_BIN") or shutil.which("godot") or shutil.which("godot4")
+    return Path(candidate).expanduser() if candidate else GODOT
+
+
+def isolated_user_data(name: str) -> Path:
+    """仅接受本运行器随机测试名，按 Godot 平台默认位置返回可清理目录。"""
+    if not re.fullmatch(r"DegenerateAge-Test-[0-9a-f]{12}", name):
+        raise ValueError("拒绝非隔离项目身份")
+    if sys.platform == "darwin":
+        base = Path.home() / "Library/Application Support/Godot"
+    elif sys.platform == "win32":
+        base = Path(os.environ["APPDATA"]) / "Godot"
+    else:
+        base = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "godot"
+    return base / "app_userdata" / name
+
 DEFAULT_TESTS = [
     "EquipmentAxesTest", "EquipmentLayoutRegressionTest",
     "SettingsTest", "NanGuardTest", "FrameLayoutSchedulerTest", "ReforgeLayoutStabilityTest", "CrashTraceTest", "DiagnosticProbeGuardTest", "PotionAccessibilityTest", "AudioCuesTest", "FlowFeedbackTest",
@@ -307,20 +328,24 @@ def run(project: Path, args: list[str], timeout: int = 180, rendered: bool = Fal
 
 
 def main() -> int:
+    """解析运行环境，冻结项目快照并逐场景验收，最后只清理本次隔离目录。"""
+    global GODOT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tests", nargs="*", default=DEFAULT_TESTS)
     parser.add_argument("--all", action="store_true", help="运行 tests/ 下全部测试场景；默认集只是常用子集")
     parser.add_argument("--committed-tree", action="store_true", help="用已提交的稳定快照隔离并行美术试作")
     parser.add_argument("--rendered", action="store_true", help="以实际窗口运行指定测试，用于渲染采样")
+    parser.add_argument("--godot", help="Godot 可执行文件路径；也可设置 GODOT_BIN")
     args = parser.parse_args()
+    GODOT = find_godot(args.godot)
     if args.all:
         args.tests = discover_all_tests()
     if not GODOT.is_file():
         print(f"Godot 未找到：{GODOT}", file=sys.stderr)
         return 2
     name = "DegenerateAge-Test-" + uuid.uuid4().hex[:12]
-    # Godot macOS 默认 user:// 目录。只清理本次随机项目名；永不指向正式游戏名。
-    user_data = Path.home() / "Library/Application Support/Godot/app_userdata" / name
+    # Godot 平台默认 user:// 目录。只清理本次随机项目名；永不指向正式游戏名。
+    user_data = isolated_user_data(name)
     try:
         with tempfile.TemporaryDirectory(prefix="degenerateage-test-") as temporary:
             project = Path(temporary)
