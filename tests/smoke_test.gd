@@ -110,7 +110,7 @@ func _test_data_validation() -> void:
 func _test_blacksmith() -> void:
 	GameState.reset_to_defaults()
 	var item := _equip_instance("weapon_iron", "smith_weapon", {"atk": 10})
-	GameState.inventory[0] = item
+	GameState.equipment.weapon = item
 	GameState.add_gold(500)
 	var main := preload("res://scenes/Main.tscn").instantiate()
 	add_child(main)
@@ -571,7 +571,7 @@ func _test_rune_upgrade() -> void:
 	GameState.reset_to_defaults()
 	var weapon := _equip_instance("weapon_iron", "rune_upgrade", {"atk": 10})
 	weapon.star = 8
-	GameState.inventory[0] = weapon
+	GameState.equipment.weapon = weapon
 	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_diamond", "count": 2}
 	GameState.inventory[2] = {"kind": "rune", "itemId": "rune_diamond", "count": 2}
 	GameState.add_gold(Upgrade.cost(8))
@@ -591,6 +591,8 @@ func _test_rune_upgrade() -> void:
 		"升星成功应扣除四枚如意与金币，保留装备实例")
 	panel.set_open(false)
 	panel.queue_free()
+	GameState.equipment.weapon = null
+	GameState.inventory[0] = weapon
 	weapon.star = 11
 	GameState.inventory[1] = {"kind": "rune", "itemId": "rune_iron", "count": 1}
 	GameState.gold = Upgrade.cost(11)
@@ -2500,19 +2502,31 @@ func _test_equipment_panel_interaction() -> void:
 	bag._on_bag_pressed(0)
 	_expect(GameState.equipment.get("weapon") == weapon and GameState.inventory[0] == null,
 		"两窗同开时双击背包装备应穿戴")
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var worn: EquipmentSlot = character._slots["weapon"]
 	_expect(worn.role == ItemSlot.ROLE_EQUIP and worn.draggable,
 		"人物装备槽应标记为可拖动的装备来源")
+	var replacement := _equip_instance("weapon_iron", "unrendered_weapon", {"atk": 6})
+	GameState.equipment.weapon = replacement
+	character._on_slot_pressed("weapon")
+	character._on_slot_pressed("weapon")
+	_expect(GameState.equipment.weapon == replacement, "延迟刷新期间不能卸下尚未显示的新装备")
+	GameState.equipment.weapon = weapon
 	character._on_slot_pressed("weapon")
 	character._on_slot_pressed("weapon")
 	_expect(GameState.equipment.get("weapon") == null and GameState.inventory[0] == weapon,
 		"两窗同开时双击人物装备应卸下")
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var bag_payload: Dictionary = bag._bag_buttons[0]._get_drag_data(Vector2.ZERO)
 	_expect(character._slots["weapon"]._can_drop_data(Vector2.ZERO, bag_payload),
 		"人物装备槽应接收背包装备拖放")
 	character._on_equipment_dropped(-1, bag_payload, "weapon")
 	_expect(GameState.equipment.get("weapon") == weapon and GameState.inventory[0] == null,
 		"背包拖至对应装备槽应穿戴")
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var equipped_payload: Dictionary = character._slots["weapon"]._get_drag_data(Vector2.ZERO)
 	_expect(bag._bag_buttons[2]._can_drop_data(Vector2.ZERO, equipped_payload),
 		"背包格应接收人物装备拖放")
@@ -2535,6 +2549,8 @@ func _test_equipment_panel_interaction() -> void:
 	character.set_open(false)
 	bag.set_open(true)
 	GameState.unequip_slot("weapon")
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var index := -1
 	for i in range(GameState.inventory.size()):
 		if GameState.inventory[i] == weapon:

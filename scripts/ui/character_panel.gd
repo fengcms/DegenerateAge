@@ -285,6 +285,8 @@ func _refresh() -> void:
 				button._refresh_durability_bar()
 				button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)]
 				continue
+		if _last_slot_id == sid:
+			_last_slot_id = ""
 		button.item = item if item is Dictionary else {}
 		button.text = ItemUtil.template_name(item).substr(0, 2) if item is Dictionary else String(def.label)
 		# 工程 78：单卡标题用槽位名；有物品时走结构化卡（tooltip_text 仅作原生回退）。
@@ -389,7 +391,10 @@ func _on_slot_pressed(slot_id: String) -> void:
 	if slot_id == _last_slot_id and now - _last_slot_click_ms <= 400:
 		_last_slot_id = ""
 		_last_slot_click_ms = 0
-		if _bag_visible() and GameState.equipment.get(slot_id) is Dictionary:
+		var current: Variant = GameState.equipment.get(slot_id)
+		var button: EquipmentSlot = _slots[slot_id]
+		if _bag_visible() and current is Dictionary \
+				and Warehouse.token_matches(current, Warehouse.item_token(button.item)):
 			GameState.unequip_slot(slot_id)
 	else:
 		_last_slot_id = slot_id
