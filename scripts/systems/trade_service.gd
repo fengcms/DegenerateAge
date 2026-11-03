@@ -55,7 +55,7 @@ static func shop_sell_staged(items: Array) -> Dictionary:
 		n += 1
 	if n == 0:
 		return {"ok": false, "count": 0, "gold": 0, "reason": Localization.tr_key("ui.review.game_state.018")}
-	# 工程 56 / 口径 A：不再因金币上限整批拒绝。托盘内容由界面持有，本函数只算价与入账。
+	# 工程 56 / 口径 A：不再因金币上限整批拒绝。正式托盘由 GameState 持有并由 commit_tray 认领，本函数只算价与入账。
 	var gained := GameState._gold_gain(total)
 	EventBus.trade_done.emit("sell", "", gained)
 	return {"ok": true, "count": n, "gold": gained, "reason": "", "capped": gained < total}
