@@ -38,11 +38,18 @@ func _ready() -> void:
 	await get_tree().process_frame
 	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.READY, "升级到门槛后由灰转绿")
 	check(slot._upgrade_marker.get_theme_color("font_color").is_equal_approx(ItemSlot.UPGRADE_READY_COLOR), "绿箭头使用可穿戴色")
+	var style := slot.get_theme_stylebox("normal")
+	GameState.wear_equipment("normal")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(slot.get_theme_stylebox("normal") == style and slot.upgrade_badge_state == ItemSlot.UpgradeBadge.READY,
+		"普通磨损保留背包格样式和评分角标")
 	GameState.equipment.shoes = better_shoes.duplicate(true)
 	EventBus.equipment_changed.emit()
 	await get_tree().process_frame
 	await get_tree().process_frame
-	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.NONE, "同分装备不显示箭头")
+	check(slot.upgrade_badge_state == ItemSlot.UpgradeBadge.NONE and slot.get_theme_stylebox("normal") == style,
+		"同分装备清除箭头并复用原样式")
 	GameState.inventory[0] = old_shoes
 	EventBus.inventory_changed.emit()
 	await get_tree().process_frame

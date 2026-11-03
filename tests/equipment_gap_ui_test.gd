@@ -54,11 +54,9 @@ func _ready() -> void:
 	var fresh:=item("weapon",510,"common")
 	check(Equipment.score(fresh)<Equipment.score(GameState.equipment.weapon),"夹具确实是低分高等级过渡装")
 	var inv:=main.get_node("UI/InventoryPanel")
-	check(String(inv._bag_tooltip(fresh)).contains("跨级预览"),"新装有等级影响预览")
-	var source:=ItemSlot.new()
-	source.role=ItemSlot.ROLE_BAG
-	source.item=fresh
-	main.get_node("UI").add_child(source)
+	GameState.inventory[0] = fresh
+	inv.set_open(true)
+	var source: ItemSlot = inv._bag_buttons[0]
 	var card:=source._make_custom_tooltip("fallback") as Control
 	check(text_of(card).contains("跨级预览"),"实际结构化对比卡也显示预览")
 	main.get_node("UI").add_child(card)

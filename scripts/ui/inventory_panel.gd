@@ -115,13 +115,11 @@ func set_open(open: bool) -> void:
 			EventBus.reforge_close_requested.emit()
 		var character := get_node_or_null("../CharacterPanel")
 		if character != null and character.visible:
-			character._refresh()
+			character._refresh_drag_sources()
 
 ## 其他面板打开时自动关闭本面板，保证互斥——**例外**：交易会话中的货郎面板（见 05 方案）。
 ## 并开集合统一由 `GameState.panels_coexist`（F-P3-1）判定，本面板不再自带名单。
 func _on_panel_opened(panel_id: String) -> void:
-	if panel_id == "character" and visible:
-		_refresh()
 	if visible and not (GameState.panels_coexist(panel_id, "inventory") or panel_id == "shop"):
 		set_open(false)
 
@@ -353,7 +351,14 @@ func _invalidate_rendered_slots() -> void:
 ## 比较独立快照，捕捉原地叠加、耐久修改以及穿戴对比条件变化。
 func _refresh() -> void:
 	_ensure_bag_slots()
-	var context := [GameState.equipment, int(GameState.player.level), EquipmentGap.reference_level(), _character_visible()]
+	var worn := {}
+	for sid in GameState.equipment:
+		var item: Variant = GameState.equipment[sid]
+		if item is Dictionary:
+			var comparison: Dictionary = item.duplicate()
+			comparison["durability"] = 0 if Durability.is_broken(item) else 1
+			worn[sid] = comparison
+	var context := [worn, int(GameState.player.level)]
 	var comparison_changed := context != _comparison_context
 	if comparison_changed:
 		_comparison_context = context.duplicate(true)
@@ -362,9 +367,13 @@ func _refresh() -> void:
 	for i in range(_bag_buttons.size()):
 		var b2: ItemSlot = _bag_buttons[i]
 		var it2 = GameState.inventory[i] if i < GameState.inventory.size() else null
-		if i < previous_count and it2 == _slot_snapshots[i]:
-			if not comparison_changed or not it2 is Dictionary or String(it2.get("kind", "")) != "equip":
-				continue
+		var is_equipment := it2 is Dictionary and String(it2.get("kind", "")) == "equip"
+		var same_item: bool = i < previous_count and it2 == _slot_snapshots[i] \
+			and (not it2 is Dictionary or is_same(b2.item, it2))
+		if same_item:
+			if comparison_changed and is_equipment:
+				_refresh_upgrade_badge(b2, it2)
+			continue
 		_slot_snapshots[i] = it2.duplicate(true) if it2 is Dictionary else null
 		if _last_click_index == i:
 			_last_click_index = -1
@@ -377,11 +386,10 @@ func _refresh() -> void:
 			b2.add_theme_color_override("font_color", col2)
 			_apply_slot_style(b2, col2, true)
 			b2.tooltip_text = _bag_tooltip(it2)
-			var preview := Equipment.replacement_preview(GameState.equipment, it2) if String(it2.get("kind", "")) == "equip" else {}
-			b2.upgrade_badge_state = ItemSlot.UpgradeBadge.NONE
-			if bool(preview.get("score_increase", false)):
-				b2.upgrade_badge_state = ItemSlot.UpgradeBadge.READY if Equipment.meets_level(it2, int(GameState.player.level)) \
-					else ItemSlot.UpgradeBadge.LEVEL_LOCKED
+			if is_equipment:
+				_refresh_upgrade_badge(b2, it2)
+			else:
+				b2.upgrade_badge_state = ItemSlot.UpgradeBadge.NONE
 		else:
 			b2.item = {}
 			b2.fusion_selected = false
@@ -399,6 +407,15 @@ func _refresh() -> void:
 	_sell_low_button.disabled = int(GameState.player.get("level", 1)) < 15
 	_sell_low_button.tooltip_text = Localization.tr_key("ui.inventory_panel.p017") if _sell_low_button.disabled else Localization.tr_key("ui.inventory_panel.p018")
 	_refresh_summary()
+
+func _refresh_upgrade_badge(button: ItemSlot, item: Dictionary) -> void:
+	var preview := Equipment.replacement_preview(GameState.equipment, item)
+	var state := ItemSlot.UpgradeBadge.NONE
+	if bool(preview.get("score_increase", false)):
+		state = ItemSlot.UpgradeBadge.READY if Equipment.meets_level(item, int(GameState.player.level)) \
+			else ItemSlot.UpgradeBadge.LEVEL_LOCKED
+	if button.upgrade_badge_state != state:
+		button.upgrade_badge_state = state
 
 func _ensure_bag_slots() -> void:
 	while _bag_buttons.size() < GameState.inventory.size():
@@ -450,33 +467,13 @@ func _short_name(item: Dictionary) -> String:
 func _item_color(item: Dictionary) -> Color:
 	return ItemUtil.item_accent_color(item)
 
+## 装备对比由 ItemSlot 在悬停时构建，普通物品沿用文字提示。
 func _bag_tooltip(item: Dictionary) -> String:
-	var lines: Array[String] = []
-	lines.append(ItemUtil.display_name(item))
-	if String(item.get("kind", "")) != "equip":
-		lines.append_array(_non_equip_tooltip(item))
-		return "\n".join(PackedStringArray(lines))
-
-	var level := int(GameState.player.level)
-	var req := Equipment.level_req(item)
-	var ok := Equipment.meets_level(item, level)
-	if ok:
-		lines.append(Localization.tr_key("ui.inventory_panel.p020") % req)
-	else:
-		lines.append(Localization.tr_key("ui.inventory_panel.p021") % [req, level])
-	# 工程 77：耐久行 + 破损红字；属性行照常列出（展示与生效分离，玩家能看见修好后拿回什么）。
-	if item.has("durability"):
-		lines.append(Localization.tr_key("ui.durability.line",
-			[Durability.current(item), Durability.max_durability()]))
-	if Durability.is_broken(item):
-		lines.append(Localization.tr_key("ui.durability.broken"))
-	if ok:
-		var gap_text := EquipmentGap.comparison_hint(item,GameState.equipment,EquipmentGap.reference_level(),level)
-		if not gap_text.is_empty():
-			lines.append(gap_text)
-	lines.append_array(ItemUtil.attr_lines(item))
-	lines.append("")
-	lines.append((Localization.tr_key("ui.inventory_panel.p025") if _character_visible() else Localization.tr_key("ui.inventory_panel.p026")) if ok else Localization.tr_key("ui.inventory_panel.p027"))
+	var name := ItemUtil.display_name(item)
+	if String(item.get("kind", "")) == "equip":
+		return name
+	var lines := [name]
+	lines.append_array(_non_equip_tooltip(item))
 	return "\n".join(PackedStringArray(lines))
 
 ## 非装备物品的 tooltip（M2.5）：药水显示恢复量 / 冷却 / 使用方式；
