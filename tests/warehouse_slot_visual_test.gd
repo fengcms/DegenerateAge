@@ -67,6 +67,14 @@ func _ready() -> void:
 	dialog._on_confirm()
 	_check(not dialog.visible and GameState.player.xp == 6975 and GameState.warehouse[1].count == 4 and GameState.diamond_xp_used == 1 and GameState.brick_xp_used == 1,
 		"如意和金砖使用独立额度")
+	var frame: QualityFrameOverlay = quality_slot._quality_frame
+	var start := frame._started_usec
+	frame.set_quality("rare")
+	_check(frame.is_processing() and frame._started_usec == start, "相同品质不重启动画")
+	panel.set_open(false)
+	_check(not frame.is_processing(), "隐藏仓库停止品质框处理")
+	panel.set_open(true)
+	_check(frame.is_processing() and frame._started_usec == start, "重开继续原品质动画")
 	panel.queue_free()
 	if _failures.is_empty():
 		print("[WarehouseSlotVisualTest] 全部通过 ✅")

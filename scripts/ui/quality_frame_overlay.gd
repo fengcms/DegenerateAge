@@ -15,7 +15,8 @@ const FPS := 12.0
 const OUTSET := 2.0
 
 var _region := AtlasTexture.new()
-var _elapsed := 0.0
+var _quality := ""
+var _started_usec := 0
 var _frame := -1
 
 func _ready() -> void:
@@ -30,8 +31,12 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
 	set_process(false)
+	visibility_changed.connect(_sync_processing)
 
 func set_quality(quality: String) -> void:
+	if quality == _quality:
+		return
+	_quality = quality
 	if not ATLASES.has(quality):
 		visible = false
 		set_process(false)
@@ -39,18 +44,21 @@ func set_quality(quality: String) -> void:
 		return
 	_region.atlas = ATLASES[quality]
 	texture = _region
-	_elapsed = 0.0
+	_started_usec = Time.get_ticks_usec()
 	_frame = -1
 	visible = true
 	_update_frame()
-	set_process(true)
+	_sync_processing()
 
-func _process(delta: float) -> void:
-	_elapsed += delta
+func _sync_processing() -> void:
+	set_process(is_visible_in_tree() and ATLASES.has(_quality))
+
+func _process(_delta: float) -> void:
 	_update_frame()
 
 func _update_frame() -> void:
-	var next_frame := int(_elapsed * FPS) % FRAME_COUNT
+	var elapsed := (Time.get_ticks_usec() - _started_usec) / 1000000.0
+	var next_frame := int(elapsed * FPS) % FRAME_COUNT
 	if next_frame == _frame:
 		return
 	_frame = next_frame
