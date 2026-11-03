@@ -96,6 +96,8 @@ var auto_pickup_on: bool = false
 ## 故 > 0 时 SaveManager 挂起自动存档（否则交易中被触发的自动存档会把它们漏掉）。
 ## 由 ShopPanel 在托盘变更 / 退回处同步；面板关闭退回后自然归 0。运行态，不落档。
 var trade_staged_count: int = 0
+## 未成交物品的唯一所有者；面板仅展示，跨场景与存档保留。
+var trade_tray: Dictionary = {}
 
 # ---- 世界时钟与怪物点刷新状态（M4-10：墓碑跨图保持）----
 ## 依据：产品文档 07 §7.9（怪物点刷新）。根因见工程文档 14 §1.1 ——
@@ -313,6 +315,7 @@ func reset_to_defaults(class_id: String = "") -> void:
 	equipment = Equipment.create()
 	panel_open = false
 	_open_panels = {}
+	trade_tray.clear()
 	trade_staged_count = 0          # E-P3-4：新游戏 / 读档清空托盘暂存计数
 	quest_states = {}
 	quest_items = {}

@@ -182,6 +182,7 @@ func _collect() -> Dictionary:
 		"visitedMaps": GameState.visited_maps.duplicate(),
 		"playerPos": [pos.x, pos.y],
 		"inventory": GameState.inventory.duplicate(true),
+		"tradeTray": GameState.trade_tray.values().duplicate(true),
 		"inventoryExpansions": GameState.inventory_expansions,
 		"warehouse": GameState.warehouse.duplicate(true),
 		"warehouseExpansions": GameState.warehouse_expansions,
@@ -217,6 +218,9 @@ func _player_world_pos() -> Vector2:
 
 ## 保存到某槽。silent = true 时不弹成功提示（自动存用，避免刷屏；失败始终提示）。
 func save_slot(slot: int, silent: bool = false, new_game: bool = false) -> bool:
+	# 暂存提交尚未完整登记时拒绝所有保存入口，避免信号重入写下半笔交易。
+	if GameState.trade_staged_count > GameState.trade_tray.size():
+		return false
 	if not MapService.pending_travel.is_empty():
 		EventBus.toast_requested.emit(Localization.tr_key("msg.save_manager.p001"), "danger")
 		return false
@@ -822,6 +826,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	# M6-0c：未领取战利品同样须在重载场景前恢复 —— `Game._ready` 会据此重建地面物（创意 07 §11.2）。
 	GameState.apply_unclaimed_loot(_deep_int(data.get("unclaimedLoot", {})))
 	GameState.inventory_expansions = int(data.get("inventoryExpansions", 0))
+	GameState.trade_tray.clear()
+	GameState.trade_staged_count = 0
 	GameState.inventory = _migrate_inventory(data.get("inventory", []), GameState.inventory_expansions)
 	GameState.diamond_xp_used = int(data.get("diamondXpUsed", 0))
 	GameState.brick_xp_used = int(data.get("brickXpUsed", 0))
@@ -881,6 +887,12 @@ func apply_to_game_state(data: Dictionary) -> void:
 	# 与 reset_to_defaults 的 "menu" 成对，避免残留上一会话的菜单态。
 	GameState.menu_mode = "world"
 	GameState.close_all_panels()
+	# 旧档缺省为空；优先退回背包，满包余项继续保存在托盘，读档重复执行不复制。
+	for raw in data.get("tradeTray", []):
+		var item: Dictionary = _deep_int(raw)
+		if not Inventory.add(GameState.inventory, item):
+			GameState.trade_tray[GameState.trade_tray.size()] = item
+	GameState.set_trade_staged_count(GameState.trade_tray.size())
 
 	# HP / MP 收敛到（可能变化的）上限：装备加成改变上限时不越界、不补满
 	GameState.player.hp = mini(int(GameState.player.hp), GameState.max_hp())
@@ -1413,6 +1425,12 @@ func _is_valid_save(raw: Variant) -> bool:
 		return _reject("player.attackInterval 低于下限")
 	if not _number(data.player.get("movementSpeed")) or float(data.player.movementSpeed) > GameState.PLAYER_MOVE_SPEED_CAP:
 		return _reject("player.movementSpeed 超上界")
+	var tray: Variant = data.get("tradeTray", [])
+	if not tray is Array or tray.size() > 24:
+		return _reject("tradeTray 结构或容量非法")
+	for item in tray:
+		if not _valid_item(item) or not Shop.can_sell(item):
+			return _reject("tradeTray 含非法物品")
 	for item in data.inventory:
 		if item != null and not _valid_item(item):
 			return _reject("inventory 含非法物品")

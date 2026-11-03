@@ -39,7 +39,10 @@ var _shop_id: String = ""
 var _trade_active: bool = false
 ## 出售托盘：已从背包移出、尚未结算的物品实例（确认出售 / 取回 / 关闭退回见下）。
 ## 固定格位：键是 0..23 的格下标，值是物品实例；空格不占键。
-var _tray: Dictionary = {}
+## 托盘由全局状态持有，面板销毁不会丢失未成交物品。
+var _tray: Dictionary:
+	get:
+		return GameState.trade_tray
 ## 托盘内物品是用哪个预设暂存的（空 = 读存档设置）。「暴力」一次性预设靠它一路传到结算，
 ## 结算前的风险确认据此跳过 —— 否则刚从暴力清单搬进来的装备会被再拦一次。
 var _tray_preset: String = ""
