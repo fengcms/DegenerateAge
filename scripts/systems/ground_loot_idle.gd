@@ -3,11 +3,16 @@ extends Node
 ## 地图掉落根节点拥有的静止调度器；只停高密度持久装备的物理空转，不接管奖励。
 ## 常态每0.1未缩放秒共享玩家查询；库存版本变化下一物理步唤醒，点击/悬停立即退出静止。
 const INTERVAL := 0.1
+## 限制积压装备的同步交易次数，多个物理补步共享同一显示帧预算。
+const PICKUP_ATTEMPTS_PER_FRAME := 2
 var game_clock := 0.0
 var _clock_frame := -1
 var _remaining := 0.0
 var _revision := -1
 var _sleepers: Dictionary = {}
+var _pickup_frame := -1
+var _pickup_attempts := 0
+var _pickup_pending := false
 
 ## 在掉落父节点下按需建立一个调度器；不跨图持有物品或玩家。
 static func park(item: GroundItem) -> void:
@@ -55,8 +60,17 @@ func _physics_process(delta: float) -> void:
 	_remaining -= delta/maxf(Engine.time_scale,0.000001)
 	var revision := LootRetryState.revision()
 	var changed := revision != _revision
-	if not changed and _remaining > 0.0:
-		return
+	var frame := Engine.get_process_frames()
+	var next_frame := frame != _pickup_frame
+	if _remaining > 0.0:
+		if _pickup_pending and not next_frame:
+			return
+		if not changed and not _pickup_pending:
+			return
+	if next_frame:
+		_pickup_frame = frame
+		_pickup_attempts = 0
+	_pickup_pending = false
 	_revision = revision
 	_remaining = INTERVAL
 	var dense := _is_dense()
@@ -74,6 +88,10 @@ func _physics_process(delta: float) -> void:
 			wake(item,true)
 		elif can_pick and not item.manual_only and item._failed_pickup_revision != revision \
 				and position.distance_squared_to(item.global_position) <= GroundItem.PICKUP_RANGE_PX*GroundItem.PICKUP_RANGE_PX:
+			if _pickup_attempts >= PICKUP_ATTEMPTS_PER_FRAME:
+				_pickup_pending = true
+				continue
+			_pickup_attempts += 1
 			wake(item,true)
 
 ## 将窗口密度判定集中一次；逻辑测试可用固定密度隔离渲染后端。

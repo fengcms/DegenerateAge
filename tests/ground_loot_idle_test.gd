@@ -10,9 +10,13 @@ class Player extends Node2D:
 class Item extends GroundItem:
 	var attempts := 0
 	var success := false
+	var attempts_by_frame: Dictionary = {}
 	## 测试源不注册持久记录，真实奖励数量另由窗口压力基准检查。
 	func _ready() -> void:
 		set_physics_process(false)
+	## 固定测试表现，避免真实绘制在无头环境把模拟缓存标记清空。
+	func _draw() -> void:
+		pass
 	## 隔离绘制，只验证调度和原自动拾取入口。
 	func _tick_redraw(_delta: float) -> void:
 		pass
@@ -22,6 +26,8 @@ class Item extends GroundItem:
 	## 统计唯一交易入口调用，成功由测试显式控制。
 	func _try_pickup(_announce: bool = true, _quiet: bool = false) -> bool:
 		attempts += 1
+		var frame := Engine.get_process_frames()
+		attempts_by_frame[frame] = int(attempts_by_frame.get(frame, 0)) + 1
 		return success
 
 class Boundary extends Node:
@@ -114,6 +120,44 @@ func _ready() -> void:
 	boundary.target = boundary_item
 	root.add_child(boundary)
 	await boundary.finished
+	await _check_pickup_budget(player)
 	Engine.time_scale = old_scale
 	print("[GroundLootIdleTest] PASS")
 	get_tree().quit()
+
+
+## 物理补步共享预算，下一显示帧继续处理上次未尝试的装备。
+func _check_pickup_budget(player: Player) -> void:
+	var root := Node2D.new()
+	add_child(root)
+	var service := Service.new()
+	service.name = "GroundLootIdle"
+	root.add_child(service)
+	var attempts_by_frame: Dictionary = {}
+	for i in range(5):
+		var item := Item.new()
+		item.item = {"kind": "equip", "itemId": "fixed"}
+		item.position = player.position
+		item.persistent = true
+		item._cached_drawn = true
+		item._spawn_t = 100.0
+		item.success = true
+		item.attempts_by_frame = attempts_by_frame
+		root.add_child(item)
+		GroundLootIdle.park(item)
+	service.set_physics_process(false)
+	for i in range(8):
+		service._physics_process(16.0 / 60.0)
+	assert(service._sleepers.size() == 3, "同一显示帧的物理补步最多尝试两件")
+	service.set_physics_process(true)
+	for i in range(30):
+		if service._sleepers.is_empty():
+			break
+		await get_tree().process_frame
+	assert(service._sleepers.is_empty(), "预算用完后继续领取，直至候选处理完")
+	var attempts := 0
+	for count in attempts_by_frame.values():
+		assert(int(count) <= 2, "跨物理补步的单帧预算")
+		attempts += int(count)
+	assert(attempts == 5, "每件候选恰好领取一次")
+	root.queue_free()
