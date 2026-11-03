@@ -19,7 +19,6 @@ from monster_catalog import load_chapter, save_chapter
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/素材设计/制作记录/11-60级/asset_manifest.json"
 APPEARANCE_DIR = ROOT / "data/monster_appearances"
-PRELOAD_LIBRARY = ROOT / "scripts/entities/simplified_monster_library.gd"
 KINDS = {"normal": (80, 64, -70), "elite": (112, 88, -96), "boss": (192, 152, -160)}
 
 
@@ -55,21 +54,6 @@ def make_atlas(base: Image.Image) -> Image.Image:
     faded.putalpha(base.getchannel("A"))
     atlas.alpha_composite(faded, (width * 2, 0))
     return atlas
-
-
-def update_preload_library(manifest: dict) -> None:
-    """从已登记临时图构建静态预载表，确保 Godot 导出包不会漏掉字符串路径资源。"""
-    rows = [row for row in manifest["assets"] if row["type"] == "monster" and row.get("integration") == "temporary_static"]
-    lines = [
-        "class_name SimplifiedMonsterLibrary", "extends RefCounted",
-        "## 由 tools/build_simplified_monster_art.py 生成；预载已接入的临时怪物静态图。",
-        "## 三格为原姿、受击、死亡；后续八向动画可逐 ID 替换外观档案。",
-        "const TEXTURES := {",
-    ]
-    for row in rows:
-        lines.append(f'\t"{row["data_id"]}": preload("res://{row["temporary_sprite"]}"),')
-    lines.append("}\n")
-    PRELOAD_LIBRARY.write_text("\n".join(lines), encoding="utf-8")
 
 
 def make_preview(chapter: str, entries: list[tuple[dict, Image.Image]]) -> None:
@@ -130,7 +114,6 @@ def build_chapter(chapter: str) -> None:
     save_chapter(chapter, rows)
     (APPEARANCE_DIR / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    update_preload_library(manifest)
     make_preview(chapter, previews)
     print(f"{chapter}: 导出并登记 {len(rows)} 个临时怪物表现")
 

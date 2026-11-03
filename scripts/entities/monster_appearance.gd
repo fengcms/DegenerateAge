@@ -34,10 +34,7 @@ static func attach(actor: Node2D, appearance_id: String) -> CanvasItem:
 		"static_atlas":
 			var path := String(spec.get("texture", ""))
 			if ResourceLoader.exists(path):
-				# 临时怪物图在导出包中显式预载；旧木桩等静态档案仍按路径读取。
-				var image := SimplifiedMonsterLibrary.TEXTURES.get(appearance_id) as Texture2D
-				if image == null:
-					image = load(path) as Texture2D
+				var image := MonsterAnimationCache.get_static_texture(path)
 				if image != null:
 					var sprite := Sprite2D.new()
 					sprite.name = "MonsterStaticArt"

@@ -12,6 +12,16 @@ func check(ok: bool, message: String) -> void:
 
 ## 对照已知的第一章地图分布，检查缓存只保留当前地图所需包。
 func _ready() -> void:
+	MonsterAnimationCache.prepare_for_map("camp")
+	var initial_static := MonsterAnimationCache.cached_static_paths().size()
+	var path := "res://assets/sprites/monsters/c3_normal02/simplified_atlas.png"
+	check(not MonsterAnimationCache.cached_static_paths().has(path), "营地不预载第三章静态怪物图")
+	var image := MonsterAnimationCache.get_static_texture(path)
+	check(image != null and image == MonsterAnimationCache.get_static_texture(path), "静态图按需共享")
+	check(MonsterAnimationCache.cached_static_paths().size() == initial_static + 1, "仅持有请求的静态图")
+	print("[PERF] 营地静态图缓存 %d，按需请求后 %d" % [initial_static, MonsterAnimationCache.cached_static_paths().size()])
+	MonsterAnimationCache.release_for_map("camp")
+	check(MonsterAnimationCache.cached_static_paths().is_empty(), "退出地图释放静态图引用")
 	MonsterAnimationCache.prepare_for_map("wild_trial")
 	check(MonsterAnimationCache.cached_ids().has("elite_wolf_king"), "试炼地图预取狼王")
 	check(not MonsterAnimationCache.cached_ids().has("boss_corrupted_beast"), "试炼地图不预取源头首领")

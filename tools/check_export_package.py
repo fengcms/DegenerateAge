@@ -1,5 +1,6 @@
 """检查 Godot ZIP 资源包边界与配置完整性；输入 --export-pack 产物，不读取玩家数据。"""
 import argparse
+import re
 from pathlib import Path
 import zipfile
 
@@ -21,6 +22,11 @@ def check_package(path: Path) -> list[str]:
             relative = source.relative_to(ROOT).as_posix()
             if relative not in names:
                 issues.append(f"配置缺失：{relative}")
+                continue
+            for resource in re.findall(r'"(res://[^"\\]+)"', archive.read(relative).decode("utf-8")):
+                target = resource.removeprefix("res://")
+                if not any(candidate in names for candidate in [target, target + ".import", target + ".remap"]):
+                    issues.append(f"动态资源缺失：{relative} -> {resource}")
         return sorted(issues)
 
 

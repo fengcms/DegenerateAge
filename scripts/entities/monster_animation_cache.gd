@@ -5,6 +5,8 @@ extends RefCounted
 
 static var _loaded: Dictionary = {}
 static var _preview_loaded: Dictionary = {}
+static var _static_loaded: Dictionary = {}
+static var _static_revision := -1
 static var _failed: Dictionary = {}
 static var _map_id := ""
 
@@ -13,6 +15,7 @@ static func prepare_for_map(map_id: String) -> void:
 	if _map_id != map_id:
 		_loaded.clear()
 		_preview_loaded.clear()
+		_static_loaded.clear()
 		_failed.clear()
 		_map_id = map_id
 	var map_data: Variant = DataLoader.get_entry("maps", map_id)
@@ -36,6 +39,7 @@ static func release_for_map(map_id: String) -> void:
 	if _map_id == map_id:
 		_loaded.clear()
 		_preview_loaded.clear()
+		_static_loaded.clear()
 		_failed.clear()
 		_map_id = ""
 
@@ -80,6 +84,23 @@ static func get_preview_texture(id: String, resource_path: String) -> Texture2D:
 	_preview_loaded[id] = atlas
 	return atlas
 
+## 静态图按路径按需加载；同图共享，切图释放，数据重载后失败/成功记录均失效。
+static func get_static_texture(path: String) -> Texture2D:
+	if _static_revision != DataLoader.revision:
+		_static_loaded.clear()
+		_static_revision = DataLoader.revision
+	if _static_loaded.has(path):
+		return _static_loaded[path] as Texture2D
+	var texture: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
+	_static_loaded[path] = texture
+	if texture == null:
+		push_warning("[MonsterAnimationCache] 静态图缺失：%s" % path)
+	return texture
+
+## 返回当前静态纹理路径，供生命周期验收，不触发加载。
+static func cached_static_paths() -> Array:
+	return _static_loaded.keys()
+
 ## 供缓存回归测试查看当前地图实际持有的包，不触发加载。
 static func cached_ids() -> Array:
 	return _loaded.keys()
@@ -102,6 +123,8 @@ static func _prefetch_monster(monster_id: String, seen: Dictionary) -> void:
 		get_pack(String((appearance as Dictionary).get("assetKey", "")))
 	elif appearance is Dictionary and String((appearance as Dictionary).get("renderer", "")) == "directional_preview":
 		get_preview_texture(appearance_id, String((appearance as Dictionary).get("texture", "")))
+	elif appearance is Dictionary and String((appearance as Dictionary).get("renderer", "")) == "static_atlas":
+		get_static_texture(String((appearance as Dictionary).get("texture", "")))
 	var abilities: Dictionary = entry.get("abilities", {})
 	_prefetch_monster(String(abilities.get("summon", "")), seen)
 	var skill: Variant = entry.get("bossSkill", null)

@@ -62,7 +62,7 @@ func _ready() -> void:
 		if art != null:
 			var dimensions: Array = SIZES[String(entry.get("kind", "normal"))]
 			check(art.hframes == 3, "%s 保留原姿/受击/死亡三格" % id)
-			check(art.texture == SimplifiedMonsterLibrary.TEXTURES.get(id), "%s 使用预载的独立运行图" % id)
+			check(art.texture == MonsterAnimationCache.get_static_texture(String(appearance.get("texture", ""))), "%s 使用按需共享的独立运行图" % id)
 			if art.texture != null:
 				check(art.texture.get_size() == Vector2(int(dimensions[0]) * 3, int(dimensions[0])), "%s 图集帧尺寸" % id)
 			check(art.offset == Vector2(-int(dimensions[0]) / 2.0, -int(dimensions[1])), "%s 脚底锚点" % id)
