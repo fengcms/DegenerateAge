@@ -146,11 +146,17 @@ func check_character_layout(main: Node, player: PlayerCharacter, boss: Monster) 
 			get_viewport().get_texture().get_image().save_png("/tmp/character_gap_%d_%d.png" % [dimensions.x, dimensions.y])
 	boss.level = 450
 	player.select_target(boss, false)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(not card.visible, "低等级目标无衰减时隐藏整卡")
 	player.select_target(null, false)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(card.visible and String(panel.get("_gap_reference").text).contains("人物等级"), "无目标明确按人物等级参考")
 	boss.level = 517
 	player.select_target(boss, false)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	check(String(panel.get("_gap_reference").text).contains("参考目标"), "切回目标更新来源说明")
 	panel.set_open(false)
 	window.content_scale_size = original_scale

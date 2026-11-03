@@ -16,21 +16,30 @@ var _center: FloatingWindow
 var _last_slot_id := ""
 var _last_slot_click_ms := 0
 
+var _refresh_scheduler: FrameLayoutScheduler
+var _equipment_dirty := false
+var _gap_dirty := false
+var _vitals_dirty := false
+var _stats_values: Array = []
+var _bonus_text := ""
+var _slot_snapshots := {}
+
 ## 初始化人物面板并订阅装备、目标及属性变化。
 func _ready() -> void:
+	_refresh_scheduler = FrameLayoutScheduler.new(self, _flush_refresh)
 	# 切换目标时刷新跨级参考等级，不增加逐帧轮询。
 	EventBus.target_changed.connect(_on_gap_target_changed)
-	EventBus.data_loaded.connect(_refresh)
+	EventBus.data_loaded.connect(_on_data_loaded)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
 	visible = false
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
-	EventBus.equipment_changed.connect(_refresh)
-	EventBus.player_leveled.connect(func(_level: int) -> void: _refresh())
-	EventBus.player_hp_changed.connect(func(_hp: int, _max: int) -> void: _refresh())
-	EventBus.player_mp_changed.connect(func(_mp: int, _max: int) -> void: _refresh())
+	EventBus.equipment_changed.connect(_request_equipment_refresh)
+	EventBus.player_leveled.connect(func(_level: int) -> void: _request_equipment_refresh())
+	EventBus.player_hp_changed.connect(_on_hp_changed)
+	EventBus.player_mp_changed.connect(_on_mp_changed)
 
 ## 通过既有输入映射切换面板，遵守浮窗层级。
 func _unhandled_input(event: InputEvent) -> void:
@@ -52,14 +61,11 @@ func set_open(open: bool) -> void:
 		_refresh()
 		EventBus.panel_opened.emit("character")
 		_center.show_window()
-	var bag := get_node_or_null("../InventoryPanel")
-	if bag != null and bag.visible:
-		bag._refresh()
 
 ## 并开集合统一由 `GameState.panels_coexist`（F-P3-1）判定，本面板不再自带名单。
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id == "inventory" and visible:
-		_refresh()
+		_refresh_drag_sources()
 	if visible and not GameState.panels_coexist(panel_id, "character"):
 		set_open(false)
 
@@ -208,21 +214,78 @@ func _build() -> void:
 	gap_body.add_child(_gap_advice)
 
 ## 读取当前人物数据刷新显示，不修改装备或战斗数值。
-func _refresh() -> void:
-	if _title == null:
+func _on_data_loaded() -> void:
+	_slot_snapshots.clear()
+	_request_equipment_refresh()
+
+func _request_equipment_refresh() -> void:
+	if visible:
+		_equipment_dirty = true
+		_refresh_scheduler.request()
+
+func _on_hp_changed(hp: int, maximum: int) -> void:
+	if visible and not _stats_values.is_empty():
+		_stats_values[0] = hp
+		_stats_values[1] = maximum
+		_vitals_dirty = true
+		_refresh_scheduler.request()
+
+func _on_mp_changed(mp: int, maximum: int) -> void:
+	if visible and not _stats_values.is_empty():
+		_stats_values[2] = mp
+		_stats_values[3] = maximum
+		_vitals_dirty = true
+		_refresh_scheduler.request()
+
+func _flush_refresh() -> void:
+	if not visible:
 		return
+	if _equipment_dirty:
+		_refresh()
+		return
+	if _gap_dirty:
+		_gap_dirty = false
+		_refresh_gap_card()
+		_fit_window_to_content.call_deferred()
+	if _vitals_dirty:
+		_vitals_dirty = false
+		_render_stats()
+
+func _refresh_drag_sources() -> void:
+	var bag_visible := _bag_visible()
+	for button: EquipmentSlot in _slots.values():
+		button.draggable = bag_visible and not button.item.is_empty()
+
+func _refresh() -> void:
+	if not visible or _title == null:
+		return
+	_equipment_dirty = false
+	_gap_dirty = false
+	_vitals_dirty = false
 	var player_name := String(GameState.player.get("name", Localization.tr_key("ui.character_panel.p003")))
 	_title.text = PanelChrome.title_text("人物 · %s" % player_name)
 	_identity.text = "%s      Lv %d" % [player_name, int(GameState.player.get("level", 1))]
 	_apply_look()
 	_refresh_gap_card()
 	_fit_window_to_content.call_deferred()
+	var bag_visible := _bag_visible()
 	for def in Equipment.SLOT_DEFS:
 		var sid := String(def.id)
 		var button: EquipmentSlot = _slots[sid]
 		var item: Variant = GameState.equipment.get(sid)
+		button.draggable = item is Dictionary and bag_visible
+		if _slot_snapshots.has(sid) and item == _slot_snapshots[sid] \
+				and (not item is Dictionary or is_same(button.item, item)):
+			continue
+		var previous: Variant = _slot_snapshots.get(sid)
+		_slot_snapshots[sid] = item.duplicate(true) if item is Dictionary else null
+		if item is Dictionary and previous is Dictionary and is_same(button.item, item):
+			previous["durability"] = item.get("durability")
+			if item == previous:
+				button._refresh_durability_bar()
+				button.tooltip_text = "%s\n%s" % [String(def.label), _equipment_tooltip(item)]
+				continue
 		button.item = item if item is Dictionary else {}
-		button.draggable = item is Dictionary and _bag_visible()
 		button.text = ItemUtil.template_name(item).substr(0, 2) if item is Dictionary else String(def.label)
 		# 工程 78：单卡标题用槽位名；有物品时走结构化卡（tooltip_text 仅作原生回退）。
 		button.tooltip_heading = String(def.label)
@@ -235,7 +298,7 @@ func _refresh() -> void:
 	# 工程 66：以上六项在「有套装加成」时会放大，展示必须走 GameState 的派生门面，
 	# 不能读 player 字典（那里永远是基础值）。
 	var p := GameState.player
-	_stats.text = Localization.tr_key("ui.character_panel.p005") % [
+	_stats_values = [
 		int(p.hp), GameState.max_hp(), int(p.mp), GameState.max_mp(),
 		GameState.total_attack(), GameState.total_defense(), int(p.level),
 		GameState.total_move_speed(),
@@ -244,7 +307,14 @@ func _refresh() -> void:
 		GameState.total_attack_interval(),
 		100.0 * GameState.total_dodge(),
 		100.0 * GameState.total_block(),
-		100.0 * GameState.total_cdr()] + _set_bonus_text()
+		100.0 * GameState.total_cdr()]
+	_bonus_text = _set_bonus_text()
+	_render_stats()
+
+func _render_stats() -> void:
+	var text := Localization.tr_key("ui.character_panel.p005") % _stats_values + _bonus_text
+	if _stats.text != text:
+		_stats.text = text
 
 ## 套装 / 强化两段（工程 66）：成套档位 + 距下一档还差几件。
 ## 「还差 N 件」是诱导收集的闭环 —— 只显示当前档位，玩家不知道自己离下一档多远。
@@ -354,7 +424,8 @@ func _equipment_tooltip(item: Dictionary) -> String:
 ## 人物面板开启时才随锁定目标刷新参考等级，隐藏时不额外重建整张面板。
 func _on_gap_target_changed(_target: Node) -> void:
 	if visible:
-		_refresh()
+		_gap_dirty = true
+		_refresh_scheduler.request()
 
 ## 以统一规则更新简明卡片；无有效目标时明确按人物等级参考，不更改属性值。
 func _refresh_gap_card() -> void:
