@@ -313,7 +313,7 @@ func _test_non_transfer_ignores_runes() -> void:
 func _test_ui_rows() -> void:
 	GameState.reset_to_defaults()
 	GameState.gold = 1000000
-	GameState.inventory[0] = _make("c6_equip_necklace", 100, "legendary", 2661)
+	GameState.equipment.necklace = _make("c6_equip_necklace", 100, "legendary", 2661)
 	GameState.inventory[1] = _rune("rune_gold", 3)
 	var panel: Control = (load("res://scenes/ui/ReforgePanel.tscn") as PackedScene).instantiate()
 	add_child(panel)
