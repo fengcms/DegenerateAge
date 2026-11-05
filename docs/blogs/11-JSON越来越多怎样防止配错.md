@@ -84,9 +84,9 @@ def valid_projectile_count(value):
     import math
     return (
         type(value) in (int, float)
+        and 1 <= value <= 5
         and math.isfinite(value)
         and value == math.floor(value)
-        and 1 <= value <= 5
     )
 
 assert valid_projectile_count(2)
@@ -94,11 +94,14 @@ assert valid_projectile_count(2.0)
 assert not valid_projectile_count(2.5)
 assert not valid_projectile_count(True)
 assert not valid_projectile_count(float("inf"))
+assert not valid_projectile_count(float("nan"))
+assert not valid_projectile_count(10 ** 1000)
+assert not valid_projectile_count("2")
 ```
 
 示例里的一到五是为了讲约束而设定的范围，不是宣称游戏所有能力都只能用这个弹数。正式范围要回到对应字段的设计。
 
-校验也有顺序。先确认类型和有限性，再判断是否整值，最后检查业务范围。错误信息最好分别告诉维护者是哪一层失败，否则他可能把一个字段改成字符串来绕过报错，制造新的问题。
+校验也有顺序。这段Python先确认类型，再用业务范围短路拦下过大数值，最后检查有限性与整值。Python整数可以任意大，直接把超大整数交给math.isfinite，可能在转换为浮点数时抛出异常；校验器就没有按约定返回失败。这个顺序是本示例针对运行时特点的处理，不是要求所有语言都照搬。错误信息最好分别告诉维护者是哪一层失败，否则他可能把一个字段改成字符串来绕过报错，制造新的问题。
 
 同样，概率和冷却即使都使用小数，也不能共用一个没有语义的“数字合法”检查就结束。概率的上界、时间单位以及是否允许零，都是具体玩法决定的。
 
