@@ -129,6 +129,7 @@ var dummy_art: Sprite2D
 ## 表现档案的头顶 UI 高度；null 表示沿用渲染器默认位置。
 var appearance_head_hp_y: Variant = null
 
+## 更新目标选择高亮并请求重绘，不改变仇恨或攻击状态。
 func set_selected(value: bool) -> void:
 	selected = value
 	queue_redraw()
@@ -341,6 +342,7 @@ func _spawn_death_summons() -> void:
 		if effect.has("summonId"):
 			_spawn_summons(String(effect.summonId), int(effect.get("summonCount", 0)), true)
 
+## 按指定模板在周围装配召唤物；宿主父节点须为Node2D，死亡和退场时按参数拒绝迟到调用。
 func _spawn_summons(id: String, count: int, after_death: bool = false, no_rewards: bool = false) -> void:
 	if not is_inside_tree() or get_parent() == null or is_queued_for_deletion() or (is_dead and not after_death):
 		return
@@ -591,6 +593,7 @@ func _reset_boss_to_arena() -> void:
 	_announce_boss_hp()
 	queue_redraw()
 
+## 仅首次Boss死亡登记首通与解锁，后续同模板击杀不重复广播首通。
 func _settle_first_clear() -> void:
 	if template.get("kind", "") != "boss" or bool(GameState.first_clear.get(monster_id, false)):
 		return
@@ -608,9 +611,11 @@ func _derive_max_hp(tpl_level: int) -> int:
 	var scaled := hp_base * (1.0 + M_HP_PER_LV * float(level - tpl_level))
 	return maxi(1, int(round(scaled)))
 
+## 向统一战斗结算提供当前实例攻击力，不修改模板。
 func get_attack() -> float:
 	return attack_power
 
+## 返回计入临时破甲后的防御，状态到期后恢复实例基值。
 func get_defense() -> float:
 	# R4-c：破甲期间防御打折；到期自然恢复，不写回 defense_power（模板值不可被污染）。
 	if armor_break_left > 0.0:
@@ -628,6 +633,7 @@ func apply_armor_break(duration: float, scale: float = ARMOR_BREAK_SCALE) -> voi
 	armor_break_scale = minf(armor_break_scale, scale)
 	armor_break_left = maxf(armor_break_left, duration)
 
+## 返回破甲剩余游戏秒数，供状态显示与验收查询。
 func armor_break_remaining() -> float:
 	return armor_break_left
 
@@ -642,6 +648,7 @@ func apply_slow(percent: float, duration: float) -> void:
 		slow_pct = clampf(percent, 0.0, 0.95)
 		slow_left = duration
 
+## 返回减速剩余游戏秒数，不在读取时推进计时。
 func slow_remaining() -> float:
 	return slow_left
 
@@ -650,6 +657,7 @@ func slow_remaining() -> float:
 func movement_multiplier() -> float:
 	return 1.0 - slow_pct if slow_left > 0.0 else 1.0
 
+## 返回减速生效后的世界像素/秒速度，供追击和Boss避让共同限速。
 func current_move_speed() -> float:
 	return move_speed_px * movement_multiplier()
 
@@ -660,9 +668,11 @@ func tick_status(delta: float) -> void:
 	if slow_left > 0.0:
 		slow_left = maxf(0.0, slow_left - delta)
 
+## 读取模板闪避点数，概率转换由Combat负责。
 func get_dodge() -> float:
 	return float(template.get("dodge", 0.0))
 
+## 提供当前血量比例供阶段和显示使用，最大生命至少按1处理。
 func hp_ratio() -> float:
 	return float(hp) / float(maxi(1, max_hp))
 
@@ -690,6 +700,7 @@ func _announce_boss_hp() -> void:
 
 # ---- 物理 / 状态机 ----
 
+## 物理帧集中推进状态与动作；技能接管时跳过普通AI，最后统一执行物理移动。
 func _physics_process(delta: float) -> void:
 	if _boss_visual != null and _boss_visual.tick(delta):
 		queue_redraw()
@@ -733,6 +744,7 @@ func _physics_process(delta: float) -> void:
 		_boss_ground.sync(_stomp_pending or not _chapter_boss_warn.is_empty() or (boss_action != null and boss_action.is_warning()) or not _boss_visual.impacts.is_empty())
 	move_and_slide()
 
+## 切换AI状态并清理已取消的动作；首次接战重置技能首放计时，重复进入同状态无副作用。
 func _enter(s: int) -> void:
 	if state == s:
 		return
@@ -759,6 +771,7 @@ func _enter(s: int) -> void:
 		_announce_boss_hp()
 	queue_redraw()
 
+## 按目标、射程和牵引范围推进追击/攻击/返回；只有未被技能接管的物理帧调用。
 func _update_ai(delta: float) -> void:
 	var player := _get_player()
 	var dist := INF
@@ -810,6 +823,7 @@ func _can_aggro(player: Node2D, dist: float) -> bool:
 		return false
 	return dist <= aggro_range
 
+## 闲置到期后选择巡逻点并接近，静止模板不产生巡逻位移。
 func _patrol(delta: float) -> void:
 	if move_speed_px <= 0.0:
 		return   # 静止型怪物不巡逻
@@ -826,6 +840,7 @@ func _patrol(delta: float) -> void:
 	_state_t += delta
 	_approach(_patrol_target)
 
+## 在出生点周边有限次抽取巡逻位置，拒绝休整区，找不到则返回出生点。
 func _random_patrol_point() -> Vector2:
 	for _i in range(8):
 		var ang := _rng.randf() * TAU
@@ -902,6 +917,7 @@ func _hold_attack_spacing(_player: Node2D) -> void:
 		return
 	velocity = to * speed
 
+## 取得有效且未死亡、未进入休整区的玩家；无可攻击目标时返回null。
 func _get_player() -> Node2D:
 	var p := get_tree().get_first_node_in_group("player")
 	if p == null:
@@ -966,6 +982,7 @@ func _level_damage_multiplier() -> float:
 func _min_hit_on_player() -> int:
 	return clampi(int(round(float(GameState.max_hp()) * 0.0025)), 10, 60)
 
+## 共用普通攻击与旧技能伤害入口；检查休整区、设置冷却并按命中结果触发反馈和附加效果。
 func _do_attack(player: Node2D, play_attack_art: bool = true, from_skill: bool = false) -> void:
 	if MapService.is_in_rest_zone(GameState.current_map, player.global_position) or MapService.is_in_rest_zone(GameState.current_map, global_position):
 		return
@@ -1021,6 +1038,7 @@ func _begin_projectile(player: Node2D) -> void:
 	if sample_art != null:
 		sample_art.attack(_ranged_target - global_position, attack_interval)
 
+## 远程蓄力到期时按锁定方向和能力弹数创建投射物，死亡或退场时取消发射。
 func _fire_projectile() -> void:
 	if is_dead or not is_inside_tree() or get_parent() == null:
 		return
@@ -1090,6 +1108,7 @@ func take_hit(result: Dictionary, from: Node = null) -> void:
 		_announce_boss_hp()
 		queue_redraw()
 
+## 幂等登记死亡、取消技能并结算奖励和重生信号，随后由视觉淡出释放节点。
 func _die() -> void:
 	if is_dead:
 		return
@@ -1189,6 +1208,7 @@ func _settle_rewards() -> void:
 ## 药水 / 如意 / 杂项排在装备之后，金币最后（独立入账）。分桶实现以保持**稳定次序**。
 const _QUALITY_RANK := {"common": 0, "uncommon": 1, "rare": 2, "epic": 3, "legendary": 4}
 
+## 按认领优先级分桶排列奖励，保留同优先级原始顺序，不丢弃合法字典物品。
 static func _priority_order(items: Array) -> Array:
 	var buckets := {6: [], 5: [], 4: [], 3: [], 2: [], 1: [], 0: []}
 	for it in items:
@@ -1344,6 +1364,7 @@ func _clamp_to_map(pos: Vector2) -> Vector2:
 		return pos
 	return ground.clamp_to_map(pos)
 
+## 绘制当前实体的选择、血条和占位表现；地面技能预警由独立画布处理。
 func _draw() -> void:
 	if not _special_warn.is_empty() and not is_dead:
 		if _special_warn == "sweep":
@@ -1493,6 +1514,7 @@ func _head_name_style() -> Dictionary:
 		_:
 			return {"color": COLOR_NAME_NORMAL, "size": 12, "width": 180.0}
 
+## 返回各怪物档次的头顶血条像素尺寸，与实际生命数值无关。
 func _head_hp_size() -> Vector2:
 	match _kind():
 		"elite":
