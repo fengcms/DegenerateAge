@@ -35,7 +35,7 @@ const ATTACK_SPACING_SPEED := 48.0
 ## 工程 103-b：近战射程下限 1.25 格（80px）。
 ## 按可见体宽分离后，64px 攻击圈只能站 6—7 只怪，打金图的密度与承伤明显下降；
 ## 抬到 1.25 格可让约 8—10 只同时够得着玩家（用户已拍板：方案 A + 近战射程补偿）。
-## Boss 不参与：Boss 是不可推动的锚点，且 `_stomp_radius` 的缺省半径复用了攻击射程。
+## Boss 不参与：Boss 射程与站位分开，且 `_stomp_radius` 的缺省半径复用了攻击射程。
 const MELEE_RANGE_FLOOR := 1.25
 const HIT_FLASH := 0.12        # 受击白闪时长（s）
 ## R4-c：破甲的**缺省**幅度（目标防御保留比例）。工程 107 起幅度由数据驱动
@@ -217,7 +217,7 @@ func _ready() -> void:
 		sample_art = art as SampleActorArt
 	elif art is Sprite2D:
 		dummy_art = art as Sprite2D
-	# 工程 103-b：分离半径按画面体宽算（体宽取不到时回退玩法半径）；Boss 只做锚点。
+	# 工程 103-b：分离半径按画面体宽算（体宽取不到时回退玩法半径）；Boss 对小怪只做锚点，对 Boss 的独立占地见 BossSpacing。
 	var visible := MonsterAppearance.body_half_width(appearance_id, art) if art != null else 0.0
 	separation_radius = radius if _kind() == "boss" or visible <= 0.0 else visible
 	if spawn_position == Vector2.ZERO:
@@ -835,6 +835,7 @@ func _random_patrol_point() -> Vector2:
 			return candidate
 	return spawn_position
 
+## 沿导航方向接近目标；同类避让只修正速度，仍由物理移动和休整区守卫限制落点。
 func _approach(target_pos: Vector2) -> void:
 	var ground := get_tree().get_first_node_in_group("map_ground") as IsoGround
 	var to := _cave_nav.direction(ground, global_position, target_pos)
@@ -844,15 +845,19 @@ func _approach(target_pos: Vector2) -> void:
 	var push := _separation_push()
 	if push.length() > 0.001:
 		to = (to + push.normalized() * SEPARATION_WEIGHT).normalized()
-	var step := to * current_move_speed() * get_physics_process_delta_time()
+	var desired := to * current_move_speed()
+	if _kind() == "boss":
+		desired = BossSpacing.steer(self, desired)
+	var step := desired * get_physics_process_delta_time()
 	if MapService.is_in_rest_zone(GameState.current_map, global_position + step):
 		velocity = Vector2.ZERO
 		return
-	velocity = to * current_move_speed()
+	velocity = desired
 
 ## 同类排斥向量：长度 = 还差多少才到最小间距（px），方向由邻居指向自己。
 ## 间距用各自 `separation_radius`（可见半宽）而不是玩法半径，否则 69px 的身体只拉开 23px。
-## Boss 是**不可推动的锚点**：自身不产生排斥位移；对普通怪只按玩法半径计间距，
+## 此函数只处理小怪：Boss 对 Boss 由 BossSpacing 处理，Boss 不被小怪推动。
+## 对普通怪只按 Boss 玩法半径计间距，
 ## 不按 Boss 的美术体宽把小怪推到很远处。
 ## 邻居查询直接遍历 `enemies` 组：本图普通怪预算 32 只（打金图），每帧 O(N²) 可接受；
 ## 若未来召唤物数量级上升，再改网格分桶。
@@ -880,6 +885,11 @@ func _separation_push() -> Vector2:
 ## 只在真实重叠时给一个很小的侧移；**不夹攻击范围** —— 被 Boss 之类的大体积锚点挡住时，
 ## 位移会把怪挤出 ATTACK 阈值，状态机自然转 CHASE 重新绕位，比原地卡在身体里更好。
 func _hold_attack_spacing(_player: Node2D) -> void:
+	if _kind() == "boss":
+		var desired := BossSpacing.steer(self, Vector2.ZERO)
+		if not MapService.is_in_rest_zone(GameState.current_map, global_position + desired * get_physics_process_delta_time()):
+			velocity = desired
+		return
 	if move_speed_px <= 0.0:
 		return
 	var push := _separation_push()
