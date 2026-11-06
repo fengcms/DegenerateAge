@@ -14,41 +14,32 @@ extends Control
 ##   · 死亡逐条处理：保留条目 0.6s + 0.3s 淡出，旁边那只的血条不受影响。
 ##   · `MAX_BARS` 上限：超限淘汰 `since` 最大的非死亡条目（同区 2 只 + 打死一只的过渡够用）。
 
-const MONO_FONT := preload("res://assets/themes/mono_font.tres")
-
 const HIDE_AFTER := 3.0           # 脱战隐藏延迟（s）
 const FADE_AFTER_DEATH := 0.6     # 死亡后停留（s），随后淡出
 const FADE_TIME := 0.3            # 淡出时长（s）
-const BAR_W := 480.0
-const BAR_H := 18.0
-const TOP_Y := 22.0
-## 条间距：一条血条 = 18px 条体 + 名称行，56px 包含额外的装备跨级提示行。
-const PITCH := 56.0
 ## 同时最多几条（同区 2 只 + 「刚打死一只、旁边又来一只」的过渡）。
 const MAX_BARS := 3
 ## 三阶段名（对应 monsters.json 的 bossSkill.phases 0/1/2，创意 07 §4）。
 const PHASE_KEYS := ["ui.boss.phase_sealed", "ui.boss.phase_cracked", "ui.boss.phase_corrupted"]
 
-const COL_BG := Color(0.06, 0.02, 0.03, 0.88)
-const COL_EDGE := Color(0.58, 0.18, 0.18, 0.95)
-const COL_FILL := Color(0.78, 0.16, 0.18, 1.0)
-const COL_TICK := Color(1.0, 0.85, 0.4, 0.8)
-const COL_NAME := Color(0.96, 0.89, 0.87, 1.0)
-const COL_PHASE := Color(0.96, 0.74, 0.64, 1.0)
-const COL_HP_TEXT := Color(1.0, 1.0, 1.0, 0.85)
-
 ## 每条：`{id, name, hp, max_hp, phase, since, dying_left, alpha}`。
 var _bars: Array[Dictionary] = []
 ## 全部条目都在死亡淡出中（既有断言语义：非空且全 dying）。
 var _dying := false
+var _rows: Dictionary = {}
+var _portraits := MonsterPortraitCache.new()
 
+## 绑定数据事件，保持原有逐实例状态模型。
 func _ready() -> void:
 	EventBus.equipment_changed.connect(_refresh_gap_rows)
-	EventBus.data_loaded.connect(_refresh_gap_rows)
+	EventBus.data_loaded.connect(_on_data_loaded)
+	EventBus.map_changed.connect(_on_map_changed)
+	resized.connect(_sync_rows)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	EventBus.boss_hp_changed.connect(_on_boss_hp)
 
+## 逐条推进过期与死亡淡出，不重排仍存活的实例。
 func _process(delta: float) -> void:
 	if _bars.is_empty():
 		return
@@ -71,6 +62,7 @@ func _process(delta: float) -> void:
 		_sync_visibility()
 		queue_redraw()
 
+## 接收真实实例事件，首次登记时缓存头像及技能阶段信息。
 func _on_boss_hp(boss_id: int, boss_name: String, hp: int, max_hp: int, phase: int) -> void:
 	var index := _index_of(boss_id)
 	var monster := instance_from_id(boss_id) if is_instance_id_valid(boss_id) else null
@@ -114,6 +106,13 @@ func _on_boss_hp(boss_id: int, boss_name: String, hp: int, max_hp: int, phase: i
 		var updated := _index_of(boss_id)
 		if updated >= 0:
 			_bars[updated]["level"] = level
+	var updated_index := _index_of(boss_id)
+	if updated_index >= 0 and monster is Monster:
+		var entry: Dictionary = _bars[updated_index]
+		if entry.get("portrait") == null:
+			entry["portrait"] = _portraits.get_portrait(monster)
+		entry["thresholds"] = _thresholds(monster)
+		entry["phase_text"] = _phase_text(monster, phase)
 	_refresh_gap_rows()
 	_sync_visibility()
 	queue_redraw()
@@ -134,6 +133,7 @@ func _evict_overflow() -> void:
 			worst = _bars.size() - 1
 		_bars.remove_at(worst)
 
+## 更新可见性与行节点，所有死亡时保持原有_dying语义。
 func _sync_visibility() -> void:
 	visible = not _bars.is_empty()
 	var all_dying := true
@@ -142,7 +142,9 @@ func _sync_visibility() -> void:
 			all_dying = false
 			break
 	_dying = visible and all_dying
+	_sync_rows()
 
+## 按运行实例id查找条目，不按怪物模板或同名匹配。
 func _index_of(boss_id: int) -> int:
 	for i in range(_bars.size()):
 		if int(_bars[i]["id"]) == boss_id:
@@ -167,54 +169,69 @@ func bar_state(boss_id: int) -> Dictionary:
 		return {}
 	return (_bars[index] as Dictionary).duplicate()
 
-func _draw() -> void:
-	var left := size.x * 0.5 - BAR_W * 0.5
+## 通过行节点呈现数据，布局使用固定槽位；更新既有实例不改变顺序。
+func _sync_rows() -> void:
+	for id in _rows.keys():
+		if _index_of(id) < 0:
+			_rows[id].queue_free()
+			_rows.erase(id)
+	var y := 140.0
 	for i in range(_bars.size()):
-		_draw_one(left, TOP_Y + PITCH * float(i), _bars[i])
-
-func _draw_one(left: float, top: float, entry: Dictionary) -> void:
-	var alpha := float(entry["alpha"])
-	# 名称（血条上方居中）
-	var name_color := COL_NAME
-	name_color.a *= alpha
-	draw_string(MONO_FONT, Vector2(left, top - 7.0), String(entry["name"]),
-		HORIZONTAL_ALIGNMENT_CENTER, BAR_W, 17, name_color)
-	# 底板 + 血量
-	var bg := COL_BG
-	bg.a *= alpha
-	draw_rect(Rect2(left, top, BAR_W, BAR_H), bg)
-	var ratio := clampf(float(int(entry["hp"])) / float(int(entry["max_hp"])), 0.0, 1.0)
-	if ratio > 0.0:
-		var fill := COL_FILL
-		fill.a *= alpha
-		draw_rect(Rect2(left, top, BAR_W * ratio, BAR_H), fill)
-	# 阶段刻度（60% / 30%）
-	for t in [0.6, 0.3]:
-		var tick := COL_TICK
-		tick.a *= alpha
-		var tx := left + BAR_W * float(t)
-		draw_line(Vector2(tx, top), Vector2(tx, top + BAR_H), tick, 2.0, true)
-	var edge := COL_EDGE
-	edge.a *= alpha
-	draw_rect(Rect2(left, top, BAR_W, BAR_H), edge, false, 2.0)
-	# 血量数值（左）+ 阶段名（中）
-	var hp_color := COL_HP_TEXT
-	hp_color.a *= alpha
-	draw_string(MONO_FONT, Vector2(left + 8.0, top + BAR_H - 4.0),
-		"%d / %d" % [int(entry["hp"]), int(entry["max_hp"])],
-		HORIZONTAL_ALIGNMENT_LEFT, BAR_W - 16.0, 11, hp_color)
-	var gap_text := String(entry.get("gap_text",""))
-	if not gap_text.is_empty():
-		draw_string(MONO_FONT, Vector2(left,top+BAR_H+13.0), gap_text, HORIZONTAL_ALIGNMENT_CENTER,BAR_W,11,Color(0.96,0.75,0.45,alpha))
-	var phase_color := COL_PHASE
-	phase_color.a *= alpha
-	var phase_name := Localization.tr_key(PHASE_KEYS[clampi(int(entry["phase"]), 0, PHASE_KEYS.size() - 1)])
-	draw_string(MONO_FONT, Vector2(left, top + BAR_H - 4.0), phase_name,
-		HORIZONTAL_ALIGNMENT_CENTER, BAR_W, 11, phase_color)
+		var entry: Dictionary = _bars[i]
+		var id := int(entry.id)
+		if not _rows.has(id):
+			var row := BossStatusRow.new()
+			add_child(row)
+			_rows[id] = row
+		var row: BossStatusRow = _rows[id]
+		row.position = Vector2((size.x - 560.0) * 0.5, y)
+		row.size = Vector2(560, 88 if i == 0 else 60)
+		row.present(entry, i == 0, false)
+		y += row.size.y + 8
 
 ## 每次血量/装备/规则事件刷新最多三条提示，不在绘制或逐帧扫描装备属性。
 func _refresh_gap_rows() -> void:
 	var ctx := EquipmentGap.current_context()
 	for entry in _bars:
 		entry["gap_text"] = EquipmentGap.hint(ctx,int(entry.get("level",0)))
-	queue_redraw()
+	_sync_rows()
+
+## 从实际技能定义读取血量阈值，不把首章的60%/30%强加给其他首领。
+func _thresholds(monster: Monster) -> Array:
+	var result: Array = []
+	var raw: Variant = monster.template.get("bossSkill")
+	var skill: Dictionary = raw if raw is Dictionary else {}
+	for phase in skill.get("phases", []):
+		if phase.has("hpBelow"):
+			result.append(float(phase.hpBelow))
+	if skill.has("phaseB"):
+		result.append(float(skill.phaseB.get("triggerHp", 0.5)))
+	if skill.has("phaseC"):
+		result.append(float(skill.phaseC.get("hpBelow", 0.25)))
+	return result
+
+## 首章使用既有阶段命名，其他模板只展示真实已触发阶段，避免虚构同名机制。
+func _phase_text(monster: Monster, phase: int) -> String:
+	var raw: Variant = monster.template.get("bossSkill")
+	var skill: Dictionary = raw if raw is Dictionary else {}
+	if skill.has("phases") or monster.template.get("abilities", {}).has("bossPattern"):
+		return Localization.tr_key(PHASE_KEYS[clampi(phase, 0, PHASE_KEYS.size()-1)])
+	return "II" if monster._boss_visual_phase == 1 else ""
+
+## 配置重载后重新取仍存在实例的外观，缓存资源不跨数据修订存活。
+func _on_data_loaded() -> void:
+	_portraits.clear()
+	for entry in _bars:
+		var monster := instance_from_id(int(entry.id)) if is_instance_id_valid(int(entry.id)) else null
+		entry["portrait"] = _portraits.get_portrait(monster) if monster is Monster else null
+	_refresh_gap_rows()
+
+## 切图时清空旧Boss与头像，避免旧实例在新地图上继续展示。
+func _on_map_changed(_map_id: String) -> void:
+	_bars.clear()
+	_portraits.clear()
+	_sync_visibility()
+
+## UI销毁时主动放开裁切缓存，行节点纹理随子树释放。
+func _exit_tree() -> void:
+	_portraits.clear()
