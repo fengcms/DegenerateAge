@@ -16,9 +16,19 @@ var _selected := false
 var _plate := StyleBoxFlat.new()
 var _track := StyleBoxFlat.new()
 var _fill := StyleBoxFlat.new()
+var _trail_style := StyleBoxFlat.new()
+var _shown_id := 0
+var _last_hp := -1
+var _last_max := 1
+var _last_phase := ""
+var _appearance := 0.0
+var _pulse := 0.0
+var _trail := 0.0
+var _trail_hold := 0.0
 
 ## 创建固定子节点，控制名与数值字号，所有主题/纹理资源随行实例释放。
 func _init() -> void:
+	set_process(false)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	_plate.bg_color = Color("19191e")
 	_plate.border_color = Color("a68a51")
@@ -28,6 +38,8 @@ func _init() -> void:
 	_track.set_corner_radius_all(3)
 	_fill.bg_color = Color("ae3f43")
 	_fill.set_corner_radius_all(3)
+	_trail_style.bg_color = Color("754c3d")
+	_trail_style.set_corner_radius_all(3)
 	_portrait = TextureRect.new()
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -75,6 +87,25 @@ func _label(font_size: int, color: Color) -> Label:
 
 ## 按对应实例快照更新文字；最多3行，调用者保证每行自身实例id不串台。
 func present(entry: Dictionary, expanded: bool, selected: bool) -> void:
+	var ratio := float(entry.hp) / maxf(1, float(entry.max_hp))
+	if _shown_id != int(entry.id):
+		_shown_id = int(entry.id)
+		_last_hp = -1
+		_last_phase = ""
+		_pulse = 0.0
+		_trail_hold = 0.0
+		_appearance = 0.0
+		_trail = ratio
+	elif int(entry.hp) < _last_hp:
+		_trail = maxf(_trail, float(_last_hp) / maxf(1,float(_last_max)))
+		_trail_hold = 0.2
+	elif int(entry.hp) > _last_hp:
+		_trail = ratio
+	if _last_hp >= 0 and String(entry.get("phase_text", "")) != _last_phase:
+		_pulse = 0.35
+	_last_phase = String(entry.get("phase_text", ""))
+	_last_hp = int(entry.hp)
+	_last_max = int(entry.max_hp)
 	_entry = entry
 	_expanded = expanded
 	_selected = selected
@@ -91,7 +122,8 @@ func present(entry: Dictionary, expanded: bool, selected: bool) -> void:
 	_level.offset_top = 3
 	_level.offset_bottom = -3
 	tooltip_text = _name_label.text + "\n" + _numbers.text + "\n" + _gap.text
-	modulate.a = float(entry.alpha)
+	modulate.a = float(entry.alpha) * _appearance
+	set_process(_appearance < 1.0 or _pulse > 0.0 or _trail > ratio + 0.001)
 	_layout()
 	queue_redraw()
 
@@ -123,7 +155,7 @@ func _layout() -> void:
 func _draw() -> void:
 	if _entry.is_empty():
 		return
-	_plate.border_color = Color("e2c581") if _selected else Color("a68a51")
+	_plate.border_color = (Color("e2c581") if _selected else Color("a68a51")).lerp(Color("f2dfa4"), _pulse / 0.35)
 	draw_style_box(_plate, Rect2(Vector2.ZERO, size))
 	var center := _portrait.position + _portrait.size * 0.5
 	var radius := _portrait.size.x * 0.5
@@ -136,8 +168,36 @@ func _draw() -> void:
 	var bar := Rect2(84, 24 if size.y < 60 else 29, maxf(1, size.x - 96), 15 if _expanded else 10)
 	draw_style_box(_track, bar)
 	var ratio := clampf(float(_entry.hp) / maxf(1, float(_entry.max_hp)), 0, 1)
+	if _trail > ratio:
+		draw_style_box(_trail_style, Rect2(bar.position, Vector2(bar.size.x * _trail, bar.size.y)))
 	if ratio > 0:
 		draw_style_box(_fill, Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)))
+		if bar.size.x * ratio > 6:
+			draw_line(bar.position+Vector2(3,1), bar.position+Vector2(bar.size.x*ratio-3,1), Color("d97168"), 1)
 	for threshold in _entry.get("thresholds", []):
 		var x := bar.position.x + bar.size.x * float(threshold)
 		draw_line(Vector2(x, bar.position.y), Vector2(x, bar.end.y), Color("dec68c"), 1)
+
+## 仅进入/受伤余量/阶段提亮期间运行，结束后停止；真实血量与原有死亡alpha始终立即生效。
+func _process(delta: float) -> void:
+	if _entry.is_empty():
+		set_process(false)
+		return
+	_appearance = minf(1, _appearance + delta / 0.15)
+	_pulse = maxf(0, _pulse-delta)
+	_trail_hold = maxf(0, _trail_hold-delta)
+	var ratio := float(_entry.hp) / maxf(1, float(_entry.max_hp))
+	if _trail_hold <= 0:
+		_trail = move_toward(_trail, ratio, delta * 1.5)
+	modulate.a = float(_entry.alpha) * _appearance
+	queue_redraw()
+	set_process(_appearance < 1 or _pulse > 0 or _trail > ratio + 0.001)
+
+## 进入最多3行的界面复用池前放开外观与实例快照，不保留旧地图纹理或运行状态。
+func clear_presentation() -> void:
+	set_process(false)
+	hide()
+	_portrait.texture = null
+	_entry = {}
+	_shown_id = 0
+	tooltip_text = ""

@@ -101,7 +101,7 @@ DEFAULT_TESTS = [
     "StarTransferLevelHintTest",
     "StarTransferAutoEquipTest",
     # M10-3b 多目标血条：实例分条 + 不重排 + 逐条过期/死亡 + current_bosses + 音频按实例。
-    "BossMultiTargetTest",
+    "BossMultiTargetTest", "BossStatusPresentationTest",
     # M10-4 能力层：useType=panel 分发 + PanelRouter ready 表 + 任务等级门槛（发放任务在 M10-7）。
     "PortableToolsTest",
     # 工程 108 随身铁匠：道具契约 / 路由器登记 / 双击不消耗 / **面板双模式（回城零回归）**

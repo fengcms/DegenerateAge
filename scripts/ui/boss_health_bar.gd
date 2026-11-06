@@ -27,6 +27,7 @@ var _bars: Array[Dictionary] = []
 ## 全部条目都在死亡淡出中（既有断言语义：非空且全 dying）。
 var _dying := false
 var _rows: Dictionary = {}
+var _row_pool: Array[BossStatusRow] = []
 var _portraits := MonsterPortraitCache.new()
 var _selected_id := 0
 
@@ -115,7 +116,7 @@ func _on_boss_hp(boss_id: int, boss_name: String, hp: int, max_hp: int, phase: i
 			entry["portrait"] = _portraits.get_portrait(monster)
 		entry["thresholds"] = _thresholds(monster)
 		entry["phase_text"] = _phase_text(monster, phase)
-	_refresh_gap_rows()
+	_refresh_gap_rows(false)
 	_sync_visibility()
 	queue_redraw()
 
@@ -175,7 +176,9 @@ func bar_state(boss_id: int) -> Dictionary:
 func _sync_rows() -> void:
 	for id in _rows.keys():
 		if _index_of(id) < 0:
-			_rows[id].queue_free()
+			var row: BossStatusRow = _rows[id]
+			row.clear_presentation()
+			_row_pool.append(row)
 			_rows.erase(id)
 	var compact := size.x < 1000.0 or size.y < 650.0
 	var compact_height := 52.0 if size.y < 460.0 else 60.0
@@ -187,8 +190,10 @@ func _sync_rows() -> void:
 		var entry: Dictionary = _bars[i]
 		var id := int(entry.id)
 		if not _rows.has(id):
-			var row := BossStatusRow.new()
-			add_child(row)
+			var row: BossStatusRow = _row_pool.pop_back() if not _row_pool.is_empty() else BossStatusRow.new()
+			if row.get_parent() == null:
+				add_child(row)
+			row.show()
 			_rows[id] = row
 		var row: BossStatusRow = _rows[id]
 		row.position = Vector2(left, y)
@@ -197,11 +202,12 @@ func _sync_rows() -> void:
 		y += row.size.y + 8
 
 ## 每次血量/装备/规则事件刷新最多三条提示，不在绘制或逐帧扫描装备属性。
-func _refresh_gap_rows() -> void:
+func _refresh_gap_rows(sync: bool = true) -> void:
 	var ctx := EquipmentGap.current_context()
 	for entry in _bars:
 		entry["gap_text"] = EquipmentGap.hint(ctx,int(entry.get("level",0)))
-	_sync_rows()
+	if sync:
+		_sync_rows()
 
 ## 从实际技能定义读取血量阈值，不把首章的60%/30%强加给其他首领。
 func _thresholds(monster: Monster) -> Array:
@@ -223,7 +229,9 @@ func _phase_text(monster: Monster, phase: int) -> String:
 	var skill: Dictionary = raw if raw is Dictionary else {}
 	if skill.has("phases") or monster.template.get("abilities", {}).has("bossPattern"):
 		return Localization.tr_key(PHASE_KEYS[clampi(phase, 0, PHASE_KEYS.size()-1)])
-	return "II" if monster._boss_visual_phase == 1 else ""
+	if skill.has("phaseC") and monster.hp_ratio() <= float(skill.phaseC.get("hpBelow",0.25)):
+		return "III"
+	return "II" if monster._boss_visual_phase == 1 else "I" if skill.has("phaseB") else ""
 
 ## 配置重载后重新取仍存在实例的外观，缓存资源不跨数据修订存活。
 func _on_data_loaded() -> void:
