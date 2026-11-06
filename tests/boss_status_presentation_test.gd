@@ -84,6 +84,7 @@ func _ready() -> void:
 		hud.scale = Vector2.ONE * factor
 		await get_tree().process_frame
 		await get_tree().process_frame
+		_check(is_equal_approx((bar._rows[ids[0]] as Control).position.y, 16.0), "各档UI缩放的首行必须固定在顶部16像素")
 		var end := 0.0
 		for id in ids:
 			var row: BossStatusRow = bar._rows[id]
@@ -97,6 +98,21 @@ func _ready() -> void:
 		if DisplayServer.get_name() != "headless":
 			RenderingServer.force_draw(false)
 			get_viewport().get_texture().get_image().save_png("/tmp/da-boss-status-%d.png" % int(factor*100))
+	# 默认倍率下普通目标卡与Boss状态栏同时存在，也必须互不遮挡。
+	bar.size = Vector2(1280,800)
+	hud.size = bar.size
+	bar.scale = Vector2.ONE
+	hud.scale = Vector2.ONE
+	var normal := load("res://scenes/entities/Monster.tscn").instantiate() as Monster
+	host.add_child(normal)
+	normal.set_physics_process(false)
+	EventBus.target_changed.emit(normal)
+	await get_tree().process_frame
+	var ordinary_card := hud.get_node("TargetPanel") as Control
+	_check(ordinary_card.visible, "普通目标卡与Boss状态栏同时显示")
+	for row in bar._rows.values():
+		_check(not row.get_global_rect().intersects(ordinary_card.get_global_rect()), "顶部Boss状态栏避让普通目标卡")
+	EventBus.target_changed.emit(bosses[0])
 	DataLoader.revision += 1
 	EventBus.data_loaded.emit()
 	_check(cache.cached_count() == 3, "数据修订后只重建当前3个外观")

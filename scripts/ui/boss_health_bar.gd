@@ -184,8 +184,14 @@ func _sync_rows() -> void:
 	var compact_height := 52.0 if size.y < 460.0 else 60.0
 	var width := minf(560.0, maxf(280.0, size.x - 275.0))
 	var left := clampf((size.x - width) * 0.5, 16, maxf(16, size.x - 259 - width))
-	var total := (compact_height * _bars.size() if compact else 88.0 + 60.0 * maxi(0,_bars.size()-1)) + 8.0 * maxi(0,_bars.size()-1)
-	var y := minf(140.0, maxf(132.0, size.y - 92.0 - total))
+	# 标准宽画布同时选中普通怪/NPC时，让出其顶部目标卡（右缘548+16间隔）。
+	var target := instance_from_id(_selected_id) if is_instance_id_valid(_selected_id) else null
+	var other_card: bool = target is Npc or (target is Monster and not target.is_dead and target._kind() != "boss")
+	if size.x >= 1000.0 and other_card:
+		width = minf(width, size.x - 259.0 - 564.0)
+		left = clampf((size.x-width)*0.5, 564.0, size.x-259.0-width)
+	# 用户要求固定顶部；不再为普通目标卡预留132–140像素的垂直空白。
+	var y := 16.0
 	for i in range(_bars.size()):
 		var entry: Dictionary = _bars[i]
 		var id := int(entry.id)
