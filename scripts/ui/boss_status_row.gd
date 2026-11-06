@@ -33,7 +33,7 @@ func _init() -> void:
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mask := ShaderMaterial.new()
-	mask.shader = preload("res://assets/ui/portrait_circle.gdshader")
+	mask.shader = preload("res://assets/ui/monster_portrait_circle.gdshader")
 	_portrait.material = mask
 	add_child(_portrait)
 	_name_label = _label(17, Color("e9dcc0"))
@@ -97,9 +97,11 @@ func present(entry: Dictionary, expanded: bool, selected: bool) -> void:
 
 ## 固定信息行，名称和阶段各有独立区域；大生命数值使用完整独立文字行。
 func _layout() -> void:
-	var p := 64.0 if _expanded else 52.0
+	var slim := size.y < 60
+	var p := 64.0 if _expanded else minf(52.0, size.y-8)
 	_portrait.position = Vector2(8, 10 if _expanded else 4)
 	_portrait.size = Vector2(p, p)
+	_portrait.material.set_shader_parameter("portrait_size", _portrait.size)
 	_badge.size.y = 35 if _expanded else 30
 	_badge.position = Vector2(74 - _badge.size.x, size.y - _badge.size.y - 3)
 	var left := 84.0
@@ -111,7 +113,7 @@ func _layout() -> void:
 	_numbers.position = Vector2(left, 48)
 	_numbers.size = Vector2(maxf(1, width - 64), 18)
 	_numbers.visible = _expanded
-	_percent.position = Vector2(size.x - 72, 48 if _expanded else 39)
+	_percent.position = Vector2(size.x - 72, 48 if _expanded else 32 if slim else 39)
 	_percent.size = Vector2(60, 18)
 	_gap.position = Vector2(left, 66)
 	_gap.size = Vector2(width, 18)
@@ -131,7 +133,7 @@ func _draw() -> void:
 		draw_colored_polygon(PackedVector2Array([center+Vector2(-14,14),center+Vector2(0,-15),center+Vector2(14,14),center]), Color("766b60"))
 	var crown := PackedVector2Array([Vector2(center.x-22,8),Vector2(center.x-26,0),Vector2(center.x-10,4),Vector2(center.x,-5),Vector2(center.x+10,4),Vector2(center.x+26,0),Vector2(center.x+22,8)])
 	draw_colored_polygon(crown, Color("8e7547"))
-	var bar := Rect2(84, 29, maxf(1, size.x - 96), 15 if _expanded else 10)
+	var bar := Rect2(84, 24 if size.y < 60 else 29, maxf(1, size.x - 96), 15 if _expanded else 10)
 	draw_style_box(_track, bar)
 	var ratio := clampf(float(_entry.hp) / maxf(1, float(_entry.max_hp)), 0, 1)
 	if ratio > 0:

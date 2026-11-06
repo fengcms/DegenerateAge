@@ -49,9 +49,35 @@ func _ready() -> void:
 	missing.template = {"appearanceId":"missing_portrait_test"}
 	_check(cache.get_portrait(missing) == null and cache.cached_count() == 3, "缺图回退不污染缓存")
 	missing.free()
-	if DisplayServer.get_name() != "headless":
-		RenderingServer.force_draw(false)
-		get_viewport().get_texture().get_image().save_png("/tmp/da-boss-status.png")
+	var positions: Array = []
+	for id in ids:
+		positions.append(bar._rows[id].position)
+	EventBus.target_changed.emit(bosses[0])
+	_check(bar.bar_ids() == ids, "选中高亮不得重排实例")
+	for i in range(ids.size()):
+		_check(bar._rows[ids[i]].position == positions[i], "切换目标不得改变槽位位置")
+	_check(bar._rows[bosses[0].get_instance_id()]._selected, "正确实例被高亮")
+	for factor in [0.8, 1.0, 1.5, 2.0]:
+		bar.size = Vector2(1280,800) / factor
+		hud.size = bar.size
+		bar.scale = Vector2.ONE * factor
+		hud.scale = Vector2.ONE * factor
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var end := 0.0
+		for id in ids:
+			var row: BossStatusRow = bar._rows[id]
+			_check(row.position.y >= end, "缩放后行之间不重叠")
+			_check(row.position.x >= 0 and row.position.x + row.size.x <= bar.size.x - 243 + 0.1, "缩放后避开小地图/任务右侧栏")
+			_check(row.position.y + row.size.y <= bar.size.y - 92 + 0.1, "缩放后不覆盖底部快捷栏")
+			_check(row._level.text.length() == 4 and row._level.size.x >= row._level.get_minimum_size().x, "缩放后四位等级完整")
+			end = row.position.y + row.size.y
+		if DisplayServer.get_name() != "headless":
+			RenderingServer.force_draw(false)
+			get_viewport().get_texture().get_image().save_png("/tmp/da-boss-status-%d.png" % int(factor*100))
+	DataLoader.revision += 1
+	EventBus.data_loaded.emit()
+	_check(cache.cached_count() == 3, "数据修订后只重建当前3个外观")
 	EventBus.map_changed.emit("wild_trial")
 	_check(bar.bar_count() == 0 and cache.cached_count() == 0, "切图释放全部Boss条目与头像缓存")
 	bar.queue_free()

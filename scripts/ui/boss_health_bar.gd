@@ -28,12 +28,14 @@ var _bars: Array[Dictionary] = []
 var _dying := false
 var _rows: Dictionary = {}
 var _portraits := MonsterPortraitCache.new()
+var _selected_id := 0
 
 ## 绑定数据事件，保持原有逐实例状态模型。
 func _ready() -> void:
 	EventBus.equipment_changed.connect(_refresh_gap_rows)
 	EventBus.data_loaded.connect(_on_data_loaded)
 	EventBus.map_changed.connect(_on_map_changed)
+	EventBus.target_changed.connect(_on_target_changed)
 	resized.connect(_sync_rows)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -175,7 +177,12 @@ func _sync_rows() -> void:
 		if _index_of(id) < 0:
 			_rows[id].queue_free()
 			_rows.erase(id)
-	var y := 140.0
+	var compact := size.x < 1000.0 or size.y < 650.0
+	var compact_height := 52.0 if size.y < 460.0 else 60.0
+	var width := minf(560.0, maxf(280.0, size.x - 275.0))
+	var left := clampf((size.x - width) * 0.5, 16, maxf(16, size.x - 259 - width))
+	var total := (compact_height * _bars.size() if compact else 88.0 + 60.0 * maxi(0,_bars.size()-1)) + 8.0 * maxi(0,_bars.size()-1)
+	var y := minf(140.0, maxf(132.0, size.y - 92.0 - total))
 	for i in range(_bars.size()):
 		var entry: Dictionary = _bars[i]
 		var id := int(entry.id)
@@ -184,9 +191,9 @@ func _sync_rows() -> void:
 			add_child(row)
 			_rows[id] = row
 		var row: BossStatusRow = _rows[id]
-		row.position = Vector2((size.x - 560.0) * 0.5, y)
-		row.size = Vector2(560, 88 if i == 0 else 60)
-		row.present(entry, i == 0, false)
+		row.position = Vector2(left, y)
+		row.size = Vector2(width, 88 if i == 0 and not compact else compact_height)
+		row.present(entry, i == 0 and not compact, id == _selected_id)
 		y += row.size.y + 8
 
 ## 每次血量/装备/规则事件刷新最多三条提示，不在绘制或逐帧扫描装备属性。
@@ -235,3 +242,8 @@ func _on_map_changed(_map_id: String) -> void:
 ## UI销毁时主动放开裁切缓存，行节点纹理随子树释放。
 func _exit_tree() -> void:
 	_portraits.clear()
+
+## 选中高亮只改变外框，不改变显示槽、顺序或行高。
+func _on_target_changed(target: Node) -> void:
+	_selected_id = target.get_instance_id() if is_instance_valid(target) else 0
+	_sync_rows()
