@@ -117,6 +117,7 @@ func _ready() -> void:
 					for key in SettingsRuntime.DISPLAY_PREF_KEYS:
 						if (saved as Dictionary).has(key):
 							GameState.settings[key] = saved[key]
+					SettingsRuntime.adopt_legacy_display_preferences(saved)
 					SettingsRuntime.save_display_preferences()
 					SettingsRuntime.apply_all()
 	# M4-7：启动先显示主菜单；玩家选择「继续」后才读取上次存档。
@@ -855,7 +856,8 @@ func apply_to_game_state(data: Dictionary) -> void:
 	if data.get("settings", null) is Dictionary:
 		GameState.settings = _migrate_settings(data["settings"] as Dictionary)
 		if SettingsRuntime.read_display_preferences().is_empty():
-			# 未有本机偏好时，首次读取旧槽即迁入独立文件。
+			# 未有本机偏好时，先标记旧槽来源，再迁入独立文件。
+			SettingsRuntime.adopt_legacy_display_preferences(data["settings"])
 			SettingsRuntime.save_display_preferences()
 		GameState.settings = SettingsRuntime.with_display_preferences(GameState.settings)
 		SettingsRuntime.apply_all()

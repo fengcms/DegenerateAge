@@ -1,6 +1,7 @@
 class_name SettingsRuntime
 extends RefCounted
-## 设置统一应用层。改键只存物理键码，旧档迁移后沿用项目默认绑定。
+## 设置统一应用层：输入、声音、窗口和显示倍率的唯一应用入口。
+## 本机显示偏好独立于角色存档；只保存手动值与来源，自动推荐保存在会话缓存。
 
 const ACTIONS := ["move_up", "move_down", "move_left", "move_right", "attack", "target_next", "sit_toggle",
 	"auto_battle", "auto_pickup", "interact", "pause", "panel_inventory", "panel_character",
@@ -22,6 +23,11 @@ const TEXT_SCALE_MIN := 0.8
 const TEXT_SCALE_MAX := 2.0
 ## 与角色进度分离的本机显示偏好；旧槽的 settings 字段继续保留以兼容旧档。
 const DISPLAY_PREFS_PATH := "user://display_preferences.json"
+const SCALE_KEYS := ["uiScale", "mapScale", "textScale"]
+## 元数据随本机偏好加载，角色重置不会清空；测试可通过 load_display_policy 显式建立隔离状态。
+static var _display_policy: Dictionary = {}
+static var _preferences_write_blocked := false
+
 const DISPLAY_PREF_KEYS := ["uiScale", "mapScale", "textScale", "displayScaleMode", "displayScale",
 	"fullscreen", "resolution"]
 
@@ -55,57 +61,142 @@ const NUMERIC_RANGES := {
 	"lowGearLevelLimit": [1.0, 9999.0],
 }
 
-## 读取独立显示偏好，不修改角色进度。
-static func read_display_preferences() -> Dictionary:
+## 校验显示偏好数值；与角色设置使用相同值域，不允许 NaN、越界或错误类型进入布局。
+static func valid_display_value(key: String, value: Variant) -> bool:
+	if key in SCALE_KEYS or key == "displayScale":
+		return (value is int or value is float) and valid_setting_number(key, float(value))
+	if key == "fullscreen":
+		return value is bool
+	return value is String and valid_choice(key, value)
+
+## 纯解析 v1/v2 本机偏好；旧值含 100% 均标为 legacy，真正缺失的轴才采用自动。
+static func decode_display_preferences(raw: Dictionary) -> Dictionary:
+	var values := {}
+	for key in DISPLAY_PREF_KEYS:
+		if raw.has(key) and valid_display_value(key, raw[key]):
+			values[key] = raw[key]
+	var version: Variant = raw.get("version", 1)
+	var v2: bool = (version is int or version is float) and version == 2
+	var raw_sources: Variant = raw.get("scaleSources", {})
+	var sources := {}
+	for key in SCALE_KEYS:
+		var source := "legacy" if values.has(key) else "auto"
+		if v2 and raw_sources is Dictionary and raw_sources.get(key) in ["auto", "manual", "legacy"]:
+			source = raw_sources[key] if values.has(key) else "auto"
+		sources[key] = source
+	var window_policy := "fullscreen" if values.get("fullscreen", false) else ("fixed" if values.get("resolution", "auto") != "auto" else "auto_maximized")
+	var custom_size := Vector2i.ZERO
+	var custom: Variant = raw.get("customWindowSize", [])
+	if custom is Array and custom.size() == 2:
+		if valid_window_dimension(custom[0]) and valid_window_dimension(custom[1]):
+			custom_size = Vector2i(int(custom[0]), int(custom[1]))
+	if v2 and raw.get("windowPolicy") in ["auto_maximized", "fixed", "custom", "fullscreen"]:
+		window_policy = raw.windowPolicy
+	if window_policy == "custom" and custom_size == Vector2i.ZERO:
+		window_policy = "auto_maximized"
+	return {"values": values, "scaleSources": sources, "windowPolicy": window_policy, "customWindowSize": custom_size}
+
+## 自定义客户区使用整数像素；拒绝非法数值和不合理的大尺寸，实际落屏仍须按工作区夹紧。
+static func valid_window_dimension(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value)) and float(value) == floor(float(value)) and value >= 64 and value <= 32768
+
+## 从显式文档更新会话来源，供首次迁移及独立测试使用，不写入磁盘或角色成长数据。
+static func load_display_policy(raw: Dictionary) -> void:
+	_display_policy = decode_display_preferences(raw)
+
+## 查询来源只读会话缓存，不在界面热路径读文件。
+static func scale_source(key: String) -> String:
+	return str(_display_policy.get("scaleSources", {}).get(key, "auto"))
+
+## 记录真正由玩家触发的字段变化；声音/玩法变更不改变显示来源。
+static func mark_display_customized(key: String) -> void:
+	if _display_policy.is_empty():
+		load_display_policy({})
+	if key in SCALE_KEYS:
+		_display_policy.scaleSources[key] = "manual"
+	elif key in ["displayScale", "displayScaleMode"]:
+		for axis in SCALE_KEYS:
+			_display_policy.scaleSources[axis] = "legacy"
+	elif key in ["fullscreen", "resolution"]:
+		_display_policy.windowPolicy = "fullscreen" if GameState.settings.get("fullscreen", false) else ("fixed" if GameState.settings.get("resolution", "auto") != "auto" else "auto_maximized")
+
+## 恢复指定轴或三轴自动；保留手动值，后续重新选手动时不会丢失原有配置。
+static func restore_automatic_scale(key: String = "") -> void:
+	if _display_policy.is_empty():
+		load_display_policy({})
+	for axis in SCALE_KEYS:
+		if key.is_empty() or key == axis:
+			_display_policy.scaleSources[axis] = "auto"
+
+## 仅在旧角色导入本机偏好时调用，必须在第一次保存自动配置之前执行。
+static func adopt_legacy_display_preferences(settings: Dictionary) -> void:
+	load_display_policy(settings)
+
+## 读取并校验文件；损坏文档先保留副本，不能备份时禁止覆盖。未来版本也不降级写入。
+static func _read_display_document() -> Dictionary:
+	_preferences_write_blocked = false
 	if not FileAccess.file_exists(DISPLAY_PREFS_PATH):
 		return {}
 	var file := FileAccess.open(DISPLAY_PREFS_PATH, FileAccess.READ)
 	if file == null:
+		_preferences_write_blocked = true
 		return {}
-	var raw: Variant = JSON.parse_string(file.get_as_text())
-	if not raw is Dictionary:
+	var parser := JSON.new()
+	var error := parser.parse(file.get_as_text())
+	file.close()
+	if error != OK or not parser.data is Dictionary:
+		var backup := DISPLAY_PREFS_PATH + ".corrupt-" + str(Time.get_ticks_usec())
+		_preferences_write_blocked = DirAccess.copy_absolute(DISPLAY_PREFS_PATH, backup) != OK
+		push_warning("[SettingsRuntime] 显示偏好损坏，已尝试保留副本：" + backup)
 		return {}
-	var source := raw as Dictionary
-	var out := {}
-	for key in DISPLAY_PREF_KEYS:
-		if not source.has(key):
-			continue
-		var value: Variant = source[key]
-		if key in ["uiScale", "mapScale", "textScale", "displayScale"]:
-			if (value is int or value is float) and is_finite(float(value)):
-				out[key] = value
-		elif key == "fullscreen" and value is bool:
-			out[key] = value
-		elif value is String and valid_choice(key, value):
-			out[key] = value
-	return out
+	var raw: Dictionary = parser.data
+	var version: Variant = raw.get("version", 1)
+	if not (version is int or version is float) or version not in [1, 2]:
+		_preferences_write_blocked = true
+	return raw
 
-## 返回叠加本机显示偏好的设置副本。
+## 返回合法的七项兼容值；来源元数据不会混进角色 settings 校验。
+static func read_display_preferences() -> Dictionary:
+	return decode_display_preferences(_read_display_document()).values
+
+## 返回本机显示偏好覆盖后的设置。磁盘无记录时保留当前会话来源，不让新建角色重置玩家选择。
 static func with_display_preferences(settings: Dictionary) -> Dictionary:
 	var result := settings.duplicate(true)
-	var preferences := read_display_preferences()
-	for key in preferences:
-		result[key] = preferences[key]
+	var raw := _read_display_document()
+	if not raw.is_empty() or _display_policy.is_empty():
+		load_display_policy(raw)
+	for key in decode_display_preferences(raw).values:
+		result[key] = raw[key]
 	return result
 
-## 保存显示偏好；隔离测试按既有开关决定是否允许写入。
+## 保存版本、逐项来源和手动值；自动推荐不回写。隔离测试按既有开关决定是否允许写入。
 static func save_display_preferences(force_in_tests: bool = false) -> bool:
-	# 测试场景会频繁切换倍率，不能把测试值留作下一次启动偏好。
 	var tree := Engine.get_main_loop() as SceneTree
 	if not force_in_tests and tree != null and tree.current_scene != null \
 			and String(tree.current_scene.scene_file_path).begins_with("res://tests/"):
 		return true
-	var values := {}
+	if _preferences_write_blocked:
+		push_warning("[SettingsRuntime] 保留不可覆盖的显示偏好，未写入")
+		return false
+	if _display_policy.is_empty():
+		load_display_policy({})
+	var values := {"version": 2, "scaleSources": _display_policy.scaleSources.duplicate(), "windowPolicy": _display_policy.windowPolicy}
+	var custom_size: Vector2i = _display_policy.customWindowSize
+	values.customWindowSize = [custom_size.x, custom_size.y]
+	var defaults := GameState.default_settings()
 	for key in DISPLAY_PREF_KEYS:
-		values[key] = GameState.settings.get(key, GameState.default_settings()[key])
+		var value: Variant = GameState.settings.get(key, defaults[key])
+		values[key] = value if valid_display_value(key, value) else defaults[key]
 	var tmp := DISPLAY_PREFS_PATH + ".tmp"
 	var file := FileAccess.open(tmp, FileAccess.WRITE)
 	if file == null:
 		push_warning("[SettingsRuntime] 无法写入显示偏好")
 		return false
 	file.store_string(JSON.stringify(values, "\t"))
+	file.flush()
+	var error := file.get_error()
 	file.close()
-	if DirAccess.rename_absolute(tmp, DISPLAY_PREFS_PATH) != OK:
+	if error != OK or DirAccess.rename_absolute(tmp, DISPLAY_PREFS_PATH) != OK:
 		DirAccess.remove_absolute(tmp)
 		push_warning("[SettingsRuntime] 无法保存显示偏好")
 		return false

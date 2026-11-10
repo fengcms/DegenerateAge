@@ -2,7 +2,7 @@ extends Control
 ## M4-6 设置：即时预览，写入当前存档；冲突键位经确认后交换。
 ## 工程 97：补齐「分组层」——页签之下先用卡片（短表单）或小标题 + 分隔线（长列表）分组，再放控件；
 ## 行规格统一（左标签列定宽、下拉定宽、注解 14 号 MUTED），避免 44 个控件等权平铺成一条线。
-## 只动布局与样式：任何设置键名、默认值、存档结构、控件行为均不变。
+## 显示项目通过 SettingsRuntime 记录逐项来源；旧倍率与角色存档继续兼容。
 
 const ACTION_NAMES := {
 	"move_up": "ui.action.move_up", "move_down": "ui.action.move_down", "move_left": "ui.action.move_left", "move_right": "ui.action.move_right",
@@ -33,6 +33,8 @@ const HINT_INDENT := 4
 ## 面板最大高：拆卡后游戏页内容高约 610，600 会让溢出从 2 行变 4 行（工程 97 §6.2）。
 const PANEL_MAX_HEIGHT := 680.0
 
+var _scale_status: Dictionary = {}
+
 var _key_list: VBoxContainer
 var _capture_action := ""
 var _capture_label: Label
@@ -44,6 +46,7 @@ var _layout_root: VBoxContainer
 var _auto_sell_check: CheckBox
 var _auto_sell_preset: OptionButton
 
+## 构建设置页并连接面板互斥及窗口布局通知。
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -54,11 +57,13 @@ func _ready() -> void:
 	EventBus.panel_opened.connect(_on_panel_opened)
 	EventBus.panels_close_requested.connect(func() -> void: set_open(false))
 
+## 设置打开时消费暂停快捷键并收起面板。
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("pause"):
 		set_open(false)
 		get_viewport().set_input_as_handled()
 
+## 捕获改键输入，非法修饰键被拒绝，冲突时交给确认对话框。
 func _input(event: InputEvent) -> void:
 	if _capture_action.is_empty() or not event is InputEventKey or not event.pressed or event.echo:
 		return
@@ -85,11 +90,13 @@ func _input(event: InputEvent) -> void:
 		_capture_label.text = Localization.tr_key("ui.settings_panel.p005") % _action_name(action)
 		_refresh_keys()
 
+## 打开时刷新布局、按键与功能门槛，关闭时清理改键状态。
 func set_open(open: bool) -> void:
 	visible = open
 	GameState.set_panel_open("settings", open)
 	if open:
 		_update_layout()
+		_refresh_display_status()
 		_refresh_keys()
 		_refresh_auto_sell_gate()
 		EventBus.panel_opened.emit("settings")
@@ -98,10 +105,12 @@ func set_open(open: bool) -> void:
 		if _conflict != null:
 			_conflict.hide()
 
+## 其他面板打开时收起设置，保持现有面板互斥。
 func _on_panel_opened(panel_id: String) -> void:
 	if panel_id != "settings" and visible:
 		set_open(false)
 
+## 构建统一面板、页签、关闭按钮和改键确认窗口。
 func _build() -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -151,6 +160,7 @@ func _build() -> void:
 	_conflict.confirmed.connect(_confirm_swap)
 	add_child(_conflict)
 
+## 为设置分类创建可滚动的内容页。
 func _tab(tabs: TabContainer, title: String) -> VBoxContainer:
 	var scroll := ScrollContainer.new()
 	scroll.name = title
@@ -164,6 +174,7 @@ func _tab(tabs: TabContainer, title: String) -> VBoxContainer:
 	scroll.add_child(box)
 	return box
 
+## 按当前可用设计空间收缩设置面板并保留滚动空间。
 func _update_layout() -> void:
 	if _layout_root == null:
 		return
@@ -233,6 +244,7 @@ func _style_option(button: OptionButton) -> void:
 	button.add_theme_font_size_override("font_size", 16)
 	button.custom_minimum_size.x = OPTION_MIN_WIDTH
 
+## 创建符合统一风格的复选框。
 func _new_check(label: String) -> CheckBox:
 	var check := CheckBox.new()
 	check.text = label
@@ -240,6 +252,7 @@ func _new_check(label: String) -> CheckBox:
 	check.add_theme_color_override("font_disabled_color", PanelChrome.MUTED)
 	return check
 
+## 创建数值设置滑块，显式透传变化字段以记录自定义来源。
 func _slider(parent: VBoxContainer, caption_text: String, field: String, minimum: float, maximum: float, step: float) -> void:
 	var row := _control_row(parent, caption_text)
 	var slider := HSlider.new()
@@ -258,17 +271,19 @@ func _slider(parent: VBoxContainer, caption_text: String, field: String, minimum
 	slider.value_changed.connect(func(v: float) -> void:
 		GameState.settings[field] = v
 		value.text = "%.0f%%" % (v * 100.0) if maximum <= 1.0 else str(v)
-		_changed())
+		_changed(field))
 
+## 创建布尔设置项，切换后应用该字段变化。
 func _checkbox(parent: VBoxContainer, label: String, field: String) -> void:
 	var row := _check_row(parent)
 	var check := _new_check(label)
 	check.button_pressed = bool(GameState.settings.get(field, false))
 	check.toggled.connect(func(v: bool) -> void:
 		GameState.settings[field] = v
-		_changed())
+		_changed(field))
 	row.add_child(check)
 
+## 构建音乐与音效音量页。
 func _build_audio(tabs: TabContainer) -> void:
 	# 两个滑块不值得套卡片；单页只有一组控件时，卡片只会白占一层留白。
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p009"))
@@ -276,6 +291,7 @@ func _build_audio(tabs: TabContainer) -> void:
 	_slider(box, Localization.tr_key("ui.settings_panel.p011"), "sfxVolume", 0.0, 1.0, 0.05)
 	_hint(box, "ui.settings_panel.p012")
 
+## 构建显示倍率、逐项恢复自动、窗口与辅助设置。
 func _build_visual(tabs: TabContainer) -> void:
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p013"))
 	# ① 适配方式：决定基准倍率，必须排在三个百分比之前（先定基准，再微调三轴）。
@@ -288,6 +304,11 @@ func _build_visual(tabs: TabContainer) -> void:
 	_option_row(scaling, Localization.tr_key("ui.settings_panel.p015"), "mapScale", [80, 100, 125, 150, 175, 200])
 	_option_row(scaling, Localization.tr_key("ui.settings_panel.p016"), "textScale", [100, 110, 125, 150, 175, 200])
 	_hint(scaling, "ui.settings_panel.p024")
+	var automatic := Button.new()
+	automatic.text = Localization.tr_key("ui.display.restore_all")
+	automatic.pressed.connect(_restore_auto.bind(""))
+	PanelChrome.style_action(automatic)
+	scaling.add_child(automatic)
 	# ③ 设备与无障碍：与缩放无关，单独一组，色盲也不再夹在三轴中间。
 	var device := _card(box, "ui.settings_panel.p056")
 	_checkbox(device, Localization.tr_key("ui.settings_panel.p020"), "fullscreen")
@@ -317,9 +338,20 @@ func _option_row(parent: VBoxContainer, caption_text: String, field: String, per
 	options.select(exact if exact >= 0 else nearest)
 	options.item_selected.connect(func(index: int) -> void:
 		GameState.settings[field] = float(options.get_item_id(index)) / 100.0
-		_changed())
+		_changed(field))
 	_style_option(options)
 	row.add_child(options)
+	var status := Label.new()
+	status.add_theme_font_size_override("font_size", HINT_FONT_SIZE)
+	status.add_theme_color_override("font_color", PanelChrome.MUTED)
+	row.add_child(status)
+	_scale_status[field] = status
+	var automatic := Button.new()
+	automatic.text = Localization.tr_key("ui.display.restore_axis")
+	automatic.pressed.connect(_restore_auto.bind(field))
+	PanelChrome.style_action(automatic)
+	row.add_child(automatic)
+	_refresh_display_status()
 
 ## 窗口尺寸：原来是一个裸挂在下拉列表、没有标签的下拉框，玩家只能猜它管什么（工程 97 §2.2）。
 func _resolution_row(parent: VBoxContainer) -> void:
@@ -334,10 +366,11 @@ func _resolution_row(parent: VBoxContainer) -> void:
 			resolution.select(resolution.item_count - 1)
 	resolution.item_selected.connect(func(index: int) -> void:
 		GameState.settings["resolution"] = resolution.get_item_metadata(index)
-		_changed())
+		_changed("resolution"))
 	_style_option(resolution)
 	row.add_child(resolution)
 
+## 构建色盲模式选项并保留原有设置入口。
 func _colorblind_row(parent: VBoxContainer) -> void:
 	var row := _control_row(parent, Localization.tr_key("ui.settings_panel.p017"))
 	var options := OptionButton.new()
@@ -381,13 +414,14 @@ func _build_display_adapt(box: VBoxContainer) -> void:
 	slider.value_changed.connect(func(v: float) -> void:
 		GameState.settings["displayScale"] = v
 		value.text = "%.0f%%" % (v * 100.0)
-		_changed())
+		_changed("displayScale"))
 	mode.item_selected.connect(func(index: int) -> void:
 		GameState.settings["displayScaleMode"] = "manual" if index == 1 else "auto"
 		manual_row.visible = index == 1
-		_changed())
+		_changed("displayScaleMode"))
 	_hint(box, "ui.settings_panel.p028")
 
+## 构建战斗、拾取及挂机维护设置分组。
 func _build_game(tabs: TabContainer) -> void:
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p029"))
 	# ① 战斗辅助
@@ -488,6 +522,7 @@ func _build_controls(tabs: TabContainer) -> void:
 	root.add_child(_key_list)
 	_refresh_keys()
 
+## 构建数据与存档相关操作入口。
 func _build_data(tabs: TabContainer) -> void:
 	var box := _tab(tabs, Localization.tr_key("ui.settings_panel.p040"))
 	var button := Button.new()
@@ -501,6 +536,7 @@ func _build_data(tabs: TabContainer) -> void:
 	PanelChrome.style_action(button)
 	_hint(box, "ui.settings_panel.p042")
 
+## 刷新按键分组及当前绑定，保留既有冲突处理流程。
 func _refresh_keys() -> void:
 	if _key_list == null:
 		return
@@ -534,6 +570,7 @@ func _group_actions(group: Dictionary, is_last: bool, placed: Dictionary) -> Arr
 			out.append(id)
 	return out
 
+## 添加按键分组标题及可选分隔线。
 func _add_key_section(title_key: String, is_first: bool) -> void:
 	if not is_first:
 		var line := HSeparator.new()
@@ -544,6 +581,7 @@ func _add_key_section(title_key: String, is_first: bool) -> void:
 	PanelChrome.style_section(title)
 	_key_list.add_child(title)
 
+## 添加指定动作的绑定显示与改键按钮。
 func _add_key_row(action: String) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
@@ -560,15 +598,18 @@ func _add_key_row(action: String) -> void:
 	row.add_child(key)
 	PanelChrome.style_action(key)
 
+## 从本地化配置读取动作名称，快捷格按序号显示。
 func _action_name(action: String) -> String:
 	if action.begins_with("hotbar_"):
 		return Localization.tr_key("ui.settings_panel.p043") % action.trim_prefix("hotbar_")
 	return Localization.tr_key(String(ACTION_NAMES[action])) if ACTION_NAMES.has(action) else action
 
+## 进入指定动作的单次按键捕获状态。
 func _start_capture(action: String) -> void:
 	_capture_action = action
 	_capture_label.text = Localization.tr_key("ui.settings_panel.p044") % _action_name(action)
 
+## 确认交换冲突按键后更新实际绑定并刷新显示。
 func _confirm_swap() -> void:
 	SettingsRuntime.set_binding(_pending_action, _pending_code)
 	_capture_label.text = Localization.tr_key("ui.settings_panel.p045")
@@ -576,8 +617,25 @@ func _confirm_swap() -> void:
 	_pending_code = 0
 	_refresh_keys()
 
-func _changed() -> void:
+## 应用具体字段变更，保存显示来源；失败时向玩家提供反馈。
+func _changed(field: String = "") -> void:
+	SettingsRuntime.mark_display_customized(field)
 	SettingsRuntime.apply_all()
+	_refresh_display_status()
 	_update_layout.call_deferred()
-	SettingsRuntime.save_display_preferences()
+	if not SettingsRuntime.save_display_preferences():
+		EventBus.toast_requested.emit(Localization.tr_key("ui.display.save_failed"), "danger")
 	EventBus.settings_changed.emit()
+
+
+## 只恢复指定显示轴的自动来源，不覆盖用户保留的手动值。
+func _restore_auto(field: String) -> void:
+	SettingsRuntime.restore_automatic_scale(field)
+	_changed()
+
+## 在打开设置和用户变更后刷新来源提示，不使用逐帧读取或保存。
+func _refresh_display_status() -> void:
+	for field in _scale_status:
+		var value: float = GameState.settings.get(field, 1.0)
+		var key := "ui.display.source_auto" if SettingsRuntime.scale_source(field) == "auto" else "ui.display.source_manual"
+		(_scale_status[field] as Label).text = Localization.tr_key(key) % roundi(value * 100.0)
