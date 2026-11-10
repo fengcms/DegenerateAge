@@ -11,6 +11,7 @@ func _ready() -> void:
 	CrashTrace.mark("main.ready.begin", "mode=" + GameState.menu_mode)
 	# M5-9a：渲染策略先于一切显示相关计算落地（窗口放大 = 看到更多，元素像素尺寸不变）。
 	SettingsRuntime.apply_display_strategy()
+	SettingsRuntime.initialize_startup_display()
 	_apply_settings_after_scene_ready.call_deferred()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	$UI/MenuPanel.initialize_if_current.call_deferred()

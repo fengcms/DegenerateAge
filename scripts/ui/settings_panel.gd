@@ -313,6 +313,11 @@ func _build_visual(tabs: TabContainer) -> void:
 	var device := _card(box, "ui.settings_panel.p056")
 	_checkbox(device, Localization.tr_key("ui.settings_panel.p020"), "fullscreen")
 	_resolution_row(device)
+	var remember := Button.new()
+	remember.text = Localization.tr_key("ui.display.remember_window")
+	remember.pressed.connect(_remember_window)
+	PanelChrome.style_action(remember)
+	device.add_child(remember)
 	_colorblind_row(device)
 	# 屏震 / 强闪尚无实际效果；旧档字段保留兼容，界面暂不暴露空开关。
 
@@ -620,6 +625,8 @@ func _confirm_swap() -> void:
 ## 应用具体字段变更，保存显示来源；失败时向玩家提供反馈。
 func _changed(field: String = "") -> void:
 	SettingsRuntime.mark_display_customized(field)
+	if field in ["fullscreen", "resolution"]:
+		SettingsRuntime.apply_window_preferences()
 	SettingsRuntime.apply_all()
 	_refresh_display_status()
 	_update_layout.call_deferred()
@@ -639,3 +646,11 @@ func _refresh_display_status() -> void:
 		var value: float = GameState.settings.get(field, 1.0)
 		var key := "ui.display.source_auto" if SettingsRuntime.scale_source(field) == "auto" else "ui.display.source_manual"
 		(_scale_status[field] as Label).text = Localization.tr_key(key) % roundi(value * 100.0)
+
+## 只有明确按下按钮才记住窗口尺寸；全屏与编辑器嵌入时提示无法记录。
+func _remember_window() -> void:
+	if SettingsRuntime.remember_current_window():
+		_changed()
+		EventBus.toast_requested.emit(Localization.tr_key("ui.display.window_remembered"), "success")
+	else:
+		EventBus.toast_requested.emit(Localization.tr_key("ui.display.window_unavailable"), "warning")

@@ -309,7 +309,6 @@ static func apply_all() -> void:
 	_apply_text_scale()
 	_apply_map_scale()
 	apply_world_text_scale()   # M5-9e：世界文字反向补偿与地图倍率联动（见该函数）
-	_apply_window()
 
 ## M5-9a（09-A 显示适配，工程 17）：渲染策略 = disabled。
 ## disabled 下「逻辑视口尺寸 = 窗口逻辑尺寸」⇒ 窗口放大 = 看到更多地图，元素像素尺寸不变；
@@ -537,16 +536,29 @@ static func apply_world_text_scale_to(node: Node) -> void:
 	elif node is CanvasItem:
 		(node as CanvasItem).queue_redraw()
 
-## 将窗口设置应用到当前显示环境。
-static func _apply_window() -> void:
+## Main 首次进入时应用窗口偏好，角色加载和普通设置更新不改变窗口。
+static func initialize_startup_display() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
-	if tree == null or is_headless():
-		return
-	var window := tree.root
-	window.mode = Window.MODE_FULLSCREEN if bool(GameState.settings.get("fullscreen", false)) else Window.MODE_WINDOWED
-	if window.mode == Window.MODE_WINDOWED:
-		match String(GameState.settings.get("resolution", "auto")):
-			"1280x800": window.size = Vector2i(1280, 800)
-			"1440x900": window.size = Vector2i(1440, 900)
-			"1600x900": window.size = Vector2i(1600, 900)
-			"1920x1200": window.size = Vector2i(1920, 1200)   # M5-9d：直接验证"窗口更大看得更多"
+	if tree != null:
+		DisplayEnvironment.initialize(tree.root, _display_policy, str(GameState.settings.get("resolution", "auto")))
+
+## 玩家明确变更窗口模式时调用，与音量、按键等设置的应用路径分离。
+static func apply_window_preferences() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		DisplayEnvironment.apply_window(tree.root, _display_policy, str(GameState.settings.get("resolution", "auto")))
+
+## 显式记住当前客户区尺寸；拖动窗口本身不产生持久化副作用。
+static func remember_current_window() -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or not DisplayEnvironment.can_control_window(tree.root):
+		return false
+	if tree.root.mode not in [Window.MODE_WINDOWED, Window.MODE_MAXIMIZED]:
+		return false
+	if _display_policy.is_empty():
+		load_display_policy({})
+	_display_policy.windowPolicy = "custom"
+	_display_policy.customWindowSize = tree.root.size
+	GameState.settings.fullscreen = false
+	GameState.settings.resolution = "auto"
+	return true
