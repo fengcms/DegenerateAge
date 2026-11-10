@@ -28,6 +28,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/WorldDropZone.tscn" id="26_drop_zone"]
 
 [ext_resource type="Script" path="res://scripts/ui/super_portable_panel.gd" id="27_super"]
+[ext_resource type="Script" path="res://scripts/ui/main_menu_background.gd" id="28_menu_background"]
 
 [node name="Main" type="Node2D" unique_id=261996148]
 script = ExtResource("1_main")
@@ -45,6 +46,11 @@ layout_mode = 3
 
 [node name="BossHealthBar" parent="UI" instance=ExtResource("18_bossbar")]
 layout_mode = 3
+
+[node name="MainMenuBackground" type="ColorRect" parent="UI"]
+visible = false
+layout_mode = 3
+script = ExtResource("28_menu_background")
 
 [node name="InventoryPanel" parent="UI" unique_id=115460546 instance=ExtResource("4_inv")]
 layout_mode = 3
