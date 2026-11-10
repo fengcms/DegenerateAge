@@ -144,6 +144,7 @@ func _build() -> void:
 	PanelChrome.style_title(title)
 	var close := Button.new()
 	close.text = Localization.tr_key("ui.settings_panel.p007")
+	close.tooltip_text = close.text
 	close.pressed.connect(func() -> void: set_open(false))
 	head.add_child(close)
 	PanelChrome.style_close(close)
@@ -630,16 +631,18 @@ func _confirm_swap() -> void:
 	_refresh_keys()
 
 ## 应用具体字段变更，保存显示来源；失败时向玩家提供反馈。
-func _changed(field: String = "") -> void:
+func _changed(field: String = "") -> bool:
 	SettingsRuntime.mark_display_customized(field)
 	if field in ["fullscreen", "resolution"]:
 		SettingsRuntime.apply_window_preferences()
 	SettingsRuntime.apply_all()
 	refresh_display_status()
 	_update_layout.call_deferred()
-	if not SettingsRuntime.save_display_preferences():
+	var saved := SettingsRuntime.save_display_preferences()
+	if not saved:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.display.save_failed"), "danger")
 	EventBus.settings_changed.emit()
+	return saved
 
 
 ## 只恢复指定显示轴的自动来源，不覆盖用户保留的手动值。
@@ -668,7 +671,7 @@ func refresh_display_status() -> void:
 ## 只有明确按下按钮才记住窗口尺寸；全屏与编辑器嵌入时提示无法记录。
 func _remember_window() -> void:
 	if SettingsRuntime.remember_current_window():
-		_changed()
-		EventBus.toast_requested.emit(Localization.tr_key("ui.display.window_remembered"), "success")
+		if _changed():
+			EventBus.toast_requested.emit(Localization.tr_key("ui.display.window_remembered"), "success")
 	else:
 		EventBus.toast_requested.emit(Localization.tr_key("ui.display.window_unavailable"), "warning")

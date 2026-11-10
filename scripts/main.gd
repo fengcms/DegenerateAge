@@ -48,6 +48,8 @@ func _apply_settings_after_scene_ready() -> void:
 	await get_tree().process_frame
 	if not is_inside_tree():
 		return
+	if not SettingsRuntime.ensure_display_preferences():
+		EventBus.toast_requested.emit(Localization.tr_key("ui.display.save_failed"), "danger")
 	SettingsRuntime.apply_all()
 	CrashTrace.mark("main.settings.applied")
 ## 合并同轮视口变化，避免重复重排整棵界面。

@@ -33,6 +33,7 @@ func click(point: Vector2) -> void:
 ## 构造真实主场景并执行鼠标、键盘、面板和自动战斗的综合输入回归。
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	GameState.menu_mode = "world" # 明确测试游戏内输入，主菜单背景不应参与命中。
 	# 交互回归需要可攻击的近距离怪；营地出生点位于免战区内。
 	GameState.current_map = "wild_trial"
 	var main: Node = load("res://scenes/Main.tscn").instantiate()

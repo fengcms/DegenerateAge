@@ -22,6 +22,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	var menu: Control = main.get_node("UI/MenuPanel")
 	_check(menu.visible and get_tree().paused, "启动进入主菜单并暂停世界")
+	var display_sources: Dictionary = SettingsRuntime._display_policy.scaleSources.duplicate()
 	var background_path: String = main.get_node("UI/MainMenuBackground").session_background_path()
 	_check(main.get_node("UI/MainMenuBackground").is_visible_in_tree(), "启动显示专用背景")
 	menu._open_new_slots()
@@ -80,11 +81,12 @@ func _ready() -> void:
 	_check(GameState.menu_mode == "world" and not get_tree().paused and SaveManager.active_slot == 3,
 		"读档进入世界并恢复活动槽")
 	_check_world_background(get_tree().current_scene)
+	_check(SettingsRuntime._display_policy.scaleSources == display_sources, "新建、继续、重载与读档不把自动来源误迁为旧手动值")
 	_finish()
 
 ## 列出本测试可能写入的槽位及其备份文件。
 func _protected_paths() -> Array[String]:
-	var paths: Array[String] = [SaveManager.LAST_SLOT_FILE]
+	var paths: Array[String] = [SaveManager.LAST_SLOT_FILE, SettingsRuntime.DISPLAY_PREFS_PATH]
 	for suffix in ["", ".bak", ".tmp", ".corrupt"]:
 		paths.append(SaveManager.slot_path(3) + suffix)
 	return paths

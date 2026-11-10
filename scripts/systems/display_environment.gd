@@ -59,6 +59,9 @@ static func apply_window(window: Window, policy: Dictionary, resolution: String)
 		var parts := resolution.split("x")
 		requested = Vector2i(int(parts[0]), int(parts[1])) if parts.size() == 2 else Vector2i(1280, 800)
 	window.mode = Window.MODE_WINDOWED
+	await window.get_tree().create_timer(0.25).timeout
+	if serial != _request_serial or not is_instance_valid(window) or window.mode != Window.MODE_WINDOWED:
+		return
 	_fit_window(window, requested, DisplayServer.screen_get_usable_rect(window.current_screen))
 
 ## 按当前原生装饰差值居中客户区，避免标题栏或边框越过任务栏和 Dock。

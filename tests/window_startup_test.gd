@@ -25,7 +25,7 @@ func _ready() -> void:
 		print("[WindowStartupTest] screen=", window.current_screen, " usable=", area, " client=", window.size, " outer=", outer)
 		window.mode = Window.MODE_WINDOWED
 		window.size = Vector2i(1100, 700)
-		await get_tree().create_timer(0.2).timeout
+		await get_tree().create_timer(0.4).timeout
 		var current := window.size
 		GameState.settings.musicVolume = 0.5
 		SettingsRuntime.apply_all()
@@ -36,12 +36,22 @@ func _ready() -> void:
 		check(SettingsRuntime.save_display_preferences(true), "自定义尺寸持久化成功")
 		window.size = Vector2i(900, 600)
 		SettingsRuntime.apply_window_preferences()
-		await get_tree().create_timer(0.2).timeout
+		await get_tree().create_timer(0.4).timeout
 		check(window.size == current, "自定义偏好恢复保存尺寸")
+		GameState.settings.fullscreen = true
+		SettingsRuntime.mark_display_customized("fullscreen")
+		SettingsRuntime.apply_window_preferences()
+		await get_tree().create_timer(1.5).timeout
+		check(window.mode == Window.MODE_FULLSCREEN, "显式全屏优先")
+		GameState.settings.fullscreen = false
+		SettingsRuntime.mark_display_customized("fullscreen")
+		SettingsRuntime.apply_window_preferences()
+		await get_tree().create_timer(1.5).timeout
+		check(window.mode == Window.MODE_WINDOWED and window.size == current, "退出全屏恢复原自定义窗口偏好 mode=%d size=%s expected=%s policy=%s" % [window.mode, window.size, current, SettingsRuntime._display_policy.windowPolicy])
 		GameState.settings.resolution = "1280x800"
 		SettingsRuntime.mark_display_customized("resolution")
 		SettingsRuntime.apply_window_preferences()
-		await get_tree().create_timer(0.2).timeout
+		await get_tree().create_timer(0.4).timeout
 		check(window.size == Vector2i(1280, 800), "旧固定尺寸仍然优先")
 	else:
 		check(not DisplayEnvironment.can_control_window(get_window()), "无头跳过窗口操作")

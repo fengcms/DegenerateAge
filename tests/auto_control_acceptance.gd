@@ -3,11 +3,13 @@ extends Node
 
 var _failures: Array[String] = []
 
+## 汇总状态机与输入断言，不因首个失败中断后续边界检查。
 func _check(ok: bool, message: String) -> void:
 	if not ok:
 		_failures.append(message)
 		print("[AutoControl] 失败：", message)
 
+## 将世界投影后的视口坐标作为真实鼠标事件注入，覆盖未处理输入链。
 func _click(point: Vector2) -> void:
 	for pressed in [true, false]:
 		var event := InputEventMouseButton.new()
@@ -16,6 +18,7 @@ func _click(point: Vector2) -> void:
 		event.pressed = pressed
 		get_viewport().push_input(event, true)
 
+## 在指定世界坐标创建不主动移动的训练木桩，用于稳定目标选择断言。
 func _spawn_dummy(world: Node, point: Vector2) -> Monster:
 	var monster := (load("res://scenes/entities/Monster.tscn") as PackedScene).instantiate() as Monster
 	monster.monster_id = "training_dummy"
@@ -27,8 +30,10 @@ func _spawn_dummy(world: Node, point: Vector2) -> Monster:
 	monster.set_physics_process(false)
 	return monster
 
+## 明确装配战斗模式，模拟不可达恢复和玩家点击接管，再验证自动战斗恢复。
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	GameState.menu_mode = "world" # 此夹具测试世界输入，不应让主菜单背景接管鼠标。
 	GameState.current_map = "wild_trial" # 营地安全区会排除测试木桩，改在全图危险的野外验收。
 	var main := (load("res://scenes/Main.tscn") as PackedScene).instantiate()
 	add_child(main)
@@ -157,5 +162,6 @@ func _ready() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	GameState.reset_to_defaults()
+	GameState.menu_mode = "world" # 此夹具测试世界输入，不应让主菜单背景接管鼠标。
 	print("[AutoControlAcceptance] ", "全部通过 ✅" if _failures.is_empty() else str(_failures))
 	get_tree().quit(0 if _failures.is_empty() else 1)

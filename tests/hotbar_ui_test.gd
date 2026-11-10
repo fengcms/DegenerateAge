@@ -3,8 +3,10 @@ extends Node
 
 var _errors: Array[String] = []
 
+## 装配世界模式，使用真实鼠标拖放验证背包、技能与快捷栏绑定。
 func _ready() -> void:
 	GameState.reset_to_defaults()
+	GameState.menu_mode = "world" # 明确测试游戏内输入，主菜单背景不应参与命中。
 	var main := (load("res://scenes/Main.tscn") as PackedScene).instantiate()
 	add_child(main)
 	var inventory: Control = main.get_node("UI/InventoryPanel")
@@ -156,11 +158,13 @@ func _ready() -> void:
 	print("[HotbarUiTest] ", "全部通过 ✅" if _errors.is_empty() else str(_errors))
 	get_tree().quit(0 if _errors.is_empty() else 1)
 
+## 汇总失败，保留后续独立的绑定和消耗断言。
 func _check(ok: bool, message: String) -> void:
 	if not ok:
 		_errors.append(message)
 		push_error("[HotbarUiTest] " + message)
 
+## 向视口注入鼠标按下/释放，按状态同步坐标和按钮掩码。
 func _send_mouse(point: Vector2, pressed: bool) -> void:
 	var event := InputEventMouseButton.new()
 	event.position = point
@@ -170,6 +174,7 @@ func _send_mouse(point: Vector2, pressed: bool) -> void:
 	event.pressed = pressed
 	get_viewport().push_input(event, true)
 
+## 模拟持续按下左键的移动，驱动 Godot 原生拖放命中链。
 func _send_move(point: Vector2, relative: Vector2) -> void:
 	var event := InputEventMouseMotion.new()
 	event.position = point

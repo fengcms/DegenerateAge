@@ -6,6 +6,16 @@ var failures: Array[String] = []
 func _ready() -> void:
 	if not DiagnosticProbeGuard.require_isolated(self):
 		return
+	DirAccess.remove_absolute(SettingsRuntime.DISPLAY_PREFS_PATH)
+	GameState.reset_to_defaults()
+	SettingsRuntime.load_display_policy({})
+	check(SettingsRuntime.ensure_display_preferences(true), "首次启动在旧档迁移之后持久化自动来源")
+	var auto_document := FileAccess.get_file_as_string(SettingsRuntime.DISPLAY_PREFS_PATH)
+	SettingsRuntime.load_display_policy({"uiScale": 1.75})
+	GameState.reset_to_defaults()
+	check(SettingsRuntime.scale_source("uiScale") == "auto", "重新启动不会把新角色默认值误迁为旧手动值")
+	check(SettingsRuntime.ensure_display_preferences(true) and FileAccess.get_file_as_string(SettingsRuntime.DISPLAY_PREFS_PATH) == auto_document, "重复启动不改已有偏好文档")
+	DirAccess.remove_absolute(SettingsRuntime.DISPLAY_PREFS_PATH)
 	var old := {"uiScale": 1.0, "mapScale": 1.25, "textScale": 2.0, "displayScaleMode": "manual", "displayScale": 1.5}
 	var decoded := SettingsRuntime.decode_display_preferences(old)
 	check(decoded.values.uiScale == 1.0 and decoded.scaleSources.uiScale == "legacy", "旧手动100%不能被误判未自定义")

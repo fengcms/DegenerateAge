@@ -119,7 +119,12 @@ static func mark_display_customized(key: String) -> void:
 		for axis in SCALE_KEYS:
 			_display_policy.scaleSources[axis] = "legacy"
 	elif key in ["fullscreen", "resolution"]:
-		_display_policy.windowPolicy = "fullscreen" if GameState.settings.get("fullscreen", false) else ("fixed" if GameState.settings.get("resolution", "auto") != "auto" else "auto_maximized")
+		if key == "resolution":
+			_display_policy.customWindowSize = Vector2i.ZERO
+		var windowed := "fixed" if GameState.settings.get("resolution", "auto") != "auto" else "auto_maximized"
+		if _display_policy.customWindowSize != Vector2i.ZERO:
+			windowed = "custom"
+		_display_policy.windowPolicy = "fullscreen" if GameState.settings.get("fullscreen", false) else windowed
 
 ## 恢复指定轴或三轴自动；保留手动值，后续重新选手动时不会丢失原有配置。
 static func restore_automatic_scale(key: String = "") -> void:
@@ -202,6 +207,13 @@ static func save_display_preferences(force_in_tests: bool = false) -> bool:
 		push_warning("[SettingsRuntime] 无法保存显示偏好")
 		return false
 	return true
+
+## 旧槽迁移完成后建立缺失的本机文档，保存自动来源而非推荐快照。
+## 否则新角色默认值下次启动会被误当成旧手动值；已有文档（含损坏/未来版本）不覆盖。
+static func ensure_display_preferences(force_in_tests: bool = false) -> bool:
+	if FileAccess.file_exists(DISPLAY_PREFS_PATH):
+		return true
+	return save_display_preferences(force_in_tests)
 
 ## 无头判定唯一可靠方式。⚠ `OS.has_feature("headless")` 实测恒为 false（无头下也 false），勿用。
 static func is_headless() -> bool:
