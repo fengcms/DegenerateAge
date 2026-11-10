@@ -31,6 +31,7 @@ var _quest_nav_issued := false
 var _quest_nav_serial_seen := -1
 var _animation_map_id := ""
 
+## 推进待完成交互、任务导航与迷雾，只在玩家格子变化时更新探索范围。
 func _process(_delta: float) -> void:
 	if not Input.is_action_pressed("interact"):
 		MapService.walk_key_released = true
@@ -66,6 +67,7 @@ func _process(_delta: float) -> void:
 	# 工程 116：逐帧心跳（内部 0.5s 节流，每帧只做一次 msec 比较）。
 	CrashTrace.tick(_player.global_position)
 
+## 接收世界像素坐标，拒绝锁定区域并将合法移动请求交给玩家寻路。
 func request_map_move(point: Vector2) -> bool:
 	if _ground.is_locked_boss_area(point):
 		EventBus.toast_requested.emit(Localization.tr_key("msg.game.p011"), "info")
@@ -249,6 +251,7 @@ func _refresh_npc_quest_markers() -> void:
 		if npc != null:
 			npc.set_quest_marker(available.has(npc.npc_id))
 
+## 按当前地图出口配置创建路标，配置格坐标在此转换为世界坐标。
 func _spawn_exits() -> void:
 	for spec in MapService.current_exits():
 		if not (spec is Dictionary):
@@ -259,6 +262,7 @@ func _spawn_exits() -> void:
 		exit_node.position = Iso.grid_to_world(_cell_of(spec))
 		_exits.add_child(exit_node)
 
+## 按最近可交互出口和玩家控制状态更新路标接近提示。
 func _update_exit_nearness() -> void:
 	var nearest := nearest_exit()
 	for child in _exits.get_children():
@@ -266,6 +270,7 @@ func _update_exit_nearness() -> void:
 		if exit_node != null:
 			exit_node.set_player_near(exit_node == nearest and not GameState.world_controls_blocked() and not _player.is_dead)
 
+## 以地图格为单位查找步行交互半径内最近出口，无候选时返回 null。
 func nearest_exit() -> TravelExit:
 	var player_cell := Iso.world_to_grid(_player.global_position)
 	var best: TravelExit = null
@@ -318,7 +323,10 @@ func _cell_of(spec: Dictionary) -> Vector2i:
 	return Vector2i.ZERO
 
 ## 抵达提示（切图 / 读档 / 新游戏开局各一次）：延后一帧调用，确保 HUD 已就绪。
+## 主菜单也会装配世界，但尚未开始冒险，此时不发送抵达提示以免覆盖菜单标题。
 func _notify_arrival() -> void:
+	if GameState.menu_mode != "world":
+		return
 	EventBus.toast_requested.emit(Localization.tr_key("msg.game.p007") % MapService.display_name(GameState.current_map), "levelup")
 
 ## 消费一次落地意图：把玩家直接指挥向目标点（跨图追猎）。
@@ -348,6 +356,7 @@ func visible_enemies() -> Array[Node2D]:
 		return a.get_instance_id() < b.get_instance_id() if is_equal_approx(da, db) else da < db)
 	return candidates
 
+## 轮换当前可见敌人，同时终止旧的自动移动与攻击意图。
 func cycle_target() -> void:
 	var candidates := visible_enemies()
 	_player.manual_attack_active = false
@@ -360,6 +369,7 @@ func cycle_target() -> void:
 	var index := candidates.find(_player.locked_target)
 	_player.select_target(candidates[(index + 1) % candidates.size()])
 
+## 将视口坐标转换到敌人局部空间，按碰撞半径及美术可点击范围选择最近命中者。
 func enemy_at_screen(point: Vector2) -> Node2D:
 	var best: Node2D = null
 	var nearest := INF
@@ -387,6 +397,7 @@ func _input(event: InputEvent) -> void:
 		cycle_target()
 		get_viewport().set_input_as_handled()
 
+## 处理未被界面消费的世界操作，遵循死亡、模态面板及控制阻断规则。
 func _unhandled_input(event: InputEvent) -> void:
 	# 坐骑切换沿用 GameState 的骑乘/下马规则，不受普通浮窗打开状态影响。
 	if event.is_action_pressed("mount_toggle") and not event.is_echo() and not GameState.world_controls_blocked():
@@ -462,6 +473,7 @@ func _try_interact() -> bool:
 	_focus_npc(npc)
 	return _interact_with(npc)
 
+## 通过地图服务验证并提交步行切图，失败时保留原场景并显示原因。
 func _activate_exit(exit_node: TravelExit) -> void:
 	var result := MapService.request_walk(exit_node.exit_id, _player.global_position)
 	if bool(result.get("ok", false)):
@@ -484,6 +496,7 @@ func _request_exit_interaction(exit_node: TravelExit) -> void:
 	elif _player.request_map_move(_ground.clamp_to_map(exit_node.global_position)):
 		_pending_exit = exit_node
 
+## 从视口坐标命中的路标中选择最近者，没有命中则返回 null。
 func exit_at_screen(point: Vector2) -> TravelExit:
 	var best: TravelExit = null
 	var nearest := INF
@@ -535,6 +548,7 @@ func _focus_npc(npc: Npc) -> void:
 	_player.clear_travel_intent()
 	EventBus.target_changed.emit(npc)
 
+## 从视口坐标命中的 NPC 中选择最近者，供鼠标交互使用。
 func npc_at_screen(point: Vector2) -> Npc:
 	var best: Npc = null
 	var best_distance := INF
