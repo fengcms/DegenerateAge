@@ -13,6 +13,12 @@ func _ready() -> void:
 	SettingsRuntime.apply_display_strategy()
 	SettingsRuntime.initialize_startup_display()
 	_apply_settings_after_scene_ready.call_deferred()
+	var display_watch := Timer.new()
+	display_watch.wait_time = 0.75
+	display_watch.process_mode = Node.PROCESS_MODE_ALWAYS
+	display_watch.timeout.connect(_check_display_environment)
+	add_child(display_watch)
+	display_watch.start()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	$UI/MenuPanel.initialize_if_current.call_deferred()
 	print("========================================")
@@ -55,3 +61,9 @@ func _on_viewport_size_changed() -> void:
 func _reapply_for_viewport() -> void:
 	_resize_queued = false
 	SettingsRuntime.reapply_for_viewport()
+
+## 暂停菜单下也低频检测跨屏/DPI/工作区变化；不因窗口拖动重新计算人物大小。
+func _check_display_environment() -> void:
+	if SettingsRuntime.refresh_screen_environment():
+		SettingsRuntime.refresh_display_scales()
+		$UI/SettingsPanel.refresh_display_status()

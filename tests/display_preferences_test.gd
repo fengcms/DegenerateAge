@@ -26,6 +26,8 @@ func _ready() -> void:
 	check(SettingsRuntime.save_display_preferences(true), "v2偏好保存成功")
 	var raw: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SettingsRuntime.DISPLAY_PREFS_PATH))
 	check(raw.version == 2 and raw.scaleSources.uiScale == "manual" and raw.scaleSources.mapScale == "auto", "写入来源而非只写快照数值")
+	SettingsRuntime.read_display_preferences()
+	check(SettingsRuntime.save_display_preferences(true), "JSON数字解析为浮点版本后仍可再次保存")
 	SettingsRuntime.load_display_policy({})
 	GameState.reset_to_defaults()
 	check(SettingsRuntime.scale_source("uiScale") == "manual", "重置角色保留本机来源")

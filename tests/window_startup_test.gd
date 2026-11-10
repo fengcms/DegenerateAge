@@ -45,6 +45,7 @@ func _ready() -> void:
 		check(window.size == Vector2i(1280, 800), "旧固定尺寸仍然优先")
 	else:
 		check(not DisplayEnvironment.can_control_window(get_window()), "无头跳过窗口操作")
+	DirAccess.remove_absolute(SettingsRuntime.DISPLAY_PREFS_PATH)
 	print("[WindowStartupTest] ", "全部通过 ✅" if failures.is_empty() else str(failures))
 	get_tree().quit(0 if failures.is_empty() else 1)
 

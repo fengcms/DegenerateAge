@@ -71,3 +71,36 @@ static func _fit_window(window: Window, requested: Vector2i, usable: Rect2i) -> 
 	var fitted := fitted_rect(requested, usable, decoration)
 	window.size = fitted.size
 	window.position = fitted.position + inset
+
+## 低频采集当前屏幕；客户区仅用于诊断，拖动窗口不参与推荐倍率计算。
+static func screen_snapshot(window: Window) -> Dictionary:
+	if DisplayServer.get_name() == "headless":
+		return {}
+	var screen := window.current_screen
+	return {"screen": screen, "size": DisplayServer.screen_get_size(screen),
+		"usable": DisplayServer.screen_get_usable_rect(screen), "scale": DisplayServer.screen_get_scale(screen),
+		"dpi": DisplayServer.screen_get_dpi(screen), "platform": OS.get_name(),
+		"hidpi": ProjectSettings.get_setting("display/window/dpi/allow_hidpi", true),
+		"contentMode": window.content_scale_mode, "contentFactor": window.content_scale_factor,
+		"client": window.size, "viewport": window.get_visible_rect().size}
+
+## 提取影响屏幕适配的稳定字段，不包含客户区尺寸，避免同屏拖动触发倍率跳变。
+static func screen_signature(snapshot: Dictionary) -> Array:
+	var result := []
+	for key in ["screen", "size", "usable", "scale", "dpi", "platform", "hidpi", "contentMode", "contentFactor"]:
+		result.append(snapshot.get(key))
+	return result
+
+## 只使用已实测的 macOS 高密度 disabled 路径；其他坐标后端保守回退 100%。
+## 2K/4K 是像素尺寸分类，不足以决定桌面逻辑点与渲染单位之间的补偿系数。
+static func recommended_scale(snapshot: Dictionary) -> float:
+	if snapshot.get("platform", "") != "macOS" or not snapshot.get("hidpi", false):
+		return 1.0
+	if snapshot.get("contentMode", -1) != Window.CONTENT_SCALE_MODE_DISABLED or snapshot.get("contentFactor", 1.0) != 1.0:
+		return 1.0
+	var density := float(snapshot.get("scale", 1.0))
+	var size: Vector2i = snapshot.get("size", Vector2i.ZERO)
+	if not is_finite(density) or density < 1.0 or density > 4.0 or size.x <= 0 or size.y <= 0:
+		return 1.0
+	# 现有三轴共同支持的推荐档位；最多 200%，更大屏幕仍可由玩家手动微调。
+	return clampf(roundf(density * 4.0) / 4.0, 1.0, 2.0)

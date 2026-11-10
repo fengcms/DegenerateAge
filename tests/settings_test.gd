@@ -75,6 +75,8 @@ func _ready() -> void:
 	GameState.settings["textScale"] = 1.5
 	GameState.settings["displayScaleMode"] = "manual"
 	GameState.settings["displayScale"] = 1.5
+	# 模拟玩家明确操作高级统一系数，进入旧兼容乘法来源。
+	SettingsRuntime.mark_display_customized("displayScale")
 	SettingsRuntime.apply_ui_scale_to(ui)
 	SettingsRuntime.apply_text_scale_to(ui)
 	_check(absf(float(font_probe.get_theme_font_size("font_size")) * ui.transform.x.x - 16.0 * 2.25) <= 1.0,
@@ -163,7 +165,7 @@ func _check_layout_structure() -> void:
 	if visual == null or game == null or keys == null:
 		panel.queue_free()
 		return
-	_check(_card_titles(visual) == ["显示适配", "界面缩放", "显示与辅助"],
+	_check(_card_titles(visual) == ["高级统一系数", "界面缩放", "显示与辅助"],
 		"画面页应分 3 组卡片，实际 %s" % str(_card_titles(visual)))
 	_check(_card_titles(game) == ["战斗辅助", "拾取与出售", "挂机维护"],
 		"游戏页应分 3 组卡片，实际 %s" % str(_card_titles(game)))
@@ -296,8 +298,8 @@ func _check_visual_tab() -> void:
 			"文字大小档位应为 100/110/125/150/175/200，实际 %s" % str(items))
 	if dropdowns.has("适配方式"):
 		var mode: OptionButton = dropdowns["适配方式"]
-		_check(mode.item_count == 2 and String(mode.get_item_text(0)).begins_with("自动"),
-			"适配方式应有「自动 / 手动」两档")
+		_check(mode.item_count == 2 and mode.get_item_text(0) == Localization.tr_key("ui.settings_panel.p026") and mode.get_item_text(1) == Localization.tr_key("ui.settings_panel.p027"),
+			"高级系数应有「不使用额外系数 / 手动」两档")
 		# 选「手动」⇒ 写 displayScaleMode 并显示系数行
 		mode.select(1)
 		mode.item_selected.emit(1)
@@ -431,6 +433,8 @@ func _check_extreme_scale(ui: CanvasLayer, embedded: SubViewport) -> void:
 	GameState.settings["mapScale"] = 1.0
 	GameState.settings["displayScaleMode"] = "manual"
 	GameState.settings["displayScale"] = 1.5
+	# 模拟玩家明确操作高级统一系数，进入旧兼容乘法来源。
+	SettingsRuntime.mark_display_customized("displayScale")
 	SettingsRuntime.apply_ui_scale_to(ui)
 	SettingsRuntime.apply_text_scale_to(ui)
 	SettingsRuntime.apply_world_text_scale()

@@ -39,6 +39,8 @@ func _ready() -> void:
 	_check(_arrival_count == 0, "主菜单不显示世界抵达提示")
 	_check(background.get_index() > main.get_node("UI/Hud").get_index(), "插画覆盖世界 HUD")
 	_check(background.get_index() < main.get_node("UI/SavePanel").get_index(), "存档面板位于插画上层")
+	# 尺寸矩阵明确模拟玩家选择普通窗口，覆盖自动启动最大化后的用户操作。
+	get_window().mode = Window.MODE_WINDOWED
 	for path in BACKGROUND.BACKGROUND_PATHS:
 		get_tree().set_meta(BACKGROUND.SESSION_KEY, path)
 		background.set_active(false)
@@ -56,6 +58,7 @@ func _ready() -> void:
 	background.set_active(true)
 	var session_texture: Texture2D = background._picture.texture
 	get_window().size = Vector2i(1280, 800)
+	SettingsRuntime.mark_display_customized("uiScale")
 	for ui_scale in [0.8, 1.0, 1.5, 2.0]:
 		GameState.settings["uiScale"] = ui_scale
 		SettingsRuntime.apply_ui_scale_to(main.get_node("UI"))

@@ -34,6 +34,8 @@ const HINT_INDENT := 4
 const PANEL_MAX_HEIGHT := 680.0
 
 var _scale_status: Dictionary = {}
+var _scale_options: Dictionary = {}
+var _window_status: Label
 
 var _key_list: VBoxContainer
 var _capture_action := ""
@@ -96,7 +98,7 @@ func set_open(open: bool) -> void:
 	GameState.set_panel_open("settings", open)
 	if open:
 		_update_layout()
-		_refresh_display_status()
+		refresh_display_status()
 		_refresh_keys()
 		_refresh_auto_sell_gate()
 		EventBus.panel_opened.emit("settings")
@@ -318,6 +320,10 @@ func _build_visual(tabs: TabContainer) -> void:
 	remember.pressed.connect(_remember_window)
 	PanelChrome.style_action(remember)
 	device.add_child(remember)
+	_window_status = Label.new()
+	_window_status.add_theme_font_size_override("font_size", HINT_FONT_SIZE)
+	device.add_child(_window_status)
+	refresh_display_status()
 	_colorblind_row(device)
 	# 屏震 / 强闪尚无实际效果；旧档字段保留兼容，界面暂不暴露空开关。
 
@@ -351,12 +357,13 @@ func _option_row(parent: VBoxContainer, caption_text: String, field: String, per
 	status.add_theme_color_override("font_color", PanelChrome.MUTED)
 	row.add_child(status)
 	_scale_status[field] = status
+	_scale_options[field] = options
 	var automatic := Button.new()
 	automatic.text = Localization.tr_key("ui.display.restore_axis")
 	automatic.pressed.connect(_restore_auto.bind(field))
 	PanelChrome.style_action(automatic)
 	row.add_child(automatic)
-	_refresh_display_status()
+	refresh_display_status()
 
 ## 窗口尺寸：原来是一个裸挂在下拉列表、没有标签的下拉框，玩家只能猜它管什么（工程 97 §2.2）。
 func _resolution_row(parent: VBoxContainer) -> void:
@@ -628,7 +635,7 @@ func _changed(field: String = "") -> void:
 	if field in ["fullscreen", "resolution"]:
 		SettingsRuntime.apply_window_preferences()
 	SettingsRuntime.apply_all()
-	_refresh_display_status()
+	refresh_display_status()
 	_update_layout.call_deferred()
 	if not SettingsRuntime.save_display_preferences():
 		EventBus.toast_requested.emit(Localization.tr_key("ui.display.save_failed"), "danger")
@@ -641,11 +648,22 @@ func _restore_auto(field: String) -> void:
 	_changed()
 
 ## 在打开设置和用户变更后刷新来源提示，不使用逐帧读取或保存。
-func _refresh_display_status() -> void:
+func refresh_display_status() -> void:
 	for field in _scale_status:
-		var value: float = GameState.settings.get(field, 1.0)
+		var value := SettingsRuntime.effective_scale(field)
 		var key := "ui.display.source_auto" if SettingsRuntime.scale_source(field) == "auto" else "ui.display.source_manual"
 		(_scale_status[field] as Label).text = Localization.tr_key(key) % roundi(value * 100.0)
+		var options: OptionButton = _scale_options[field]
+		# 下拉框显示当前有效档位；不写回保留的手动原值，也不触发 item_selected。
+		var selected := -1
+		for index in options.item_count:
+			if options.get_item_id(index) == roundi(value * 100.0):
+				selected = index
+		options.select(selected)
+		if selected < 0:
+			options.text = "%d%%" % roundi(value * 100.0)
+	if is_instance_valid(_window_status):
+		_window_status.text = SettingsRuntime.window_preference_description()
 
 ## 只有明确按下按钮才记住窗口尺寸；全屏与编辑器嵌入时提示无法记录。
 func _remember_window() -> void:

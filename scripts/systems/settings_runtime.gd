@@ -27,6 +27,7 @@ const SCALE_KEYS := ["uiScale", "mapScale", "textScale"]
 ## 元数据随本机偏好加载，角色重置不会清空；测试可通过 load_display_policy 显式建立隔离状态。
 static var _display_policy: Dictionary = {}
 static var _preferences_write_blocked := false
+static var _screen_snapshot: Dictionary = {}
 
 const DISPLAY_PREF_KEYS := ["uiScale", "mapScale", "textScale", "displayScaleMode", "displayScale",
 	"fullscreen", "resolution"]
@@ -151,7 +152,7 @@ static func _read_display_document() -> Dictionary:
 		return {}
 	var raw: Dictionary = parser.data
 	var version: Variant = raw.get("version", 1)
-	if not (version is int or version is float) or version not in [1, 2]:
+	if not (version is int or version is float) or (version != 1 and version != 2):
 		_preferences_write_blocked = true
 	return raw
 
@@ -211,12 +212,43 @@ static func display_scale_mode() -> String:
 	var mode := String(GameState.settings.get("displayScaleMode", "auto"))
 	return "manual" if mode == "manual" else "auto"
 
-## M5-9c：显示适配统一系数。auto ⇒ 1.0（系统已在逻辑单位层完成密度换算，游戏内**不得**再乘一次）；
-## manual ⇒ clamp(displayScale, 0.75, 1.5)。三轴最终值各乘这一次，见 09-A §4。
+## 旧版高级统一系数，只影响 legacy 来源；手动轴与自动轴均不重复乘它。
 static func display_scale_factor() -> float:
 	if display_scale_mode() != "manual":
 		return 1.0
-	return clampf(float(GameState.settings.get("displayScale", 1.0)), DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX)
+	var factor := float(GameState.settings.get("displayScale", 1.0))
+	return clampf(factor, DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX) if is_finite(factor) else 1.0
+
+## 解析单轴最终倍率。未启动主场景的工具/无头预览没有屏幕快照，沿用其显式原值。
+## 自动值只来自缓存；旧来源保留历史乘法，新的手动值就是玩家选择的最终百分比。
+static func effective_scale(key: String) -> float:
+	var raw := float(GameState.settings.get(key, 1.0))
+	if not is_finite(raw):
+		raw = 1.0
+	raw = clampf(raw, float(NUMERIC_RANGES[key][0]), float(NUMERIC_RANGES[key][1]))
+	var source := scale_source(key)
+	if source == "auto" and not _screen_snapshot.is_empty():
+		return DisplayEnvironment.recommended_scale(_screen_snapshot)
+	if source == "manual":
+		return raw
+	return raw * display_scale_factor()
+
+## Main 低频检查屏幕变化；同屏窗口拖动只更新诊断快照，不触发三轴重算或写文件。
+static func refresh_screen_environment() -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return false
+	var snapshot := DisplayEnvironment.screen_snapshot(tree.root)
+	var changed := DisplayEnvironment.screen_signature(snapshot) != DisplayEnvironment.screen_signature(_screen_snapshot)
+	_screen_snapshot = snapshot
+	return changed
+
+## 屏幕变化后只刷新显示，不重载输入、声音、窗口或持久化来源。
+static func refresh_display_scales() -> void:
+	_apply_ui_scale()
+	_apply_text_scale()
+	_apply_map_scale()
+	apply_world_text_scale()
 
 ## 校验输入绑定字段是否符合现有动作规则。
 static func valid_bindings(value: Dictionary) -> bool:
@@ -387,16 +419,9 @@ static func apply_ui_scale_to(ui: CanvasLayer) -> void:
 			control.size = logical_size
 	ui.transform = Transform2D(Vector2(scale_value, 0), Vector2(0, scale_value), Vector2.ZERO)
 
-## 🔴 工程 115：`clampf(NAN, min, max)` 会**原样返回 nan**（实测），clamp 不能当有限性兜底。
-## 这里被 20+ 处用来算「逻辑视口」，一旦透传 nan 会把整条 UI 尺寸链带崩。
+## 返回经过来源解析及有限性防御的界面倍率，供所有面板统一换算逻辑视口。
 static func ui_scale_value() -> float:
-	var raw := float(GameState.settings.get("uiScale", 1.0))
-	var factor := display_scale_factor()
-	if not is_finite(raw):
-		raw = 1.0
-	if not is_finite(factor) or factor <= 0.0:
-		factor = 1.0
-	return clampf(raw, UI_SCALE_MIN, UI_SCALE_MAX) * factor
+	return effective_scale("uiScale")
 
 ## 把界面倍率补到 Window 类弹层（FileDialog / Popup 等）上。
 ## 界面轴挂在 UI CanvasLayer 的 transform，而 transform 只作用于 CanvasItem；Window 不是
@@ -450,9 +475,9 @@ static func _apply_tooltip_shell(theme: Theme) -> void:
 	theme.set_stylebox("panel", "TooltipPanel", style)
 	theme.set_color("font_color", "TooltipLabel", Color("e1e7ee"))
 
-## M5-9c：文字轴最终倍率 = clamp(textScale) × display_scale_factor()。
+## 文字轴使用独立有效倍率，后续仅补偿 UI 已有变换。
 static func text_scale_value() -> float:
-	return clampf(float(GameState.settings.get("textScale", 1.0)), TEXT_SCALE_MIN, TEXT_SCALE_MAX) * display_scale_factor()
+	return effective_scale("textScale")
 
 ## 供外部（测试 / 工具）对指定 UI 层直接应用文字缩放，不依赖 current_scene 路径
 ## —— 与 `apply_ui_scale_to` / `apply_map_scale_to` 同一模式。
@@ -496,10 +521,9 @@ static func apply_map_scale_to(camera: Camera2D) -> void:
 	camera.zoom = Vector2.ONE * map_scale_value()
 	StableFollowCamera.snap(camera)
 
-## 地图显示倍率（0.8–2.0 × 显示适配系数）。缺键取默认 1.0，无需 schema 升级。
-## M5-9c：最终值 = clamp(mapScale) × display_scale_factor()（自动模式下后者恒为 1.0）。
+## 地图独立有效倍率；仅影响相机显示，不修改世界坐标或玩法数值。
 static func map_scale_value() -> float:
-	return clampf(float(GameState.settings.get("mapScale", 1.0)), MAP_SCALE_MIN, MAP_SCALE_MAX) * display_scale_factor()
+	return effective_scale("mapScale")
 
 ## 返回文字相对地图缩放的反向补偿倍率。
 static func world_text_scale_value() -> float:
@@ -541,6 +565,7 @@ static func initialize_startup_display() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree != null:
 		DisplayEnvironment.initialize(tree.root, _display_policy, str(GameState.settings.get("resolution", "auto")))
+		refresh_screen_environment()
 
 ## 玩家明确变更窗口模式时调用，与音量、按键等设置的应用路径分离。
 static func apply_window_preferences() -> void:
@@ -562,3 +587,13 @@ static func remember_current_window() -> bool:
 	GameState.settings.fullscreen = false
 	GameState.settings.resolution = "auto"
 	return true
+
+## 设置页显示实际启动策略，避免记住自定义尺寸后仍误显示自动最大化。
+static func window_preference_description() -> String:
+	var policy: String = _display_policy.get("windowPolicy", "auto_maximized")
+	if policy == "custom":
+		var size: Vector2i = _display_policy.customWindowSize
+		return Localization.tr_key("ui.display.window_custom") % [size.x, size.y]
+	if policy == "fixed":
+		return Localization.tr_key("ui.display.window_fixed") % str(GameState.settings.get("resolution", "auto"))
+	return Localization.tr_key("ui.display.window_" + policy)
