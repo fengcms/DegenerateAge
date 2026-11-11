@@ -1,0 +1,66 @@
+[
+  {
+    "url": "https://blog.csdn.net/fungleo/article/details/164120426",
+    "articles": [
+      "GAME-01"
+    ],
+    "checkedAt": "2026-11-10",
+    "method": "web.open",
+    "status": "unverified_tool_access_error",
+    "note": "工具未能取得页面，未据此判定失效；保留原地址，线上发布前人工复核。"
+  },
+  {
+    "url": "https://blog.csdn.net/fungleo/article/details/164121738",
+    "articles": [
+      "GAME-01",
+      "GAME-04"
+    ],
+    "checkedAt": "2026-11-10",
+    "method": "web.open",
+    "status": "unverified_tool_access_error",
+    "note": "工具未能取得页面，未据此判定失效；保留原地址，线上发布前人工复核。"
+  },
+  {
+    "url": "https://blog.csdn.net/fungleo/article/details/164139553",
+    "articles": [
+      "GAME-01",
+      "GAME-02",
+      "GAME-10"
+    ],
+    "checkedAt": "2026-11-10",
+    "method": "web.open",
+    "status": "unverified_tool_access_error",
+    "note": "工具未能取得页面，未据此判定失效；保留原地址，线上发布前人工复核。"
+  },
+  {
+    "url": "https://blog.csdn.net/fungleo/article/details/164140515",
+    "articles": [
+      "GAME-02",
+      "GAME-06"
+    ],
+    "checkedAt": "2026-11-10",
+    "method": "web.open",
+    "status": "unverified_tool_access_error",
+    "note": "工具未能取得页面，未据此判定失效；保留原地址，线上发布前人工复核。"
+  },
+  {
+    "url": "https://docs.godotengine.org/en/stable/classes/class_node.html",
+    "articles": [
+      "GAME-68"
+    ],
+    "checkedAt": "2026-11-10",
+    "method": "web.open",
+    "status": "accessible",
+    "note": "官方文档可访问，支持 WeakRef 与 Node 生命周期的区分。"
+  },
+  {
+    "url": "https://docs.godotengine.org/en/stable/classes/class_weakref.html",
+    "articles": [
+      "GAME-68"
+    ],
+    "checkedAt": "2026-11-10",
+    "method": "web.open",
+    "status": "accessible",
+    "note": "官方文档可访问，支持 WeakRef 与 Node 生命周期的区分。"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-58",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发58：金币封顶，卖出去的物品怎么办",
+  "description": "挂牌五十却只能入账十，出售应如何反馈？本文说明当前封顶成交口径、四个出售入口的一致性，以及先认领托盘防止同步重入的边界。",
+  "tags": [
+    "金币封顶",
+    "实际入账",
+    "托盘认领",
+    "同步重入",
+    "出售结算"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-58/封面.png",
+  "ready": true
+}

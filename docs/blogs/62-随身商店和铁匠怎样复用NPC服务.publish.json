@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-62",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发62：随身商店和铁匠，怎样复用NPC服务",
+  "description": "随身商店和铁匠怎样复用原NPC功能？本文沿道具路由、聚合货单、实际费率和补领规则，说明复用所保留的交易保护与当前接线边界。",
+  "tags": [
+    "随身服务",
+    "能力复用",
+    "面板路由",
+    "服务费率",
+    "永久工具"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-62/封面.png",
+  "ready": true
+}

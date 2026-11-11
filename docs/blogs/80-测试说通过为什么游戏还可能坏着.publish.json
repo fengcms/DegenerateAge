@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-80",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发80：测试说通过，为什么游戏还可能坏着",
+  "description": "退出码为零，为什么不能直接说游戏没问题？本文用异步完成、全量扫描、负向注入和导出包检查，说明测试结论怎样与真实交付范围对应。",
+  "tags": [
+    "测试完成标记",
+    "负向验证",
+    "隔离运行",
+    "覆盖边界",
+    "导出验收"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-80/封面.png",
+  "ready": true
+}

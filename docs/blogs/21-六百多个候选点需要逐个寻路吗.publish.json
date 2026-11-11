@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-21",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发21：624个候选点，需要跑624次完整寻路吗",
+  "description": "从《末法纪元》历史624候选点零次完整寻路的案例出发，本文区分可达过滤与实际路线，解释四邻接连通性的规则前提、构建与缓存成本，以及怎样用调用计数和AStar对照验证优化，不把CPU记录冒充帧率提升。",
+  "tags": [
+    "可达性",
+    "连通区域",
+    "寻路优化",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-21/封面.png",
+  "ready": true
+}

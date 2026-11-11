@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-54",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发54：Boss死了换张图，墓碑为什么没了",
+  "description": "Boss死亡记录还在，为什么跨图后看不见墓碑？本文拆解距离筛选与重建顺序，并区分刷新墓碑和未领取战利品各自的持久边界。",
+  "tags": [
+    "Boss墓碑",
+    "跨图恢复",
+    "世界时钟",
+    "未领取战利品",
+    "节点重建"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-54/封面.png",
+  "ready": true
+}

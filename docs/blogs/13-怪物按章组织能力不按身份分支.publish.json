@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-13",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发13：怪物可以按章分，招式为什么不能跟着名字写死",
+  "description": "本文结合《末法纪元》的怪物分章方案和能力配置整改，区分章节归属、稳定身份、外观表现与招式规则，解释为什么按怪物ID写行为分支会阻碍复用，以及怎样通过新身份克隆和真实行为入口验证迁移。",
+  "tags": [
+    "怪物系统",
+    "数据驱动",
+    "配置设计",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-13/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-55",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发55：满背包，不是异常情况",
+  "description": "满包时为何仍可能拾取成功？本文区分格子占满与实际接纳能力，拆解失败版本缓存、事件失效、手动输入与腾格恢复的边界。",
+  "tags": [
+    "满背包",
+    "失败重试",
+    "缓存失效",
+    "掉落积压",
+    "堆叠容量"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-55/封面.png",
+  "ready": true
+}

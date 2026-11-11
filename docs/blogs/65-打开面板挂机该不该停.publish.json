@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-65",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发65：打开面板，挂机该不该停",
+  "description": "打开窗口是否应该停止挂机？本文区分可见状态、输入接管与场景树暂停，结合寻路误清和快捷栏历史问题，说明普通浮窗与模态流程的边界。",
+  "tags": [
+    "面板并存",
+    "世界输入",
+    "自动战斗",
+    "自动寻路",
+    "模态暂停"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-65/封面.png",
+  "ready": true
+}

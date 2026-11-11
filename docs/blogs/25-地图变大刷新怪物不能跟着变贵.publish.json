@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-25",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发25：地图变大了，刷新怪物不能跟着越来越贵",
+  "description": "本文结合《末法纪元》的刷新器源码，解释候选点与活动对象的区别、每轮预算快照及同步增减、墓碑与跨图时钟、稳定身份和退场边界，说明怎样同时验证统计次数与真实刷新行为。",
+  "tags": [
+    "怪物刷新",
+    "性能优化",
+    "活动预算",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-25/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-07",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发07：从产品文档到代码，中间那一步怎么拆",
+  "description": "本文用《末法纪元》免费步行与车夫直达的工程方案，说明如何盘点现有能力、处理设计冲突、按行为边界拆批次、定义失败状态，并用交付清单把产品需求接到可验证的代码改动。文中阶段规则按历史背景介绍。",
+  "tags": [
+    "需求拆解",
+    "产品设计",
+    "游戏开发",
+    "工程方案",
+    "验收标准"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-07/封面.png",
+  "ready": true
+}

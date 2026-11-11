@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-14",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发14：游戏还没做完，值得先做一个地图编辑器吗",
+  "description": "以《末法纪元》的营地地图编辑器为例，本文讨论内部工具的投入边界，介绍文档与画布分工、草稿校验、源哈希保护和重建流程，并结合命中与平移修复说明编辑器也需要交互验收，而不能只看数据能否保存。",
+  "tags": [
+    "地图编辑器",
+    "Godot插件",
+    "工具开发",
+    "关卡设计",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-14/封面.png",
+  "ready": true
+}

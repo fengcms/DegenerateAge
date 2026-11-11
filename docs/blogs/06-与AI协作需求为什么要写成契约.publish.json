@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-06",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发06：和AI一起做游戏，需求为什么要写成契约",
+  "description": "以《末法纪元》的自动出售入口、共用规则和交付记录为例，本文讨论AI协作任务怎样写清行为边界、当前状态、复用入口与验收证据。文中任务模板是依据现有规则整理的说明示例，不虚构历史提示词或代码贡献比例。",
+  "tags": [
+    "AI编程",
+    "需求契约",
+    "游戏开发",
+    "工程协作",
+    "验收标准"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-06/封面.png",
+  "ready": true
+}

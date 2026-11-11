@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-49",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发49：四件合一，随机应该落在哪里",
+  "description": "批量合成应该随机挑材料吗？本文用同档优先与跨档余数的算例，解释材料保护、降档提醒，以及固定投入与随机产物的职责分界。",
+  "tags": [
+    "四金合紫",
+    "批量分组",
+    "同档优先",
+    "随机边界",
+    "降档提醒"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-49/封面.png",
+  "ready": true
+}

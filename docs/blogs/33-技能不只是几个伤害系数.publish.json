@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-33",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发33：加一项技能，远不止填一个伤害系数",
+  "description": "本文结合《末法纪元》的施法源码，梳理技能资格、命中集合、一次扣费、多段与逐目标结算，区分穿防破甲、控制和纯视觉弹道，说明预警与几何同源及失败组合验收，避免只填系数就宣称技能完成。",
+  "tags": [
+    "技能系统",
+    "多段伤害",
+    "资源冷却",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-33/封面.png",
+  "ready": true
+}

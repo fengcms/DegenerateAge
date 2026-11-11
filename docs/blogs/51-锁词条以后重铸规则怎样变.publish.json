@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-51",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发51：锁词条以后，重铸规则怎样变",
+  "description": "加一个锁词条按钮，会改变哪些规则？本文拆解锁定身份、候选排除、有效锁数计价，以及锁定、精炼和如意抽样各自承担的职责。",
+  "tags": [
+    "锁词条",
+    "装备重铸",
+    "候选池",
+    "精炼下限",
+    "如意取优"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-51/封面.png",
+  "ready": true
+}

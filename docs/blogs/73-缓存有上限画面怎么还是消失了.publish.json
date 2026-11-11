@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-73",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发73：缓存有上限，画面怎么还是消失了",
+  "description": "全局缓存没有超上限，静态预警为什么消失？本文解释查找表与活跃画布的不同所有权，以及RID、强引用和淘汰后像素验证之间的关系。",
+  "tags": [
+    "网格缓存",
+    "资源所有权",
+    "RID",
+    "缓存淘汰",
+    "静态绘制"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-73/封面.png",
+  "ready": true
+}

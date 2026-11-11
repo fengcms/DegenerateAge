@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-31",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发31：怪物死了以后，状态机还没下班",
+  "description": "本文结合《末法纪元》怪物状态转换与死亡源码，解释接战重置、动作取消、死亡唯一性、延迟召唤、奖励释放和刷新持久状态的分工，并给出预警与多段期间的中断验证方法。",
+  "tags": [
+    "怪物状态机",
+    "生命周期",
+    "死亡结算",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-31/封面.png",
+  "ready": true
+}

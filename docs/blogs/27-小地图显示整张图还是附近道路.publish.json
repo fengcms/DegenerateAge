@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-27",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发27：右上角的小地图，该装下整个世界吗",
+  "description": "本文结合《末法纪元》的局部小地图实现，解释全局与附近信息分工、观察中心、节点跟随、边缘夹取和圆形裁剪，讨论标记路线的可见性，以及如何验证投影往返和移动不重建底图。",
+  "tags": [
+    "小地图",
+    "UI投影",
+    "裁剪缓存",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-27/封面.png",
+  "ready": true
+}

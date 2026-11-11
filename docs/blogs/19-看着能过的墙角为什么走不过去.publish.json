@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-19",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发19：看着能过的墙角，为什么角色走不过去",
+  "description": "本文沿着《末法纪元》的洞穴导航，区分通行掩码、格子路径和真实角色碰撞，解释禁止穿角、线段余量、路径平滑、空路线与偏航重建，并给出微型反例及现有测试入口，避免用穿墙兜底修复卡住。",
+  "tags": [
+    "寻路",
+    "碰撞",
+    "Godot",
+    "等距地图",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-19/封面.png",
+  "ready": true
+}

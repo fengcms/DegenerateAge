@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-75",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发75：挂机一晚还稳定，应该测些什么",
+  "description": "进程跑十分钟没崩，能证明挂机一晚稳定吗？本文结合历史压测和现有跨图用例，拆解时间、负载、资源趋势与保存恢复需要分别验证的内容。",
+  "tags": [
+    "长时稳定",
+    "真实负载",
+    "节点回收",
+    "合法积累",
+    "隔离存档"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-75/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-22",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+  "description": "本文梳理《末法纪元》自动战斗的决策链，解释关闭死亡优先级、目标选择、接近攻击、职业资源、拾取与巡游交接，强调自动和手动共用动作规则，并给出连续流程验收及日志记录方法。",
+  "tags": [
+    "自动战斗",
+    "状态机",
+    "技能决策",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-22/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-60",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发60：打金、刷装、单王挑战，为何分地图",
+  "description": "后期地图为什么要区分打金、刷装和单王挑战？本文结合战场收拢、同屏预算、承伤门槛与集中掉落，讨论完整循环中的压力和收益。",
+  "tags": [
+    "循环地图",
+    "打金节奏",
+    "刷装收益",
+    "单王挑战",
+    "单击上限"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-60/封面.png",
+  "ready": true
+}

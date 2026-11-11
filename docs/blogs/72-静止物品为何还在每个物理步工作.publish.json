@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-72",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发72：静止物品，为何还在每个物理步工作",
+  "description": "共享图片以后，静止装备为什么仍然耗时？本文沿地图内调度器说明进入资格、首步补偿、即时交互与预算恢复，明确少回调不等于少奖励。",
+  "tags": [
+    "静止调度",
+    "掉落空转",
+    "时钟补偿",
+    "事件唤醒",
+    "显示帧预算"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-72/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-39",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发39：装备落后二十级，怎样有缓冲又有换装压力",
+  "description": "本文结合《末法纪元》的EquipmentGap实现，解释逐件二十级缓冲、槽位权重、主武器约束与平滑衰减，讨论最终伤害接线、缓存签名、换装提示、自动出售和老角色过渡，避免把成长压力做成无解断崖。",
+  "tags": [
+    "装备跨级",
+    "数值设计",
+    "伤害衰减",
+    "成长反馈",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-39/封面.png",
+  "ready": true
+}

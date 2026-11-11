@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-40",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发40：地上的攻击范围，为什么不能直接画个圆",
+  "description": "本文结合《末法纪元》的Iso、BossAction和GroundFx，解释地面圆投影、同源判定与历史等面积补偿，区分面积守恒和战斗结果，说明玩家提示例外、描边变换及几何缓存边界，聚焦程序正确性而非素材制作。",
+  "tags": [
+    "等距几何",
+    "技能预警",
+    "画判同源",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-40/封面.png",
+  "ready": true
+}

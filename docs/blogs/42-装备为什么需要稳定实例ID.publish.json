@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-42",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发42：背包整理以后，程序怎么认出原来那件装备",
+  "description": "本文结合《末法纪元》的穿戴目标与合成入口，区分物品身份、容器位置和内容快照，解释整理重定位、同槽换装、重复材料、允许来源与存档恢复，并给出持续操作中的验证方法。",
+  "tags": [
+    "实例ID",
+    "背包整理",
+    "交易快照",
+    "装备系统",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-42/封面.png",
+  "ready": true
+}

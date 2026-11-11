@@ -1,0 +1,3742 @@
+[
+  {
+    "id": "GAME-01",
+    "title": "末法纪元·游戏开发01：一个全栈开发者，开始做自己的单机ARPG",
+    "file": "01-为什么一个全栈开发者要做单机ARPG.md",
+    "publishedUrl": null,
+    "references": []
+  },
+  {
+    "id": "GAME-02",
+    "title": "末法纪元·游戏开发02：打宝、成长、探索，怎样变成能验收的目标",
+    "file": "02-打宝成长和探索怎样变成验收标准.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-01",
+        "originalLabel": "上一篇介绍了《末法纪元》",
+        "replacement": "第01篇《一个全栈开发者，开始做自己的单机ARPG》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-01",
+        "originalLabel": "末法纪元·游戏开发01：一个全栈开发者，开始做自己的单机ARPG",
+        "replacement": "第01篇《一个全栈开发者，开始做自己的单机ARPG》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-03",
+    "title": "末法纪元·游戏开发03：想做的越来越多，首版到底不做什么",
+    "file": "03-首版到底不做什么.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-02",
+        "originalLabel": "上一篇",
+        "replacement": "第02篇《打宝、成长、探索，怎样变成能验收的目标》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-01",
+        "originalLabel": "第一篇",
+        "replacement": "第01篇《一个全栈开发者，开始做自己的单机ARPG》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-01",
+        "originalLabel": "末法纪元·游戏开发01：一个全栈开发者，开始做自己的单机ARPG",
+        "replacement": "第01篇《一个全栈开发者，开始做自己的单机ARPG》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-02",
+        "originalLabel": "末法纪元·游戏开发02：打宝、成长、探索，怎样变成能验收的目标",
+        "replacement": "第02篇《打宝、成长、探索，怎样变成能验收的目标》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-04",
+    "title": "末法纪元·游戏开发04：选了Godot以后，工程第一天要准备什么",
+    "file": "04-Godot选型与工程第一天.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-03",
+        "originalLabel": "上一篇",
+        "replacement": "第03篇《想做的越来越多，首版到底不做什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-01",
+        "originalLabel": "第一篇",
+        "replacement": "第01篇《一个全栈开发者，开始做自己的单机ARPG》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-03",
+        "originalLabel": "末法纪元·游戏开发03：想做的越来越多，首版到底不做什么",
+        "replacement": "第03篇《想做的越来越多，首版到底不做什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-05",
+    "title": "末法纪元·游戏开发05：从最小闭环到M10，里程碑怎样一步步长出来",
+    "file": "05-从最小闭环到M10里程碑怎样演变.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-04",
+        "originalLabel": "上一篇",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-02",
+        "originalLabel": "第二篇",
+        "replacement": "第02篇《打宝、成长、探索，怎样变成能验收的目标》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-02",
+        "originalLabel": "末法纪元·游戏开发02：打宝、成长、探索，怎样变成能验收的目标",
+        "replacement": "第02篇《打宝、成长、探索，怎样变成能验收的目标》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-04",
+        "originalLabel": "末法纪元·游戏开发04：选了Godot以后，工程第一天要准备什么",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-06",
+    "title": "末法纪元·游戏开发06：和AI一起做游戏，需求为什么要写成契约",
+    "file": "06-与AI协作需求为什么要写成契约.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-04",
+        "originalLabel": "第四篇",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-05",
+        "originalLabel": "上一篇",
+        "replacement": "第05篇《从最小闭环到M10，里程碑怎样一步步长出来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-04",
+        "originalLabel": "末法纪元·游戏开发04：选了Godot以后，工程第一天要准备什么",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-05",
+        "originalLabel": "末法纪元·游戏开发05：从最小闭环到M10，里程碑怎样一步步长出来",
+        "replacement": "第05篇《从最小闭环到M10，里程碑怎样一步步长出来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-07",
+    "title": "末法纪元·游戏开发07：从产品文档到代码，中间那一步怎么拆",
+    "file": "07-一份产品需求怎样拆成开发任务.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-06",
+        "originalLabel": "上一篇",
+        "replacement": "第06篇《和AI一起做游戏，需求为什么要写成契约》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-05",
+        "originalLabel": "第五篇",
+        "replacement": "第05篇《从最小闭环到M10，里程碑怎样一步步长出来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-05",
+        "originalLabel": "末法纪元·游戏开发05：从最小闭环到M10，里程碑怎样一步步长出来",
+        "replacement": "第05篇《从最小闭环到M10，里程碑怎样一步步长出来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-06",
+        "originalLabel": "末法纪元·游戏开发06：和AI一起做游戏，需求为什么要写成契约",
+        "replacement": "第06篇《和AI一起做游戏，需求为什么要写成契约》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-08",
+    "title": "末法纪元·游戏开发08：功能越来越齐，什么时候该停下来审查一次",
+    "file": "08-什么时候该停下来做完整度审查.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-05",
+        "originalLabel": "第五篇",
+        "replacement": "第05篇《从最小闭环到M10，里程碑怎样一步步长出来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-07",
+        "originalLabel": "第七篇",
+        "replacement": "第07篇《从产品文档到代码，中间那一步怎么拆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-05",
+        "originalLabel": "末法纪元·游戏开发05：从最小闭环到M10，里程碑怎样一步步长出来",
+        "replacement": "第05篇《从最小闭环到M10，里程碑怎样一步步长出来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-06",
+        "originalLabel": "末法纪元·游戏开发06：和AI一起做游戏，需求为什么要写成契约",
+        "replacement": "第06篇《和AI一起做游戏，需求为什么要写成契约》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-07",
+        "originalLabel": "末法纪元·游戏开发07：从产品文档到代码，中间那一步怎么拆",
+        "replacement": "第07篇《从产品文档到代码，中间那一步怎么拆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-09",
+    "title": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+    "file": "09-从网页状态走向游戏状态.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-08",
+        "originalLabel": "第八篇",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-04",
+        "originalLabel": "第四篇",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-04",
+        "originalLabel": "末法纪元·游戏开发04：选了Godot以后，工程第一天要准备什么",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "末法纪元·游戏开发08：功能越来越齐，什么时候该停下来审查一次",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-10",
+    "title": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+    "file": "10-模板实例和显示数据为什么分开.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "上一篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "第八篇",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-11",
+    "title": "末法纪元·游戏开发11：JSON越写越多，怎样把配置错误拦在进游戏之前",
+    "file": "11-JSON越来越多怎样防止配错.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-06",
+        "originalLabel": "第六篇",
+        "replacement": "第06篇《和AI一起做游戏，需求为什么要写成契约》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-06",
+        "originalLabel": "末法纪元·游戏开发06：和AI一起做游戏，需求为什么要写成契约",
+        "replacement": "第06篇《和AI一起做游戏，需求为什么要写成契约》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-12",
+    "title": "末法纪元·游戏开发12：地图越来越多，为什么拆成一图一目录",
+    "file": "12-地图从总表拆成一图一目录.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "第十一篇",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "末法纪元·游戏开发11：JSON越写越多，怎样把配置错误拦在进游戏之前",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-13",
+    "title": "末法纪元·游戏开发13：怪物可以按章分，招式为什么不能跟着名字写死",
+    "file": "13-怪物按章组织能力不按身份分支.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-12",
+        "originalLabel": "上一篇",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "末法纪元·游戏开发12：地图越来越多，为什么拆成一图一目录",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-14",
+    "title": "末法纪元·游戏开发14：游戏还没做完，值得先做一个地图编辑器吗",
+    "file": "14-为游戏做地图编辑器值不值.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-12",
+        "originalLabel": "第十二篇",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "第十一篇",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "末法纪元·游戏开发11：JSON越写越多，怎样把配置错误拦在进游戏之前",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "末法纪元·游戏开发12：地图越来越多，为什么拆成一图一目录",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-15",
+    "title": "末法纪元·游戏开发15：能编辑营地以后，离网友帮我做地图还有多远",
+    "file": "15-地图编辑器离UGC平台有多远.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-14",
+        "originalLabel": "上一篇",
+        "replacement": "第14篇《游戏还没做完，值得先做一个地图编辑器吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "第十二篇",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "第十一篇",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "末法纪元·游戏开发12：地图越来越多，为什么拆成一图一目录",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-14",
+        "originalLabel": "末法纪元·游戏开发14：游戏还没做完，值得先做一个地图编辑器吗",
+        "replacement": "第14篇《游戏还没做完，值得先做一个地图编辑器吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-16",
+    "title": "末法纪元·游戏开发16：资源文件明明在，为什么游戏还是起不来",
+    "file": "16-文件都在游戏为什么启动不了.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-11",
+        "originalLabel": "第十一篇",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-04",
+        "originalLabel": "第四篇",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-04",
+        "originalLabel": "末法纪元·游戏开发04：选了Godot以后，工程第一天要准备什么",
+        "replacement": "第04篇《选了Godot以后，工程第一天要准备什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "末法纪元·游戏开发08：功能越来越齐，什么时候该停下来审查一次",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "末法纪元·游戏开发11：JSON越写越多，怎样把配置错误拦在进游戏之前",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-17",
+    "title": "末法纪元·游戏开发17：斜着看的世界，坐标不能跟着乱",
+    "file": "17-斜着看的世界坐标不能跟着乱.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-14",
+        "originalLabel": "第十四篇",
+        "replacement": "第14篇《游戏还没做完，值得先做一个地图编辑器吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-14",
+        "originalLabel": "末法纪元·游戏开发14：游戏还没做完，值得先做一个地图编辑器吗",
+        "replacement": "第14篇《游戏还没做完，值得先做一个地图编辑器吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-18",
+    "title": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+    "file": "18-键盘鼠标和自动移动谁说了算.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-17",
+        "originalLabel": "末法纪元·游戏开发17：斜着看的世界，坐标不能跟着乱",
+        "replacement": "第17篇《斜着看的世界，坐标不能跟着乱》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-19",
+    "title": "末法纪元·游戏开发19：看着能过的墙角，为什么角色走不过去",
+    "file": "19-看着能过的墙角为什么走不过去.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-14",
+        "originalLabel": "第十四篇",
+        "replacement": "第14篇《游戏还没做完，值得先做一个地图编辑器吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-14",
+        "originalLabel": "末法纪元·游戏开发14：游戏还没做完，值得先做一个地图编辑器吗",
+        "replacement": "第14篇《游戏还没做完，值得先做一个地图编辑器吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-17",
+        "originalLabel": "末法纪元·游戏开发17：斜着看的世界，坐标不能跟着乱",
+        "replacement": "第17篇《斜着看的世界，坐标不能跟着乱》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-20",
+    "title": "末法纪元·游戏开发20：一扇门打开以后，哪些缓存应该作废",
+    "file": "20-门打开后哪些缓存应该作废.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-19",
+        "originalLabel": "第十九篇",
+        "replacement": "第19篇《看着能过的墙角，为什么角色走不过去》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-11",
+        "originalLabel": "末法纪元·游戏开发11：JSON越写越多，怎样把配置错误拦在进游戏之前",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-19",
+        "originalLabel": "末法纪元·游戏开发19：看着能过的墙角，为什么角色走不过去",
+        "replacement": "第19篇《看着能过的墙角，为什么角色走不过去》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-21",
+    "title": "末法纪元·游戏开发21：624个候选点，需要跑624次完整寻路吗",
+    "file": "21-六百多个候选点需要逐个寻路吗.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-19",
+        "originalLabel": "第十九篇",
+        "replacement": "第19篇《看着能过的墙角，为什么角色走不过去》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "第二十篇",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-19",
+        "originalLabel": "末法纪元·游戏开发19：看着能过的墙角，为什么角色走不过去",
+        "replacement": "第19篇《看着能过的墙角，为什么角色走不过去》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "末法纪元·游戏开发20：一扇门打开以后，哪些缓存应该作废",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-22",
+    "title": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+    "file": "22-自动战斗不是循环按攻击.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-21",
+        "originalLabel": "第二十一篇",
+        "replacement": "第21篇《624个候选点，需要跑624次完整寻路吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-21",
+        "originalLabel": "末法纪元·游戏开发21：624个候选点，需要跑624次完整寻路吗",
+        "replacement": "第21篇《624个候选点，需要跑624次完整寻路吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-23",
+    "title": "末法纪元·游戏开发23：自动找怪，为什么要记住上次走到哪里",
+    "file": "23-自动找怪为什么要记住巡游进度.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-21",
+        "originalLabel": "第二十一篇",
+        "replacement": "第21篇《624个候选点，需要跑624次完整寻路吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "第二十篇",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "末法纪元·游戏开发20：一扇门打开以后，哪些缓存应该作废",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-22",
+        "originalLabel": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-24",
+    "title": "末法纪元·游戏开发24：Boss还剩血，角色为什么跑去打旁边那只",
+    "file": "24-Boss打到一半为什么换目标.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-22",
+        "originalLabel": "第二十二篇",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-22",
+        "originalLabel": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-25",
+    "title": "末法纪元·游戏开发25：地图变大了，刷新怪物不能跟着越来越贵",
+    "file": "25-地图变大刷新怪物不能跟着变贵.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "第十二篇",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-24",
+        "originalLabel": "第二十四篇",
+        "replacement": "第24篇《Boss还剩血，角色为什么跑去打旁边那只》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "末法纪元·游戏开发12：地图越来越多，为什么拆成一图一目录",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-24",
+        "originalLabel": "末法纪元·游戏开发24：Boss还剩血，角色为什么跑去打旁边那只",
+        "replacement": "第24篇《Boss还剩血，角色为什么跑去打旁边那只》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-26",
+    "title": "末法纪元·游戏开发26：免费步行和付费车夫，怎样各自有用",
+    "file": "26-免费步行与付费车夫怎样各有价值.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-07",
+        "originalLabel": "第七篇",
+        "replacement": "第07篇《从产品文档到代码，中间那一步怎么拆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "第八篇",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-25",
+        "originalLabel": "第二十五篇",
+        "replacement": "第25篇《地图变大了，刷新怪物不能跟着越来越贵》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-07",
+        "originalLabel": "末法纪元·游戏开发07：从产品文档到代码，中间那一步怎么拆",
+        "replacement": "第07篇《从产品文档到代码，中间那一步怎么拆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-25",
+        "originalLabel": "末法纪元·游戏开发25：地图变大了，刷新怪物不能跟着越来越贵",
+        "replacement": "第25篇《地图变大了，刷新怪物不能跟着越来越贵》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-27",
+    "title": "末法纪元·游戏开发27：右上角的小地图，该装下整个世界吗",
+    "file": "27-小地图显示整张图还是附近道路.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-26",
+        "originalLabel": "第二十六篇",
+        "replacement": "第26篇《免费步行和付费车夫，怎样各自有用》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-17",
+        "originalLabel": "第十七篇",
+        "replacement": "第17篇《斜着看的世界，坐标不能跟着乱》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "第二十篇",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-17",
+        "originalLabel": "末法纪元·游戏开发17：斜着看的世界，坐标不能跟着乱",
+        "replacement": "第17篇《斜着看的世界，坐标不能跟着乱》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "末法纪元·游戏开发20：一扇门打开以后，哪些缓存应该作废",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-26",
+        "originalLabel": "末法纪元·游戏开发26：免费步行和付费车夫，怎样各自有用",
+        "replacement": "第26篇《免费步行和付费车夫，怎样各自有用》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-28",
+    "title": "末法纪元·游戏开发28：迷雾、任务标记和路线，怎样讲清同一个世界",
+    "file": "28-迷雾任务标记和路线怎样共用世界.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-19",
+        "originalLabel": "第十九篇",
+        "replacement": "第19篇《看着能过的墙角，为什么角色走不过去》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-27",
+        "originalLabel": "第二十七篇",
+        "replacement": "第27篇《右上角的小地图，该装下整个世界吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-26",
+        "originalLabel": "第二十六篇",
+        "replacement": "第26篇《免费步行和付费车夫，怎样各自有用》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-26",
+        "originalLabel": "末法纪元·游戏开发26：免费步行和付费车夫，怎样各自有用",
+        "replacement": "第26篇《免费步行和付费车夫，怎样各自有用》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-27",
+        "originalLabel": "末法纪元·游戏开发27：右上角的小地图，该装下整个世界吗",
+        "replacement": "第27篇《右上角的小地图，该装下整个世界吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-29",
+    "title": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+    "file": "29-一次攻击在哪一步算伤害.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-22",
+        "originalLabel": "第二十二篇",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "第八篇",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "末法纪元·游戏开发08：功能越来越齐，什么时候该停下来审查一次",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-22",
+        "originalLabel": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-30",
+    "title": "末法纪元·游戏开发30：伤害里有随机，出了问题怎样重来一遍",
+    "file": "30-伤害公式为什么要能更换随机源.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-29",
+        "originalLabel": "上一篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-31",
+    "title": "末法纪元·游戏开发31：怪物死了以后，状态机还没下班",
+    "file": "31-怪物状态机还要管理死亡以后.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-25",
+        "originalLabel": "第二十五篇",
+        "replacement": "第25篇《地图变大了，刷新怪物不能跟着越来越贵》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-25",
+        "originalLabel": "末法纪元·游戏开发25：地图变大了，刷新怪物不能跟着越来越贵",
+        "replacement": "第25篇《地图变大了，刷新怪物不能跟着越来越贵》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-32",
+    "title": "末法纪元·游戏开发32：Boss还没接战，怎么已经开始放技能了",
+    "file": "32-Boss没有接战为什么已经放技能.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-13",
+        "originalLabel": "第十三篇",
+        "replacement": "第13篇《怪物可以按章分，招式为什么不能跟着名字写死》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-31",
+        "originalLabel": "第三十一篇",
+        "replacement": "第31篇《怪物死了以后，状态机还没下班》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-13",
+        "originalLabel": "末法纪元·游戏开发13：怪物可以按章分，招式为什么不能跟着名字写死",
+        "replacement": "第13篇《怪物可以按章分，招式为什么不能跟着名字写死》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-31",
+        "originalLabel": "末法纪元·游戏开发31：怪物死了以后，状态机还没下班",
+        "replacement": "第31篇《怪物死了以后，状态机还没下班》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-33",
+    "title": "末法纪元·游戏开发33：加一项技能，远不止填一个伤害系数",
+    "file": "33-技能不只是几个伤害系数.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-11",
+        "originalLabel": "第十一篇",
+        "replacement": "第11篇《JSON越写越多，怎样把配置错误拦在进游戏之前》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-24",
+        "originalLabel": "第二十四篇",
+        "replacement": "第24篇《Boss还剩血，角色为什么跑去打旁边那只》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-24",
+        "originalLabel": "末法纪元·游戏开发24：Boss还剩血，角色为什么跑去打旁边那只",
+        "replacement": "第24篇《Boss还剩血，角色为什么跑去打旁边那只》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-32",
+        "originalLabel": "末法纪元·游戏开发32：Boss还没接战，怎么已经开始放技能了",
+        "replacement": "第32篇《Boss还没接战，怎么已经开始放技能了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-34",
+    "title": "末法纪元·游戏开发34：从武士扩到法师，原来只有一个职业也会留下这么多假设",
+    "file": "34-从武士扩到法师哪里容易写死.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-22",
+        "originalLabel": "第二十二篇",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "第八篇",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-09",
+        "originalLabel": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-22",
+        "originalLabel": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-33",
+        "originalLabel": "末法纪元·游戏开发33：加一项技能，远不止填一个伤害系数",
+        "replacement": "第33篇《加一项技能，远不止填一个伤害系数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-35",
+    "title": "末法纪元·游戏开发35：怪都围上来了，法师为什么还不放群攻",
+    "file": "35-被围住以后法师为什么不群攻.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-22",
+        "originalLabel": "第二十二篇",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-31",
+        "originalLabel": "第三十一篇",
+        "replacement": "第31篇《怪物死了以后，状态机还没下班》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-33",
+        "originalLabel": "第三十三篇",
+        "replacement": "第33篇《加一项技能，远不止填一个伤害系数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-22",
+        "originalLabel": "末法纪元·游戏开发22：自动战斗，不是写一个循环替玩家按攻击",
+        "replacement": "第22篇《自动战斗，不是写一个循环替玩家按攻击》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-33",
+        "originalLabel": "末法纪元·游戏开发33：加一项技能，远不止填一个伤害系数",
+        "replacement": "第33篇《加一项技能，远不止填一个伤害系数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-36",
+    "title": "末法纪元·游戏开发36：蓝条变长以后，自动喝药和魔法盾才刚开始算账",
+    "file": "36-自动喝药和魔法盾怎样形成资源玩法.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-34",
+        "originalLabel": "第三十四篇",
+        "replacement": "第34篇《从武士扩到法师，原来只有一个职业也会留下这么多假设》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-35",
+        "originalLabel": "第三十五篇",
+        "replacement": "第35篇《怪都围上来了，法师为什么还不放群攻》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-34",
+        "originalLabel": "末法纪元·游戏开发34：从武士扩到法师，原来只有一个职业也会留下这么多假设",
+        "replacement": "第34篇《从武士扩到法师，原来只有一个职业也会留下这么多假设》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-35",
+        "originalLabel": "末法纪元·游戏开发35：怪都围上来了，法师为什么还不放群攻",
+        "replacement": "第35篇《怪都围上来了，法师为什么还不放群攻》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-37",
+    "title": "末法纪元·游戏开发37：技能能升级以后，怎样留下成长又不把数值推翻",
+    "file": "37-技能升阶怎样留下成长空间.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-07",
+        "originalLabel": "第七篇",
+        "replacement": "第07篇《从产品文档到代码，中间那一步怎么拆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-36",
+        "originalLabel": "第三十六篇",
+        "replacement": "第36篇《蓝条变长以后，自动喝药和魔法盾才刚开始算账》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-36",
+        "originalLabel": "末法纪元·游戏开发36：蓝条变长以后，自动喝药和魔法盾才刚开始算账",
+        "replacement": "第36篇《蓝条变长以后，自动喝药和魔法盾才刚开始算账》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-38",
+    "title": "末法纪元·游戏开发38：差了几十级装备，为什么打怪还没明显变慢",
+    "file": "38-等级高了为什么打怪没慢多少.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-25",
+        "originalLabel": "第二十五篇",
+        "replacement": "第25篇《地图变大了，刷新怪物不能跟着越来越贵》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-35",
+        "originalLabel": "第三十五篇",
+        "replacement": "第35篇《怪都围上来了，法师为什么还不放群攻》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-35",
+        "originalLabel": "末法纪元·游戏开发35：怪都围上来了，法师为什么还不放群攻",
+        "replacement": "第35篇《怪都围上来了，法师为什么还不放群攻》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-39",
+    "title": "末法纪元·游戏开发39：装备落后二十级，怎样有缓冲又有换装压力",
+    "file": "39-装备跨级二十级缓冲怎样设计.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-38",
+        "originalLabel": "上一篇",
+        "replacement": "第38篇《差了几十级装备，为什么打怪还没明显变慢》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-33",
+        "originalLabel": "第三十三篇",
+        "replacement": "第33篇《加一项技能，远不止填一个伤害系数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "第二十篇",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "末法纪元·游戏开发20：一扇门打开以后，哪些缓存应该作废",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-33",
+        "originalLabel": "末法纪元·游戏开发33：加一项技能，远不止填一个伤害系数",
+        "replacement": "第33篇《加一项技能，远不止填一个伤害系数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-38",
+        "originalLabel": "末法纪元·游戏开发38：差了几十级装备，为什么打怪还没明显变慢",
+        "replacement": "第38篇《差了几十级装备，为什么打怪还没明显变慢》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-40",
+    "title": "末法纪元·游戏开发40：地上的攻击范围，为什么不能直接画个圆",
+    "file": "40-地上的攻击范围为什么必须是椭圆.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-17",
+        "originalLabel": "第十七篇",
+        "replacement": "第17篇《斜着看的世界，坐标不能跟着乱》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-32",
+        "originalLabel": "第三十二篇",
+        "replacement": "第32篇《Boss还没接战，怎么已经开始放技能了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-27",
+        "originalLabel": "第二十七篇",
+        "replacement": "第27篇《右上角的小地图，该装下整个世界吗》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-17",
+        "originalLabel": "末法纪元·游戏开发17：斜着看的世界，坐标不能跟着乱",
+        "replacement": "第17篇《斜着看的世界，坐标不能跟着乱》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-32",
+        "originalLabel": "末法纪元·游戏开发32：Boss还没接战，怎么已经开始放技能了",
+        "replacement": "第32篇《Boss还没接战，怎么已经开始放技能了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-33",
+        "originalLabel": "末法纪元·游戏开发33：加一项技能，远不止填一个伤害系数",
+        "replacement": "第33篇《加一项技能，远不止填一个伤害系数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-41",
+    "title": "末法纪元·游戏开发41：装备等级、品质和星级，为什么要分三条轴",
+    "file": "41-等级品质星级分别解决什么.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-34",
+        "originalLabel": "第三十四篇",
+        "replacement": "第34篇《从武士扩到法师，原来只有一个职业也会留下这么多假设》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-34",
+        "originalLabel": "末法纪元·游戏开发34：从武士扩到法师，原来只有一个职业也会留下这么多假设",
+        "replacement": "第34篇《从武士扩到法师，原来只有一个职业也会留下这么多假设》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-42",
+    "title": "末法纪元·游戏开发42：背包整理以后，程序怎么认出原来那件装备",
+    "file": "42-装备为什么需要稳定实例ID.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "第八篇",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-08",
+        "originalLabel": "末法纪元·游戏开发08：功能越来越齐，什么时候该停下来审查一次",
+        "replacement": "第08篇《功能越来越齐，什么时候该停下来审查一次》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "末法纪元·游戏开发41：装备等级、品质和星级，为什么要分三条轴",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-43",
+    "title": "末法纪元·游戏开发43：左右两个槽，怎样判断新装备更强",
+    "file": "43-左右两个槽怎样判断新装备更强.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "装备等级、品质和星级，为什么要分三条轴",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-44",
+    "title": "末法纪元·游戏开发44：十级一套装备，简化了什么",
+    "file": "44-十级一套装备简化了什么.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-43",
+        "originalLabel": "第四十三篇",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-38",
+        "originalLabel": "第三十八篇",
+        "replacement": "第38篇《差了几十级装备，为什么打怪还没明显变慢》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-38",
+        "originalLabel": "差了几十级装备，为什么打怪还没明显变慢",
+        "replacement": "第38篇《差了几十级装备，为什么打怪还没明显变慢》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "装备等级、品质和星级，为什么要分三条轴",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "左右两个槽，怎样判断新装备更强",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-45",
+    "title": "末法纪元·游戏开发45：升星与套装，怎样互相放大",
+    "file": "45-升星与套装怎样互相放大.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-39",
+        "originalLabel": "第三十九篇",
+        "replacement": "第39篇《装备落后二十级，怎样有缓冲又有换装压力》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-39",
+        "originalLabel": "装备落后二十级，怎样有缓冲又有换装压力",
+        "replacement": "第39篇《装备落后二十级，怎样有缓冲又有换装压力》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "装备等级、品质和星级，为什么要分三条轴",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "十级一套装备，简化了什么",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-46",
+    "title": "末法纪元·游戏开发46：保星升级，怎样保住玩家的投入",
+    "file": "46-保星升级怎样保住玩家的投入.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "第四十四篇",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "第四十三篇",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "第三十篇",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "伤害里有随机，出了问题怎样重来一遍",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "左右两个槽，怎样判断新装备更强",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "十级一套装备，简化了什么",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-47",
+    "title": "末法纪元·游戏开发47：战斗不停，材料预选为什么老被清空",
+    "file": "47-战斗不停材料预选为什么老被清空.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "第四十六篇",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "保星升级，怎样保住玩家的投入",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-48",
+    "title": "末法纪元·游戏开发48：点了确认还得重来，怎样锁定同一笔交易",
+    "file": "48-怎样锁定同一笔交易.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-47",
+        "originalLabel": "第四十七篇",
+        "replacement": "第47篇《战斗不停，材料预选为什么老被清空》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "第四十六篇",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "保星升级，怎样保住玩家的投入",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-47",
+        "originalLabel": "战斗不停，材料预选为什么老被清空",
+        "replacement": "第47篇《战斗不停，材料预选为什么老被清空》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-49",
+    "title": "末法纪元·游戏开发49：四件合一，随机应该落在哪里",
+    "file": "49-四件合一随机应该落在哪里.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "第四十四篇",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "第三十篇",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "第四十八篇",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "伤害里有随机，出了问题怎样重来一遍",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "十级一套装备，简化了什么",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "点了确认还得重来，怎样锁定同一笔交易",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-50",
+    "title": "末法纪元·游戏开发50：批量合成，不能循环调用单次合成",
+    "file": "50-批量合成不能循环调用单次合成.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-49",
+        "originalLabel": "第四十九篇",
+        "replacement": "第49篇《四件合一，随机应该落在哪里》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "第三十篇",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "第四十八篇",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "伤害里有随机，出了问题怎样重来一遍",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "点了确认还得重来，怎样锁定同一笔交易",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-49",
+        "originalLabel": "四件合一，随机应该落在哪里",
+        "replacement": "第49篇《四件合一，随机应该落在哪里》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-51",
+    "title": "末法纪元·游戏开发51：锁词条以后，重铸规则怎样变",
+    "file": "51-锁词条以后重铸规则怎样变.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-46",
+        "originalLabel": "第四十六篇",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "第四十三篇",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "第三十篇",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-30",
+        "originalLabel": "伤害里有随机，出了问题怎样重来一遍",
+        "replacement": "第30篇《伤害里有随机，出了问题怎样重来一遍》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "左右两个槽，怎样判断新装备更强",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "保星升级，怎样保住玩家的投入",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-52",
+    "title": "末法纪元·游戏开发52：第五词条，怎样接进老装备",
+    "file": "52-第五词条怎样接进老装备.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-51",
+        "originalLabel": "第五十一篇",
+        "replacement": "第51篇《锁词条以后，重铸规则怎样变》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "第四十六篇",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "装备等级、品质和星级，为什么要分三条轴",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-46",
+        "originalLabel": "保星升级，怎样保住玩家的投入",
+        "replacement": "第46篇《保星升级，怎样保住玩家的投入》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-51",
+        "originalLabel": "锁词条以后，重铸规则怎样变",
+        "replacement": "第51篇《锁词条以后，重铸规则怎样变》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-53",
+    "title": "末法纪元·游戏开发53：掉落动画没飞完，奖励归谁",
+    "file": "53-掉落动画没飞完奖励归谁.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-50",
+        "originalLabel": "批量合成，不能循环调用单次合成",
+        "replacement": "第50篇《批量合成，不能循环调用单次合成》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-54",
+    "title": "末法纪元·游戏开发54：Boss死了换张图，墓碑为什么没了",
+    "file": "54-Boss死了换张图墓碑为什么没了.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-53",
+        "originalLabel": "第五十三篇",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-53",
+        "originalLabel": "掉落动画没飞完，奖励归谁",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-55",
+    "title": "末法纪元·游戏开发55：满背包，不是异常情况",
+    "file": "55-满背包不是异常情况.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-53",
+        "originalLabel": "第五十三篇",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "第四十八篇",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "第五十四篇",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "点了确认还得重来，怎样锁定同一笔交易",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-53",
+        "originalLabel": "掉落动画没飞完，奖励归谁",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "Boss死了换张图，墓碑为什么没了",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-56",
+    "title": "末法纪元·游戏开发56：自动出售，为什么只能接在拾取入口",
+    "file": "56-自动出售为什么只能接在拾取入口.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-09",
+        "originalLabel": "第九篇",
+        "replacement": "第09篇《从网页状态走到游戏状态，职责该怎么分》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "第四十三篇",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-53",
+        "originalLabel": "第五十三篇",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-43",
+        "originalLabel": "左右两个槽，怎样判断新装备更强",
+        "replacement": "第43篇《左右两个槽，怎样判断新装备更强》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-53",
+        "originalLabel": "掉落动画没飞完，奖励归谁",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "满背包，不是异常情况",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-57",
+    "title": "末法纪元·游戏开发57：预设和本次勾选，不能是一份状态",
+    "file": "57-预设和本次勾选不能是一份状态.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-56",
+        "originalLabel": "第五十六篇",
+        "replacement": "第56篇《自动出售，为什么只能接在拾取入口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-50",
+        "originalLabel": "第五十篇",
+        "replacement": "第50篇《批量合成，不能循环调用单次合成》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "点了确认还得重来，怎样锁定同一笔交易",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-50",
+        "originalLabel": "批量合成，不能循环调用单次合成",
+        "replacement": "第50篇《批量合成，不能循环调用单次合成》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-56",
+        "originalLabel": "自动出售，为什么只能接在拾取入口",
+        "replacement": "第56篇《自动出售，为什么只能接在拾取入口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-58",
+    "title": "末法纪元·游戏开发58：金币封顶，卖出去的物品怎么办",
+    "file": "58-金币封顶卖出去的物品怎么办.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-57",
+        "originalLabel": "第五十七篇",
+        "replacement": "第57篇《预设和本次勾选，不能是一份状态》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-50",
+        "originalLabel": "第五十篇",
+        "replacement": "第50篇《批量合成，不能循环调用单次合成》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-56",
+        "originalLabel": "第五十六篇",
+        "replacement": "第56篇《自动出售，为什么只能接在拾取入口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-50",
+        "originalLabel": "批量合成，不能循环调用单次合成",
+        "replacement": "第50篇《批量合成，不能循环调用单次合成》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-56",
+        "originalLabel": "自动出售，为什么只能接在拾取入口",
+        "replacement": "第56篇《自动出售，为什么只能接在拾取入口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-57",
+        "originalLabel": "预设和本次勾选，不能是一份状态",
+        "replacement": "第57篇《预设和本次勾选，不能是一份状态》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-59",
+    "title": "末法纪元·游戏开发59：背包容量，也是一个经济参数",
+    "file": "59-背包容量也是一个经济参数.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-10",
+        "originalLabel": "同一种武器，为什么不能共用一份装备数据",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "满背包，不是异常情况",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-60",
+    "title": "末法纪元·游戏开发60：打金、刷装、单王挑战，为何分地图",
+    "file": "60-打金刷装单王挑战为何分地图.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "第四十四篇",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-29",
+        "originalLabel": "一次攻击，到底在哪一步算伤害",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "十级一套装备，简化了什么",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "满背包，不是异常情况",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-61",
+    "title": "末法纪元·游戏开发61：毕业材料越积越多，怎么设计消耗出口",
+    "file": "61-毕业材料越积越多怎么设计消耗出口.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-51",
+        "originalLabel": "第五十一篇",
+        "replacement": "第51篇《锁词条以后，重铸规则怎样变》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "第四十八篇",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-51",
+        "originalLabel": "第五十一篇",
+        "replacement": "第51篇《锁词条以后，重铸规则怎样变》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-58",
+        "originalLabel": "第五十八篇",
+        "replacement": "第58篇《金币封顶，卖出去的物品怎么办》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "点了确认还得重来，怎样锁定同一笔交易",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-51",
+        "originalLabel": "锁词条以后，重铸规则怎样变",
+        "replacement": "第51篇《锁词条以后，重铸规则怎样变》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-58",
+        "originalLabel": "金币封顶，卖出去的物品怎么办",
+        "replacement": "第58篇《金币封顶，卖出去的物品怎么办》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-62",
+    "title": "末法纪元·游戏开发62：随身商店和铁匠，怎样复用NPC服务",
+    "file": "62-随身商店和铁匠怎样复用NPC服务.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-10",
+        "originalLabel": "第十篇",
+        "replacement": "第10篇《同一种武器，为什么不能共用一份装备数据》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-57",
+        "originalLabel": "第五十七篇",
+        "replacement": "第57篇《预设和本次勾选，不能是一份状态》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-58",
+        "originalLabel": "第五十八篇",
+        "replacement": "第58篇《金币封顶，卖出去的物品怎么办》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-47",
+        "originalLabel": "第四十七篇",
+        "replacement": "第47篇《战斗不停，材料预选为什么老被清空》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "第四十八篇",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-47",
+        "originalLabel": "战斗不停，材料预选为什么老被清空",
+        "replacement": "第47篇《战斗不停，材料预选为什么老被清空》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-57",
+        "originalLabel": "预设和本次勾选，不能是一份状态",
+        "replacement": "第57篇《预设和本次勾选，不能是一份状态》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-58",
+        "originalLabel": "金币封顶，卖出去的物品怎么办",
+        "replacement": "第58篇《金币封顶，卖出去的物品怎么办》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-63",
+    "title": "末法纪元·游戏开发63：任务系统，先画状态再填剧情",
+    "file": "63-任务系统先画状态再填剧情.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-56",
+        "originalLabel": "第五十六篇",
+        "replacement": "第56篇《自动出售，为什么只能接在拾取入口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-59",
+        "originalLabel": "第五十九篇",
+        "replacement": "第59篇《背包容量，也是一个经济参数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-62",
+        "originalLabel": "第六十二篇",
+        "replacement": "第62篇《随身商店和铁匠，怎样复用NPC服务》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-59",
+        "originalLabel": "背包容量，也是一个经济参数",
+        "replacement": "第59篇《背包容量，也是一个经济参数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-62",
+        "originalLabel": "随身商店和铁匠，怎样复用NPC服务",
+        "replacement": "第62篇《随身商店和铁匠，怎样复用NPC服务》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-64",
+    "title": "末法纪元·游戏开发64：六章内容，怎样避免任务和地图脱节",
+    "file": "64-六章内容怎样避免任务和地图脱节.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-12",
+        "originalLabel": "第十二篇",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-63",
+        "originalLabel": "第六十三篇",
+        "replacement": "第63篇《任务系统，先画状态再填剧情》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "第五十四篇",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-60",
+        "originalLabel": "第六十篇",
+        "replacement": "第60篇《打金、刷装、单王挑战，为何分地图》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-12",
+        "originalLabel": "地图从总表拆成一图一目录",
+        "replacement": "第12篇《地图越来越多，为什么拆成一图一目录》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-60",
+        "originalLabel": "打金、刷装、单王挑战，为何分地图",
+        "replacement": "第60篇《打金、刷装、单王挑战，为何分地图》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-63",
+        "originalLabel": "任务系统，先画状态再填剧情",
+        "replacement": "第63篇《任务系统，先画状态再填剧情》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-65",
+    "title": "末法纪元·游戏开发65：打开面板，挂机该不该停",
+    "file": "65-打开面板挂机该不该停.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-62",
+        "originalLabel": "第六十二篇",
+        "replacement": "第62篇《随身商店和铁匠，怎样复用NPC服务》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "第十八篇",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-56",
+        "originalLabel": "第五十六篇",
+        "replacement": "第56篇《自动出售，为什么只能接在拾取入口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-18",
+        "originalLabel": "键盘、鼠标和自动移动，到底谁说了算",
+        "replacement": "第18篇《键盘、鼠标和自动移动，到底谁说了算》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-62",
+        "originalLabel": "随身商店和铁匠，怎样复用NPC服务",
+        "replacement": "第62篇《随身商店和铁匠，怎样复用NPC服务》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-63",
+        "originalLabel": "任务系统，先画状态再填剧情",
+        "replacement": "第63篇《任务系统，先画状态再填剧情》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-66",
+    "title": "末法纪元·游戏开发66：拖拽交易，为什么总和弹层打架",
+    "file": "66-拖拽交易为什么总和弹层打架.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-65",
+        "originalLabel": "第六十五篇",
+        "replacement": "第65篇《打开面板，挂机该不该停》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-57",
+        "originalLabel": "第五十七篇",
+        "replacement": "第57篇《预设和本次勾选，不能是一份状态》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-47",
+        "originalLabel": "第四十七篇",
+        "replacement": "第47篇《战斗不停，材料预选为什么老被清空》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-47",
+        "originalLabel": "战斗不停，材料预选为什么老被清空",
+        "replacement": "第47篇《战斗不停，材料预选为什么老被清空》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-57",
+        "originalLabel": "预设和本次勾选，不能是一份状态",
+        "replacement": "第57篇《预设和本次勾选，不能是一份状态》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-65",
+        "originalLabel": "打开面板，挂机该不该停",
+        "replacement": "第65篇《打开面板，挂机该不该停》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-67",
+    "title": "末法纪元·游戏开发67：高分屏，不是把所有控件乘一个数",
+    "file": "67-高分屏不是把所有控件乘一个数.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-40",
+        "originalLabel": "第四十篇",
+        "replacement": "第40篇《地上的攻击范围，为什么不能直接画个圆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-66",
+        "originalLabel": "第六十六篇",
+        "replacement": "第66篇《拖拽交易，为什么总和弹层打架》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-40",
+        "originalLabel": "地上的攻击范围，为什么必须是椭圆",
+        "replacement": "第40篇《地上的攻击范围，为什么不能直接画个圆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-65",
+        "originalLabel": "打开面板，挂机该不该停",
+        "replacement": "第65篇《打开面板，挂机该不该停》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-66",
+        "originalLabel": "拖拽交易，为什么总和弹层打架",
+        "replacement": "第66篇《拖拽交易，为什么总和弹层打架》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-68",
+    "title": "末法纪元·游戏开发68：悬停数字，为什么不跟血条更新",
+    "file": "68-悬停数字为什么不跟血条更新.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-29",
+        "originalLabel": "第二十九篇",
+        "replacement": "第29篇《一次攻击，到底在哪一步算伤害》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-45",
+        "originalLabel": "第四十五篇",
+        "replacement": "第45篇《升星与套装，怎样互相放大》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-61",
+        "originalLabel": "第六十一篇",
+        "replacement": "第61篇《毕业材料越积越多，怎么设计消耗出口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-67",
+        "originalLabel": "第六十七篇",
+        "replacement": "第67篇《高分屏，不是把所有控件乘一个数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-45",
+        "originalLabel": "升星与套装，怎样互相放大",
+        "replacement": "第45篇《升星与套装，怎样互相放大》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-61",
+        "originalLabel": "毕业材料越积越多，怎么设计消耗出口",
+        "replacement": "第61篇《毕业材料越积越多，怎么设计消耗出口》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-67",
+        "originalLabel": "高分屏，不是把所有控件乘一个数",
+        "replacement": "第67篇《高分屏，不是把所有控件乘一个数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-69",
+    "title": "末法纪元·游戏开发69：倍速一开，镜头为什么越跟越晃",
+    "file": "69-倍速一开镜头为什么越跟越晃.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-40",
+        "originalLabel": "第四十篇",
+        "replacement": "第40篇《地上的攻击范围，为什么不能直接画个圆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-67",
+        "originalLabel": "第六十七篇",
+        "replacement": "第67篇《高分屏，不是把所有控件乘一个数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "满背包，不是异常情况",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-67",
+        "originalLabel": "高分屏，不是把所有控件乘一个数",
+        "replacement": "第67篇《高分屏，不是把所有控件乘一个数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-70",
+    "title": "末法纪元·游戏开发70：大地图为什么卡，先测量再改架构",
+    "file": "70-大地图为什么卡先测量再改架构.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-69",
+        "originalLabel": "第六十九篇",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "第二十篇",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "第五十四篇",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-20",
+        "originalLabel": "一扇门打开以后，哪些缓存应该作废",
+        "replacement": "第20篇《一扇门打开以后，哪些缓存应该作废》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "Boss死了换张图，墓碑为什么没了",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-69",
+        "originalLabel": "倍速一开，镜头为什么越跟越晃",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-71",
+    "title": "末法纪元·游戏开发71：2400件掉落，先优化绘制还是寻路",
+    "file": "71-2400件掉落先优化绘制还是寻路.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-70",
+        "originalLabel": "第七十篇",
+        "replacement": "第70篇《大地图为什么卡，先测量再改架构》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-53",
+        "originalLabel": "第五十三篇",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-53",
+        "originalLabel": "掉落动画没飞完，奖励归谁",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "满背包，不是异常情况",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-70",
+        "originalLabel": "大地图为什么卡，先测量再改架构",
+        "replacement": "第70篇《大地图为什么卡，先测量再改架构》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-72",
+    "title": "末法纪元·游戏开发72：静止物品，为何还在每个物理步工作",
+    "file": "72-静止物品为何还在每个物理步工作.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-53",
+        "originalLabel": "第五十三篇",
+        "replacement": "第53篇《掉落动画没飞完，奖励归谁》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-71",
+        "originalLabel": "第七十一篇",
+        "replacement": "第71篇《2400件掉落，先优化绘制还是寻路》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-69",
+        "originalLabel": "第六十九篇",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "第五十五篇",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-55",
+        "originalLabel": "满背包，不是异常情况",
+        "replacement": "第55篇《满背包，不是异常情况》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-69",
+        "originalLabel": "倍速一开，镜头为什么越跟越晃",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-71",
+        "originalLabel": "2400件掉落，先优化绘制还是寻路",
+        "replacement": "第71篇《2400件掉落，先优化绘制还是寻路》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-73",
+    "title": "末法纪元·游戏开发73：缓存有上限，画面怎么还是消失了",
+    "file": "73-缓存有上限画面怎么还是消失了.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-40",
+        "originalLabel": "第四十篇",
+        "replacement": "第40篇《地上的攻击范围，为什么不能直接画个圆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-72",
+        "originalLabel": "第七十二篇",
+        "replacement": "第72篇《静止物品，为何还在每个物理步工作》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-71",
+        "originalLabel": "第七十一篇",
+        "replacement": "第71篇《2400件掉落，先优化绘制还是寻路》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-40",
+        "originalLabel": "地上的攻击范围，为什么必须是椭圆",
+        "replacement": "第40篇《地上的攻击范围，为什么不能直接画个圆》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-71",
+        "originalLabel": "2400件掉落，先优化绘制还是寻路",
+        "replacement": "第71篇《2400件掉落，先优化绘制还是寻路》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-72",
+        "originalLabel": "静止物品，为何还在每个物理步工作",
+        "replacement": "第72篇《静止物品，为何还在每个物理步工作》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-74",
+    "title": "末法纪元·游戏开发74：耐久只变一点，为什么整个背包都刷新",
+    "file": "74-耐久只变一点为什么整个背包都刷新.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-68",
+        "originalLabel": "第六十八篇",
+        "replacement": "第68篇《悬停数字，为什么不跟血条更新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "第四十二篇",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-69",
+        "originalLabel": "第六十九篇",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-48",
+        "originalLabel": "第四十八篇",
+        "replacement": "第48篇《点了确认还得重来，怎样锁定同一笔交易》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-42",
+        "originalLabel": "背包整理以后，程序怎么认出原来那件装备",
+        "replacement": "第42篇《背包整理以后，程序怎么认出原来那件装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-68",
+        "originalLabel": "悬停数字，为什么不跟血条更新",
+        "replacement": "第68篇《悬停数字，为什么不跟血条更新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-69",
+        "originalLabel": "倍速一开，镜头为什么越跟越晃",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-75",
+    "title": "末法纪元·游戏开发75：挂机一晚还稳定，应该测些什么",
+    "file": "75-挂机一晚还稳定应该测些什么.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-72",
+        "originalLabel": "第七十二篇",
+        "replacement": "第72篇《静止物品，为何还在每个物理步工作》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-74",
+        "originalLabel": "第七十四篇",
+        "replacement": "第74篇《耐久只变一点，为什么整个背包都刷新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "第五十四篇",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-73",
+        "originalLabel": "第七十三篇",
+        "replacement": "第73篇《缓存有上限，画面怎么还是消失了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-54",
+        "originalLabel": "Boss死了换张图，墓碑为什么没了",
+        "replacement": "第54篇《Boss死了换张图，墓碑为什么没了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-72",
+        "originalLabel": "静止物品，为何还在每个物理步工作",
+        "replacement": "第72篇《静止物品，为何还在每个物理步工作》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-74",
+        "originalLabel": "耐久只变一点，为什么整个背包都刷新",
+        "replacement": "第74篇《耐久只变一点，为什么整个背包都刷新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-76",
+    "title": "末法纪元·游戏开发76：重铸闪退，为什么第一轮解释错了",
+    "file": "76-重铸闪退为什么第一轮解释错了.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-69",
+        "originalLabel": "第六十九篇",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-67",
+        "originalLabel": "第六十七篇",
+        "replacement": "第67篇《高分屏，不是把所有控件乘一个数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-75",
+        "originalLabel": "第七十五篇",
+        "replacement": "第75篇《挂机一晚还稳定，应该测些什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-67",
+        "originalLabel": "高分屏，不是把所有控件乘一个数",
+        "replacement": "第67篇《高分屏，不是把所有控件乘一个数》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-69",
+        "originalLabel": "倍速一开，镜头为什么越跟越晃",
+        "replacement": "第69篇《倍速一开，镜头为什么越跟越晃》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-75",
+        "originalLabel": "挂机一晚还稳定，应该测些什么",
+        "replacement": "第75篇《挂机一晚还稳定，应该测些什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-77",
+    "title": "末法纪元·游戏开发77：延迟调用，也能把界面拖垮",
+    "file": "77-延迟调用也能把界面拖垮.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-76",
+        "originalLabel": "第七十六篇",
+        "replacement": "第76篇《重铸闪退，为什么第一轮解释错了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-74",
+        "originalLabel": "第七十四篇",
+        "replacement": "第74篇《耐久只变一点，为什么整个背包都刷新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-66",
+        "originalLabel": "第六十六篇",
+        "replacement": "第66篇《拖拽交易，为什么总和弹层打架》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-73",
+        "originalLabel": "第七十三篇",
+        "replacement": "第73篇《缓存有上限，画面怎么还是消失了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-74",
+        "originalLabel": "第七十四篇",
+        "replacement": "第74篇《耐久只变一点，为什么整个背包都刷新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-66",
+        "originalLabel": "拖拽交易，为什么总和弹层打架",
+        "replacement": "第66篇《拖拽交易，为什么总和弹层打架》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-74",
+        "originalLabel": "耐久只变一点，为什么整个背包都刷新",
+        "replacement": "第74篇《耐久只变一点，为什么整个背包都刷新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-76",
+        "originalLabel": "重铸闪退，为什么第一轮解释错了",
+        "replacement": "第76篇《重铸闪退，为什么第一轮解释错了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-78",
+    "title": "末法纪元·游戏开发78：本地存档，怎样写坏了还能救回来",
+    "file": "78-本地存档怎样写坏了还能救回来.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-58",
+        "originalLabel": "第五十八篇",
+        "replacement": "第58篇《金币封顶，卖出去的物品怎么办》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-76",
+        "originalLabel": "第七十六篇",
+        "replacement": "第76篇《重铸闪退，为什么第一轮解释错了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-74",
+        "originalLabel": "第七十四篇",
+        "replacement": "第74篇《耐久只变一点，为什么整个背包都刷新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-63",
+        "originalLabel": "第六十三篇",
+        "replacement": "第63篇《任务系统，先画状态再填剧情》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-58",
+        "originalLabel": "金币封顶，卖出去的物品怎么办",
+        "replacement": "第58篇《金币封顶，卖出去的物品怎么办》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-63",
+        "originalLabel": "任务系统，先画状态再填剧情",
+        "replacement": "第63篇《任务系统，先画状态再填剧情》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-76",
+        "originalLabel": "重铸闪退，为什么第一轮解释错了",
+        "replacement": "第76篇《重铸闪退，为什么第一轮解释错了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-79",
+    "title": "末法纪元·游戏开发79：旧存档，究竟要兼容到哪一版",
+    "file": "79-旧存档究竟要兼容到哪一版.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-41",
+        "originalLabel": "第四十一篇",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-52",
+        "originalLabel": "第五十二篇",
+        "replacement": "第52篇《第五词条，怎样接进老装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-44",
+        "originalLabel": "第四十四篇",
+        "replacement": "第44篇《十级一套装备，简化了什么》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-64",
+        "originalLabel": "第六十四篇",
+        "replacement": "第64篇《六章内容，怎样避免任务和地图脱节》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-78",
+        "originalLabel": "第七十八篇",
+        "replacement": "第78篇《本地存档，怎样写坏了还能救回来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-41",
+        "originalLabel": "装备等级、品质和星级，为什么要分三条轴",
+        "replacement": "第41篇《装备等级、品质和星级，为什么要分三条轴》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-52",
+        "originalLabel": "第五词条，怎样接进老装备",
+        "replacement": "第52篇《第五词条，怎样接进老装备》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-78",
+        "originalLabel": "本地存档，怎样写坏了还能救回来",
+        "replacement": "第78篇《本地存档，怎样写坏了还能救回来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  },
+  {
+    "id": "GAME-80",
+    "title": "末法纪元·游戏开发80：测试说通过，为什么游戏还可能坏着",
+    "file": "80-测试说通过为什么游戏还可能坏着.md",
+    "publishedUrl": null,
+    "references": [
+      {
+        "target": "GAME-64",
+        "originalLabel": "第六十四篇",
+        "replacement": "第64篇《六章内容，怎样避免任务和地图脱节》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-76",
+        "originalLabel": "第七十六篇",
+        "replacement": "第76篇《重铸闪退，为什么第一轮解释错了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-78",
+        "originalLabel": "第七十八篇",
+        "replacement": "第78篇《本地存档，怎样写坏了还能救回来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-68",
+        "originalLabel": "第六十八篇",
+        "replacement": "第68篇《悬停数字，为什么不跟血条更新》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-71",
+        "originalLabel": "第七十一篇",
+        "replacement": "第71篇《2400件掉落，先优化绘制还是寻路》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-64",
+        "originalLabel": "六章内容，怎样避免任务和地图脱节",
+        "replacement": "第64篇《六章内容，怎样避免任务和地图脱节》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-76",
+        "originalLabel": "重铸闪退，为什么第一轮解释错了",
+        "replacement": "第76篇《重铸闪退，为什么第一轮解释错了》",
+        "url": null,
+        "status": "plain_text_until_published"
+      },
+      {
+        "target": "GAME-78",
+        "originalLabel": "本地存档，怎样写坏了还能救回来",
+        "replacement": "第78篇《本地存档，怎样写坏了还能救回来》",
+        "url": null,
+        "status": "plain_text_until_published"
+      }
+    ]
+  }
+]

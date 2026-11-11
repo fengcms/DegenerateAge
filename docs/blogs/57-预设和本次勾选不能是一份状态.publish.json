@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-57",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发57：预设和本次勾选，不能是一份状态",
+  "description": "长期出售预设为什么不能保存本次勾选？本文区分默认保护、手动选择与风险授权，说明共用清单在背包直卖和货郎暂存中的不同提交时机。",
+  "tags": [
+    "出售预设",
+    "本次勾选",
+    "风险确认",
+    "装备托盘",
+    "实例快照"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-57/封面.png",
+  "ready": true
+}

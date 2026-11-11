@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-17",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发17：斜着看的世界，坐标不能跟着乱",
+  "description": "本文结合《末法纪元》的Iso源码，解释网格、世界像素、地面度量与窗口画布的区别，讨论取整、落点修正、地面圆投影、排序锚点及往返验证，帮助读者在寻路之前先把空间和单位约定清楚。",
+  "tags": [
+    "等距地图",
+    "坐标转换",
+    "Godot",
+    "地面几何",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-17/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-03",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发03：想做的越来越多，首版到底不做什么",
+  "description": "游戏功能越想越多，首版该怎样划范围？本文结合《末法纪元》的单机定位、自动战斗与离线收益边界，以及后续装备玩法扩展，讨论阶段取舍、暂缓记录和最小闭环，避免把有趣的想法直接变成当前版本的交付承诺。",
+  "tags": [
+    "游戏开发",
+    "需求管理",
+    "项目范围",
+    "单机游戏",
+    "ARPG"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-03/封面.png",
+  "ready": true
+}

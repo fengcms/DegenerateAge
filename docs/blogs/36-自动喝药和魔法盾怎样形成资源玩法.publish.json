@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-36",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发36：蓝条变长以后，自动喝药和魔法盾才刚开始算账",
+  "description": "本文沿《末法纪元》的药水、费用和承伤源码，区分法力容量与续航，解释恢复等级边界、护盾不足蓝分配、提前刷新与效果快照，以及旧档比例结转，强调用真实收支验证资源玩法。",
+  "tags": [
+    "自动喝药",
+    "魔法盾",
+    "资源续航",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-36/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-16",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发16：资源文件明明在，为什么游戏还是起不来",
+  "description": "本文复盘《末法纪元》一次资源导入未就绪引起的启动失败，沿着preload、脚本编译和场景构建解释连锁错误，讨论如何保存现场、查找首条具体失败、区分缺文件与缓存问题，并强调干净副本验证和历史结论的适用边界。",
+  "tags": [
+    "Godot",
+    "资源导入",
+    "启动排查",
+    "脚本依赖",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-16/封面.png",
+  "ready": true
+}

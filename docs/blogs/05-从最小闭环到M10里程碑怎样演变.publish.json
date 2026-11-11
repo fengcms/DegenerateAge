@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-05",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发05：从最小闭环到M10，里程碑怎样一步步长出来",
+  "description": "本文沿着《末法纪元》的工程记录，回顾从M1货郎经济闭环到任务、多地图、成长收口及M10循环玩法的阶段推进，说明如何按可玩流程、共享依赖和风险拆批次，以及怎样区分配置登记、能力接通与实际验收。",
+  "tags": [
+    "游戏开发",
+    "里程碑",
+    "MVP",
+    "项目管理",
+    "Godot"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-05/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-23",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发23：自动找怪，为什么要记住上次走到哪里",
+  "description": "本文结合《末法纪元》的巡游实现与记录，解释已探索屏外搜索、稀疏主路线、区块补漏、分帧预算及战斗后的游标接续，区分候选数量、真实绕墙路程和实际玩法表现，并给出规划与恢复验证入口。",
+  "tags": [
+    "自动巡游",
+    "探索覆盖",
+    "分帧规划",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-23/封面.png",
+  "ready": true
+}

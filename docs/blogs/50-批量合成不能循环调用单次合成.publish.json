@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-50",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发50：批量合成，不能循环调用单次合成",
+  "description": "把单次合成循环调用为什么会留下半完成状态？本文沿实际批量流程，拆解分帧生成、最终重验、当前背包副本与一次提交的边界。",
+  "tags": [
+    "批量合成",
+    "原子提交",
+    "分帧准备",
+    "背包副本",
+    "聚合通知"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-50/封面.png",
+  "ready": true
+}

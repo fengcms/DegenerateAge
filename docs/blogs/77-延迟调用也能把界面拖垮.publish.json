@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-77",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发77：延迟调用，也能把界面拖垮",
+  "description": "call_deferred为什么也能造成无限布局？本文拆解dirty、pending与running的职责，说明首轮响应、同帧预算和真正收敛为何需要分别保证。",
+  "tags": [
+    "延迟调用",
+    "布局自激",
+    "帧调度",
+    "末次更新",
+    "窗口收敛"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-77/封面.png",
+  "ready": true
+}

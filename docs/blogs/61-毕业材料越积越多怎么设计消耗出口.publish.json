@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-61",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发61：毕业材料越积越多，怎么设计消耗出口",
+  "description": "后期材料越积越多，怎样让它们继续有价值？本文比较献祭、重掷取优和比例经验兑换，说明计价依据、额度保存与跨级结转的边界。",
+  "tags": [
+    "材料消耗",
+    "紫装献祭",
+    "金砖经验",
+    "钻石如意",
+    "每级额度"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-61/封面.png",
+  "ready": true
+}

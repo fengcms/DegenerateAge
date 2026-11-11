@@ -1,0 +1,706 @@
+[
+  {
+    "id": "GAME-01",
+    "method": "copy_approved_template_C",
+    "template": "assets/cover-templates/2026-11-10/C-场景与图解.png",
+    "originalTemplateRecord": {
+      "id": "C",
+      "prompt": "Create ONE polished 16:9 landscape Chinese technical blog cover, template preview for series about an isometric single-player ARPG, not a game screenshot. Exact typography: small series brand top left \"末法纪元 · 游戏开发\"; large extremely legible main title on left in two lines \"从全栈到\" and \"游戏开发\"; small subtitle \"一个人的单机 ARPG 开发实录\"; top right small chapter badge \"01\"; tiny bottom footer \"FungLeo\". Generous margins, sophisticated consistent editorial typography, no other words, no watermark. Palette blue-gray and amber. Reference image is an actual project's guardian lantern, use its recognizable Chinese roofed lantern shape as visual motif, not a logo. No fake game UI.\nStyle C, hybrid game-art and engineering editorial cover. Deep slate-blue background, large ivory typography left and thin amber horizontal rule; on right a floating isometric square stone camp fragment with the roofed guardian lantern rendered in refined painterly 3D-like detail, half of the square transitions into precise blue-gray wireframe grid and clean geometric module outlines. Amber lamp glow ties illustration to diagram. Restrained modern technical book cover, beautiful spacing, clear thumbnail readability, not divided panels, one integrated composition. No unrelated props."
+    },
+    "finalPath": "assets/game/GAME-01/封面.png",
+    "sha256": "030a1735eb87ee102bacc65956758ac7184d040efa68ec3b886b375bc1171d3d",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-02",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-3ce477b9-a8c3-4b5d-925c-530598f202de.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"02\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"把游戏体验变成验收目标\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: “打宝要爽、成长明显、地图有探索感”怎样变成程序能实现、开发能验收的目标？本文以《末法纪元》为例，从玩家行动拆解核心循环，区分掉落功能与奖励期待、面板增长与战斗变化、地图面积与探索价值，并说明自动检查与实际试玩如何共同验证体验。. Original art direction: 为中文游戏开发技术博客制作16:9横版封面，简洁专业的编辑插画。左侧三个发光概念图标是宝箱、成长阶梯、地图指南针，经过中间清晰的箭头，右侧转化为步骤卡片和打勾的验收清单。背景有很淡的菱形网格，蓝灰主色、琥珀强调，留出上方标题区。不生成文字、数字或品牌标志，不呈现虚构游戏截图。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-02/封面.png",
+    "sha256": "23082558d4cad6f504538223eaf920d60596cf0543d5ac3e7cc0c506afff9b9a",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-03",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-69aa0cd2-4b0b-42e3-9ac7-95d84dd2442b.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"03\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"首版先把哪些事放下\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 游戏功能越想越多，首版该怎样划范围？本文结合《末法纪元》的单机定位、自动战斗与离线收益边界，以及后续装备玩法扩展，讨论阶段取舍、暂缓记录和最小闭环，避免把有趣的想法直接变成当前版本的交付承诺。. Original art direction: 16:9技术博客封面，蓝灰背景和琥珀强调，中心小型菱形游戏地图完成一圈道路，周围多人网络、公会、交易市场图标停留在边界外。表达首版范围取舍，不生成文字，保留标题空间，不使用禁止符号堆叠。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-03/封面.png",
+    "sha256": "936fdf15a0ad1c1515ce8b45462fa74de16513a3c1d71ed41bf24b39ce9180b7",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-04",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-0b0ae64e-24d7-4e08-afa3-3f05c65727c0.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"04\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"选完引擎怎样开工\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 本文结合《末法纪元》的项目条件，解释Godot与GDScript的选择，并讨论工程第一天应准备的目录职责、跨场景服务、配置校验和可复现启动流程，帮助有软件开发经验的读者把游戏想法推进到可继续开发的工程起点。. Original art direction: 16:9技术博客封面，一个简洁游戏工程文件夹展开为场景、脚本、配置、资源四组卡片，右侧小型等距地图刚刚点亮。深蓝灰和琥珀色，不使用引擎商标，不生成文字，保留标题空间。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-04/封面.png",
+    "sha256": "84483fc03e0b3f23df7ead3f9140b56224ccf960c92fad6113b9b1dc97e3508c",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-05",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-05e72c8e-59ca-4d59-8e67-7afb68a01107.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"05\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"里程碑要交出能玩的流程\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 本文沿着《末法纪元》的工程记录，回顾从M1货郎经济闭环到任务、多地图、成长收口及M10循环玩法的阶段推进，说明如何按可玩流程、共享依赖和风险拆批次，以及怎样区分配置登记、能力接通与实际验收。. Original art direction: 16:9封面，五段小型等距场景由道路依次连接，从简单营地到更丰富的战斗区域，每段道路尽头有检查旗。蓝灰和琥珀配色，不生成具体里程碑数字，不画工期比例，保留标题空间。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-05/封面.png",
+    "sha256": "1f63095d41973b4f169347b8ed6ba1cd7b14b78da05e207a316c86e207bcd7e4",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-06",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-619966e1-8fac-40e5-813a-a0c4d230bdb8.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"06\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"AI任务要交付什么证据\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 以《末法纪元》的自动出售入口、共用规则和交付记录为例，本文讨论AI协作任务怎样写清行为边界、当前状态、复用入口与验收证据。文中任务模板是依据现有规则整理的说明示例，不虚构历史提示词或代码贡献比例。. Original art direction: 16:9封面，一个开发者工作台旁有抽象辅助节点，中心任务卡连接代码和验收清单，强调清楚约定带来可检查成果。蓝灰琥珀配色，不画拟人机器人，不生成文字或品牌标志，留标题空间。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-06/封面.png",
+    "sha256": "076ce4556e0eb63dd5e7f864a63216cecaadf3d96f3015ae1adb41f7eec1e5e3",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-07",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-fc85d839-ad70-44b5-81b7-40615bdab954.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"07\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"需求到代码中间怎么拆\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 本文用《末法纪元》免费步行与车夫直达的工程方案，说明如何盘点现有能力、处理设计冲突、按行为边界拆批次、定义失败状态，并用交付清单把产品需求接到可验证的代码改动。文中阶段规则按历史背景介绍。. Original art direction: 16:9封面，左侧地图道路和车夫站点的产品草图，右侧代码模块和检查卡，中间一座由任务卡构成的桥梁。简洁编辑插画，蓝灰琥珀色，不生成文字，留标题区。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-07/封面.png",
+    "sha256": "4bf9100161db7d61b85596d1e6ac47ad204ed7a882b035204fdca8a36ca94c31",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-08",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-ebfadcfb-6dd9-4731-9594-92839ccc10db.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"08\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"功能齐了还要查什么\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 功能齐全以后，为什么还需要完整度审查？本文以《末法纪元》历史审阅中的交易托盘漏存、测试完成标记和职责整改为例，讨论系统交界、审查时机、证据边界及问题优先级，说明怎样把发现的问题变成范围明确的修复。. Original art direction: 16:9封面，多块游戏功能卡片背包商店任务存档已排列好，放大镜聚焦卡片之间的一条连接；蓝灰琥珀专业编辑插画，避免红色故障铺满画面，不生成文字，留标题区。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-08/封面.png",
+    "sha256": "6aaa258cd92a396cee42269af889a129dec9b0d651894758889d29eeb7ce5a8c",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-09",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-700ba1d8-69f2-4c3c-9b94-e10debc47a4a.png",
+    "prompt": "Use case: stylized-concept. Create a finished 16:9 technical blog cover in EXACTLY the approved reference C design system: deep slate blue background, ivory Chinese serif text, thin amber rules, generous margins, large title occupying left 48%, polished isometric game-world object on right blending partially into fine blueprint wireframe. Top left exact \"末法纪元 · 游戏开发\", top right chapter badge \"09\", bottom \"FungLeo\", small subtitle \"单机 ARPG 开发实录\". Main title exact \"游戏状态到底归谁\", split naturally into 2 or 3 lines; no other text. Do NOT retain the reference headline or number. The reference is STYLE ONLY: replace the lantern centerpiece with imagery specific to this article. Subject brief: 从前端状态管理出发，本文结合《末法纪元》的全局服务、背包规则、战斗公式和事件通知，讨论状态归属、生命周期、提交边界及UI职责，并用切图说明为什么目录清晰还不足以证明运行时依赖合理。. Original art direction: 16:9技术博客封面，网页窗口逐渐转为简洁等距游戏地图，角色、背包、地图和界面分别用不同容器承接，蓝灰琥珀配色，不生成文字和品牌标志，保留标题空间。. Follow reference C palette and layout over any conflicting palette in original direction. A visual metaphor, never a claimed game screenshot, never fake charts or measurements. Avoid clutter, unreadable tiny text, photorealistic people.",
+    "finalPath": "assets/game/GAME-09/封面.png",
+    "sha256": "2a62e16cc5be5ab01471bbe4bcb9626c7cc7abcfef8363dbf3a00904d14177de",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-10",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-9b0672b6-8d8c-46d3-8c20-9933f7f9ec10.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"10\", bottom \"FungLeo\". Main headline on left 48%, exact \"同名装备也有不同身份\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 以两把同名武器为例，本文结合《末法纪元》的ItemFactory、ItemUtil和装备比较入口，解释模板、实例与显示数据的职责，讨论稳定实例ID、随机结果保存、共享引用污染和显示缓存失效，避免整理背包或读取存档时改变装备身份与属性。. Subject illustration instructions: 16:9封面，中心一张武器模板卡分出两把外形相同但附属属性符号不同的武器，另一侧独立提示框显示比较图标，蓝灰琥珀色，不生成文字或真实数值，留标题空间。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-10/封面.png",
+    "sha256": "56fb45d7646f48bd6f6884cd4a4163b243a4dca328ab55ed1f16866914792d44",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-11",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-2a850c99-6faa-4f21-bc75-d3fa3a0e6098.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"11\", bottom \"FungLeo\". Main headline on left 48%, exact \"配置能读还不够\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: JSON能解析不等于游戏配置正确。本文结合《末法纪元》的DataLoader，讨论字段范围、跨表引用、组合规则、掉落语义、默认值边界和负向验证，并说明静态校验与运行场景测试如何分工，以及配置重载后的缓存失效。. Subject illustration instructions: 16:9封面，多张整齐配置卡片经过检查关口进入等距地图，关口分别用类型引用范围图标表达，蓝灰琥珀色，不生成代码或文字，不使用全绿认证式视觉，保留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-11/封面.png",
+    "sha256": "8a883e6c36c48aea19a320f268e3f0e36205d97aaad7fa55baabbc96dfebfef5",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-12",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-7bd213b4-f669-4e4a-80a0-93a635785f5e.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"12\", bottom \"FungLeo\". Main headline on left 48%, exact \"一图一目录怎样维护\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文介绍《末法纪元》地图从总表拆成一图一目录后的组织方式，解释索引聚合、稳定ID、配置源、README自动参数区与人工说明的分工，并说明目录校验为何不能代替实际通行和跨图验证。. Subject illustration instructions: 16:9封面，一张大地图配置卷轴展开为多个小地图文件夹，再汇入统一游戏地图入口。蓝灰琥珀编辑插画，不生成真实参数或文字，保留标题空间。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-12/封面.png",
+    "sha256": "0d8d5b739961996a9b400c73d2f71e89999cb37d06b406d3c4e2ac41af5345fb",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-13",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-8d34a25c-89d2-4df3-8bfc-3a089a44edc3.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"13\", bottom \"FungLeo\". Main headline on left 48%, exact \"招式别跟怪物名字绑死\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文结合《末法纪元》的怪物分章方案和能力配置整改，区分章节归属、稳定身份、外观表现与招式规则，解释为什么按怪物ID写行为分支会阻碍复用，以及怎样通过新身份克隆和真实行为入口验证迁移。. Subject illustration instructions: 16:9封面，不同身份的两个怪物卡片共享外观资源和招式组件，章节文件夹独立组织，蓝灰琥珀色，简洁概念插画，无文字和品牌，保留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-13/封面.png",
+    "sha256": "525a960963fa1538d724985074819155ca0efd2c3c3701d8fc0cca7a39dbcd72",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-14",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-31eb5e0b-1361-4d62-aeef-079ee3e0cd8e.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"14\", bottom \"FungLeo\". Main headline on left 48%, exact \"内部地图工具怎样值回成本\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 以《末法纪元》的营地地图编辑器为例，本文讨论内部工具的投入边界，介绍文档与画布分工、草稿校验、源哈希保护和重建流程，并结合命中与平移修复说明编辑器也需要交互验收，而不能只看数据能否保存。. Subject illustration instructions: 16:9封面，一块营地地图被鼠标拖动碰撞顶点和道路节点，旁边有草稿及检查图标，专业编辑插画，蓝灰琥珀色，不伪装实际编辑器截图，不生成文字，留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-14/封面.png",
+    "sha256": "d7d4401ac67bbfea17b819f88b62bcd902ed2775f93c9ef2289f29e3edfafcc7",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-15",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-27d35fdd-f0fb-4d71-bc16-654fd483c350.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"15\", bottom \"FungLeo\". Main headline on left 48%, exact \"地图工具到UGC还差什么\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文基于《末法纪元》的编辑器可行性评估，区分内部插件、独立应用和UGC平台，讨论编译依赖自包含、地图包格式、外部数据校验、运行装载和资源授权边界。文中路线属于评估建议，不代表当前游戏已经支持外部地图。. Subject illustration instructions: 16:9封面，内部营地工具到独立应用再到共享地图库三段阶梯，后两段以规划虚线呈现，蓝灰琥珀专业概念图，不画成当前已上线平台，无文字，保留标题空间。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-15/封面.png",
+    "sha256": "468b4322a62d06f55340f000cfc05235fcb08c4ade66b52b7cd0628d221bfe7d",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-16",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-6a90791b-24a3-4656-81a5-4a936d44dcc7.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"16\", bottom \"FungLeo\". Main headline on left 48%, exact \"文件在为什么还起不来\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文复盘《末法纪元》一次资源导入未就绪引起的启动失败，沿着preload、脚本编译和场景构建解释连锁错误，讨论如何保存现场、查找首条具体失败、区分缺文件与缓存问题，并强调干净副本验证和历史结论的适用边界。. Subject illustration instructions: 16:9封面，完整PNG文件图标与尚未完成的资源导入齿轮之间有等待标识，右侧游戏启动窗口停在依赖关口，蓝灰琥珀概念插画，不显示伪造报错文字，留标题空间。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-16/封面.png",
+    "sha256": "a7e75629fed4ec78a2ce5862eeae9eaca8cb5bb24c0ac5e2f169afec0e23d81b",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-17",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-b22c987a-6150-40df-acc9-edaee3962ae7.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"17\", bottom \"FungLeo\". Main headline on left 48%, exact \"等距世界先分清坐标\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文结合《末法纪元》的Iso源码，解释网格、世界像素、地面度量与窗口画布的区别，讨论取整、落点修正、地面圆投影、排序锚点及往返验证，帮助读者在寻路之前先把空间和单位约定清楚。. Subject illustration instructions: 16:9封面，方格逻辑地图投影为菱形世界，再呈现在相机窗口里，三层空间清楚分开，蓝灰琥珀技术插画，无文字不冒充截图，留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-17/封面.png",
+    "sha256": "dca143842b7dd36f4c9cd6bf4bfe15bc8bfaa10f07f15931442c54d65215e99d",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-18",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-5112b865-cfbd-4252-b84a-6b8c9f0299be.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"18\", bottom \"FungLeo\". Main headline on left 48%, exact \"角色应该听谁的\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文从键盘、鼠标、地图导航和自动战斗共存的场景出发，解释《末法纪元》的意图优先级、手动接管、面板拦截、取消清理与自动恢复，结合源码节选和交接矩阵说明怎样验证角色真正执行了当前命令。. Subject illustration instructions: 16:9封面，键盘鼠标和自动决策三个来源汇入同一个角色移动执行节点，手动接管路径高亮，蓝灰琥珀概念图，无文字，留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-18/封面.png",
+    "sha256": "4fbd4281c9c85b7c6fdf51ac997941b00bdb8e6aa20a53e93a1279a1094d33c1",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-19",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-4540734b-600b-4b67-9988-61d548766d3f.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"19\", bottom \"FungLeo\". Main headline on left 48%, exact \"路径有解角色为什么卡住\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文沿着《末法纪元》的洞穴导航，区分通行掩码、格子路径和真实角色碰撞，解释禁止穿角、线段余量、路径平滑、空路线与偏航重建，并给出微型反例及现有测试入口，避免用穿墙兜底修复卡住。. Subject illustration instructions: 16:9封面，角色停在洞穴拐角，网格路线与带半径身体轮廓同时可见，蓝灰琥珀技术插画，无文字，留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-19/封面.png",
+    "sha256": "24685bcc5ef6db3bf841febcbf123fd3500fb78f22e18ed367c18aa2d4efd7fd",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-20",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-91813edf-48b7-409f-b79b-5b999c43684b.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"20\", bottom \"FungLeo\". Main headline on left 48%, exact \"门开了缓存也得更新\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 本文结合《末法纪元》门禁和导航源码，梳理动态通行变化对连通区域、路线、巡游及地图底图的影响，解释版本号、合法空结果和双向开关验证，避免门已打开而上游缓存仍拒绝目标。. Subject illustration instructions: 16:9封面，洞穴门从关闭到打开，后方路线和区域编号随版本变化更新，蓝灰琥珀概念插图，不生成数字或文字，留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-20/封面.png",
+    "sha256": "e7341829d8e3fbd5e08697a60febe0674082686ff8354e5a1701d8ceacc56014",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-21",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-654dbea7-afc4-4f49-92a2-b8e05c55dafd.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover. Match reference C precisely: deep slate blue, ivory Chinese serif typography, amber rules, top left \"末法纪元 · 游戏开发\", top right \"21\", bottom \"FungLeo\". Main headline on left 48%, exact \"候选筛选别逐个造路线\", naturally broken into 2-3 lines. Small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game object or scene partially transformed into clean engineering wireframe, amber highlights, same restrained premium visual language as reference. Reference image is STYLE ONLY, replace its lantern subject and old text with this article's subject: 从《末法纪元》历史624候选点零次完整寻路的案例出发，本文区分可达过滤与实际路线，解释四邻接连通性的规则前提、构建与缓存成本，以及怎样用调用计数和AStar对照验证优化，不把CPU记录冒充帧率提升。. Subject illustration instructions: 16:9封面，大量候选点先经过连通区域筛选，只有选中的一个目标展开完整折线路径，蓝灰琥珀技术概念图，无文字，留标题区。. Override original no-text instructions with the exact heading above. No extra labels, fake charts, measured results, fabricated UI screenshot or clutter. Broad margins and thumbnail readability.",
+    "finalPath": "assets/game/GAME-21/封面.png",
+    "sha256": "950349a976833963722b0ee2fe136f44bd7e0b3c568bd35f2f0a0636d6a9692e",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-22",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-29ab2461-14dd-493c-bf94-fe3edb81a3f1.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"22\", bottom \"FungLeo\". Main headline on left 48%, exact \"自动战斗要会中断恢复\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文梳理《末法纪元》自动战斗的决策链，解释关闭死亡优先级、目标选择、接近攻击、职业资源、拾取与巡游交接，强调自动和手动共用动作规则，并给出连续流程验收及日志记录方法。. Art brief: 16:9封面，角色周围搜索接近攻击拾取巡游形成可中断循环，手动与死亡在外层控制，蓝灰琥珀概念插画，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-22/封面.png",
+    "sha256": "617cbb706dfa3495b1e80b1b188f8b15b84adfa329be5f6384548893c2a4fa77",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-23",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-46469d08-ca04-49c9-a23b-44f459cd9a4e.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"23\", bottom \"FungLeo\". Main headline on left 48%, exact \"打完怪接着往哪走\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的巡游实现与记录，解释已探索屏外搜索、稀疏主路线、区块补漏、分帧预算及战斗后的游标接续，区分候选数量、真实绕墙路程和实际玩法表现，并给出规划与恢复验证入口。. Art brief: 16:9封面，角色沿主巡游路线前进，中途绕去战斗后回到下一段，窄支路保留少量补点，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-23/封面.png",
+    "sha256": "769e6b2c1c3c3749c6a478420f33696c37429e7a86357a65f72015d6de2543d7",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-24",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-4bcdb9c1-1aba-4b32-9ae7-0d3b423fc4f3.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"24\", bottom \"FungLeo\". Main headline on left 48%, exact \"Boss没打完为什么换怪\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文复盘《末法纪元》自动战斗中途换Boss的历史问题，沿提示与实例状态区分原因，解释直线接近量误判、角色位移、临时黑名单和跨重选黏性，并说明真实卡住与合法绕行应如何共同验证。. Art brief: 16:9封面，角色正绕墙接近残血Boss却被错误箭头引向旁边目标，旁边用放大镜追踪清目标链路，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-24/封面.png",
+    "sha256": "e1f7fca2ba4bebc0c2c6ed05621a3daf33985d67d67427710d4c39a5b8db2cdc",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-25",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-d374f4a6-c1ae-42c7-89a1-f1f695710f56.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"25\", bottom \"FungLeo\". Main headline on left 48%, exact \"刷新预算每轮算一次\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的刷新器源码，解释候选点与活动对象的区别、每轮预算快照及同步增减、墓碑与跨图时钟、稳定身份和退场边界，说明怎样同时验证统计次数与真实刷新行为。. Art brief: 16:9封面，大地图多个刷新候选点只有附近一部分激活，普通精英Boss各有预算槽，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-25/封面.png",
+    "sha256": "7bcaaf863425938627a89c13c1e0088f834c12f5231fb87ebcc5f0ce02cec549",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-26",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-65f401bb-71a6-48ce-8264-f695047b2e27.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"26\", bottom \"FungLeo\". Main headline on left 48%, exact \"步行与车夫怎样分工\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的步行与车夫设计，解释城镇拓扑、解锁到访、报价和落点的分工，并通过旅行服务源码说明准备、抵达确认、回滚和幽灵指令清理，给出成功与拒绝场景的验证方法。. Art brief: 16:9封面，两个城镇由道路连接，各自周围有附属区域，步行路径与车夫快捷线区分，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-26/封面.png",
+    "sha256": "826a82b7f61e1894ae81fccf191cee159b76d3d2cabfec958c4c9d32ee520341",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-27",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-d6e603cb-4a37-4b72-ab61-d1d742ded400.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"27\", bottom \"FungLeo\". Main headline on left 48%, exact \"小地图专心显示附近\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的局部小地图实现，解释全局与附近信息分工、观察中心、节点跟随、边缘夹取和圆形裁剪，讨论标记路线的可见性，以及如何验证投影往返和移动不重建底图。. Art brief: 16:9封面，一张全局地图与角色附近圆形小地图并列，前者显示结构后者显示路口，蓝灰琥珀编辑插画，不伪装截图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-27/封面.png",
+    "sha256": "3cd7ec8b0ea78882210fb9ae3bd1cda1ae3753ba2d147ae5b59af1dafe5a4521",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-28",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-504f9abb-af11-4206-beaa-2d92af665fcb.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"28\", bottom \"FungLeo\". Main headline on left 48%, exact \"迷雾标记路线别混状态\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的Fog、玩家路线访问器和MapCanvas，区分探索事实、任务可见信息与当前行进意图，解释跨图路段、接管清理、底图缓存和局部裁剪，并明确当前路线并非按迷雾逐段过滤的实现边界。. Art brief: 16:9封面，同一地图上探索区块、任务标记、当前绕障路线三种信息分层呈现，未探索底图保持暗色，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-28/封面.png",
+    "sha256": "d5bc81ab6f1cbbc47d458552cf01b3d7c99faef1f043b5ec93bbb786d93cb15d",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-29",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-abbcb471-e07e-44c1-ab04-eba3c5a8ef21.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"29\", bottom \"FungLeo\". Main headline on left 48%, exact \"一击伤害谁算谁扣\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文沿《末法纪元》一次攻击的调用链，区分资格检查、命中基础伤害暴击、目标相关修正、承伤提交和视觉反馈，解释下限、重复结算及弹道时机，并给出固定单击到持续输出的复核方法。. Art brief: 16:9技术博客封面，攻击意图经过规则与公式形成结果后进入目标生命条，表现数字另有分支，蓝灰琥珀色，无文字不冒充截图，留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-29/封面.png",
+    "sha256": "3c3c6565756b8461be3eb20d9502c69d161cdb9ce4d1378cb7cbccc4add034e6",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-30",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-97a74ed4-1e22-4057-8dca-7b91fe98eff4.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"30\", bottom \"FungLeo\". Main headline on left 48%, exact \"随机伤害也能重来一遍\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文从《末法纪元》的Combat随机源注入出发，解释固定种子、调用顺序、概率上限、边界与分布验证的区别，讨论预览消费随机和失败序列记录，避免用重复跑到通过代替可复现证据。. Art brief: 16:9封面，两条相同起点的随机序列进入同一伤害规则得到一致结果，正式玩法另保留正常随机源，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-30/封面.png",
+    "sha256": "2170579060ffe7ab21557a416aa40feccdde046c4708c572c6dec0ed1cc02dd9",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-31",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-060aabb9-1121-45c8-a11a-a0a10304d6bf.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"31\", bottom \"FungLeo\". Main headline on left 48%, exact \"怪物死了清理还没完\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》怪物状态转换与死亡源码，解释接战重置、动作取消、死亡唯一性、延迟召唤、奖励释放和刷新持久状态的分工，并给出预警与多段期间的中断验证方法。. Art brief: 16:9封面，怪物从交战到死亡淡出，旁边预警计时奖励刷新各有明确交接，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-31/封面.png",
+    "sha256": "32682fdc938b0d90d06d4207a71645ee204dcd5c639e5f3e88e6591f723e6fef",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-32",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-15c8bcb1-f9fb-4fce-83fd-14b0da06d4e6.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"32\", bottom \"FungLeo\". Main headline on left 48%, exact \"Boss施法先确认接战\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文复盘《末法纪元》未接战Boss释放技能的问题，解释宿主与动作组件的资格边界、首放重置、旧章节入口、目标失效取消和延迟召唤复核，并说明如何修正测试前提而保留原有行为断言。. Art brief: 16:9封面，闲置Boss与交战Boss对照，共享动作组件前有状态资格门，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-32/封面.png",
+    "sha256": "f30c884d1fc854290615297a2f6fdd7c08de1e1b362781288d97971eca572f36",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-33",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-439d59be-a8c1-4f22-acdc-275ee8f0871b.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"33\", bottom \"FungLeo\". Main headline on left 48%, exact \"技能远不止一个系数\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的施法源码，梳理技能资格、命中集合、一次扣费、多段与逐目标结算，区分穿防破甲、控制和纯视觉弹道，说明预警与几何同源及失败组合验收，避免只填系数就宣称技能完成。. Art brief: 16:9封面，一张技能卡连接资格资源时间目标几何与表现多个模块，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-33/封面.png",
+    "sha256": "bae7cd22c133fbcfa314da75d1e61b05fca4af1d9be722bc499fcd9c5599232c",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-34",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-2200d601-e583-4fec-9ad4-010472583d1d.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"34\", bottom \"FungLeo\". Main headline on left 48%, exact \"第二职业暴露旧假设\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文沿《末法纪元》从武士扩展法师的工程记录，梳理身份归一、技能集合、默认快捷栏、属性系数位置、射程与自动行为，区分早期方案和后续资源调整，强调旧档与原职业回归。. Art brief: 16:9封面，同一个角色执行底座承接近战与远程两套职业定义，属性技能存档各有连线，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-34/封面.png",
+    "sha256": "766c46028a336cf32dd12119b2f3df4d397e7e07a1af299b40da428b31e68b1e",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-35",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-f7fec591-4711-4c04-b947-5165504a3328.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"35\", bottom \"FungLeo\". Main headline on left 48%, exact \"围住了为什么不群攻\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文复盘《末法纪元》法师被围后群攻停顿的可复现链路，解释受阻优先级、物品拾取口径、低蓝保盾与原地解围例外，强调命中集合、统一费用和现场证据，不把历史诊断当作每次停顿的唯一原因。. Art brief: 16:9封面，法师被敌群围住，自动决策中受阻拾取和省蓝三个入口被放大检查，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-35/封面.png",
+    "sha256": "16036a802d33d32a7f93dd67cff3f0945af545976303ee1c824e7537c32e34f0",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-36",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-5edb1f6f-5dae-4abb-83c9-7c5ef6164b30.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"36\", bottom \"FungLeo\". Main headline on left 48%, exact \"蓝条续航要一起算账\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文沿《末法纪元》的药水、费用和承伤源码，区分法力容量与续航，解释恢复等级边界、护盾不足蓝分配、提前刷新与效果快照，以及旧档比例结转，强调用真实收支验证资源玩法。. Art brief: 16:9封面，法力池连接技能输出护盾转嫁与药水恢复，生命条独立承接剩余伤害，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-36/封面.png",
+    "sha256": "d499904ea008587c536db19a9b68fa2f6e78e95ba588ae63643669726ec31048",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-37",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-0ac80b56-6d0c-4c77-a0f3-b0bb5fed508e.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"37\", bottom \"FungLeo\". Main headline on left 48%, exact \"技能升级何时真正生效\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的SkillProgression与升阶记录，解释基础定义、购买阶数和生效数据分离，讨论整体效果替换、原子购买、活动增益快照、冷却与价格校准，并给出配置到施放的验证入口。. Art brief: 16:9封面，基础技能卡与玩家有限阶数共同生成生效技能，旁边费用和等级门槛明确，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-37/封面.png",
+    "sha256": "dad5d4bae92d746dc960af10dd4f9d7b4fcb1679566619c84b0d1b46680ba1db",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-38",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-2bbbed72-d9b8-47d5-965d-884c51de331a.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"38\", bottom \"FungLeo\". Main headline on left 48%, exact \"等级差为什么没变成速度差\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文依据《末法纪元》高等级反馈及更正后的分析，区分人物装备怪物等级、曲线相对增长、装备贡献与防御减项，说明不完整探针和理想技能模型的风险，明确算例、隔离复算与实际击杀时间的边界。. Art brief: 16:9封面，人物装备怪物三种等级分别进入属性与行为链，中间放大镜核对，蓝灰琥珀概念图，无文字和虚构面板，留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-38/封面.png",
+    "sha256": "1cb0916134da897b25ee1320927f16b4f05c50f0cc58ac4272a4920a88f272d2",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-39",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-0d6bb2e4-d639-4ca3-85cb-6762022ea9ee.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"39\", bottom \"FungLeo\". Main headline on left 48%, exact \"装备跨级有缓冲也有压力\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的EquipmentGap实现，解释逐件二十级缓冲、槽位权重、主武器约束与平滑衰减，讨论最终伤害接线、缓存签名、换装提示、自动出售和老角色过渡，避免把成长压力做成无解断崖。. Art brief: 16:9封面，十四个装备槽各自经过缓冲刻度后汇入平滑伤害系数，武器独立保护，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-39/封面.png",
+    "sha256": "9b1c6dcf5f3ebc22dfa49138723a45f8db7473c20595b2ad947ebcd055cfd2c7",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-40",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-d5cba2ec-6d67-4118-bea4-43568e4a293a.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"40\", bottom \"FungLeo\". Main headline on left 48%, exact \"攻击范围画判要同源\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的Iso、BossAction和GroundFx，解释地面圆投影、同源判定与历史等面积补偿，区分面积守恒和战斗结果，说明玩家提示例外、描边变换及几何缓存边界，聚焦程序正确性而非素材制作。. Art brief: 16:9封面，等距地面上的椭圆危险区与真实判定点重合，旁边旧屏幕圆作为对照，蓝灰琥珀技术插图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-40/封面.png",
+    "sha256": "1a5244ebd04b13a4ec40a43472846496f3f2ae0c039bbce8f5db249986ba1338",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-41",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-8b5c3524-c154-439c-8e13-0fadc03b7596.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"41\", bottom \"FungLeo\". Main headline on left 48%, exact \"三条成长轴分别算清\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的三轴模型与EquipmentMath，区分等级、品质、星级职责，解释基础与词条乘法、耐久和套装边界、生成入口与历史兼容限制，并给出矩阵式验证方法。. Art brief: 16:9封面，一件装备连接等级品质星级三条独立刻度，最后汇入统一属性结果，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-41/封面.png",
+    "sha256": "6d2f78680eb08a0109a9c4d7bb120a3e6a35148086066e51fd7d7d63495d747f",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-42",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-2fda96f0-564c-41fa-a545-0f2529daea7f.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"42\", bottom \"FungLeo\". Main headline on left 48%, exact \"位置变了还是那件装备吗\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 本文结合《末法纪元》的穿戴目标与合成入口，区分物品身份、容器位置和内容快照，解释整理重定位、同槽换装、重复材料、允许来源与存档恢复，并给出持续操作中的验证方法。. Art brief: 16:9封面，一件装备在背包格子穿戴槽和交易选择间流转，稳定身份标记不变，蓝灰琥珀概念图，无文字留标题区。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-42/封面.png",
+    "sha256": "ba6327dfb7c4e99d5663c6097ad0da4f49d0871dbd59c5903b304d5eb9057bc5",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-43",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-95dccdce-e939-43e5-9da6-c0bf2b1bc215.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"43\", bottom \"FungLeo\". Main headline on left 48%, exact \"左右双槽怎么换\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 一枚新戒指该替换左右哪个槽？从自动选槽、显式拖放和共用预览出发，拆解更强提示、降品质提醒与满背包交换之间的边界。. Art brief: 16:9游戏开发概念封面，中央两枚戒指分别置于左右装备槽，新戒指悬停等待选择，蓝灰背景琥珀高亮目标，简洁技术博客插画，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-43/封面.png",
+    "sha256": "a5f1fe4f6fefe8081fc82a9db390b89f1ca576438670fe10b4c44f6e82520252",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-44",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-efd082e0-a0a1-4722-a7a3-fb17cd26fe2e.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"44\", bottom \"FungLeo\". Main headline on left 48%, exact \"十级一套的代价\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 从逐级生成收束为十级一套，减少的不只是模板数量。本文梳理部位偏移、来源等级、穿戴门槛、历史实例保留与成长节奏验证。. Art brief: 16:9技术博客封面，一条等级阶梯上摆放成组的十种幻想装备，每组有明确边界，蓝灰背景琥珀光线，无人物肖像无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-44/封面.png",
+    "sha256": "30ce8bf37d79da4285823f39297f625113b58f090bee4ea936e1b0e13bc5dc71",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-45",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-bba8869d-2e65-4fa8-a17c-0c59f6170297.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"45\", main headline \"升星与套装怎么叠\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"升星与套装怎么叠\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-dbf3e1d8-1474-425f-b9dc-1c158f8ff78c.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"45\", bottom \"FungLeo\". Main headline on left 48%, exact \"升星与套装怎么叠\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 单件升星与全身成套奖励如何叠加？本文拆解最低品质与星级门槛、百分比相加和攻击间隔反向缩放，说明成长收益的计算边界。. Art brief: 16:9幻想装备系统概念封面，十四件装备围成环，其中星光逐步连为完整光环，蓝灰琥珀配色，干净工程博客风，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-45/封面.png",
+    "sha256": "079e889359285bbca3f0ca63214ae9a22f60b8c2dd4a53c15a51958697d7bbf4",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-46",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-e6ff1ca1-4276-49cb-91f6-0fb52a18f43b.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"46\", bottom \"FungLeo\". Main headline on left 48%, exact \"保住满星的投入\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 满星旧装备怎样跨档继续使用？本文说明保星保留的范围、材料与费用规划，以及先确定产物落点、再统一扣除和穿回原槽的提交过程。. Art brief: 16:9技术博客封面，一件布满星光的旧武器和一件新档武器进入锻造台，产物保留星环但外观焕新，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-46/封面.png",
+    "sha256": "5f5f1775814064697ab09233e86dd2a4eb23d8129c5ca8dfc616480f66c4139b",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-47",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-75aa8270-d781-4602-b420-fe7bef1405c8.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"47\", main headline \"材料怎么又没了\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"材料怎么又没了\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-b001b8da-89af-4970-bb56-fff2cb465296.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"47\", bottom \"FungLeo\". Main headline on left 48%, exact \"材料怎么又没了\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 战斗中保星材料为什么突然清空？从击杀磨损的真实触发链，解释仅排除耐久的比较、预选快照更新和严格终验如何配合。. Art brief: 16:9游戏开发排错封面，锻造面板中的武器格逐渐变空，背景战斗以小型抽象剪影表现，耐久刻度微降被琥珀放大镜照亮，蓝灰，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-47/封面.png",
+    "sha256": "30b4d5b9f2eda8b6d1d69e029689b7471e7fe09c8258e79d0c2495565c5a4c5b",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-48",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-dbffaa8e-24a5-429c-b112-4695494fd61d.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"48\", bottom \"FungLeo\". Main headline on left 48%, exact \"确认的是同一笔\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 为什么战斗中反复点击仍然无法确认？本文用保星和紫装献祭，说明如何锁定同一笔交易，放行无关变化，并拒绝材料与结果被悄悄替换。. Art brief: 16:9技术博客封面，锻造确认卡片被稳定光框固定，外围金币药品和战斗事件流动但不穿透核心，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-48/封面.png",
+    "sha256": "2d58eadb11dee7e3629169fbf7ab0795cacfb019a050c1eca4de5bebadc378d3",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-49",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-75202b84-d0dc-4fa7-86e4-1ba0ba04c19a.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"49\", main headline \"随机应该放在哪\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"随机应该放在哪\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-00c3656f-314e-4411-85b6-a510746205f3.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"49\", bottom \"FungLeo\". Main headline on left 48%, exact \"随机应该放在哪\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 批量合成应该随机挑材料吗？本文用同档优先与跨档余数的算例，解释材料保护、降档提醒，以及固定投入与随机产物的职责分界。. Art brief: 16:9技术博客封面，多档金色装备分成四件一组进入锻造台，出口紫色装备带问号形抽象光纹，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-49/封面.png",
+    "sha256": "3eaa3601f8738bb8190b21fe1b37ffb431845e5be29168a9e05501bcecb91583",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-50",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-484078fc-087e-43d4-b28b-2a1d85fbb59b.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"50\", bottom \"FungLeo\". Main headline on left 48%, exact \"批量不能只加循环\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 把单次合成循环调用为什么会留下半完成状态？本文沿实际批量流程，拆解分帧生成、最终重验、当前背包副本与一次提交的边界。. Art brief: 16:9技术博客封面，多组装备在透明准备区排队，所有结果通过一道统一闸门后进入真实背包，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-50/封面.png",
+    "sha256": "7c01249bdf6843669f97689e4dfad05b58d210f3eab69899386be32fe1d078c1",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-51",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-31c43333-74f4-47a7-8ca2-6f8b7495b504.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"51\", main headline \"锁住好词条以后\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"锁住好词条以后\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-5f167b0e-3a07-44ab-9f89-0d00729460b7.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"51\", bottom \"FungLeo\". Main headline on left 48%, exact \"锁住好词条以后\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 加一个锁词条按钮，会改变哪些规则？本文拆解锁定身份、候选排除、有效锁数计价，以及锁定、精炼和如意抽样各自承担的职责。. Art brief: 16:9技术博客封面，装备卡片四条抽象属性中三条被小锁稳定固定，最后一条在锻造光中变化，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-51/封面.png",
+    "sha256": "3ba49db1f83f62aac581424fc6aa7c4764ff173a04e49d44367675a4c469e981",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-52",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-f620a5de-05e3-4e24-bae7-f44e36708809.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"52\", bottom \"FungLeo\". Main headline on left 48%, exact \"第五词条怎么接\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 给满星紫装加第五词条，为什么不能直接修改品质表？本文说明资格与解锁状态的区别、候选副本提交、四固定加一百分比形态，以及旧存档与保星边界。. Art brief: 16:9技术博客封面，满星紫色装备卡片原有四条属性，第五条在一次锻造后亮起，旁边旧档案保持原样，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-52/封面.png",
+    "sha256": "4e0bd3d81e8174bf1829802681ac3fb34bfd1ee94c4b912bccca3edd30a14f14",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-53",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-9e308529-9251-4c7e-be8f-21f72c266561.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"53\", bottom \"FungLeo\". Main headline on left 48%, exact \"动画没完奖励归谁\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 掉落动画还没结束，奖励是否已经入包？从保护期方案的冲突讲起，拆解认领、提示与表现清理的不同职责，以及满包失败时的保留边界。. Art brief: 16:9技术博客概念封面，怪物掉落沿弧线飞向人物，背包账本已亮起确认光，蓝灰琥珀配色，预留标题区，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-53/封面.png",
+    "sha256": "c91c141d0fb915812b85f2b07b7fc365528d429868c4c8b09729132d60f31f30",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-54",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-530cf841-0bea-497c-bfa9-f8849ca63c36.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"54\", main headline \"换图以后墓碑去哪了\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"换图以后墓碑去哪了\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-30649870-bebb-47b8-8074-66aeebd1bc2d.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"54\", bottom \"FungLeo\". Main headline on left 48%, exact \"换图以后墓碑去哪了\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: Boss死亡记录还在，为什么跨图后看不见墓碑？本文拆解距离筛选与重建顺序，并区分刷新墓碑和未领取战利品各自的持久边界。. Art brief: 16:9技术博客封面，两张地图之间一条通道，Boss墓碑在返回地图时由档案光线重建，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-54/封面.png",
+    "sha256": "8954ad1ceaf3a01987a9c6a990a066ea8c61325e0abcb05187a8fe62edd11d97",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-55",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-211d7b4c-db32-46cd-b678-89e0d847824e.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"55\", bottom \"FungLeo\". Main headline on left 48%, exact \"满包以后怎么办\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 满包时为何仍可能拾取成功？本文区分格子占满与实际接纳能力，拆解失败版本缓存、事件失效、手动输入与腾格恢复的边界。. Art brief: 16:9技术博客封面，已满背包旁有整齐保留的地面装备，少量可堆叠药水和金币继续流入，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-55/封面.png",
+    "sha256": "fc6cfa11ff964c4ee7e072ad52d556af216bc7e0c95e6ce5ca46e0a5fcc1df26",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-56",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-996a81ff-6d49-402e-97b8-a1f15027d4be.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"56\", main headline \"自动出售接在哪里\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"自动出售接在哪里\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-567964bb-2dbc-4653-8051-371038544171.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"56\", bottom \"FungLeo\". Main headline on left 48%, exact \"自动出售接在哪里\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 为什么不能在通用入包函数里自动卖装备？本文结合购物与领奖来源、候选保护和满包让位，说明拾取业务入口的职责与结算边界。. Art brief: 16:9技术博客封面，地面装备走向筛选闸门，购物袋和任务礼盒沿独立路径进入背包，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-56/封面.png",
+    "sha256": "a4bd2d55f1629ca22b9974f167109f31e9d78ef9113c938ba764f5bada85d090",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-57",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-7a30bc8c-7b80-4c0a-bad5-314f5560e417.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"57\", bottom \"FungLeo\". Main headline on left 48%, exact \"预设不是本次勾选\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 长期出售预设为什么不能保存本次勾选？本文区分默认保护、手动选择与风险授权，说明共用清单在背包直卖和货郎暂存中的不同提交时机。. Art brief: 16:9技术博客封面，长期预设卡片与临时勾选清单双层悬浮，具体装备由本次清单连线，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-57/封面.png",
+    "sha256": "edcfcbe9b080239c012f3088073264513141c72a02c5dc2eb8fbc0ae5ce3c5ef",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-58",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-9ae793fb-7140-445a-91a3-ccee812b93d5.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"58\", main headline \"卖出以后钱算多少\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"卖出以后钱算多少\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-54d074c7-05da-458a-82e2-f4c29e647f6f.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"58\", bottom \"FungLeo\". Main headline on left 48%, exact \"卖出以后钱算多少\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 挂牌五十却只能入账十，出售应如何反馈？本文说明当前封顶成交口径、四个出售入口的一致性，以及先认领托盘防止同步重入的边界。. Art brief: 16:9技术博客封面，装备出售后金币流入接近封顶的钱袋，部分流量止于上限标尺，实际到账账本清晰发光，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-58/封面.png",
+    "sha256": "c720228a1a3193cf10fb2fffc76e62783c7f8e1e3ee6398723486fb660b04a72",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-59",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-63a53f8f-1ffd-45f4-950f-6934a54e3c59.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"59\", main headline \"容量也是经济参数\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"容量也是经济参数\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-7bd55aec-a435-4baa-bb0a-b60be824d540.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"59\", bottom \"FungLeo\". Main headline on left 48%, exact \"容量也是经济参数\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 多十格背包改变了什么？本文结合四百格扩容与分段费用，解释容量如何影响操作节奏，以及堆叠预检、整理和转移必须守住的数据边界。. Art brief: 16:9技术博客封面，背包格子延展为一段成长阶梯，金币与整理时钟围绕其变化，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-59/封面.png",
+    "sha256": "2fd818be07c61641a8d6843ba8b280a95ba79f0dc88c521adc8f8cc9fe281f5a",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-60",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-1e6af616-934b-4fbd-bc0d-45f86249464e.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"60\", main headline \"三种目标三种地图\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"三种目标三种地图\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-d6b789b7-8af6-404c-ae11-84e75c6b3d6f.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"60\", bottom \"FungLeo\". Main headline on left 48%, exact \"三种目标三种地图\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 后期地图为什么要区分打金、刷装和单王挑战？本文结合战场收拢、同屏预算、承伤门槛与集中掉落，讨论完整循环中的压力和收益。. Art brief: 16:9技术博客封面，中心枢纽连接金币矿脉、多Boss战场和孤王竞技场三条路线，三种不同收获符号，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-60/封面.png",
+    "sha256": "8c6e3812f21e37888b98e4e84a9a20cdce25ddfd5e4268269628bc41429cb39f",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-61",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-502b9e0d-6a4e-499a-99b6-56dcfb7fbe85.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"61\", bottom \"FungLeo\". Main headline on left 48%, exact \"材料多了往哪用\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 后期材料越积越多，怎样让它们继续有价值？本文比较献祭、重掷取优和比例经验兑换，说明计价依据、额度保存与跨级结转的边界。. Art brief: 16:9技术博客封面，积累的紫装如意金砖分流到装备优化和等级进度两条路线，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-61/封面.png",
+    "sha256": "c2182071c829e97d245bd61069d8c2b8868ba491c9d5d09dd86211c1aab09b20",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-62",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-b993a703-b0ef-427e-b428-0236578d40fe.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"62\", bottom \"FungLeo\". Main headline on left 48%, exact \"随身服务怎样复用\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 随身商店和铁匠怎样复用原NPC功能？本文沿道具路由、聚合货单、实际费率和补领规则，说明复用所保留的交易保护与当前接线边界。. Art brief: 16:9技术博客封面，一枚便携工具连接远处商店铁匠仓库服务，原有能力以统一底座呈现，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-62/封面.png",
+    "sha256": "2c6c5730c742fdc6601e5d9286806e0abf345fffb6503f5d8dbb7efef8eccd98",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-63",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-02747390-486f-44fa-a3fd-dec47cd778ea.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"63\", main headline \"先画状态再写剧情\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"先画状态再写剧情\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-3c01b974-b31f-4405-b3fe-67267c45515d.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"63\", bottom \"FungLeo\". Main headline on left 48%, exact \"先画状态再写剧情\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 任务打够了为什么还不能算结束？本文拆解目标完成与正式领奖，说明事件范围、随机奖励计划和满包重试怎样共同保护剧情进度与玩家资产。. Art brief: 16:9技术博客封面，冒险任务卷轴连接多个状态节点，最后奖励宝箱独立发光，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-63/封面.png",
+    "sha256": "7152c35987e6437e6059e3ca99e4e621cd6dab2f01b4fff87c9d699400b62373",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-64",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-8183a757-a4e8-426a-95ca-f780255bb8fb.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"64\", main headline \"让任务地图连起来\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"让任务地图连起来\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-99a4a7fc-4999-4d8c-86cb-ab1e8885d7bd.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"64\", bottom \"FungLeo\". Main headline on left 48%, exact \"让任务地图连起来\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 六章文件都合法，玩家为什么仍可能走不下去？本文把任务前置、目标地图、回交路线和结局持久化连起来，说明整链与实际路线验证的分工。. Art brief: 16:9技术博客封面，多章地图与任务卷轴连接成清楚路线，终点故事节点后保留返回旧城道路，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-64/封面.png",
+    "sha256": "27a879cf1b8042db6f7f84a6583a037f28fdc0a2b395adcf65720e3ce06736ca",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-65",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-953a96f9-6a7c-4577-aeb7-fc9ae41b1202.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"65\", main headline \"打开面板要不要停\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"打开面板要不要停\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-3e15a0ab-77e1-40b5-b7b8-85557bf0bebb.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"65\", bottom \"FungLeo\". Main headline on left 48%, exact \"打开面板要不要停\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 打开窗口是否应该停止挂机？本文区分可见状态、输入接管与场景树暂停，结合寻路误清和快捷栏历史问题，说明普通浮窗与模态流程的边界。. Art brief: 16:9技术博客封面，人物在后台持续战斗，前景背包与人物窗并开，真正暂停菜单以独立图层表示，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-65/封面.png",
+    "sha256": "2a1668133184fa06a157670bc5f1df6738ac407f0488f4fc9358db26b790aa3d",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-66",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-e1a3f91b-e7f3-477c-b581-92aa6d8e18c7.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"66\", main headline \"拖得起放不进去\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"拖得起放不进去\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-71668ec5-923c-4854-becc-73f73eb03964.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"66\", bottom \"FungLeo\". Main headline on left 48%, exact \"拖得起放不进去\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 装备能拖起来，为什么落不进格子？本文沿拖起、命中与提交三段流程，拆解全屏拦截、视觉层级、坐标转换和预选归属之间的区别。. Art brief: 16:9技术博客封面，装备从背包跨向合成格，透明界面层之间显示清楚输入路径，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-66/封面.png",
+    "sha256": "de3c7a6ee8743c679aef83f5d003f94ed5782f741c70ab215028a317e3b00820",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-67",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-3f7706c2-6cdc-42fb-8919-06444a70119b.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"67\", main headline \"高分屏别只乘倍数\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"高分屏别只乘倍数\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-0af00475-2dd2-4201-a090-ec84f7334d7f.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"67\", bottom \"FungLeo\". Main headline on left 48%, exact \"高分屏别只乘倍数\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 为什么界面和文字都设150%，字却变成225%？本文解释三条倍率、逻辑布局空间及独立文件窗口的缩放边界，说明可读与可操作如何一起验收。. Art brief: 16:9技术博客封面，大屏中的地图界面文字各有独立刻度，三个层次大小协调，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-67/封面.png",
+    "sha256": "a167499b7d80c3db1deb56b3113f2eec3c155178dead143cd56f9058162e0274",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-68",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-9da71dca-7faa-4b64-873d-5bed6b033f70.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"68\", bottom \"FungLeo\". Main headline on left 48%, exact \"血条动了数字没动\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 血条已经变化，悬停提示为什么还是旧数字？本文分开角色数据、来源控件与现存提示，说明事件同步、弱引用清理及持续提示测试的边界。. Art brief: 16:9技术博客封面，HUD血条已缩短，旁边旧数字提示通过事件光线同步成新值，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-68/封面.png",
+    "sha256": "bf80e7921832e6cec2b972a2cd84396a6774255cf068d63ce51d963bd3575e2c",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-69",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-997fa1dc-f6db-4886-94c3-851a1bd3e90b.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"69\", bottom \"FungLeo\". Main headline on left 48%, exact \"镜头为什么越追越晃\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 倍速与卡顿为什么会让镜头往返发散？本文沿隔离对照与当前稳定相机，解释真实时间、指数追赶、边界约束和明确传送复位的分工。. Art brief: 16:9技术博客封面，固定人物旁两条镜头轨迹，一条左右发散一条稳定收敛，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-69/封面.png",
+    "sha256": "c70c7599e874f197291d0dba06dcd2433e35695eb8282de3829a305c584c12bf",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-70",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-f5f5e86d-bf0e-4413-92cc-ac7bf094fb09.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"70\", bottom \"FungLeo\". Main headline on left 48%, exact \"大地图先测哪里卡\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 地图变大以后该先分块还是重写地形？本文沿实际分阶段优化，拆开装配尖峰、重复CPU计算与绘制调用，说明测量如何决定架构取舍。. Art brief: 16:9技术博客封面，大型等距地图被放大镜分出装配寻路与绘制三个成本层，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail.",
+    "finalPath": "assets/game/GAME-70/封面.png",
+    "sha256": "79fc2f9cdbfc5550256464b3b4af72bdd10176fd00290bef1b4c3537ad50ad66",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-71",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-f853d023-8785-4c2a-9dd1-c2fa20f8ac86.png",
+    "prompt": "Edit this cover preserving its illustration, colors, lines, badge, author and overall style. Correct the typography to match the consistent series template. ONLY these text strings may remain visible: top left \"末法纪元 · 游戏开发\", top right \"71\", main headline \"2400件先优化哪里\" split into two balanced lines on left, subtitle \"单机 ARPG 开发实录\", bottom \"FungLeo\". Remove ALL description paragraphs, longer article title variants and any other text, filling their areas seamlessly with the plain deep slate blue background. Main headline MUST be exactly \"2400件先优化哪里\", no additional words. Keep the right illustration intact.",
+    "previous": {
+      "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-4b7b27a9-74b3-435c-9c18-8e850cb307d3.png",
+      "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. Top left \"末法纪元 · 游戏开发\", top right \"71\", bottom \"FungLeo\". Main headline on left 48%, exact \"2400件先优化哪里\", split in 2-3 balanced lines; small subtitle \"单机 ARPG 开发实录\". Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text for this article: 2400件掉落变慢，先重写拾取还是减少绘制？本文解释固定夹具、反事实对照与混合模板补测，区分共享图像的稳定收益和首次建立代价。. Art brief: 16:9技术博客封面，密集地面装备被分析镜分成渲染与拾取两层，真实物品档案完整保留，蓝灰琥珀，无文字无水印。. Override original no-text instruction with exact typography above. Cover is conceptual, not actual screenshot or measured data. No extra labels or fake statistics. Keep title clear of illustration and readable in thumbnail."
+    },
+    "finalPath": "assets/game/GAME-71/封面.png",
+    "sha256": "4283e114f26e0ddecdb5d765c4c179586ca85228a7898a6958968475d57eba12",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-72",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-70d292ff-3418-462d-9fea-e1d67b282303.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"72\", bottom \"FungLeo\", main headline \"静止以后还在忙什么\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 共享图片以后，静止装备为什么仍然耗时？本文沿地图内调度器说明进入资格、首步补偿、即时交互与预算恢复，明确少回调不等于少奖励。. Art brief: 16:9技术博客封面，大量静止装备连接一个地图内轻量调度钟，少数附近装备被唤醒，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"静止以后还在忙什么\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-72/封面.png",
+    "sha256": "d1f477c0347a8662799bbc06bb899101e96e6372979c1211dde7a8049c09f96d",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-73",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-2c18e247-e80f-48f9-9b0a-a0dcdf91140d.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"73\", bottom \"FungLeo\", main headline \"缓存淘汰画面没了\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 全局缓存没有超上限，静态预警为什么消失？本文解释查找表与活跃画布的不同所有权，以及RID、强引用和淘汰后像素验证之间的关系。. Art brief: 16:9技术博客封面，扇形预警的一块几何被缓存淘汰箭头抽走，画布持有光线将它稳定保留，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"缓存淘汰画面没了\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-73/封面.png",
+    "sha256": "5336856fecd0c1dbc9bebd13d448333e3c7f018e9d32e85e90b4ce88c0d1edb3",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-74",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-0e34ddb2-553d-4789-b9ed-5cbf3fa3df28.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"74\", bottom \"FungLeo\", main headline \"一点磨损整包刷新\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 一次耐久磨损为何重建整包装备？本文拆开物品展示、比较上下文与装饰动画，说明完好状态归一、引用核对和隐藏停更的正确边界。. Art brief: 16:9技术博客封面，一件穿戴武器耐久刻度微降，背包大量格子被不必要刷新波纹覆盖，局部更新路径琥珀高亮，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"一点磨损整包刷新\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-74/封面.png",
+    "sha256": "3a55787eab82ee01e0c372eebd324eef8fa1a98409c6997f43394e9165928bde",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-75",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-843be102-197a-4a62-8900-b38c9452d2da.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"75\", bottom \"FungLeo\", main headline \"挂机稳定要看什么\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 进程跑十分钟没崩，能证明挂机一晚稳定吗？本文结合历史压测和现有跨图用例，拆解时间、负载、资源趋势与保存恢复需要分别验证的内容。. Art brief: 16:9技术博客封面，夜间持续运行的游戏画面旁有节点内存击杀与保存曲线，蓝灰琥珀，不暗示已完成通宵实测，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"挂机稳定要看什么\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-75/封面.png",
+    "sha256": "71cf042378d642e03cdf0a62e179d438d26290ccef41c18bfda7d7fb6bb55747",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-76",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-e1913eac-7411-44a8-9197-ef67fb98a296.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"76\", bottom \"FungLeo\", main headline \"第一轮为什么看错了\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 重铸闪退为什么两轮解释都被推翻？本文保留调查中的误判与证据演变，区分伴随异常、未复现和确定触发，并说明后续布局与工具如何收口。. Art brief: 16:9技术博客封面，三轮调查档案依次修正假设，最终布局请求闭环被高亮，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"第一轮为什么看错了\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-76/封面.png",
+    "sha256": "ae635b7bc2002def66745388fe62443276b9c91678d85f85e8089fcce3a147e5",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-77",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-c12e19e8-4ef7-401d-ae1f-fab4c49bbf63.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"77\", bottom \"FungLeo\", main headline \"延迟也能排爆队列\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: call_deferred为什么也能造成无限布局？本文拆解dirty、pending与running的职责，说明首轮响应、同帧预算和真正收敛为何需要分别保证。. Art brief: 16:9技术博客封面，布局请求不断回流的环路被显示帧闸门截断，最后变化仍排向下一帧，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"延迟也能排爆队列\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-77/封面.png",
+    "sha256": "068e48127b4987b1cbf0dfb60f5bc1b9e21f9a286c9cbe640a9dc0d6a38cf950",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-78",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-00f2d051-0592-4893-ad07-191598ffbd05.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"78\", bottom \"FungLeo\", main headline \"写坏以后还能恢复吗\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 存档写坏以后怎样保住最后的有效进度？本文拆解临时写入、有效备份、损坏现场与导入归一，说明文件成功和业务可恢复为什么需要分别验证。. Art brief: 16:9技术博客封面，主档临时文件有效备份形成保护链，损坏档案被独立保留，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"写坏以后还能恢复吗\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-78/封面.png",
+    "sha256": "8d4870f2ce40faf0d8ae99d9722887aa3f7e3cfe268d74224aa282628bad05cf",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-79",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-43e01f2c-3d3b-4e69-a99b-5da99558dfd4.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"79\", bottom \"FungLeo\", main headline \"旧存档兼容到哪版\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 迁移函数里有旧版本分支，就表示正式入口还支持它吗？本文解释当前可读范围、缺省与非法数据、地图独立迁移门，以及旧资产怎样正确保留。. Art brief: 16:9技术博客封面，不同年代存档通过明确版本闸门，允许范围内沿迁移桥进入当前世界，原档案保持完整，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"旧存档兼容到哪版\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-79/封面.png",
+    "sha256": "67a27a9722f9dbb20a6f344b8ea8dd8abc326e88fda34eca97a46f0a892774e0",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  },
+  {
+    "id": "GAME-80",
+    "path": "/Users/fungleo/.codex/generated_images/01a1bfe2-263a-7d41-a63e-54a016601ea2/exec-55ff24a3-372c-4009-95f1-c7e5f96f81b7.png",
+    "prompt": "Create ONE 16:9 finished Chinese technical blog cover, EXACT same design system as reference C: deep slate blue background, ivory Chinese serif type, amber rules, generous margins. ONLY allowed visible text: top left \"末法纪元 · 游戏开发\", top right \"80\", bottom \"FungLeo\", main headline \"通过到底证明什么\" on left 48% split in 2-3 balanced lines, small subtitle \"单机 ARPG 开发实录\". NO OTHER TEXT, no descriptive paragraphs. Right: refined painterly isometric game-world thematic scene or object partially becoming fine blueprint wireframe, small amber highlights. Reference STYLE ONLY, change subject and text. BACKGROUND CONTEXT FOR ILLUSTRATION ONLY, DO NOT PRINT THIS DESCRIPTION: 退出码为零，为什么不能直接说游戏没问题？本文用异步完成、全量扫描、负向注入和导出包检查，说明测试结论怎样与真实交付范围对应。. Art brief: 16:9技术博客封面，绿色测试标记旁连接明确覆盖范围与目标平台，最后汇入玩家实际操作，蓝灰琥珀，无文字无水印。. Cover is conceptual, not actual screenshot or measured data. No fake statistics. Keep title clear of illustration and readable in thumbnail. Again exact main headline MUST be \"通过到底证明什么\", do not use any other title from context.",
+    "finalPath": "assets/game/GAME-80/封面.png",
+    "sha256": "b2a5347ec65e5eb6992c74ea6bc00021156bebed948c73946c05eddf5a759484",
+    "visualReview": "已检查主题、标题、篇号、署名和 C 风格；修订版复查通过"
+  }
+]

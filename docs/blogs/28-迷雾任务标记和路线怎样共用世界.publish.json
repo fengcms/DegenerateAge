@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-28",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发28：迷雾、任务标记和路线，怎样讲清同一个世界",
+  "description": "本文结合《末法纪元》的Fog、玩家路线访问器和MapCanvas，区分探索事实、任务可见信息与当前行进意图，解释跨图路段、接管清理、底图缓存和局部裁剪，并明确当前路线并非按迷雾逐段过滤的实现边界。",
+  "tags": [
+    "探索迷雾",
+    "路线显示",
+    "地图UI",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-28/封面.png",
+  "ready": true
+}

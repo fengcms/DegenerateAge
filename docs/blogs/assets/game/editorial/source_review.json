@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-10",
+  "historicalAudit": "docs/blogs/80篇文章全面审阅报告.md",
+  "auditCommit": "6c7aa51b799a2ee168916eccff05301bb4b01d83",
+  "basis": "80 篇原稿哈希逐篇与既有全面审阅提交一致；沿用该次技术结论，不冒称本次重新全量审阅源码。",
+  "subsequentChangedFiles": [
+    "assets/ui/monster_portrait_circle.gdshader",
+    "assets/ui/monster_portrait_circle.gdshader.uid",
+    "docs/工程文档/2026-11-05-HUD高等级徽章可读性修复.md",
+    "docs/工程文档/2026-11-05-多Boss防重叠实施记录.md",
+    "docs/工程文档/2026-11-05-百首禁域Boss重叠原因与修复方案.md",
+    "docs/工程文档/2026-11-06-Boss独立状态栏美化实施记录.md",
+    "docs/工程文档/怪物重叠原因分析.md",
+    "docs/素材设计/2026-11-06-Boss独立状态栏方案.png",
+    "docs/素材设计/2026-11-06-Boss独立状态栏方案.svg",
+    "docs/素材设计/2026-11-06-怪物等级与Boss独立状态栏美化方案.md",
+    "scenes/ui/Hud.tscn",
+    "scripts/entities/monster.gd",
+    "scripts/systems/boss_spacing.gd",
+    "scripts/systems/boss_spacing.gd.uid",
+    "scripts/ui/boss_health_bar.gd",
+    "scripts/ui/boss_status_row.gd",
+    "scripts/ui/boss_status_row.gd.uid",
+    "scripts/ui/hud_level_badge.gd",
+    "scripts/ui/hud_target_level_badge.gd",
+    "scripts/ui/hud_target_level_badge.gd.uid",
+    "scripts/ui/monster_portrait_cache.gd",
+    "scripts/ui/monster_portrait_cache.gd.uid",
+    "tests/BossCrowdMapTest.tscn",
+    "tests/BossCrowdTest.tscn",
+    "tests/BossStatusPresentationTest.tscn",
+    "tests/HudTargetLevelTest.tscn",
+    "tests/boss_crowd_map_test.gd",
+    "tests/boss_crowd_map_test.gd.uid",
+    "tests/boss_crowd_test.gd",
+    "tests/boss_crowd_test.gd.uid",
+    "tests/boss_status_presentation_test.gd",
+    "tests/boss_status_presentation_test.gd.uid",
+    "tests/hud_target_level_test.gd",
+    "tests/hud_target_level_test.gd.uid",
+    "tools/run_isolated_tests.py"
+  ],
+  "supplementalReview": "检查后续 monster.gd 与测试运行器变更，并对第 24、31、32、60、68、80 篇涉及 Boss、UI 与测试口径的叙述补查。新增 Boss 防重叠/状态栏不改写历史文章；全文标注 2026-11-05 技术快照。",
+  "resourceReferences": {
+    "scenes/Main.tscn": [
+      "04"
+    ],
+    "autoload/event_bus.gd": [
+      "04"
+    ],
+    "autoload/game_state.gd": [
+      "04"
+    ],
+    "autoload/data_loader.gd": [
+      "04"
+    ],
+    "autoload/save_manager.gd": [
+      "04"
+    ]
+  },
+  "missingResourceReferences": [],
+  "gameTestsRun": false,
+  "playerSavesAccessed": false
+}

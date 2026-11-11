@@ -1,0 +1,1762 @@
+[
+  {
+    "id": "GAME-01-经验迁移",
+    "path": "assets/game/GAME-01/经验迁移.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a0557d8f26f720a2acf6f46bc4dce0bf68761d0cffd0cd4ef2771dda6bd7d735",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-01-持续运行",
+    "path": "assets/game/GAME-01/持续运行.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "9069aa08cada749a2f7b73aef94ba3820a44d58a7087b28cbb8d12dbe31a2e51",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-02-核心循环",
+    "path": "assets/game/GAME-02/核心循环.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "21315b9f2bb848ece0feb6dec0fc50ab4cd72a5389b9fe51ede46b9db96a38af",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-02-目标到验收",
+    "path": "assets/game/GAME-02/目标到验收.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5313f144f4f516e1151b15b4145711f97b33a9067a2c7ae58ac3b99024ce4ebb",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-03-范围边界",
+    "path": "assets/game/GAME-03/范围边界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e22b05c9a5bc89ec7889cd500236df9d41fca42733e54d1d26c7c6b951e97360",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-03-阶段取舍",
+    "path": "assets/game/GAME-03/阶段取舍.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "69b7d8d8f8a742da8d81964b87be5a56d4d44e919a2c03af2b8979c2ee148b41",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-04-工程分工",
+    "path": "assets/game/GAME-04/工程分工.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "8518da66818ead42e6b00575dd055c083a4a264973b71d904ac447f141529b93",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-04-复现检查",
+    "path": "assets/game/GAME-04/复现检查.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3f49b6b7c002aa14a4a3aee517e4952fea0bc05962bb07f833df78759ba65c22",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-05-阶段接续",
+    "path": "assets/game/GAME-05/阶段接续.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "ac9b55774d5cd2a6dffca02a109ea88ddbc5185d856074a0fa5c4d5c5e40bdea",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-05-依赖与出口",
+    "path": "assets/game/GAME-05/依赖与出口.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "af2d96f05aa1a9cc93682f30cb6711e1f91e3390b85f97e71dd2451f80d79952",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-06-任务契约",
+    "path": "assets/game/GAME-06/任务契约.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "af0c259887032a48308e3fc859bb9707af11ce5bb17de66e92bac9c53f49359f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-06-验证闭环",
+    "path": "assets/game/GAME-06/验证闭环.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3ff43f2a4ece497cfa7e83524cd65a714887a2cdbe320042746044efa34468c3",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-07-现状与缺口",
+    "path": "assets/game/GAME-07/现状与缺口.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1c7141930516b38fc573f6621d12194e337cbe5b91c765719584e36d6027dcc4",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-07-任务交付",
+    "path": "assets/game/GAME-07/任务交付.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e82b8b122fef004ca561a62ac6897ee0ce65563a79604af0be691c10b8b002f8",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-08-状态交界",
+    "path": "assets/game/GAME-08/状态交界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "8001afe27049e31932856fe209f575b757fd205d322b1ea9173b09e61ccf6202",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-08-证据分层",
+    "path": "assets/game/GAME-08/证据分层.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "8caea2c1580f4219d47dccddd5223bc02c1c8760fc71a38ec8f31785d4708ff1",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-09-状态归属",
+    "path": "assets/game/GAME-09/状态归属.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "28b2419665d7a92abd85d6a80577372649510396da4fa01fad3e0a495d783aed",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-09-提交与通知",
+    "path": "assets/game/GAME-09/提交与通知.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3dbeeeec8b5ff8cf82d8443705a46615cd9853f820b897f43a1b477bc18b30d8",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-10-模板与实例",
+    "path": "assets/game/GAME-10/模板与实例.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a30eac41d7dd545e3eabe90066c35ad361dfe60976c1eaa494650d409c81a978",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-10-显示依赖",
+    "path": "assets/game/GAME-10/显示依赖.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "86378cfff267b4c8bd34e537b45717d93ebb24c6d22afd59c673219269ca9f20",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-11-引用关系",
+    "path": "assets/game/GAME-11/引用关系.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "8a90b16dd7935e65d81401126bd03e83ea21a6f08746463cdeff533331b6615a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-11-校验层次",
+    "path": "assets/game/GAME-11/校验层次.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b50d1371356155670df123df228886d7356ce36ddae5db5122ae669e60ca24ac",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-12-目录与接口",
+    "path": "assets/game/GAME-12/目录与接口.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "f9dc96f1285b280e7301a76317b9cef2d79947e5447872ab90477cc090bde4cf",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-12-说明分工",
+    "path": "assets/game/GAME-12/说明分工.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1083f3d7760cb16a977536013561e52d43e09522f69113f9d95e1a2ebc5f299b",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-13-身份表现能力",
+    "path": "assets/game/GAME-13/身份表现能力.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "eb3bd7ea56a2d348b7bbf119f62c13dd7c0f9f8e7e956cacb2b5d4aa76a4c279",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-13-能力验证",
+    "path": "assets/game/GAME-13/能力验证.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "40893a58e1a58a3ad87eb8307e99ad4029014e74d851d71bea6da47c6bc08c27",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-14-编辑分工",
+    "path": "assets/game/GAME-14/编辑分工.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "ddeb80aa93412cb56ee5d89e52f4c28aac6d68098ba5a950ea07ce7b5f2a1fa4",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-14-草稿到运行",
+    "path": "assets/game/GAME-14/草稿到运行.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5ac6a8fee91b1307edfb7df2d099053e5c45abf4fdf0a96077b62da9de22351f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-15-外壳与编译",
+    "path": "assets/game/GAME-15/外壳与编译.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5bdf4b55fab529c24b774c6a3797e1a1aa49c1e1c7d05aaa1ca49636b65035de",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-15-地图包边界",
+    "path": "assets/game/GAME-15/地图包边界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "c07f105b71bf89527a504daace30eb611e96806a08eb0df5576615f1fbe7ab6a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-16-导入依赖",
+    "path": "assets/game/GAME-16/导入依赖.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b69b6d7edb28a031ec83fa2c2e279a29cac77c704ed588dca769ee1c58e3fbbe",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-16-排查顺序",
+    "path": "assets/game/GAME-16/排查顺序.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "0d14bb0fd0734cc66357659320d5f2e76ba9d3288edb1adfe13082b2a7627d5a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-17-空间转换",
+    "path": "assets/game/GAME-17/空间转换.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1e35c1bf01bfdb27439d5dd0a3204a5bd734315b477115cdb58bd246892dc826",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-17-地面度量",
+    "path": "assets/game/GAME-17/地面度量.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "33fa9bc2c70db385a1bbbd0a1c82dcbc6bd2610537315bef5d121bc0f33f955f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-18-意图优先级",
+    "path": "assets/game/GAME-18/意图优先级.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "047cfcc3de8cb03dcbb62b78668abbab4c0b79242e957a622df1c3022583f402",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-18-面板与世界",
+    "path": "assets/game/GAME-18/面板与世界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e3d1af491341978ebbc39ac3d3420ff4c398d2e735620b6a3b4ede62af1b77b7",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-19-墙角反例",
+    "path": "assets/game/GAME-19/墙角反例.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a4eed71cab79cb2c37fed042d7227a431d5e9164419851ae9673dd61d11fef37",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-19-路径与身体",
+    "path": "assets/game/GAME-19/路径与身体.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "931e7e0b4fe7bad1c4390229e74e22cb927757532f899c84689024037747dc79",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-20-依赖清单",
+    "path": "assets/game/GAME-20/依赖清单.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "0fda4f85214773bfa25e451bc72efd44bddccd90b52f11454fb9613f01d4a2b7",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-20-版本失效",
+    "path": "assets/game/GAME-20/版本失效.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "7a3de4df3f9dbc338dceb6e27597ee971f77891a2c79a8a5ff6c9cfcfddb4e3f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-21-查询分工",
+    "path": "assets/game/GAME-21/查询分工.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "8ba6c0a3a6ab7acaa791f4e365c968fe68da20f1181738f5488ccb0be8fb3baf",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-21-区域与路线",
+    "path": "assets/game/GAME-21/区域与路线.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3771fc9597a6566933ef37aa5c37f1149708a4581a4ac38b7eecfec046932ddb",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-22-决策状态",
+    "path": "assets/game/GAME-22/决策状态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "c679a0b7bcc3adc95eb58252b22bfc5393eadf1113f5155c669e5b6c98eb9741",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-22-共享执行",
+    "path": "assets/game/GAME-22/共享执行.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a8aa1144100391610d4476ecaa42b72ff25c2879e4fefb23d463d97d51bf3810",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-23-主路与补漏",
+    "path": "assets/game/GAME-23/主路与补漏.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "6eca8348f26a51bd90dbd69fad7dbd1ee391810e136ac224c2d98ed7d44ae660",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-23-中断接续",
+    "path": "assets/game/GAME-23/中断接续.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "c3f324fcf4acfdcfb9531d8e7a58d1af34540c7f892b2f181105a91b9c1712ea",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-24-误判链路",
+    "path": "assets/game/GAME-24/误判链路.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "8d01d0df112de23fb964bd09fcad98b95dd5c2a89e3b7fdf7112e3170698dd77",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-24-临时记忆",
+    "path": "assets/game/GAME-24/临时记忆.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "ffea0f1434fc579353621f98439cb1c806fa82b163ca67442300df0606932d47",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-25-预算快照",
+    "path": "assets/game/GAME-25/预算快照.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "81a875631f8175eb225dddc97b4c7fa20c5e030a32611ab207f43cf7c4c352c3",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-25-刷新生命周期",
+    "path": "assets/game/GAME-25/刷新生命周期.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5697e055f5cd045dabec3202b911777613be4de0486c676aa97164331d2a9e27",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-26-交通拓扑",
+    "path": "assets/game/GAME-26/交通拓扑.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1ba529c7f140c9a7a131a3a752df3eafcd85429496bbb7d761cd8400c3797fe4",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-26-旅行提交",
+    "path": "assets/game/GAME-26/旅行提交.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "86b20b1d56dc6575b5d11d2327e85487539e0665bd9893708a1555f148861728",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-27-全局与局部",
+    "path": "assets/game/GAME-27/全局与局部.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3c2af0d263670b8b7f91a90c398dd010e12c37e610a6786d0a7abd18b664fc2f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-27-跟随与裁剪",
+    "path": "assets/game/GAME-27/跟随与裁剪.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "22a086b04723d4e2f06721cfaff0bfc23b1a7e9592f6af4f611f3b7052b40479",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-28-三种信息",
+    "path": "assets/game/GAME-28/三种信息.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "6e4098096ae4fc55fa99ffc5149b456a53db14070840f22c07a144979f941c2e",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-28-路线来源",
+    "path": "assets/game/GAME-28/路线来源.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "917891c408fee7f90e1ae6a83012704db2982aa6d66c49561dea0ecedeec72a9",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-29-结算链路",
+    "path": "assets/game/GAME-29/结算链路.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "63a04aeb5cd97202879dcc613701cfe46777c578ccd3fb0de68c2b166f5aa2e6",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-29-结果与提交",
+    "path": "assets/game/GAME-29/结果与提交.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "d00503e204697b21404e96c595789ce3d932d842a7df4f81db715aa300043cc5",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-30-可复现输入",
+    "path": "assets/game/GAME-30/可复现输入.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "17aa0fa0e83e80faba782f6d110140b8c3eba000e2760bd1391e4691145af008",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-30-两类验证",
+    "path": "assets/game/GAME-30/两类验证.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "525575f28c086d929a1650e4df0f59413dc36812bc8c40fa26b28c4826d83d05",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-31-生命周期",
+    "path": "assets/game/GAME-31/生命周期.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "4e1bf06614763bcdc24b0a2ce94994a181ace51fb73be2d8eacbd8df87d60a95",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-31-死亡交接",
+    "path": "assets/game/GAME-31/死亡交接.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "77f93cdbd5c5b3d56b4b054246c38d03f1174e752b13f28d9a8a258946e961f5",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-32-宿主与组件",
+    "path": "assets/game/GAME-32/宿主与组件.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "90b176e8713c38a120b9ec8c10b2b42a30c2d7b2661211101b2a7ddf32214336",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-32-取消边界",
+    "path": "assets/game/GAME-32/取消边界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "d8e5cd4c78d20dec255c9fd447b87a5f35debbff0848230092271a43a3256874",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-33-技能契约",
+    "path": "assets/game/GAME-33/技能契约.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "419b885a57c5c28412d4087f18be0136bcf5bf67f3ccd892207925f3538d63a1",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-33-施放与命中",
+    "path": "assets/game/GAME-33/施放与命中.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "d4cfde8f7d8ecdf5af3413673c707eb17692d29378efe7d39dd0f62d9782a654",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-34-职业入口",
+    "path": "assets/game/GAME-34/职业入口.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "fe99e45797a84300c0fa28914fec8ebb9b05070cc04edcd324b5c6caa6e95522",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-34-派生与行为",
+    "path": "assets/game/GAME-34/派生与行为.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "db27e87c9aa55d97a24ed2a394d22941cd08d2f5eba0f163dc7641892a57b9cf",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-35-优先级空档",
+    "path": "assets/game/GAME-35/优先级空档.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "079f0922e9f8c5a379d09fd99d3fb1e0a0b9f33fedc0fd1ddd704aeb844826c9",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-35-解围条件",
+    "path": "assets/game/GAME-35/解围条件.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e93e89690833bb87a5d820cd6603504b8025c00e4227ae6e75dd45cdfe4b92dd",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-36-资源收支",
+    "path": "assets/game/GAME-36/资源收支.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "baecdf1da255eb660b0608deeb4fa073f98cff8b3088e2f9bb4ce876caea585d",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-36-护盾分配",
+    "path": "assets/game/GAME-36/护盾分配.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1e39e39d7c8deca86521f9e3e625b693f038d624e5e6927e624759e081599ee9",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-37-定义与阶数",
+    "path": "assets/game/GAME-37/定义与阶数.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "590a4d434da1aa8fc5f286ae1261ec2f47f68b2714648fe856da842511011e32",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-37-购买与生效",
+    "path": "assets/game/GAME-37/购买与生效.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "d01912951882709dc03d72e4ddf61a920001aea9ac816a6ade98d8dbd1276d74",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-38-等级来源",
+    "path": "assets/game/GAME-38/等级来源.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "adfb12e798b56731c1c1264aae03046f8afef01363643d9949da0d9964978dbf",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-38-输出拆解",
+    "path": "assets/game/GAME-38/输出拆解.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "c9871d8bb0628fe00c260187bb862cef8f8ae023e8980c8063a49c9fd1ef2d8a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-39-逐件缓冲",
+    "path": "assets/game/GAME-39/逐件缓冲.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "bb8bf404444e174fa601df8ee6377c60cc74df2199964197c75a48d25816a1bb",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-39-接线与反馈",
+    "path": "assets/game/GAME-39/接线与反馈.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1a782e329eda3907f1c55d83ea6a21cf6b9a9ee41c924713759a8de3e32070a8",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-40-画与判",
+    "path": "assets/game/GAME-40/画与判.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "dbb4b901e490629839add81d3fc83ae3f9ca3f6889fd60a605f29d2d34cceeeb",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-40-几何迁移",
+    "path": "assets/game/GAME-40/几何迁移.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "531af414f1dc26206bf1e78e50163d159903d1aa298786f6b942b619d65ec849",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-41-三轴职责",
+    "path": "assets/game/GAME-41/三轴职责.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5f47568a02143511e5535023783eaac615d90fab389211814a9a7594c3b8ee4f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-41-属性组合",
+    "path": "assets/game/GAME-41/属性组合.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3338c5748294021298bd7f7361a2cd6efb61fbffe04108c15662d0d5243a65a1",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-42-身份与位置",
+    "path": "assets/game/GAME-42/身份与位置.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "7565da5e0906483bdfa112a846f54e221c1614508d1351c599228db39396fe6d",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-42-重定位与快照",
+    "path": "assets/game/GAME-42/重定位与快照.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e8b9565feed8fc7890362ff0d3d81d07737cf65c97eb1f1bc40bb489387a2572",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-43-目标与比较",
+    "path": "assets/game/GAME-43/目标与比较.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "9e9c34ccf412c92b6599814789cf027a91decded2956cb7701573163043eb757",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-43-共用预览",
+    "path": "assets/game/GAME-43/共用预览.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b232fa9b249f53de76b5971c566612f50b2e6ada58fba973ca76daa503d23e3b",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-44-档位与部位",
+    "path": "assets/game/GAME-44/档位与部位.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b6d0d8d01ab56b00dc9c2f4eddf20634b9358ce6037a0e9d001c5ff003b71679",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-44-新旧实例",
+    "path": "assets/game/GAME-44/新旧实例.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "15614ce50d3cb20b88e683bfa0db0a76f71cd7618dc05046937bc018e90e825b",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-45-最低门槛",
+    "path": "assets/game/GAME-45/最低门槛.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3ad30a8b0e160777c9071b789b38d262233d41f877e4fd46d201a2a2cbde4e64",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-45-分层缩放",
+    "path": "assets/game/GAME-45/分层缩放.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "faadab6fbf0f3e96f4be502019bdf405ae3a494050823d0709df381c862328cd",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-46-传承与代价",
+    "path": "assets/game/GAME-46/传承与代价.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1be21d752cb203dfb15ce85eabde5e246ac00ad6cb909f57d412d2759cee5812",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-46-规划与提交",
+    "path": "assets/game/GAME-46/规划与提交.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "9d7316a184af2c74980875a39c987538c075fa2933c8e276190ec23b1436e7fa",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-47-变化分级",
+    "path": "assets/game/GAME-47/变化分级.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1a306777d916bba01f74dc2825f3d6beec8ffbaad62d31d4a2242fda3d8018e5",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-47-快照更新",
+    "path": "assets/game/GAME-47/快照更新.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a0cc8e891edece27d41715f2e59a29c0989d380c776380940a3f967c764a6bd5",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-48-条款与状态",
+    "path": "assets/game/GAME-48/条款与状态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "881a8025c5cb9193caf4732a756c86ee9f569b4027b477ac72a2dd7ac0ad5757",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-48-固定批次",
+    "path": "assets/game/GAME-48/固定批次.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a8f912ffd3841ad6fcd63a191ba1bd8dafaac588a0ce662c59ceb0584b16d36d",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-49-同档优先",
+    "path": "assets/game/GAME-49/同档优先.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "62f26cfe55ce0265ba2fb724671567732658c7b5025ab1be924b69be5d2ae683",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-49-随机边界",
+    "path": "assets/game/GAME-49/随机边界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "45689137e9e50b557634750a3fabba469d8f37379038efc5fa387bf669030dca",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-50-准备与提交",
+    "path": "assets/game/GAME-50/准备与提交.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "0c81f90cc8c00b34352424471c8e343c1dd9237815b2ca8d49380728b8eb5acc",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-50-当前副本",
+    "path": "assets/game/GAME-50/当前副本.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "7bd936b9435aaf90210f96eb64bc44b415b4cfed76b58dd9007a8afb62c24f95",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-51-锁定与候选",
+    "path": "assets/game/GAME-51/锁定与候选.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "d43b4082b882a2a0d3ede4c961ef185c61f3821da39fba0c7b4e2226ed41d862",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-51-投入职责",
+    "path": "assets/game/GAME-51/投入职责.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "29e30b99b197e00e722a0fde5456c4223daa83aa91c143187236c569f4d1bf3f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-52-资格与形态",
+    "path": "assets/game/GAME-52/资格与形态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "680225a6365c2a8730a8ee79ac381a0f9abf94f261b0c7bddcfbcd65f0c7df72",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-52-兼容与提交",
+    "path": "assets/game/GAME-52/兼容与提交.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "39bdd54717f02b26d27f417cafc6338f2a576908a04ebd9e69e51355920ac1dc",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-53-认领与表现",
+    "path": "assets/game/GAME-53/认领与表现.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "ee24e8dc9ccd95fe7db0182649e11860f19087a72739d52919634bd9b28e8ce1",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-53-失败与清理",
+    "path": "assets/game/GAME-53/失败与清理.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "461ee7792abdee8873bfd9b72889bf9dc27ac3a0ed302c35c2bfd1770e0ba82f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-54-状态与节点",
+    "path": "assets/game/GAME-54/状态与节点.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "f5af87ed0fdaa1bc8bbded3236ae1ce378f5c184f5cba15258b8012d39a25b7b",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-54-两类记录",
+    "path": "assets/game/GAME-54/两类记录.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "1aba099520f20a0990824a02865e011c2e1e8ab996e973dc8a6f3bf79cc321e3",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-55-失败与失效",
+    "path": "assets/game/GAME-55/失败与失效.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e941f34b12bc0537edfc825859680a7e9a72abcbce2a6101934df22ac6e3c507",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-55-恢复与交互",
+    "path": "assets/game/GAME-55/恢复与交互.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3b248f8b6b38b30f53044088406d2d295e0c44ceb4eeab5bc5aa919852887690",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-56-业务入口",
+    "path": "assets/game/GAME-56/业务入口.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a632f2757752b5591e85cc374bbfa1a25333d543d21f57598a814fd6ce74e21a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-56-候选与让位",
+    "path": "assets/game/GAME-56/候选与让位.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "f8ed4382ca2ce4a344e4f441017b02ae7ff12f8fce47709dbd5fcc897ce3b586",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-57-两份状态",
+    "path": "assets/game/GAME-57/两份状态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3d62c0baf74eda71c73cfcb6d18debe76bc721e1f87154df58b1e27028ef9fcd",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-57-预览与终验",
+    "path": "assets/game/GAME-57/预览与终验.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a748d71ab2e1a68de37fd0e8d7e45da0774e55aa6270c5f922fa3dbcc2913771",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-58-理论与实际",
+    "path": "assets/game/GAME-58/理论与实际.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "de0e6985402840dbbb6bcce686ce417b042605d49a8a74247e8e37a17130a369",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-58-托盘认领",
+    "path": "assets/game/GAME-58/托盘认领.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "751300e0a73d58c69a3bab0752c6c8d76a4edae4b0ee47d9e63755bddf0a0442",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-59-容量与节奏",
+    "path": "assets/game/GAME-59/容量与节奏.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5c45222dd794ed7cba40ee321aa4a59f2f5b85067f6f9a252031eb37e1aee217",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-59-堆叠预检",
+    "path": "assets/game/GAME-59/堆叠预检.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "9aede0724f601d143f6bc779e1778f8f73d51b9cb8d5a1ca0bf79c20e50a1417",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-60-地图目标",
+    "path": "assets/game/GAME-60/地图目标.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "12edfab387568faedff9db8b834318b37e34e7b68cafa23b3a9a7f982b1895cf",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-60-压力与产出",
+    "path": "assets/game/GAME-60/压力与产出.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "2149f12495ac37ebc929e163d588136105786d98c726c4c5d8cc9224af5c5ca9",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-61-材料出口",
+    "path": "assets/game/GAME-61/材料出口.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "176befba2baefb2bef6588eb0215ae7ae722763321ccead2e69c289ca1da0a86",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-61-额度与结转",
+    "path": "assets/game/GAME-61/额度与结转.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "37bd0dd7eac6d99bcef3fc31b9a387a9a96f2405c684dfadffd1c4e4dd524440",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-62-入口与能力",
+    "path": "assets/game/GAME-62/入口与能力.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "abe5ac1a1727e5dcc903fd5884fff3b4c8d62519cefc36d20ddd93216881df38",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-62-模式与保护",
+    "path": "assets/game/GAME-62/模式与保护.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "3a96bb8f77dccee9099a2bb1381ae0216350864b02fbc1fc79a56a700b2c793f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-63-状态流转",
+    "path": "assets/game/GAME-63/状态流转.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "77fe74b14982d1c29de86288321c2fa27ed9f677b64d7f63de3831e1f12f7d70",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-63-奖励计划",
+    "path": "assets/game/GAME-63/奖励计划.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "eed21f78d7728bda05225352e4c029cd6052e92bf57da577450b5110399e7850",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-64-内容关系网",
+    "path": "assets/game/GAME-64/内容关系网.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "5daeac0c4b81e475be786722f6c3128f4e1c7588f21cbd5bd55f285cf99153fb",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-64-结局交接",
+    "path": "assets/game/GAME-64/结局交接.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "2ba0c03234eefdf179c0e9d8aa441b36b24b0a2aafe8bbfad6f0dd74625e20ae",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-65-三种状态",
+    "path": "assets/game/GAME-65/三种状态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "7c004bb99f47694edec25a1f90dee642c1b2ee9799466cc6669676d1fe1462ac",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-65-输入与暂停",
+    "path": "assets/game/GAME-65/输入与暂停.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "9017144b16550f7a3068792a513cb01985f4798d5c060fb14bf82c47aa430ad8",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-66-视觉与命中",
+    "path": "assets/game/GAME-66/视觉与命中.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "48d2ec5e2d04ce75d2917fe8b92860b013b1a9832ed5711cbed428a5dc312a68",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-66-投放与预选",
+    "path": "assets/game/GAME-66/投放与预选.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b069402a33622e38597dede12cfe07fa6a106f2e2ede143f4b3b7aba8e009b00",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-67-三条倍率",
+    "path": "assets/game/GAME-67/三条倍率.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b2794d3e1e32047d3edc26cc59ee8d4274a136a06670503f2add8f64ed00af2a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-67-独立弹层",
+    "path": "assets/game/GAME-67/独立弹层.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "0cc8470b4ed217621fe40eaec5ad4bfc749f2a856e62c992c180b103981ce189",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-68-三层数据",
+    "path": "assets/game/GAME-68/三层数据.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "52ff2ad27243d3388775971e4357eca3539e4c3370383e066aaea28861e63abb",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-68-事件与生命周期",
+    "path": "assets/game/GAME-68/事件与生命周期.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e07a34b653cb5fcd1e9c6e0e724c5ea90f41cf2dd2eed45d60fb4a9e37910bf8",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-69-追赶与过冲",
+    "path": "assets/game/GAME-69/追赶与过冲.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e83acb45465b481b59960a0b61ed83a48b485d80e5a3978bc16544809c6c525d",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-69-时钟与复位",
+    "path": "assets/game/GAME-69/时钟与复位.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "76a8528a618d828c9425c94eb3eaf668864957f76471bff1497b110bd1e4663a",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-70-分层与尖峰",
+    "path": "assets/game/GAME-70/分层与尖峰.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "f2fa3083df36f480d58d51b589a45bfa49101bb599e542f9bc750a58c9ffd575",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-70-测量分工",
+    "path": "assets/game/GAME-70/测量分工.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "062ba338564117158026c53c2bff6014e94f9c9e63ac2dc2e41f6228c75e62e5",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-71-反事实对照",
+    "path": "assets/game/GAME-71/反事实对照.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "824a8ecc5e10198fe6df7872352b7e74c776235cec062171a9e379ca80682699",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-71-首次与稳态",
+    "path": "assets/game/GAME-71/首次与稳态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "e02a7c4e6f9ecf6be2fd6f8e6dea8959bf1183980c182eca2e9a597aa60a524f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-72-共享调度",
+    "path": "assets/game/GAME-72/共享调度.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "b7d2e7e7dd3a54b65c8dbca0e1a764cc84d7e095aa281e99e5dd6f1772c2ac19",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-72-时钟与唤醒",
+    "path": "assets/game/GAME-72/时钟与唤醒.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "4c5b74294f024a906590ac1cb026fdd47403cf00bdb26ad862cddc9632116eca",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-73-两种所有权",
+    "path": "assets/game/GAME-73/两种所有权.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "6491c0519a7141c77fd067ca45450ee6e9053db7c717d2b4df78e68f4ebd044b",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-73-淘汰与持有",
+    "path": "assets/game/GAME-73/淘汰与持有.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a9e15a152eed42f25a29df12dd9609671a71c312ce75494c46145170ff7a486e",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-74-变化范围",
+    "path": "assets/game/GAME-74/变化范围.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "718342c8c7af9cfee1c3badce0e2f5eb2d11c561c5da6caaf8431c47513d889e",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-74-展示与比较",
+    "path": "assets/game/GAME-74/展示与比较.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "69f4c0bf30292bfcde6b3bf0cb041fd72d8bf1a4005637a8e8e21c172e6cc80f",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-75-负载与时钟",
+    "path": "assets/game/GAME-75/负载与时钟.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "53d9e672517b71085aa576240e95bf3e1118585a5f5810613ae3420e93445c14",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-75-趋势与归属",
+    "path": "assets/game/GAME-75/趋势与归属.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "d9476cb9252de4e6e38348ebe60b372bbfcbee8f73b8a9b71365c87f0a69e4bf",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-76-证据与假设",
+    "path": "assets/game/GAME-76/证据与假设.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "290ca249686448952a37ea36a7df0be0376d44f3376559a81e7d0aa90e7d6380",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-76-因果闭环",
+    "path": "assets/game/GAME-76/因果闭环.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "7c34a4b6d62ba9a96f5487a3a031a4982d56297f809a35eae8b641879a94ee89",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-77-请求状态",
+    "path": "assets/game/GAME-77/请求状态.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "fbfcf203d5738d451baf84e8dd3f46d861722822ab24d0fddef93ba6649be59c",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-77-预算与收敛",
+    "path": "assets/game/GAME-77/预算与收敛.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "975a7d82ccce245620dc5a985c75e73ed0ec46288c6be681d1f01301c462033d",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-78-写入交接",
+    "path": "assets/game/GAME-78/写入交接.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "decf2534622db1c54f608a2e805944130da0781f088ea3df3844456ffc7eb0f8",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-78-恢复与保全",
+    "path": "assets/game/GAME-78/恢复与保全.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "bb05ca05b164f008408ee4da71058bd3673daa98a0473f8b252610a0565d7801",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-79-版本边界",
+    "path": "assets/game/GAME-79/版本边界.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "a8682ff29303d5df466757fe37918b127529e4a248f18cad8960fb16f91bef86",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-79-迁移与保留",
+    "path": "assets/game/GAME-79/迁移与保留.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "fb33ea116ed09967d1913ebbfefa701e71ccdfc08f5dcef9f77590121c3449db",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-80-完成与覆盖",
+    "path": "assets/game/GAME-80/完成与覆盖.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "c6548c9ebfc0e0f2af3e43da43c5d9da4faa482ce3716f1cd16aba9901b8cf1b",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  },
+  {
+    "id": "GAME-80-验证分工",
+    "path": "assets/game/GAME-80/验证分工.png",
+    "size": [
+      1500,
+      1000
+    ],
+    "sha256": "ad7337121b0addbd3051f40b613c8ec6069df4c9ad22a1050a8b77020b6c043e",
+    "textBounds": "passed",
+    "method": "Pillow deterministic diagram"
+  }
+]

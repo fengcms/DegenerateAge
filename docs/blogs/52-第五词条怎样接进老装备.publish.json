@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-52",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发52：第五词条，怎样接进老装备",
+  "description": "给满星紫装加第五词条，为什么不能直接修改品质表？本文说明资格与解锁状态的区别、候选副本提交、四固定加一百分比形态，以及旧存档与保星边界。",
+  "tags": [
+    "第五词条",
+    "满星重铸",
+    "实例状态",
+    "存档兼容",
+    "原子解锁"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-52/封面.png",
+  "ready": true
+}

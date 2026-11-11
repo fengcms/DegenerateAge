@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-64",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发64：六章内容，怎样避免任务和地图脱节",
+  "description": "六章文件都合法，玩家为什么仍可能走不下去？本文把任务前置、目标地图、回交路线和结局持久化连起来，说明整链与实际路线验证的分工。",
+  "tags": [
+    "任务链",
+    "地图交通",
+    "章节门禁",
+    "结局状态",
+    "跨章引用"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-64/封面.png",
+  "ready": true
+}

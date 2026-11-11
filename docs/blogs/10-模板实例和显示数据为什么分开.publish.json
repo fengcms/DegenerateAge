@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-10",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发10：同一种武器，为什么不能共用一份装备数据",
+  "description": "以两把同名武器为例，本文结合《末法纪元》的ItemFactory、ItemUtil和装备比较入口，解释模板、实例与显示数据的职责，讨论稳定实例ID、随机结果保存、共享引用污染和显示缓存失效，避免整理背包或读取存档时改变装备身份与属性。",
+  "tags": [
+    "装备系统",
+    "数据建模",
+    "Godot",
+    "实例快照",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-10/封面.png",
+  "ready": true
+}

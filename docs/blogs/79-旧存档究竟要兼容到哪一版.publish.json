@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-79",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发79：旧存档，究竟要兼容到哪一版",
+  "description": "迁移函数里有旧版本分支，就表示正式入口还支持它吗？本文解释当前可读范围、缺省与非法数据、地图独立迁移门，以及旧资产怎样正确保留。",
+  "tags": [
+    "存档兼容",
+    "版本下限",
+    "迁移幂等",
+    "快照保留",
+    "导入校验"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-79/封面.png",
+  "ready": true
+}

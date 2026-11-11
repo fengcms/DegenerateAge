@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-34",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发34：从武士扩到法师，原来只有一个职业也会留下这么多假设",
+  "description": "本文沿《末法纪元》从武士扩展法师的工程记录，梳理身份归一、技能集合、默认快捷栏、属性系数位置、射程与自动行为，区分早期方案和后续资源调整，强调旧档与原职业回归。",
+  "tags": [
+    "职业系统",
+    "法师",
+    "派生属性",
+    "存档兼容",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-34/封面.png",
+  "ready": true
+}

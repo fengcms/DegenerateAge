@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-69",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发69：倍速一开，镜头为什么越跟越晃",
+  "description": "倍速与卡顿为什么会让镜头往返发散？本文沿隔离对照与当前稳定相机，解释真实时间、指数追赶、边界约束和明确传送复位的分工。",
+  "tags": [
+    "倍速相机",
+    "指数跟随",
+    "真实时间",
+    "过冲发散",
+    "镜头复位"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-69/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-44",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发44：十级一套装备，简化了什么",
+  "description": "从逐级生成收束为十级一套，减少的不只是模板数量。本文梳理部位偏移、来源等级、穿戴门槛、历史实例保留与成长节奏验证。",
+  "tags": [
+    "装备档位",
+    "动态模板",
+    "等级门槛",
+    "掉落生成",
+    "存档兼容"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-44/封面.png",
+  "ready": true
+}

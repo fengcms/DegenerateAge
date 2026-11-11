@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-46",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发46：保星升级，怎样保住玩家的投入",
+  "description": "满星旧装备怎样跨档继续使用？本文说明保星保留的范围、材料与费用规划，以及先确定产物落点、再统一扣除和穿回原槽的提交过程。",
+  "tags": [
+    "保星升级",
+    "装备传承",
+    "材料校验",
+    "原槽穿戴",
+    "交易提交"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-46/封面.png",
+  "ready": true
+}

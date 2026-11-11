@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-41",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发41：装备等级、品质和星级，为什么要分三条轴",
+  "description": "本文结合《末法纪元》的三轴模型与EquipmentMath，区分等级、品质、星级职责，解释基础与词条乘法、耐久和套装边界、生成入口与历史兼容限制，并给出矩阵式验证方法。",
+  "tags": [
+    "装备三轴",
+    "等级品质星级",
+    "属性快照",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-41/封面.png",
+  "ready": true
+}

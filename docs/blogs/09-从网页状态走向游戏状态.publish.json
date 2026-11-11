@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-09",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发09：从网页状态走到游戏状态，职责该怎么分",
+  "description": "从前端状态管理出发，本文结合《末法纪元》的全局服务、背包规则、战斗公式和事件通知，讨论状态归属、生命周期、提交边界及UI职责，并用切图说明为什么目录清晰还不足以证明运行时依赖合理。",
+  "tags": [
+    "Godot",
+    "状态管理",
+    "游戏架构",
+    "事件总线",
+    "全栈开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-09/封面.png",
+  "ready": true
+}

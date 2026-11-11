@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-20",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发20：一扇门打开以后，哪些缓存应该作废",
+  "description": "本文结合《末法纪元》门禁和导航源码，梳理动态通行变化对连通区域、路线、巡游及地图底图的影响，解释版本号、合法空结果和双向开关验证，避免门已打开而上游缓存仍拒绝目标。",
+  "tags": [
+    "缓存失效",
+    "导航版本",
+    "寻路",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-20/封面.png",
+  "ready": true
+}

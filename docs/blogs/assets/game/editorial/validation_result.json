@@ -1,0 +1,2422 @@
+{
+  "date": "2026-11-10",
+  "passed": true,
+  "errors": [],
+  "scope": "本地文章/发布配置/配图静态检查；不代表线上发布或游戏测试通过",
+  "sourceAuditCommit": "6c7aa51b",
+  "sourceHead": "0f6420c760dd40cd053d10625464656e64060586",
+  "articleCount": 80,
+  "imageCount": 240,
+  "codeBlocks": {
+    "text": 11,
+    "sh": 76,
+    "yaml": 2,
+    "ini": 1,
+    "gdscript": 95,
+    "python": 5,
+    "json": 2
+  },
+  "seriesReferences": 443,
+  "articles": [
+    {
+      "id": "GAME-01",
+      "file": "01-为什么一个全栈开发者要做单机ARPG.md",
+      "beforeChineseCharacters": 2323,
+      "afterChineseCharacters": 2323,
+      "images": [
+        {
+          "path": "assets/game/GAME-01/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "030a1735eb87ee102bacc65956758ac7184d040efa68ec3b886b375bc1171d3d"
+        },
+        {
+          "path": "assets/game/GAME-01/经验迁移.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a0557d8f26f720a2acf6f46bc4dce0bf68761d0cffd0cd4ef2771dda6bd7d735"
+        },
+        {
+          "path": "assets/game/GAME-01/持续运行.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "9069aa08cada749a2f7b73aef94ba3820a44d58a7087b28cbb8d12dbe31a2e51"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 0,
+      "ready": true,
+      "sha256": "b7217138e64506cf85566aeb99508c8bc06722156d27b43a7f7e5cd1efc9b267"
+    },
+    {
+      "id": "GAME-02",
+      "file": "02-打宝成长和探索怎样变成验收标准.md",
+      "beforeChineseCharacters": 2632,
+      "afterChineseCharacters": 2639,
+      "images": [
+        {
+          "path": "assets/game/GAME-02/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "23082558d4cad6f504538223eaf920d60596cf0543d5ac3e7cc0c506afff9b9a"
+        },
+        {
+          "path": "assets/game/GAME-02/核心循环.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "21315b9f2bb848ece0feb6dec0fc50ab4cd72a5389b9fe51ede46b9db96a38af"
+        },
+        {
+          "path": "assets/game/GAME-02/目标到验收.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5313f144f4f516e1151b15b4145711f97b33a9067a2c7ae58ac3b99024ce4ebb"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 2,
+      "ready": true,
+      "sha256": "08182cbbdffc17c2aea76aa6e3aa9a2dfe9150cc2467bb44cc908870d4bec8c1"
+    },
+    {
+      "id": "GAME-03",
+      "file": "03-首版到底不做什么.md",
+      "beforeChineseCharacters": 2252,
+      "afterChineseCharacters": 2281,
+      "images": [
+        {
+          "path": "assets/game/GAME-03/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "936fdf15a0ad1c1515ce8b45462fa74de16513a3c1d71ed41bf24b39ce9180b7"
+        },
+        {
+          "path": "assets/game/GAME-03/范围边界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e22b05c9a5bc89ec7889cd500236df9d41fca42733e54d1d26c7c6b951e97360"
+        },
+        {
+          "path": "assets/game/GAME-03/阶段取舍.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "69b7d8d8f8a742da8d81964b87be5a56d4d44e919a2c03af2b8979c2ee148b41"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "6d45ffdb35db3af3600f4b1324a6ba132e81c0401c5aba99e8e83d69fb51a176"
+    },
+    {
+      "id": "GAME-04",
+      "file": "04-Godot选型与工程第一天.md",
+      "beforeChineseCharacters": 2255,
+      "afterChineseCharacters": 2283,
+      "images": [
+        {
+          "path": "assets/game/GAME-04/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "84483fc03e0b3f23df7ead3f9140b56224ccf960c92fad6113b9b1dc97e3508c"
+        },
+        {
+          "path": "assets/game/GAME-04/工程分工.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "8518da66818ead42e6b00575dd055c083a4a264973b71d904ac447f141529b93"
+        },
+        {
+          "path": "assets/game/GAME-04/复现检查.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3f49b6b7c002aa14a4a3aee517e4952fea0bc05962bb07f833df78759ba65c22"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 3,
+      "ready": true,
+      "sha256": "e4c9d8a96ed335570182488031f2d9b8ebaadb61ef2898795c3ede5fe79ee4ad"
+    },
+    {
+      "id": "GAME-05",
+      "file": "05-从最小闭环到M10里程碑怎样演变.md",
+      "beforeChineseCharacters": 2384,
+      "afterChineseCharacters": 2412,
+      "images": [
+        {
+          "path": "assets/game/GAME-05/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "1f63095d41973b4f169347b8ed6ba1cd7b14b78da05e207a316c86e207bcd7e4"
+        },
+        {
+          "path": "assets/game/GAME-05/阶段接续.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "ac9b55774d5cd2a6dffca02a109ea88ddbc5185d856074a0fa5c4d5c5e40bdea"
+        },
+        {
+          "path": "assets/game/GAME-05/依赖与出口.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "af2d96f05aa1a9cc93682f30cb6711e1f91e3390b85f97e71dd2451f80d79952"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "7a85cf3c583ce5bddfcd251ec3f749af3c6d29643d14662cb4e4ea76a25009c5"
+    },
+    {
+      "id": "GAME-06",
+      "file": "06-与AI协作需求为什么要写成契约.md",
+      "beforeChineseCharacters": 2259,
+      "afterChineseCharacters": 2288,
+      "images": [
+        {
+          "path": "assets/game/GAME-06/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "076ce4556e0eb63dd5e7f864a63216cecaadf3d96f3015ae1adb41f7eec1e5e3"
+        },
+        {
+          "path": "assets/game/GAME-06/任务契约.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "af0c259887032a48308e3fc859bb9707af11ce5bb17de66e92bac9c53f49359f"
+        },
+        {
+          "path": "assets/game/GAME-06/验证闭环.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3ff43f2a4ece497cfa7e83524cd65a714887a2cdbe320042746044efa34468c3"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "4edaae4ce271437e76bcffb2c5710e40c235da0c0271d42b7e6e82fc84a6d79a"
+    },
+    {
+      "id": "GAME-07",
+      "file": "07-一份产品需求怎样拆成开发任务.md",
+      "beforeChineseCharacters": 2295,
+      "afterChineseCharacters": 2326,
+      "images": [
+        {
+          "path": "assets/game/GAME-07/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "4bf9100161db7d61b85596d1e6ac47ad204ed7a882b035204fdca8a36ca94c31"
+        },
+        {
+          "path": "assets/game/GAME-07/现状与缺口.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1c7141930516b38fc573f6621d12194e337cbe5b91c765719584e36d6027dcc4"
+        },
+        {
+          "path": "assets/game/GAME-07/任务交付.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e82b8b122fef004ca561a62ac6897ee0ce65563a79604af0be691c10b8b002f8"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "790afcf7cb007fd73e8565a604fe0e6d0b109a146276606dfa5a9cbc6b837a77"
+    },
+    {
+      "id": "GAME-08",
+      "file": "08-什么时候该停下来做完整度审查.md",
+      "beforeChineseCharacters": 2381,
+      "afterChineseCharacters": 2417,
+      "images": [
+        {
+          "path": "assets/game/GAME-08/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "6aaa258cd92a396cee42269af889a129dec9b0d651894758889d29eeb7ce5a8c"
+        },
+        {
+          "path": "assets/game/GAME-08/状态交界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "8001afe27049e31932856fe209f575b757fd205d322b1ea9173b09e61ccf6202"
+        },
+        {
+          "path": "assets/game/GAME-08/证据分层.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "8caea2c1580f4219d47dccddd5223bc02c1c8760fc71a38ec8f31785d4708ff1"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "e983052d49edc4c1d90cf345b90c58e1d74ab82f3cdc7a7c538d4cee0718bed0"
+    },
+    {
+      "id": "GAME-09",
+      "file": "09-从网页状态走向游戏状态.md",
+      "beforeChineseCharacters": 2267,
+      "afterChineseCharacters": 2297,
+      "images": [
+        {
+          "path": "assets/game/GAME-09/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "2a62e16cc5be5ab01471bbe4bcb9626c7cc7abcfef8363dbf3a00904d14177de"
+        },
+        {
+          "path": "assets/game/GAME-09/状态归属.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "28b2419665d7a92abd85d6a80577372649510396da4fa01fad3e0a495d783aed"
+        },
+        {
+          "path": "assets/game/GAME-09/提交与通知.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3dbeeeec8b5ff8cf82d8443705a46615cd9853f820b897f43a1b477bc18b30d8"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "dd4f0a9aac130bc62bfe5dd852095b189d841b4fbe7078f2a127b112ec88c176"
+    },
+    {
+      "id": "GAME-10",
+      "file": "10-模板实例和显示数据为什么分开.md",
+      "beforeChineseCharacters": 2229,
+      "afterChineseCharacters": 2262,
+      "images": [
+        {
+          "path": "assets/game/GAME-10/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "56fb45d7646f48bd6f6884cd4a4163b243a4dca328ab55ed1f16866914792d44"
+        },
+        {
+          "path": "assets/game/GAME-10/模板与实例.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a30eac41d7dd545e3eabe90066c35ad361dfe60976c1eaa494650d409c81a978"
+        },
+        {
+          "path": "assets/game/GAME-10/显示依赖.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "86378cfff267b4c8bd34e537b45717d93ebb24c6d22afd59c673219269ca9f20"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 3,
+      "ready": true,
+      "sha256": "79debac2b7c9ba460ab6a08af43c13b8316143a38bfeb346999436b30ee90360"
+    },
+    {
+      "id": "GAME-11",
+      "file": "11-JSON越来越多怎样防止配错.md",
+      "beforeChineseCharacters": 2343,
+      "afterChineseCharacters": 2375,
+      "images": [
+        {
+          "path": "assets/game/GAME-11/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "8a883e6c36c48aea19a320f268e3f0e36205d97aaad7fa55baabbc96dfebfef5"
+        },
+        {
+          "path": "assets/game/GAME-11/引用关系.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "8a90b16dd7935e65d81401126bd03e83ea21a6f08746463cdeff533331b6615a"
+        },
+        {
+          "path": "assets/game/GAME-11/校验层次.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b50d1371356155670df123df228886d7356ce36ddae5db5122ae669e60ca24ac"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "b78ddc362afdc140fbe2457ba38e08b912c565ddaef1f5eddcfd77b15b9d3d00"
+    },
+    {
+      "id": "GAME-12",
+      "file": "12-地图从总表拆成一图一目录.md",
+      "beforeChineseCharacters": 2273,
+      "afterChineseCharacters": 2305,
+      "images": [
+        {
+          "path": "assets/game/GAME-12/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "0d8d5b739961996a9b400c73d2f71e89999cb37d06b406d3c4e2ac41af5345fb"
+        },
+        {
+          "path": "assets/game/GAME-12/目录与接口.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "f9dc96f1285b280e7301a76317b9cef2d79947e5447872ab90477cc090bde4cf"
+        },
+        {
+          "path": "assets/game/GAME-12/说明分工.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1083f3d7760cb16a977536013561e52d43e09522f69113f9d95e1a2ebc5f299b"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "39ec905c3bccb4a11f520e2e7cccab60f214422efbde0e88779241b5bed4d08a"
+    },
+    {
+      "id": "GAME-13",
+      "file": "13-怪物按章组织能力不按身份分支.md",
+      "beforeChineseCharacters": 2232,
+      "afterChineseCharacters": 2268,
+      "images": [
+        {
+          "path": "assets/game/GAME-13/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "525a960963fa1538d724985074819155ca0efd2c3c3701d8fc0cca7a39dbcd72"
+        },
+        {
+          "path": "assets/game/GAME-13/身份表现能力.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "eb3bd7ea56a2d348b7bbf119f62c13dd7c0f9f8e7e956cacb2b5d4aa76a4c279"
+        },
+        {
+          "path": "assets/game/GAME-13/能力验证.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "40893a58e1a58a3ad87eb8307e99ad4029014e74d851d71bea6da47c6bc08c27"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "1b59d0da86e79c5244ea54754e8ce087fdb082d5a978e61b1fcc5ebf85b44654"
+    },
+    {
+      "id": "GAME-14",
+      "file": "14-为游戏做地图编辑器值不值.md",
+      "beforeChineseCharacters": 2309,
+      "afterChineseCharacters": 2339,
+      "images": [
+        {
+          "path": "assets/game/GAME-14/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "d7d4401ac67bbfea17b819f88b62bcd902ed2775f93c9ef2289f29e3edfafcc7"
+        },
+        {
+          "path": "assets/game/GAME-14/编辑分工.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "ddeb80aa93412cb56ee5d89e52f4c28aac6d68098ba5a950ea07ce7b5f2a1fa4"
+        },
+        {
+          "path": "assets/game/GAME-14/草稿到运行.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5ac6a8fee91b1307edfb7df2d099053e5c45abf4fdf0a96077b62da9de22351f"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "349f927a8c1d4069068528a8b94162dbd1991ebd71f5408d4ef0d1efde85e846"
+    },
+    {
+      "id": "GAME-15",
+      "file": "15-地图编辑器离UGC平台有多远.md",
+      "beforeChineseCharacters": 2316,
+      "afterChineseCharacters": 2360,
+      "images": [
+        {
+          "path": "assets/game/GAME-15/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "468b4322a62d06f55340f000cfc05235fcb08c4ade66b52b7cd0628d221bfe7d"
+        },
+        {
+          "path": "assets/game/GAME-15/外壳与编译.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5bdf4b55fab529c24b774c6a3797e1a1aa49c1e1c7d05aaa1ca49636b65035de"
+        },
+        {
+          "path": "assets/game/GAME-15/地图包边界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "c07f105b71bf89527a504daace30eb611e96806a08eb0df5576615f1fbe7ab6a"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "29264156774b4c04cae68ca2d9b2fb9b2fb1d0172f4addc63bb3ddd69b1edae8"
+    },
+    {
+      "id": "GAME-16",
+      "file": "16-文件都在游戏为什么启动不了.md",
+      "beforeChineseCharacters": 2393,
+      "afterChineseCharacters": 2424,
+      "images": [
+        {
+          "path": "assets/game/GAME-16/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "a7e75629fed4ec78a2ce5862eeae9eaca8cb5bb24c0ac5e2f169afec0e23d81b"
+        },
+        {
+          "path": "assets/game/GAME-16/导入依赖.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b69b6d7edb28a031ec83fa2c2e279a29cac77c704ed588dca769ee1c58e3fbbe"
+        },
+        {
+          "path": "assets/game/GAME-16/排查顺序.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "0d14bb0fd0734cc66357659320d5f2e76ba9d3288edb1adfe13082b2a7627d5a"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "f4c2da9a0d20d7b6ef8904fbaa7b61c6ef5b55c691af278e4de4767faecf3dc6"
+    },
+    {
+      "id": "GAME-17",
+      "file": "17-斜着看的世界坐标不能跟着乱.md",
+      "beforeChineseCharacters": 2249,
+      "afterChineseCharacters": 2279,
+      "images": [
+        {
+          "path": "assets/game/GAME-17/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "dca143842b7dd36f4c9cd6bf4bfe15bc8bfaa10f07f15931442c54d65215e99d"
+        },
+        {
+          "path": "assets/game/GAME-17/空间转换.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1e35c1bf01bfdb27439d5dd0a3204a5bd734315b477115cdb58bd246892dc826"
+        },
+        {
+          "path": "assets/game/GAME-17/地面度量.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "33fa9bc2c70db385a1bbbd0a1c82dcbc6bd2610537315bef5d121bc0f33f955f"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "b0fe04308de7acf726906a18c1172a8a6bbb52f41a6b7f904962d20f78d96a9c"
+    },
+    {
+      "id": "GAME-18",
+      "file": "18-键盘鼠标和自动移动谁说了算.md",
+      "beforeChineseCharacters": 2220,
+      "afterChineseCharacters": 2236,
+      "images": [
+        {
+          "path": "assets/game/GAME-18/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "4fbd4281c9c85b7c6fdf51ac997941b00bdb8e6aa20a53e93a1279a1094d33c1"
+        },
+        {
+          "path": "assets/game/GAME-18/意图优先级.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "047cfcc3de8cb03dcbb62b78668abbab4c0b79242e957a622df1c3022583f402"
+        },
+        {
+          "path": "assets/game/GAME-18/面板与世界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e3d1af491341978ebbc39ac3d3420ff4c398d2e735620b6a3b4ede62af1b77b7"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 3,
+      "ready": true,
+      "sha256": "252814d26a4ee994fea985bb40c3c14a684b397edfdca82b3a934a74f15c07b4"
+    },
+    {
+      "id": "GAME-19",
+      "file": "19-看着能过的墙角为什么走不过去.md",
+      "beforeChineseCharacters": 2214,
+      "afterChineseCharacters": 2243,
+      "images": [
+        {
+          "path": "assets/game/GAME-19/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "24685bcc5ef6db3bf841febcbf123fd3500fb78f22e18ed367c18aa2d4efd7fd"
+        },
+        {
+          "path": "assets/game/GAME-19/墙角反例.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a4eed71cab79cb2c37fed042d7227a431d5e9164419851ae9673dd61d11fef37"
+        },
+        {
+          "path": "assets/game/GAME-19/路径与身体.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "931e7e0b4fe7bad1c4390229e74e22cb927757532f899c84689024037747dc79"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "39b9160cd3b4c0c4286eb812447445da8630fae112e9a28e9540090ca913f7da"
+    },
+    {
+      "id": "GAME-20",
+      "file": "20-门打开后哪些缓存应该作废.md",
+      "beforeChineseCharacters": 2212,
+      "afterChineseCharacters": 2226,
+      "images": [
+        {
+          "path": "assets/game/GAME-20/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "e7341829d8e3fbd5e08697a60febe0674082686ff8354e5a1701d8ceacc56014"
+        },
+        {
+          "path": "assets/game/GAME-20/依赖清单.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "0fda4f85214773bfa25e451bc72efd44bddccd90b52f11454fb9613f01d4a2b7"
+        },
+        {
+          "path": "assets/game/GAME-20/版本失效.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "7a3de4df3f9dbc338dceb6e27597ee971f77891a2c79a8a5ff6c9cfcfddb4e3f"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 3,
+      "ready": true,
+      "sha256": "70559951d74282644047098c71e63e95d387602a47b768af10137121620a78cd"
+    },
+    {
+      "id": "GAME-21",
+      "file": "21-六百多个候选点需要逐个寻路吗.md",
+      "beforeChineseCharacters": 2231,
+      "afterChineseCharacters": 2258,
+      "images": [
+        {
+          "path": "assets/game/GAME-21/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "950349a976833963722b0ee2fe136f44bd7e0b3c568bd35f2f0a0636d6a9692e"
+        },
+        {
+          "path": "assets/game/GAME-21/查询分工.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "8ba6c0a3a6ab7acaa791f4e365c968fe68da20f1181738f5488ccb0be8fb3baf"
+        },
+        {
+          "path": "assets/game/GAME-21/区域与路线.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3771fc9597a6566933ef37aa5c37f1149708a4581a4ac38b7eecfec046932ddb"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "dd6b3ca4d063f1b26ecfb07603925426c391e47b8947dcac83ff656cd0bc6a68"
+    },
+    {
+      "id": "GAME-22",
+      "file": "22-自动战斗不是循环按攻击.md",
+      "beforeChineseCharacters": 2250,
+      "afterChineseCharacters": 2273,
+      "images": [
+        {
+          "path": "assets/game/GAME-22/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "617cbb706dfa3495b1e80b1b188f8b15b84adfa329be5f6384548893c2a4fa77"
+        },
+        {
+          "path": "assets/game/GAME-22/决策状态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "c679a0b7bcc3adc95eb58252b22bfc5393eadf1113f5155c669e5b6c98eb9741"
+        },
+        {
+          "path": "assets/game/GAME-22/共享执行.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a8aa1144100391610d4476ecaa42b72ff25c2879e4fefb23d463d97d51bf3810"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "5e89680d7a6b39baa46d741a2abbf521108818fffc8714e82d7c6294a5c22769"
+    },
+    {
+      "id": "GAME-23",
+      "file": "23-自动找怪为什么要记住巡游进度.md",
+      "beforeChineseCharacters": 2226,
+      "afterChineseCharacters": 2262,
+      "images": [
+        {
+          "path": "assets/game/GAME-23/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "769e6b2c1c3c3749c6a478420f33696c37429e7a86357a65f72015d6de2543d7"
+        },
+        {
+          "path": "assets/game/GAME-23/主路与补漏.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "6eca8348f26a51bd90dbd69fad7dbd1ee391810e136ac224c2d98ed7d44ae660"
+        },
+        {
+          "path": "assets/game/GAME-23/中断接续.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "c3f324fcf4acfdcfb9531d8e7a58d1af34540c7f892b2f181105a91b9c1712ea"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "2b0b848f2b5d707acee34b0e8a4e83cfb1a9f155c168b3feb2594a9b2792f0b4"
+    },
+    {
+      "id": "GAME-24",
+      "file": "24-Boss打到一半为什么换目标.md",
+      "beforeChineseCharacters": 2212,
+      "afterChineseCharacters": 2239,
+      "images": [
+        {
+          "path": "assets/game/GAME-24/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "e1f7fca2ba4bebc0c2c6ed05621a3daf33985d67d67427710d4c39a5b8db2cdc"
+        },
+        {
+          "path": "assets/game/GAME-24/误判链路.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "8d01d0df112de23fb964bd09fcad98b95dd5c2a89e3b7fdf7112e3170698dd77"
+        },
+        {
+          "path": "assets/game/GAME-24/临时记忆.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "ffea0f1434fc579353621f98439cb1c806fa82b163ca67442300df0606932d47"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "9127fd1af4273cffa7fb75b65a1ed4171729f0915e212841d6c098f8678915a0"
+    },
+    {
+      "id": "GAME-25",
+      "file": "25-地图变大刷新怪物不能跟着变贵.md",
+      "beforeChineseCharacters": 2223,
+      "afterChineseCharacters": 2265,
+      "images": [
+        {
+          "path": "assets/game/GAME-25/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "7bcaaf863425938627a89c13c1e0088f834c12f5231fb87ebcc5f0ce02cec549"
+        },
+        {
+          "path": "assets/game/GAME-25/预算快照.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "81a875631f8175eb225dddc97b4c7fa20c5e030a32611ab207f43cf7c4c352c3"
+        },
+        {
+          "path": "assets/game/GAME-25/刷新生命周期.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5697e055f5cd045dabec3202b911777613be4de0486c676aa97164331d2a9e27"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "d8a54786e2170305a81e2744460f19bee2bb9a48edcc7aa2dfc95600dd53eb17"
+    },
+    {
+      "id": "GAME-26",
+      "file": "26-免费步行与付费车夫怎样各有价值.md",
+      "beforeChineseCharacters": 2241,
+      "afterChineseCharacters": 2300,
+      "images": [
+        {
+          "path": "assets/game/GAME-26/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "826a82b7f61e1894ae81fccf191cee159b76d3d2cabfec958c4c9d32ee520341"
+        },
+        {
+          "path": "assets/game/GAME-26/交通拓扑.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1ba529c7f140c9a7a131a3a752df3eafcd85429496bbb7d761cd8400c3797fe4"
+        },
+        {
+          "path": "assets/game/GAME-26/旅行提交.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "86b20b1d56dc6575b5d11d2327e85487539e0665bd9893708a1555f148861728"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "1aae6b7b02af9ab7c43f49666747ee18d49fa639d0d7266a9b04ae45cabe2836"
+    },
+    {
+      "id": "GAME-27",
+      "file": "27-小地图显示整张图还是附近道路.md",
+      "beforeChineseCharacters": 2254,
+      "afterChineseCharacters": 2290,
+      "images": [
+        {
+          "path": "assets/game/GAME-27/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "3cd7ec8b0ea78882210fb9ae3bd1cda1ae3753ba2d147ae5b59af1dafe5a4521"
+        },
+        {
+          "path": "assets/game/GAME-27/全局与局部.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3c2af0d263670b8b7f91a90c398dd010e12c37e610a6786d0a7abd18b664fc2f"
+        },
+        {
+          "path": "assets/game/GAME-27/跟随与裁剪.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "22a086b04723d4e2f06721cfaff0bfc23b1a7e9592f6af4f611f3b7052b40479"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "059a51344e545d8d513abb4451b6cfcc6744016d039422e68bcf3791f710f2d5"
+    },
+    {
+      "id": "GAME-28",
+      "file": "28-迷雾任务标记和路线怎样共用世界.md",
+      "beforeChineseCharacters": 2257,
+      "afterChineseCharacters": 2325,
+      "images": [
+        {
+          "path": "assets/game/GAME-28/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "d5bc81ab6f1cbbc47d458552cf01b3d7c99faef1f043b5ec93bbb786d93cb15d"
+        },
+        {
+          "path": "assets/game/GAME-28/三种信息.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "6e4098096ae4fc55fa99ffc5149b456a53db14070840f22c07a144979f941c2e"
+        },
+        {
+          "path": "assets/game/GAME-28/路线来源.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "917891c408fee7f90e1ae6a83012704db2982aa6d66c49561dea0ecedeec72a9"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "743e9c9bc3d023d4d28b014252c15ff9e0fde8e73a6be45acbe8c246c29ce9dd"
+    },
+    {
+      "id": "GAME-29",
+      "file": "29-一次攻击在哪一步算伤害.md",
+      "beforeChineseCharacters": 2392,
+      "afterChineseCharacters": 2423,
+      "images": [
+        {
+          "path": "assets/game/GAME-29/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "3c3c6565756b8461be3eb20d9502c69d161cdb9ce4d1378cb7cbccc4add034e6"
+        },
+        {
+          "path": "assets/game/GAME-29/结算链路.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "63a04aeb5cd97202879dcc613701cfe46777c578ccd3fb0de68c2b166f5aa2e6"
+        },
+        {
+          "path": "assets/game/GAME-29/结果与提交.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "d00503e204697b21404e96c595789ce3d932d842a7df4f81db715aa300043cc5"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "89bacb521a9708d1507bb8d42ce359b56417816864474bd6476c54c2c2d0d91c"
+    },
+    {
+      "id": "GAME-30",
+      "file": "30-伤害公式为什么要能更换随机源.md",
+      "beforeChineseCharacters": 2250,
+      "afterChineseCharacters": 2279,
+      "images": [
+        {
+          "path": "assets/game/GAME-30/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "2170579060ffe7ab21557a416aa40feccdde046c4708c572c6dec0ed1cc02dd9"
+        },
+        {
+          "path": "assets/game/GAME-30/可复现输入.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "17aa0fa0e83e80faba782f6d110140b8c3eba000e2760bd1391e4691145af008"
+        },
+        {
+          "path": "assets/game/GAME-30/两类验证.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "525575f28c086d929a1650e4df0f59413dc36812bc8c40fa26b28c4826d83d05"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "11c0c6ee989e631a3cf37d425df6db78085762f4bca4fd20784b97ec9b69b1e1"
+    },
+    {
+      "id": "GAME-31",
+      "file": "31-怪物状态机还要管理死亡以后.md",
+      "beforeChineseCharacters": 2238,
+      "afterChineseCharacters": 2295,
+      "images": [
+        {
+          "path": "assets/game/GAME-31/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "32682fdc938b0d90d06d4207a71645ee204dcd5c639e5f3e88e6591f723e6fef"
+        },
+        {
+          "path": "assets/game/GAME-31/生命周期.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "4e1bf06614763bcdc24b0a2ce94994a181ace51fb73be2d8eacbd8df87d60a95"
+        },
+        {
+          "path": "assets/game/GAME-31/死亡交接.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "77f93cdbd5c5b3d56b4b054246c38d03f1174e752b13f28d9a8a258946e961f5"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "7ea70f083abb4203145753583cfb3e2e195c02baaebddcff1ec1a94f1363e587"
+    },
+    {
+      "id": "GAME-32",
+      "file": "32-Boss没有接战为什么已经放技能.md",
+      "beforeChineseCharacters": 2222,
+      "afterChineseCharacters": 2263,
+      "images": [
+        {
+          "path": "assets/game/GAME-32/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "f30c884d1fc854290615297a2f6fdd7c08de1e1b362781288d97971eca572f36"
+        },
+        {
+          "path": "assets/game/GAME-32/宿主与组件.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "90b176e8713c38a120b9ec8c10b2b42a30c2d7b2661211101b2a7ddf32214336"
+        },
+        {
+          "path": "assets/game/GAME-32/取消边界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "d8e5cd4c78d20dec255c9fd447b87a5f35debbff0848230092271a43a3256874"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "0eec095a73aa12a522a2778d5328327e4c14ada7aeca080f7981e23debb7bcbf"
+    },
+    {
+      "id": "GAME-33",
+      "file": "33-技能不只是几个伤害系数.md",
+      "beforeChineseCharacters": 2257,
+      "afterChineseCharacters": 2295,
+      "images": [
+        {
+          "path": "assets/game/GAME-33/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "bae7cd22c133fbcfa314da75d1e61b05fca4af1d9be722bc499fcd9c5599232c"
+        },
+        {
+          "path": "assets/game/GAME-33/技能契约.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "419b885a57c5c28412d4087f18be0136bcf5bf67f3ccd892207925f3538d63a1"
+        },
+        {
+          "path": "assets/game/GAME-33/施放与命中.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "d4cfde8f7d8ecdf5af3413673c707eb17692d29378efe7d39dd0f62d9782a654"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "6a3a98bdd68199e9b3470c402b473241190bafd6fc05f981595ba4b983ae40e7"
+    },
+    {
+      "id": "GAME-34",
+      "file": "34-从武士扩到法师哪里容易写死.md",
+      "beforeChineseCharacters": 2222,
+      "afterChineseCharacters": 2286,
+      "images": [
+        {
+          "path": "assets/game/GAME-34/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "766c46028a336cf32dd12119b2f3df4d397e7e07a1af299b40da428b31e68b1e"
+        },
+        {
+          "path": "assets/game/GAME-34/职业入口.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "fe99e45797a84300c0fa28914fec8ebb9b05070cc04edcd324b5c6caa6e95522"
+        },
+        {
+          "path": "assets/game/GAME-34/派生与行为.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "db27e87c9aa55d97a24ed2a394d22941cd08d2f5eba0f163dc7641892a57b9cf"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "ee7c9178e5e1d1eaf09a4dac51b9b2632c00d1870e255354fd813d1defe8472d"
+    },
+    {
+      "id": "GAME-35",
+      "file": "35-被围住以后法师为什么不群攻.md",
+      "beforeChineseCharacters": 2223,
+      "afterChineseCharacters": 2272,
+      "images": [
+        {
+          "path": "assets/game/GAME-35/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "16036a802d33d32a7f93dd67cff3f0945af545976303ee1c824e7537c32e34f0"
+        },
+        {
+          "path": "assets/game/GAME-35/优先级空档.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "079f0922e9f8c5a379d09fd99d3fb1e0a0b9f33fedc0fd1ddd704aeb844826c9"
+        },
+        {
+          "path": "assets/game/GAME-35/解围条件.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e93e89690833bb87a5d820cd6603504b8025c00e4227ae6e75dd45cdfe4b92dd"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "c668493497fa47e8f58ecede719d35ca645aed00fd40f5d1b5919b15963ed7a4"
+    },
+    {
+      "id": "GAME-36",
+      "file": "36-自动喝药和魔法盾怎样形成资源玩法.md",
+      "beforeChineseCharacters": 2238,
+      "afterChineseCharacters": 2289,
+      "images": [
+        {
+          "path": "assets/game/GAME-36/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "d499904ea008587c536db19a9b68fa2f6e78e95ba588ae63643669726ec31048"
+        },
+        {
+          "path": "assets/game/GAME-36/资源收支.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "baecdf1da255eb660b0608deeb4fa073f98cff8b3088e2f9bb4ce876caea585d"
+        },
+        {
+          "path": "assets/game/GAME-36/护盾分配.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1e39e39d7c8deca86521f9e3e625b693f038d624e5e6927e624759e081599ee9"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "e5b997f8d5359880289065479a2295d270962f524e46864133f522d7a88df9fa"
+    },
+    {
+      "id": "GAME-37",
+      "file": "37-技能升阶怎样留下成长空间.md",
+      "beforeChineseCharacters": 2222,
+      "afterChineseCharacters": 2281,
+      "images": [
+        {
+          "path": "assets/game/GAME-37/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "dad5d4bae92d746dc960af10dd4f9d7b4fcb1679566619c84b0d1b46680ba1db"
+        },
+        {
+          "path": "assets/game/GAME-37/定义与阶数.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "590a4d434da1aa8fc5f286ae1261ec2f47f68b2714648fe856da842511011e32"
+        },
+        {
+          "path": "assets/game/GAME-37/购买与生效.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "d01912951882709dc03d72e4ddf61a920001aea9ac816a6ade98d8dbd1276d74"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "eb7328e7d11127044d0e166e81f83d71dfa13b545a215dbfa69c571a8d3a6539"
+    },
+    {
+      "id": "GAME-38",
+      "file": "38-等级高了为什么打怪没慢多少.md",
+      "beforeChineseCharacters": 2235,
+      "afterChineseCharacters": 2289,
+      "images": [
+        {
+          "path": "assets/game/GAME-38/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "1cb0916134da897b25ee1320927f16b4f05c50f0cc58ac4272a4920a88f272d2"
+        },
+        {
+          "path": "assets/game/GAME-38/等级来源.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "adfb12e798b56731c1c1264aae03046f8afef01363643d9949da0d9964978dbf"
+        },
+        {
+          "path": "assets/game/GAME-38/输出拆解.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "c9871d8bb0628fe00c260187bb862cef8f8ae023e8980c8063a49c9fd1ef2d8a"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "14c6df402a34971ce9ba6bcdbf19e67eae1a0cb61a529064bb01186f483e7784"
+    },
+    {
+      "id": "GAME-39",
+      "file": "39-装备跨级二十级缓冲怎样设计.md",
+      "beforeChineseCharacters": 2208,
+      "afterChineseCharacters": 2277,
+      "images": [
+        {
+          "path": "assets/game/GAME-39/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "9b1c6dcf5f3ebc22dfa49138723a45f8db7473c20595b2ad947ebcd055cfd2c7"
+        },
+        {
+          "path": "assets/game/GAME-39/逐件缓冲.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "bb8bf404444e174fa601df8ee6377c60cc74df2199964197c75a48d25816a1bb"
+        },
+        {
+          "path": "assets/game/GAME-39/接线与反馈.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1a782e329eda3907f1c55d83ea6a21cf6b9a9ee41c924713759a8de3e32070a8"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "dea8794a8a42f1b3bfc3b5446d3f2906a91b11c88dc6e7b660815b6fa0f09956"
+    },
+    {
+      "id": "GAME-40",
+      "file": "40-地上的攻击范围为什么必须是椭圆.md",
+      "beforeChineseCharacters": 2221,
+      "afterChineseCharacters": 2255,
+      "images": [
+        {
+          "path": "assets/game/GAME-40/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "1a5244ebd04b13a4ec40a43472846496f3f2ae0c039bbce8f5db249986ba1338"
+        },
+        {
+          "path": "assets/game/GAME-40/画与判.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "dbb4b901e490629839add81d3fc83ae3f9ca3f6889fd60a605f29d2d34cceeeb"
+        },
+        {
+          "path": "assets/game/GAME-40/几何迁移.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "531af414f1dc26206bf1e78e50163d159903d1aa298786f6b942b619d65ec849"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "5d897d07db45ea46ab9c76124cf0178de4c2e1bb3154a76aa36f6bae489924db"
+    },
+    {
+      "id": "GAME-41",
+      "file": "41-等级品质星级分别解决什么.md",
+      "beforeChineseCharacters": 2212,
+      "afterChineseCharacters": 2260,
+      "images": [
+        {
+          "path": "assets/game/GAME-41/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "6d2f78680eb08a0109a9c4d7bb120a3e6a35148086066e51fd7d7d63495d747f"
+        },
+        {
+          "path": "assets/game/GAME-41/三轴职责.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5f47568a02143511e5535023783eaac615d90fab389211814a9a7594c3b8ee4f"
+        },
+        {
+          "path": "assets/game/GAME-41/属性组合.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3338c5748294021298bd7f7361a2cd6efb61fbffe04108c15662d0d5243a65a1"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "cafb19b591a07c9aabab502018ac7049f5ef14aefce994a02c166f0095b03860"
+    },
+    {
+      "id": "GAME-42",
+      "file": "42-装备为什么需要稳定实例ID.md",
+      "beforeChineseCharacters": 2215,
+      "afterChineseCharacters": 2263,
+      "images": [
+        {
+          "path": "assets/game/GAME-42/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "ba6327dfb7c4e99d5663c6097ad0da4f49d0871dbd59c5903b304d5eb9057bc5"
+        },
+        {
+          "path": "assets/game/GAME-42/身份与位置.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "7565da5e0906483bdfa112a846f54e221c1614508d1351c599228db39396fe6d"
+        },
+        {
+          "path": "assets/game/GAME-42/重定位与快照.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e8b9565feed8fc7890362ff0d3d81d07737cf65c97eb1f1bc40bb489387a2572"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "df4ea8e973d92c613282f9d1131567c8e8761dc9404e5632fe5ff87e11cf3c9b"
+    },
+    {
+      "id": "GAME-43",
+      "file": "43-左右两个槽怎样判断新装备更强.md",
+      "beforeChineseCharacters": 2235,
+      "afterChineseCharacters": 2264,
+      "images": [
+        {
+          "path": "assets/game/GAME-43/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "a5f1fe4f6fefe8081fc82a9db390b89f1ca576438670fe10b4c44f6e82520252"
+        },
+        {
+          "path": "assets/game/GAME-43/目标与比较.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "9e9c34ccf412c92b6599814789cf027a91decded2956cb7701573163043eb757"
+        },
+        {
+          "path": "assets/game/GAME-43/共用预览.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b232fa9b249f53de76b5971c566612f50b2e6ada58fba973ca76daa503d23e3b"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "73830c54a379235cb6d573bc101a2c9ed13d25a1327ebae5656c5b7bb47e8092"
+    },
+    {
+      "id": "GAME-44",
+      "file": "44-十级一套装备简化了什么.md",
+      "beforeChineseCharacters": 2238,
+      "afterChineseCharacters": 2278,
+      "images": [
+        {
+          "path": "assets/game/GAME-44/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "30ce8bf37d79da4285823f39297f625113b58f090bee4ea936e1b0e13bc5dc71"
+        },
+        {
+          "path": "assets/game/GAME-44/档位与部位.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b6d0d8d01ab56b00dc9c2f4eddf20634b9358ce6037a0e9d001c5ff003b71679"
+        },
+        {
+          "path": "assets/game/GAME-44/新旧实例.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "15614ce50d3cb20b88e683bfa0db0a76f71cd7618dc05046937bc018e90e825b"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "ba5d432d7e82dac20fdd621fa8b0856f02c3078f3ad2c58974d3a49667cd8018"
+    },
+    {
+      "id": "GAME-45",
+      "file": "45-升星与套装怎样互相放大.md",
+      "beforeChineseCharacters": 2224,
+      "afterChineseCharacters": 2253,
+      "images": [
+        {
+          "path": "assets/game/GAME-45/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "079e889359285bbca3f0ca63214ae9a22f60b8c2dd4a53c15a51958697d7bbf4"
+        },
+        {
+          "path": "assets/game/GAME-45/最低门槛.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3ad30a8b0e160777c9071b789b38d262233d41f877e4fd46d201a2a2cbde4e64"
+        },
+        {
+          "path": "assets/game/GAME-45/分层缩放.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "faadab6fbf0f3e96f4be502019bdf405ae3a494050823d0709df381c862328cd"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "c86c8d331b762df3e84deaa980aca85534a044afc30f9fb62db94e2fe77525e1"
+    },
+    {
+      "id": "GAME-46",
+      "file": "46-保星升级怎样保住玩家的投入.md",
+      "beforeChineseCharacters": 2231,
+      "afterChineseCharacters": 2279,
+      "images": [
+        {
+          "path": "assets/game/GAME-46/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "5f5f1775814064697ab09233e86dd2a4eb23d8129c5ca8dfc616480f66c4139b"
+        },
+        {
+          "path": "assets/game/GAME-46/传承与代价.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1be21d752cb203dfb15ce85eabde5e246ac00ad6cb909f57d412d2759cee5812"
+        },
+        {
+          "path": "assets/game/GAME-46/规划与提交.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "9d7316a184af2c74980875a39c987538c075fa2933c8e276190ec23b1436e7fa"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "1af55f5b9b0052cf84e8b909338076e54dfebc18d96d8f07e84d12880f5d5fba"
+    },
+    {
+      "id": "GAME-47",
+      "file": "47-战斗不停材料预选为什么老被清空.md",
+      "beforeChineseCharacters": 2241,
+      "afterChineseCharacters": 2266,
+      "images": [
+        {
+          "path": "assets/game/GAME-47/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "30b4d5b9f2eda8b6d1d69e029689b7471e7fe09c8258e79d0c2495565c5a4c5b"
+        },
+        {
+          "path": "assets/game/GAME-47/变化分级.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1a306777d916bba01f74dc2825f3d6beec8ffbaad62d31d4a2242fda3d8018e5"
+        },
+        {
+          "path": "assets/game/GAME-47/快照更新.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a0cc8e891edece27d41715f2e59a29c0989d380c776380940a3f967c764a6bd5"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "438ad936a9bdffa70f2cb6d5d56f842299b08633df353702d4880536bf48458e"
+    },
+    {
+      "id": "GAME-48",
+      "file": "48-怎样锁定同一笔交易.md",
+      "beforeChineseCharacters": 2244,
+      "afterChineseCharacters": 2281,
+      "images": [
+        {
+          "path": "assets/game/GAME-48/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "2d58eadb11dee7e3629169fbf7ab0795cacfb019a050c1eca4de5bebadc378d3"
+        },
+        {
+          "path": "assets/game/GAME-48/条款与状态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "881a8025c5cb9193caf4732a756c86ee9f569b4027b477ac72a2dd7ac0ad5757"
+        },
+        {
+          "path": "assets/game/GAME-48/固定批次.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a8f912ffd3841ad6fcd63a191ba1bd8dafaac588a0ce662c59ceb0584b16d36d"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "96ffc322363cd71a6b20acc32ed3fe1a3d56ab38855786ce9427b02719dddbcf"
+    },
+    {
+      "id": "GAME-49",
+      "file": "49-四件合一随机应该落在哪里.md",
+      "beforeChineseCharacters": 2221,
+      "afterChineseCharacters": 2272,
+      "images": [
+        {
+          "path": "assets/game/GAME-49/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "3eaa3601f8738bb8190b21fe1b37ffb431845e5be29168a9e05501bcecb91583"
+        },
+        {
+          "path": "assets/game/GAME-49/同档优先.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "62f26cfe55ce0265ba2fb724671567732658c7b5025ab1be924b69be5d2ae683"
+        },
+        {
+          "path": "assets/game/GAME-49/随机边界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "45689137e9e50b557634750a3fabba469d8f37379038efc5fa387bf669030dca"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "48b2c4aa327dd54a12162849b2605578882abe3218a034828c9f4284970ab73f"
+    },
+    {
+      "id": "GAME-50",
+      "file": "50-批量合成不能循环调用单次合成.md",
+      "beforeChineseCharacters": 2242,
+      "afterChineseCharacters": 2279,
+      "images": [
+        {
+          "path": "assets/game/GAME-50/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "7c01249bdf6843669f97689e4dfad05b58d210f3eab69899386be32fe1d078c1"
+        },
+        {
+          "path": "assets/game/GAME-50/准备与提交.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "0c81f90cc8c00b34352424471c8e343c1dd9237815b2ca8d49380728b8eb5acc"
+        },
+        {
+          "path": "assets/game/GAME-50/当前副本.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "7bd936b9435aaf90210f96eb64bc44b415b4cfed76b58dd9007a8afb62c24f95"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "fda0ee625d46265ac78357931e9b8f1c3086e09f1784173cf97c0962cfd5485a"
+    },
+    {
+      "id": "GAME-51",
+      "file": "51-锁词条以后重铸规则怎样变.md",
+      "beforeChineseCharacters": 2217,
+      "afterChineseCharacters": 2267,
+      "images": [
+        {
+          "path": "assets/game/GAME-51/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "3ba49db1f83f62aac581424fc6aa7c4764ff173a04e49d44367675a4c469e981"
+        },
+        {
+          "path": "assets/game/GAME-51/锁定与候选.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "d43b4082b882a2a0d3ede4c961ef185c61f3821da39fba0c7b4e2226ed41d862"
+        },
+        {
+          "path": "assets/game/GAME-51/投入职责.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "29e30b99b197e00e722a0fde5456c4223daa83aa91c143187236c569f4d1bf3f"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "055de3dcdfad824eb306228dd8620ff6375097fcc05b15b6c5e942093c5d3e84"
+    },
+    {
+      "id": "GAME-52",
+      "file": "52-第五词条怎样接进老装备.md",
+      "beforeChineseCharacters": 2368,
+      "afterChineseCharacters": 2401,
+      "images": [
+        {
+          "path": "assets/game/GAME-52/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "4e0bd3d81e8174bf1829802681ac3fb34bfd1ee94c4b912bccca3edd30a14f14"
+        },
+        {
+          "path": "assets/game/GAME-52/资格与形态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "680225a6365c2a8730a8ee79ac381a0f9abf94f261b0c7bddcfbcd65f0c7df72"
+        },
+        {
+          "path": "assets/game/GAME-52/兼容与提交.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "39bdd54717f02b26d27f417cafc6338f2a576908a04ebd9e69e51355920ac1dc"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "3aac28f8ba96b70f442f31749f1af953ff24ddc307676005e4c5984b22f41a01"
+    },
+    {
+      "id": "GAME-53",
+      "file": "53-掉落动画没飞完奖励归谁.md",
+      "beforeChineseCharacters": 2254,
+      "afterChineseCharacters": 2269,
+      "images": [
+        {
+          "path": "assets/game/GAME-53/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "c91c141d0fb915812b85f2b07b7fc365528d429868c4c8b09729132d60f31f30"
+        },
+        {
+          "path": "assets/game/GAME-53/认领与表现.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "ee24e8dc9ccd95fe7db0182649e11860f19087a72739d52919634bd9b28e8ce1"
+        },
+        {
+          "path": "assets/game/GAME-53/失败与清理.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "461ee7792abdee8873bfd9b72889bf9dc27ac3a0ed302c35c2bfd1770e0ba82f"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 3,
+      "ready": true,
+      "sha256": "2a410efd54b1ce48c8e1a0b8fcfaf3962697b7839c88712044c330423f73b7f9"
+    },
+    {
+      "id": "GAME-54",
+      "file": "54-Boss死了换张图墓碑为什么没了.md",
+      "beforeChineseCharacters": 2238,
+      "afterChineseCharacters": 2261,
+      "images": [
+        {
+          "path": "assets/game/GAME-54/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "8954ad1ceaf3a01987a9c6a990a066ea8c61325e0abcb05187a8fe62edd11d97"
+        },
+        {
+          "path": "assets/game/GAME-54/状态与节点.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "f5af87ed0fdaa1bc8bbded3236ae1ce378f5c184f5cba15258b8012d39a25b7b"
+        },
+        {
+          "path": "assets/game/GAME-54/两类记录.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "1aba099520f20a0990824a02865e011c2e1e8ab996e973dc8a6f3bf79cc321e3"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 4,
+      "ready": true,
+      "sha256": "cbfa34b5a40d426c9458678a671f65d0ab4933c6b3ecc1b8135e84185b3604ab"
+    },
+    {
+      "id": "GAME-55",
+      "file": "55-满背包不是异常情况.md",
+      "beforeChineseCharacters": 2245,
+      "afterChineseCharacters": 2276,
+      "images": [
+        {
+          "path": "assets/game/GAME-55/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "fc6cfa11ff964c4ee7e072ad52d556af216bc7e0c95e6ce5ca46e0a5fcc1df26"
+        },
+        {
+          "path": "assets/game/GAME-55/失败与失效.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e941f34b12bc0537edfc825859680a7e9a72abcbce2a6101934df22ac6e3c507"
+        },
+        {
+          "path": "assets/game/GAME-55/恢复与交互.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3b248f8b6b38b30f53044088406d2d295e0c44ceb4eeab5bc5aa919852887690"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "88469a4b5bc2d7b21651fdac20257e85eb773300db26fff7090d5a3dea657a6e"
+    },
+    {
+      "id": "GAME-56",
+      "file": "56-自动出售为什么只能接在拾取入口.md",
+      "beforeChineseCharacters": 2239,
+      "afterChineseCharacters": 2280,
+      "images": [
+        {
+          "path": "assets/game/GAME-56/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "a4bd2d55f1629ca22b9974f167109f31e9d78ef9113c938ba764f5bada85d090"
+        },
+        {
+          "path": "assets/game/GAME-56/业务入口.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a632f2757752b5591e85cc374bbfa1a25333d543d21f57598a814fd6ce74e21a"
+        },
+        {
+          "path": "assets/game/GAME-56/候选与让位.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "f8ed4382ca2ce4a344e4f441017b02ae7ff12f8fce47709dbd5fcc897ce3b586"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "56ad5c0ef3e8716c9db46429c9c2307761faa9aee67bbd1b9324c225029629cf"
+    },
+    {
+      "id": "GAME-57",
+      "file": "57-预设和本次勾选不能是一份状态.md",
+      "beforeChineseCharacters": 2241,
+      "afterChineseCharacters": 2280,
+      "images": [
+        {
+          "path": "assets/game/GAME-57/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "edcfcbe9b080239c012f3088073264513141c72a02c5dc2eb8fbc0ae5ce3c5ef"
+        },
+        {
+          "path": "assets/game/GAME-57/两份状态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3d62c0baf74eda71c73cfcb6d18debe76bc721e1f87154df58b1e27028ef9fcd"
+        },
+        {
+          "path": "assets/game/GAME-57/预览与终验.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a748d71ab2e1a68de37fd0e8d7e45da0774e55aa6270c5f922fa3dbcc2913771"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "de3a0c1b57b944fc25794aa420bd64bddaba196cdc76f7a85472ae2bc6ad1e06"
+    },
+    {
+      "id": "GAME-58",
+      "file": "58-金币封顶卖出去的物品怎么办.md",
+      "beforeChineseCharacters": 2203,
+      "afterChineseCharacters": 2238,
+      "images": [
+        {
+          "path": "assets/game/GAME-58/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "c720228a1a3193cf10fb2fffc76e62783c7f8e1e3ee6398723486fb660b04a72"
+        },
+        {
+          "path": "assets/game/GAME-58/理论与实际.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "de0e6985402840dbbb6bcce686ce417b042605d49a8a74247e8e37a17130a369"
+        },
+        {
+          "path": "assets/game/GAME-58/托盘认领.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "751300e0a73d58c69a3bab0752c6c8d76a4edae4b0ee47d9e63755bddf0a0442"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "2389703b432f4f650361ce52cf3050c90bf33d92d158a698400eaed873bf6451"
+    },
+    {
+      "id": "GAME-59",
+      "file": "59-背包容量也是一个经济参数.md",
+      "beforeChineseCharacters": 2254,
+      "afterChineseCharacters": 2292,
+      "images": [
+        {
+          "path": "assets/game/GAME-59/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "2fd818be07c61641a8d6843ba8b280a95ba79f0dc88c521adc8f8cc9fe281f5a"
+        },
+        {
+          "path": "assets/game/GAME-59/容量与节奏.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5c45222dd794ed7cba40ee321aa4a59f2f5b85067f6f9a252031eb37e1aee217"
+        },
+        {
+          "path": "assets/game/GAME-59/堆叠预检.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "9aede0724f601d143f6bc779e1778f8f73d51b9cb8d5a1ca0bf79c20e50a1417"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "c771aaabc0e70408dcc772f6217a595629649056317b3de7184c6be48773f4c2"
+    },
+    {
+      "id": "GAME-60",
+      "file": "60-打金刷装单王挑战为何分地图.md",
+      "beforeChineseCharacters": 2352,
+      "afterChineseCharacters": 2376,
+      "images": [
+        {
+          "path": "assets/game/GAME-60/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "8c6e3812f21e37888b98e4e84a9a20cdce25ddfd5e4268269628bc41429cb39f"
+        },
+        {
+          "path": "assets/game/GAME-60/地图目标.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "12edfab387568faedff9db8b834318b37e34e7b68cafa23b3a9a7f982b1895cf"
+        },
+        {
+          "path": "assets/game/GAME-60/压力与产出.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "2149f12495ac37ebc929e163d588136105786d98c726c4c5d8cc9224af5c5ca9"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "e0481e10a6cbf4d853d47bc671aca5f4fb69b1943f01b6277afd3fb6080d4c36"
+    },
+    {
+      "id": "GAME-61",
+      "file": "61-毕业材料越积越多怎么设计消耗出口.md",
+      "beforeChineseCharacters": 2265,
+      "afterChineseCharacters": 2307,
+      "images": [
+        {
+          "path": "assets/game/GAME-61/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "c2182071c829e97d245bd61069d8c2b8868ba491c9d5d09dd86211c1aab09b20"
+        },
+        {
+          "path": "assets/game/GAME-61/材料出口.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "176befba2baefb2bef6588eb0215ae7ae722763321ccead2e69c289ca1da0a86"
+        },
+        {
+          "path": "assets/game/GAME-61/额度与结转.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "37bd0dd7eac6d99bcef3fc31b9a387a9a96f2405c684dfadffd1c4e4dd524440"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "a6e011da713f00d382b68bbd5de2c261b0be4178571e6a621b0d1575dab581a4"
+    },
+    {
+      "id": "GAME-62",
+      "file": "62-随身商店和铁匠怎样复用NPC服务.md",
+      "beforeChineseCharacters": 2303,
+      "afterChineseCharacters": 2367,
+      "images": [
+        {
+          "path": "assets/game/GAME-62/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "2c6c5730c742fdc6601e5d9286806e0abf345fffb6503f5d8dbb7efef8eccd98"
+        },
+        {
+          "path": "assets/game/GAME-62/入口与能力.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "abe5ac1a1727e5dcc903fd5884fff3b4c8d62519cefc36d20ddd93216881df38"
+        },
+        {
+          "path": "assets/game/GAME-62/模式与保护.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "3a96bb8f77dccee9099a2bb1381ae0216350864b02fbc1fc79a56a700b2c793f"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "9827923235263a9c98f2ee197cafd0b1e12383e94f1027d6a568b008c660c96e"
+    },
+    {
+      "id": "GAME-63",
+      "file": "63-任务系统先画状态再填剧情.md",
+      "beforeChineseCharacters": 2320,
+      "afterChineseCharacters": 2366,
+      "images": [
+        {
+          "path": "assets/game/GAME-63/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "7152c35987e6437e6059e3ca99e4e621cd6dab2f01b4fff87c9d699400b62373"
+        },
+        {
+          "path": "assets/game/GAME-63/状态流转.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "77fe74b14982d1c29de86288321c2fa27ed9f677b64d7f63de3831e1f12f7d70"
+        },
+        {
+          "path": "assets/game/GAME-63/奖励计划.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "eed21f78d7728bda05225352e4c029cd6052e92bf57da577450b5110399e7850"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "000e3e39be134e083fdb7e3e5e329d340de3468046a835c22ce6cee23e7f3956"
+    },
+    {
+      "id": "GAME-64",
+      "file": "64-六章内容怎样避免任务和地图脱节.md",
+      "beforeChineseCharacters": 2474,
+      "afterChineseCharacters": 2517,
+      "images": [
+        {
+          "path": "assets/game/GAME-64/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "27a879cf1b8042db6f7f84a6583a037f28fdc0a2b395adcf65720e3ce06736ca"
+        },
+        {
+          "path": "assets/game/GAME-64/内容关系网.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "5daeac0c4b81e475be786722f6c3128f4e1c7588f21cbd5bd55f285cf99153fb"
+        },
+        {
+          "path": "assets/game/GAME-64/结局交接.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "2ba0c03234eefdf179c0e9d8aa441b36b24b0a2aafe8bbfad6f0dd74625e20ae"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "2fa80b19212154747b7b9a95ef364910df48e1689e9fb88556d95b52be2a9e61"
+    },
+    {
+      "id": "GAME-65",
+      "file": "65-打开面板挂机该不该停.md",
+      "beforeChineseCharacters": 2239,
+      "afterChineseCharacters": 2274,
+      "images": [
+        {
+          "path": "assets/game/GAME-65/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "2a1668133184fa06a157670bc5f1df6738ac407f0488f4fc9358db26b790aa3d"
+        },
+        {
+          "path": "assets/game/GAME-65/三种状态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "7c004bb99f47694edec25a1f90dee642c1b2ee9799466cc6669676d1fe1462ac"
+        },
+        {
+          "path": "assets/game/GAME-65/输入与暂停.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "9017144b16550f7a3068792a513cb01985f4798d5c060fb14bf82c47aa430ad8"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "748ac24036b2a35d94dacb8b2a263c29d2f0569af21bde98e430b5dbfa33f454"
+    },
+    {
+      "id": "GAME-66",
+      "file": "66-拖拽交易为什么总和弹层打架.md",
+      "beforeChineseCharacters": 2230,
+      "afterChineseCharacters": 2275,
+      "images": [
+        {
+          "path": "assets/game/GAME-66/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "de3c7a6ee8743c679aef83f5d003f94ed5782f741c70ab215028a317e3b00820"
+        },
+        {
+          "path": "assets/game/GAME-66/视觉与命中.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "48d2ec5e2d04ce75d2917fe8b92860b013b1a9832ed5711cbed428a5dc312a68"
+        },
+        {
+          "path": "assets/game/GAME-66/投放与预选.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b069402a33622e38597dede12cfe07fa6a106f2e2ede143f4b3b7aba8e009b00"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "732fd865644ce53a354ebc4b75e1fb9e3206634bdcc7c55da6c7ddf841d83b96"
+    },
+    {
+      "id": "GAME-67",
+      "file": "67-高分屏不是把所有控件乘一个数.md",
+      "beforeChineseCharacters": 2282,
+      "afterChineseCharacters": 2307,
+      "images": [
+        {
+          "path": "assets/game/GAME-67/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "a167499b7d80c3db1deb56b3113f2eec3c155178dead143cd56f9058162e0274"
+        },
+        {
+          "path": "assets/game/GAME-67/三条倍率.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b2794d3e1e32047d3edc26cc59ee8d4274a136a06670503f2add8f64ed00af2a"
+        },
+        {
+          "path": "assets/game/GAME-67/独立弹层.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "0cc8470b4ed217621fe40eaec5ad4bfc749f2a856e62c992c180b103981ce189"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "87f60b123c26bf130187dd5876818c87804d10311319636caa8a1c48f6e031a3"
+    },
+    {
+      "id": "GAME-68",
+      "file": "68-悬停数字为什么不跟血条更新.md",
+      "beforeChineseCharacters": 2477,
+      "afterChineseCharacters": 2525,
+      "images": [
+        {
+          "path": "assets/game/GAME-68/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "bf80e7921832e6cec2b972a2cd84396a6774255cf068d63ce51d963bd3575e2c"
+        },
+        {
+          "path": "assets/game/GAME-68/三层数据.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "52ff2ad27243d3388775971e4357eca3539e4c3370383e066aaea28861e63abb"
+        },
+        {
+          "path": "assets/game/GAME-68/事件与生命周期.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e07a34b653cb5fcd1e9c6e0e724c5ea90f41cf2dd2eed45d60fb4a9e37910bf8"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "03ce6c11c59ab496879d2761a3ef6009be476ff1c5aa45b86f58e7545c0cd20b"
+    },
+    {
+      "id": "GAME-69",
+      "file": "69-倍速一开镜头为什么越跟越晃.md",
+      "beforeChineseCharacters": 2335,
+      "afterChineseCharacters": 2367,
+      "images": [
+        {
+          "path": "assets/game/GAME-69/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "c70c7599e874f197291d0dba06dcd2433e35695eb8282de3829a305c584c12bf"
+        },
+        {
+          "path": "assets/game/GAME-69/追赶与过冲.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e83acb45465b481b59960a0b61ed83a48b485d80e5a3978bc16544809c6c525d"
+        },
+        {
+          "path": "assets/game/GAME-69/时钟与复位.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "76a8528a618d828c9425c94eb3eaf668864957f76471bff1497b110bd1e4663a"
+        }
+      ],
+      "codeBlocks": 4,
+      "seriesReferences": 5,
+      "ready": true,
+      "sha256": "6bdf3eef2aebedd9f9c4cbfedc97a1d1c7c441c15cce1eab2639e8ea2a3055c0"
+    },
+    {
+      "id": "GAME-70",
+      "file": "70-大地图为什么卡先测量再改架构.md",
+      "beforeChineseCharacters": 2253,
+      "afterChineseCharacters": 2285,
+      "images": [
+        {
+          "path": "assets/game/GAME-70/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "79fc2f9cdbfc5550256464b3b4af72bdd10176fd00290bef1b4c3537ad50ad66"
+        },
+        {
+          "path": "assets/game/GAME-70/分层与尖峰.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "f2fa3083df36f480d58d51b589a45bfa49101bb599e542f9bc750a58c9ffd575"
+        },
+        {
+          "path": "assets/game/GAME-70/测量分工.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "062ba338564117158026c53c2bff6014e94f9c9e63ac2dc2e41f6228c75e62e5"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "65566c56b102fe449e325c97642ec783125fb971dfe3a8e29d8e552134b469cd"
+    },
+    {
+      "id": "GAME-71",
+      "file": "71-2400件掉落先优化绘制还是寻路.md",
+      "beforeChineseCharacters": 2288,
+      "afterChineseCharacters": 2329,
+      "images": [
+        {
+          "path": "assets/game/GAME-71/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "4283e114f26e0ddecdb5d765c4c179586ca85228a7898a6958968475d57eba12"
+        },
+        {
+          "path": "assets/game/GAME-71/反事实对照.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "824a8ecc5e10198fe6df7872352b7e74c776235cec062171a9e379ca80682699"
+        },
+        {
+          "path": "assets/game/GAME-71/首次与稳态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "e02a7c4e6f9ecf6be2fd6f8e6dea8959bf1183980c182eca2e9a597aa60a524f"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "78c3ddb87e51be1413ed3c9b143b79c05f8b09b34212f8719557dcafd5c33196"
+    },
+    {
+      "id": "GAME-72",
+      "file": "72-静止物品为何还在每个物理步工作.md",
+      "beforeChineseCharacters": 2246,
+      "afterChineseCharacters": 2279,
+      "images": [
+        {
+          "path": "assets/game/GAME-72/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "d1f477c0347a8662799bbc06bb899101e96e6372979c1211dde7a8049c09f96d"
+        },
+        {
+          "path": "assets/game/GAME-72/共享调度.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "b7d2e7e7dd3a54b65c8dbca0e1a764cc84d7e095aa281e99e5dd6f1772c2ac19"
+        },
+        {
+          "path": "assets/game/GAME-72/时钟与唤醒.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "4c5b74294f024a906590ac1cb026fdd47403cf00bdb26ad862cddc9632116eca"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "e129f3c94b93b73efdc968db8a98a1b993b61f89be9f9875173ab843692ec2c5"
+    },
+    {
+      "id": "GAME-73",
+      "file": "73-缓存有上限画面怎么还是消失了.md",
+      "beforeChineseCharacters": 2215,
+      "afterChineseCharacters": 2251,
+      "images": [
+        {
+          "path": "assets/game/GAME-73/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "5336856fecd0c1dbc9bebd13d448333e3c7f018e9d32e85e90b4ce88c0d1edb3"
+        },
+        {
+          "path": "assets/game/GAME-73/两种所有权.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "6491c0519a7141c77fd067ca45450ee6e9053db7c717d2b4df78e68f4ebd044b"
+        },
+        {
+          "path": "assets/game/GAME-73/淘汰与持有.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a9e15a152eed42f25a29df12dd9609671a71c312ce75494c46145170ff7a486e"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "e28d9675b85dad185e2a0777994b26499dc315af15574975cc4e2d161b53005f"
+    },
+    {
+      "id": "GAME-74",
+      "file": "74-耐久只变一点为什么整个背包都刷新.md",
+      "beforeChineseCharacters": 2238,
+      "afterChineseCharacters": 2301,
+      "images": [
+        {
+          "path": "assets/game/GAME-74/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "3a55787eab82ee01e0c372eebd324eef8fa1a98409c6997f43394e9165928bde"
+        },
+        {
+          "path": "assets/game/GAME-74/变化范围.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "718342c8c7af9cfee1c3badce0e2f5eb2d11c561c5da6caaf8431c47513d889e"
+        },
+        {
+          "path": "assets/game/GAME-74/展示与比较.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "69f4c0bf30292bfcde6b3bf0cb041fd72d8bf1a4005637a8e8e21c172e6cc80f"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "ba8b97a873e23c25609405bfc291ffa9de2e4663030354d3a3d5ef4b9fdb7255"
+    },
+    {
+      "id": "GAME-75",
+      "file": "75-挂机一晚还稳定应该测些什么.md",
+      "beforeChineseCharacters": 2251,
+      "afterChineseCharacters": 2293,
+      "images": [
+        {
+          "path": "assets/game/GAME-75/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "71cf042378d642e03cdf0a62e179d438d26290ccef41c18bfda7d7fb6bb55747"
+        },
+        {
+          "path": "assets/game/GAME-75/负载与时钟.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "53d9e672517b71085aa576240e95bf3e1118585a5f5810613ae3420e93445c14"
+        },
+        {
+          "path": "assets/game/GAME-75/趋势与归属.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "d9476cb9252de4e6e38348ebe60b372bbfcbee8f73b8a9b71365c87f0a69e4bf"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "6053a952d9930a57675fbb61590e458dbe6ae7d057a10735544000647af3b066"
+    },
+    {
+      "id": "GAME-76",
+      "file": "76-重铸闪退为什么第一轮解释错了.md",
+      "beforeChineseCharacters": 2264,
+      "afterChineseCharacters": 2295,
+      "images": [
+        {
+          "path": "assets/game/GAME-76/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "ae635b7bc2002def66745388fe62443276b9c91678d85f85e8089fcce3a147e5"
+        },
+        {
+          "path": "assets/game/GAME-76/证据与假设.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "290ca249686448952a37ea36a7df0be0376d44f3376559a81e7d0aa90e7d6380"
+        },
+        {
+          "path": "assets/game/GAME-76/因果闭环.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "7c34a4b6d62ba9a96f5487a3a031a4982d56297f809a35eae8b641879a94ee89"
+        }
+      ],
+      "codeBlocks": 1,
+      "seriesReferences": 6,
+      "ready": true,
+      "sha256": "591db94f32cfca872f6f48d739b78ba9f7da6671285d00020c0d9b7de506c4c5"
+    },
+    {
+      "id": "GAME-77",
+      "file": "77-延迟调用也能把界面拖垮.md",
+      "beforeChineseCharacters": 2224,
+      "afterChineseCharacters": 2282,
+      "images": [
+        {
+          "path": "assets/game/GAME-77/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "068e48127b4987b1cbf0dfb60f5bc1b9e21f9a286c9cbe640a9dc0d6a38cf950"
+        },
+        {
+          "path": "assets/game/GAME-77/请求状态.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "fbfcf203d5738d451baf84e8dd3f46d861722822ab24d0fddef93ba6649be59c"
+        },
+        {
+          "path": "assets/game/GAME-77/预算与收敛.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "975a7d82ccce245620dc5a985c75e73ed0ec46288c6be681d1f01301c462033d"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "2346286e83e78c7deaeeaa95d90b734fba7b4fdd1887cfbd1755843e1af97004"
+    },
+    {
+      "id": "GAME-78",
+      "file": "78-本地存档怎样写坏了还能救回来.md",
+      "beforeChineseCharacters": 2240,
+      "afterChineseCharacters": 2283,
+      "images": [
+        {
+          "path": "assets/game/GAME-78/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "8d4870f2ce40faf0d8ae99d9722887aa3f7e3cfe268d74224aa282628bad05cf"
+        },
+        {
+          "path": "assets/game/GAME-78/写入交接.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "decf2534622db1c54f608a2e805944130da0781f088ea3df3844456ffc7eb0f8"
+        },
+        {
+          "path": "assets/game/GAME-78/恢复与保全.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "bb05ca05b164f008408ee4da71058bd3673daa98a0473f8b252610a0565d7801"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 7,
+      "ready": true,
+      "sha256": "5eada2993cd33c37f1aac4ce4cc23f5926d5fa1b818a7230fae1b076dda12fae"
+    },
+    {
+      "id": "GAME-79",
+      "file": "79-旧存档究竟要兼容到哪一版.md",
+      "beforeChineseCharacters": 2377,
+      "afterChineseCharacters": 2430,
+      "images": [
+        {
+          "path": "assets/game/GAME-79/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "67a27a9722f9dbb20a6f344b8ea8dd8abc326e88fda34eca97a46f0a892774e0"
+        },
+        {
+          "path": "assets/game/GAME-79/版本边界.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "a8682ff29303d5df466757fe37918b127529e4a248f18cad8960fb16f91bef86"
+        },
+        {
+          "path": "assets/game/GAME-79/迁移与保留.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "fb33ea116ed09967d1913ebbfefa701e71ccdfc08f5dcef9f77590121c3449db"
+        }
+      ],
+      "codeBlocks": 3,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "bacaa9c80322167f88a487cdf3d46a6f09300d288d540d5d787629017c34de4e"
+    },
+    {
+      "id": "GAME-80",
+      "file": "80-测试说通过为什么游戏还可能坏着.md",
+      "beforeChineseCharacters": 2456,
+      "afterChineseCharacters": 2509,
+      "images": [
+        {
+          "path": "assets/game/GAME-80/封面.png",
+          "width": 1672,
+          "height": 941,
+          "sha256": "b2a5347ec65e5eb6992c74ea6bc00021156bebed948c73946c05eddf5a759484"
+        },
+        {
+          "path": "assets/game/GAME-80/完成与覆盖.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "c6548c9ebfc0e0f2af3e43da43c5d9da4faa482ce3716f1cd16aba9901b8cf1b"
+        },
+        {
+          "path": "assets/game/GAME-80/验证分工.png",
+          "width": 1500,
+          "height": 1000,
+          "sha256": "ad7337121b0addbd3051f40b613c8ec6069df4c9ad22a1050a8b77020b6c043e"
+        }
+      ],
+      "codeBlocks": 2,
+      "seriesReferences": 8,
+      "ready": true,
+      "sha256": "07814988a246a6bd57a680aee2c82c7b689756b02f0ca3438a431ec73cecb179"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-76",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发76：重铸闪退，为什么第一轮解释错了",
+  "description": "重铸闪退为什么两轮解释都被推翻？本文保留调查中的误判与证据演变，区分伴随异常、未复现和确定触发，并说明后续布局与工具如何收口。",
+  "tags": [
+    "崩溃取证",
+    "因果反证",
+    "重铸闪退",
+    "布局自激",
+    "隔离探针"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-76/封面.png",
+  "ready": true
+}

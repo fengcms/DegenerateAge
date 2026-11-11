@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-67",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发67：高分屏，不是把所有控件乘一个数",
+  "description": "为什么界面和文字都设150%，字却变成225%？本文解释三条倍率、逻辑布局空间及独立文件窗口的缩放边界，说明可读与可操作如何一起验收。",
+  "tags": [
+    "高分屏适配",
+    "界面倍率",
+    "文字缩放",
+    "地图视野",
+    "文件选择器"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-67/封面.png",
+  "ready": true
+}

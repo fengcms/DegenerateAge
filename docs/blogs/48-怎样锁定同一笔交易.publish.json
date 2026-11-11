@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-48",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发48：点了确认还得重来，怎样锁定同一笔交易",
+  "description": "为什么战斗中反复点击仍然无法确认？本文用保星和紫装献祭，说明如何锁定同一笔交易，放行无关变化，并拒绝材料与结果被悄悄替换。",
+  "tags": [
+    "交易确认",
+    "稳定快照",
+    "固定批次",
+    "如意库存",
+    "事件合并"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-48/封面.png",
+  "ready": true
+}

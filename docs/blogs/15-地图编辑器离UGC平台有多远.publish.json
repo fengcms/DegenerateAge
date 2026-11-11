@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-15",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发15：能编辑营地以后，离网友帮我做地图还有多远",
+  "description": "本文基于《末法纪元》的编辑器可行性评估，区分内部插件、独立应用和UGC平台，讨论编译依赖自包含、地图包格式、外部数据校验、运行装载和资源授权边界。文中路线属于评估建议，不代表当前游戏已经支持外部地图。",
+  "tags": [
+    "UGC",
+    "地图编辑器",
+    "工具独立化",
+    "资源契约",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-15/封面.png",
+  "ready": true
+}

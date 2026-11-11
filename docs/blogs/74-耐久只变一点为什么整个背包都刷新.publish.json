@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-74",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发74：耐久只变一点，为什么整个背包都刷新",
+  "description": "一次耐久磨损为何重建整包装备？本文拆开物品展示、比较上下文与装饰动画，说明完好状态归一、引用核对和隐藏停更的正确边界。",
+  "tags": [
+    "增量刷新",
+    "耐久变化",
+    "背包角标",
+    "隐藏停更",
+    "信号合并"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-74/封面.png",
+  "ready": true
+}

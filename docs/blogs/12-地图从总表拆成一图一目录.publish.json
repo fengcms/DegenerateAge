@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-12",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发12：地图越来越多，为什么拆成一图一目录",
+  "description": "本文介绍《末法纪元》地图从总表拆成一图一目录后的组织方式，解释索引聚合、稳定ID、配置源、README自动参数区与人工说明的分工，并说明目录校验为何不能代替实际通行和跨图验证。",
+  "tags": [
+    "地图配置",
+    "数据驱动",
+    "目录设计",
+    "文档生成",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-12/封面.png",
+  "ready": true
+}

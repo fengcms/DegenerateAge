@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-04",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发04：选了Godot以后，工程第一天要准备什么",
+  "description": "本文结合《末法纪元》的项目条件，解释Godot与GDScript的选择，并讨论工程第一天应准备的目录职责、跨场景服务、配置校验和可复现启动流程，帮助有软件开发经验的读者把游戏想法推进到可继续开发的工程起点。",
+  "tags": [
+    "Godot",
+    "GDScript",
+    "工程搭建",
+    "技术选型",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-04/封面.png",
+  "ready": true
+}

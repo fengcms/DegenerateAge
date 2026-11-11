@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-38",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发38：差了几十级装备，为什么打怪还没明显变慢",
+  "description": "本文依据《末法纪元》高等级反馈及更正后的分析，区分人物装备怪物等级、曲线相对增长、装备贡献与防御减项，说明不完整探针和理想技能模型的风险，明确算例、隔离复算与实际击杀时间的边界。",
+  "tags": [
+    "数值诊断",
+    "等级曲线",
+    "装备成长",
+    "TTK",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-38/封面.png",
+  "ready": true
+}

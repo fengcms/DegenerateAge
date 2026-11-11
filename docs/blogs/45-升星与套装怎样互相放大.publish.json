@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-45",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发45：升星与套装，怎样互相放大",
+  "description": "单件升星与全身成套奖励如何叠加？本文拆解最低品质与星级门槛、百分比相加和攻击间隔反向缩放，说明成长收益的计算边界。",
+  "tags": [
+    "装备升星",
+    "套装加成",
+    "数值分层",
+    "攻击间隔",
+    "最低门槛"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-45/封面.png",
+  "ready": true
+}

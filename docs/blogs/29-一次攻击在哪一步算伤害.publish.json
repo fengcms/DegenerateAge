@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-29",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发29：一次攻击，到底在哪一步算伤害",
+  "description": "本文沿《末法纪元》一次攻击的调用链，区分资格检查、命中基础伤害暴击、目标相关修正、承伤提交和视觉反馈，解释下限、重复结算及弹道时机，并给出固定单击到持续输出的复核方法。",
+  "tags": [
+    "伤害结算",
+    "战斗系统",
+    "Godot",
+    "攻击流程",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-29/封面.png",
+  "ready": true
+}

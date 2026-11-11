@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-56",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发56：自动出售，为什么只能接在拾取入口",
+  "description": "为什么不能在通用入包函数里自动卖装备？本文结合购物与领奖来源、候选保护和满包让位，说明拾取业务入口的职责与结算边界。",
+  "tags": [
+    "自动出售",
+    "拾取门面",
+    "候选额度",
+    "业务分层",
+    "满包让位"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-56/封面.png",
+  "ready": true
+}

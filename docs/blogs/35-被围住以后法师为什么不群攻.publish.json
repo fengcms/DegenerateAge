@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-35",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发35：怪都围上来了，法师为什么还不放群攻",
+  "description": "本文复盘《末法纪元》法师被围后群攻停顿的可复现链路，解释受阻优先级、物品拾取口径、低蓝保盾与原地解围例外，强调命中集合、统一费用和现场证据，不把历史诊断当作每次停顿的唯一原因。",
+  "tags": [
+    "法师群攻",
+    "自动战斗",
+    "资源策略",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-35/封面.png",
+  "ready": true
+}

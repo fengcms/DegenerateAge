@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-71",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发71：2400件掉落，先优化绘制还是寻路",
+  "description": "2400件掉落变慢，先重写拾取还是减少绘制？本文解释固定夹具、反事实对照与混合模板补测，区分共享图像的稳定收益和首次建立代价。",
+  "tags": [
+    "掉落积压",
+    "反事实探针",
+    "静态表现缓存",
+    "冷启动",
+    "稳态性能"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-71/封面.png",
+  "ready": true
+}

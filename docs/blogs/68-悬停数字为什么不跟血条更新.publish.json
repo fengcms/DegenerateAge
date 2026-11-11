@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-68",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发68：悬停数字，为什么不跟血条更新",
+  "description": "血条已经变化，悬停提示为什么还是旧数字？本文分开角色数据、来源控件与现存提示，说明事件同步、弱引用清理及持续提示测试的边界。",
+  "tags": [
+    "实时悬停",
+    "HUD刷新",
+    "弱引用",
+    "事件驱动",
+    "经验结转"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-68/封面.png",
+  "ready": true
+}

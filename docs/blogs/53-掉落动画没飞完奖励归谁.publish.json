@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-53",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发53：掉落动画没飞完，奖励归谁",
+  "description": "掉落动画还没结束，奖励是否已经入包？从保护期方案的冲突讲起，拆解认领、提示与表现清理的不同职责，以及满包失败时的保留边界。",
+  "tags": [
+    "掉落认领",
+    "飞行动画",
+    "奖励结算",
+    "节点生命周期",
+    "自动拾取"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-53/封面.png",
+  "ready": true
+}

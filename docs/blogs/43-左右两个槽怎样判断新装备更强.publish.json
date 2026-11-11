@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-43",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发43：左右两个槽，怎样判断新装备更强",
+  "description": "一枚新戒指该替换左右哪个槽？从自动选槽、显式拖放和共用预览出发，拆解更强提示、降品质提醒与满背包交换之间的边界。",
+  "tags": [
+    "双槽装备",
+    "智能替换",
+    "装备评分",
+    "降品质确认",
+    "背包交换"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-43/封面.png",
+  "ready": true
+}

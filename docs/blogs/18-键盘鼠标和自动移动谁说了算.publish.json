@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-18",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发18：键盘、鼠标和自动移动，到底谁说了算",
+  "description": "本文从键盘、鼠标、地图导航和自动战斗共存的场景出发，解释《末法纪元》的意图优先级、手动接管、面板拦截、取消清理与自动恢复，结合源码节选和交接矩阵说明怎样验证角色真正执行了当前命令。",
+  "tags": [
+    "输入控制",
+    "自动战斗",
+    "Godot",
+    "状态交接",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-18/封面.png",
+  "ready": true
+}

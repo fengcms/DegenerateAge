@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-11",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发11：JSON越写越多，怎样把配置错误拦在进游戏之前",
+  "description": "JSON能解析不等于游戏配置正确。本文结合《末法纪元》的DataLoader，讨论字段范围、跨表引用、组合规则、掉落语义、默认值边界和负向验证，并说明静态校验与运行场景测试如何分工，以及配置重载后的缓存失效。",
+  "tags": [
+    "JSON",
+    "数据校验",
+    "数据驱动",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-11/封面.png",
+  "ready": true
+}

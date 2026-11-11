@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-01",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发01：一个全栈开发者，开始做自己的单机ARPG",
+  "description": "一个全栈开发者开始做自己的单机ARPG，会遇到哪些熟悉又陌生的问题？本文介绍《末法纪元》的产品定位，聊聊建模、状态管理和交易一致性等经验怎样迁移到游戏，以及持续战斗、自动行为和密集掉落带来的新功课，开启这套真实项目开发记录。",
+  "tags": [
+    "Godot",
+    "单机游戏",
+    "ARPG",
+    "独立游戏开发",
+    "全栈开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-01/封面.png",
+  "ready": true
+}

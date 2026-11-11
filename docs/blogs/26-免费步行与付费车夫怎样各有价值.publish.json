@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-26",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发26：免费步行和付费车夫，怎样各自有用",
+  "description": "本文结合《末法纪元》的步行与车夫设计，解释城镇拓扑、解锁到访、报价和落点的分工，并通过旅行服务源码说明准备、抵达确认、回滚和幽灵指令清理，给出成功与拒绝场景的验证方法。",
+  "tags": [
+    "地图交通",
+    "游戏经济",
+    "事务回滚",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-26/封面.png",
+  "ready": true
+}

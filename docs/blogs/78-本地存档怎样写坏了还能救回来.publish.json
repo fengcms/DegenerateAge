@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-78",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发78：本地存档，怎样写坏了还能救回来",
+  "description": "存档写坏以后怎样保住最后的有效进度？本文拆解临时写入、有效备份、损坏现场与导入归一，说明文件成功和业务可恢复为什么需要分别验证。",
+  "tags": [
+    "本地存档",
+    "临时写入",
+    "读回校验",
+    "备份恢复",
+    "损坏保全"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-78/封面.png",
+  "ready": true
+}

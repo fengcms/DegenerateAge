@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-66",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发66：拖拽交易，为什么总和弹层打架",
+  "description": "装备能拖起来，为什么落不进格子？本文沿拖起、命中与提交三段流程，拆解全屏拦截、视觉层级、坐标转换和预选归属之间的区别。",
+  "tags": [
+    "拖拽交易",
+    "浮窗置前",
+    "GUI命中",
+    "坐标转换",
+    "材料预选"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-66/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-70",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发70：大地图为什么卡，先测量再改架构",
+  "description": "地图变大以后该先分块还是重写地形？本文沿实际分阶段优化，拆开装配尖峰、重复CPU计算与绘制调用，说明测量如何决定架构取舍。",
+  "tags": [
+    "大地图性能",
+    "绘制合批",
+    "底图分层",
+    "连通筛选",
+    "性能基准"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-70/封面.png",
+  "ready": true
+}

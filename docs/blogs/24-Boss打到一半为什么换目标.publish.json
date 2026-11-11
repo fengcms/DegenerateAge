@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-24",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发24：Boss还剩血，角色为什么跑去打旁边那只",
+  "description": "本文复盘《末法纪元》自动战斗中途换Boss的历史问题，沿提示与实例状态区分原因，解释直线接近量误判、角色位移、临时黑名单和跨重选黏性，并说明真实卡住与合法绕行应如何共同验证。",
+  "tags": [
+    "自动选怪",
+    "目标黏性",
+    "卡住检测",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-24/封面.png",
+  "ready": true
+}

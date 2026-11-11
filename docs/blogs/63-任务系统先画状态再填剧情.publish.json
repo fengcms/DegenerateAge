@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-63",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发63：任务系统，先画状态再填剧情",
+  "description": "任务打够了为什么还不能算结束？本文拆解目标完成与正式领奖，说明事件范围、随机奖励计划和满包重试怎样共同保护剧情进度与玩家资产。",
+  "tags": [
+    "任务状态机",
+    "持久奖励计划",
+    "满包领奖",
+    "任务推进",
+    "事件驱动"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-63/封面.png",
+  "ready": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-37",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发37：技能能升级以后，怎样留下成长又不把数值推翻",
+  "description": "本文结合《末法纪元》的SkillProgression与升阶记录，解释基础定义、购买阶数和生效数据分离，讨论整体效果替换、原子购买、活动增益快照、冷却与价格校准，并给出配置到施放的验证入口。",
+  "tags": [
+    "技能升阶",
+    "成长系统",
+    "数据缓存",
+    "存档兼容",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-37/封面.png",
+  "ready": true
+}

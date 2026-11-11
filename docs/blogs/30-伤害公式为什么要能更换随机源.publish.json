@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "GAME-30",
+  "platform": "csdn",
+  "title": "末法纪元·游戏开发30：伤害里有随机，出了问题怎样重来一遍",
+  "description": "本文从《末法纪元》的Combat随机源注入出发，解释固定种子、调用顺序、概率上限、边界与分布验证的区别，讨论预览消费随机和失败序列记录，避免用重复跑到通过代替可复现证据。",
+  "tags": [
+    "随机源",
+    "确定性测试",
+    "暴击闪避",
+    "Godot",
+    "游戏开发"
+  ],
+  "categoryNames": [
+    "末法纪元",
+    "Godot"
+  ],
+  "articleType": "original",
+  "cover": "./assets/game/GAME-30/封面.png",
+  "ready": true
+}

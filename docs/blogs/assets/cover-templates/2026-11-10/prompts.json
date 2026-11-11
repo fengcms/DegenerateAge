@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-10",
+  "status": "approved",
+  "tool": "built-in image_gen",
+  "reference": "assets/maps/camp_final_v1/guardian_lamp.png",
+  "variants": [
+    {
+      "id": "A",
+      "prompt": "Create ONE polished 16:9 landscape Chinese technical blog cover, template preview for series about an isometric single-player ARPG, not a game screenshot. Exact typography: small series brand top left \"末法纪元 · 游戏开发\"; large extremely legible main title on left in two lines \"从全栈到\" and \"游戏开发\"; small subtitle \"一个人的单机 ARPG 开发实录\"; top right small chapter badge \"01\"; tiny bottom footer \"FungLeo\". Generous margins, sophisticated consistent editorial typography, no other words, no watermark. Palette blue-gray and amber. Reference image is an actual project's guardian lantern, use its recognizable Chinese roofed lantern shape as visual motif, not a logo. No fake game UI.\nStyle A, immersive game-scene editorial cover. Deep midnight blue-gray background, restrained painterly isometric fantasy ruined camp diorama occupying right 55%, guardian lantern amber light on aged stone walkway, sparse silhouettes of Chinese camp architecture in mist, beautifully detailed handcrafted game concept art, negative space dark left for ivory headline, tiny amber accent line. Moody premium art direction, no excessive particles, no character needed."
+    },
+    {
+      "id": "B",
+      "prompt": "Create ONE polished 16:9 landscape Chinese technical blog cover, template preview for series about an isometric single-player ARPG, not a game screenshot. Exact typography: small series brand top left \"末法纪元 · 游戏开发\"; large extremely legible main title on left in two lines \"从全栈到\" and \"游戏开发\"; small subtitle \"一个人的单机 ARPG 开发实录\"; top right small chapter badge \"01\"; tiny bottom footer \"FungLeo\". Generous margins, sophisticated consistent editorial typography, no other words, no watermark. Palette blue-gray and amber. Reference image is an actual project's guardian lantern, use its recognizable Chinese roofed lantern shape as visual motif, not a logo. No fake game UI.\nStyle B, engineering blueprint editorial cover. Pale blue-gray matte drafting paper background with very subtle fine grid. Dark navy typography at left. On right an exquisite isometric technical drawing of the reference guardian lantern and tiled ground, blue linework with one warm amber lantern core, a few neat exploded-layer outlines and connection lines suggesting game architecture, deliberate whitespace. Crisp technical publication design, accurate legible silhouettes not busy random circuits, no extra text or labels."
+    },
+    {
+      "id": "C",
+      "prompt": "Create ONE polished 16:9 landscape Chinese technical blog cover, template preview for series about an isometric single-player ARPG, not a game screenshot. Exact typography: small series brand top left \"末法纪元 · 游戏开发\"; large extremely legible main title on left in two lines \"从全栈到\" and \"游戏开发\"; small subtitle \"一个人的单机 ARPG 开发实录\"; top right small chapter badge \"01\"; tiny bottom footer \"FungLeo\". Generous margins, sophisticated consistent editorial typography, no other words, no watermark. Palette blue-gray and amber. Reference image is an actual project's guardian lantern, use its recognizable Chinese roofed lantern shape as visual motif, not a logo. No fake game UI.\nStyle C, hybrid game-art and engineering editorial cover. Deep slate-blue background, large ivory typography left and thin amber horizontal rule; on right a floating isometric square stone camp fragment with the roofed guardian lantern rendered in refined painterly 3D-like detail, half of the square transitions into precise blue-gray wireframe grid and clean geometric module outlines. Amber lamp glow ties illustration to diagram. Restrained modern technical book cover, beautiful spacing, clear thumbnail readability, not divided panels, one integrated composition. No unrelated props."
+    }
+  ],
+  "selected": "C"
+}
