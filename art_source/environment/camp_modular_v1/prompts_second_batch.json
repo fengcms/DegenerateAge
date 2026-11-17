@@ -1,0 +1,20 @@
+{
+  "tool": "image_gen built-in",
+  "prompts": [
+    [
+      "grass",
+      false,
+      "Original realistic pre-rendered dark fantasy RPG ground material swatch, square seamless repeating texture, straight down orthographic 90 degree overhead. Dense short dusty olive grey-green dry grass mixed with muted grey-brown earth, very low contrast, tiny scattered dry roots, no bushes no flowers no rocks no objects no path no cast shadows. Flat uniform soft lighting, subdued weathered natural palette, no vivid green. Entire square filled, opposite edges match. No text, no border, no scene. For a 4x4 cell repeating isometric terrain material."
+    ],
+    [
+      "wall_other",
+      true,
+      "Use attached short stone wall as precise material and shape reference. Produce same short tall weathered grey masonry segment viewed along OTHER grid axis: wall runs from TOP LEFT to BOTTOM RIGHT, downward right slope +0.5, orthographic 2:1 isometric camera. Re-render lighting correctly from SCREEN UPPER LEFT, not a mirror image. Same four courses, two stone lengths, compact nearly square silhouette, clean butt ends, no terminal pillar. All of object visible with transparent background, no ground no cast shadow no base."
+    ],
+    [
+      "wall_corner",
+      true,
+      "Use attached short grey masonry wall material reference. Create ONE compact 90 degree L CORNER module joining two short walls along both 2:1 isometric axes. Orthographic camera, screen ground axes slopes +0.5 and -0.5, upper-left light. Four courses of weathered grey stone, flat coping, compact corner, two VERY SHORT arms (each only one block long) forming an L, not a large enclosure. Match the reference block sizes and height. Entire object visible, genuinely transparent background, no ground, no platform, no cast shadow, no text."
+    ]
+  ]
+}

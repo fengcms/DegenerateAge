@@ -10,28 +10,30 @@ func _initialize() -> void:
 	var output := root+"/assets/environment/camp_modular_v1/"
 	var soils := _material(source+"soil.png")
 	var roads := _material(source+"road.png")
+	var grass := _material(source+"grass.png")
 	var shapes: Array = Rules.shapes()
-	var atlas := Image.create(1024,1536,false,Image.FORMAT_RGBA8)
-	for variant in range(16):
-		for shape in range(48):
-			var tile := Image.create(64,32,false,Image.FORMAT_RGBA8)
-			for y in range(32):
-				for x in range(64):
-					var a := (x+0.5-32.0)/32.0
-					var b := -(y+0.5-16.0)/16.0
-					var u := (a+b)*0.5
-					var v := (b-a)*0.5
-					if absf(u)>0.5 or absf(v)>0.5:
-						continue
-					var sx := posmod(floori((variant%4+u+0.5)*64),256)
-					var sy := posmod(floori((floori(float(variant)/4.0)+v+0.5)*64),256)
-					var color := (soils if shape==0 else roads).get_pixel(sx,sy)
-					color.a = 1.0 if shape==0 else Rules.coverage(shapes[shape-1],u,v)
-					tile.set_pixel(x,y,color)
-			atlas.blit_rect(tile,Rect2i(0,0,64,32),Vector2i(variant*64,shape*32))
-	atlas.save_png(output+"terrain_atlas.png")
-	var manifest := {"terrain":{"size":[1024,1536],"tile":[64,32],"period":4,"shapes":shapes},"objects":{}}
-	for id in ["wall","tree","shelter"]:
+	for kind in ["terrain","grass"]:
+		var atlas := Image.create(1024,1536,false,Image.FORMAT_RGBA8)
+		for variant in range(16):
+			for shape in range(48):
+				var tile := Image.create(64,32,false,Image.FORMAT_RGBA8)
+				for y in range(32):
+					for x in range(64):
+						var a := (x+0.5-32.0)/32.0
+						var b := -(y+0.5-16.0)/16.0
+						var u := (a+b)*0.5
+						var v := (b-a)*0.5
+						if absf(u)>0.5 or absf(v)>0.5:
+							continue
+						var sx := posmod(floori((variant%4+u+0.5)*64),256)
+						var sy := posmod(floori((floori(float(variant)/4.0)+v+0.5)*64),256)
+						var color := (soils if shape==0 else (roads if kind=="terrain" else grass)).get_pixel(sx,sy)
+						color.a = 1.0 if shape==0 else Rules.coverage(shapes[shape-1],u,v,0.08 if kind=="grass" else 0.25,0.49 if kind=="grass" else 0.38)
+						tile.set_pixel(x,y,color)
+				atlas.blit_rect(tile,Rect2i(0,0,64,32),Vector2i(variant*64,shape*32))
+		atlas.save_png(output+kind+"_atlas.png")
+	var manifest := {"terrain":{"size":[1024,1536],"tile":[64,32],"period":4,"shapes":shapes},"grass":{"size":[1024,1536],"tile":[64,32],"period":4},"objects":{}}
+	for id in ["wall","wall_other","wall_corner","tree","shelter"]:
 		var image := Image.load_from_file(source+("wall_short" if id=="wall" else id)+".png")
 		assert(image.detect_alpha()!=Image.ALPHA_NONE,"物件缺少透明通道")
 		image = image.get_region(image.get_used_rect())

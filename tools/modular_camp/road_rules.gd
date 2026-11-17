@@ -30,17 +30,17 @@ static func shapes() -> Array:
 	result.sort()
 	return result
 
-## 在局部方格坐标内构建可连接的道路覆盖；缺边缩进，缺对角挖出圆角。
-static func coverage(bits: int, u: float, v: float) -> float:
+## 在局部方格坐标内构建连接覆盖；道路使用窄边，草土使用较宽渐变，内角半径同步保持共边一致。
+static func coverage(bits: int, u: float, v: float, edge_inner: float = 0.25, edge_outer: float = 0.38) -> float:
 	var limits := [-v, u, v, -u]
 	var alpha := 1.0
 	for i in range(4):
 		if bits & (1 << i) == 0:
-			alpha = minf(alpha, 1.0 - smoothstep(0.25, 0.38, limits[i]))
+			alpha = minf(alpha, 1.0 - smoothstep(edge_inner, edge_outer, limits[i]))
 	var corners := [Vector2(1,-1), Vector2(1,1), Vector2(-1,1), Vector2(-1,-1)]
 	for i in range(4):
 		var edges := (1 << i) | (1 << ((i + 1) % 4))
 		if bits & edges == edges and bits & (1 << (i+4)) == 0:
 			var distance := Vector2(u,v).distance_to(corners[i] * 0.5)
-			alpha = minf(alpha, smoothstep(0.12, 0.25, distance))
+			alpha = minf(alpha, smoothstep(0.5-edge_outer, 0.5-edge_inner, distance))
 	return alpha

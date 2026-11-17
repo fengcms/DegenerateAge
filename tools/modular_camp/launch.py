@@ -44,7 +44,9 @@ window/stretch/mode="canvas_items"
 renderer/rendering_method="gl_compatibility"
 ''')
         (project / 'Main.tscn').write_text('[gd_scene load_steps=2 format=3]\n[ext_resource type="Script" path="res://main.gd" id="1"]\n[node name="Sample" type="Node2D"]\nscript = ExtResource("1")\n')
-        subprocess.run([godot, '--headless', '--editor', '--path', temp, '--quit'], check=True, stdout=subprocess.DEVNULL)
+        imported = subprocess.run([godot, '--headless', '--editor', '--path', temp, '--quit'], check=True, capture_output=True, text=True, timeout=60)
+        if 'SCRIPT ERROR' in imported.stderr:
+            raise RuntimeError(imported.stderr)
         command = [godot, '--path', temp]
         if args.verify and not args.capture:
             command += ['--headless']
@@ -55,7 +57,12 @@ renderer/rendering_method="gl_compatibility"
             args.capture.mkdir(parents=True, exist_ok=True)
             command += ['--capture=' + str(args.capture.resolve())]
         if args.verify:
-            result = subprocess.run(command, check=True, timeout=120, capture_output=True, text=True)
+            try:
+                result = subprocess.run(command, check=True, timeout=120, capture_output=True, text=True)
+            except subprocess.TimeoutExpired as error:
+                print(error.stdout or b'')
+                print(error.stderr or b'')
+                raise
             print(result.stdout, end='')
             print(result.stderr, end='')
             if 'MODULAR_CAMP_VERIFY_OK' not in result.stdout or 'SCRIPT ERROR' in result.stderr:

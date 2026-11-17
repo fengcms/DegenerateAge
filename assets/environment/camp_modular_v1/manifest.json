@@ -1,4 +1,15 @@
 {
+  "grass": {
+    "period": 4,
+    "size": [
+      1024,
+      1536
+    ],
+    "tile": [
+      64,
+      32
+    ]
+  },
   "objects": {
     "shelter": {
       "pivot": [
@@ -21,6 +32,26 @@
       ]
     },
     "wall": {
+      "pivot": [
+        29.0,
+        52
+      ],
+      "size": [
+        58,
+        56
+      ]
+    },
+    "wall_corner": {
+      "pivot": [
+        29.0,
+        52
+      ],
+      "size": [
+        58,
+        56
+      ]
+    },
+    "wall_other": {
       "pivot": [
         29.0,
         52

@@ -6,6 +6,8 @@ const DEFINITIONS := {
 	"shelter": {"path":"assets/environment/camp_modular_v1/shelter.png", "height":200, "footprint":[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[0,3],[1,3],[2,3],[3,3]]},
 	"tree": {"path":"assets/environment/camp_modular_v1/tree.png", "height":230, "footprint":[[0,0]]},
 	"crate": {"path":"assets/tiles/camp/crate.png", "height":45, "footprint":[[0,0]]},
+	"wall_other": {"path":"assets/environment/camp_modular_v1/wall_other.png", "height":56, "footprint":[[0,0]]},
+	"wall_corner": {"path":"assets/environment/camp_modular_v1/wall_corner.png", "height":56, "footprint":[[0,0]]},
 	"wall": {"path":"assets/environment/camp_modular_v1/wall.png", "height":56, "footprint":[[0,0]]}
 }
 var layouts: Array
@@ -16,6 +18,7 @@ var navigator: CaveLayout
 var waypoints: Array[Vector2] = []
 var textures: Dictionary = {}
 var atlas: Texture2D
+var grass_atlas: Texture2D
 var shape_ids: Array
 var collision_cells: Dictionary = {}
 var label: Label
@@ -44,15 +47,16 @@ func _texture(path: String) -> Texture2D:
 func _build_atlas() -> void:
 	shape_ids = SampleRoadRules.shapes()
 	atlas = _texture("assets/environment/camp_modular_v1/terrain_atlas.png")
+	grass_atlas = _texture("assets/environment/camp_modular_v1/grass_atlas.png")
 
-## 建立一层合批网格，基础地面与道路分别只生成一个MeshInstance2D。
-func _ground(rows: Array, roads: bool) -> void:
+## 每层各建一个合批网格：土底、草土覆盖、道路，按固定顺序叠加。
+func _ground(rows: Array, layer: int) -> void:
 	var builder := FlatTileMesh.new(256,true)
 	for y in range(16):
 		for x in range(16):
-			if roads and rows[y][x] != "1":
+			if layer>0 and rows[y][x] != "1":
 				continue
-			var slot := shape_ids.find(SampleRoadRules.at(rows,Vector2i(x,y)))+1 if roads else 0
+			var slot := shape_ids.find(SampleRoadRules.at(rows,Vector2i(x,y)))+1 if layer>0 else 0
 			var origin := Iso.grid_to_world(Vector2i(x,y))-Vector2(32,16)
 			var variant := posmod(x,4)+posmod(y,4)*4
 			var left := float(variant)/16.0
@@ -62,9 +66,9 @@ func _ground(rows: Array, roads: bool) -> void:
 			builder.add_quad(PackedVector2Array([origin,origin+Vector2(64,0),origin+Vector2(64,32),origin+Vector2(0,32)]),PackedVector2Array([Vector2(left,top),Vector2(right,top),Vector2(right,bottom),Vector2(left,bottom)]))
 	var mesh := MeshInstance2D.new()
 	mesh.mesh = builder.build()
-	mesh.texture = atlas
+	mesh.texture = grass_atlas if layer==1 else atlas
 	mesh.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	mesh.z_index = -4000 if not roads else -3999
+	mesh.z_index = -4000+layer
 	world.add_child(mesh)
 
 ## 用同一物件占地生成贴图、阻挡掩码和物理菱形，切图时释放旧场景及路线。
@@ -79,8 +83,9 @@ func _switch_layout(index: int) -> void:
 	world.position = OFFSET
 	add_child(world)
 	var definition: Dictionary = layouts[index]
-	_ground(definition.roads,false)
-	_ground(definition.roads,true)
+	_ground(definition.roads,0)
+	_ground(definition.grass,1)
+	_ground(definition.roads,2)
 	var blocked: Dictionary = {}
 	for raw in definition.objects:
 		var object: Dictionary = raw
@@ -90,6 +95,7 @@ func _switch_layout(index: int) -> void:
 			cell += Vector2i(0,2)
 		var sprite := Sprite2D.new()
 		sprite.texture = _texture(spec.path)
+		sprite.set_meta("module_kind", object.kind)
 		sprite.position = Iso.grid_to_world(cell)
 		sprite.offset.y = -sprite.texture.get_height()*0.5+4
 		sprite.scale = Vector2.ONE * float(spec.height)/sprite.texture.get_height()
@@ -137,7 +143,7 @@ func _switch_layout(index: int) -> void:
 	art.offset.y = -art.texture.get_height()*0.5
 	player.add_child(art)
 	world.add_child(player)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 4×4周期地面 / 47连接道路 · 角色仍为静态占位" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 土草路三层 / 双轴墙与墙角 · 角色仍为静态占位" % definition.name
 
 ## 鼠标仅在目标可达时创建既有导航路线；编辑操作整体重建小样板并失效旧路线。
 func _unhandled_input(event: InputEvent) -> void:
@@ -182,11 +188,13 @@ func _physics_process(_delta: float) -> void:
 func _verify() -> void:
 	assert(shape_ids.size()==47)
 	assert(atlas.get_size()==Vector2(1024,1536))
-	var pixels := atlas.get_image()
-	for row in range(48):
-		for column in range(16):
-			assert(pixels.get_pixel(column*64+32,row*32+16).a>0.99,"图集中心缺失")
-			assert(pixels.get_pixel(column*64,row*32).a==0.0,"地砖角部透明区污染")
+	for texture in [atlas,grass_atlas]:
+		assert(texture.get_size()==Vector2(1024,1536))
+		var pixels: Image = texture.get_image()
+		for row in range(48):
+			for column in range(16):
+				assert(pixels.get_pixel(column*64+32,row*32+16).a>0.99,"图集中心缺失")
+				assert(pixels.get_pixel(column*64,row*32).a==0.0,"地砖角部透明区污染")
 	for bits in range(256):
 		assert(SampleRoadRules.normalize(SampleRoadRules.normalize(bits))==SampleRoadRules.normalize(bits))
 	# 随机排列覆盖连接与非连接边，验证共享边的alpha完全一致。
@@ -198,19 +206,20 @@ func _verify() -> void:
 		for x in range(16):
 			row += "1" if random.randf()>0.35 else "0"
 		test_rows.append(row)
-	for y in range(15):
-		for x in range(15):
-			if test_rows[y][x] != "1":
-				continue
-			var current := SampleRoadRules.at(test_rows,Vector2i(x,y))
-			for step in range(21):
-				var coordinate := -0.5+step*0.05
-				if test_rows[y][x+1] == "1":
-					var neighbor := SampleRoadRules.at(test_rows,Vector2i(x+1,y))
-					assert(is_equal_approx(SampleRoadRules.coverage(current,0.5,coordinate),SampleRoadRules.coverage(neighbor,-0.5,coordinate)),"横向共边不连续")
-				if test_rows[y+1][x] == "1":
-					var neighbor := SampleRoadRules.at(test_rows,Vector2i(x,y+1))
-					assert(is_equal_approx(SampleRoadRules.coverage(current,coordinate,0.5),SampleRoadRules.coverage(neighbor,coordinate,-0.5)),"纵向共边不连续")
+	for edge in [Vector2(0.25,0.38),Vector2(0.08,0.49)]:
+		for y in range(15):
+			for x in range(15):
+				if test_rows[y][x] != "1":
+					continue
+				var current := SampleRoadRules.at(test_rows,Vector2i(x,y))
+				for step in range(21):
+					var coordinate := -0.5+step*0.05
+					if test_rows[y][x+1] == "1":
+						var neighbor := SampleRoadRules.at(test_rows,Vector2i(x+1,y))
+						assert(is_equal_approx(SampleRoadRules.coverage(current,0.5,coordinate,edge.x,edge.y),SampleRoadRules.coverage(neighbor,-0.5,coordinate,edge.x,edge.y)),"横向共边不连续")
+					if test_rows[y+1][x] == "1":
+						var neighbor := SampleRoadRules.at(test_rows,Vector2i(x,y+1))
+						assert(is_equal_approx(SampleRoadRules.coverage(current,coordinate,0.5,edge.x,edge.y),SampleRoadRules.coverage(neighbor,coordinate,-0.5,edge.x,edge.y)),"纵向共边不连续")
 	var captures := ""
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--capture="):
@@ -218,6 +227,9 @@ func _verify() -> void:
 	for index in range(2):
 		moved_wall = false
 		_switch_layout(index)
+		for row in range(16):
+			for col in range(16):
+				assert(not (layouts[index].grass[row][col]=="1" and layouts[index].roads[row][col]=="1"),"草覆盖了道路格")
 		await get_tree().physics_frame
 		for y in range(16):
 			for x in range(16):
@@ -225,6 +237,18 @@ func _verify() -> void:
 		if not captures.is_empty():
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
+		if not captures.is_empty() and index==0:
+			var origin := player.position
+			for node in world.get_children():
+				if node is Sprite2D and node.get_meta("module_kind","")=="tree":
+					for side in [-1,1]:
+						player.position = node.position+Vector2(0,side*30)
+						await get_tree().physics_frame
+						await get_tree().process_frame
+						assert((player.z_index>node.z_index)==(side==1),"脚底排序错误")
+						await RenderingServer.frame_post_draw
+						get_viewport().get_texture().get_image().save_png(captures+"/tree_%s.png"%("front" if side==1 else "back"))
+			player.position = origin
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
 		var deadline := Time.get_ticks_msec()+15000
