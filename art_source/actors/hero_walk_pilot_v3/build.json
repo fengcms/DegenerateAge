@@ -18,7 +18,8 @@
     112
   ],
   "directions": [
-    "se"
+    "se",
+    "ne"
   ],
   "stridePixels": 64,
   "states": {
@@ -61,5 +62,18 @@
   "idleDirections": [
     "se",
     "ne"
-  ]
+  ],
+  "rearWalkSource": {
+    "path": "../hero_walk_ne_pose_v2/candidate.png",
+    "sourceFrame": [
+      512,
+      768
+    ],
+    "columns": 4,
+    "scale": 0.14,
+    "pivot": [
+      275,
+      710
+    ]
+  }
 }

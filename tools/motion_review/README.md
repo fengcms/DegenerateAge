@@ -38,3 +38,9 @@ python3 tools/motion_review/launch.py --source art_source/actors/hero_walk_pose_
 ## 怪物候选与独立对照图
 
 --reference <图片>可选择静态怪物对照，默认仍为原主角；review.json可设actorName。支持四帧的四列或2×2源格。自动验证检查数据和播放，不要求候选先被拒绝，也不会把under_review或isolated_idle_trial升级为正式通过；始终输出ART_NOT_APPROVED。原V1拒绝候选已复测通过工具检查，透明角和同步断言保留。
+
+## 背面姿态约束
+
+build_pose_guide.py新增--direction ne；默认se保持原骨架坐标。相机和四人偶排列随视角一起改变，身体前方、左蓝/右红肢体及骨长不变，不使用镜像。渲染前额外验证身体前方投影确实指向屏幕右上/右下。Blender分别输出两方向POSE_GUIDE_OK，前后四帧骨架数值与原se版一致；数值通过仍不能批准AI输出的步态。
+
+review.json还可指定referencePivot（静态对照图像素坐标）；默认仍是底边中心。使用带透明帧格的站姿时必须提供其实际接触区锚点，例如(56,112)，避免把帧底当脚底造成虚假的高低差。此字段只调整对照图，不修正候选各帧的漂移。

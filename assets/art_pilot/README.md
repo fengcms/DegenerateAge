@@ -25,3 +25,5 @@ hero_idle_ne_v3.png是独立右上背面站姿，112×128、pivot(56,112)，RGBA
 wolf_idle_v1.png为128×384四帧待机图集，每帧128×96、pivot(64,80)、3fps、屏幕左下朝向，理论RGBA8为192KiB。源稿与提示词位于art_source/actors/wolf_idle_trial_v1，build.json构建、运行JSON为其副本。隔离营地J键恢复原wolf.png；新图集只加载一次，四个区域引用共享图集，热路径不生成新纹理。
 
 beetle_idle_v1.png同为128×384四帧图集，每帧128×96、pivot(64,80)、3fps、屏幕左下；理论RGBA8为192KiB，两怪新增合计384KiB。源稿与两轮生成提示词在art_source/actors/beetle_idle_trial_v1；第一轮背景不透明，当前使用内置image_gen去背景修正版。两图集源稿不复制进运行项目，正式外观库不登记。
+
+hero_walk_ne_v2.png新增右上四帧行走试装，112×512，一列四行112×128，pivot(56,112)，理论RGBA8为224KiB。源稿、骨架和提示词位于art_source/actors/hero_walk_ne_pose_v2，构建参数在hero_walk_pilot_v3/build.json；hero_walk_se_v3.json沿用旧文件名但现声明se/ne两个行走方向。两行走图集与两站姿理论合计560KiB。仅实际右上位移推进四帧，停步回原右上站姿，其他方向仍回退，不登记正式角色库。

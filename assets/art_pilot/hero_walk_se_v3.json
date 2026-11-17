@@ -1,6 +1,7 @@
 {
   "directions": [
-    "se"
+    "se",
+    "ne"
   ],
   "frameSize": [
     112.0,
@@ -37,6 +38,19 @@
     "size": [
       1024.0,
       1536.0
+    ]
+  },
+  "rearWalkSource": {
+    "columns": 4.0,
+    "path": "../hero_walk_ne_pose_v2/candidate.png",
+    "pivot": [
+      275.0,
+      710.0
+    ],
+    "scale": 0.14,
+    "sourceFrame": [
+      512.0,
+      768.0
     ]
   },
   "scale": 0.15,

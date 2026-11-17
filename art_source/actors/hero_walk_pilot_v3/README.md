@@ -17,3 +17,7 @@ idle_source.png以同目录行走源稿为参考由内置image_gen生成，提�
 rear_idle_source.png由内置image_gen参考idle_source.png生成，完整提示词见rear_idle_prompt.json；原创角色旋转成右上背面，不使用商业游戏素材或镜像前身。build.json的rearIdleSource定义1024×1536源尺寸、0.069缩放与源锚点(530,1390)，统一打包112×128/pivot(56,112)的hero_idle_ne_v3.png。idleDirections单独记录se/ne，directions仍只声明se行走，不能据此宣称八向动画完成。
 
 I原地对照前后站姿。右上移动先使用背面静态图，未制作背面步态；正式CharacterLook仍不登记。前后材质与人物高度接近，披布形状仍需在后续多方向制作中保持一致。
+
+## 右上行走扩展
+
+现已补入../hero_walk_ne_pose_v2/candidate.png，由背面双色骨架约束生成。build.json的rearWalkSource定义四列512×768、0.14缩放与源锚点(275,710)，输出hero_walk_ne_v2.png，与既有站姿/右下行走共用112×128帧和(56,112)锚点。directions现为se/ne；右下源图未改。O复现右上试走，其他方向仍回退。前文“右上仅单帧”为上一阶段记录，当前仅两方向具备四帧试装，仍非完整八向。

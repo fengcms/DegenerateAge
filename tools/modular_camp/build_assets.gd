@@ -147,6 +147,19 @@ func _build_walk(root: String) -> void:
 		frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
 		atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
 	assert(atlas.save_png(root+"/assets/art_pilot/hero_walk_se_v3.png")==OK)
+	var rear: Dictionary = spec.rearWalkSource
+	assert(rear.sourceFrame==spec.sourceFrame and rear.columns==spec.frames)
+	var rear_image := Image.load_from_file(source+rear.path)
+	assert(rear_image.get_size()==Vector2i(2048,768) and rear_image.detect_alpha()!=Image.ALPHA_NONE)
+	var rear_scaled := Vector2i((Vector2(source_size)*float(rear.scale)).round())
+	var rear_offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(rear.pivot[0],rear.pivot[1])*float(rear.scale)).round())
+	assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(rear_offset,rear_scaled)))
+	var rear_atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
+	for index in range(4):
+		var frame := rear_image.get_region(Rect2i(Vector2i(index*source_size.x,0),source_size))
+		frame.resize(rear_scaled.x,rear_scaled.y,Image.INTERPOLATE_LANCZOS)
+		rear_atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,rear_scaled),rear_offset+Vector2i(0,index*size.y))
+	assert(rear_atlas.save_png(root+"/assets/art_pilot/hero_walk_ne_v2.png")==OK)
 	for direction in ["se","ne"]:
 		var idle_spec: Dictionary = spec.idleSource if direction=="se" else spec.rearIdleSource
 		var idle_frame := _pack_idle(source,idle_spec,size,Vector2i(spec.pivot[0],spec.pivot[1]))

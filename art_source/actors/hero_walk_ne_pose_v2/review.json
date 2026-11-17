@@ -1,0 +1,23 @@
+{
+  "actorName": "守护者背面",
+  "status": "isolated_motion_trial",
+  "frameSize": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [
+    275,
+    710
+  ],
+  "scale": 0.14,
+  "direction": "ne",
+  "guide": "pose_guide.png",
+  "issues": "背面骨架约束试装：接触腿已有交替，四帧节奏与站走切换仍需精修",
+  "referencePivot": [
+    56,
+    112
+  ]
+}

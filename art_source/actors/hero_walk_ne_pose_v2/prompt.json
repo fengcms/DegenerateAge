@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen",
+  "references": [
+    "pose_guide.png",
+    "../hero_walk_pilot_v3/rear_idle_source.png"
+  ],
+  "prompt": "Use case: sketch-to-render. First image is an EXACT FOUR FRAME REAR-WALK POSE GUIDE, 2048x768 four512x768 cells. Second image is warrior identity reference ONLY. Replace the mannequin volumes with the same worn bronze lamellar warrior while preserving EACH guide pose and its left/right leg anatomy precisely. BLUE limbs are ANATOMICAL LEFT, RED limbs are ANATOMICAL RIGHT. Four frames must match their respective guide silhouette and joint positions: frame1 RED right leg trails toward bottom-left while BLUE left leg ahead; frame2 BLUE left support and RED right lifted passing; frame3 BLUE left leg trails toward bottom-left while RED right leg ahead; frame4 RED right support and BLUE left lifted passing. Rear three-quarter heading SCREEN UPPER RIGHT in ALL frames. Sword always in RED/anatomical RIGHT hand visible screen right, held low. Same topknot, scarf, crossed back straps, right hip pouch, bronze armor, boots and SHORT ragged cape. Use thin knee-length torn cloth which DOES NOT conceal knees and feet. Preserve fixed camera, body scale and origin positions of guide; don't duplicate pose1 in pose3. No red/blue remains in finished art. Full bodies no cropping, exact equal-cell layout. Realistic muted weathered rendering matching reference. Genuine alpha transparent background, no ground, no shadow, no glow or text."
+}

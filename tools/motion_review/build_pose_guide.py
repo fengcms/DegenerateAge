@@ -4,6 +4,7 @@
 执行blender -b -t 4 --python tools/motion_review/build_pose_guide.py -- /tmp/hero-pose-guide。
 输出透明参考图与骨段/接触点校验JSON，不修改游戏资产。
 """
+import argparse
 import json
 import math
 from pathlib import Path
@@ -11,6 +12,7 @@ import sys
 
 import bpy
 from mathutils import Vector
+from bpy_extras.object_utils import world_to_camera_view
 
 
 def material(name, color):
@@ -54,8 +56,14 @@ def knee(hip, ankle):
 
 
 def main():
-    """渲染固定正交四姿态，校验左右相位和脚底接触高度后输出源参照。"""
-    output = Path(sys.argv[sys.argv.index('--')+1]).resolve()
+    """按se/ne相机渲染固定正交四姿态；左右肢体和前方不变，切换视角不镜像骨架。"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--direction', choices=['se', 'ne'], default='se')
+    args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
+    output = args.output.resolve()
+    camera_position = (-6,-8,7) if args.direction == 'se' else (-6,8,7)
+    screen_right = Vector((0.8,-0.6,0)) if args.direction == 'se' else Vector((-0.8,-0.6,0))
     output.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
@@ -65,7 +73,7 @@ def main():
     poses = [((-0.28,0.08),(0.28,0.08)), ((0.0,0.08),(0.0,0.22)), ((0.28,0.08),(-0.28,0.08)), ((0.0,0.22),(0.0,0.08))]
     reports = []
     for index, feet in enumerate(poses):
-        origin = Vector((0.8,-0.6,0)) * ((index-1.5)*1.8)
+        origin = screen_right * ((index-1.5)*1.8)
         ellipsoid('胸', origin+Vector((0,0,1.29)), (0.23,0.14,0.30), neutral)
         ellipsoid('骨盆', origin+Vector((0,0,0.94)), (0.18,0.13,0.13), neutral)
         ellipsoid('头', origin+Vector((0,0,1.72)), (0.13,0.12,0.17), neutral)
@@ -101,19 +109,25 @@ def main():
     scene.render.image_settings.file_format = 'PNG'
     scene.render.image_settings.color_mode = 'RGBA'
     scene.world.color = (0.3,0.3,0.3)
-    bpy.ops.object.camera_add(location=(-6,-8,7))
+    bpy.ops.object.camera_add(location=camera_position)
     camera = bpy.context.object
     camera.rotation_euler = (Vector((0,0,0.95))-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.type = 'ORTHO'
     camera.data.ortho_scale = 7.6
     scene.camera = camera
+    bpy.context.view_layer.update()
+    projected_origin = world_to_camera_view(scene, camera, Vector((0,0,0)))
+    projected_forward = world_to_camera_view(scene, camera, Vector((0,-1,0)))
+    projected_delta = projected_forward - projected_origin
+    assert projected_delta.x > 0
+    assert projected_delta.y > 0 if args.direction == "ne" else projected_delta.y < 0
     bpy.ops.object.light_add(type='AREA',location=(-3,-4,8))
     bpy.context.object.data.energy = 1600
     bpy.context.object.data.shape = 'DISK'
     bpy.context.object.data.size = 6
     scene.render.filepath = str(output/'pose_guide.png')
     bpy.ops.render.render(write_still=True)
-    (output/'pose_checks.json').write_text(json.dumps({'units':'meters','forward':[0,-1,0],'left_color':'blue','right_color':'red','frames':reports},indent=2)+'\n')
+    (output/'pose_checks.json').write_text(json.dumps({'direction':args.direction,'camera':camera_position,'screen_right':list(screen_right),'units':'meters','forward':[0,-1,0],'left_color':'blue','right_color':'red','frames':reports},indent=2)+'\n')
     print('POSE_GUIDE_OK: alternating contacts / equal bone lengths / planted sole heights')
 
 

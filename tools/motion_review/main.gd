@@ -45,7 +45,8 @@ func _ready() -> void:
 	var reference := Sprite2D.new()
 	reference.texture = load("res://reference.png")
 	reference.position = Vector2(120,370)
-	reference.offset.y = -reference.texture.get_height()*0.5
+	var reference_pivot: Array = spec.get("referencePivot",[reference.texture.get_width()*0.5,reference.texture.get_height()])
+	reference.offset = reference.texture.get_size()*0.5-Vector2(reference_pivot[0],reference_pivot[1])
 	add_child(reference)
 	previews.append(_sprite(0,Vector2(330,370),1))
 	previews.append(_sprite(0,Vector2(850,470),3))
