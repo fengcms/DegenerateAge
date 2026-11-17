@@ -20,3 +20,6 @@ hero_idle_se_v3.png是新增配套单帧站姿，112×128、RGBA8理论56KiB，�
 
 
 hero_idle_ne_v3.png是独立右上背面站姿，112×128、pivot(56,112)，RGBA8理论56KiB；与右下站姿、四帧行走合计336KiB（不含旧回退图、导入和驱动开销）。来源art_source/actors/hero_walk_pilot_v3/rear_idle_source.png和rear_idle_prompt.json，按build.json的rearIdleSource构建。仅隔离营地加载，移动/停步均可显示这一背面单帧，尚无背面行走动画。前文“其他方向回退”现排除已补的右上背面方向。
+
+
+wolf_idle_v1.png为128×384四帧待机图集，每帧128×96、pivot(64,80)、3fps、屏幕左下朝向，理论RGBA8为192KiB。源稿与提示词位于art_source/actors/wolf_idle_trial_v1，build.json构建、运行JSON为其副本。隔离营地J键恢复原wolf.png；新图集只加载一次，四个区域引用共享图集，热路径不生成新纹理。

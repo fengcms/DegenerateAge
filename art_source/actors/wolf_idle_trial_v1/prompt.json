@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "../../style_pilot_20261117/layers/wolf.png",
+  "prompt": "Use case: identity-preserve. Transparent game sprite sheet of the EXACT corrupted wolf in reference: lean dark grey shaggy wolf with tiny muted violet skin fissures, four legs, no armor. Create FOUR frames of a subtle alert IDLE loop, 2x2 grid in a 1536x1024 canvas, each cell 768x512. Same full-body scale, same southwest screen lower-left facing, same elevated orthographic camera, same foot contact positions, same body proportions in all four cells. Frame 1 neutral low head jaw nearly closed; frame 2 head raises very slightly with ears alert chest expands subtly; frame 3 head lowers slightly jaw opens in a small snarl showing teeth; frame 4 jaw starts closing returns toward neutral. Feet remain planted. Small tail changes. Keep paws and nose fully inside each cell, consistent ground pivot at cell(384,440), silhouette width about 650px. Original dark realistic eastern fantasy game materials, not cartoon. Genuine transparent background, no floor, shadow, glow, text or dividers."
+}

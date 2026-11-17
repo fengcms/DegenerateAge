@@ -13,6 +13,8 @@ const DEFINITIONS := {
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var motion_enabled := true
+var monster_motion_enabled := true
+var monster_specs: Dictionary = {}
 var verification_direction := Vector2.ZERO
 var actor_specs: Dictionary
 var monster_previews: Array[Sprite2D] = []
@@ -37,6 +39,8 @@ var occluders: Array[SampleOccluder] = []
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
+	for kind in ["wolf"]:
+		monster_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_idle_v1.json"))
 	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
 	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
 	_build_atlas()
@@ -184,18 +188,21 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照 · I前后转向\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 右上背面站姿 / 两怪仍单帧" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照 · I转向 · J怪物动作\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 右上背面站姿 / 狼待机试装" % definition.name
 
-## 按档案定位角色表现；主角支持单向试装，怪物仍是单帧，不引入AI或碰撞。
+## 按档案定位角色表现；主角支持单向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
 	var spec: Dictionary = actor_specs[kind]
-	var sprite: Sprite2D = SampleWalkSprite.new() if kind=="hero" else Sprite2D.new()
+	var sprite: Sprite2D = SampleWalkSprite.new() if kind=="hero" else (SampleIdleSprite.new() if monster_specs.has(kind) else Sprite2D.new())
 	sprite.texture = _texture(spec.path)
 	sprite.centered = false
 	sprite.offset = -Vector2(spec.pivot_ratio[0],spec.pivot_ratio[1])*sprite.texture.get_size()
 	if sprite is SampleWalkSprite:
 		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),_texture("assets/art_pilot/hero_idle_se_v3.png"),_texture("assets/art_pilot/hero_idle_ne_v3.png"),walk_spec)
 		sprite.enabled = motion_enabled
+	elif sprite is SampleIdleSprite:
+		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
+		sprite.set_enabled(monster_motion_enabled)
 	sprite.set_meta("actor_kind",kind)
 	var caption := Label.new()
 	caption.text = spec.name
@@ -223,6 +230,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_I:
 			waypoints.clear()
 			_turn_preview()
+		elif event.keycode == KEY_J:
+			_set_monster_motion(not monster_motion_enabled)
 		elif event.keycode == KEY_H:
 			motion_enabled = not motion_enabled
 			player_art.enabled = motion_enabled
@@ -323,6 +332,7 @@ func _verify() -> void:
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
 		_verify_actors()
+		await _verify_monster_idle(captures)
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
 		await _verify_rear(captures)
@@ -423,6 +433,8 @@ func _verify_actors() -> void:
 	assert(monster_previews.size()==2)
 	assert(get_tree().get_nodes_in_group("actor_names").size()==3)
 	for actor in monster_previews:
+		if actor is SampleIdleSprite:
+			actor.set_enabled(false)
 		var kind: String = actor.get_meta("actor_kind")
 		assert(actor.texture==_texture(actor_specs[kind].path))
 		assert(actor.texture.get_width()==110)
@@ -434,6 +446,8 @@ func _verify_actors() -> void:
 		assert(not collision_cells.has(cell))
 		assert(actor.z_index==roundi(actor.position.y))
 		assert(actor.get_child_count()==1 and actor.get_child(0) is Label)
+		if actor is SampleIdleSprite:
+			actor.set_enabled(monster_motion_enabled)
 
 ## 明确的试走入口：回到两布局共用的空地并沿右下方向寻路，不改变正式出生点。
 func _start_walk_demo() -> void:
@@ -571,3 +585,49 @@ func _verify_rear(captures: String) -> void:
 	player_art.update_motion(Vector2.ZERO)
 	assert(player_art.texture==player_art.rear_idle,"重新启用应保留背向")
 	player.position = origin
+
+## 同时切换展示怪物待机开关，切图保留用户选择；不改变布局或物理。
+func _set_monster_motion(value: bool) -> void:
+	monster_motion_enabled = value
+	for actor in monster_previews:
+		if actor is SampleIdleSprite:
+			actor.set_enabled(value)
+
+## 真实帧回调覆盖循环；关闭后应保持旧图，位置、排序与导航均不变化。
+func _verify_monster_idle(captures: String) -> void:
+	var revision := navigator.navigation_revision
+	var count := collision_cells.size()
+	var positions: Array[Vector2] = []
+	var seen: Dictionary = {}
+	var shots: Dictionary = {}
+	_set_monster_motion(true)
+	for actor in monster_previews:
+		positions.append(actor.position)
+		if actor is SampleIdleSprite:
+			seen[actor.get_meta("actor_kind")] = {}
+	var deadline := Time.get_ticks_msec()+2200
+	while Time.get_ticks_msec()<deadline:
+		await get_tree().process_frame
+		for actor in monster_previews:
+			if actor is SampleIdleSprite:
+				var kind: String = actor.get_meta("actor_kind")
+				if not seen[kind].has(actor.current_frame):
+					seen[kind][actor.current_frame] = true
+					if not captures.is_empty():
+						await RenderingServer.frame_post_draw
+						shots["idle_%s_%d_%d.png"%[kind,selected_layout,actor.current_frame]] = get_viewport().get_texture().get_image()
+	for kind in seen:
+		assert(seen[kind].size()==4,"待机真实播放未覆盖四帧")
+	assert(shots.size()<=8,"怪物截图超出缓存预算")
+	for filename in shots:
+		shots[filename].save_png(captures+"/"+filename)
+	shots.clear()
+	_set_monster_motion(false)
+	await get_tree().create_timer(0.4).timeout
+	for index in range(monster_previews.size()):
+		var actor := monster_previews[index]
+		assert(actor.position==positions[index] and actor.z_index==roundi(actor.position.y))
+		if actor is SampleIdleSprite:
+			assert(actor.texture==actor.original and not actor.is_processing())
+	assert(navigator.navigation_revision==revision and collision_cells.size()==count)
+	_set_monster_motion(true)

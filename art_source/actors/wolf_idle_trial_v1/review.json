@@ -1,0 +1,18 @@
+{
+  "actorName": "腐化狼",
+  "status": "isolated_idle_trial",
+  "frameSize": [
+    768,
+    512
+  ],
+  "columns": 2,
+  "frames": 4,
+  "fps": 3,
+  "pivot": [
+    384,
+    440
+  ],
+  "scale": 0.16,
+  "direction": "sw",
+  "issues": "允许隔离试装：头颈露齿变化可见，足尖仍有小幅漂移；未达正式动画验收"
+}

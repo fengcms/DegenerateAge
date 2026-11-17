@@ -36,10 +36,10 @@ func _ready() -> void:
 			var copy: AtlasTexture = region.duplicate()
 			copy.atlas = guide
 			guide_regions.append(copy)
-	_text("守护者 · 单方向动作审片",Vector2(30,20),24)
+	_text(str(spec.get("actorName","守护者"))+" · 单方向动作审片",Vector2(30,20),24)
 	_text(spec.issues,Vector2(30,58),17,Color(1,0.7,0.45))
 	_text("空格 播放/暂停   ← → 单帧检查   1 正常速度   2 慢放   R 回到首帧   B 底色   G 姿态参照",Vector2(30,88),16)
-	_text("已认可静态主角",Vector2(55,190),18)
+	_text("静态形象对照",Vector2(55,190),18)
 	_text("候选 · 原尺寸",Vector2(265,190),18)
 	_text("候选 · 3倍（与原尺寸同步）",Vector2(680,125),18)
 	var reference := Sprite2D.new()
@@ -147,7 +147,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## 验证审片工具而非美术质量：真实共享资源、边缘透明、同步、暂停、循环与倍率。
 func _verify() -> void:
-	assert(spec.status=="rejected_for_runtime")
+	assert(spec.frames==4 and int(spec.columns) in [2,4] and spec.fps>0 and spec.scale>0)
+	assert(not str(spec.status).is_empty(),"候选须明确记录人工审查状态；工具不审批美术")
 	var pixels := atlas.get_image()
 	assert(pixels.detect_alpha()!=Image.ALPHA_NONE)
 	for region in regions:

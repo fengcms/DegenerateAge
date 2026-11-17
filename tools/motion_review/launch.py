@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--verify', action='store_true')
     parser.add_argument('--source', type=Path, default=ROOT / 'art_source/actors/hero_walk_trial_v1')
     parser.add_argument('--capture', type=Path)
+    parser.add_argument('--reference', type=Path, default=ROOT / 'assets/art_pilot/hero.png')
     args = parser.parse_args()
     godot = shutil.which('godot') or '/Applications/Godot.app/Contents/MacOS/Godot'
     with tempfile.TemporaryDirectory(prefix='motion-review-') as temp:
@@ -29,7 +30,7 @@ def main():
             if Path(spec['guide']).name != spec['guide']:
                 raise ValueError('guide必须是源目录内的文件名')
             shutil.copy2(source / spec['guide'], project / spec['guide'])
-        shutil.copy2(ROOT / 'assets/art_pilot/hero.png', project / 'reference.png')
+        shutil.copy2(args.reference.resolve(), project / 'reference.png')
         (project / 'project.godot').write_text('''config_version=5
 [application]
 config/name="MotionReview-Isolated"

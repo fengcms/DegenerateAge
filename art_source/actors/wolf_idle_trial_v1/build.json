@@ -1,0 +1,25 @@
+{
+  "status": "isolated_idle_trial",
+  "source": "candidate.png",
+  "sourceFrame": [
+    768,
+    512
+  ],
+  "columns": 2,
+  "frames": 4,
+  "scale": 0.16,
+  "sourcePivot": [
+    384,
+    460
+  ],
+  "frameSize": [
+    128,
+    96
+  ],
+  "pivot": [
+    64,
+    80
+  ],
+  "fps": 3,
+  "direction": "sw"
+}

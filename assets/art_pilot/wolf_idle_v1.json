@@ -1,0 +1,25 @@
+{
+  "columns": 2.0,
+  "direction": "sw",
+  "fps": 3.0,
+  "frameSize": [
+    128.0,
+    96.0
+  ],
+  "frames": 4.0,
+  "pivot": [
+    64.0,
+    80.0
+  ],
+  "scale": 0.16,
+  "source": "candidate.png",
+  "sourceFrame": [
+    768.0,
+    512.0
+  ],
+  "sourcePivot": [
+    384.0,
+    460.0
+  ],
+  "status": "isolated_idle_trial"
+}

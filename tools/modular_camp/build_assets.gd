@@ -66,6 +66,7 @@ func _initialize() -> void:
 	assert(beetle.save_png(root+"/assets/art_pilot/beetle_v2.png")==OK)
 	print("BEETLE_BUILT: ",beetle.get_size())
 	_build_walk(root)
+	_build_monster_idle(root)
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
 	print("MODULAR_ASSETS_BUILT: ",manifest)
@@ -165,3 +166,26 @@ func _pack_idle(source: String, spec: Dictionary, size: Vector2i, pivot: Vector2
 	var frame := Image.create(size.x,size.y,false,Image.FORMAT_RGBA8)
 	frame.blit_rect(idle,Rect2i(Vector2i.ZERO,scaled),offset)
 	return frame
+
+## 固定2×2源格统一倍率打包两类待机，保留帧间真实差异，不逐帧吸附足尖。
+func _build_monster_idle(root: String) -> void:
+	for kind in ["wolf"]:
+		var folder: String = root+"/art_source/actors/"+kind+"_idle_trial_v1/"
+		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
+		var source := Image.load_from_file(folder+spec.source)
+		var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
+		var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
+		assert(source.get_size()==cell*2 and source.detect_alpha()!=Image.ALPHA_NONE)
+		var scaled := Vector2i((Vector2(cell)*float(spec.scale)).round())
+		var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
+		assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
+		var atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
+		for index in range(4):
+			var frame := source.get_region(Rect2i(Vector2i(index%2,index/2)*cell,cell))
+			assert(frame.get_pixel(0,0).a<0.01)
+			frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
+			atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
+		var output: String = root+"/assets/art_pilot/"+kind+"_idle_v1"
+		assert(atlas.save_png(output+".png")==OK)
+		FileAccess.open(output+".json",FileAccess.WRITE).store_string(JSON.stringify(spec,"  "))
+	print("MONSTER_IDLE_BUILT")

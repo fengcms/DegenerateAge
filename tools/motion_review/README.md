@@ -34,3 +34,7 @@ python3 tools/motion_review/launch.py --source art_source/actors/hero_walk_pose_
 ```
 
 新版验证增加底色循环、姿态条带切换而候选不变，以及窗口截图中棋盘颜色差异；打印各帧非零alpha包围盒。失败或超时保留子进程日志，不把断言中断误报为成功。加载一张姿态图额外约6MiB理论RGBA8纹理，只在审片器使用。
+
+## 怪物候选与独立对照图
+
+--reference <图片>可选择静态怪物对照，默认仍为原主角；review.json可设actorName。支持四帧的四列或2×2源格。自动验证检查数据和播放，不要求候选先被拒绝，也不会把under_review或isolated_idle_trial升级为正式通过；始终输出ART_NOT_APPROVED。原V1拒绝候选已复测通过工具检查，透明角和同步断言保留。
