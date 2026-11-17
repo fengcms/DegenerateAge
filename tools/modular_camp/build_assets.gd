@@ -54,6 +54,11 @@ func _initialize() -> void:
 		decals.blit_rect(detail,Rect2i(Vector2i.ZERO,detail.get_size()),offset)
 	decals.save_png(output+"decals_atlas.png")
 	manifest["decals"] = {"size":[256,64],"slot":[128,64],"ids":["roots","gravel"]}
+	var regions: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(root+"/tools/modular_camp/occlusion_regions.json"))
+	for id in regions:
+		var mask := _reveal_mask(Image.load_from_file(output+id+".png"),regions[id])
+		mask.save_png(output+id+"_reveal_mask.png")
+		manifest.objects[id]["reveal_mask"] = id+"_reveal_mask.png"
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
 	print("MODULAR_ASSETS_BUILT: ",manifest)
@@ -75,3 +80,42 @@ func _material(path: String) -> Image:
 				image.set_pixelv(first,a.lerp(b,weight))
 				image.set_pixelv(last,b.lerp(a,weight))
 	return image
+
+## 将人工标注的轮廓区域编译为显示蒙版；保护区与透明像素始终为黑色，不改原画。
+func _reveal_mask(source: Image, spec: Dictionary) -> Image:
+	assert(source.get_size()==Vector2i(spec.size[0],spec.size[1]),"图片尺寸变化后必须重审轮廓")
+	var mask := Image.create(source.get_width(),source.get_height(),false,Image.FORMAT_RGBA8)
+	mask.fill(Color.BLACK)
+	var includes := _polygons(spec.include)
+	var protects := _polygons(spec.protect)
+	for y in range(source.get_height()):
+		for x in range(source.get_width()):
+			if source.get_pixel(x,y).a<0.02:
+				continue
+			var point := Vector2(x+0.5,y+0.5)
+			var selected := false
+			for polygon in includes:
+				selected = selected or Geometry2D.is_point_in_polygon(point,polygon)
+			for polygon in protects:
+				if Geometry2D.is_point_in_polygon(point,polygon):
+					selected = false
+			if selected:
+				mask.set_pixel(x,y,Color.WHITE)
+	for raw in spec.protected_samples:
+		var point := Vector2i(raw[0],raw[1])
+		assert(source.get_pixelv(point).a>0.2,"保护验证点必须位于可见树干或墙体")
+		assert(mask.get_pixelv(point).r==0,"保护区错误淡出")
+	for raw in spec.reveal_samples:
+		var point := Vector2i(raw[0],raw[1])
+		assert(source.get_pixelv(point).a>0.2 and mask.get_pixelv(point).r==1,"冠层或屋顶验证点不在蒙版内")
+	return mask
+
+## 将配置中的像素顶点转换成Godot多边形，构建期执行，不进入帧循环。
+func _polygons(raw: Array) -> Array[PackedVector2Array]:
+	var result: Array[PackedVector2Array] = []
+	for values in raw:
+		var polygon := PackedVector2Array()
+		for point in values:
+			polygon.append(Vector2(point[0],point[1]))
+		result.append(polygon)
+	return result

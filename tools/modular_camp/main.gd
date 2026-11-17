@@ -117,7 +117,7 @@ func _switch_layout(index: int) -> void:
 			cell += Vector2i(0,2)
 		var sprite: Sprite2D = SampleOccluder.new() if object.kind in ["tree","shelter"] else Sprite2D.new()
 		if sprite is SampleOccluder:
-			sprite.upper_limit = 0.68 if object.kind=="tree" else 0.56
+			sprite.mask_texture = _texture("assets/environment/camp_modular_v1/"+object.kind+"_reveal_mask.png")
 			occluders.append(sprite)
 		sprite.texture = _texture(spec.path)
 		sprite.set_meta("module_kind", object.kind)
@@ -168,7 +168,7 @@ func _switch_layout(index: int) -> void:
 	art.offset.y = -art.texture.get_height()*0.5
 	player.add_child(art)
 	world.add_child(player)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 土草路＋贴花 / 树冠屋顶局部淡出 · 角色仍为静态占位" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 角色仍为静态占位" % definition.name
 
 ## 鼠标仅在目标可达时创建既有导航路线；编辑操作整体重建小样板并失效旧路线。
 func _unhandled_input(event: InputEvent) -> void:
@@ -336,6 +336,10 @@ func _verify_occlusion(captures: String) -> void:
 		assert(occluder.target_reveal and occluder.reveal_amount>0.99,"遮挡时未淡出")
 		assert(player.z_index<occluder.z_index)
 		if not captures.is_empty():
+			occluder.reveal_material.set_shader_parameter("reveal_amount",0.0)
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_opaque.png")
+			occluder.reveal_material.set_shader_parameter("reveal_amount",occluder.reveal_amount)
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_reveal.png")
 		player.position = occluder.position+Vector2(0,35)

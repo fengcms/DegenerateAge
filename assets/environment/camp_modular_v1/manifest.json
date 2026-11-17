@@ -30,6 +30,7 @@
         196.0,
         196
       ],
+      "reveal_mask": "shelter_reveal_mask.png",
       "size": [
         392,
         200
@@ -40,6 +41,7 @@
         226.0,
         226
       ],
+      "reveal_mask": "tree_reveal_mask.png",
       "size": [
         452,
         230
