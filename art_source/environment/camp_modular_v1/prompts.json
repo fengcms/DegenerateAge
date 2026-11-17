@@ -1,0 +1,32 @@
+{
+  "tool": "image_gen built-in",
+  "reference": "../../style_pilot_20261117/camp_hero_monsters.png",
+  "common": "Original mature eastern dark-fantasy, weathered realistic pre-rendered RPG look, muted grey brown, soft upper-left light. Not pixel art, not cartoon, no text or UI.",
+  "prompts": [
+    [
+      "soil",
+      false,
+      "Square seamless repeating ground material texture seen straight down, orthographic 90 degree overhead. Flat dull grey-brown packed earth, sparse tiny pebbles, subdued faded olive moss and occasional tiny dried grass roots. VERY LOW contrast and low frequency broad mottling. Every edge matches opposite edge. Equal scale across image. No path, no scene, no objects, no directional cast shadows, no border, no lighting gradient. Material swatch only, entire square filled. Approximate 4x4 meters."
+    ],
+    [
+      "road",
+      false,
+      "Square seamless repeating ground material texture seen straight down, orthographic 90 degree overhead. Worn compacted smooth earth roadway material, desaturated taupe brown, slightly lighter than soil, very sparse fine grit, broad subdued mottling, no cobblestones, no grass, no actual path shape, no borders. All square filled with uniform material, opposite edges match, no lighting gradient, low contrast."
+    ],
+    [
+      "wall",
+      true,
+      "ONE isolated reusable low stone wall segment for 2:1 isometric game grid. Orthographic camera, 30 degree elevation; straight wall along axis from bottom-left to top-right, ground edge slope exactly -0.5. Rough grey weathered masonry with a few flat coping stones, knee-high, thickness 0.4m, length 2m. Parallel clean butt ends ready to connect to another identical segment, no terminal columns, no rubble pile. Entire object visible. NO floor, NO base platform, NO cast shadow, real transparent background. Coherent light from upper left."
+    ],
+    [
+      "tree",
+      true,
+      "ONE standalone old camp tree, restrained dusty olive foliage, twisted substantial grey-brown trunk and compact roots. Original realistic pre-rendered 2D game sprite in 2:1 isometric orthographic camera elevated 30 degrees. Entire crown and roots visible. Crown irregular with gaps, not brightly colored, no fairy glow, no decorations. Root footprint modest relative to crown. NO ground patch, NO floor, NO cast shadow. Genuine transparent background. Upper-left light. Intended height 230px when reduced."
+    ],
+    [
+      "shelter",
+      true,
+      "ONE standalone modest survivor workshop shelter game asset, grey stone lower walls and dark worn wood, dark clay tiled roof, sand canvas small awning and small warm lantern. 2:1 isometric orthographic view, ground parallel axes at slopes plus/minus 0.5. Compact simple rectangular structure, no surrounding yard or ground, no attached piles or trees, no platform. Door clearly visible on front face. Mature realistic worn materials, muted values. All roof and feet visible. Genuine transparent background, no cast shadow or backdrop, no text. Upper-left light. This is one reusable building sprite, not an environment scene."
+    ]
+  ]
+}
