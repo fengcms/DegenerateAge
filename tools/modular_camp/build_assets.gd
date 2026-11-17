@@ -65,6 +65,7 @@ func _initialize() -> void:
 	beetle.resize(110,roundi(110.0*beetle.get_height()/beetle.get_width()),Image.INTERPOLATE_LANCZOS)
 	assert(beetle.save_png(root+"/assets/art_pilot/beetle_v2.png")==OK)
 	print("BEETLE_BUILT: ",beetle.get_size())
+	_build_walk(root)
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
 	print("MODULAR_ASSETS_BUILT: ",manifest)
@@ -125,3 +126,25 @@ func _polygons(raw: Array) -> Array[PackedVector2Array]:
 			polygon.append(Vector2(point[0],point[1]))
 		result.append(polygon)
 	return result
+
+## 固定格、统一倍率打包姿态帧，不按各帧边界缩放或吸附脚底；输出只供隔离动作试装。
+func _build_walk(root: String) -> void:
+	var source := root+"/art_source/actors/hero_walk_pilot_v3/"
+	var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(source+"build.json"))
+	var image := Image.load_from_file(source+"source.png")
+	var source_size := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
+	assert(image.get_size()==source_size*Vector2i(spec.frames,1))
+	assert(image.detect_alpha()!=Image.ALPHA_NONE)
+	var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
+	var atlas := Image.create(size.x,size.y*int(spec.frames),false,Image.FORMAT_RGBA8)
+	var scaled := Vector2i((Vector2(source_size)*float(spec.scale)).round())
+	var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
+	assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
+	for index in range(spec.frames):
+		var frame := image.get_region(Rect2i(Vector2i(index*source_size.x,0),source_size))
+		frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
+		atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
+	assert(atlas.save_png(root+"/assets/art_pilot/hero_walk_se_v3.png")==OK)
+	var output := FileAccess.open(root+"/assets/art_pilot/hero_walk_se_v3.json",FileAccess.WRITE)
+	output.store_string(JSON.stringify(spec,"  "))
+	print("HERO_WALK_BUILT: ",atlas.get_size()," / shared pivot / 4 source poses")

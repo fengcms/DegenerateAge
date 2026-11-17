@@ -10,6 +10,9 @@ const DEFINITIONS := {
 	"wall_corner": {"path":"assets/environment/camp_modular_v1/wall_corner.png", "height":56, "footprint":[[0,0]]},
 	"wall": {"path":"assets/environment/camp_modular_v1/wall.png", "height":56, "footprint":[[0,0]]}
 }
+var player_art: SampleWalkSprite
+var walk_spec: Dictionary
+var motion_enabled := true
 var actor_specs: Dictionary
 var monster_previews: Array[Sprite2D] = []
 var actor_names_visible := false
@@ -32,6 +35,7 @@ var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
+	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
 	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
 	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
 	_build_atlas()
@@ -168,7 +172,8 @@ func _switch_layout(index: int) -> void:
 	circle.radius = 12.0
 	shape.shape = circle
 	player.add_child(shape)
-	player.add_child(_actor_sprite("hero"))
+	player_art = _actor_sprite("hero") as SampleWalkSprite
+	player.add_child(player_art)
 	world.add_child(player)
 	for entry in definition.actors:
 		var cell := Vector2i(entry.cell[0],entry.cell[1])
@@ -178,15 +183,18 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角＋腐化狼＋铜甲虫 · 单帧比例样板" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 其他方向/两怪仍单帧" % definition.name
 
-## 按档案中归一化的地面接触中心定位单帧图片；只创建表现，不引入怪物AI或碰撞。
+## 按档案定位角色表现；主角支持单向试装，怪物仍是单帧，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
 	var spec: Dictionary = actor_specs[kind]
-	var sprite := Sprite2D.new()
+	var sprite: Sprite2D = SampleWalkSprite.new() if kind=="hero" else Sprite2D.new()
 	sprite.texture = _texture(spec.path)
 	sprite.centered = false
 	sprite.offset = -Vector2(spec.pivot_ratio[0],spec.pivot_ratio[1])*sprite.texture.get_size()
+	if sprite is SampleWalkSprite:
+		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),walk_spec)
+		sprite.enabled = motion_enabled
 	sprite.set_meta("actor_kind",kind)
 	var caption := Label.new()
 	caption.text = spec.name
@@ -209,6 +217,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_TAB:
 			moved_wall = false
 			_switch_layout(1-selected_layout)
+		elif event.keycode == KEY_P:
+			_start_walk_demo()
+		elif event.keycode == KEY_H:
+			motion_enabled = not motion_enabled
+			player_art.enabled = motion_enabled
 		elif event.keycode == KEY_N:
 			actor_names_visible = not actor_names_visible
 			for caption in get_tree().get_nodes_in_group("actor_names"):
@@ -231,7 +244,7 @@ func _route(target: Vector2) -> void:
 	if navigator.reachable(start,finish):
 		waypoints = navigator.smooth_path(player.position,navigator.path(start,finish))
 
-## 以真实CharacterBody2D和半径12碰撞移动；贴图不播放伪动画。
+## 以真实CharacterBody2D和半径12碰撞移动；行走帧仅由碰撞处理后的实际位移推进。
 func _physics_process(delta: float) -> void:
 	physics_steps += 1
 	var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
@@ -243,7 +256,9 @@ func _physics_process(delta: float) -> void:
 		if not waypoints.is_empty():
 			direction = player.position.direction_to(waypoints[0])
 	player.velocity = direction.normalized()*150.0
+	var before := player.position
 	player.move_and_slide()
+	player_art.update_motion(player.position-before)
 	player.z_index = clampi(roundi(player.position.y),-3500,3500)
 	for occluder in occluders:
 		occluder.update_reveal(player.position,delta)
@@ -302,6 +317,7 @@ func _verify() -> void:
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
 		_verify_actors()
+		await _verify_walk(captures)
 		await _verify_occlusion(captures)
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
@@ -410,3 +426,62 @@ func _verify_actors() -> void:
 		assert(not collision_cells.has(cell))
 		assert(actor.z_index==roundi(actor.position.y))
 		assert(actor.get_child_count()==1 and actor.get_child(0) is Label)
+
+## 明确的试走入口：回到两布局共用的空地并沿右下方向寻路，不改变正式出生点。
+func _start_walk_demo() -> void:
+	player.position = Iso.grid_to_world(Vector2i(8,6))
+	player_art.update_motion(Vector2.ZERO)
+	_route(Iso.grid_to_world(Vector2i(8,2)))
+
+## 用真实物理路线覆盖四帧、停步与反向回退；显示开关不允许修改碰撞和角色位置。
+func _verify_walk(captures: String) -> void:
+	var origin := player.position
+	_start_walk_demo()
+	assert(not waypoints.is_empty())
+	var seen: Dictionary = {}
+	var capture_index := 0
+	var shots: Dictionary = {}
+	var capture_times: Array = []
+	var deadline := Time.get_ticks_msec()+5000
+	while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
+		await get_tree().physics_frame
+		if not captures.is_empty() and physics_steps%3==0 and capture_index<24:
+			await RenderingServer.frame_post_draw
+			shots["walk_demo_%d_%03d.png"%[selected_layout,capture_index]] = get_viewport().get_texture().get_image()
+			capture_times.append(Time.get_ticks_msec())
+			capture_index += 1
+		if player_art.walking and not seen.has(player_art.walk_frame):
+			seen[player_art.walk_frame] = true
+			if not captures.is_empty():
+				await RenderingServer.frame_post_draw
+				shots["walk_%d_%d.png"%[selected_layout,player_art.walk_frame]] = get_viewport().get_texture().get_image()
+	assert(player.position.distance_to(Iso.grid_to_world(Vector2i(8,2)))<8)
+	assert(seen.size()==4,"实际移动没有覆盖完整四帧")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert(not player_art.walking and player_art.texture==player_art.idle_texture,"停步后未恢复原静态图")
+	if not captures.is_empty():
+		await RenderingServer.frame_post_draw
+		shots["walk_demo_%d_%03d.png"%[selected_layout,capture_index]] = get_viewport().get_texture().get_image()
+		capture_times.append(Time.get_ticks_msec())
+		assert(shots.size()<=29,"截图缓存超出上限")
+		for filename in shots:
+			shots[filename].save_png(captures+"/"+filename)
+		shots.clear()
+		var timing := FileAccess.open(captures+"/walk_demo_%d.json"%selected_layout,FileAccess.WRITE)
+		timing.store_string(JSON.stringify(capture_times))
+	_route(Iso.grid_to_world(Vector2i(8,6)))
+	deadline = Time.get_ticks_msec()+5000
+	while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
+		await get_tree().physics_frame
+		assert(not player_art.walking,"未制作方向不应套用右下动作")
+	assert(player.position.distance_to(Iso.grid_to_world(Vector2i(8,6)))<8)
+	player_art.enabled = false
+	player_art.update_motion(Vector2(2,1))
+	assert(not player_art.walking)
+	player_art.enabled = true
+	player_art.update_motion(Vector2(2,1))
+	assert(player_art.walking)
+	player_art.update_motion(Vector2.ZERO)
+	assert(not player_art.walking and player_art.phase_distance==0,"零位移不应原地踏步")
+	player.position = origin

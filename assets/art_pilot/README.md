@@ -9,3 +9,9 @@
 新增beetle_v2.png（110×82），由tools/modular_camp/launch.py --build-assets构建，源稿位于art_source/actors/camp_pilot_v1。新稿为无光晕的六足铜甲虫，不覆盖worm.png。模块化营地只复制hero.png（77×96）、wolf.png（110×57）与beetle_v2.png，不加载camp.png或旧worm.png。
 
 样板角色锚点与资源路径集中在tools/modular_camp/actors.json；pivot_ratio以图像左上角为原点归一化。主角暂用底部中心；狼为(0.5,0.87)，甲虫为(0.5,0.82)，四足/六足按接触区域中心排序，不能统一取最低足尖。名称位于图顶上方22px，可按N切换。角色碰撞仍为半径12，怪物仅展示，无碰撞、AI或血条，不映射正式怪物模板。三个形象都是单帧，尚无帧率、命中帧或死亡时序。
+
+## 右下行走试装 V3
+
+hero_walk_se_v3.png为112×512（四行，每格112×128），RGBA8理论224KiB；hero_walk_se_v3.json为构建清单副本。来源art_source/actors/hero_walk_pilot_v3/source.png，内置image_gen在V2姿态基础上修正原主角胸甲、背带和腰包。tools/modular_camp/launch.py --build-assets统一按0.15缩放并打包，固定pivot(56,112)，不逐帧拉伸、镜像或裁脚。
+
+仅隔离营地引用：向屏幕右下、以(2,1)为中心约±22.5度范围播放四帧；循环按实际位移64px推进，原图用于停步和其他方向。与正式CharacterLook一样采用帧尺寸、锚点及状态帧数约定，但不把缺失方向冒充完整八向登记。没有攻击命中、受击或死亡时序，怪物仍静态。

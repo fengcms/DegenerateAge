@@ -26,9 +26,13 @@ def main():
             shutil.copy2(Path(__file__).with_name(filename), project / filename)
         if args.build_assets:
             (project / 'project.godot').write_text('config_version=5\n')
-            subprocess.run([godot, '--headless', '--path', temp, '--script', 'build_assets.gd', '--', str(ROOT)], check=True)
+            built = subprocess.run([godot, '--headless', '--path', temp, '--script', 'build_assets.gd', '--', str(ROOT)], check=True, capture_output=True, text=True, timeout=60)
+            print(built.stdout, end='')
+            print(built.stderr, end='')
+            if 'MODULAR_ASSETS_BUILT' not in built.stdout or 'HERO_WALK_BUILT' not in built.stdout or 'SCRIPT ERROR' in built.stderr:
+                raise RuntimeError('素材构建未完整成功')
             return
-        for relative in ['assets/tiles/camp/crate.png', 'assets/art_pilot/hero.png', 'assets/art_pilot/wolf.png', 'assets/art_pilot/beetle_v2.png']:
+        for relative in ['assets/tiles/camp/crate.png', 'assets/art_pilot/hero.png', 'assets/art_pilot/wolf.png', 'assets/art_pilot/beetle_v2.png', 'assets/art_pilot/hero_walk_se_v3.png', 'assets/art_pilot/hero_walk_se_v3.json']:
             destination = project / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / relative, destination)

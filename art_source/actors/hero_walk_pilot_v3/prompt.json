@@ -1,0 +1,9 @@
+{
+  "tool": "image_gen",
+  "mode": "edit",
+  "inputs": [
+    "../hero_walk_pose_v2/candidate.png",
+    "../../style_pilot_20261117/layers/hero.png"
+  ],
+  "prompt": "Use case: identity-preserve. Image1 is the EDIT TARGET: four walking sprites. Image2 is the approved costume/identity reference. Modify ONLY the costume details and face in image1 to match image2, keeping all four leg poses, body sizes, frame positions, camera and anatomical right-hand sword grip unchanged. Restore the reference's distinctive large round metal chest ring on diagonal leather harness, worn layered shoulder plates with thin bronze rims, beige wrapped scarf, utility pouch on sword-hand hip, overlapping asymmetrical skirt plates and torn grey cloth below the waist, short ragged cape on back. Same black topknot and bearded face as image2. Keep knees/feet in image1's exact existing walking positions, especially different leg in front in frames1 and3. Do not change camera or stance to match image2. Four equal cells in one row, identical torso and head scale. Physically opaque realistic matte texture, genuine transparent empty background. No ground, no cast shadow, no atmospheric haze or glow, no labels. Keep the complete long straight sword inside each cell. This is precise costume correction of a pose sheet, not a new character."
+}

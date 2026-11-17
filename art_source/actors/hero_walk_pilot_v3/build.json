@@ -1,0 +1,12 @@
+{
+  "sourceFrame": [512, 768],
+  "frames": 4,
+  "scale": 0.15,
+  "sourcePivot": [275, 720],
+  "frameSize": [112, 128],
+  "pivot": [56, 112],
+  "directions": ["se"],
+  "stridePixels": 64,
+  "states": {"walk": {"frames": 4, "fps": 6, "loop": true}},
+  "status": "isolated_motion_trial"
+}
