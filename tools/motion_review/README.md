@@ -21,3 +21,16 @@ python3 tools/motion_review/launch.py --verify --capture /tmp/hero-motion-review
 自动验证只证明工具可用：透明帧角、共享图集、双预览同步、暂停、切帧、慢放、循环以及位置/倍率保持。成功标记MOTION_REVIEW_VERIFY_OK同时注明ART_NOT_APPROVED，不能用于证明步态或美术质量通过。
 
 图集仅加载一次，四个AtlasTexture共享源纹理；两个动态预览、四个静态帧、一个原图对照。热路径无文件读取、图片加工或纹理分配；窗口关闭释放临时项目与资源。此工具可加载大源稿用于审片，不属于正式运行素材打包入口。
+
+## 姿态约束与透明检查
+
+新增`--source <目录>`选择含candidate.png、review.json的候选；默认仍为V1。配置可用guide字段指定同目录、同尺寸的姿态图，background_probes指定要输出alpha的源图像素坐标。G只切换下方条带，不替换上方候选。B循环深色、浅色、棋盘底，用于避免只凭生成预览判断透明边缘；外部采样点为0也不能证明整个背景已干净。
+
+`build_pose_guide.py`在Blender中使用等长双骨腿解析膝盖位置，显式交换接触脚与支撑脚，生成姿态参照和数值校验记录。它不重建主角模型、不生成最终人物，也不宣称实现了连续脚锁定；目前是四个关键姿态。
+
+```sh
+blender -b -t 4 --python-exit-code 1 --python tools/motion_review/build_pose_guide.py -- /tmp/hero-pose-guide
+python3 tools/motion_review/launch.py --source art_source/actors/hero_walk_pose_v2 --verify --capture /tmp/hero-motion-pose-v2
+```
+
+新版验证增加底色循环、姿态条带切换而候选不变，以及窗口截图中棋盘颜色差异；打印各帧非零alpha包围盒。失败或超时保留子进程日志，不把断言中断误报为成功。加载一张姿态图额外约6MiB理论RGBA8纹理，只在审片器使用。

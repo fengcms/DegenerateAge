@@ -1,0 +1,28 @@
+{
+  "tool": "image_gen",
+  "pose_template": "pose_guide.png",
+  "identity_reference": "../../style_pilot_20261117/layers/hero.png",
+  "attempts": [
+    {
+      "purpose": "姿态与原画双参照",
+      "prompt": "Use case: compositing / identity-preserve. Create a FOUR FRAME WALK CYCLE SPRITE SHEET. Image1 is an EXACT POSE AND CAMERA TEMPLATE: four mannequins in a row, with left limbs colored blue and right limbs red. Image2 is the EXACT CHARACTER IDENTITY/COSTUME reference. Replace each mannequin with the same realistic warrior from image2 while preserving image1's leg joint coordinates, foot contact locations, frame ordering and fixed isometric camera. In frame1 the BLUE/LEFT leg is forward, RED/RIGHT back; frame2 BLUE/LEFT supports weight and RED/RIGHT swings; frame3 RED/RIGHT is forward and BLUE/LEFT back; frame4 RED/RIGHT supports and BLUE/LEFT swings. Do not repeat frame1's stance in frame3. Dress all frames in the same weathered dark bronze lamellar armor, beige scarf, torn cloth skirt and short ragged cape; black topknot and short beard. Sword stays in anatomical RIGHT hand (the template's RED arm) in all frames, pointing down, no hand switching. Final limbs use natural costume colors, not red/blue. Match ORIGINAL portrait's armor and face, not a new character design. Four equal cells in ONE HORIZONTAL ROW, same scale, center and ground plane. Genuine transparent background with NO shadows, halo, smoke, floor, labels or grid. Crisp edges. Preserve the template's moderate walking motion, no high knees or running. Body and sword must not overlap other cells.",
+      "selected": false
+    },
+    {
+      "purpose": "姿态单参照代表候选",
+      "prompt": "Use case: style-transfer. EDIT TARGET is the supplied four-pose mannequin sheet. Paint realistic worn bronze lamellar armor, dark trousers and leather boots over these EXACT four mannequins, following every leg silhouette and ankle position exactly. The blue leg in each frame must remain the same connected left leg; red remains right leg; remove identifying colors only after dressing the bodies. Do NOT replace the poses with a generic walking image. Frame3 has the nearer red leg extended forwards and the farther blue leg bent back. Maintain this difference from frame1. Give all four identical adult male faces with short beard, black topknot and beige scarf, short torn cape behind. Right hand carries straight sword downward, fixed to template red hand. Old eastern dark-fantasy RPG realistic matte materials, muted charcoal/bronze. Four equal cells one row. Same elevation/camera/body centers as template. Keep every empty pixel outside figures truly TRANSPARENT. No white background, no floor/shadows, no glow, no text. This is repainting a pose template, not inventing poses. Clothing must not hide which knee/boot belongs to which hip.",
+      "selected": true
+    },
+    {
+      "purpose": "去背景修正；未选，预览外观不等同实机alpha合成",
+      "prompt": "Background removal ONLY. Cut out the four physical warrior figures in this sprite sheet. Erase every pixel of the black/brown atmospheric background and ALL the soft brown glows around heads, capes, legs, swords and feet. Replace with actual ZERO ALPHA transparency, not a black or white color. Preserve the exact figures, all four poses, their placement, faces, armor, swords, clothing details and canvas dimensions. Do NOT redraw or change the bodies, only isolate the physical opaque silhouettes. The hazy fuzzy rings surrounding figures are unwanted BACKGROUND and must disappear completely. Keep natural antialiased edges on the physical silhouettes. Empty space and gaps between limbs must be transparent. No new shadows or effects.",
+      "selected": false
+    },
+    {
+      "purpose": "平光重制；未选，服装与原稿偏差较大",
+      "prompt": "Production sprite sheet with ZERO atmosphere. Use the attached colored mannequin image strictly for the FOUR leg poses, camera, body centers and layout. Replace the mannequins with identical textured game characters: adult eastern warrior, black topknot, short beard, beige scarf, weathered dark bronze lamellar shoulder armor and skirt, grey trousers, worn leather boots, short torn cape; long straight sword down in RIGHT hand. Realistic matte game texture shading, neutral flat studio illumination, no dramatic lighting. Four poses in ONE ROW: follow all limb coordinates in the template exactly, keeping the BLUE leg's positions as anatomical left and RED as right. Do not copy mannequin colors into final clothing. The final sheet is a set of CLEAN HARD-EDGED CUTOUT SPRITES for compositing over arbitrary maps. Physical bodies and swords are opaque; every surrounding pixel is fully transparent. NO diffusion, bloom, gradients, glows, fog, haze, auras, lighting behind the character, ground shadow, floor or colored background. No grid or text. Keep full figures and weapons within their four equal cells.",
+      "selected": false
+    }
+  ],
+  "status": "rejected_for_runtime"
+}

@@ -1,6 +1,7 @@
 """隔离运行单方向动作审片器，仅加载候选源稿，不启动正式游戏或读取存档。"""
 from pathlib import Path
 import argparse
+import json
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +13,7 @@ def main():
     """复制固定审片输入至临时项目，导入后运行窗口或有成功标记的自动校验。"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify', action='store_true')
+    parser.add_argument('--source', type=Path, default=ROOT / 'art_source/actors/hero_walk_trial_v1')
     parser.add_argument('--capture', type=Path)
     args = parser.parse_args()
     godot = shutil.which('godot') or '/Applications/Godot.app/Contents/MacOS/Godot'
@@ -19,9 +21,14 @@ def main():
         project = Path(temp)
         for name in ['main.gd', 'main.gd.uid']:
             shutil.copy2(Path(__file__).with_name(name), project / name)
-        source = ROOT / 'art_source/actors/hero_walk_trial_v1'
+        source = args.source.resolve()
         for name in ['candidate.png', 'review.json']:
             shutil.copy2(source / name, project / name)
+        spec = json.loads((source / 'review.json').read_text())
+        if spec.get('guide'):
+            if Path(spec['guide']).name != spec['guide']:
+                raise ValueError('guide必须是源目录内的文件名')
+            shutil.copy2(source / spec['guide'], project / spec['guide'])
         shutil.copy2(ROOT / 'assets/art_pilot/hero.png', project / 'reference.png')
         (project / 'project.godot').write_text('''config_version=5
 [application]
@@ -48,7 +55,12 @@ renderer/rendering_method="gl_compatibility"
             args.capture.mkdir(parents=True, exist_ok=True)
             command += ['--capture=' + str(args.capture.resolve())]
         if args.verify:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=30, check=True)
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, timeout=30, check=True)
+            except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+                print(error.stdout or '')
+                print(error.stderr or '')
+                raise
             print(result.stdout, end='')
             print(result.stderr, end='')
             if 'MOTION_REVIEW_VERIFY_OK' not in result.stdout or 'SCRIPT ERROR' in result.stderr:

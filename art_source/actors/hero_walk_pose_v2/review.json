@@ -1,0 +1,32 @@
+{
+  "status": "rejected_for_runtime",
+  "frameSize": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [
+    288,
+    680
+  ],
+  "scale": 0.17454545454545456,
+  "direction": "se",
+  "guide": "pose_guide.png",
+  "issues": "未通过：落脚交替已有改善；服装差异和帧间漂移仍需修正",
+  "background_probes": [
+    [
+      90,
+      220
+    ],
+    [
+      470,
+      400
+    ],
+    [
+      1000,
+      250
+    ]
+  ]
+}
