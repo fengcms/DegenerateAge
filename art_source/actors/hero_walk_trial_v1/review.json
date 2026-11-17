@@ -1,0 +1,11 @@
+{
+  "status": "rejected_for_runtime",
+  "frameSize": [543, 724],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [272, 690],
+  "scale": 0.1411764706,
+  "direction": "se",
+  "issues": "未通过：前后半周期支撑腿未可靠交换；服装细节偏离已认可静态主角"
+}
