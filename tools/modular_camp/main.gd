@@ -25,6 +25,7 @@ var label: Label
 var debug_visible := false
 var moved_wall := false
 var physics_steps := 0
+var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
@@ -71,11 +72,31 @@ func _ground(rows: Array, layer: int) -> void:
 	mesh.z_index = -4000+layer
 	world.add_child(mesh)
 
+## 静态贴花共用一张图集和一个网格，固定地面层，不建立任何碰撞节点。
+func _decals(entries: Array) -> void:
+	assert(entries.size()<=48,"样板贴花超出预算")
+	var builder := FlatTileMesh.new(entries.size(),true)
+	for entry in entries:
+		var center := Iso.grid_pt(float(entry.cell[0]),float(entry.cell[1]))
+		var size := Vector2(128,64)*float(entry.get("scale",0.7))
+		var origin := center-size*0.5
+		var slot := 0 if entry.kind=="roots" else 1
+		var left := slot*0.5
+		builder.add_quad(PackedVector2Array([origin,origin+Vector2(size.x,0),origin+size,origin+Vector2(0,size.y)]),PackedVector2Array([Vector2(left,0),Vector2(left+0.5,0),Vector2(left+0.5,1),Vector2(left,1)]))
+	var mesh := MeshInstance2D.new()
+	mesh.name = "GroundDecals"
+	mesh.modulate = Color(0.82,0.8,0.76,0.65)
+	mesh.mesh = builder.build()
+	mesh.texture = _texture("assets/environment/camp_modular_v1/decals_atlas.png")
+	mesh.z_index = -3997
+	world.add_child(mesh)
+
 ## 用同一物件占地生成贴图、阻挡掩码和物理菱形，切图时释放旧场景及路线。
 func _switch_layout(index: int) -> void:
 	selected_layout = index
 	waypoints.clear()
 	collision_cells.clear()
+	occluders.clear()
 	if world != null:
 		remove_child(world)
 		world.queue_free()
@@ -86,6 +107,7 @@ func _switch_layout(index: int) -> void:
 	_ground(definition.roads,0)
 	_ground(definition.grass,1)
 	_ground(definition.roads,2)
+	_decals(definition.decals)
 	var blocked: Dictionary = {}
 	for raw in definition.objects:
 		var object: Dictionary = raw
@@ -93,7 +115,10 @@ func _switch_layout(index: int) -> void:
 		var cell := Vector2i(object.cell[0],object.cell[1])
 		if moved_wall and object == definition.objects[3]:
 			cell += Vector2i(0,2)
-		var sprite := Sprite2D.new()
+		var sprite: Sprite2D = SampleOccluder.new() if object.kind in ["tree","shelter"] else Sprite2D.new()
+		if sprite is SampleOccluder:
+			sprite.upper_limit = 0.68 if object.kind=="tree" else 0.56
+			occluders.append(sprite)
 		sprite.texture = _texture(spec.path)
 		sprite.set_meta("module_kind", object.kind)
 		sprite.position = Iso.grid_to_world(cell)
@@ -143,7 +168,7 @@ func _switch_layout(index: int) -> void:
 	art.offset.y = -art.texture.get_height()*0.5
 	player.add_child(art)
 	world.add_child(player)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 土草路三层 / 双轴墙与墙角 · 角色仍为静态占位" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 土草路＋贴花 / 树冠屋顶局部淡出 · 角色仍为静态占位" % definition.name
 
 ## 鼠标仅在目标可达时创建既有导航路线；编辑操作整体重建小样板并失效旧路线。
 func _unhandled_input(event: InputEvent) -> void:
@@ -170,7 +195,7 @@ func _route(target: Vector2) -> void:
 		waypoints = navigator.smooth_path(player.position,navigator.path(start,finish))
 
 ## 以真实CharacterBody2D和半径12碰撞移动；贴图不播放伪动画。
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	physics_steps += 1
 	var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
 	if direction != Vector2.ZERO:
@@ -183,6 +208,8 @@ func _physics_process(_delta: float) -> void:
 	player.velocity = direction.normalized()*150.0
 	player.move_and_slide()
 	player.z_index = clampi(roundi(player.position.y),-3500,3500)
+	for occluder in occluders:
+		occluder.update_reveal(player.position,delta)
 
 ## 验证所有邻接规范化、两布局通行碰撞一致、真实物理绕障以及移动墙后的缓存更新。
 func _verify() -> void:
@@ -237,18 +264,8 @@ func _verify() -> void:
 		if not captures.is_empty():
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
-		if not captures.is_empty() and index==0:
-			var origin := player.position
-			for node in world.get_children():
-				if node is Sprite2D and node.get_meta("module_kind","")=="tree":
-					for side in [-1,1]:
-						player.position = node.position+Vector2(0,side*30)
-						await get_tree().physics_frame
-						await get_tree().process_frame
-						assert((player.z_index>node.z_index)==(side==1),"脚底排序错误")
-						await RenderingServer.frame_post_draw
-						get_viewport().get_texture().get_image().save_png(captures+"/tree_%s.png"%("front" if side==1 else "back"))
-			player.position = origin
+		if index==0:
+			await _verify_occlusion(captures)
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
 		var deadline := Time.get_ticks_msec()+15000
@@ -286,3 +303,52 @@ func _verify() -> void:
 		assert(waypoints.is_empty())
 	print("MODULAR_CAMP_VERIFY_OK: 256 masks / 47 shapes / 2 layouts / physics routes / moved wall")
 	get_tree().quit()
+
+## 实际寻路到可通行遮挡点验证淡出；另定点验证恢复和远处不误触发，不冒充新动作动画。
+func _verify_occlusion(captures: String) -> void:
+	var origin := player.position
+	var blocked := navigator.blocked_cells().duplicate()
+	var revision := navigator.navigation_revision
+	var collision_count := collision_cells.size()
+	for occluder in occluders:
+		var kind: String = occluder.get_meta("module_kind")
+		var target := occluder.position+Vector2(0,-30 if kind=="tree" else -80)
+		var chosen := Vector2.INF
+		var best := INF
+		for y in range(16):
+			for x in range(16):
+				var cell := Vector2i(x,y)
+				var candidate := Iso.grid_to_world(cell)
+				if navigator.is_walkable(cell) and occluder.overlaps_actor(candidate):
+					var distance := candidate.distance_squared_to(target)
+					if distance<best:
+						best = distance
+						chosen = candidate
+		assert(chosen!=Vector2.INF,"没有可通行的遮挡验证点")
+		player.position = origin
+		_route(chosen)
+		assert(not waypoints.is_empty(),"遮挡点缺少可达路线")
+		var deadline := Time.get_ticks_msec()+15000
+		while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
+			await get_tree().physics_frame
+		assert(player.position.distance_to(chosen)<8,"未能实际走到遮挡点")
+		await get_tree().create_timer(0.35).timeout
+		assert(occluder.target_reveal and occluder.reveal_amount>0.99,"遮挡时未淡出")
+		assert(player.z_index<occluder.z_index)
+		if not captures.is_empty():
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_reveal.png")
+		player.position = occluder.position+Vector2(0,35)
+		await get_tree().create_timer(0.35).timeout
+		assert(not occluder.target_reveal and occluder.reveal_amount<0.01,"前方未恢复")
+		assert(player.z_index>occluder.z_index)
+		if not captures.is_empty():
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_restored.png")
+		player.position = occluder.position+Vector2(500,-30)
+		await get_tree().create_timer(0.25).timeout
+		assert(not occluder.target_reveal,"远处误触发淡出")
+	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked)
+	assert(collision_cells.size()==collision_count,"显示淡出改动了物理障碍")
+	assert(world.get_node("GroundDecals").get_child_count()==0,"贴花不应建立碰撞子节点")
+	player.position = origin

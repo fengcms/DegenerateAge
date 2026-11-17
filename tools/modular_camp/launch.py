@@ -18,7 +18,7 @@ def main():
     godot = shutil.which('godot') or '/Applications/Godot.app/Contents/MacOS/Godot'
     with tempfile.TemporaryDirectory(prefix='modular-camp-') as temp:
         project = Path(temp)
-        for source in Path(__file__).parent.glob('*.gd'):
+        for source in list(Path(__file__).parent.glob('*.gd')) + list(Path(__file__).parent.glob('*.gdshader')):
             shutil.copy2(source, project / source.name)
         for relative in ['scripts/systems/iso.gd', 'scripts/systems/flat_tile_mesh.gd', 'scripts/world/cave_layout.gd']:
             shutil.copy2(ROOT / relative, project / Path(relative).name)

@@ -42,6 +42,18 @@ func _initialize() -> void:
 		image.resize(width,height,Image.INTERPOLATE_LANCZOS)
 		image.save_png(output+id+".png")
 		manifest.objects[id] = {"size":[width,height],"pivot":[width*0.5,height-4]}
+	var decals := Image.create(256,64,false,Image.FORMAT_RGBA8)
+	for index in range(2):
+		var id := "roots" if index==0 else "gravel"
+		var detail := Image.load_from_file(source+id+".png")
+		assert(detail.detect_alpha()!=Image.ALPHA_NONE)
+		detail = detail.get_region(detail.get_used_rect())
+		var factor := minf(96.0/detail.get_width(),48.0/detail.get_height())
+		detail.resize(roundi(detail.get_width()*factor),roundi(detail.get_height()*factor),Image.INTERPOLATE_LANCZOS)
+		var offset := Vector2i(index*128+(128-detail.get_width())/2,(64-detail.get_height())/2)
+		decals.blit_rect(detail,Rect2i(Vector2i.ZERO,detail.get_size()),offset)
+	decals.save_png(output+"decals_atlas.png")
+	manifest["decals"] = {"size":[256,64],"slot":[128,64],"ids":["roots","gravel"]}
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
 	print("MODULAR_ASSETS_BUILT: ",manifest)

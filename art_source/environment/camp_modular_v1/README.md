@@ -11,3 +11,7 @@ wall.png是过长候选，缩到单格后墙体高度不足，保留用于追溯
 ## 第二批源稿
 
 新增grass.png、wall_other.png、wall_corner.png，使用内置image_gen；完整提示词见prompts_second_batch.json。草地为独立平光材质，墙件以wall_short.png为材质/形体参考。另一轴向要求重新按屏幕左上光照生成，未镜像；角件只制作一种L角朝向，不标记为全套墙连接件。
+
+## 第三批源稿
+
+roots.png和gravel.png使用内置image_gen生成透明地面贴花；提示词记录于prompts_decals.json。草根与碎石独立于地形，构建时裁去透明边并缩至96×48以内，放入带留白的槽位。运行端统一降低贴花亮度和透明度，保持地面低对比。没有把生成图作为整幅地图使用。

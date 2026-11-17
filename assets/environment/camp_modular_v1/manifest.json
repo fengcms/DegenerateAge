@@ -1,4 +1,18 @@
 {
+  "decals": {
+    "ids": [
+      "roots",
+      "gravel"
+    ],
+    "size": [
+      256,
+      64
+    ],
+    "slot": [
+      128,
+      64
+    ]
+  },
   "grass": {
     "period": 4,
     "size": [

@@ -1,0 +1,13 @@
+{
+  "tool": "image_gen built-in",
+  "prompts": [
+    [
+      "roots",
+      "One isolated small irregular patch of sparse dry grass roots with a few short muted olive grass blades, lying flat on the ground. Orthographic oblique 2:1 isometric game decal, mature realistic weathered dark fantasy material, restrained brown grey-green, upper-left soft light. Genuine transparent background visible between individual blades and roots, no solid soil island, no base, no square border, no large bush, no glow, no text. Wide roughly 2:1 footprint. For a subtle 96x48 pixel ground detail in original eastern dark fantasy RPG."
+    ],
+    [
+      "gravel",
+      "One isolated sparse scattered cluster of about twelve tiny irregular weathered grey-brown pebbles with a little coarse grit, lying flat on ground. Orthographic oblique 2:1 isometric game decal, mature realistic old pre-rendered RPG style, upper-left soft light. Genuine transparent background between the individual stones. No soil platform, no large boulder, no grass, no square border, no cast shadow outside the pebbles, no text. Wide roughly 2:1 footprint, low contrast subtle ground detail to be reduced to 96x48 pixels."
+    ]
+  ]
+}
