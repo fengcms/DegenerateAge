@@ -1,12 +1,49 @@
 {
-  "sourceFrame": [512, 768],
+  "sourceFrame": [
+    512,
+    768
+  ],
   "frames": 4,
   "scale": 0.15,
-  "sourcePivot": [275, 720],
-  "frameSize": [112, 128],
-  "pivot": [56, 112],
-  "directions": ["se"],
+  "sourcePivot": [
+    275,
+    720
+  ],
+  "frameSize": [
+    112,
+    128
+  ],
+  "pivot": [
+    56,
+    112
+  ],
+  "directions": [
+    "se"
+  ],
   "stridePixels": 64,
-  "states": {"walk": {"frames": 4, "fps": 6, "loop": true}},
-  "status": "isolated_motion_trial"
+  "states": {
+    "walk": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "idle": {
+      "frames": 1,
+      "fps": 0,
+      "loop": false
+    }
+  },
+  "status": "isolated_motion_trial",
+  "idleSource": {
+    "path": "idle_source.png",
+    "size": [
+      1024,
+      1536
+    ],
+    "scale": 0.069,
+    "pivot": [
+      535,
+      1410
+    ]
+  }
 }

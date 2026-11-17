@@ -7,6 +7,18 @@
     128.0
   ],
   "frames": 4.0,
+  "idleSource": {
+    "path": "idle_source.png",
+    "pivot": [
+      535.0,
+      1410.0
+    ],
+    "scale": 0.069,
+    "size": [
+      1024.0,
+      1536.0
+    ]
+  },
   "pivot": [
     56.0,
     112.0
@@ -21,6 +33,11 @@
     720.0
   ],
   "states": {
+    "idle": {
+      "fps": 0.0,
+      "frames": 1.0,
+      "loop": false
+    },
     "walk": {
       "fps": 6.0,
       "frames": 4.0,

@@ -1,0 +1,6 @@
+{
+  "tool": "image_gen",
+  "mode": "generate_from_reference",
+  "reference": "source.png",
+  "prompt": "Use case: identity-preserve. Create ONE matching IDLE sprite for the exact warrior in this four-frame sheet. Same face, topknot, beige scarf, circular ring on diagonal chest harness, weathered bronze lamellar shoulder armor, waist pouch, torn grey skirt and short ragged cape, exact same camera and screen lower-right facing. Relaxed neutral alert stance, both feet planted beneath hips, knees gently relaxed, no stride, no lifted foot, no wide fighting stance. Sword stays in anatomical RIGHT hand at the same low downward angle as reference frames. Arms stay close to body. Preserve body proportions, costume silhouette and material details, don't add new equipment. Only one full-body figure including hair and sword tip, centered with modest empty margin. Actual transparent background and limb gaps, no ground, no shadow, no glow, no text. This idle must cut seamlessly with the existing walking character."
+}

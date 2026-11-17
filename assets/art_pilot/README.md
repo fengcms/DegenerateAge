@@ -14,4 +14,6 @@
 
 hero_walk_se_v3.png为112×512（四行，每格112×128），RGBA8理论224KiB；hero_walk_se_v3.json为构建清单副本。来源art_source/actors/hero_walk_pilot_v3/source.png，内置image_gen在V2姿态基础上修正原主角胸甲、背带和腰包。tools/modular_camp/launch.py --build-assets统一按0.15缩放并打包，固定pivot(56,112)，不逐帧拉伸、镜像或裁脚。
 
-仅隔离营地引用：向屏幕右下、以(2,1)为中心约±22.5度范围播放四帧；循环按实际位移64px推进，原图用于停步和其他方向。与正式CharacterLook一样采用帧尺寸、锚点及状态帧数约定，但不把缺失方向冒充完整八向登记。没有攻击命中、受击或死亡时序，怪物仍静态。
+仅隔离营地引用：向屏幕右下、以(2,1)为中心约±22.5度范围播放四帧；循环按实际位移64px推进，配套站姿用于右下停步，原图保留给其他方向和关闭试装的对照。与正式CharacterLook一样采用帧尺寸、锚点及状态帧数约定，但不把缺失方向冒充完整八向登记。没有攻击命中、受击或死亡时序，怪物仍静态。
+
+hero_idle_se_v3.png是新增配套单帧站姿，112×128、RGBA8理论56KiB，与行走同锚点。源稿及完整提示词为art_source/actors/hero_walk_pilot_v3/idle_source.png及idle_prompt.json；build.json的idleSource定义缩放0.069和源锚点(535,1410)，仅构建时处理。它不是呼吸动画，未改变角色碰撞、名字位置或正式外观登记。

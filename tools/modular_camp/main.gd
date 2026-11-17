@@ -13,6 +13,7 @@ const DEFINITIONS := {
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var motion_enabled := true
+var verification_direction := Vector2.ZERO
 var actor_specs: Dictionary
 var monster_previews: Array[Sprite2D] = []
 var actor_names_visible := false
@@ -193,7 +194,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 	sprite.centered = false
 	sprite.offset = -Vector2(spec.pivot_ratio[0],spec.pivot_ratio[1])*sprite.texture.get_size()
 	if sprite is SampleWalkSprite:
-		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),walk_spec)
+		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),_texture("assets/art_pilot/hero_idle_se_v3.png"),walk_spec)
 		sprite.enabled = motion_enabled
 	sprite.set_meta("actor_kind",kind)
 	var caption := Label.new()
@@ -248,6 +249,8 @@ func _route(target: Vector2) -> void:
 func _physics_process(delta: float) -> void:
 	physics_steps += 1
 	var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
+	if verification_direction != Vector2.ZERO:
+		direction = verification_direction
 	if direction != Vector2.ZERO:
 		waypoints.clear()
 	elif not waypoints.is_empty():
@@ -258,7 +261,7 @@ func _physics_process(delta: float) -> void:
 	player.velocity = direction.normalized()*150.0
 	var before := player.position
 	player.move_and_slide()
-	player_art.update_motion(player.position-before)
+	player_art.update_motion(player.position-before,direction)
 	player.z_index = clampi(roundi(player.position.y),-3500,3500)
 	for occluder in occluders:
 		occluder.update_reveal(player.position,delta)
@@ -318,6 +321,7 @@ func _verify() -> void:
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
 		_verify_actors()
 		await _verify_walk(captures)
+		await _verify_wall_stop(captures)
 		await _verify_occlusion(captures)
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
@@ -459,7 +463,7 @@ func _verify_walk(captures: String) -> void:
 	assert(seen.size()==4,"实际移动没有覆盖完整四帧")
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	assert(not player_art.walking and player_art.texture==player_art.idle_texture,"停步后未恢复原静态图")
+	assert(not player_art.walking and player_art.texture==player_art.directional_idle,"右下停步后未保持配套站姿")
 	if not captures.is_empty():
 		await RenderingServer.frame_post_draw
 		shots["walk_demo_%d_%03d.png"%[selected_layout,capture_index]] = get_viewport().get_texture().get_image()
@@ -484,4 +488,42 @@ func _verify_walk(captures: String) -> void:
 	assert(player_art.walking)
 	player_art.update_motion(Vector2.ZERO)
 	assert(not player_art.walking and player_art.phase_distance==0,"零位移不应原地踏步")
+	assert(player_art.texture==player_art.directional_idle)
+	player_art.update_motion(Vector2.ZERO,Vector2(-2,-1))
+	assert(player_art.texture==player_art.idle_texture,"未制作朝向应回退")
+	player_art.update_motion(Vector2.ZERO,Vector2(2,1))
+	assert(player_art.texture==player_art.directional_idle and not player_art.walking,"输入意图只能转向，不能原地踏步")
+	player.position = origin
+
+## 持续模拟右下移动输入，实际撞到既有地图边界角；验证顶墙停帧且保持朝向，随后撤销输入。
+func _verify_wall_stop(captures: String) -> void:
+	var origin := player.position
+	waypoints.clear()
+	player.position = Iso.grid_to_world(Vector2i(14,1))
+	var start := player.position
+	verification_direction = Vector2(2,1)
+	var previous := player.position
+	var stopped_frames := 0
+	var saw_walk := false
+	for step in range(300):
+		await get_tree().physics_frame
+		saw_walk = saw_walk or player_art.walking
+		if player.position.distance_to(previous)<0.01 and player.get_slide_collision_count()>0:
+			stopped_frames += 1
+		else:
+			stopped_frames = 0
+		previous = player.position
+		if stopped_frames>=12:
+			break
+	assert(saw_walk and player.position.distance_to(start)>10,"顶墙测试未发生真实接近")
+	assert(stopped_frames>=12,"持续输入后未被现有边界稳定挡住")
+	assert(not player_art.walking and player_art.phase_distance==0)
+	assert(player_art.texture==player_art.directional_idle,"顶墙应保持右下站姿")
+	if not captures.is_empty():
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(captures+"/wall_stop_%d.png"%selected_layout)
+	verification_direction = Vector2.ZERO
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert(not player_art.walking)
 	player.position = origin
