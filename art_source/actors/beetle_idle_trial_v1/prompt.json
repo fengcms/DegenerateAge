@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "../camp_pilot_v1/beetle.png",
+  "prompt": "Use case: identity-preserve. Asset: transparent 4-frame idle sprite sheet of the exact SIX-LEGGED copper beetle from reference. 1536x1024 canvas, 2x2 equal cells each768x512. Same beetle facing screen lower left, same elevated orthographic angle, same tarnished overlapping copper armor plates and green patina, same mandibles, TWO antennae, SIX legs exactly. Four subtle alert poses: neutral antennae forward; antennae lift slightly and mandibles open slightly; antennae splay outward and mandibles close; antennae return inward. ALL six foot contact points, carapace position, shell pattern, body scale and camera MUST remain fixed across all four cells. Full silhouette fits with padding inside every cell, width about620px height420px, ground center at(384,440) in each cell. This is a small idle motion, NOT walking, no wings or extra limbs or large jumps. Realistic dark eastern fantasy game asset, muted weathered metal, soft upper-left light. Genuine transparent background, no floor/shadow/glow/text/grid."
+}

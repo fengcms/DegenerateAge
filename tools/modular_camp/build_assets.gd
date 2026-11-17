@@ -169,7 +169,7 @@ func _pack_idle(source: String, spec: Dictionary, size: Vector2i, pivot: Vector2
 
 ## 固定2×2源格统一倍率打包两类待机，保留帧间真实差异，不逐帧吸附足尖。
 func _build_monster_idle(root: String) -> void:
-	for kind in ["wolf"]:
+	for kind in ["wolf","beetle"]:
 		var folder: String = root+"/art_source/actors/"+kind+"_idle_trial_v1/"
 		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
 		var source := Image.load_from_file(folder+spec.source)
@@ -182,10 +182,17 @@ func _build_monster_idle(root: String) -> void:
 		var atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
 		for index in range(4):
 			var frame := source.get_region(Rect2i(Vector2i(index%2,index/2)*cell,cell))
-			assert(frame.get_pixel(0,0).a<0.01)
+			_assert_frame_edges(frame)
 			frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
 			atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
 		var output: String = root+"/assets/art_pilot/"+kind+"_idle_v1"
 		assert(atlas.save_png(output+".png")==OK)
 		FileAccess.open(output+".json",FileAccess.WRITE).store_string(JSON.stringify(spec,"  "))
 	print("MONSTER_IDLE_BUILT")
+
+## 离线逐边检查帧格没有截断可见肢体或混入背景；低于5% alpha的残留仍需棋盘底人工复核。
+func _assert_frame_edges(frame: Image) -> void:
+	for x in range(frame.get_width()):
+		assert(frame.get_pixel(x,0).a<0.05 and frame.get_pixel(x,frame.get_height()-1).a<0.05,"源帧上下边出现可见像素")
+	for y in range(frame.get_height()):
+		assert(frame.get_pixel(0,y).a<0.05 and frame.get_pixel(frame.get_width()-1,y).a<0.05,"源帧左右边出现可见像素")

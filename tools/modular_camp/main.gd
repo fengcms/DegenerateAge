@@ -39,7 +39,7 @@ var occluders: Array[SampleOccluder] = []
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
-	for kind in ["wolf"]:
+	for kind in ["wolf","beetle"]:
 		monster_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_idle_v1.json"))
 	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
 	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
@@ -188,7 +188,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照 · I转向 · J怪物动作\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 右上背面站姿 / 狼待机试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照 · I转向 · J怪物动作\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 右上背面站姿 / 狼与甲虫待机试装" % definition.name
 
 ## 按档案定位角色表现；主角支持单向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:

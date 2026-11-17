@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "opaque_candidate.png",
+  "prompt": "Use case: background-extraction. Remove ALL white/grey background from this 1536x1024 four-frame copper beetle sprite sheet. Preserve every beetle, all six legs and two antennae and mandibles, exact poses, exact pixel positions, colors, scale and 2x2 cell layout unchanged. Make the entire empty area genuinely alpha=0 TRANSPARENT, including holes between legs, antennae, and outside silhouette. No white matte, grey checkerboard, black background, glow or shadow. Do not repaint the creatures. Output same1536x1024 transparent PNG."
+}

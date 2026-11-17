@@ -1,0 +1,18 @@
+{
+  "actorName": "铜甲虫",
+  "status": "isolated_idle_trial",
+  "frameSize": [
+    768,
+    512
+  ],
+  "columns": 2,
+  "frames": 4,
+  "fps": 3,
+  "pivot": [
+    384,
+    410
+  ],
+  "scale": 0.16,
+  "direction": "sw",
+  "issues": "允许隔离试装：触须变化可见，甲壳/足尖有轻微漂移；透明修正版"
+}
