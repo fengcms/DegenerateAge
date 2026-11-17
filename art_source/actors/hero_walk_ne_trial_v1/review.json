@@ -1,0 +1,17 @@
+{
+  "status": "rejected_for_runtime",
+  "frameSize": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [
+    270,
+    715
+  ],
+  "scale": 0.14,
+  "direction": "ne",
+  "issues": "未通过：第1与3帧跨步相似，未形成可靠的左右接触交替；保留背面单帧"
+}
