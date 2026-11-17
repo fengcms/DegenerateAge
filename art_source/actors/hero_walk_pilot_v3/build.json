@@ -45,5 +45,21 @@
       535,
       1410
     ]
-  }
+  },
+  "rearIdleSource": {
+    "path": "rear_idle_source.png",
+    "size": [
+      1024,
+      1536
+    ],
+    "scale": 0.069,
+    "pivot": [
+      530,
+      1390
+    ]
+  },
+  "idleDirections": [
+    "se",
+    "ne"
+  ]
 }

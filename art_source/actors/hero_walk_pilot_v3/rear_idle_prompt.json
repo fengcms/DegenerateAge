@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "idle_source.png",
+  "prompt": "Use case: identity-preserve. Make ONE matching rear three-quarter IDLE sprite of this EXACT warrior facing SCREEN UPPER RIGHT (northeast, away from viewer). Rotate the character about the vertical axis, keep the same elevated orthographic game camera. Show his back and right shoulder, not chest. Same black topknot, beige scarf, worn dark bronze lamellar armor, battered belt and pouch, grey cloth skirt, boots, short torn cape. Cape is ragged cloth reaching only knees, not a large new cloak. Sword remains held low in ANATOMICAL RIGHT HAND, now visible on screen right side of body; never switch hands. Both feet planted naturally beneath hips. Same adult proportions and realistic muted worn material style. Full body with topknot and sword tip fully inside canvas. Genuine transparent background, no ground/shadow/glow/text. This is a true rotated rear view, not horizontal mirroring of the front."
+}

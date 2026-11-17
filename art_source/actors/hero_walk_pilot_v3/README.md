@@ -4,10 +4,16 @@ source.png由内置image_gen编辑生成。输入为V2姿态候选及已认可�
 
 build.json是打包事实源：原稿2048×768、四列；统一缩放0.15，每格512×768缩为77×115，打包成一列四行112×128。源锚点(275,720)统一映射至运行锚点(56,112)。不按每帧包围盒重缩放，不逐帧吸附脚底，不镜像人物或武器。输出assets/art_pilot/hero_walk_se_v3.png和同名JSON。
 
-运行只对屏幕右下方向播放，64px实际位移一循环；配置6fps是96px/s审片基准。配套idle_source.png用于右下停步；原静态主角用于其他方向与关闭试装对照。四帧步态较简化，仍需精修脚滑、步幅和站走过渡；攻击、受击、死亡与其他方向均未制作，本轮不登记正式CharacterLook。
+运行只对屏幕右下方向播放，64px实际位移一循环；配置6fps是96px/s审片基准。配套idle_source.png用于右下停步；原静态主角用于其他方向与关闭试装对照。四帧步态较简化，仍需精修脚滑、步幅和站走过渡；攻击、受击、死亡与其他方向行走均未制作，本轮不登记正式CharacterLook。
 
 查看：python3 tools/modular_camp/launch.py；P试走，H原静态图对照。
 
 ## 配套站姿
 
 idle_source.png以同目录行走源稿为参考由内置image_gen生成，提示词见idle_prompt.json。双脚落地、右手低持剑，保留胸饰和腰包。按build.json缩放0.069并以源锚点(535,1410)放入同规格112×128帧，导出hero_idle_se_v3.png；未使用逐帧拉伸、透明度交叉混合或人物位置补偿掩盖切换。
+
+## 右上背面站姿
+
+rear_idle_source.png由内置image_gen参考idle_source.png生成，完整提示词见rear_idle_prompt.json；原创角色旋转成右上背面，不使用商业游戏素材或镜像前身。build.json的rearIdleSource定义1024×1536源尺寸、0.069缩放与源锚点(530,1390)，统一打包112×128/pivot(56,112)的hero_idle_ne_v3.png。idleDirections单独记录se/ne，directions仍只声明se行走，不能据此宣称八向动画完成。
+
+I原地对照前后站姿。右上移动先使用背面静态图，未制作背面步态；正式CharacterLook仍不登记。前后材质与人物高度接近，披布形状仍需在后续多方向制作中保持一致。

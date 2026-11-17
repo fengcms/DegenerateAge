@@ -184,7 +184,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 其他方向/两怪仍单帧" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P试走 · H动作对照 · I前后转向\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下四帧试装 · 右上背面站姿 / 两怪仍单帧" % definition.name
 
 ## 按档案定位角色表现；主角支持单向试装，怪物仍是单帧，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -194,7 +194,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 	sprite.centered = false
 	sprite.offset = -Vector2(spec.pivot_ratio[0],spec.pivot_ratio[1])*sprite.texture.get_size()
 	if sprite is SampleWalkSprite:
-		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),_texture("assets/art_pilot/hero_idle_se_v3.png"),walk_spec)
+		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),_texture("assets/art_pilot/hero_idle_se_v3.png"),_texture("assets/art_pilot/hero_idle_ne_v3.png"),walk_spec)
 		sprite.enabled = motion_enabled
 	sprite.set_meta("actor_kind",kind)
 	var caption := Label.new()
@@ -220,6 +220,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_switch_layout(1-selected_layout)
 		elif event.keycode == KEY_P:
 			_start_walk_demo()
+		elif event.keycode == KEY_I:
+			waypoints.clear()
+			_turn_preview()
 		elif event.keycode == KEY_H:
 			motion_enabled = not motion_enabled
 			player_art.enabled = motion_enabled
@@ -322,6 +325,7 @@ func _verify() -> void:
 		_verify_actors()
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
+		await _verify_rear(captures)
 		await _verify_occlusion(captures)
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
@@ -526,4 +530,44 @@ func _verify_wall_stop(captures: String) -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	assert(not player_art.walking)
+	player.position = origin
+
+## 原地切换前后两个已制作朝向，不移动角色；用于检查武器持握、比例和共用脚底锚点。
+func _turn_preview() -> void:
+	player_art.update_motion(Vector2.ZERO,Vector2(2,1) if player_art.facing_id=="ne" else Vector2(2,-1))
+
+## 真实右上路线只能显示背面单帧，停步保持背向；原地转向不应改变位置或镜像贴图。
+func _verify_rear(captures: String) -> void:
+	var origin := player.position
+	player.position = Iso.grid_to_world(Vector2i(4,7))
+	var start := player.position
+	_route(Iso.grid_to_world(Vector2i(8,7)))
+	assert(not waypoints.is_empty())
+	var deadline := Time.get_ticks_msec()+5000
+	while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
+		await get_tree().physics_frame
+		if player.position.distance_to(start)>0.1:
+			assert(not player_art.walking and player_art.texture==player_art.rear_idle,"右上未使用独立背面或误用行走帧")
+	assert(player.position.distance_to(Iso.grid_to_world(Vector2i(8,7)))<8)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert(player_art.texture==player_art.rear_idle and player_art.offset==-Vector2(walk_spec.pivot[0],walk_spec.pivot[1]))
+	assert(not player_art.flip_h and not player_art.flip_v)
+	if not captures.is_empty():
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(captures+"/rear_idle_%d.png"%selected_layout)
+	var resting := player.position
+	_turn_preview()
+	assert(player.position==resting and player_art.texture==player_art.directional_idle)
+	if not captures.is_empty():
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(captures+"/front_idle_%d.png"%selected_layout)
+	_turn_preview()
+	assert(player.position==resting and player_art.texture==player_art.rear_idle)
+	player_art.enabled = false
+	player_art.update_motion(Vector2.ZERO)
+	assert(player_art.texture==player_art.idle_texture)
+	player_art.enabled = true
+	player_art.update_motion(Vector2.ZERO)
+	assert(player_art.texture==player_art.rear_idle,"重新启用应保留背向")
 	player.position = origin

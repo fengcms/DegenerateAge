@@ -17,3 +17,6 @@ hero_walk_se_v3.png为112×512（四行，每格112×128），RGBA8理论224KiB�
 仅隔离营地引用：向屏幕右下、以(2,1)为中心约±22.5度范围播放四帧；循环按实际位移64px推进，配套站姿用于右下停步，原图保留给其他方向和关闭试装的对照。与正式CharacterLook一样采用帧尺寸、锚点及状态帧数约定，但不把缺失方向冒充完整八向登记。没有攻击命中、受击或死亡时序，怪物仍静态。
 
 hero_idle_se_v3.png是新增配套单帧站姿，112×128、RGBA8理论56KiB，与行走同锚点。源稿及完整提示词为art_source/actors/hero_walk_pilot_v3/idle_source.png及idle_prompt.json；build.json的idleSource定义缩放0.069和源锚点(535,1410)，仅构建时处理。它不是呼吸动画，未改变角色碰撞、名字位置或正式外观登记。
+
+
+hero_idle_ne_v3.png是独立右上背面站姿，112×128、pivot(56,112)，RGBA8理论56KiB；与右下站姿、四帧行走合计336KiB（不含旧回退图、导入和驱动开销）。来源art_source/actors/hero_walk_pilot_v3/rear_idle_source.png和rear_idle_prompt.json，按build.json的rearIdleSource构建。仅隔离营地加载，移动/停步均可显示这一背面单帧，尚无背面行走动画。前文“其他方向回退”现排除已补的右上背面方向。

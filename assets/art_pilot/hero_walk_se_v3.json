@@ -7,6 +7,10 @@
     128.0
   ],
   "frames": 4.0,
+  "idleDirections": [
+    "se",
+    "ne"
+  ],
   "idleSource": {
     "path": "idle_source.png",
     "pivot": [
@@ -23,6 +27,18 @@
     56.0,
     112.0
   ],
+  "rearIdleSource": {
+    "path": "rear_idle_source.png",
+    "pivot": [
+      530.0,
+      1390.0
+    ],
+    "scale": 0.069,
+    "size": [
+      1024.0,
+      1536.0
+    ]
+  },
   "scale": 0.15,
   "sourceFrame": [
     512.0,
