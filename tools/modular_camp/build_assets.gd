@@ -59,6 +59,12 @@ func _initialize() -> void:
 		var mask := _reveal_mask(Image.load_from_file(output+id+".png"),regions[id])
 		mask.save_png(output+id+"_reveal_mask.png")
 		manifest.objects[id]["reveal_mask"] = id+"_reveal_mask.png"
+	var beetle := Image.load_from_file(root+"/art_source/actors/camp_pilot_v1/beetle.png")
+	assert(beetle.detect_alpha()!=Image.ALPHA_NONE,"铜甲虫必须有透明背景")
+	beetle = beetle.get_region(beetle.get_used_rect())
+	beetle.resize(110,roundi(110.0*beetle.get_height()/beetle.get_width()),Image.INTERPOLATE_LANCZOS)
+	assert(beetle.save_png(root+"/assets/art_pilot/beetle_v2.png")==OK)
+	print("BEETLE_BUILT: ",beetle.get_size())
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
 	print("MODULAR_ASSETS_BUILT: ",manifest)

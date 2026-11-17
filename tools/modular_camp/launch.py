@@ -22,12 +22,13 @@ def main():
             shutil.copy2(source, project / source.name)
         for relative in ['scripts/systems/iso.gd', 'scripts/systems/flat_tile_mesh.gd', 'scripts/world/cave_layout.gd']:
             shutil.copy2(ROOT / relative, project / Path(relative).name)
-        shutil.copy2(Path(__file__).with_name('layouts.json'), project / 'layouts.json')
+        for filename in ['layouts.json', 'actors.json']:
+            shutil.copy2(Path(__file__).with_name(filename), project / filename)
         if args.build_assets:
             (project / 'project.godot').write_text('config_version=5\n')
             subprocess.run([godot, '--headless', '--path', temp, '--script', 'build_assets.gd', '--', str(ROOT)], check=True)
             return
-        for relative in ['assets/tiles/camp/crate.png', 'assets/art_pilot/hero.png']:
+        for relative in ['assets/tiles/camp/crate.png', 'assets/art_pilot/hero.png', 'assets/art_pilot/wolf.png', 'assets/art_pilot/beetle_v2.png']:
             destination = project / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / relative, destination)

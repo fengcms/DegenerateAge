@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "mode": "generate",
+  "prompt": "Use case: stylized-concept. Single original copper armored beetle monster sprite for a realistic dark eastern fantasy isometric RPG. TRUE TRANSPARENT BACKGROUND. Whole creature, six sturdy jointed legs, low oval body with overlapping dull weathered bronze plates and small patches of verdigris; dark chitin visible at joints, two short antennae. Faces lower-left, orthographic camera elevated 35 degrees, three-quarter view; soft neutral daylight from upper left. Matte worn materials, muted earthy palette, restrained highlights, readable silhouette at 110 pixels wide. Physical beetle only. Absolutely no glow, aura, haze, smoke, purple mist, cast shadow, pedestal, scenery, text, frame or ground plane. Empty space between all legs must be transparent. All legs fully inside image, modest empty margin."
+}

@@ -62,3 +62,9 @@ python3 tools/modular_camp/launch.py --build-assets
 `occlusion_regions.json`以运行图片左上角为原点，单位为像素：size约束图片尺寸，include定义允许淡出的多边形，protect定义优先保护区，protected_samples与reveal_samples用于构建检查。build_assets.gd将区域与源图可见像素相交，生成tree_reveal_mask.png及shelter_reveal_mask.png。换图时必须重新审查轮廓；尺寸和抽样检查不能识别所有同尺寸美术变化。
 
 运行时CPU探测与shader使用同一蒙版；淡出仍只作用于人物附近。它不是拆分出的独立树冠/屋顶美术，也不会修改碰撞。截图模式额外输出相同人物位置的*_opaque.png和*_reveal.png用于对照，*_restored.png验证恢复。两套布局依次验收，遮挡截图同名文件最终保留后一套。
+
+## 主角与两类怪物同场景试装
+
+两套layouts.json新增actors条目，分别摆放腐化狼与铜甲虫。actors.json定义资源路径、中文名及归一化地面锚点；怪物是静态美术展示，不增加导航障碍或战斗规则。主角依然可以点击/WASD物理移动，但三个角色均为单方向单帧，不播放假走路动作。N切换名称，切图保留名称开关。
+
+启动器只复制所需三张角色图。新铜甲虫随--build-assets裁切缩放生成，完整源稿与生成提示词见art_source/actors/camp_pilot_v1。--verify扩展检查怪物数量、尺寸、透明角、资源复用、落点可达和排序；树/屋遮挡专项现对两套布局均执行（此前代码仅对第一套执行）。完整物理移动测试保持原断言。

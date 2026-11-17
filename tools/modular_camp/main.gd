@@ -10,6 +10,9 @@ const DEFINITIONS := {
 	"wall_corner": {"path":"assets/environment/camp_modular_v1/wall_corner.png", "height":56, "footprint":[[0,0]]},
 	"wall": {"path":"assets/environment/camp_modular_v1/wall.png", "height":56, "footprint":[[0,0]]}
 }
+var actor_specs: Dictionary
+var monster_previews: Array[Sprite2D] = []
+var actor_names_visible := false
 var layouts: Array
 var selected_layout := 0
 var world: Node2D
@@ -29,6 +32,7 @@ var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
+	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
 	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
 	_build_atlas()
 	label = Label.new()
@@ -97,6 +101,7 @@ func _switch_layout(index: int) -> void:
 	waypoints.clear()
 	collision_cells.clear()
 	occluders.clear()
+	monster_previews.clear()
 	if world != null:
 		remove_child(world)
 		world.queue_free()
@@ -157,18 +162,46 @@ func _switch_layout(index: int) -> void:
 		overlay.z_index = 3000
 		world.add_child(overlay)
 	player = CharacterBody2D.new()
-	player.position = Iso.grid_to_world(Vector2i(2,2))
+	player.position = Iso.grid_to_world(Vector2i(definition.start[0],definition.start[1]))
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
 	circle.radius = 12.0
 	shape.shape = circle
 	player.add_child(shape)
-	var art := Sprite2D.new()
-	art.texture = _texture("assets/art_pilot/hero.png")
-	art.offset.y = -art.texture.get_height()*0.5
-	player.add_child(art)
+	player.add_child(_actor_sprite("hero"))
 	world.add_child(player)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 角色仍为静态占位" % definition.name
+	for entry in definition.actors:
+		var cell := Vector2i(entry.cell[0],entry.cell[1])
+		assert(navigator.is_walkable(cell),"怪物展示落点被阻挡")
+		var actor := _actor_sprite(entry.kind)
+		actor.position = Iso.grid_to_world(cell)
+		actor.z_index = roundi(actor.position.y)
+		world.add_child(actor)
+		monster_previews.append(actor)
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角＋腐化狼＋铜甲虫 · 单帧比例样板" % definition.name
+
+## 按档案中归一化的地面接触中心定位单帧图片；只创建表现，不引入怪物AI或碰撞。
+func _actor_sprite(kind: String) -> Sprite2D:
+	var spec: Dictionary = actor_specs[kind]
+	var sprite := Sprite2D.new()
+	sprite.texture = _texture(spec.path)
+	sprite.centered = false
+	sprite.offset = -Vector2(spec.pivot_ratio[0],spec.pivot_ratio[1])*sprite.texture.get_size()
+	sprite.set_meta("actor_kind",kind)
+	var caption := Label.new()
+	caption.text = spec.name
+	caption.position = Vector2(-55,sprite.offset.y-22)
+	caption.size.x = 110
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size",13)
+	caption.add_theme_color_override("font_shadow_color",Color.BLACK)
+	caption.add_theme_constant_override("shadow_offset_x",1)
+	caption.add_theme_constant_override("shadow_offset_y",1)
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	caption.visible = actor_names_visible
+	caption.add_to_group("actor_names")
+	sprite.add_child(caption)
+	return sprite
 
 ## 鼠标仅在目标可达时创建既有导航路线；编辑操作整体重建小样板并失效旧路线。
 func _unhandled_input(event: InputEvent) -> void:
@@ -176,6 +209,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_TAB:
 			moved_wall = false
 			_switch_layout(1-selected_layout)
+		elif event.keycode == KEY_N:
+			actor_names_visible = not actor_names_visible
+			for caption in get_tree().get_nodes_in_group("actor_names"):
+				caption.visible = actor_names_visible
 		elif event.keycode == KEY_B:
 			debug_visible = not debug_visible
 			for overlay in get_tree().get_nodes_in_group("sample_debug"):
@@ -264,8 +301,8 @@ func _verify() -> void:
 		if not captures.is_empty():
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
-		if index==0:
-			await _verify_occlusion(captures)
+		_verify_actors()
+		await _verify_occlusion(captures)
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
 		var deadline := Time.get_ticks_msec()+15000
@@ -356,3 +393,20 @@ func _verify_occlusion(captures: String) -> void:
 	assert(collision_cells.size()==collision_count,"显示淡出改动了物理障碍")
 	assert(world.get_node("GroundDecals").get_child_count()==0,"贴花不应建立碰撞子节点")
 	player.position = origin
+
+## 确认两类展示物件复用纹理、落在可达地面、脚底排序一致且不增加物理障碍。
+func _verify_actors() -> void:
+	assert(monster_previews.size()==2)
+	assert(get_tree().get_nodes_in_group("actor_names").size()==3)
+	for actor in monster_previews:
+		var kind: String = actor.get_meta("actor_kind")
+		assert(actor.texture==_texture(actor_specs[kind].path))
+		assert(actor.texture.get_width()==110)
+		var pixels := actor.texture.get_image()
+		assert(pixels.detect_alpha()!=Image.ALPHA_NONE)
+		assert(pixels.get_pixel(0,0).a<0.01)
+		var cell := Vector2i(Iso.world_to_grid(actor.position).round())
+		assert(navigator.reachable(Vector2i(layouts[selected_layout].start[0],layouts[selected_layout].start[1]),cell))
+		assert(not collision_cells.has(cell))
+		assert(actor.z_index==roundi(actor.position.y))
+		assert(actor.get_child_count()==1 and actor.get_child(0) is Label)
