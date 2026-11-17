@@ -1,0 +1,26 @@
+{
+  "tool": "image_gen built-in",
+  "reference": "../camp_hero_monsters.png",
+  "prompts": [
+    [
+      "camp",
+      "Edit reference: remove ONLY all three characters (human, wolf, copper insect) and their cast shadows, reconstruct natural empty dirt path underneath. Preserve exact environment, building, tree, stone walls, colors, perspective, composition. Empty environment plate. No characters, no text.",
+      false
+    ],
+    [
+      "hero",
+      "Extract and refine ONLY the exact male guardian from reference into standalone full body game sprite, same mature proportions, sand scarf, dark iron armor, right-hand sword, black tied hair, same pose and oblique overhead camera and upper-left light. Entire figure centered, boots and sword tip intact. Absolutely no ground, no backdrop, no baked cast shadow, genuine transparent background. Keep character identity and armor exact; no other subjects. High resolution source for downsampling.",
+      true
+    ],
+    [
+      "wolf",
+      "Extract ONLY exact corrupted grey wolf from reference into isolated game sprite, preserve crouched four-legged pose facing down-left, thick shoulder fur, restrained violet fissures, same oblique overhead camera and upper-left light. Entire wolf and tail intact, no floor or cast shadow, genuinely transparent background, no other subjects. Realistic worn dark fantasy pre-rendered appearance.",
+      true
+    ],
+    [
+      "worm",
+      "Extract ONLY exact copper armored arthropod from reference into isolated game sprite. Preserve segmented oxidized copper shell, articulated supporting legs, purple parasitic head and facing down-left, same oblique overhead camera and upper-left light. Full creature centered, all legs intact, no floor, no cast shadow, genuine transparent background, no other subjects.",
+      true
+    ]
+  ]
+}
