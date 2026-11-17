@@ -5,7 +5,8 @@ const OFFSET := Vector2(640, 665)
 const DEFINITIONS := {
 	"shelter": {"path":"assets/environment/camp_modular_v1/shelter.png", "height":200, "footprint":[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[0,3],[1,3],[2,3],[3,3]]},
 	"tree": {"path":"assets/environment/camp_modular_v1/tree.png", "height":230, "footprint":[[0,0]]},
-	"crate": {"path":"assets/tiles/camp/crate.png", "height":45, "footprint":[[0,0]]},
+	"crate": {"path":"assets/environment/camp_modular_v1/crate.png", "footprint":[[0,0]]},
+	"barrel": {"path":"assets/environment/camp_modular_v1/barrel.png", "footprint":[[0,0]]},
 	"wall_other": {"path":"assets/environment/camp_modular_v1/wall_other.png", "height":56, "footprint":[[0,0]]},
 	"wall_corner": {"path":"assets/environment/camp_modular_v1/wall_corner.png", "height":56, "footprint":[[0,0]]},
 	"wall": {"path":"assets/environment/camp_modular_v1/wall.png", "height":56, "footprint":[[0,0]]}
@@ -19,6 +20,7 @@ var verification_direction := Vector2.ZERO
 var actor_specs: Dictionary
 var monster_previews: Array[Sprite2D] = []
 var actor_names_visible := false
+var object_manifest: Dictionary
 var layouts: Array
 var selected_layout := 0
 var world: Node2D
@@ -43,6 +45,7 @@ func _ready() -> void:
 		monster_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_idle_v1.json"))
 	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
 	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
+	object_manifest = JSON.parse_string(FileAccess.get_file_as_string("res://assets/environment/camp_modular_v1/manifest.json")).objects
 	_build_atlas()
 	label = Label.new()
 	label.position = Vector2(20,20)
@@ -137,7 +140,11 @@ func _switch_layout(index: int) -> void:
 		sprite.set_meta("module_kind", object.kind)
 		sprite.position = Iso.grid_to_world(cell)
 		sprite.offset.y = -sprite.texture.get_height()*0.5+4
-		sprite.scale = Vector2.ONE * float(spec.height)/sprite.texture.get_height()
+		if object.kind in ["crate","barrel"]:
+			var pivot: Array = object_manifest[object.kind].pivot
+			sprite.offset = sprite.texture.get_size()*0.5-Vector2(pivot[0],pivot[1])
+		else:
+			sprite.scale = Vector2.ONE * float(spec.height)/sprite.texture.get_height()
 		sprite.z_index = roundi(sprite.position.y)
 		world.add_child(sprite)
 		for footprint in spec.footprint:
@@ -336,6 +343,7 @@ func _verify() -> void:
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
 		await _verify_rear(captures)
+		await _verify_supplies(captures)
 		await _verify_occlusion(captures)
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
@@ -631,3 +639,44 @@ func _verify_monster_idle(captures: String) -> void:
 			assert(actor.texture==actor.original and not actor.is_processing())
 	assert(navigator.navigation_revision==revision and collision_cells.size()==count)
 	_set_monster_motion(true)
+
+## 从可通行邻格真实撞向补给物件，必须接触对应物理体；并检查独立贴图按清单锚点落地。
+func _verify_supplies(captures: String) -> void:
+	var origin := player.position
+	waypoints.clear()
+	var checked := 0
+	for sprite in world.get_children():
+		if not sprite is Sprite2D or not sprite.get_meta("module_kind","") in ["crate","barrel"]:
+			continue
+		var kind: String = sprite.get_meta("module_kind")
+		var spec: Dictionary = object_manifest[kind]
+		assert(sprite.texture.get_size()==Vector2(spec.size[0],spec.size[1]))
+		assert(sprite.offset==sprite.texture.get_size()*0.5-Vector2(spec.pivot[0],spec.pivot[1]))
+		assert(sprite.scale==Vector2.ONE and sprite.texture.get_image().detect_alpha()!=Image.ALPHA_NONE)
+		var cell := Vector2i(Iso.world_to_grid(sprite.position).round())
+		assert(collision_cells.has(cell) and not navigator.is_walkable(cell))
+		var approach := Vector2i(-100,-100)
+		for step in [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1),Vector2i(0,-1)]:
+			if navigator.is_walkable(cell+step):
+				approach = cell+step
+				break
+		assert(approach.x!=-100,"补给物件没有可接近的检查面")
+		player.position = Iso.grid_to_world(approach)
+		verification_direction = player.position.direction_to(sprite.position)
+		var contacted := false
+		for step in range(45):
+			await get_tree().physics_frame
+			for index in range(player.get_slide_collision_count()):
+				if player.get_slide_collision(index).get_collider()==collision_cells[cell]:
+					contacted = true
+			if contacted:
+				break
+		verification_direction = Vector2.ZERO
+		assert(contacted and player.position.distance_to(sprite.position)>12,"补给物件碰撞缺失或穿入中心")
+		await get_tree().physics_frame
+		if not captures.is_empty():
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(captures+"/supply_%s_%d.png"%[kind,selected_layout])
+		checked += 1
+	assert(checked==2,"每套样板应包含木箱与木桶")
+	player.position = origin

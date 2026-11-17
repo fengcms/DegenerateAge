@@ -67,6 +67,7 @@ func _initialize() -> void:
 	print("BEETLE_BUILT: ",beetle.get_size())
 	_build_walk(root)
 	_build_monster_idle(root)
+	_build_supplies(root,manifest)
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
 	print("MODULAR_ASSETS_BUILT: ",manifest)
@@ -196,3 +197,24 @@ func _assert_frame_edges(frame: Image) -> void:
 		assert(frame.get_pixel(x,0).a<0.05 and frame.get_pixel(x,frame.get_height()-1).a<0.05,"源帧上下边出现可见像素")
 	for y in range(frame.get_height()):
 		assert(frame.get_pixel(0,y).a<0.05 and frame.get_pixel(frame.get_width()-1,y).a<0.05,"源帧左右边出现可见像素")
+
+## 离线裁切两件独立补给物件，源锚点记录地面接触区中心；输出尺寸与锚点写回生成清单。
+func _build_supplies(root: String, manifest: Dictionary) -> void:
+	var folder := root+"/art_source/environment/camp_supplies_v1/"
+	var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
+	var source := Image.load_from_file(folder+"source.png")
+	assert(source.get_size()==Vector2i(spec.sourceSize[0],spec.sourceSize[1]))
+	assert(source.detect_alpha()!=Image.ALPHA_NONE and source.get_pixel(0,0).a<0.01)
+	for kind in spec.objects:
+		var entry: Dictionary = spec.objects[kind]
+		var rect := Rect2i(entry.crop[0],entry.crop[1],entry.crop[2],entry.crop[3])
+		assert(Rect2i(Vector2i.ZERO,source.get_size()).encloses(rect))
+		var frame := source.get_region(rect)
+		var factor := float(entry.width)/rect.size.x
+		var size := Vector2i(entry.width,roundi(rect.size.y*factor))
+		var pivot := ((Vector2(entry.sourcePivot[0],entry.sourcePivot[1])-Vector2(rect.position))*factor).round()
+		assert(Rect2(Vector2.ZERO,Vector2(size)).has_point(pivot))
+		frame.resize(size.x,size.y,Image.INTERPOLATE_LANCZOS)
+		assert(frame.save_png(root+"/assets/environment/camp_modular_v1/"+str(kind)+".png")==OK)
+		manifest.objects[kind] = {"size":[size.x,size.y],"pivot":[pivot.x,pivot.y]}
+	print("CAMP_SUPPLIES_BUILT")

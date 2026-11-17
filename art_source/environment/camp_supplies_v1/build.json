@@ -1,0 +1,7 @@
+{
+  "sourceSize": [1536, 1024],
+  "objects": {
+    "crate": {"crop": [48, 240, 720, 608], "width": 60, "sourcePivot": [408, 650]},
+    "barrel": {"crop": [890, 190, 570, 665], "width": 44, "sourcePivot": [1175, 755]}
+  }
+}
