@@ -29,6 +29,16 @@ func _ready() -> void:
 			ground.queue_free()
 			await get_tree().process_frame
 			continue
+		if map_id=="wild_trial":
+			assert(ground._wild_modular!=null and ground._wild_modular.get_child_count()==3,"试炼野外须复用三层模块地面")
+			assert(ground._wild_modular.tile_counts[0]==ground.grid_size.x*ground.grid_size.y,"野外模块须覆盖完整地图")
+			var roads := 0
+			for row: String in ground._chapter_one_road_rows:
+				roads += row.count("1")
+			assert(ground._wild_modular.tile_counts[2]==roads,"野外道路必须逐格保留既有路线")
+			ground.queue_free()
+			await get_tree().process_frame
+			continue
 		assert(ground._tile_mesh != null and ground._tile_mesh.get_surface_count() == 1)
 		var cells := ground.grid_size.x * ground.grid_size.y - ground.cave.blocked_cells().size()
 		assert(ground._tile_mesh.surface_get_array_len(0) == cells * 4, "Texture batching retains every walkable tile")

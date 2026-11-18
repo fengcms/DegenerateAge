@@ -32,13 +32,18 @@ func _ready() -> void:
 				continue
 			var values: Array = positions[index]
 			var cell := Vector2i(int(values[0]), int(values[1]))
-			var sprite := Sprite2D.new()
+			var modular_tree := map_id=="wild_trial" and String(visual_entity.get("asset_id",""))=="dead_tree"
+			var sprite: Sprite2D = CampModuleOccluder.new() if modular_tree else Sprite2D.new()
+			if modular_tree:
+				sprite.mask_texture = load("res://assets/environment/camp_modular_v1/tree_reveal_mask.png") as Texture2D
 			sprite.name = "%s_%02d" % [String(entity.get("instance_id", "entity")), index]
 			sprite.texture = texture
 			sprite.centered = false
 			# 导出时裁掉了透明边，脚底锚点固定在图片底部中心。
 			sprite.offset = Vector2(-texture.get_width() * 0.5, -texture.get_height() + 4.0)
 			var visual_scale := float(entity.get("visual_scale", 1.0))
+			if modular_tree:
+				visual_scale *= 189.0/230.0 # 保持旧树高度与脚底，新增较宽树冠使用局部淡出。
 			sprite.scale = Vector2.ONE * visual_scale
 			sprite.position = Iso.grid_to_world(cell)
 			sprite.z_as_relative = false
@@ -68,6 +73,8 @@ func add_collisions_to(body: StaticBody2D) -> void:
 func _texture_for(entity: Dictionary) -> Texture2D:
 	var asset_id := String(entity.get("asset_id", ""))
 	var path := String(entity.get("asset_path", ""))
+	if map_id=="wild_trial" and asset_id=="dead_tree":
+		path = "res://assets/environment/camp_modular_v1/tree.png"
 	if path.is_empty():
 		path = "res://assets/tiles/chapter1_v2/%s/%s.png" % [map_id, asset_id]
 	if _textures.has(path):

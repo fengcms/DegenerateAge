@@ -101,6 +101,7 @@ var _camp_ground_overlay: Texture2D
 var _camp_road_texture: Texture2D
 var _camp_foreground_count := 0
 var _camp_modular: CampModularArt
+var _wild_modular: CampModularArt
 
 ## 进入地图时装配布局、地面、第一章静态实体与碰撞；所有重建都在加载阶段完成。
 func _ready() -> void:
@@ -273,6 +274,14 @@ func _load_chapter_one_art() -> void:
 	_chapter_one_art = ChapterOneMapArt.new()
 	_chapter_one_art.configure(map_id, art_data)
 	add_child(_chapter_one_art)
+	if map_id=="wild_trial":
+		var grass: Array = []
+		for row: String in _chapter_one_road_rows:
+			grass.append(row.replace("0","x").replace("1","0").replace("x","1"))
+		_wild_modular = CampModularArt.new()
+		_wild_modular.name = "WildModularTerrain"
+		add_child(_wild_modular)
+		_wild_modular.setup({"roads":_chapter_one_road_rows,"grass":grass},get_world_bounds())
 
 ## 返回离地图中心最近的合法世界坐标，供默认出生点使用。
 func get_map_center_world() -> Vector2:
@@ -420,7 +429,7 @@ func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 
 ## 绘制纹理地面、阻挡顶面和洞壁外观；只在装载或显式失效时重绘。
 func _draw() -> void:
-	if _camp_modular != null:
+	if _camp_modular != null or _wild_modular != null:
 		return
 	if not _camp_whitebox.is_empty():
 		if _camp_ground_texture != null:
