@@ -31,7 +31,7 @@ func _ready() -> void:
 		var modular := ground.get_node_or_null("ModularTerrain")
 		if modular != null:
 			assert(modular.get_child_count()==3,"模块地面必须固定三个合批节点")
-			for id in ["blacksmith","merchant","elder_tree"]:
+			for id in ["blacksmith","merchant","elder_tree","warehouse"]:
 				var prop := ground.get_node("Camp_%s_front" % id)
 				assert(prop.material is ShaderMaterial,"新模块必须保留局部遮挡材质")
 				assert(prop.get("mask_image") != null,"屋顶树冠遮挡掩码缺失")

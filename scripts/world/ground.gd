@@ -186,7 +186,7 @@ func _load_camp_final_art() -> void:
 		assert(not object_ids.has(id), "营地整体美术实体重复：%s" % id)
 		object_ids[id] = true
 		var rect: Array = entry["rect"]
-		if id in ["blacksmith","merchant","elder_tree"]:
+		if id in ["blacksmith","merchant","elder_tree","warehouse"]:
 			_add_camp_module(id,rect)
 			continue
 		for layer in ["back", "front"]:
@@ -211,15 +211,17 @@ func _load_camp_final_art() -> void:
 	assert(object_ids.size() == (_camp_whitebox["entities"] as Array).size()
 		+ (_camp_whitebox["fences"] as Array).size(), "营地整体视觉必须覆盖全部原实体与障碍")
 
-## 新棚屋与树木按原实体的整体占地定位；其他专用服务物件沿用独立透明素材。
+## 新棚屋、树木和仓库按原实体整体占地定位；未替换设施沿用独立透明素材。
 ## 只替换可视节点，真实多边形碰撞与路线不改变，纹理由ResourceLoader共享。
 func _add_camp_module(id: String, rect: Array) -> void:
-	var kind := "tree" if id=="elder_tree" else "shelter"
-	var texture := load("res://assets/environment/camp_modular_v1/"+kind+".png") as Texture2D
-	var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/environment/camp_modular_v1/manifest.json"))
-	var pivot: Array = manifest.objects[kind].pivot
+	var kind := "warehouse" if id=="warehouse" else ("tree" if id=="elder_tree" else "shelter")
+	var directory := "res://assets/environment/camp_facilities_v1/" if id=="warehouse" else "res://assets/environment/camp_modular_v1/"
+	var texture := load(directory+kind+".png") as Texture2D
+	var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(directory+"manifest.json"))
+	var definitions: Dictionary = manifest if id=="warehouse" else manifest.objects
+	var pivot: Array = definitions[kind].pivot
 	var sprite := CampModuleOccluder.new()
-	sprite.mask_texture = load("res://assets/environment/camp_modular_v1/"+kind+"_reveal_mask.png") as Texture2D
+	sprite.mask_texture = load(directory+kind+"_reveal_mask.png") as Texture2D
 	sprite.name = "Camp_%s_front" % id
 	sprite.texture = texture
 	sprite.centered = false

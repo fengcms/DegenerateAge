@@ -73,7 +73,10 @@ func _ready() -> void:
 		actual_ids[id] = true
 		art_rects[id] = entry["rect"]
 		assert(ground.has_node("Camp_%s_front" % id), "实体前沿缺失：%s" % id)
-		if entity_ids.has(id) and id not in ["blacksmith","merchant","elder_tree"]:
+		if id in ["blacksmith","merchant","elder_tree","warehouse"]:
+			var module := ground.get_node("Camp_%s_front" % id)
+			assert(module is CampModuleOccluder and module.material is ShaderMaterial, "模块实体必须有局部遮挡表现："+id)
+		elif entity_ids.has(id):
 			assert(ground.has_node("Camp_%s_back" % id), "可绕行实体背层缺失：%s" % id)
 			_check_split_alpha(entry)
 	assert(actual_ids.size() == expected_ids.size() and ground._camp_foreground_count == 11,
