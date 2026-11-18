@@ -424,7 +424,7 @@ func _verify() -> void:
 			for x in range(16):
 				assert(navigator.is_walkable(Vector2i(x,y)) == not collision_cells.has(Vector2i(x,y)))
 		if not captures.is_empty():
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
 		_verify_actors()
 		print("VERIFY_STAGE: ",index," / monster_idle")
@@ -541,17 +541,17 @@ func _verify_occlusion(captures: String) -> void:
 		assert(player.z_index<occluder.z_index)
 		if not captures.is_empty():
 			occluder.reveal_material.set_shader_parameter("reveal_amount",0.0)
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_opaque.png")
 			occluder.reveal_material.set_shader_parameter("reveal_amount",occluder.reveal_amount)
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_reveal.png")
 		player.position = occluder.position+Vector2(0,35)
 		await get_tree().create_timer(0.35).timeout
 		assert(not occluder.target_reveal and occluder.reveal_amount<0.01,"前方未恢复")
 		assert(player.z_index>occluder.z_index)
 		if not captures.is_empty():
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 			get_viewport().get_texture().get_image().save_png(captures+"/"+kind+"_restored.png")
 		player.position = occluder.position+Vector2(500,-30)
 		await get_tree().create_timer(0.25).timeout
@@ -603,14 +603,14 @@ func _verify_walk(captures: String) -> void:
 	while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
 		await get_tree().physics_frame
 		if not captures.is_empty() and physics_steps%3==0 and capture_index<24:
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 			shots["walk_demo_%d_%03d.png"%[selected_layout,capture_index]] = get_viewport().get_texture().get_image()
 			capture_times.append(Time.get_ticks_msec())
 			capture_index += 1
 		if player_art.walking and not seen.has(player_art.walk_frame):
 			seen[player_art.walk_frame] = true
 			if not captures.is_empty():
-				await RenderingServer.frame_post_draw
+				await _render_verification_frame()
 				shots["walk_%d_%d.png"%[selected_layout,player_art.walk_frame]] = get_viewport().get_texture().get_image()
 	assert(player.position.distance_to(Iso.grid_to_world(Vector2i(8,2)))<8)
 	assert(seen.size()==4,"实际移动没有覆盖完整四帧")
@@ -618,7 +618,7 @@ func _verify_walk(captures: String) -> void:
 	await get_tree().physics_frame
 	assert(not player_art.walking and player_art.texture==player_art.directional_idle,"右下停步后未保持配套站姿")
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		shots["walk_demo_%d_%03d.png"%[selected_layout,capture_index]] = get_viewport().get_texture().get_image()
 		capture_times.append(Time.get_ticks_msec())
 		assert(shots.size()<=29,"截图缓存超出上限")
@@ -681,7 +681,7 @@ func _verify_wall_stop(captures: String, direction := "se") -> void:
 	assert(not player_art.walking and player_art.phase_distance==0)
 	assert(player_art.texture==player_art.idle_for_direction(direction),"顶墙应保持对应站姿")
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/wall_stop_%s_%d.png"%[direction,selected_layout])
 	verification_direction = Vector2.ZERO
 	await get_tree().physics_frame
@@ -710,7 +710,7 @@ func _verify_rear(captures: String) -> void:
 			if not seen.has(player_art.walk_frame):
 				seen[player_art.walk_frame] = true
 				if not captures.is_empty():
-					await RenderingServer.frame_post_draw
+					await _render_verification_frame()
 					shots[player_art.walk_frame] = get_viewport().get_texture().get_image()
 	assert(seen.size()==4,"实际右上移动未覆盖四帧")
 	for index in shots:
@@ -722,13 +722,13 @@ func _verify_rear(captures: String) -> void:
 	assert(player_art.texture==player_art.rear_idle and player_art.offset==-Vector2(walk_spec.pivot[0],walk_spec.pivot[1]))
 	assert(not player_art.flip_h and not player_art.flip_v)
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/rear_idle_%d.png"%selected_layout)
 	var resting := player.position
 	_turn_preview()
 	assert(player.position==resting and player_art.texture==player_art.directional_idle)
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/front_idle_%d.png"%selected_layout)
 	_turn_preview()
 	assert(player.position==resting and player_art.texture==player_art.rear_idle)
@@ -768,7 +768,7 @@ func _verify_monster_idle(captures: String) -> void:
 				if not seen[kind].has(actor.current_frame):
 					seen[kind][actor.current_frame] = true
 					if not captures.is_empty():
-						await RenderingServer.frame_post_draw
+						await _render_verification_frame()
 						shots["idle_%s_%d_%d.png"%[kind,selected_layout,actor.current_frame]] = get_viewport().get_texture().get_image()
 	for kind in seen:
 		assert(seen[kind].size()==4,"待机真实播放未覆盖四帧")
@@ -838,7 +838,7 @@ func _verify_supplies(captures: String) -> void:
 		assert(contacted and player.position.distance_to(sprite.position)>12,"补给物件碰撞缺失或穿入中心")
 		await get_tree().physics_frame
 		if not captures.is_empty():
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 			get_viewport().get_texture().get_image().save_png(captures+"/supply_%s_%d.png"%[kind,selected_layout])
 		checked += 1
 	assert(checked==2,"每套样板应包含木箱与木桶")
@@ -883,7 +883,7 @@ func _verify_left(captures: String) -> void:
 			if not seen.has(player_art.walk_frame):
 				seen[player_art.walk_frame] = true
 				if not captures.is_empty():
-					await RenderingServer.frame_post_draw
+					await _render_verification_frame()
 					shots[player_art.walk_frame] = get_viewport().get_texture().get_image()
 	assert(seen.size()==4 and player.position.distance_to(Iso.grid_to_world(Vector2i(4,7)))<8)
 	for index in shots:
@@ -894,7 +894,7 @@ func _verify_left(captures: String) -> void:
 	assert(not player_art.walking and player_art.texture==player_art.left_idle and player_art.phase_distance==0)
 	assert(not player_art.flip_h and not player_art.flip_v)
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/left_idle_%d.png"%selected_layout)
 	player_art.enabled = false
 	player_art.update_motion(Vector2.ZERO)
@@ -927,7 +927,7 @@ func _verify_left_rear(captures: String) -> void:
 			if not seen.has(player_art.walk_frame):
 				seen[player_art.walk_frame] = true
 				if not captures.is_empty():
-					await RenderingServer.frame_post_draw
+					await _render_verification_frame()
 					shots[player_art.walk_frame] = get_viewport().get_texture().get_image()
 	assert(seen.size()==4 and player.position.distance_to(Iso.grid_to_world(Vector2i(8,6)))<8)
 	for index in shots:
@@ -938,7 +938,7 @@ func _verify_left_rear(captures: String) -> void:
 	assert(not player_art.walking and player_art.texture==player_art.left_rear_idle and player_art.phase_distance==0)
 	assert(not player_art.flip_h and not player_art.flip_v)
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/left_rear_idle_%d.png"%selected_layout)
 	player_art.enabled = false
 	player_art.update_motion(Vector2.ZERO)
@@ -970,7 +970,7 @@ func _verify_attack(captures: String, direction := "se") -> void:
 	var deadline := Time.get_ticks_msec()+3000
 	while player_art.attacking and Time.get_ticks_msec()<deadline:
 		if not captures.is_empty():
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 		else:
 			await get_tree().physics_frame
 		if player_art.attacking:
@@ -1022,7 +1022,7 @@ func _verify_monster_attack(captures: String) -> void:
 	var deadline := Time.get_ticks_msec()+1500
 	while Time.get_ticks_msec()<deadline:
 		if not captures.is_empty():
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 		else:
 			await get_tree().process_frame
 		for actor in monster_previews:
@@ -1088,7 +1088,7 @@ func _verify_front(captures: String) -> void:
 			if not seen.has(player_art.walk_frame):
 				seen[player_art.walk_frame] = true
 				if not captures.is_empty():
-					await RenderingServer.frame_post_draw
+					await _render_verification_frame()
 					shots[player_art.walk_frame] = get_viewport().get_texture().get_image()
 	assert(seen.size()==4 and player.position.distance_to(Iso.grid_to_world(Vector2i(6,4)))<8)
 	for index in shots:
@@ -1099,7 +1099,7 @@ func _verify_front(captures: String) -> void:
 	assert(not player_art.walking and player_art.texture==player_art.front_idle and player_art.phase_distance==0)
 	assert(not player_art.flip_h and not player_art.flip_v)
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/straight_idle_%d.png"%selected_layout)
 	player_art.enabled = false
 	player_art.update_motion(Vector2.ZERO)
@@ -1134,7 +1134,7 @@ func _verify_extra(captures: String, direction: String) -> void:
 	var deadline := Time.get_ticks_msec()+5000
 	while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
 		if not captures.is_empty():
-			await RenderingServer.frame_post_draw
+			await _render_verification_frame()
 		else:
 			await get_tree().physics_frame
 		if player_art.walking:
@@ -1152,7 +1152,7 @@ func _verify_extra(captures: String, direction: String) -> void:
 	assert(not player_art.walking and player_art.texture==player_art.extra_idles[direction] and player_art.phase_distance==0)
 	assert(not player_art.flip_h and not player_art.flip_v)
 	if not captures.is_empty():
-		await RenderingServer.frame_post_draw
+		await _render_verification_frame()
 		get_viewport().get_texture().get_image().save_png(captures+"/extra_idle_%s_%d.png"%[direction,selected_layout])
 	player_art.enabled = false
 	player_art.update_motion(Vector2.ZERO)
@@ -1182,7 +1182,7 @@ func _verify_reactions(captures: String, direction := "se") -> void:
 			if captures.is_empty():
 				await get_tree().physics_frame
 			else:
-				await RenderingServer.frame_post_draw
+				await _render_verification_frame()
 			if not player_art.reaction_state.is_empty():
 				var frame := player_art.reaction_frame
 				seen[frame] = true
@@ -1246,7 +1246,7 @@ func _verify_monster_previews(captures: String) -> void:
 			if captures.is_empty():
 				await get_tree().process_frame
 			else:
-				await RenderingServer.frame_post_draw
+				await _render_verification_frame()
 			for actor in monster_previews:
 				if actor.preview_state==state:
 					var kind: String = actor.get_meta("actor_kind")
@@ -1288,3 +1288,8 @@ func _verify_monster_previews(captures: String) -> void:
 			shots[key].save_png(captures+"/"+key)
 		shots.clear()
 	assert(navigator.navigation_revision==revision)
+
+## 截图验收显式提交绘制，避免窗口不可绘制时无限等待 frame_post_draw；只供验收，不用于FPS采样。
+func _render_verification_frame() -> void:
+	await get_tree().process_frame
+	RenderingServer.force_draw(false)
