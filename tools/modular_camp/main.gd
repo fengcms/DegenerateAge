@@ -201,6 +201,9 @@ func _switch_layout(index: int) -> void:
 		overlay.z_index = 3000
 		world.add_child(overlay)
 	player = CharacterBody2D.new()
+	# 俯视移动不使用平台地板分类；较小安全余量避免菱形交角反复恢复位移，半径仍为12。
+	player.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	player.safe_margin = 0.001
 	player.position = Iso.grid_to_world(Vector2i(definition.start[0],definition.start[1]))
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
@@ -438,9 +441,7 @@ func _verify() -> void:
 		await _verify_front(captures)
 		for direction in ["n","e","w"]:
 			await _verify_extra(captures,direction)
-			# 正后持续顶墙被北角物理抖动阻塞，见78号记录；不降低已有七向静止门槛。
-			if direction!="n":
-				await _verify_wall_stop(captures,direction)
+			await _verify_wall_stop(captures,direction)
 		await _verify_wall_stop(captures,"s")
 		print("VERIFY_STAGE: ",index," / hero_attack")
 		await _verify_attack(captures)
@@ -648,7 +649,7 @@ func _verify_walk(captures: String) -> void:
 	assert(player_art.texture==player_art.directional_idle and not player_art.walking,"输入意图只能转向，不能原地踏步")
 	player.position = origin
 
-## 持续模拟已通过接触验收的七方向移动输入，实际撞到既有地图边界角；验证顶墙停帧且保持朝向，随后撤销输入。
+## 持续模拟八方向移动输入，实际撞到既有地图边界角；验证顶墙停帧且保持朝向，随后撤销输入。
 func _verify_wall_stop(captures: String, direction := "se") -> void:
 	var origin := player.position
 	waypoints.clear()
@@ -657,6 +658,8 @@ func _verify_wall_stop(captures: String, direction := "se") -> void:
 		start_cell = Vector2i(1,14)
 	elif direction=="s":
 		start_cell = Vector2i(1,1)
+	elif direction=="n":
+		start_cell = Vector2i(14,14)
 	player.position = Iso.grid_to_world(start_cell)
 	var start := player.position
 	verification_direction = SampleWalkSprite.DIRECTION_VECTORS[direction]
