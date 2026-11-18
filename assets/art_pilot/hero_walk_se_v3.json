@@ -166,7 +166,7 @@
   },
   "leftRearWalkSource": {
     "columns": 4.0,
-    "path": "../hero_walk_nw_trial_v2/candidate.png",
+    "path": "../hero_walk_nw_trial_v2/candidate_alpha_v3.png",
     "pivot": [
       275.0,
       710.0

@@ -1,0 +1,7 @@
+{
+  "tool": "image_gen",
+  "useCase": "background-extraction",
+  "transparent_background": true,
+  "reference": "candidate.png",
+  "prompt": "Use case: background-extraction. Remove only the white/gray backdrop and all diffuse ground shadows from this exact four-frame warrior walk sheet. Preserve all four full characters, poses, weapon, hair, armor colors, current scale, and EXACT pixel positions. Preserve canvas 2048 x 768, four 512 x 768 cells side by side. Every pixel outside the characters must have alpha zero: absolutely no rectangular haze, gray fill, white cloud or checkerboard. Keep all boots and sword tips complete. Do not change camera, anatomy, costume, lighting, number of frames or layout. Return a genuine transparent PNG."
+}

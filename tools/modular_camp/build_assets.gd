@@ -168,7 +168,7 @@ func _build_walk(root: String) -> void:
 		var rear_atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
 		for index in range(4):
 			var frame := rear_image.get_region(Rect2i(Vector2i(index*source_size.x,0),source_size))
-			if facing in ["s","n","e","w"]:
+			if facing in ["nw","s","n","e","w"]:
 				_assert_frame_edges(frame)
 			frame.resize(rear_scaled.x,rear_scaled.y,Image.INTERPOLATE_LANCZOS)
 			rear_atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,rear_scaled),rear_offset+Vector2i(0,index*size.y))

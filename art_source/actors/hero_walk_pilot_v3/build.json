@@ -114,7 +114,7 @@
     ]
   },
   "leftRearWalkSource": {
-    "path": "../hero_walk_nw_trial_v2/candidate.png",
+    "path": "../hero_walk_nw_trial_v2/candidate_alpha_v3.png",
     "sourceFrame": [
       512,
       768
