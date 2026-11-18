@@ -37,3 +37,5 @@ hero_attack_se_v1.png为右前挥剑112×512四帧，pivot(56,112)，理论RGBA8
 wolf_attack_v1.png、beetle_attack_v1.png各128×384（四帧128×96），共用各自待机的(64,80)锚点。理论RGBA8各192KiB，共384KiB，隔离单次攻击无伤害事件。源稿与完整提示词分别在art_source/actors/wolf_attack_trial_v1和beetle_attack_trial_v1；狼使用透明修正版。
 
 正前增加hero_walk_s_v1.png（112×512）和hero_idle_s_v3.png（112×128），锚点(56,112)，理论RGBA8共280KiB。源稿和提示词在art_source/actors/hero_walk_s_trial_v1，行走只采用透明修正版。
+
+正后与左右侧向新增hero_walk_{n,e,w}_v1.png及hero_idle_{n,e,w}_v3.png，每方向224+56KiB，合计840KiB；八方向站走理论RGBA8共2240KiB。源稿和提示词在对应art_source/actors/hero_walk_{n,e,w}_trial_v1，w只采用修正版candidate_fixed_v2.png。

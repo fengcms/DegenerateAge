@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate_fixed_v2.png",
+  "prompt": "Use case: identity-preserve. ONE matching IDLE sprite of this exact LEFT-facing warrior. Strict profile faces screen LEFT, elevated orthographic camera. BOTH feet planted below hips, no frozen stride. Near anatomical LEFT arm has EMPTY relaxed hand; LEFT hip no pouch. ONLY ONE sword held LOW by anatomical RIGHT FAR hand, partly hidden behind legs, right hip pouch hidden on far side. Same topknot scarf bronze lamellar cape grey skirt boots and body proportions.1024x1536 fullbody topy100 solesy1420. Genuine transparent alpha background, no glow/floor/shadow/text. No extra weapon, no mirroring."
+}

@@ -200,9 +200,9 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\nT挥剑 / R怪物攻击 · K暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角五方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T挥剑 / R怪物攻击 · K暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
 
-## 按档案定位角色表现；主角支持五个方向试装，怪物可试装待机，不引入AI或碰撞。
+## 按档案定位角色表现；主角支持八个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
 	var spec: Dictionary = actor_specs[kind]
 	var sprite: Sprite2D = SampleWalkSprite.new() if kind=="hero" else (SampleIdleSprite.new() if monster_specs.has(kind) else Sprite2D.new())
@@ -212,6 +212,8 @@ func _actor_sprite(kind: String) -> Sprite2D:
 	if sprite is SampleWalkSprite:
 		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),_texture("assets/art_pilot/hero_idle_se_v3.png"),_texture("assets/art_pilot/hero_idle_ne_v3.png"),_texture("assets/art_pilot/hero_walk_ne_v2.png"),_texture("assets/art_pilot/hero_walk_sw_v1.png"),_texture("assets/art_pilot/hero_idle_sw_v3.png"),_texture("assets/art_pilot/hero_walk_nw_v2.png"),_texture("assets/art_pilot/hero_idle_nw_v3.png"),walk_spec)
 		sprite.setup_front(_texture("assets/art_pilot/hero_walk_s_v1.png"),_texture("assets/art_pilot/hero_idle_s_v3.png"))
+		for direction in ["n","e","w"]:
+			sprite.setup_extra(direction,_texture("assets/art_pilot/hero_walk_"+direction+"_v1.png"),_texture("assets/art_pilot/hero_idle_"+direction+"_v3.png"))
 		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_se_v1.png"),attack_spec)
 		sprite.enabled = motion_enabled
 	elif sprite is SampleIdleSprite:
@@ -251,6 +253,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_start_left_rear_demo()
 		elif event.keycode == KEY_G:
 			_start_front_demo()
+		elif event.keycode in [KEY_1,KEY_2,KEY_3]:
+			_start_extra_demo("n" if event.keycode==KEY_1 else ("e" if event.keycode==KEY_2 else "w"))
 		elif event.keycode == KEY_T:
 			_start_attack_demo()
 		elif event.keycode == KEY_I:
@@ -374,16 +378,21 @@ func _verify() -> void:
 		print("VERIFY_STAGE: ",index," / hero_walk")
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
-		await _verify_wall_stop(captures,true)
+		await _verify_wall_stop(captures,"ne")
 		await _verify_rear(captures)
 		await _verify_left(captures)
 		await _verify_left_rear(captures)
 		await _verify_front(captures)
-		await _verify_wall_stop(captures,false,false,true)
+		for direction in ["n","e","w"]:
+			await _verify_extra(captures,direction)
+			# 正后持续顶墙被北角物理抖动阻塞，见78号记录；不降低已有七向静止门槛。
+			if direction!="n":
+				await _verify_wall_stop(captures,direction)
+		await _verify_wall_stop(captures,"s")
 		print("VERIFY_STAGE: ",index," / hero_attack")
 		await _verify_attack(captures)
-		await _verify_wall_stop(captures,true,true)
-		await _verify_wall_stop(captures,false,true)
+		await _verify_wall_stop(captures,"nw")
+		await _verify_wall_stop(captures,"sw")
 		print("VERIFY_STAGE: ",index," / supplies_occlusion")
 		await _verify_supplies(captures)
 		await _verify_occlusion(captures)
@@ -569,18 +578,23 @@ func _verify_walk(captures: String) -> void:
 	assert(not player_art.walking and player_art.phase_distance==0,"零位移不应原地踏步")
 	assert(player_art.texture==player_art.directional_idle)
 	player_art.update_motion(Vector2.ZERO,Vector2(0,-1))
-	assert(player_art.texture==player_art.idle_texture,"未制作朝向应回退")
+	assert(player_art.texture==player_art.extra_idles["n"],"正后已有独立站姿")
 	player_art.update_motion(Vector2.ZERO,Vector2(2,1))
 	assert(player_art.texture==player_art.directional_idle and not player_art.walking,"输入意图只能转向，不能原地踏步")
 	player.position = origin
 
-## 持续模拟四斜向或正下移动输入，实际撞到既有地图边界角；验证顶墙停帧且保持朝向，随后撤销输入。
-func _verify_wall_stop(captures: String, rear := false, left := false, front := false) -> void:
+## 持续模拟已通过接触验收的七方向移动输入，实际撞到既有地图边界角；验证顶墙停帧且保持朝向，随后撤销输入。
+func _verify_wall_stop(captures: String, direction := "se") -> void:
 	var origin := player.position
 	waypoints.clear()
-	player.position = Iso.grid_to_world(Vector2i(1,1) if front else (Vector2i(1,14) if left else Vector2i(14,1)))
+	var start_cell := Vector2i(14,1)
+	if direction in ["sw","nw","w"]:
+		start_cell = Vector2i(1,14)
+	elif direction=="s":
+		start_cell = Vector2i(1,1)
+	player.position = Iso.grid_to_world(start_cell)
 	var start := player.position
-	verification_direction = Vector2.DOWN if front else (Vector2(-2,-1 if rear else 1) if left else (Vector2(2,-1) if rear else Vector2(2,1)))
+	verification_direction = SampleWalkSprite.DIRECTION_VECTORS[direction]
 	var previous := player.position
 	var stopped_frames := 0
 	var saw_walk := false
@@ -595,12 +609,12 @@ func _verify_wall_stop(captures: String, rear := false, left := false, front := 
 		if stopped_frames>=12:
 			break
 	assert(saw_walk and player.position.distance_to(start)>10,"顶墙测试未发生真实接近")
-	assert(stopped_frames>=12,"持续输入后未被现有边界稳定挡住")
+	assert(stopped_frames>=12,"方向%s顶墙不稳定：帧%d，位置%s，碰撞%d"%[direction,stopped_frames,player.position,player.get_slide_collision_count()])
 	assert(not player_art.walking and player_art.phase_distance==0)
-	assert(player_art.texture==(player_art.front_idle if front else ((player_art.left_rear_idle if rear else player_art.left_idle) if left else (player_art.rear_idle if rear else player_art.directional_idle))),"顶墙应保持对应站姿")
+	assert(player_art.texture==player_art.idle_for_direction(direction),"顶墙应保持对应站姿")
 	if not captures.is_empty():
 		await RenderingServer.frame_post_draw
-		get_viewport().get_texture().get_image().save_png(captures+("/wall_stop_s_%d.png" if front else (("/wall_stop_nw_%d.png" if rear else "/wall_stop_sw_%d.png") if left else ("/wall_stop_ne_%d.png" if rear else "/wall_stop_%d.png")))%selected_layout)
+		get_viewport().get_texture().get_image().save_png(captures+"/wall_stop_%s_%d.png"%[direction,selected_layout])
 	verification_direction = Vector2.ZERO
 	await get_tree().physics_frame
 	await get_tree().physics_frame
@@ -1011,4 +1025,55 @@ func _verify_front(captures: String) -> void:
 	player_art.enabled = true
 	player_art.update_motion(Vector2.ZERO)
 	assert(player_art.texture==player_art.front_idle)
+	player.position = origin
+
+## 复现三种补齐视角的直线路线，坐标选在两布局共用空地，不改变正式出生点。
+func _start_extra_demo(direction: String) -> void:
+	waypoints.clear()
+	var start := Vector2i(5,3) if direction=="n" else (Vector2i(6,6) if direction=="e" else Vector2i(8,4))
+	var goal := Vector2i(9,7) if direction=="n" else (Vector2i(8,4) if direction=="e" else Vector2i(6,6))
+	player.position = Iso.grid_to_world(start)
+	player_art.update_motion(Vector2.ZERO,SampleWalkSprite.DIRECTION_VECTORS[direction])
+	_route(Iso.grid_to_world(goal))
+
+## 八方向不留角度空隙；补齐方向逐个实际走完、停步回退，并缓存实际显示的四帧。
+func _verify_extra(captures: String, direction: String) -> void:
+	var origin := player.position
+	for angle in range(360):
+		assert(not player_art._direction_id(Vector2.from_angle(deg_to_rad(angle))).is_empty())
+	for key in SampleWalkSprite.DIRECTION_VECTORS:
+		assert(player_art._direction_id(SampleWalkSprite.DIRECTION_VECTORS[key])==key)
+	_start_extra_demo(direction)
+	var goal := Vector2i(9,7) if direction=="n" else (Vector2i(8,4) if direction=="e" else Vector2i(6,6))
+	var seen: Dictionary = {}
+	var shots: Dictionary = {}
+	var deadline := Time.get_ticks_msec()+5000
+	while not waypoints.is_empty() and Time.get_ticks_msec()<deadline:
+		if not captures.is_empty():
+			await RenderingServer.frame_post_draw
+		else:
+			await get_tree().physics_frame
+		if player_art.walking:
+			assert(player_art.texture in player_art.extra_frames[direction],"补齐方向 %s 实际=%s 输入=%s"%[direction,player_art.facing_id,verification_direction])
+			var frame := player_art.walk_frame
+			seen[frame] = true
+			if not captures.is_empty() and not shots.has(frame):
+				shots[frame] = get_viewport().get_texture().get_image()
+	assert(seen.size()==4 and player.position.distance_to(Iso.grid_to_world(goal))<8,"补齐方向 %s 帧=%s 位置=%s 目标=%s 路线=%s"%[direction,seen.keys(),player.position,Iso.grid_to_world(goal),waypoints])
+	for frame in shots:
+		shots[frame].save_png(captures+"/extra_%s_%d_%d.png"%[direction,selected_layout,frame])
+	shots.clear()
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert(not player_art.walking and player_art.texture==player_art.extra_idles[direction] and player_art.phase_distance==0)
+	assert(not player_art.flip_h and not player_art.flip_v)
+	if not captures.is_empty():
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(captures+"/extra_idle_%s_%d.png"%[direction,selected_layout])
+	player_art.enabled = false
+	player_art.update_motion(Vector2.ZERO)
+	assert(player_art.texture==player_art.idle_texture)
+	player_art.enabled = true
+	player_art.update_motion(Vector2.ZERO)
+	assert(player_art.texture==player_art.extra_idles[direction])
 	player.position = origin

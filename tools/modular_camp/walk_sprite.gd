@@ -1,7 +1,10 @@
 class_name SampleWalkSprite
 extends Sprite2D
-## 隔离营地主角行走试装：按实际位移推进五个已制作方向的图集；停步保持朝向站姿，未制作方向或关闭试装时回退原图。
+## 隔离营地主角行走试装：按实际位移推进八个已制作方向的图集；停步保持朝向站姿，关闭试装时回退原图。
 ## 沿既有角色清单的frameSize/pivot/frames约定构建共享区域，不加载正式CharacterLook的全量预载资源。
+const DIRECTION_VECTORS := {"se":Vector2(0.89442719,0.44721360),"ne":Vector2(0.89442719,-0.44721360),"sw":Vector2(-0.89442719,0.44721360),"nw":Vector2(-0.89442719,-0.44721360),"s":Vector2.DOWN,"n":Vector2.UP,"e":Vector2.RIGHT,"w":Vector2.LEFT}
+var extra_frames: Dictionary = {}
+var extra_idles: Dictionary = {}
 var attacking := false
 var attack_elapsed := 0.0
 var attack_frame := 0
@@ -38,7 +41,7 @@ func setup(idle: Texture2D, atlas: Texture2D, matching_idle: Texture2D, matching
 	idle_offset = -Vector2(idle.get_width()*0.5,idle.get_height())
 	walk_offset = -Vector2(spec.pivot[0],spec.pivot[1])
 	stride_pixels = float(spec.stridePixels)
-	assert(spec.directions==["se","ne","sw","nw","s"] and stride_pixels>0)
+	assert(spec.directions==["se","ne","sw","nw","s","n","e","w"] and stride_pixels>0)
 	var size := Vector2(spec.frameSize[0],spec.frameSize[1])
 	assert(atlas.get_size()==size*Vector2(1,spec.states.walk.frames))
 	assert(rear_atlas.get_size()==atlas.get_size() and left_atlas.get_size()==atlas.get_size())
@@ -80,46 +83,42 @@ func update_motion(displacement: Vector2, intent := Vector2.ZERO) -> void:
 		walking = false
 		phase_distance = 0
 		walk_frame = 0
-		var resting: Texture2D = idle_texture
-		if enabled and facing_id=="se":
-			resting = directional_idle
-		elif enabled and facing_id=="sw":
-			resting = left_idle
-		elif enabled and facing_id=="s":
-			resting = front_idle
-		elif enabled and facing_id=="nw":
-			resting = left_rear_idle
-		elif enabled and facing_id=="ne":
-			resting = rear_idle
+		var resting := idle_for_direction(facing_id) if enabled else idle_texture
 		if texture != resting:
 			texture = resting
 			offset = idle_offset if resting==idle_texture else walk_offset
 		return
 	walking = true
 	phase_distance = fposmod(phase_distance+displacement.length(),stride_pixels)
-	var active: Array[AtlasTexture] = frames if facing_id=="se" else (rear_frames if facing_id=="ne" else (left_frames if facing_id=="sw" else (left_rear_frames if facing_id=="nw" else front_frames)))
+	var active: Array[AtlasTexture] = frames if facing_id=="se" else (rear_frames if facing_id=="ne" else (left_frames if facing_id=="sw" else (left_rear_frames if facing_id=="nw" else (front_frames if facing_id=="s" else extra_frames[facing_id]))))
 	walk_frame = floori(phase_distance/stride_pixels*active.size())
 	if texture != active[walk_frame]:
 		texture = active[walk_frame]
 		offset = walk_offset
 
-## 单向试装范围以屏幕右下(2,1)为中心；调用前保证向量非零，不冒充其他方向。
-func _supports(direction: Vector2) -> bool:
-	return direction.normalized().dot(Vector2(2,1).normalized())>=0.9238795
-
-## 只返回已制作的五个朝向；其他方向显式回退，不复制正面或镜像武器来充数。
+## 从八个等距投影朝向中选最接近者；完整覆盖一周，避免旧方向锥之间回退或先后顺序偏置。
 func _direction_id(direction: Vector2) -> String:
-	if _supports(direction):
-		return "se"
-	if direction.normalized().dot(Vector2(2,-1).normalized())>=0.9238795:
-		return "ne"
-	if direction.normalized().dot(Vector2(-2,1).normalized())>=0.9238795:
-		return "sw"
-	if direction.normalized().dot(Vector2(-2,-1).normalized())>=0.9238795:
-		return "nw"
-	if direction.normalized().dot(Vector2.DOWN)>=0.9238795:
-		return "s"
-	return ""
+	if direction.length_squared()<0.0001:
+		return ""
+	var normalized := direction.normalized()
+	var best := ""
+	var similarity := -2.0
+	for key in DIRECTION_VECTORS:
+		var score: float = normalized.dot(DIRECTION_VECTORS[key])
+		if score>similarity:
+			similarity = score
+			best = key
+	return best
+
+## 返回对应独立站姿；初始化前或无朝向时仍保留明确原图回退。
+func idle_for_direction(direction: String) -> Texture2D:
+	match direction:
+		"se": return directional_idle
+		"ne": return rear_idle
+		"sw": return left_idle
+		"nw": return left_rear_idle
+		"s": return front_idle
+	return extra_idles.get(direction,idle_texture)
 
 ## 加载期切分挥剑图集并校验秒制阶段时长；区域复用共享纹理，不连接伤害事件。
 func setup_attack(atlas: Texture2D, spec: Dictionary) -> void:
@@ -184,3 +183,15 @@ func setup_front(atlas: Texture2D, idle: Texture2D) -> void:
 		var region: AtlasTexture = frame.duplicate()
 		region.atlas = atlas
 		front_frames.append(region)
+
+## 补齐正后与左右侧向，区域共享纹理；需在首个运动更新前完成，避免部分初始化。
+func setup_extra(direction: String, atlas: Texture2D, idle: Texture2D) -> void:
+	assert(direction in ["n","e","w"] and not extra_frames.has(direction))
+	assert(atlas.get_size()==frames[0].atlas.get_size() and idle.get_size()==directional_idle.get_size())
+	var cached: Array[AtlasTexture] = []
+	for frame in frames:
+		var region: AtlasTexture = frame.duplicate()
+		region.atlas = atlas
+		cached.append(region)
+	extra_frames[direction] = cached
+	extra_idles[direction] = idle

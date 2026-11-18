@@ -151,6 +151,9 @@ func _build_walk(root: String) -> void:
 	assert(atlas.save_png(root+"/assets/art_pilot/hero_walk_se_v3.png")==OK)
 	var walk_sources := {"ne":spec.rearWalkSource,"sw":spec.leftWalkSource,"nw":spec.leftRearWalkSource,"s":spec.frontWalkSource}
 	var versions := {"ne":"v2","sw":"v1","nw":"v2","s":"v1"}
+	for direction in spec.extraWalkSources:
+		walk_sources[direction] = spec.extraWalkSources[direction]
+		versions[direction] = "v1"
 	for facing in walk_sources:
 		var rear: Dictionary = walk_sources[facing]
 		assert(rear.sourceFrame==spec.sourceFrame and rear.columns==spec.frames)
@@ -162,12 +165,14 @@ func _build_walk(root: String) -> void:
 		var rear_atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
 		for index in range(4):
 			var frame := rear_image.get_region(Rect2i(Vector2i(index*source_size.x,0),source_size))
-			if facing=="s":
+			if facing in ["s","n","e","w"]:
 				_assert_frame_edges(frame)
 			frame.resize(rear_scaled.x,rear_scaled.y,Image.INTERPOLATE_LANCZOS)
 			rear_atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,rear_scaled),rear_offset+Vector2i(0,index*size.y))
 		assert(rear_atlas.save_png(root+"/assets/art_pilot/hero_walk_"+facing+"_"+versions[facing]+".png")==OK)
 	var idle_sources := {"se":spec.idleSource,"ne":spec.rearIdleSource,"sw":spec.leftIdleSource,"nw":spec.leftRearIdleSource,"s":spec.frontIdleSource}
+	for direction in spec.extraIdleSources:
+		idle_sources[direction] = spec.extraIdleSources[direction]
 	for direction in idle_sources:
 		var idle_spec: Dictionary = idle_sources[direction]
 		var idle_frame := _pack_idle(source,idle_spec,size,Vector2i(spec.pivot[0],spec.pivot[1]))

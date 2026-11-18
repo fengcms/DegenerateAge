@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: precise-object-edit. Correct ONLY equipment handedness on this LEFT-facing four-frame sprite sheet. Near visible arm is anatomical LEFT and must have EMPTY relaxed hand in ALL FOUR frames: remove the extra small dagger/blade held by near hand in frames3 and4. Near left hip must NOT carry a pouch: REMOVE near pouch from ALL FOUR frames. Keep ONLY ONE sword in anatomical RIGHT FAR hand, its existing blade partly visible behind legs. Keep right hip pouch on hidden FAR side only. Preserve ALL body/leg poses, left-facing head,2048x768 four512x768 layout, scale, clothing and camera. Genuine alpha transparent background, no glow/floor/text. Never mirror the sheet."
+}

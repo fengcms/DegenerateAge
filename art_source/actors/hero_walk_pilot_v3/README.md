@@ -29,3 +29,5 @@ leftWalkSource和leftIdleSource指向../hero_walk_sw_trial_v1；directions与idl
 现增加nw左后修正版，leftRearWalkSource/leftRearIdleSource指向../hero_walk_nw_trial_v2；四个斜向各自独立素材，没有镜像武器或接入正式CharacterLook。
 
 frontWalkSource/frontIdleSource增加正前s方向，指向../hero_walk_s_trial_v1；运行清单现列出se/ne/sw/nw/s五方向。构建以方向映射选择源稿，原四斜向输出规格不变。
+
+extraWalkSources/extraIdleSources补齐n/e/w，directions顺序现为se/ne/sw/nw/s/n/e/w。全部八方向独立素材；运行以最近投影方向选图，不再使用留有空隙的固定方向锥。

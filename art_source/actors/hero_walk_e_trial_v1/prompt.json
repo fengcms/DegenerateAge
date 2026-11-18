@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen",
+  "references": [
+    "pose_guide.png",
+    "../hero_walk_pilot_v3/idle_source.png"
+  ],
+  "prompt": "Use case: sketch-to-render. First image EXACT four walking pose and elevated orthographic camera guide, second character identity only. STRICT RIGHT-facing side profile toward screen RIGHT, nose/chest/pelvis/toes right. Red anatomical RIGHT arm NEAR camera holds sword low, blue left arm FAR empty. Right hip pouch visible on near hip. Dress all four poses as exact weathered bronze lamellar warrior with topknot, beige scarf, crossed back straps, circular right chest ornament, right hip pouch, short ragged cape, grey skirt, boots. Preserve guide's four distinct alternating leg contact/lift phases, equal proportions, NO mirrored image. Four512x768 cells in2048x768 strip. Head near y100, feet near y710, all sword/boots inside each cell. Genuine fully alpha transparent background and cell gaps, no halo/shadow/floor/white background/text/red-blue guide colors. Muted realistic materials."
+}

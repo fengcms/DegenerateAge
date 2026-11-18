@@ -22,7 +22,10 @@
     "ne",
     "sw",
     "nw",
-    "s"
+    "s",
+    "n",
+    "e",
+    "w"
   ],
   "stridePixels": 64,
   "states": {
@@ -67,7 +70,10 @@
     "ne",
     "sw",
     "nw",
-    "s"
+    "s",
+    "n",
+    "e",
+    "w"
   ],
   "rearWalkSource": {
     "path": "../hero_walk_ne_pose_v2/candidate.png",
@@ -156,5 +162,84 @@
       510,
       1460
     ]
+  },
+  "extraWalkSources": {
+    "n": {
+      "path": "../hero_walk_n_trial_v1/candidate.png",
+      "sourceFrame": [
+        512,
+        768
+      ],
+      "columns": 4,
+      "scale": 0.135,
+      "pivot": [
+        260,
+        715
+      ]
+    },
+    "e": {
+      "path": "../hero_walk_e_trial_v1/candidate.png",
+      "sourceFrame": [
+        512,
+        768
+      ],
+      "columns": 4,
+      "scale": 0.135,
+      "pivot": [
+        260,
+        715
+      ]
+    },
+    "w": {
+      "path": "../hero_walk_w_trial_v1/candidate_fixed_v2.png",
+      "sourceFrame": [
+        512,
+        768
+      ],
+      "columns": 4,
+      "scale": 0.135,
+      "pivot": [
+        260,
+        715
+      ]
+    }
+  },
+  "extraIdleSources": {
+    "n": {
+      "path": "../hero_walk_n_trial_v1/idle_source.png",
+      "size": [
+        1024,
+        1536
+      ],
+      "scale": 0.065,
+      "pivot": [
+        510,
+        1470
+      ]
+    },
+    "e": {
+      "path": "../hero_walk_e_trial_v1/idle_source.png",
+      "size": [
+        1024,
+        1536
+      ],
+      "scale": 0.065,
+      "pivot": [
+        510,
+        1460
+      ]
+    },
+    "w": {
+      "path": "../hero_walk_w_trial_v1/idle_source.png",
+      "size": [
+        1024,
+        1536
+      ],
+      "scale": 0.065,
+      "pivot": [
+        510,
+        1490
+      ]
+    }
   }
 }

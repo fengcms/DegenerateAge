@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: identity-preserve. ONE matching IDLE sprite of exact warrior from this sheet, strict RIGHT-facing profile toward screen RIGHT. Both feet planted naturally beneath hips, no frozen stride. Anatomical RIGHT near arm holds single sword low; left FAR arm empty. Same elevated orthographic camera, topknot, scarf, bronze lamellar, right chest ornament, right hip pouch near side, cape, skirt boots.1024x1536 fullbody, top near y100 soles near y1420. Genuine alpha transparent background, no shadow/glow/floor/text."
+}
