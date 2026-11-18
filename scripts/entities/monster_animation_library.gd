@@ -33,4 +33,18 @@ const PACKS := {
 		"stomp": {"texture": "res://assets/sprites/monsters/boss_corrupted_beast/stomp_atlas.png", "frames": 7, "fps": 12, "loop": false, "contact": 4},
 		"enrage_summon": {"texture": "res://assets/sprites/monsters/boss_corrupted_beast/enrage_summon_atlas.png", "frames": 8, "fps": 12, "loop": false, "contact": 3},
 	}},
+	"wolf_corrupted_modular_v1": {"pivot": [64,80], "frameSize": [128,96], "states": {
+		"attack": {"texture": "res://assets/sprites/monsters/wolf_corrupted_modular_v1/attack_atlas.png", "frames": 4, "fps": 8, "loop": false, "contact": 2},
+		"death": {"texture": "res://assets/sprites/monsters/wolf_corrupted_modular_v1/death_atlas.png", "frames": 4, "fps": 4.44444444444444, "loop": false, "contact": 0},
+		"hit": {"texture": "res://assets/sprites/monsters/wolf_corrupted_modular_v1/hit_atlas.png", "frames": 4, "fps": 25, "loop": false, "contact": 0},
+		"idle": {"texture": "res://assets/sprites/monsters/wolf_corrupted_modular_v1/idle_atlas.png", "frames": 4, "fps": 3, "loop": true, "contact": 0},
+		"walk": {"texture": "res://assets/sprites/monsters/wolf_corrupted_modular_v1/walk_atlas.png", "frames": 4, "fps": 6, "loop": true, "contact": 0},
+	}},
+	"shellback_bug_modular_v1": {"pivot": [64,80], "frameSize": [128,96], "states": {
+		"attack": {"texture": "res://assets/sprites/monsters/shellback_bug_modular_v1/attack_atlas.png", "frames": 4, "fps": 8, "loop": false, "contact": 2},
+		"death": {"texture": "res://assets/sprites/monsters/shellback_bug_modular_v1/death_atlas.png", "frames": 4, "fps": 4.44444444444444, "loop": false, "contact": 0},
+		"hit": {"texture": "res://assets/sprites/monsters/shellback_bug_modular_v1/hit_atlas.png", "frames": 4, "fps": 25, "loop": false, "contact": 0},
+		"idle": {"texture": "res://assets/sprites/monsters/shellback_bug_modular_v1/idle_atlas.png", "frames": 4, "fps": 3, "loop": true, "contact": 0},
+		"walk": {"texture": "res://assets/sprites/monsters/shellback_bug_modular_v1/walk_atlas.png", "frames": 4, "fps": 6, "loop": true, "contact": 0},
+	}},
 }

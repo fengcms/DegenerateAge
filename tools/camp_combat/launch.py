@@ -16,6 +16,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify', action='store_true')
     parser.add_argument('--controls', action='store_true')
+    parser.add_argument('--capacity', action='store_true')
+    parser.add_argument('--formal-monsters', action='store_true')
     parser.add_argument('--route', action='store_true')
     parser.add_argument('--verify-route', action='store_true')
     parser.add_argument('--stress-route', action='store_true')
@@ -32,6 +34,14 @@ def main():
         args.verify = True
     if args.route and (args.controls or args.soak or args.review):
         parser.error('--route 不可与controls/soak/review组合')
+    if args.formal_monsters:
+        if args.route or args.controls or args.capacity or args.soak or args.review:
+            parser.error('--formal-monsters 必须独立运行')
+        args.verify = True
+    if args.capacity:
+        if args.route or args.controls or args.soak or args.review:
+            parser.error('--capacity 必须独立运行')
+        args.verify = True
     if args.controls:
         if args.soak or args.review:
             parser.error('--controls 不可与soak/review组合')
@@ -69,6 +79,12 @@ def main():
             if args.route:
                 scene = project / 'Combat.tscn'
                 scene.write_text(scene.read_text().replace('camp_combat/main.gd','camp_combat/stress.gd' if args.stress_route else 'camp_combat/route.gd'))
+            if args.formal_monsters:
+                scene = project / 'Combat.tscn'
+                scene.write_text(scene.read_text().replace('camp_combat/main.gd','camp_combat/formal_monsters.gd'))
+            if args.capacity:
+                scene = project / 'Combat.tscn'
+                scene.write_text(scene.read_text().replace('camp_combat/main.gd','camp_combat/capacity.gd'))
             if args.controls:
                 scene = project / 'Combat.tscn'
                 scene.write_text(scene.read_text().replace('camp_combat/main.gd','camp_combat/controls.gd'))
@@ -104,7 +120,7 @@ def main():
                     raise
                 print(result.stdout)
                 print(result.stderr)
-                marker = 'CAMP_ROUTE_STRESS_OK' if args.stress_route else 'CAMP_ROUTE_OK' if args.route else 'CAMP_CONTROLS_OK' if args.controls else 'CAMP_ART_REVIEW_OK' if args.review else 'CAMP_COMBAT_VERIFY_OK'
+                marker = 'CAMP_CAPACITY_OK' if args.capacity else 'CAMP_ROUTE_STRESS_OK' if args.stress_route else 'CAMP_ROUTE_OK' if args.route else 'CAMP_CONTROLS_OK' if args.controls else 'CAMP_ART_REVIEW_OK' if args.review else 'CAMP_COMBAT_VERIFY_OK'
                 if result.returncode or 'SCRIPT ERROR' in result.stderr or marker not in result.stdout or (args.soak and 'CAMP_COMBAT_SOAK_OK' not in result.stdout):
                     raise RuntimeError('真实战斗验收未完整通过')
             else:

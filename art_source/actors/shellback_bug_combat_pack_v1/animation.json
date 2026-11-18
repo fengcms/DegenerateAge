@@ -1,0 +1,53 @@
+{
+  "directions": [
+    "s",
+    "sw",
+    "w",
+    "nw",
+    "n",
+    "ne",
+    "e",
+    "se"
+  ],
+  "frame_size": [
+    128,
+    96
+  ],
+  "id": "shellback_bug_modular_v1",
+  "pivot": [
+    64,
+    80
+  ],
+  "states": {
+    "attack": {
+      "fps": 8.0,
+      "frames_per_direction": 4,
+      "loop": false,
+      "visual_contact_frame": 2
+    },
+    "death": {
+      "fps": 4.44444444444444,
+      "frames_per_direction": 4,
+      "loop": false,
+      "visual_contact_frame": 0
+    },
+    "hit": {
+      "fps": 25.0,
+      "frames_per_direction": 4,
+      "loop": false,
+      "visual_contact_frame": 0
+    },
+    "idle": {
+      "fps": 3.0,
+      "frames_per_direction": 4,
+      "loop": true,
+      "visual_contact_frame": 0
+    },
+    "walk": {
+      "fps": 6.0,
+      "frames_per_direction": 4,
+      "loop": true,
+      "visual_contact_frame": 0
+    }
+  }
+}

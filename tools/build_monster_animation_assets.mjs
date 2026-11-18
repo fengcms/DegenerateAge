@@ -29,8 +29,9 @@ function pngInfo(file) {
 function buildPack(entry) {
   const { id, source: sourcePath } = entry;
   const legacySource = sourcePath.startsWith('docs/素材/monsters/');
+  const modularSource = /^art_source\/actors\/(wolf_corrupted|shellback_bug)_combat_pack_v1\/animation\.json$/.test(sourcePath);
   const chapterSource = /^art_source\/chapters\/ch0[2-6]\/monsters\/[a-z0-9_]+\/animation\/animations_v1\/animation\.json$/.test(sourcePath);
-  if (!/^[a-z][a-z0-9_]*$/.test(id) || (!legacySource && !chapterSource) || sourcePath.includes('..')) throw new Error(`清单条目无效：${id}`);
+  if (!/^[a-z][a-z0-9_]*$/.test(id) || (!legacySource && !chapterSource && !modularSource) || sourcePath.includes('..')) throw new Error(`清单条目无效：${id}`);
   const sourceFile = path.join(root, sourcePath);
   const sourceDir = path.dirname(sourceFile);
   const outputDir = path.join(root, 'assets/sprites/monsters', id);

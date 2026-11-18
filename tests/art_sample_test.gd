@@ -1,11 +1,14 @@
 extends Node
+## 综合美术样板回归：保留玩家、物品及地面契约，并核对正式狼四帧八向动画和伤害独立性。
 
 var failures: Array[String] = []
 
+## 汇总独立失败，最后按失败数量退出；不把缺图或异常当作通过。
 func expect(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
 
+## 装配既有ArtSample，核对原玩家脚锚及新狼正式图集，保持背包和伤害检查。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	GameState.current_map = "wild_trial"
@@ -63,12 +66,20 @@ func _ready() -> void:
 		if enemy is Monster and enemy.monster_id == "wolf_corrupted":
 			wolf = enemy
 	if wolf != null:
-		expect(wolf.sample_art.texture.get_size() == Vector2(640, 640), "Wolf atlas dimensions")
-		expect(wolf.sample_art.walk_texture.get_size() == Vector2(640, 320), "Wolf four-pose walk atlas dimensions")
-		for atlas in [art._animations.walk.texture, wolf.sample_art.walk_texture]:
+		expect(wolf.sample_art is MonsterActorArt, "狼使用正式方向状态动画")
+		var wolf_art := wolf.sample_art as MonsterActorArt
+		assert(wolf_art != null)
+		expect(wolf_art.texture.get_size()==Vector2(512,768), "狼四列八行图集尺寸")
+		expect(wolf_art.offset==Vector2(-64,-80), "狼统一脚底锚点")
+		for direction in range(8):
+			wolf_art.facing = direction
+			for step in range(4):
+				wolf_art._show_pose("walk",step)
+				expect(wolf_art.frame_coords==Vector2i(step,direction), "狼八方向各四步态")
+		for atlas in [art._animations.walk.texture]:
 			var sheet := (atlas as Texture2D).get_image()
 			var cell_w := sheet.get_width() / 8
-			var rows := 8 if atlas == art._animations.walk.texture else 4
+			var rows := 8
 			for row in range(rows):
 				for col in range(8):
 					var frame_image := sheet.get_region(Rect2i(col * cell_w, row * 80, cell_w, 80))
@@ -76,7 +87,7 @@ func _ready() -> void:
 					expect(used.position.y + used.size.y == 64, "Walk frame must share the same foot anchor")
 		wolf.sample_art.hit()
 		wolf.sample_art._process(0.01)
-		expect(wolf.sample_art.pose == "hit" and wolf.sample_art.frame_coords.y == 6, "Wolf keeps its independent recoil art")
+		expect(wolf_art.pose == "hit" and wolf_art.texture == wolf_art.definitions.hit.texture and wolf_art.frame_coords.y == wolf_art.facing, "狼受击切换独立图集并保持朝向")
 		expect(wolf.radius == 13, "Art must not change combat radius")
 		var before := wolf.hp
 		var hit := {"damage": 1, "miss": false, "critical": false}

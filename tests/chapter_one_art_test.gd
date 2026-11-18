@@ -1,11 +1,14 @@
 extends Node
+## 第一章NPC、木桩与怪物美术集成回归；甲虫采用正式四帧八向，其余既有规格保持不变。
 
 var failures: Array[String] = []
 
+## 汇总检查失败并保留具体对象，最后统一退出。
 func expect(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
 
+## 从正式Game装配营地和两张野外图，检查名称、点击范围、帧格与头顶位置。
 func _ready() -> void:
 	GameState.reset_to_defaults()
 	GameState.current_map = "camp"
@@ -61,10 +64,15 @@ func _ready() -> void:
 			found[monster.monster_id] = true
 			expect(monster.sample_art != null, "New enemy art attached: " + monster.monster_id)
 			if monster.sample_art != null:
-				expect(is_equal_approx(monster._head_hp_y(), -46.0), "Existing monster HP bar position stays unchanged: " + monster.monster_id)
-				var expected := Vector2(640, 640) if monster.monster_id == "shellback_bug" else Vector2(512, 640)
-				expect(monster.sample_art.texture.get_size() == expected, "Enemy atlas dimensions: " + monster.monster_id)
-				expect(monster.sample_art.hframes == 8 and monster.sample_art.vframes == 8, "Enemy has eight directions and pose rows")
+				if monster.monster_id=="shellback_bug":
+					expect(monster.sample_art is MonsterActorArt, "甲虫使用正式动画包")
+					expect(is_equal_approx(monster._head_hp_y(),-78.0), "甲虫血条匹配新帧尺寸")
+					expect(monster.sample_art.texture.get_size()==Vector2(512,768), "甲虫四帧八向图集尺寸")
+					expect(monster.sample_art.hframes==4 and monster.sample_art.vframes==8, "甲虫横四帧、纵八向")
+				else:
+					expect(is_equal_approx(monster._head_hp_y(),-46.0), "灰烬幽魂血条保持不变")
+					expect(monster.sample_art.texture.get_size()==Vector2(512,640), "灰烬幽魂图集尺寸保持不变")
+					expect(monster.sample_art.hframes==8 and monster.sample_art.vframes==8, "既有八方向姿态行保持不变")
 		expect(found.has("shellback_bug"), map_id + " contains shellback bug")
 		if map_id == "ash_land":
 			expect(found.has("ash_wraith"), "Ash land contains ash wraith")

@@ -1,9 +1,6 @@
 {
   "id": "shellback_bug",
-  "renderer": "sample_atlas",
-  "main": "res://assets/sprites/monsters/shellback_bug/actor_atlas.png",
-  "pivot": [
-    40,
-    64
-  ]
+  "renderer": "animation_pack",
+  "assetKey": "shellback_bug_modular_v1",
+  "headHpY": -78
 }

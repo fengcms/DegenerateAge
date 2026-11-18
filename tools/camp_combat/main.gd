@@ -76,7 +76,6 @@ func _ready() -> void:
 		enemy.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 		enemy.safe_margin = 0.001
 		_replace_art(enemy,entry.art)
-		enemy.appearance_head_hp_y = -92.0
 		enemy.died.connect(_on_kill)
 		enemies.append(enemy)
 	var actors_done := Time.get_ticks_usec()
@@ -93,8 +92,11 @@ func _ready() -> void:
 	if verify:
 		_run_verification.call_deferred()
 
-## 只替换宿主动作对象，保留正式调用接口与死亡清理识别，不改攻击或掉落函数。
+## 主角保留样板动作；两怪直接保留正式外观装配，避免同场重复加载两套格式。
 func _replace_art(actor: CharacterBody2D, kind: String) -> void:
+	if actor is Monster:
+		assert(actor.sample_art is MonsterActorArt,"狼与甲虫必须由正式外观档案装配")
+		return
 	if actor.sample_art != null:
 		actor.sample_art.free()
 	if actor is Monster and actor.dummy_art != null:
