@@ -15,6 +15,7 @@ var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var motion_enabled := true
 var monster_motion_enabled := true
+var monster_motion_paused := false
 var monster_specs: Dictionary = {}
 var verification_direction := Vector2.ZERO
 var actor_specs: Dictionary
@@ -195,7 +196,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上 · H动作对照 · I转向 · J怪物动作\n新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下/右上四帧试装 / 狼与甲虫待机试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上 · H动作对照 · I转向 · J怪物动作\nK暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角右下/右上四帧试装 / 狼与甲虫待机试装" % definition.name
 
 ## 按档案定位角色表现；主角支持两个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -210,6 +211,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 	elif sprite is SampleIdleSprite:
 		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
 		sprite.set_enabled(monster_motion_enabled)
+		sprite.set_paused(monster_motion_paused)
 	sprite.set_meta("actor_kind",kind)
 	var caption := Label.new()
 	caption.text = spec.name
@@ -241,6 +243,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_turn_preview()
 		elif event.keycode == KEY_J:
 			_set_monster_motion(not monster_motion_enabled)
+		elif event.keycode == KEY_K:
+			_set_monster_paused(not monster_motion_paused)
+		elif event.keycode == KEY_L:
+			_set_monster_paused(true)
+			for actor in monster_previews:
+				if actor is SampleIdleSprite:
+					actor.step_frame()
 		elif event.keycode == KEY_H:
 			motion_enabled = not motion_enabled
 			player_art.enabled = motion_enabled
@@ -642,15 +651,32 @@ func _verify_monster_idle(captures: String) -> void:
 	for filename in shots:
 		shots[filename].save_png(captures+"/"+filename)
 	shots.clear()
+	_set_monster_paused(true)
+	var frozen: Array[int] = []
+	for actor in monster_previews:
+		frozen.append(actor.current_frame)
+	await get_tree().create_timer(0.4).timeout
+	for index in range(monster_previews.size()):
+		var actor: SampleIdleSprite = monster_previews[index]
+		assert(actor.current_frame==frozen[index] and not actor.is_processing())
+		for step in range(4):
+			actor.step_frame()
+			assert(actor.current_frame==(frozen[index]+step+1)%4)
+			assert(actor.texture==actor.regions[actor.current_frame])
 	_set_monster_motion(false)
 	await get_tree().create_timer(0.4).timeout
 	for index in range(monster_previews.size()):
 		var actor := monster_previews[index]
 		assert(actor.position==positions[index] and actor.z_index==roundi(actor.position.y))
 		if actor is SampleIdleSprite:
+			actor.step_frame()
 			assert(actor.texture==actor.original and not actor.is_processing())
 	assert(navigator.navigation_revision==revision and collision_cells.size()==count)
 	_set_monster_motion(true)
+	assert(monster_previews[0].paused and not monster_previews[0].is_processing())
+	_set_monster_paused(false)
+	await get_tree().create_timer(0.4).timeout
+	assert(monster_previews[0].current_frame==1 and monster_previews[0].is_processing())
 
 ## 从可通行邻格真实撞向补给物件，必须接触对应物理体；并检查独立贴图按清单锚点落地。
 func _verify_supplies(captures: String) -> void:
@@ -699,3 +725,10 @@ func _start_rear_demo() -> void:
 	player.position = Iso.grid_to_world(Vector2i(4,7))
 	player_art.update_motion(Vector2.ZERO,Vector2(2,-1))
 	_route(Iso.grid_to_world(Vector2i(8,7)))
+
+## 切换怪物审片暂停状态，切图仍保留选择；主角移动、碰撞和导航继续正常运行。
+func _set_monster_paused(value: bool) -> void:
+	monster_motion_paused = value
+	for actor in monster_previews:
+		if actor is SampleIdleSprite:
+			actor.set_paused(value)

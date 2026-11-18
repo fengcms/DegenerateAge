@@ -10,6 +10,7 @@ var fps := 3.0
 var elapsed := 0.0
 var current_frame := 0
 var enabled := true
+var paused := false
 
 ## 以运行图集和清单初始化一次，原静态图及落点用于J键对照；不加工源稿。
 func setup(atlas: Texture2D, spec: Dictionary) -> void:
@@ -34,7 +35,7 @@ func set_enabled(value: bool) -> void:
 	current_frame = 0
 	texture = regions[0] if enabled else original
 	offset = idle_offset if enabled else original_offset
-	set_process(enabled)
+	set_process(enabled and not paused)
 
 ## 固定数量对象按秒更新；卡顿后直接恢复正确循环相位，不累积补帧队列。
 func _process(delta: float) -> void:
@@ -43,3 +44,17 @@ func _process(delta: float) -> void:
 	if next!=current_frame:
 		current_frame = next
 		texture = regions[current_frame]
+
+## 原地保留当前帧与时间余量暂停，仅停止待机回调，不暂停物理或场景树。
+func set_paused(value: bool) -> void:
+	paused = value
+	set_process(enabled and not paused)
+
+## 暂停并前进一步，末帧回首帧；原图对照关闭状态不换图，恢复播放从该帧开始。
+func step_frame() -> void:
+	set_paused(true)
+	if not enabled:
+		return
+	current_frame = (current_frame+1)%regions.size()
+	elapsed = current_frame/fps
+	texture = regions[current_frame]
