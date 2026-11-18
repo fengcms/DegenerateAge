@@ -12,6 +12,7 @@ var reaction_frame := 0
 var reaction_frames: Dictionary = {}
 var reaction_seconds: Dictionary = {}
 var reaction_durations: Dictionary = {}
+var attack_variants: Dictionary = {}
 var attacking := false
 var attack_elapsed := 0.0
 var attack_frame := 0
@@ -137,7 +138,10 @@ func idle_for_direction(direction: String) -> Texture2D:
 
 ## 加载期切分挥剑图集并校验秒制阶段时长；区域复用共享纹理，不连接伤害事件。
 func setup_attack(atlas: Texture2D, spec: Dictionary) -> void:
-	assert(spec.direction=="se" and not spec.loop and spec.frames==4)
+	assert(spec.direction in ["se","ne"] and not spec.loop and spec.frames==4)
+	var cached_frames: Array[AtlasTexture] = []
+	var cached_seconds: Array[float] = []
+	var duration := 0.0
 	var size := Vector2(spec.frameSize[0],spec.frameSize[1])
 	assert(atlas.get_size()==size*Vector2(1,spec.frames) and spec.frameSeconds.size()==spec.frames)
 	assert(Vector2(spec.pivot[0],spec.pivot[1])==-walk_offset)
@@ -146,17 +150,21 @@ func setup_attack(atlas: Texture2D, spec: Dictionary) -> void:
 		region.atlas = atlas
 		region.region = Rect2(Vector2(0,index*size.y),size)
 		region.filter_clip = true
-		attack_frames.append(region)
+		cached_frames.append(region)
 		var seconds := float(spec.frameSeconds[index])
 		assert(seconds>0)
-		attack_seconds.append(seconds)
-		attack_duration += seconds
+		cached_seconds.append(seconds)
+		duration += seconds
+	attack_variants[spec.direction] = {"frames":cached_frames,"seconds":cached_seconds,"duration":duration}
 
-## 开始右前单次挥剑；关闭或播放中拒绝重入，返回是否成功，不移动角色或计算伤害。
-func start_attack() -> bool:
-	if not enabled or attacking or not reaction_state.is_empty() or attack_frames.is_empty():
+## 按已制作方向开始单次挥剑；缺稿、关闭或播放中拒绝重入，不改变位置或伤害。
+func start_attack(direction := "se") -> bool:
+	if not enabled or attacking or not reaction_state.is_empty() or not attack_variants.has(direction):
 		return false
-	facing_id = "se"
+	attack_frames = attack_variants[direction].frames
+	attack_seconds = attack_variants[direction].seconds
+	attack_duration = attack_variants[direction].duration
+	facing_id = direction
 	walking = false
 	phase_distance = 0
 	walk_frame = 0

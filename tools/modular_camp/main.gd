@@ -14,6 +14,7 @@ const DEFINITIONS := {
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var reaction_specs: Dictionary = {}
+var rear_attack_spec: Dictionary
 var attack_spec: Dictionary
 var motion_enabled := true
 var monster_motion_enabled := true
@@ -46,6 +47,7 @@ var occluders: Array[SampleOccluder] = []
 func _ready() -> void:
 	for state in ["hit","death"]:
 		reaction_specs[state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_se_v1.json"))
+	rear_attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_ne_v1.json"))
 	attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_se_v1.json"))
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
 	for kind in ["wolf","beetle"]:
@@ -203,7 +205,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\nF受击 / C倒地 / V重置 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\nF受击 / C倒地 / V重置 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
 
 ## 按档案定位角色表现；主角支持八个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -218,6 +220,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 		for direction in ["n","e","w"]:
 			sprite.setup_extra(direction,_texture("assets/art_pilot/hero_walk_"+direction+"_v1.png"),_texture("assets/art_pilot/hero_idle_"+direction+"_v3.png"))
 		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_se_v1.png"),attack_spec)
+		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_ne_v1.png"),rear_attack_spec)
 		for state in reaction_specs:
 			sprite.setup_reaction(_texture("assets/art_pilot/hero_"+state+"_se_v1.png"),reaction_specs[state])
 		sprite.enabled = motion_enabled
@@ -260,8 +263,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_start_front_demo()
 		elif event.keycode in [KEY_1,KEY_2,KEY_3]:
 			_start_extra_demo("n" if event.keycode==KEY_1 else ("e" if event.keycode==KEY_2 else "w"))
-		elif event.keycode == KEY_T:
-			_start_attack_demo()
+		elif event.keycode in [KEY_T,KEY_4]:
+			_start_attack_demo("se" if event.keycode==KEY_T else "ne")
 		elif event.keycode == KEY_I:
 			waypoints.clear()
 			_turn_preview()
@@ -409,6 +412,7 @@ func _verify() -> void:
 		await _verify_wall_stop(captures,"s")
 		print("VERIFY_STAGE: ",index," / hero_attack")
 		await _verify_attack(captures)
+		await _verify_attack(captures,"ne")
 		await _verify_reactions(captures)
 		await _verify_wall_stop(captures,"nw")
 		await _verify_wall_stop(captures,"sw")
@@ -902,21 +906,25 @@ func _verify_left_rear(captures: String) -> void:
 	assert(player_art.texture==player_art.left_rear_idle)
 	player.position = origin
 
-## 在当前位置展示右前挥剑并清空点击路线；键盘移动仍可立即打断，不触发战斗结算。
-func _start_attack_demo() -> void:
+## 在当前位置展示指定方向挥剑并清空点击路线；键盘移动仍可立即打断，不触发战斗结算。
+func _start_attack_demo(direction := "se") -> void:
 	waypoints.clear()
-	player_art.start_attack()
+	player_art.start_attack(direction)
 
 ## 两布局验证真实时间四阶段、自动复位、重入拒绝、移动和开关取消；位置与导航版本不变。
-func _verify_attack(captures: String) -> void:
+func _verify_attack(captures: String, direction := "se") -> void:
+	# 等待前一阶段截图落盘后的补偿步结束，保留四帧真实时间采样。
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert(not player_art.start_attack("nw"),"缺稿方向不能冒充完成")
 	var revision := navigator.navigation_revision
 	var blocked := navigator.blocked_cells().duplicate()
 	waypoints.clear()
 	var origin := player.position
 	var seen: Dictionary = {}
 	var shots: Dictionary = {}
-	assert(player_art.start_attack())
-	assert(not player_art.start_attack(),"重复触发不应重置挥剑")
+	assert(player_art.start_attack(direction))
+	assert(not player_art.start_attack(direction),"重复触发不应重置挥剑")
 	var deadline := Time.get_ticks_msec()+3000
 	while player_art.attacking and Time.get_ticks_msec()<deadline:
 		if not captures.is_empty():
@@ -930,24 +938,24 @@ func _verify_attack(captures: String) -> void:
 			if not captures.is_empty() and not shots.has(index):
 				shots[index] = get_viewport().get_texture().get_image()
 	assert(seen.size()==4 and not player_art.attacking,"挥剑未覆盖四阶段或未结束")
-	assert(player.position==origin and player_art.texture==player_art.directional_idle)
+	assert(player.position==origin and player_art.texture==player_art.idle_for_direction(direction))
 	for index in shots:
-		shots[index].save_png(captures+"/hero_attack_%d_%d.png"%[selected_layout,index])
+		shots[index].save_png(captures+"/hero_attack_%s_%d_%d.png"%[direction,selected_layout,index])
 	shots.clear()
-	assert(player_art.start_attack())
+	assert(player_art.start_attack(direction))
 	player_art.advance_attack(player_art.attack_duration+0.1)
-	assert(not player_art.attacking and player_art.texture==player_art.directional_idle,"长步长应直接结束")
-	assert(player_art.start_attack())
+	assert(not player_art.attacking and player_art.texture==player_art.idle_for_direction(direction),"长步长应直接结束")
+	assert(player_art.start_attack(direction))
 	player_art.update_motion(Vector2.ZERO,Vector2(-2,-1))
 	assert(not player_art.attacking and player_art.texture==player_art.left_rear_idle,"移动意图应取消挥剑")
-	assert(player_art.start_attack())
+	assert(player_art.start_attack(direction))
 	player_art.enabled = false
 	player_art.update_motion(Vector2.ZERO)
 	assert(not player_art.attacking and player_art.texture==player_art.idle_texture)
-	assert(not player_art.start_attack(),"关闭展示不应启动挥剑")
+	assert(not player_art.start_attack(direction),"关闭展示不应启动挥剑")
 	player_art.enabled = true
 	player_art.update_motion(Vector2.ZERO)
-	assert(player_art.texture==player_art.directional_idle and player.position==origin)
+	assert(player_art.texture==player_art.idle_for_direction(direction) and player.position==origin)
 	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked)
 
 ## 同时触发两怪原地单次攻击，保持暂停选择，播放中重复触发由实例拒绝。

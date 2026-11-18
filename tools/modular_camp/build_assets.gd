@@ -248,27 +248,28 @@ func _build_supplies(root: String, manifest: Dictionary) -> void:
 
 ## 按统一格与锚点打包四阶段挥剑；边缘alpha检查防止剑尖跨格截断，不修改像素内容。
 func _build_hero_attack(root: String) -> void:
-	var folder := root+"/art_source/actors/hero_attack_se_trial_v1/"
-	var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
-	var source := Image.load_from_file(folder+spec.source)
-	var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
-	assert(source.get_size()==cell*Vector2i(spec.columns,1) and source.detect_alpha()!=Image.ALPHA_NONE)
-	var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
-	var scaled := Vector2i((Vector2(cell)*float(spec.scale)).round())
-	var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
-	assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
-	var atlas := Image.create(size.x,size.y*int(spec.frames),false,Image.FORMAT_RGBA8)
-	for index in range(spec.frames):
-		var frame := source.get_region(Rect2i(Vector2i(index*cell.x,0),cell))
-		for x in range(cell.x):
-			assert(frame.get_pixel(x,0).a<0.05 and frame.get_pixel(x,cell.y-1).a<0.05,"挥剑上下边缘截断")
-		for y in range(cell.y):
-			assert(frame.get_pixel(0,y).a<0.05 and frame.get_pixel(cell.x-1,y).a<0.05,"挥剑左右边缘截断")
-		frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
-		atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
-	assert(atlas.save_png(root+"/assets/art_pilot/hero_attack_se_v1.png")==OK)
-	var output := FileAccess.open(root+"/assets/art_pilot/hero_attack_se_v1.json",FileAccess.WRITE)
-	output.store_string(JSON.stringify(spec,"  "))
+	for direction in ["se","ne"]:
+		var folder: String = root+"/art_source/actors/hero_attack_"+direction+"_trial_v1/"
+		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
+		var source := Image.load_from_file(folder+spec.source)
+		var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
+		assert(source.get_size()==cell*Vector2i(spec.columns,int(spec.frames)/int(spec.columns)) and source.detect_alpha()!=Image.ALPHA_NONE)
+		var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
+		var scaled := Vector2i((Vector2(cell)*float(spec.scale)).round())
+		var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
+		assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
+		var atlas := Image.create(size.x,size.y*int(spec.frames),false,Image.FORMAT_RGBA8)
+		for index in range(spec.frames):
+			var frame := source.get_region(Rect2i(Vector2i((index%int(spec.columns))*cell.x,(index/int(spec.columns))*cell.y),cell))
+			for x in range(cell.x):
+				assert(frame.get_pixel(x,0).a<0.05 and frame.get_pixel(x,cell.y-1).a<0.05,"挥剑上下边缘截断")
+			for y in range(cell.y):
+				assert(frame.get_pixel(0,y).a<0.05 and frame.get_pixel(cell.x-1,y).a<0.05,"挥剑左右边缘截断")
+			frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
+			atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
+		assert(atlas.save_png(root+"/assets/art_pilot/hero_attack_"+direction+"_v1.png")==OK)
+		var output := FileAccess.open(root+"/assets/art_pilot/hero_attack_"+direction+"_v1.json",FileAccess.WRITE)
+		output.store_string(JSON.stringify(spec,"  "))
 	print("HERO_ATTACK_BUILT")
 
 ## 按真实源格打包受击与死亡四阶段，统一缩放与锚点；所有源帧四边须通过透明检查。
