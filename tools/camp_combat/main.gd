@@ -22,6 +22,7 @@ var verify := false
 
 ## 创建独立初始角色和两怪遭遇，正式数值模板不改；使用三级成长作为本场演示起点。
 func _ready() -> void:
+	var setup_started := Time.get_ticks_usec()
 	assert(OS.get_environment("DEGENERATE_CAMP_ISOLATED")=="1","必须经隔离启动器启动战斗样板")
 	soak = "--soak-combat" in OS.get_cmdline_user_args()
 	verify = "--verify-combat" in OS.get_cmdline_user_args() or soak
@@ -33,12 +34,15 @@ func _ready() -> void:
 	GameState.settings.dropFlyAnim = true
 	add_to_group("map_world")
 	camp = load("res://tools/modular_camp/main.gd").new()
+	camp.environment_only = true
 	add_child(camp)
 	camp.set_physics_process(false)
 	camp.set_process_unhandled_input(false)
 	camp.label.hide()
 	camp.world.position = Vector2.ZERO
-	camp.player.free()
+	var environment_done := Time.get_ticks_usec()
+	if is_instance_valid(camp.player):
+		camp.player.free()
 	for mover in camp.monster_movers:
 		mover.free()
 	for actor in camp.monster_previews:
@@ -58,6 +62,7 @@ func _ready() -> void:
 	hero.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	hero.safe_margin = 0.001
 	_replace_art(hero,"hero")
+	var hero_done := Time.get_ticks_usec()
 	var camera := Camera2D.new()
 	camera.name = "Camera2D"
 	camera.position = Vector2(0,-260)
@@ -74,6 +79,8 @@ func _ready() -> void:
 		enemy.appearance_head_hp_y = -92.0
 		enemy.died.connect(_on_kill)
 		enemies.append(enemy)
+	var actors_done := Time.get_ticks_usec()
+	print("COMBAT_SETUP_TIMING: ",JSON.stringify({"environment_ms":(environment_done-setup_started)/1000.0,"hero_ms":(hero_done-environment_done)/1000.0,"monsters_ms":(actors_done-hero_done)/1000.0,"total_ms":(actors_done-setup_started)/1000.0}))
 	var canvas := CanvasLayer.new()
 	add_child(canvas)
 	caption = Label.new()
@@ -148,6 +155,8 @@ func _run_verification() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	if soak:
+		DisplayServer.window_move_to_foreground()
+		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP,true)
 		recording = true
 		previous_usec = Time.get_ticks_usec()
 		drawn_start = Engine.get_frames_drawn()
@@ -184,7 +193,8 @@ func _run_verification() -> void:
 	await _capture("completed")
 	if soak:
 		recording = false
-		_report_wave()
+		if not _report_wave():
+			return
 		completed_waves += 1
 		if completed_waves<3:
 			get_tree().reload_current_scene()
@@ -203,10 +213,15 @@ func _capture(name: String) -> void:
 			get_viewport().get_texture().get_image().save_png(argument.trim_prefix("--capture=")+"/"+name+".png")
 
 ## 正常窗口三轮真实战斗采样，不调用强制绘制；保留尖峰和节点数，静态内存仅作观测。
-func _report_wave() -> void:
+func _report_wave() -> bool:
 	var drawn := Engine.get_frames_drawn()-drawn_start
-	assert(drawn>=samples.size()*0.9,"窗口没有持续绘制，不能作为战斗性能样本")
+	if drawn<samples.size()*0.9:
+		push_error("窗口没有持续绘制，不能作为战斗性能样本：%d/%d"%[drawn,samples.size()])
+		get_tree().quit(1)
+		return false
 	print("COMBAT_SLOW_FRAMES: ",JSON.stringify(slow_frames))
 	samples.sort()
 	release_counts.append(get_tree().get_node_count())
 	print("COMBAT_WAVE: ",JSON.stringify({"wave":completed_waves,"frames":samples.size(),"drawn":drawn,"median_ms":samples[samples.size()/2],"p95_ms":samples[mini(samples.size()-1,floori(samples.size()*0.95))],"p99_ms":samples[mini(samples.size()-1,floori(samples.size()*0.99))],"peak_ms":samples[-1],"nodes":get_tree().get_node_count(),"static_bytes":Performance.get_monitor(Performance.MEMORY_STATIC),"texture_bytes":Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)}))
+
+	return true

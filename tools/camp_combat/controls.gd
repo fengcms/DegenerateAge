@@ -7,6 +7,14 @@ func _run_verification() -> void:
 		enemy.free()
 	GameState.set_auto_battle(false)
 	GameState.set_auto_pickup(false)
+	await get_tree().physics_frame
+	for cell in camp.collision_cells:
+		var query := PhysicsPointQueryParameters2D.new()
+		query.position = Iso.grid_to_world(cell)
+		var found := false
+		for hit in get_world_2d().direct_space_state.intersect_point(query):
+			found = found or hit.collider==camp.collision_cells[cell]
+		assert(found,"共享轮廓的实际碰撞缺失："+str(cell))
 	var ground := get_node("Ground") as IsoGround
 	var target := Iso.grid_to_world(Vector2i(5,3))
 	assert(not ground.is_walkable_cell(Vector2i(4,3)))

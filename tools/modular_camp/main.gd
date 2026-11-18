@@ -11,6 +11,8 @@ const DEFINITIONS := {
 	"wall_corner": {"path":"assets/environment/camp_modular_v1/wall_corner.png", "height":56, "footprint":[[0,0]]},
 	"wall": {"path":"assets/environment/camp_modular_v1/wall.png", "height":56, "footprint":[[0,0]]}
 }
+## 实战调用方只需环境时跳过预览角色与其源规格；默认保留原动作样板。
+var environment_only := false
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var reaction_specs: Dictionary = {}
@@ -51,6 +53,20 @@ var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
+	if not environment_only:
+		_prepare_actor_specs()
+	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
+	object_manifest = JSON.parse_string(FileAccess.get_file_as_string("res://assets/environment/camp_modular_v1/manifest.json")).objects
+	_build_atlas()
+	label = Label.new()
+	label.position = Vector2(20,20)
+	add_child(label)
+	_switch_layout(0)
+	if "--verify" in OS.get_cmdline_user_args():
+		_verify.call_deferred()
+
+## 动作预览入口一次性读取源规格；实战仅装配环境时不加载这些被丢弃的预览数据。
+func _prepare_actor_specs() -> void:
 	for kind in ["wolf","beetle"]:
 		monster_preview_specs[kind] = {}
 		for state in ["walk","hit","death"]:
@@ -69,15 +85,6 @@ func _ready() -> void:
 		monster_attack_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_attack_v1.json"))
 		monster_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_idle_v1.json"))
 	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
-	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
-	object_manifest = JSON.parse_string(FileAccess.get_file_as_string("res://assets/environment/camp_modular_v1/manifest.json")).objects
-	_build_atlas()
-	label = Label.new()
-	label.position = Vector2(20,20)
-	add_child(label)
-	_switch_layout(0)
-	if "--verify" in OS.get_cmdline_user_args():
-		_verify.call_deferred()
 
 ## 路径缓存按资源路径共享，仅在首次使用时解码。
 func _texture(path: String) -> Texture2D:
@@ -190,20 +197,33 @@ func _switch_layout(index: int) -> void:
 	file.store_string(JSON.stringify({"grid_size":[grid_size.x,grid_size.y],"walkable_rows":rows}))
 	file.close()
 	navigator = CaveLayout.new("res://compiled_layout.json")
+	# 每格轮廓完全相同，只平移节点；共享不可变菱形，不合并或放宽障碍。
+	var shared_shape := ConvexPolygonShape2D.new()
+	shared_shape.points = Iso.tile_points(Vector2i.ZERO)
 	for cell in blocked:
 		var body := StaticBody2D.new()
-		var polygon := CollisionPolygon2D.new()
-		polygon.polygon = Iso.tile_points(cell)
-		body.add_child(polygon)
+		if environment_only:
+			body.position = Iso.grid_to_world(cell)
+			var collision := CollisionShape2D.new()
+			collision.shape = shared_shape
+			body.add_child(collision)
+		else:
+			var polygon := CollisionPolygon2D.new()
+			polygon.polygon = Iso.tile_points(cell)
+			body.add_child(polygon)
 		world.add_child(body)
 		collision_cells[cell] = body
+		if environment_only:
+			continue
 		var overlay := Polygon2D.new()
-		overlay.polygon = polygon.polygon
+		overlay.polygon = Iso.tile_points(cell)
 		overlay.color = Color(1,0.2,0.1,0.28)
 		overlay.visible = debug_visible
 		overlay.add_to_group("sample_debug")
 		overlay.z_index = 3000
 		world.add_child(overlay)
+	if environment_only:
+		return
 	player = CharacterBody2D.new()
 	# 俯视移动不使用平台地板分类；较小安全余量避免菱形交角反复恢复位移，半径仍为12。
 	player.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
