@@ -21,7 +21,8 @@
     "se",
     "ne",
     "sw",
-    "nw"
+    "nw",
+    "s"
   ],
   "stridePixels": 64,
   "states": {
@@ -65,7 +66,8 @@
     "se",
     "ne",
     "sw",
-    "nw"
+    "nw",
+    "s"
   ],
   "rearWalkSource": {
     "path": "../hero_walk_ne_pose_v2/candidate.png",
@@ -125,6 +127,31 @@
       1536
     ],
     "scale": 0.066,
+    "pivot": [
+      510,
+      1460
+    ]
+  },
+  "frontWalkSource": {
+    "path": "../hero_walk_s_trial_v1/candidate_alpha_v2.png",
+    "sourceFrame": [
+      512,
+      768
+    ],
+    "columns": 4,
+    "scale": 0.135,
+    "pivot": [
+      260,
+      715
+    ]
+  },
+  "frontIdleSource": {
+    "path": "../hero_walk_s_trial_v1/idle_source.png",
+    "size": [
+      1024,
+      1536
+    ],
+    "scale": 0.065,
     "pivot": [
       510,
       1460

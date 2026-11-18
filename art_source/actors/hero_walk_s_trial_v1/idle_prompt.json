@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: identity-preserve. Create ONE matching idle full-body sprite of this EXACT front-facing warrior. Head chest pelvis knees feet face straight toward screen BOTTOM, elevated orthographic frontal view, no sideways turning. Both feet planted beneath hips at same ground depth, no walking pose. Same topknot, beige scarf, bronze lamellar, circular right chest ornament screen-left, right hip pouch screen-left, grey skirt, boots, cape. Sword LOW in anatomical RIGHT hand on screen-left, screen-right left hand empty.1024x1536 fullbody, head near y100 soles near y1420. Match body proportions, muted lighting, worn realistic materials. Genuine alpha TRANSPARENT background, no floor, glow, shadow, labels. All sword inside frame."
+}

@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen",
+  "references": [
+    "pose_guide.png",
+    "../hero_walk_pilot_v3/idle_source.png"
+  ],
+  "prompt": "Use case: sketch-to-render. First reference exact FOUR walk poses facing STRAIGHT TOWARD BOTTOM OF SCREEN, elevated orthographic camera looking at FRONT of body. Second reference character identity only, NOT its oblique facing. Dress four mannequin poses as the same muted weathered bronze lamellar warrior, black topknot, beige scarf, circular right chest ornament on screen-left, right hip leather pouch screen-left, grey skirt boots short cape. Anatomical RIGHT red guide hand on SCREEN LEFT holds sword LOW; anatomical LEFT blue guide hand on SCREEN RIGHT EMPTY. Face chest pelvis knees and toes all face straight toward viewer, ZERO sideways rotation. Preserve alternating leg contact/lift of guide, natural four-phase forward walk, identical proportions and cell positioning. 2048x768 horizontal four512x768 cells, topknot y100 soles near y710 per cell, complete sword inside. Genuine alpha transparent gaps/background/borders, no floor, shadows, glow, text or guide colors. No mirror of another direction."
+}

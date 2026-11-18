@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: background-extraction. Remove white/gray backdrop AND ALL halos from this2048x768 four-frame warrior sheet. Keep character pixels, exact four512x768 cells, proportions, sword, leg poses and placement unchanged. Output genuine alpha transparency everywhere outside silhouettes INCLUDING borders and gaps, not translucent white. No floor, cast shadow or glow. Full sword and feet retained."
+}

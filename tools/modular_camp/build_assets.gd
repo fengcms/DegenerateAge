@@ -149,8 +149,10 @@ func _build_walk(root: String) -> void:
 		frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
 		atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
 	assert(atlas.save_png(root+"/assets/art_pilot/hero_walk_se_v3.png")==OK)
-	for facing in ["ne","sw","nw"]:
-		var rear: Dictionary = spec.rearWalkSource if facing=="ne" else (spec.leftWalkSource if facing=="sw" else spec.leftRearWalkSource)
+	var walk_sources := {"ne":spec.rearWalkSource,"sw":spec.leftWalkSource,"nw":spec.leftRearWalkSource,"s":spec.frontWalkSource}
+	var versions := {"ne":"v2","sw":"v1","nw":"v2","s":"v1"}
+	for facing in walk_sources:
+		var rear: Dictionary = walk_sources[facing]
 		assert(rear.sourceFrame==spec.sourceFrame and rear.columns==spec.frames)
 		var rear_image := Image.load_from_file(source+rear.path)
 		assert(rear_image.get_size()==Vector2i(2048,768) and rear_image.detect_alpha()!=Image.ALPHA_NONE)
@@ -160,11 +162,14 @@ func _build_walk(root: String) -> void:
 		var rear_atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
 		for index in range(4):
 			var frame := rear_image.get_region(Rect2i(Vector2i(index*source_size.x,0),source_size))
+			if facing=="s":
+				_assert_frame_edges(frame)
 			frame.resize(rear_scaled.x,rear_scaled.y,Image.INTERPOLATE_LANCZOS)
 			rear_atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,rear_scaled),rear_offset+Vector2i(0,index*size.y))
-		assert(rear_atlas.save_png(root+"/assets/art_pilot/hero_walk_"+("ne_v2" if facing=="ne" else ("sw_v1" if facing=="sw" else "nw_v2"))+".png")==OK)
-	for direction in ["se","ne","sw","nw"]:
-		var idle_spec: Dictionary = spec.idleSource if direction=="se" else (spec.rearIdleSource if direction=="ne" else (spec.leftIdleSource if direction=="sw" else spec.leftRearIdleSource))
+		assert(rear_atlas.save_png(root+"/assets/art_pilot/hero_walk_"+facing+"_"+versions[facing]+".png")==OK)
+	var idle_sources := {"se":spec.idleSource,"ne":spec.rearIdleSource,"sw":spec.leftIdleSource,"nw":spec.leftRearIdleSource,"s":spec.frontIdleSource}
+	for direction in idle_sources:
+		var idle_spec: Dictionary = idle_sources[direction]
 		var idle_frame := _pack_idle(source,idle_spec,size,Vector2i(spec.pivot[0],spec.pivot[1]))
 		assert(idle_frame.save_png(root+"/assets/art_pilot/hero_idle_"+direction+"_v3.png")==OK)
 	var output := FileAccess.open(root+"/assets/art_pilot/hero_walk_se_v3.json",FileAccess.WRITE)

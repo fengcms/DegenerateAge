@@ -56,13 +56,13 @@ def knee(hip, ankle):
 
 
 def main():
-    """按四个斜向相机渲染固定正交四姿态；左右肢体和前方不变，切换视角不镜像骨架。"""
+    """按八个方位相机渲染固定正交四姿态；左右肢体和前方不变，切换视角不镜像骨架。"""
     parser = argparse.ArgumentParser()
     parser.add_argument('output', type=Path)
-    parser.add_argument('--direction', choices=['se', 'ne', 'sw', 'nw'], default='se')
+    parser.add_argument('--direction', choices=['se', 'ne', 'sw', 'nw', 's', 'n', 'e', 'w'], default='se')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     output = args.output.resolve()
-    camera_position = {'se':(-6,-8,7), 'ne':(-6,8,7), 'sw':(6,-8,7), 'nw':(6,8,7)}[args.direction]
+    camera_position = {'se':(-6,-8,7), 'ne':(-6,8,7), 'sw':(6,-8,7), 'nw':(6,8,7), 's':(0,-10,7), 'n':(0,10,7), 'e':(-10,0,7), 'w':(10,0,7)}[args.direction]
     screen_right = Vector((-camera_position[1],camera_position[0],0)).normalized()
     output.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action='SELECT')
@@ -119,8 +119,10 @@ def main():
     projected_origin = world_to_camera_view(scene, camera, Vector((0,0,0)))
     projected_forward = world_to_camera_view(scene, camera, Vector((0,-1,0)))
     projected_delta = projected_forward - projected_origin
-    assert projected_delta.x > 0 if args.direction.endswith("e") else projected_delta.x < 0
-    assert projected_delta.y > 0 if args.direction.startswith("n") else projected_delta.y < 0
+    expected_x = 1 if args.direction.endswith('e') else (-1 if args.direction.endswith('w') else 0)
+    expected_y = 1 if args.direction.startswith('n') else (-1 if args.direction.startswith('s') else 0)
+    assert projected_delta.x * expected_x > 0 if expected_x else abs(projected_delta.x) < 1e-6
+    assert projected_delta.y * expected_y > 0 if expected_y else abs(projected_delta.y) < 1e-6
     bpy.ops.object.light_add(type='AREA',location=(-3,-4,8))
     bpy.context.object.data.energy = 1600
     bpy.context.object.data.shape = 'DISK'
