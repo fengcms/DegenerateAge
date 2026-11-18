@@ -248,7 +248,7 @@ func _build_supplies(root: String, manifest: Dictionary) -> void:
 
 ## 按统一格与锚点打包四阶段挥剑；边缘alpha检查防止剑尖跨格截断，不修改像素内容。
 func _build_hero_attack(root: String) -> void:
-	for direction in ["se","ne","sw"]:
+	for direction in ["se","ne","sw","nw"]:
 		var folder: String = root+"/art_source/actors/hero_attack_"+direction+"_trial_v1/"
 		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
 		var source := Image.load_from_file(folder+spec.source)

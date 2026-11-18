@@ -138,7 +138,7 @@ func idle_for_direction(direction: String) -> Texture2D:
 
 ## 加载期切分挥剑图集并校验秒制阶段时长；区域复用共享纹理，不连接伤害事件。
 func setup_attack(atlas: Texture2D, spec: Dictionary) -> void:
-	assert(spec.direction in ["se","ne","sw"] and not spec.loop and spec.frames==4)
+	assert(spec.direction in ["se","ne","sw","nw"] and not spec.loop and spec.frames==4)
 	var cached_frames: Array[AtlasTexture] = []
 	var cached_seconds: Array[float] = []
 	var duration := 0.0

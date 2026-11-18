@@ -47,3 +47,5 @@ hero_hit_se_v1 与 hero_death_se_v1 的 PNG/JSON 分别为四帧受击和倒地�
 hero_attack_ne_v1.png/json：独立右后挥剑四阶段，112×512、帧 112×128、锚点 (56,112)，RGBA8 理论 224 KiB。源稿及构建参数在 art_source/actors/hero_attack_ne_trial_v1；隔离营地 4 键预览，正式角色外观不变。
 
 hero_attack_sw_v1.png/json 为左前挥剑四阶段，112×512，共224KiB RGBA8；源和提示词在 art_source/actors/hero_attack_sw_trial_v1。仅隔离营地5键预览。
+
+hero_attack_nw_v1.png/json 为左后挥剑四阶段，112×512、锚点(56,112)，224KiB RGBA8；源和提示词在 art_source/actors/hero_attack_nw_trial_v1，隔离营地6键播放。
