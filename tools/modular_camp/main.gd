@@ -13,6 +13,7 @@ const DEFINITIONS := {
 }
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
+var attack_spec: Dictionary
 var motion_enabled := true
 var monster_motion_enabled := true
 var monster_motion_paused := false
@@ -41,6 +42,7 @@ var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
+	attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_se_v1.json"))
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
 	for kind in ["wolf","beetle"]:
 		monster_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_idle_v1.json"))
@@ -196,7 +198,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上 · H动作对照 · I转向 · J怪物动作\nK暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角四个斜向四帧试装 / 狼与甲虫待机试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上 · H动作对照 · I转向 · J怪物动作\nT挥剑 · K暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角四个斜向四帧试装 / 狼与甲虫待机试装" % definition.name
 
 ## 按档案定位角色表现；主角支持四个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -207,6 +209,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 	sprite.offset = -Vector2(spec.pivot_ratio[0],spec.pivot_ratio[1])*sprite.texture.get_size()
 	if sprite is SampleWalkSprite:
 		sprite.setup(sprite.texture,_texture("assets/art_pilot/hero_walk_se_v3.png"),_texture("assets/art_pilot/hero_idle_se_v3.png"),_texture("assets/art_pilot/hero_idle_ne_v3.png"),_texture("assets/art_pilot/hero_walk_ne_v2.png"),_texture("assets/art_pilot/hero_walk_sw_v1.png"),_texture("assets/art_pilot/hero_idle_sw_v3.png"),_texture("assets/art_pilot/hero_walk_nw_v2.png"),_texture("assets/art_pilot/hero_idle_nw_v3.png"),walk_spec)
+		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_se_v1.png"),attack_spec)
 		sprite.enabled = motion_enabled
 	elif sprite is SampleIdleSprite:
 		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
@@ -242,6 +245,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_start_left_demo()
 		elif event.keycode == KEY_Y:
 			_start_left_rear_demo()
+		elif event.keycode == KEY_T:
+			_start_attack_demo()
 		elif event.keycode == KEY_I:
 			waypoints.clear()
 			_turn_preview()
@@ -296,6 +301,7 @@ func _physics_process(delta: float) -> void:
 	var before := player.position
 	player.move_and_slide()
 	player_art.update_motion(player.position-before,direction)
+	player_art.advance_attack(delta)
 	player.z_index = clampi(roundi(player.position.y),-3500,3500)
 	for occluder in occluders:
 		occluder.update_reveal(player.position,delta)
@@ -354,17 +360,23 @@ func _verify() -> void:
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(captures+"/layout_%d.png"%index)
 		_verify_actors()
+		print("VERIFY_STAGE: ",index," / monster_idle")
 		await _verify_monster_idle(captures)
+		print("VERIFY_STAGE: ",index," / hero_walk")
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
 		await _verify_wall_stop(captures,true)
 		await _verify_rear(captures)
 		await _verify_left(captures)
 		await _verify_left_rear(captures)
+		print("VERIFY_STAGE: ",index," / hero_attack")
+		await _verify_attack(captures)
 		await _verify_wall_stop(captures,true,true)
 		await _verify_wall_stop(captures,false,true)
+		print("VERIFY_STAGE: ",index," / supplies_occlusion")
 		await _verify_supplies(captures)
 		await _verify_occlusion(captures)
+		print("VERIFY_STAGE: ",index," / routes")
 		_route(Iso.grid_to_world(Vector2i(13,13)))
 		assert(not waypoints.is_empty())
 		var deadline := Time.get_ticks_msec()+15000
@@ -395,8 +407,14 @@ func _verify() -> void:
 		assert(player.position.distance_to(Iso.grid_to_world(crossing_goal))<8,"绕墙未到达目标")
 		var wall: Array = layouts[index].objects[3].cell
 		var old := Vector2i(wall[0],wall[1])
+		assert(player_art.start_attack())
+		var old_art: WeakRef = weakref(player_art)
 		moved_wall = true
 		_switch_layout(index)
+		assert(not player_art.attacking)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		assert(old_art.get_ref()==null,"切图应释放旧动作实例")
 		assert(navigator.is_walkable(old))
 		assert(not navigator.is_walkable(old+Vector2i(0,2)))
 		assert(waypoints.is_empty())
@@ -825,3 +843,51 @@ func _verify_left_rear(captures: String) -> void:
 	player_art.update_motion(Vector2.ZERO)
 	assert(player_art.texture==player_art.left_rear_idle)
 	player.position = origin
+
+## 在当前位置展示右前挥剑并清空点击路线；键盘移动仍可立即打断，不触发战斗结算。
+func _start_attack_demo() -> void:
+	waypoints.clear()
+	player_art.start_attack()
+
+## 两布局验证真实时间四阶段、自动复位、重入拒绝、移动和开关取消；位置与导航版本不变。
+func _verify_attack(captures: String) -> void:
+	var revision := navigator.navigation_revision
+	var blocked := navigator.blocked_cells().duplicate()
+	waypoints.clear()
+	var origin := player.position
+	var seen: Dictionary = {}
+	var shots: Dictionary = {}
+	assert(player_art.start_attack())
+	assert(not player_art.start_attack(),"重复触发不应重置挥剑")
+	var deadline := Time.get_ticks_msec()+3000
+	while player_art.attacking and Time.get_ticks_msec()<deadline:
+		if not captures.is_empty():
+			await RenderingServer.frame_post_draw
+		else:
+			await get_tree().physics_frame
+		if player_art.attacking:
+			var index := player_art.attack_frame
+			seen[index] = true
+			assert(player_art.texture==player_art.attack_frames[index])
+			if not captures.is_empty() and not shots.has(index):
+				shots[index] = get_viewport().get_texture().get_image()
+	assert(seen.size()==4 and not player_art.attacking,"挥剑未覆盖四阶段或未结束")
+	assert(player.position==origin and player_art.texture==player_art.directional_idle)
+	for index in shots:
+		shots[index].save_png(captures+"/hero_attack_%d_%d.png"%[selected_layout,index])
+	shots.clear()
+	assert(player_art.start_attack())
+	player_art.advance_attack(player_art.attack_duration+0.1)
+	assert(not player_art.attacking and player_art.texture==player_art.directional_idle,"长步长应直接结束")
+	assert(player_art.start_attack())
+	player_art.update_motion(Vector2.ZERO,Vector2(-2,-1))
+	assert(not player_art.attacking and player_art.texture==player_art.left_rear_idle,"移动意图应取消挥剑")
+	assert(player_art.start_attack())
+	player_art.enabled = false
+	player_art.update_motion(Vector2.ZERO)
+	assert(not player_art.attacking and player_art.texture==player_art.idle_texture)
+	assert(not player_art.start_attack(),"关闭展示不应启动挥剑")
+	player_art.enabled = true
+	player_art.update_motion(Vector2.ZERO)
+	assert(player_art.texture==player_art.directional_idle and player.position==origin)
+	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked)

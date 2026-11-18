@@ -31,3 +31,5 @@ hero_walk_ne_v2.png新增右上四帧行走试装，112×512，一列四行112×
 hero_walk_sw_v1.png为112×512四帧图集，hero_idle_sw_v3.png为112×128站姿，共用(56,112)锚点，合计理论RGBA8 280KiB。来源hero_walk_sw_trial_v1，内置image_gen源稿与提示词可追溯，使用hero_walk_pilot_v3/build.json统一构建；旧清单文件名hero_walk_se_v3.json现描述三个方向，仅隔离样板使用。
 
 左后第二版增加hero_walk_nw_v2.png（112×512）与hero_idle_nw_v3.png（112×128），每帧锚点(56,112)，理论RGBA8共280KiB。仅供隔离营地，源稿与提示词在art_source/actors/hero_walk_nw_trial_v2。
+
+hero_attack_se_v1.png为右前挥剑112×512四帧，pivot(56,112)，理论RGBA8为224KiB。对应json保存四阶段秒制时长和视觉接触参考，不用于正式伤害结算；透明修正版源稿在art_source/actors/hero_attack_se_trial_v1。

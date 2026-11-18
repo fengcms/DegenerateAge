@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: background-extraction. Remove ALL white, gray, glow and ground background from this four-cell sprite sheet. Keep all warrior pixels, poses, weapon geometry, framing and exact2048x768 layout unchanged. Output genuine alpha transparent background everywhere outside the warrior silhouettes, especially all image borders and cell gaps. No cast shadows, floor, white backdrop or halo. Preserve complete sword tips and boots."
+}

@@ -1,0 +1,33 @@
+{
+  "source": "candidate_alpha_v2.png",
+  "sourceFrame": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "scale": 0.13,
+  "sourcePivot": [
+    275,
+    735
+  ],
+  "frameSize": [
+    112,
+    128
+  ],
+  "pivot": [
+    56,
+    112
+  ],
+  "direction": "se",
+  "state": "attack",
+  "loop": false,
+  "frameSeconds": [
+    0.18,
+    0.09,
+    0.15,
+    0.18
+  ],
+  "visualContactFrame": 1,
+  "status": "isolated_motion_trial"
+}
