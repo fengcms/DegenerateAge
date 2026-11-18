@@ -1,0 +1,33 @@
+{
+  "columns": 2.0,
+  "direction": "se",
+  "frameSeconds": [
+    0.18,
+    0.22,
+    0.22,
+    0.28
+  ],
+  "frameSize": [
+    112.0,
+    128.0
+  ],
+  "frames": 4.0,
+  "holdLast": true,
+  "loop": false,
+  "pivot": [
+    56.0,
+    112.0
+  ],
+  "scale": 0.155,
+  "source": "candidate.png",
+  "sourceFrame": [
+    627.0,
+    627.0
+  ],
+  "sourcePivot": [
+    315.0,
+    598.0
+  ],
+  "state": "death",
+  "status": "isolated_motion_trial"
+}

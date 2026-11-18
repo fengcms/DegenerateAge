@@ -5,6 +5,13 @@ extends Sprite2D
 const DIRECTION_VECTORS := {"se":Vector2(0.89442719,0.44721360),"ne":Vector2(0.89442719,-0.44721360),"sw":Vector2(-0.89442719,0.44721360),"nw":Vector2(-0.89442719,-0.44721360),"s":Vector2.DOWN,"n":Vector2.UP,"e":Vector2.RIGHT,"w":Vector2.LEFT}
 var extra_frames: Dictionary = {}
 var extra_idles: Dictionary = {}
+var reaction_state := ""
+var reaction_playing := false
+var reaction_elapsed := 0.0
+var reaction_frame := 0
+var reaction_frames: Dictionary = {}
+var reaction_seconds: Dictionary = {}
+var reaction_durations: Dictionary = {}
 var attacking := false
 var attack_elapsed := 0.0
 var attack_frame := 0
@@ -69,6 +76,14 @@ func setup(idle: Texture2D, atlas: Texture2D, matching_idle: Texture2D, matching
 
 ## 位移是碰撞后的世界屏幕像素；意图只决定朝向，不推进相位，不移动角色或改变物理。
 func update_motion(displacement: Vector2, intent := Vector2.ZERO) -> void:
+	if not reaction_state.is_empty():
+		if reaction_state=="death":
+			_show_reaction()
+			return
+		if not enabled or intent.length_squared()>0.0001 or displacement.length_squared()>0.0001:
+			reset_reaction()
+		else:
+			return
 	if attacking:
 		if not enabled or intent.length_squared()>0.0001 or displacement.length_squared()>0.0001:
 			cancel_attack()
@@ -139,7 +154,7 @@ func setup_attack(atlas: Texture2D, spec: Dictionary) -> void:
 
 ## 开始右前单次挥剑；关闭或播放中拒绝重入，返回是否成功，不移动角色或计算伤害。
 func start_attack() -> bool:
-	if not enabled or attacking or attack_frames.is_empty():
+	if not enabled or attacking or not reaction_state.is_empty() or attack_frames.is_empty():
 		return false
 	facing_id = "se"
 	walking = false
@@ -195,3 +210,82 @@ func setup_extra(direction: String, atlas: Texture2D, idle: Texture2D) -> void:
 		cached.append(region)
 	extra_frames[direction] = cached
 	extra_idles[direction] = idle
+
+## 加载期缓存右前受击或死亡图集，沿用统一帧格；状态时长不连接正式结算事件。
+func setup_reaction(atlas: Texture2D, spec: Dictionary) -> void:
+	var state: String = spec.state
+	assert(state in ["hit","death"] and spec.direction=="se" and not spec.loop)
+	assert(spec.frames==4 and spec.frameSeconds.size()==4 and spec.holdLast==(state=="death"))
+	assert(atlas.get_size()==frames[0].atlas.get_size() and Vector2(spec.pivot[0],spec.pivot[1])==-walk_offset)
+	var cached: Array[AtlasTexture] = []
+	var seconds: Array[float] = []
+	var duration := 0.0
+	for index in range(4):
+		var region: AtlasTexture = frames[index].duplicate()
+		region.atlas = atlas
+		cached.append(region)
+		var interval := float(spec.frameSeconds[index])
+		assert(interval>0)
+		seconds.append(interval)
+		duration += interval
+	reaction_frames[state] = cached
+	reaction_seconds[state] = seconds
+	reaction_durations[state] = duration
+
+## 受击打断挥剑，死亡可打断受击；死亡期间拒绝新动作，同类重复输入不重置相位。
+func start_reaction(state: String) -> bool:
+	assert(state in ["hit","death"])
+	if not enabled or reaction_state=="death" or reaction_state==state or not reaction_frames.has(state):
+		return false
+	cancel_attack()
+	facing_id = "se"
+	walking = false
+	phase_distance = 0
+	walk_frame = 0
+	reaction_state = state
+	reaction_playing = true
+	reaction_elapsed = 0
+	reaction_frame = 0
+	_show_reaction()
+	return true
+
+## 按物理步长推进受击/死亡，受击完成回站姿，死亡完成保持末帧直到显式重置。
+func advance_reaction(delta: float) -> void:
+	if not reaction_playing:
+		return
+	assert(delta>=0)
+	reaction_elapsed = minf(reaction_elapsed+delta,reaction_durations[reaction_state])
+	if reaction_elapsed>=reaction_durations[reaction_state]:
+		if reaction_state=="hit":
+			reset_reaction()
+			return
+		reaction_playing = false
+		reaction_frame = 3
+	else:
+		var seconds: Array[float] = reaction_seconds[reaction_state]
+		var boundary := seconds[0]
+		reaction_frame = 0
+		while reaction_elapsed>=boundary and reaction_frame<3:
+			reaction_frame += 1
+			boundary += seconds[reaction_frame]
+	_show_reaction()
+
+## H只隐藏死亡画面而不解除死亡锁；恢复显示时仍用当前动作帧，避免原图对照意外复活。
+func _show_reaction() -> void:
+	texture = reaction_frames[reaction_state][reaction_frame] if enabled else idle_texture
+	offset = walk_offset if enabled else idle_offset
+
+## V键清空展示状态，恢复当前朝向站姿；正式复活和存档不由此函数处理。
+func reset_reaction() -> void:
+	attacking = false
+	attack_elapsed = 0
+	attack_frame = 0
+	reaction_state = ""
+	reaction_playing = false
+	reaction_elapsed = 0
+	reaction_frame = 0
+	update_motion(Vector2.ZERO)
+
+## 仅供隔离样板判断死亡预览是否锁住移动和试走入口，状态不写入正式玩家数据。
+func blocks_preview_motion() -> bool:
+	return reaction_state=="death"

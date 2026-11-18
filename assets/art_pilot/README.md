@@ -39,3 +39,7 @@ wolf_attack_v1.png、beetle_attack_v1.png各128×384（四帧128×96），共用
 正前增加hero_walk_s_v1.png（112×512）和hero_idle_s_v3.png（112×128），锚点(56,112)，理论RGBA8共280KiB。源稿和提示词在art_source/actors/hero_walk_s_trial_v1，行走只采用透明修正版。
 
 正后与左右侧向新增hero_walk_{n,e,w}_v1.png及hero_idle_{n,e,w}_v3.png，每方向224+56KiB，合计840KiB；八方向站走理论RGBA8共2240KiB。源稿和提示词在对应art_source/actors/hero_walk_{n,e,w}_trial_v1，w只采用修正版candidate_fixed_v2.png。
+
+## 主角右前反应动作试装
+
+hero_hit_se_v1 与 hero_death_se_v1 的 PNG/JSON 分别为四帧受击和倒地图集，112×512、单帧 112×128、锚点 (56,112)，RGBA8 合计 448 KiB。源稿与提示词在 art_source/actors/hero_hit_se_trial_v1、hero_death_se_trial_v1，由模块化营地构建工具生成。只供隔离样板 F/C/V 预览；倒地末帧保持，未接正式伤害或复活事件。

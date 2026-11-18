@@ -13,6 +13,7 @@ const DEFINITIONS := {
 }
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
+var reaction_specs: Dictionary = {}
 var attack_spec: Dictionary
 var motion_enabled := true
 var monster_motion_enabled := true
@@ -43,6 +44,8 @@ var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
+	for state in ["hit","death"]:
+		reaction_specs[state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_se_v1.json"))
 	attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_se_v1.json"))
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
 	for kind in ["wolf","beetle"]:
@@ -200,7 +203,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T挥剑 / R怪物攻击 · K暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\nF受击 / C倒地 / V重置 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
 
 ## 按档案定位角色表现；主角支持八个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -215,6 +218,8 @@ func _actor_sprite(kind: String) -> Sprite2D:
 		for direction in ["n","e","w"]:
 			sprite.setup_extra(direction,_texture("assets/art_pilot/hero_walk_"+direction+"_v1.png"),_texture("assets/art_pilot/hero_idle_"+direction+"_v3.png"))
 		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_se_v1.png"),attack_spec)
+		for state in reaction_specs:
+			sprite.setup_reaction(_texture("assets/art_pilot/hero_"+state+"_se_v1.png"),reaction_specs[state])
 		sprite.enabled = motion_enabled
 	elif sprite is SampleIdleSprite:
 		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
@@ -260,6 +265,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_I:
 			waypoints.clear()
 			_turn_preview()
+		elif event.keycode in [KEY_F,KEY_C]:
+			waypoints.clear()
+			player_art.start_reaction("hit" if event.keycode==KEY_F else "death")
+		elif event.keycode == KEY_V:
+			waypoints.clear()
+			player_art.reset_reaction()
 		elif event.keycode == KEY_R:
 			_start_monster_attacks()
 		elif event.keycode == KEY_J:
@@ -290,6 +301,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## 复用CaveLayout的连通判断与路径平滑，不实现新的寻路算法。
 func _route(target: Vector2) -> void:
+	if player_art.blocks_preview_motion():
+		waypoints.clear()
+		return
 	var start := Vector2i(Iso.world_to_grid(player.position).round())
 	var finish := Vector2i(Iso.world_to_grid(target).round())
 	waypoints.clear()
@@ -309,11 +323,15 @@ func _physics_process(delta: float) -> void:
 			waypoints.pop_front()
 		if not waypoints.is_empty():
 			direction = player.position.direction_to(waypoints[0])
+	if player_art.blocks_preview_motion():
+		direction = Vector2.ZERO
+		waypoints.clear()
 	player.velocity = direction.normalized()*150.0
 	var before := player.position
 	player.move_and_slide()
 	player_art.update_motion(player.position-before,direction)
 	player_art.advance_attack(delta)
+	player_art.advance_reaction(delta)
 	player.z_index = clampi(roundi(player.position.y),-3500,3500)
 	for occluder in occluders:
 		occluder.update_reveal(player.position,delta)
@@ -391,6 +409,7 @@ func _verify() -> void:
 		await _verify_wall_stop(captures,"s")
 		print("VERIFY_STAGE: ",index," / hero_attack")
 		await _verify_attack(captures)
+		await _verify_reactions(captures)
 		await _verify_wall_stop(captures,"nw")
 		await _verify_wall_stop(captures,"sw")
 		print("VERIFY_STAGE: ",index," / supplies_occlusion")
@@ -428,12 +447,13 @@ func _verify() -> void:
 		var wall: Array = layouts[index].objects[3].cell
 		var old := Vector2i(wall[0],wall[1])
 		assert(player_art.start_attack())
+		assert(player_art.start_reaction("death"))
 		var old_art: WeakRef = weakref(player_art)
 		_start_monster_attacks()
 		var old_monster: WeakRef = weakref(monster_previews[0])
 		moved_wall = true
 		_switch_layout(index)
-		assert(not player_art.attacking)
+		assert(not player_art.attacking and player_art.reaction_state.is_empty())
 		await get_tree().process_frame
 		await get_tree().process_frame
 		assert(old_art.get_ref()==null and old_monster.get_ref()==null,"切图应释放旧动作实例")
@@ -520,6 +540,8 @@ func _verify_actors() -> void:
 
 ## 明确的试走入口：回到两布局共用的空地并沿右下方向寻路，不改变正式出生点。
 func _start_walk_demo() -> void:
+	if player_art.blocks_preview_motion():
+		return
 	player.position = Iso.grid_to_world(Vector2i(8,6))
 	player_art.update_motion(Vector2.ZERO)
 	_route(Iso.grid_to_world(Vector2i(8,2)))
@@ -623,6 +645,8 @@ func _verify_wall_stop(captures: String, direction := "se") -> void:
 
 ## 原地切换前后两个已制作朝向，不移动角色；用于检查武器持握、比例和共用脚底锚点。
 func _turn_preview() -> void:
+	if player_art.blocks_preview_motion():
+		return
 	player_art.update_motion(Vector2.ZERO,Vector2(2,1) if player_art.facing_id=="ne" else Vector2(2,-1))
 
 ## 真实右上路线覆盖独立背面四帧，停步保持背向；原地转向不改变位置或镜像贴图。
@@ -776,6 +800,8 @@ func _verify_supplies(captures: String) -> void:
 
 ## 右上行走的可复现入口，复用现有导航，不驱动物理之外的假位移。
 func _start_rear_demo() -> void:
+	if player_art.blocks_preview_motion():
+		return
 	waypoints.clear()
 	player.position = Iso.grid_to_world(Vector2i(4,7))
 	player_art.update_motion(Vector2.ZERO,Vector2(2,-1))
@@ -790,6 +816,8 @@ func _set_monster_paused(value: bool) -> void:
 
 ## 左前试走复用右上路线的反向，不改变正式地图出生点。
 func _start_left_demo() -> void:
+	if player_art.blocks_preview_motion():
+		return
 	waypoints.clear()
 	player.position = Iso.grid_to_world(Vector2i(8,7))
 	player_art.update_motion(Vector2.ZERO,Vector2(-2,1))
@@ -832,6 +860,8 @@ func _verify_left(captures: String) -> void:
 
 ## 左后试走沿右下路线的反向，不改变正式地图出生点。
 func _start_left_rear_demo() -> void:
+	if player_art.blocks_preview_motion():
+		return
 	waypoints.clear()
 	player.position = Iso.grid_to_world(Vector2i(8,2))
 	player_art.update_motion(Vector2.ZERO,Vector2(-2,-1))
@@ -987,6 +1017,8 @@ func _verify_monster_attack(captures: String) -> void:
 
 ## 正前试走沿屏幕正下方向，不改变正式地图出生点。
 func _start_front_demo() -> void:
+	if player_art.blocks_preview_motion():
+		return
 	waypoints.clear()
 	player.position = Iso.grid_to_world(Vector2i(8,6))
 	player_art.update_motion(Vector2.ZERO,Vector2.DOWN)
@@ -1029,6 +1061,8 @@ func _verify_front(captures: String) -> void:
 
 ## 复现三种补齐视角的直线路线，坐标选在两布局共用空地，不改变正式出生点。
 func _start_extra_demo(direction: String) -> void:
+	if player_art.blocks_preview_motion():
+		return
 	waypoints.clear()
 	var start := Vector2i(5,3) if direction=="n" else (Vector2i(6,6) if direction=="e" else Vector2i(8,4))
 	var goal := Vector2i(9,7) if direction=="n" else (Vector2i(8,4) if direction=="e" else Vector2i(6,6))
@@ -1077,3 +1111,68 @@ func _verify_extra(captures: String, direction: String) -> void:
 	player_art.update_motion(Vector2.ZERO)
 	assert(player_art.texture==player_art.extra_idles[direction])
 	player.position = origin
+
+## 两布局验证受击/死亡四阶段、打断优先级、末帧保持、显示开关及重置，不结算真实伤害。
+func _verify_reactions(captures: String) -> void:
+	waypoints.clear()
+	var origin := player.position
+	var revision := navigator.navigation_revision
+	var blocked := navigator.blocked_cells().duplicate()
+	for state in ["hit","death"]:
+		# 上一动作落盘截图会阻塞主线程，先跨过补偿物理步再开始下一次实时采样。
+		await get_tree().process_frame
+		await get_tree().process_frame
+		assert(player_art.start_attack())
+		assert(player_art.start_reaction(state) and not player_art.attacking)
+		assert(not player_art.start_reaction(state) and not player_art.start_attack())
+		var seen: Dictionary = {}
+		var shots: Dictionary = {}
+		var deadline := Time.get_ticks_msec()+3000
+		while player_art.reaction_playing and Time.get_ticks_msec()<deadline:
+			if captures.is_empty():
+				await get_tree().physics_frame
+			else:
+				await RenderingServer.frame_post_draw
+			if not player_art.reaction_state.is_empty():
+				var frame := player_art.reaction_frame
+				seen[frame] = true
+				assert(player_art.texture==player_art.reaction_frames[state][frame])
+				if not captures.is_empty() and not shots.has(frame):
+					shots[frame] = get_viewport().get_texture().get_image()
+		assert(seen.size()==4 and not player_art.reaction_playing,"反应%s 帧%s 播放%s 相位%s"%[state,seen.keys(),player_art.reaction_playing,player_art.reaction_elapsed])
+		assert(player.position==origin)
+		for frame in shots:
+			shots[frame].save_png(captures+"/hero_%s_%d_%d.png"%[state,selected_layout,frame])
+		shots.clear()
+		if state=="hit":
+			assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.directional_idle)
+		else:
+			verification_direction = Vector2.RIGHT
+			_route(origin+Vector2(100,0))
+			_start_extra_demo("e")
+			_start_front_demo()
+			_turn_preview()
+			await get_tree().create_timer(0.3).timeout
+			verification_direction = Vector2.ZERO
+			assert(player.position==origin and waypoints.is_empty())
+			assert(player_art.reaction_state=="death" and player_art.texture==player_art.reaction_frames.death[3])
+			assert(not player_art.start_reaction("hit") and not player_art.start_attack())
+			player_art.enabled = false
+			player_art.update_motion(Vector2.ZERO)
+			assert(player_art.blocks_preview_motion() and player_art.texture==player_art.idle_texture)
+			player_art.enabled = true
+			player_art.update_motion(Vector2.ZERO)
+			assert(player_art.texture==player_art.reaction_frames.death[3])
+		player_art.reset_reaction()
+	assert(player_art.start_reaction("hit"))
+	player_art.update_motion(Vector2.ZERO,Vector2.UP)
+	assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.extra_idles["n"])
+	assert(player_art.start_reaction("hit"))
+	assert(player_art.start_reaction("death"))
+	player_art.advance_reaction(10.0)
+	assert(not player_art.reaction_playing and player_art.texture==player_art.reaction_frames.death[3])
+	player_art.reset_reaction()
+	assert(player_art.start_reaction("hit"))
+	player_art.advance_reaction(10.0)
+	assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.directional_idle)
+	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked and player.position==origin)

@@ -67,6 +67,7 @@ func _initialize() -> void:
 	print("BEETLE_BUILT: ",beetle.get_size())
 	_build_walk(root)
 	_build_hero_attack(root)
+	_build_hero_reactions(root)
 	_build_monster_motion(root,"idle")
 	_build_monster_motion(root,"attack")
 	_build_supplies(root,manifest)
@@ -269,3 +270,26 @@ func _build_hero_attack(root: String) -> void:
 	var output := FileAccess.open(root+"/assets/art_pilot/hero_attack_se_v1.json",FileAccess.WRITE)
 	output.store_string(JSON.stringify(spec,"  "))
 	print("HERO_ATTACK_BUILT")
+
+## 按真实源格打包受击与死亡四阶段，统一缩放与锚点；所有源帧四边须通过透明检查。
+func _build_hero_reactions(root: String) -> void:
+	for state in ["hit","death"]:
+		var folder: String = root+"/art_source/actors/hero_"+state+"_se_trial_v1/"
+		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
+		var source := Image.load_from_file(folder+spec.source)
+		var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
+		assert(source.get_size()==cell*2 and source.detect_alpha()!=Image.ALPHA_NONE)
+		var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
+		var scaled := Vector2i((Vector2(cell)*float(spec.scale)).round())
+		var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
+		assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
+		var atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
+		for index in range(4):
+			var frame := source.get_region(Rect2i(Vector2i(index%2,index/2)*cell,cell))
+			_assert_frame_edges(frame)
+			frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
+			atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
+		var output: String = root+"/assets/art_pilot/hero_"+state+"_se_v1"
+		assert(atlas.save_png(output+".png")==OK)
+		FileAccess.open(output+".json",FileAccess.WRITE).store_string(JSON.stringify(spec,"  "))
+	print("HERO_REACTIONS_BUILT")
