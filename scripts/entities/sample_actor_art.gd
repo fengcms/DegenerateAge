@@ -70,6 +70,8 @@ func apply_look(definition: Dictionary) -> void:
 	_death_seconds = float(definition.get("death_seconds",DEATH_SECONDS))
 	_animations = definition.get("animations", {})
 	_mounts = definition.get("mounts", {})
+	# 换装必须先校验坐骑，再显示新帧，避免旧坐骑键访问不含坐骑的新档位。
+	_mount_id = _mount_id if _mounts.has(_mount_id) else ""
 	offset = -pivot
 	# 换装时立即更新当前帧；没有对应坐骑素材的形象按普通角色显示。
 	if not _animations.is_empty():
@@ -79,7 +81,6 @@ func apply_look(definition: Dictionary) -> void:
 		vframes = 8
 		hframes = 8
 		frame_coords = Vector2i(facing, 0)
-	_mount_id = _mount_id if _mounts.has(_mount_id) else ""
 
 ## 骑乘状态变化时选择已登记图集；缺失坐骑美术只回退画面，不修改游戏骑乘规则。
 func set_mount(mount_id: String) -> void:

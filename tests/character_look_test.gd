@@ -111,6 +111,13 @@ func _test_weapon_switch() -> void:
 	expect(player.sample_art.vframes == 8 and player.sample_art.phase >= 4,
 		"步行应播放完整八帧，而非只循环前四帧")
 	player.velocity = Vector2.ZERO
+	# 初始档骑乘换至无坐骑素材档位，先清理视觉坐骑键，再装配新帧。
+	player.sample_art.pose = "idle"
+	player.sample_art.apply_look(CharacterLook.definition("look_01"))
+	player.sample_art.set_mount("mount_corrupted_wing")
+	player.sample_art.apply_look(CharacterLook.definition("look_02"))
+	expect(player.sample_art._mount_id.is_empty(),"无骑乘素材的换装档位须安全回退步行表现")
+	expect(player.sample_art.texture==CharacterLook.definition("look_02").animations.idle.texture,"骑乘换装回退后仍显示新档位")
 	expect(panel._look_id == "look_02", "人物面板形象 id 应随武器刷新")
 	expect(panel._portrait.texture == CharacterLook.definition("look_02").panel,
 		"面板形象应随武器切换到独立高清图")
