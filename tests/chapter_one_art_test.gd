@@ -1,5 +1,5 @@
 extends Node
-## 第一章NPC、木桩与怪物美术集成回归；甲虫采用正式四帧八向，其余既有规格保持不变。
+## 第一章NPC、木桩与怪物美术集成回归；甲虫采用正式四帧八向，NPC采用同风格八向112×128帧，保留交互和其余怪物规格。
 
 var failures: Array[String] = []
 
@@ -26,8 +26,8 @@ func _ready() -> void:
 			continue
 		roles[npc.role] = true
 		var art := npc.get_node_or_null("RoleArt") as Sprite2D
-		expect(art != null and art.texture.get_size() == Vector2(512, 80), "Eight-direction NPC art: " + npc.role)
-		expect(art != null and art.scale == Vector2(1.5, 1.5), "NPC art uses 150% scale: " + npc.role)
+		expect(art != null and art.texture.get_size() == Vector2(896, 128), "Eight-direction NPC art: " + npc.role)
+		expect(art != null and art.scale == Vector2.ONE and art.offset == Vector2(-56, -112), "NPC art uses native scale and foot pivot: " + npc.role)
 		var name_label := npc.get_node("NameLabel") as Label
 		expect(name_label.position.y + name_label.size.y <= -96.0, "NPC name clears enlarged sprite head: " + npc.role)
 		expect(npc.contains_screen_point(npc.get_global_transform_with_canvas().origin + Vector2(0, -55)), "NPC sprite head remains clickable: " + npc.role)

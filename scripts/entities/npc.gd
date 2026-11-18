@@ -2,7 +2,7 @@ class_name Npc
 extends Node2D
 ## 功能性 NPC 实体（产品文档 6.3 安全区与通用交互），负责角色表现和头顶状态显示。
 ##
-## 占位素材（R5）：程序化绘制斗篷人形；头顶名称 / 提示用 Label（走项目主题的
+## 五类职业使用同风格八向静态图集；未知职业回退斗篷人形。头顶文字用 Label（走项目主题的
 ## SystemFont CJK 字体，避免 draw_string 用引擎内置字体导致中文方框）。
 ## 交互派发：由 scripts/world/game.gd 统一处理 E / 鼠标点击；本节点暴露
 ## shop_id、近距和命中判定，不自己抢输入。
@@ -14,7 +14,7 @@ const INTERACT_RANGE := 2.0 * Iso.TILE_W   # 2 格（7.1：tileW=64，单一来�
 const COLOR_CLOAK := Color("7d6ac8")
 const COLOR_CLOAK_EDGE := Color("3b3268")
 const COLOR_SKIN := Color("e8c9a0")
-const ART_SCALE := 1.5
+const ART_SCALE := 1.0
 
 ## 对应 shops.json 的 npcId；为空表示纯对话 NPC（M2 任务官等）。
 @export var shop_id: String = ""
@@ -43,12 +43,12 @@ func _ready() -> void:
 	if role in ["quest", "shop", "blacksmith", "warehouse", "carter"]:
 		_art = Sprite2D.new()
 		_art.name = "RoleArt"
-		_art.texture = load("res://assets/sprites/npcs/%s/idle_atlas.png" % role) as Texture2D
+		_art.texture = load("res://assets/sprites/npcs/modular_v1/%s_idle_atlas.png" % role) as Texture2D
 		_art.hframes = 8
 		_art.centered = false
-		_art.offset = Vector2(-32, -64)
+		_art.offset = Vector2(-56, -112)
 		_art.scale = Vector2.ONE * ART_SCALE
-		_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		add_child(_art)
 		move_child(_art, 0)
 		# 名称与交互提示不随人物贴图一起放大，避免遮住脸部和脚部。
@@ -78,6 +78,7 @@ func _ready() -> void:
 func set_quest_marker(available: bool) -> void:
 	_quest_marker.visible = available
 
+## 每帧维护深度与近距提示，仅在交互范围内转向玩家，不改变交互逻辑。
 func _process(delta: float) -> void:
 	_phase += delta
 	z_index = clampi(roundi(global_position.y), -3500, 3500)
@@ -104,7 +105,7 @@ func is_player_in_range() -> bool:
 ## 屏幕点击命中人物、头顶名称及可见任务标记；由世界统一决定接近和交互。
 func contains_screen_point(point: Vector2) -> bool:
 	var local := get_global_transform_with_canvas().affine_inverse() * point
-	if Rect2(Vector2(-32.0, -64.0) * ART_SCALE, Vector2(64.0, 80.0) * ART_SCALE).has_point(local):
+	if Rect2(Vector2(-56.0, -112.0) * ART_SCALE, Vector2(112.0, 128.0) * ART_SCALE).has_point(local):
 		return true
 	var label_local := _name_label.get_global_transform_with_canvas().affine_inverse() * point
 	if Rect2(Vector2.ZERO, _name_label.size).has_point(label_local):
@@ -114,6 +115,7 @@ func contains_screen_point(point: Vector2) -> bool:
 		return Rect2(Vector2.ZERO, _quest_marker.size).has_point(marker_local)
 	return false
 
+## 绘制贴地阴影与近距提示；未知职业仍提供可辨认的回退人形。
 func _draw() -> void:
 	var cloak_color := Color("956b4b") if role == "blacksmith" else (Color("547784") if role == "warehouse" else COLOR_CLOAK)
 	var edge := Color("463226") if role == "blacksmith" else (Color("273c44") if role == "warehouse" else COLOR_CLOAK_EDGE)

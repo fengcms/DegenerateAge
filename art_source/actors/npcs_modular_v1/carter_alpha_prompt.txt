@@ -1,0 +1,1 @@
+Edit this exact eight-direction sprite sheet. Remove ONLY the entire white/gray background to true alpha=0 transparent pixels. Keep all eight figures, their exact poses, facing directions, colors, clothing, and arrangement unchanged. No ground, shadow, gradient, checkerboard or text. Deliver PNG with genuine transparency and clean edges.
