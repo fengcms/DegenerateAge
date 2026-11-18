@@ -276,7 +276,7 @@ func _build_hero_attack(root: String) -> void:
 
 ## 按真实源格打包受击与死亡四阶段，统一缩放与锚点；所有源帧四边须通过透明检查。
 func _build_hero_reactions(root: String) -> void:
-	for direction in ["se","ne"]:
+	for direction in ["se","ne","sw","nw","s","n","e","w"]:
 		for state in ["hit","death"]:
 			var folder: String = root+"/art_source/actors/hero_"+state+"_"+direction+"_trial_v1/"
 			var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
@@ -290,7 +290,7 @@ func _build_hero_reactions(root: String) -> void:
 			assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
 			var atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
 			for index in range(4):
-				var source_index := index+int(spec.get("sourceStartFrame",0))
+				var source_index := int(spec.sourceIndices[index]) if spec.has("sourceIndices") else index+int(spec.get("sourceStartFrame",0))
 				var origin := Vector2i(floori((source_index%2)*source_size.x/2.0),floori((source_index/2)*source_size.y/float(spec.get("sourceRows",2))))
 				var frame := source.get_region(Rect2i(origin,cell))
 				_assert_frame_edges(frame)

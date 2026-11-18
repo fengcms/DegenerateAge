@@ -1,0 +1,4 @@
+{
+  "tool": "image_gen",
+  "prompt": "Background extraction ONLY. Remove ALL white background from this eight-pose sprite sheet and output true fully transparent alpha. Keep all eight warriors, poses, layout, exact dimensions, scale and clothing unchanged. Remove white in gaps between arms, swords and legs too. Every cell border must have zero alpha. No backdrop or shadows. Do not redraw or rearrange."
+}

@@ -55,3 +55,5 @@ hero_attack_s/n/e/w_v1.png/json为四个独立正向和侧向挥剑，各112×51
 wolf/beetle_walk/hit/death_v1.png/json：两怪左前步态、受击及倒地，每张128×384、单帧128×96、锚点(64,80)，六张共1152KiB RGBA8。来源、提示词、构建参数在art_source/actors对应trial目录，隔离营地Z/X/E/Q预览。
 
 hero_hit_ne_v1、hero_death_ne_v1为右后受击和倒地，各112×512、锚点(56,112)。源页在art_source/actors/hero_reactions_ne_trial_v1，独立构建清单在hero_hit_ne_trial_v1、hero_death_ne_trial_v1。新增448KiB RGBA8。
+
+八向主角 hit/death v1 已登记隔离样板：112×128、四帧、锚点(56,112)，使用对应 art_source/actors/hero_*_trial_v1/build.json 重建。剩余六方向新增12张图集，正式战斗尚未接入；窗口验收状态见素材设计87号记录。

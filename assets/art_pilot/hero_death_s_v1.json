@@ -1,0 +1,45 @@
+{
+  "columns": 2.0,
+  "direction": "s",
+  "frameSeconds": [
+    0.18,
+    0.22,
+    0.22,
+    0.28
+  ],
+  "frameSize": [
+    112.0,
+    128.0
+  ],
+  "frames": 4.0,
+  "holdLast": true,
+  "loop": false,
+  "pivot": [
+    56.0,
+    112.0
+  ],
+  "scale": 0.22,
+  "source": "../hero_reactions_s_trial_v1/candidate.png",
+  "sourceFrame": [
+    443.0,
+    443.0
+  ],
+  "sourceIndices": [
+    4.0,
+    3.0,
+    5.0,
+    7.0
+  ],
+  "sourcePivot": [
+    221.0,
+    430.0
+  ],
+  "sourceRows": 4.0,
+  "sourceSize": [
+    887.0,
+    1774.0
+  ],
+  "sourceStartFrame": 4.0,
+  "state": "death",
+  "status": "isolated_motion_trial"
+}

@@ -53,7 +53,7 @@ func _ready() -> void:
 		monster_preview_specs[kind] = {}
 		for state in ["walk","hit","death"]:
 			monster_preview_specs[kind][state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_"+state+"_v1.json"))
-	for direction in ["se","ne"]:
+	for direction in ["se","ne","sw","nw","s","n","e","w"]:
 		for state in ["hit","death"]:
 			reaction_specs[state+"_"+direction] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_"+direction+"_v1.json"))
 	for direction in ["s","n","e","w"]:
@@ -451,6 +451,8 @@ func _verify() -> void:
 			await _verify_attack(captures,direction)
 		await _verify_reactions(captures)
 		await _verify_reactions(captures,"ne")
+		for direction in ["sw","nw","s","n","e","w"]:
+			await _verify_reactions(captures,direction)
 		await _verify_wall_stop(captures,"nw")
 		await _verify_wall_stop(captures,"sw")
 		print("VERIFY_STAGE: ",index," / supplies_occlusion")

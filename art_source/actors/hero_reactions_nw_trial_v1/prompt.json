@@ -1,0 +1,4 @@
+{
+  "tool": "image_gen",
+  "prompt": "Create original warrior EIGHT reaction sprites in TWO COLUMNS FOUR ROWS equal square cells requested2048x4096. Reference identity and REAR LEFT view, head chest feet facing screen upper LEFT NW, back towards viewer. Right hand sword on far side, near left hand empty, right hip pouch far side. Bronze dark armor beige ragged scarf black tied hair. Frames1-4 row-major HIT flinch, brace, recover, neutral. Frames5-8 DEATH knees buckle, kneel, tip onto side, fully lying still on side, sword retained right hand. Same body scale and ground anchor, no root translation, generous12% transparent margin including blade all sides. TRUE TRANSPARENT ALPHA no white/gray backdrop fog shadow grid labels or effects. Restrained realistic painted Chinese fantasy MMORPG original design, non-gory, never mirror or turn head right."
+}

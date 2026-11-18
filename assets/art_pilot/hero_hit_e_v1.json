@@ -1,0 +1,39 @@
+{
+  "columns": 2.0,
+  "direction": "e",
+  "frameSeconds": [
+    0.12,
+    0.14,
+    0.12,
+    0.14
+  ],
+  "frameSize": [
+    112.0,
+    128.0
+  ],
+  "frames": 4.0,
+  "holdLast": false,
+  "loop": false,
+  "pivot": [
+    56.0,
+    112.0
+  ],
+  "scale": 0.22,
+  "source": "../hero_reactions_e_trial_v1/candidate_alpha_v2.png",
+  "sourceFrame": [
+    443.0,
+    443.0
+  ],
+  "sourcePivot": [
+    221.0,
+    430.0
+  ],
+  "sourceRows": 4.0,
+  "sourceSize": [
+    887.0,
+    1774.0
+  ],
+  "sourceStartFrame": 0.0,
+  "state": "hit",
+  "status": "isolated_motion_trial"
+}

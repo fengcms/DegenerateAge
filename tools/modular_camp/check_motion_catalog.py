@@ -38,7 +38,7 @@ def main():
             check_png(assets / name, (112, height))
             assert name in launcher, f'隔离启动未包含 {name}'
             total += 112 * height * 4
-    for state, directions in [('attack', DIRECTIONS), ('hit', ('se', 'ne')), ('death', ('se', 'ne'))]:
+    for state, directions in [('attack', DIRECTIONS), ('hit', DIRECTIONS), ('death', DIRECTIONS)]:
         for direction in directions:
             stem = f'hero_{state}_{direction}_v1'
             spec = read_spec(assets / f'{stem}.json')

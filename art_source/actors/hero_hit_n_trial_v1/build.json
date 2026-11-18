@@ -1,0 +1,39 @@
+{
+  "source": "../hero_reactions_n_trial_v1/candidate.png",
+  "sourceFrame": [
+    443,
+    443
+  ],
+  "columns": 2,
+  "frames": 4,
+  "scale": 0.22,
+  "sourcePivot": [
+    221,
+    430
+  ],
+  "frameSize": [
+    112,
+    128
+  ],
+  "pivot": [
+    56,
+    112
+  ],
+  "direction": "n",
+  "state": "hit",
+  "loop": false,
+  "holdLast": false,
+  "frameSeconds": [
+    0.12,
+    0.14,
+    0.12,
+    0.14
+  ],
+  "status": "isolated_motion_trial",
+  "sourceSize": [
+    887,
+    1774
+  ],
+  "sourceRows": 4,
+  "sourceStartFrame": 0
+}

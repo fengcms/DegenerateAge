@@ -1,0 +1,45 @@
+{
+  "columns": 2.0,
+  "direction": "s",
+  "frameSeconds": [
+    0.12,
+    0.14,
+    0.12,
+    0.14
+  ],
+  "frameSize": [
+    112.0,
+    128.0
+  ],
+  "frames": 4.0,
+  "holdLast": false,
+  "loop": false,
+  "pivot": [
+    56.0,
+    112.0
+  ],
+  "scale": 0.22,
+  "source": "../hero_reactions_s_trial_v1/candidate.png",
+  "sourceFrame": [
+    443.0,
+    443.0
+  ],
+  "sourceIndices": [
+    0.0,
+    1.0,
+    2.0,
+    6.0
+  ],
+  "sourcePivot": [
+    221.0,
+    430.0
+  ],
+  "sourceRows": 4.0,
+  "sourceSize": [
+    887.0,
+    1774.0
+  ],
+  "sourceStartFrame": 0.0,
+  "state": "hit",
+  "status": "isolated_motion_trial"
+}

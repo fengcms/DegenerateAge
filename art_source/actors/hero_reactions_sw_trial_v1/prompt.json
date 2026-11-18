@@ -1,0 +1,4 @@
+{
+  "tool": "image_gen",
+  "prompt": "Create an original warrior HIT and DEATH sprite sheet, using reference identity and FRONT THREE QUARTER facing SCREEN LOWER LEFT SW. Anatomical RIGHT hand holds one sword, near LEFT hand empty. Bronze dark lamellar armor beige ragged scarf tied black hair right hip pouch. EXACT eight poses in TWO COLUMNS FOUR ROWS of equal square cells, requested2048x4096. First four row-major: flinch backward, crouched brace, recovering, neutral stand. Last four: knees buckle, kneeling, tipping onto side, fully prone motionless on side holding sword. Non-gory. Keep facing lower left, body scale camera and ground anchor consistent, no mirrored equipment. Each entire pose plus sword fits within middle75% of itscell, lots of transparent margins. Real alpha cutout NO halo fog backdrop shadow floor lines text grid effects. Restrained realistic Chinese fantasy MMORPG painterly original sprite."
+}
