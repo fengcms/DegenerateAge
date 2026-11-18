@@ -12,9 +12,12 @@ def main():
     """创建临时Godot项目，运行导入及窗口/自动验证，退出后删除缓存。"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify', action='store_true')
+    parser.add_argument('--benchmark', action='store_true')
     parser.add_argument('--build-assets', action='store_true')
     parser.add_argument('--capture', type=Path)
     args = parser.parse_args()
+    if args.benchmark and (args.verify or args.capture or args.build_assets):
+        parser.error('--benchmark 必须独立运行，避免截图或其他测试污染采样')
     godot = shutil.which('godot') or '/Applications/Godot.app/Contents/MacOS/Godot'
     with tempfile.TemporaryDirectory(prefix='modular-camp-') as temp:
         project = Path(temp)
@@ -49,6 +52,9 @@ window/stretch/mode="canvas_items"
 renderer/rendering_method="gl_compatibility"
 ''')
         (project / 'Main.tscn').write_text('[gd_scene load_steps=2 format=3]\n[ext_resource type="Script" path="res://main.gd" id="1"]\n[node name="Sample" type="Node2D"]\nscript = ExtResource("1")\n')
+        if args.benchmark:
+            scene = project / 'Main.tscn'
+            scene.write_text(scene.read_text().replace('res://main.gd', 'res://benchmark.gd'))
         imported = subprocess.run([godot, '--headless', '--editor', '--path', temp, '--quit'], check=True, capture_output=True, text=True, timeout=60)
         if 'SCRIPT ERROR' in imported.stderr:
             raise RuntimeError(imported.stderr)
@@ -61,7 +67,7 @@ renderer/rendering_method="gl_compatibility"
         if args.capture:
             args.capture.mkdir(parents=True, exist_ok=True)
             command += ['--capture=' + str(args.capture.resolve())]
-        if args.verify:
+        if args.verify or args.benchmark:
             try:
                 # 八向攻击、两怪反应及逐方向主角反应增加固定验收时长；各阶段仍保留原局部截止与断言。
                 result = subprocess.run(command, check=True, timeout=240, capture_output=True, text=True)
@@ -71,7 +77,8 @@ renderer/rendering_method="gl_compatibility"
                 raise
             print(result.stdout, end='')
             print(result.stderr, end='')
-            if 'MODULAR_CAMP_VERIFY_OK' not in result.stdout or 'SCRIPT ERROR' in result.stderr:
+            marker = 'MODULAR_CAMP_BENCHMARK_OK' if args.benchmark else 'MODULAR_CAMP_VERIFY_OK'
+            if marker not in result.stdout or 'SCRIPT ERROR' in result.stderr:
                 raise RuntimeError('样板未输出成功标记或出现脚本错误')
         else:
             subprocess.run(command, check=True)
