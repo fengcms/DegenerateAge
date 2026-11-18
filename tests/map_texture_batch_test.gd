@@ -1,5 +1,5 @@
 extends Node
-## 第一章地面回归：营地检查 B 全图的分层地面，其余三图核对纹理图集合批。
+## 第一章地面回归：营地检查模块网格与矩形裁切，其余三图核对纹理图集合批。
 
 ## 逐图检查白盒事实源或网格顶点、UV 与源图像素，避免道路错位。
 func _ready() -> void:
@@ -12,10 +12,20 @@ func _ready() -> void:
 		await get_tree().process_frame
 		if map_id == "camp":
 			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v2"
-				and ground._camp_ground_texture != null and ground._camp_road_texture != null
+				and ground._camp_modular != null and ground._camp_modular.get_child_count()==3
 				and ground._camp_foreground_count == 11,
-				"营地应使用矩形分层地面及 11 个实体前沿，而非旧菱形瓦片网格")
+				"营地应使用三层模块地面及11个实体前沿")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地画幅必须是矩形")
+			for layer in range(3):
+				var node := ground._camp_modular.get_child(layer) as MeshInstance2D
+				assert(node.mesh.get_surface_count()==1,"每层只能有一个合批面")
+				assert(node.mesh.surface_get_array_len(0)==ground._camp_modular.tile_counts[layer]*4,"模块合批未保留全部瓦片")
+				var packed: Array = node.mesh.surface_get_arrays(0)
+				for vertex: Vector3 in packed[Mesh.ARRAY_VERTEX]:
+					assert(ground.get_world_bounds().grow(0.001).has_point(Vector2(vertex.x,vertex.y)),"模块顶点越出正式矩形")
+				for uv: Vector2 in packed[Mesh.ARRAY_TEX_UV]:
+					assert(uv.x>=0 and uv.x<=1 and uv.y>=0 and uv.y<=1,"模块UV越出图集")
+				assert(node.texture.get_size()==Vector2(1024,1536),"模块图集尺寸与UV规格不符")
 			ground.queue_free()
 			await get_tree().process_frame
 			continue

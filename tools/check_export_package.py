@@ -5,7 +5,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-FORBIDDEN = ("docs/", "art_source/", "outputs/", "tests/", "tools/", "addons/")
+FORBIDDEN = ("assets/art_pilot/", "docs/", "art_source/", "outputs/", "tests/", "tools/", "addons/")
 
 
 def check_package(path: Path) -> list[str]:

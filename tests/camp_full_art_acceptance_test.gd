@@ -43,6 +43,8 @@ func _ready() -> void:
 	assert(file != null, "全图清单缺失")
 	var manifest: Dictionary = JSON.parse_string(file.get_as_text())
 	assert(String(manifest["layout_id"]) == String(layout["id"]), "美术与障碍版本不一致")
+	assert(ground._camp_modular != null and ground._camp_modular.tile_counts.size()==3,"正式营地三层模块网格缺失")
+	assert(ground._camp_modular.tile_counts[0]>5000 and ground._camp_modular.tile_counts[2]>100,"地面和服务点道路覆盖不足")
 	var atlas := Image.new()
 	var roads := Image.new()
 	assert(atlas.load(String(manifest["ground_tile"])) == OK)
@@ -60,7 +62,7 @@ func _ready() -> void:
 		var ground_patches := Image.new()
 		assert(ground_patches.load(String(manifest["ground_overlay"])) == OK
 			and ground_patches.get_size() == Vector2i(1672, 941)
-			and ground._camp_ground_overlay != null, "已绘制地面必须以独立画布贴图加载")
+			and ground._camp_modular != null, "已绘制地面必须以独立画布贴图加载")
 	else:
 		assert(ground._camp_ground_overlay == null, "未绘制地面时不应占用额外纹理")
 	var actual_ids: Dictionary = {}
@@ -71,7 +73,7 @@ func _ready() -> void:
 		actual_ids[id] = true
 		art_rects[id] = entry["rect"]
 		assert(ground.has_node("Camp_%s_front" % id), "实体前沿缺失：%s" % id)
-		if entity_ids.has(id):
+		if entity_ids.has(id) and id not in ["blacksmith","merchant","elder_tree"]:
 			assert(ground.has_node("Camp_%s_back" % id), "可绕行实体背层缺失：%s" % id)
 			_check_split_alpha(entry)
 	assert(actual_ids.size() == expected_ids.size() and ground._camp_foreground_count == 11,

@@ -88,7 +88,7 @@ class CampMapEditorApplyTest(unittest.TestCase):
             files = ["data/map_art/camp_whitebox_v2.json", "data/map_art/camp_ground_palette.json",
                      "data/maps/index.json", "data/maps/ch01/camp/map.json",
                      "data/maps/ch01/camp/README.md", "data/layouts/camp.json", "tools/map_catalog.py", "tools/build_camp_whitebox.py",
-                     "tools/build_camp_style_full_b_v2.py", "tools/build_camp_style_sample.py"]
+                     "tools/build_camp_style_full_b_v2.py", "tools/build_camp_style_sample.py", "tools/build_camp_modular_layout.py"]
             directories = ["art_source/environment/camp_style_full_b",
                            "art_source/environment/camp_style_full_b_v2",
                            "assets/maps/camp_style_sample/b", "assets/maps/camp_style_full_b_v2"]
@@ -116,6 +116,9 @@ class CampMapEditorApplyTest(unittest.TestCase):
             self.assertEqual(applied["entities"][0]["footprint"][0][0],
                              self.original["entities"][0]["footprint"][0][0] + 8)
             self.assertFalse(draft_path.exists())
+            modular = json.loads((root / "data/map_art/camp_modular_v1.json").read_text())
+            self.assertEqual(modular["layout_id"],applied["id"])
+            self.assertEqual(len(modular["roads"]),applied["grid_size"][1])
             output = root / "assets/maps/camp_style_full_b_v2"
             manifest = json.loads((output / "manifest.json").read_text())
             self.assertIn("ground_overlay", manifest)

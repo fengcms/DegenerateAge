@@ -31,3 +31,5 @@ route_layout.json维护土草路、独立物件及占地；route_map.json维护�
 `--capacity` 用测试填充物占满40格后实际击杀两怪，确认金币正常入账、非金币掉落在本场保留、等待后数量不变；移走测试填充物后由正式自动拾取恢复，按装备实例身份及堆叠物数量核对守恒。普通怪掉落按既有规则不跨图持久化，测试不改变这项规则；金币也会发item_picked通知，测试专门区分金币与背包物品。
 
 正式包构建：以最小Godot项目运行build_formal_monsters.gd，参数为仓库绝对路径，可附--check逐像素核对；随后运行 `node tools/build_monster_animation_assets.mjs` 和 `--check` 统一生成/校验正式运行目录及路径库。具体源稿和成本见97号记录。
+
+正式游戏已接入初始主角八向五状态和模块营地（CharacterLook、CampModularArt）；本工具仍保留独立主角适配器，用于动作样板对照。正式游戏通过正常Game场景体验，试作assets/art_pilot目录不进入发布包；正式图集可从已验收试作图无损重建。

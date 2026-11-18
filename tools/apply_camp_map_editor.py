@@ -260,7 +260,7 @@ def validate_fixed_targets(source: dict, rows: list[str]) -> None:
 
 
 def apply(draft_path: Path) -> None:
-    """验证草稿后运行两套正式构建器；任何失败都恢复原文件，成功后删除草稿。"""
+    """验证草稿后同步构建正式通行、美术和模块道路；任何失败都恢复原文件，成功后删除草稿。"""
     source_bytes = SOURCE.read_bytes()
     envelope = json.loads(draft_path.read_text())
     if envelope.get("base_hash") != hashlib.sha256(source_bytes).hexdigest():
@@ -274,14 +274,17 @@ def apply(draft_path: Path) -> None:
     validate_ground_patches(draft)
     rows = compiled_rows(draft)
     validate_fixed_targets(draft, rows)
-    paths = [SOURCE, MAPS, MAPS.parent / "README.md", LAYOUT, *ART.glob("*.png"), ART / "manifest.json"]
+    modular = ROOT / "data/map_art/camp_modular_v1.json"
+    paths = [modular, SOURCE, MAPS, MAPS.parent / "README.md", LAYOUT, *ART.glob("*.png"), ART / "manifest.json"]
     backup = {path: path.read_bytes() for path in paths if path.is_file()}
     try:
         SOURCE.write_text(json.dumps(draft, ensure_ascii=False, indent=2) + "\n")
-        for script in ("build_camp_whitebox.py", "build_camp_style_full_b_v2.py"):
+        for script in ("build_camp_whitebox.py", "build_camp_style_full_b_v2.py", "build_camp_modular_layout.py"):
             subprocess.run([sys.executable, str(ROOT / "tools" / script)], check=True,
                            cwd=ROOT, capture_output=True, text=True)
     except Exception:
+        if modular not in backup:
+            modular.unlink(missing_ok=True)
         for path in ART.glob("*.png"):
             if path not in backup:
                 path.unlink()

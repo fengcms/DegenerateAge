@@ -13,7 +13,7 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		if map_id == "camp":
 			assert(ground._chapter_one_art == null and not ground._camp_whitebox.is_empty()
-				and ground._camp_ground_texture != null, "正式营地应加载独立几何源与完整底图")
+				and ground._camp_modular != null and ground._camp_modular.get_child_count()==3, "正式营地应加载独立几何源与三层模块地面")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地世界必须是屏幕矩形")
 			var source_count := (ground._camp_whitebox["entities"] as Array).size() + (ground._camp_whitebox["fences"] as Array).size()
 			assert(ground.get_node("CaveWalls").get_child_count() == source_count, "营地每个实体/围栏只保留一条碰撞")

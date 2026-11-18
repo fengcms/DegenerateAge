@@ -25,6 +25,8 @@ def main():
             shutil.copy2(source, project / source.name)
         for relative in ['scripts/systems/iso.gd', 'scripts/systems/flat_tile_mesh.gd', 'scripts/world/cave_layout.gd']:
             shutil.copy2(ROOT / relative, project / Path(relative).name)
+        (project / 'scripts/world').mkdir(parents=True,exist_ok=True)
+        shutil.copy2(ROOT / 'scripts/world/modular_road_rules.gd',project / 'scripts/world/modular_road_rules.gd')
         for filename in ['layouts.json', 'actors.json']:
             shutil.copy2(Path(__file__).with_name(filename), project / filename)
         if args.build_assets:

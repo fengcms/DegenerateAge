@@ -1,6 +1,6 @@
 class_name IsoGround
 extends Node2D
-## 等距地面、纹理图集合批与静态边界碰撞；营地使用正式矩形底图和整体实体前景。
+## 等距地面、纹理图集合批与静态边界碰撞；营地使用模块地面合批和独立实体前景。
 ## 营地的绘制、碰撞与通行共用原画坐标源，其他地图沿用原有纹理图集路径。
 
 @export var map_id: String = "camp"
@@ -100,6 +100,7 @@ var _camp_ground_texture: Texture2D
 var _camp_ground_overlay: Texture2D
 var _camp_road_texture: Texture2D
 var _camp_foreground_count := 0
+var _camp_modular: CampModularArt
 
 ## 进入地图时装配布局、地面、第一章静态实体与碰撞；所有重建都在加载阶段完成。
 func _ready() -> void:
@@ -146,7 +147,7 @@ func _load_camp_whitebox() -> void:
 	assert(cave != null and String(map_data.get("layoutVersion", "")) == "2026-10-16-camp-open-perimeter-v2",
 		"营地白盒与通行掩码版本不一致")
 
-## 读取 B 全图循环地纹、可编辑地面层、纯道路层和整体实体清单；仅在营地加载时装配。
+## 读取模块地面及独立实体清单；棚屋与树木使用新模块，专用服务设施保留原资产。
 ## 背层位于角色后，前沿按原实体脚底世界 Y 排序，不改变碰撞或导航。
 func _load_camp_final_art() -> void:
 	var file := FileAccess.open(CAMP_FINAL_ART_MANIFEST, FileAccess.READ)
@@ -159,17 +160,24 @@ func _load_camp_final_art() -> void:
 	var canvas: Array = manifest.get("canvas", [])
 	assert(canvas.size() == 2 and Vector2(float(canvas[0]), float(canvas[1])) == _camp_canvas_size,
 		"营地美术画幅与白盒坐标源不一致")
-	_camp_ground_texture = load(String(manifest["ground_tile"])) as Texture2D
-	_camp_ground_overlay = load(String(manifest["ground_overlay"])) as Texture2D if manifest.has("ground_overlay") else null
-	_camp_road_texture = load(String(manifest["road_overlay"])) as Texture2D
-	assert(_camp_ground_texture != null and _camp_ground_texture.get_size() == Vector2(2048, 2048),
-		"营地循环地纹不存在或尺寸错误")
-	assert(_camp_road_texture != null and _camp_road_texture.get_size() == _camp_canvas_size,
-		"营地纯道路层不存在或尺寸错误")
-	assert(_camp_ground_overlay == null or _camp_ground_overlay.get_size() == _camp_canvas_size,
-		"营地可编辑地面层尺寸错误")
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	var modular_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/map_art/camp_modular_v1.json"))
+	assert(modular_data.layout_id==_camp_whitebox.id,"模块地面与正式布局版本不一致")
+	_camp_modular = CampModularArt.new()
+	_camp_modular.name = "ModularTerrain"
+	add_child(_camp_modular)
+	_camp_modular.setup(modular_data,_camp_rect)
+	# 保留编辑器地面画笔叠层；地面和道路主体仍由模块网格构成。
+	if manifest.has("ground_overlay"):
+		_camp_ground_overlay = load(String(manifest.ground_overlay)) as Texture2D
+		var overlay := Sprite2D.new()
+		overlay.name = "EditorGroundPatches"
+		overlay.texture = _camp_ground_overlay
+		overlay.centered = false
+		overlay.position = _camp_rect.position
+		overlay.scale = _camp_rect.size/Vector2(_camp_ground_overlay.get_size())
+		overlay.z_as_relative = false
+		overlay.z_index = -3999
+		add_child(overlay)
 	var unit_scale := _camp_rect.size / _camp_canvas_size
 	var object_ids: Dictionary = {}
 	for entry: Dictionary in manifest.get("objects", []):
@@ -177,6 +185,9 @@ func _load_camp_final_art() -> void:
 		assert(not object_ids.has(id), "营地整体美术实体重复：%s" % id)
 		object_ids[id] = true
 		var rect: Array = entry["rect"]
+		if id in ["blacksmith","merchant","elder_tree"]:
+			_add_camp_module(id,rect)
+			continue
 		for layer in ["back", "front"]:
 			if not entry.has(layer):
 				continue
@@ -198,6 +209,28 @@ func _load_camp_final_art() -> void:
 				_camp_foreground_count += 1
 	assert(object_ids.size() == (_camp_whitebox["entities"] as Array).size()
 		+ (_camp_whitebox["fences"] as Array).size(), "营地整体视觉必须覆盖全部原实体与障碍")
+
+## 新棚屋与树木按原实体的整体占地定位；其他专用服务物件沿用独立透明素材。
+## 只替换可视节点，真实多边形碰撞与路线不改变，纹理由ResourceLoader共享。
+func _add_camp_module(id: String, rect: Array) -> void:
+	var kind := "tree" if id=="elder_tree" else "shelter"
+	var texture := load("res://assets/environment/camp_modular_v1/"+kind+".png") as Texture2D
+	var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/environment/camp_modular_v1/manifest.json"))
+	var pivot: Array = manifest.objects[kind].pivot
+	var sprite := CampModuleOccluder.new()
+	sprite.mask_texture = load("res://assets/environment/camp_modular_v1/"+kind+"_reveal_mask.png") as Texture2D
+	sprite.name = "Camp_%s_front" % id
+	sprite.texture = texture
+	sprite.centered = false
+	sprite.offset = -Vector2(pivot[0],pivot[1])
+	var foot_y := float(rect[1])+float(rect[3])
+	sprite.position = _camp_canvas_to_world([float(rect[0])+float(rect[2])*0.5,foot_y])
+	sprite.scale = Vector2.ONE * (float(rect[2])*_camp_rect.size.x/_camp_canvas_size.x/texture.get_width())
+	sprite.z_as_relative = false
+	sprite.z_index = clampi(roundi(sprite.position.y),-3499,3500)
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_child(sprite)
+	_camp_foreground_count += 1
 
 ## 将白盒原画像素投影到游戏世界像素；只供营地加载、绘制与碰撞复用。
 func _camp_canvas_to_world(raw: Array) -> Vector2:
@@ -387,6 +420,8 @@ func _add_wall(body: StaticBody2D, a: Vector2, b: Vector2) -> void:
 
 ## 绘制纹理地面、阻挡顶面和洞壁外观；只在装载或显式失效时重绘。
 func _draw() -> void:
+	if _camp_modular != null:
+		return
 	if not _camp_whitebox.is_empty():
 		if _camp_ground_texture != null:
 			draw_texture_rect(_camp_ground_texture, _camp_rect, true)
