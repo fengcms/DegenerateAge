@@ -1,6 +1,6 @@
 extends MonsterActorArt
 ## 隔离战斗样板表现适配器；继承正式动作接口，伤害和奖励完全由宿主结算。
-## 加载期缓存图集区域，实际位移驱动步态；怪物缺方向暂显原方向，不镜像。
+## 加载期缓存图集区域，实际位移驱动步态；八向独立图集，不镜像。
 const DIRECTIONS := ["s","sw","w","nw","n","ne","e","se"]
 static var packs: Dictionary = {}
 var clips: Dictionary
@@ -29,7 +29,12 @@ func setup(actor: CharacterBody2D, actor_kind: String) -> void:
 ## 读取已构建运行图集，保持每种状态和方向共享AtlasTexture，不在热路径I/O。
 func _load_pack(actor_kind: String) -> Dictionary:
 	var result: Dictionary = {}
-	var directions: Array = DIRECTIONS if actor_kind=="hero" else ["sw"]
+	var directions: Array = DIRECTIONS.duplicate() if actor_kind=="hero" else ["sw"]
+	var extra: Dictionary = {}
+	if actor_kind!="hero" and FileAccess.file_exists("res://assets/art_pilot/combat_monsters_v1/manifest.json"):
+		var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/combat_monsters_v1/manifest.json"))
+		extra = manifest.packs[actor_kind]
+		directions.append_array(extra.keys())
 	for direction in directions:
 		result[direction] = {}
 		for state in ["idle","walk","attack","hit","death"]:
@@ -37,10 +42,14 @@ func _load_pack(actor_kind: String) -> Dictionary:
 			if actor_kind=="hero":
 				var version: String = "v3" if state=="idle" or (state=="walk" and direction=="se") else "v2" if state=="walk" and direction in ["ne","nw"] else "v1"
 				stem = "hero_"+state+"_"+direction+"_"+version
-			var atlas := load("res://assets/art_pilot/"+stem+".png") as Texture2D
+			var path := "res://assets/art_pilot/"+stem+".png"
+			if extra.has(direction):
+				path = "res://assets/art_pilot/combat_monsters_v1/"+String(extra[direction][state])
+			var atlas := load(path) as Texture2D
 			assert(atlas != null)
 			var size := Vector2(112,128) if actor_kind=="hero" else Vector2(128,96)
 			var count := 1 if actor_kind=="hero" and state=="idle" else 4
+			assert(atlas.get_size()==size*Vector2(1,count),"运行图集尺寸不符："+path)
 			var frames: Array[AtlasTexture] = []
 			for index in range(count):
 				var region := AtlasTexture.new()
@@ -49,12 +58,14 @@ func _load_pack(actor_kind: String) -> Dictionary:
 				region.filter_clip = true
 				frames.append(region)
 			result[direction][state] = frames
+	assert(result.size()==8,"战斗样板要求完整八方向图集")
 	return result
 
 ## 只切缓存帧引用，既有八向编号与正式SampleActorArt一致。
 func _show_clip(state: String, index: int) -> void:
 	pose = state
-	var direction: String = DIRECTIONS[facing] if kind=="hero" else "sw"
+	var direction: String = DIRECTIONS[facing]
+	assert(clips.has(direction),"动作朝向未装配")
 	var frames: Array = clips[direction][state]
 	phase = clampi(index,0,frames.size()-1)
 	texture = frames[phase]
@@ -96,6 +107,7 @@ func _process(delta: float) -> void:
 	var actor := get_parent() as CharacterBody2D
 	if actor == null or clips.is_empty():
 		return
+	_clock += delta
 	var displacement := actor.global_position-previous_position
 	previous_position = actor.global_position
 	actor.z_index = clampi(roundi(actor.global_position.y),-3500,3500)
@@ -114,4 +126,4 @@ func _process(delta: float) -> void:
 		_show_clip("walk",floori(walk_distance/16))
 	else:
 		walk_distance = 0
-		_show_clip("idle",0)
+		_show_clip("idle",posmod(floori(_clock*3.0),4))

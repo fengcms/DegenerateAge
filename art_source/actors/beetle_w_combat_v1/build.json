@@ -1,0 +1,18 @@
+{
+  "source": "source_padding_v2.png",
+  "sourceSize": [
+    1295,
+    1215
+  ],
+  "columns": 4,
+  "rows": 5,
+  "scale": 0.32,
+  "frameSize": [
+    128,
+    96
+  ],
+  "pivot": [
+    64,
+    80
+  ]
+}

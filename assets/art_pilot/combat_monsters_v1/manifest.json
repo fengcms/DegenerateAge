@@ -1,0 +1,115 @@
+{
+  "frameSize": [
+    128,
+    96
+  ],
+  "frames": 4,
+  "packs": {
+    "beetle": {
+      "e": {
+        "attack": "beetle_attack_e.png",
+        "death": "beetle_death_e.png",
+        "hit": "beetle_hit_e.png",
+        "idle": "beetle_idle_e.png",
+        "walk": "beetle_walk_e.png"
+      },
+      "n": {
+        "attack": "beetle_attack_n.png",
+        "death": "beetle_death_n.png",
+        "hit": "beetle_hit_n.png",
+        "idle": "beetle_idle_n.png",
+        "walk": "beetle_walk_n.png"
+      },
+      "ne": {
+        "attack": "beetle_attack_ne.png",
+        "death": "beetle_death_ne.png",
+        "hit": "beetle_hit_ne.png",
+        "idle": "beetle_idle_ne.png",
+        "walk": "beetle_walk_ne.png"
+      },
+      "nw": {
+        "attack": "beetle_attack_nw.png",
+        "death": "beetle_death_nw.png",
+        "hit": "beetle_hit_nw.png",
+        "idle": "beetle_idle_nw.png",
+        "walk": "beetle_walk_nw.png"
+      },
+      "s": {
+        "attack": "beetle_attack_s.png",
+        "death": "beetle_death_s.png",
+        "hit": "beetle_hit_s.png",
+        "idle": "beetle_idle_s.png",
+        "walk": "beetle_walk_s.png"
+      },
+      "se": {
+        "attack": "beetle_attack_se.png",
+        "death": "beetle_death_se.png",
+        "hit": "beetle_hit_se.png",
+        "idle": "beetle_idle_se.png",
+        "walk": "beetle_walk_se.png"
+      },
+      "w": {
+        "attack": "beetle_attack_w.png",
+        "death": "beetle_death_w.png",
+        "hit": "beetle_hit_w.png",
+        "idle": "beetle_idle_w.png",
+        "walk": "beetle_walk_w.png"
+      }
+    },
+    "wolf": {
+      "e": {
+        "attack": "wolf_attack_e.png",
+        "death": "wolf_death_e.png",
+        "hit": "wolf_hit_e.png",
+        "idle": "wolf_idle_e.png",
+        "walk": "wolf_walk_e.png"
+      },
+      "n": {
+        "attack": "wolf_attack_n.png",
+        "death": "wolf_death_n.png",
+        "hit": "wolf_hit_n.png",
+        "idle": "wolf_idle_n.png",
+        "walk": "wolf_walk_n.png"
+      },
+      "ne": {
+        "attack": "wolf_attack_ne.png",
+        "death": "wolf_death_ne.png",
+        "hit": "wolf_hit_ne.png",
+        "idle": "wolf_idle_ne.png",
+        "walk": "wolf_walk_ne.png"
+      },
+      "nw": {
+        "attack": "wolf_attack_nw.png",
+        "death": "wolf_death_nw.png",
+        "hit": "wolf_hit_nw.png",
+        "idle": "wolf_idle_nw.png",
+        "walk": "wolf_walk_nw.png"
+      },
+      "s": {
+        "attack": "wolf_attack_s.png",
+        "death": "wolf_death_s.png",
+        "hit": "wolf_hit_s.png",
+        "idle": "wolf_idle_s.png",
+        "walk": "wolf_walk_s.png"
+      },
+      "se": {
+        "attack": "wolf_attack_se.png",
+        "death": "wolf_death_se.png",
+        "hit": "wolf_hit_se.png",
+        "idle": "wolf_idle_se.png",
+        "walk": "wolf_walk_se.png"
+      },
+      "w": {
+        "attack": "wolf_attack_w.png",
+        "death": "wolf_death_w.png",
+        "hit": "wolf_hit_w.png",
+        "idle": "wolf_idle_w.png",
+        "walk": "wolf_walk_w.png"
+      }
+    }
+  },
+  "pivot": [
+    64,
+    80
+  ]
+}
