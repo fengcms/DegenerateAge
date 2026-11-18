@@ -2,7 +2,8 @@
   "directions": [
     "se",
     "ne",
-    "sw"
+    "sw",
+    "nw"
   ],
   "frameSize": [
     112.0,
@@ -12,7 +13,8 @@
   "idleDirections": [
     "se",
     "ne",
-    "sw"
+    "sw",
+    "nw"
   ],
   "idleSource": {
     "path": "idle_source.png",
@@ -36,6 +38,31 @@
     "size": [
       1024.0,
       1536.0
+    ]
+  },
+  "leftRearIdleSource": {
+    "path": "../hero_walk_nw_trial_v2/idle_source.png",
+    "pivot": [
+      510.0,
+      1460.0
+    ],
+    "scale": 0.066,
+    "size": [
+      1024.0,
+      1536.0
+    ]
+  },
+  "leftRearWalkSource": {
+    "columns": 4.0,
+    "path": "../hero_walk_nw_trial_v2/candidate.png",
+    "pivot": [
+      275.0,
+      710.0
+    ],
+    "scale": 0.14,
+    "sourceFrame": [
+      512.0,
+      768.0
     ]
   },
   "leftWalkSource": {

@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "../hero_walk_nw_trial_v1/candidate.png",
+  "prompt": "Use case: precise-object-edit. Edit this FOUR FRAME warrior sprite sheet, preserve exact 2048x768 canvas and four512x768 cells, all body/leg poses, clothing, sword in anatomical RIGHT hand on screen-right. Correct ONLY HEAD AND NECK orientation in ALL FOUR frames: warrior walks toward SCREEN UPPER LEFT, his nose must point LEFT away from viewer, show a tiny LEFT-facing profile on LEFT contour of head, right contour must show back of skull and hair, NOT a right-facing ear/cheek profile. Head aligned to left-pointing toes, no looking over right shoulder. Preserve topknot, body proportions, crossed back straps, muted realistic bronze armor. Genuine alpha transparent background, no ground/shadow/glow, no text. Keep complete sword and boots inside each cell."
+}

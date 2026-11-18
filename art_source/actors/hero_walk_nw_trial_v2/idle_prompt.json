@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: identity-preserve. Create ONE matching IDLE sprite of the exact rear-left warrior in this four-frame reference. Entire body head pelvis and boots face SCREEN UPPER LEFT, visible back and LEFT-facing tiny facial profile at left contour of head. Both feet planted beneath hips, neutral standing. Same elevated orthographic camera, topknot, beige scarf, bronze lamellar, crossed leather back straps, right hip pouch, short ragged cape, grey skirt, boots. Sword low in anatomical RIGHT hand on screen-right, left hand EMPTY on screen-left. Full body on1024x1536 canvas, topknot near y100, soles near y1420. Same adult proportions and worn muted realistic materials. Genuine transparent alpha background, no glow/floor/shadow/text. Do not mirror, do not switch sword hands."
+}

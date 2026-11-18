@@ -147,8 +147,8 @@ func _build_walk(root: String) -> void:
 		frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
 		atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
 	assert(atlas.save_png(root+"/assets/art_pilot/hero_walk_se_v3.png")==OK)
-	for facing in ["ne","sw"]:
-		var rear: Dictionary = spec.rearWalkSource if facing=="ne" else spec.leftWalkSource
+	for facing in ["ne","sw","nw"]:
+		var rear: Dictionary = spec.rearWalkSource if facing=="ne" else (spec.leftWalkSource if facing=="sw" else spec.leftRearWalkSource)
 		assert(rear.sourceFrame==spec.sourceFrame and rear.columns==spec.frames)
 		var rear_image := Image.load_from_file(source+rear.path)
 		assert(rear_image.get_size()==Vector2i(2048,768) and rear_image.detect_alpha()!=Image.ALPHA_NONE)
@@ -160,9 +160,9 @@ func _build_walk(root: String) -> void:
 			var frame := rear_image.get_region(Rect2i(Vector2i(index*source_size.x,0),source_size))
 			frame.resize(rear_scaled.x,rear_scaled.y,Image.INTERPOLATE_LANCZOS)
 			rear_atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,rear_scaled),rear_offset+Vector2i(0,index*size.y))
-		assert(rear_atlas.save_png(root+"/assets/art_pilot/hero_walk_"+("ne_v2" if facing=="ne" else "sw_v1")+".png")==OK)
-	for direction in ["se","ne","sw"]:
-		var idle_spec: Dictionary = spec.idleSource if direction=="se" else (spec.rearIdleSource if direction=="ne" else spec.leftIdleSource)
+		assert(rear_atlas.save_png(root+"/assets/art_pilot/hero_walk_"+("ne_v2" if facing=="ne" else ("sw_v1" if facing=="sw" else "nw_v2"))+".png")==OK)
+	for direction in ["se","ne","sw","nw"]:
+		var idle_spec: Dictionary = spec.idleSource if direction=="se" else (spec.rearIdleSource if direction=="ne" else (spec.leftIdleSource if direction=="sw" else spec.leftRearIdleSource))
 		var idle_frame := _pack_idle(source,idle_spec,size,Vector2i(spec.pivot[0],spec.pivot[1]))
 		assert(idle_frame.save_png(root+"/assets/art_pilot/hero_idle_"+direction+"_v3.png")==OK)
 	var output := FileAccess.open(root+"/assets/art_pilot/hero_walk_se_v3.json",FileAccess.WRITE)

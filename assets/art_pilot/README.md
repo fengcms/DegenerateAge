@@ -29,3 +29,5 @@ beetle_idle_v1.png同为128×384四帧图集，每帧128×96、pivot(64,80)、3f
 hero_walk_ne_v2.png新增右上四帧行走试装，112×512，一列四行112×128，pivot(56,112)，理论RGBA8为224KiB。源稿、骨架和提示词位于art_source/actors/hero_walk_ne_pose_v2，构建参数在hero_walk_pilot_v3/build.json；hero_walk_se_v3.json沿用旧文件名但现声明se/ne两个行走方向。两行走图集与两站姿理论合计560KiB。仅实际右上位移推进四帧，停步回原右上站姿，其他方向仍回退，不登记正式角色库。
 
 hero_walk_sw_v1.png为112×512四帧图集，hero_idle_sw_v3.png为112×128站姿，共用(56,112)锚点，合计理论RGBA8 280KiB。来源hero_walk_sw_trial_v1，内置image_gen源稿与提示词可追溯，使用hero_walk_pilot_v3/build.json统一构建；旧清单文件名hero_walk_se_v3.json现描述三个方向，仅隔离样板使用。
+
+左后第二版增加hero_walk_nw_v2.png（112×512）与hero_idle_nw_v3.png（112×128），每帧锚点(56,112)，理论RGBA8共280KiB。仅供隔离营地，源稿与提示词在art_source/actors/hero_walk_nw_trial_v2。

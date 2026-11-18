@@ -25,3 +25,5 @@ I原地对照前后站姿。右上移动先使用背面静态图，未制作背�
 ## 左前扩展
 
 leftWalkSource和leftIdleSource指向../hero_walk_sw_trial_v1；directions与idleDirections现为se/ne/sw。新增左前四帧与配套站姿，不覆盖旧图，运行U键试走。左后仍缺合格素材，当前非完整四向或八向。
+
+现增加nw左后修正版，leftRearWalkSource/leftRearIdleSource指向../hero_walk_nw_trial_v2；四个斜向各自独立素材，没有镜像武器或接入正式CharacterLook。

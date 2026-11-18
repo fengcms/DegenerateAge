@@ -32,7 +32,7 @@ def main():
             if 'MODULAR_ASSETS_BUILT' not in built.stdout or 'HERO_WALK_BUILT' not in built.stdout or 'MONSTER_IDLE_BUILT' not in built.stdout or 'CAMP_SUPPLIES_BUILT' not in built.stdout or 'SCRIPT ERROR' in built.stderr:
                 raise RuntimeError('素材构建未完整成功')
             return
-        for relative in ['assets/art_pilot/beetle_idle_v1.png', 'assets/art_pilot/beetle_idle_v1.json', 'assets/art_pilot/wolf_idle_v1.png', 'assets/art_pilot/wolf_idle_v1.json', 'assets/art_pilot/hero.png', 'assets/art_pilot/wolf.png', 'assets/art_pilot/beetle_v2.png', 'assets/art_pilot/hero_walk_sw_v1.png', 'assets/art_pilot/hero_idle_sw_v3.png', 'assets/art_pilot/hero_walk_ne_v2.png', 'assets/art_pilot/hero_walk_se_v3.png', 'assets/art_pilot/hero_idle_se_v3.png', 'assets/art_pilot/hero_idle_ne_v3.png', 'assets/art_pilot/hero_walk_se_v3.json']:
+        for relative in ['assets/art_pilot/beetle_idle_v1.png', 'assets/art_pilot/beetle_idle_v1.json', 'assets/art_pilot/wolf_idle_v1.png', 'assets/art_pilot/wolf_idle_v1.json', 'assets/art_pilot/hero_walk_nw_v2.png', 'assets/art_pilot/hero_idle_nw_v3.png', 'assets/art_pilot/hero.png', 'assets/art_pilot/wolf.png', 'assets/art_pilot/beetle_v2.png', 'assets/art_pilot/hero_walk_sw_v1.png', 'assets/art_pilot/hero_idle_sw_v3.png', 'assets/art_pilot/hero_walk_ne_v2.png', 'assets/art_pilot/hero_walk_se_v3.png', 'assets/art_pilot/hero_idle_se_v3.png', 'assets/art_pilot/hero_idle_ne_v3.png', 'assets/art_pilot/hero_walk_se_v3.json']:
             destination = project / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / relative, destination)

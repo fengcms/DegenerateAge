@@ -1,0 +1,19 @@
+{
+  "actorName": "守护者左后",
+  "status": "isolated_motion_trial",
+  "frameSize": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [
+    275,
+    710
+  ],
+  "scale": 0.14,
+  "direction": "nw",
+  "guide": "pose_guide.png",
+  "issues": "左后头颈朝向修正试装，仍需精修步幅与布料"
+}
