@@ -111,6 +111,12 @@ func _process(delta: float) -> void:
 	var displacement := actor.global_position-previous_position
 	previous_position = actor.global_position
 	actor.z_index = clampi(roundi(actor.global_position.y),-3500,3500)
+	if actor.get("is_dead")==false and action=="death":
+		action = ""
+		action_time = 0
+		walk_distance = 0
+	if action=="attack" and action_time>=0.08 and displacement.length_squared()>0.01:
+		action = ""
 	if actor.get("is_dead")==true and action!="death":
 		begin_death()
 	if not action.is_empty():
