@@ -9,6 +9,7 @@ var recording := false
 var samples: Array[float] = []
 var drawn_start := 0
 var previous_usec := 0
+var slow_frames: Array[Dictionary] = []
 var camp: Node2D
 var hero: PlayerCharacter
 var enemies: Array[Monster] = []
@@ -43,6 +44,7 @@ func _ready() -> void:
 	for actor in camp.monster_previews:
 		actor.free()
 	var ground := load("res://tools/camp_combat/ground.gd").new() as IsoGround
+	ground.name = "Ground"
 	ground.cave = camp.navigator
 	ground.map_id = "wild_trial"
 	add_child(ground)
@@ -57,6 +59,7 @@ func _ready() -> void:
 	hero.safe_margin = 0.001
 	_replace_art(hero,"hero")
 	var camera := Camera2D.new()
+	camera.name = "Camera2D"
 	camera.position = Vector2(0,-260)
 	add_child(camera)
 	for entry in [{"id":"wolf_corrupted","art":"wolf","cell":Vector2i(9,5)},{"id":"shellback_bug","art":"beetle","cell":Vector2i(11,10)}]:
@@ -118,7 +121,10 @@ func _process(delta: float) -> void:
 		return
 	if recording:
 		var now := Time.get_ticks_usec()
-		samples.append(float(now-previous_usec)/1000.0)
+		var elapsed_ms := float(now-previous_usec)/1000.0
+		samples.append(elapsed_ms)
+		if elapsed_ms>25:
+			slow_frames.append({"frame":samples.size(),"ms":elapsed_ms,"damage":damage_events,"kills":kills,"pickups":pickups,"pose":hero.sample_art.pose,"texture_bytes":Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED),"process_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"physics_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000})
 		previous_usec = now
 	for occluder in camp.occluders:
 		occluder.update_reveal(hero.position,delta)
@@ -200,6 +206,7 @@ func _capture(name: String) -> void:
 func _report_wave() -> void:
 	var drawn := Engine.get_frames_drawn()-drawn_start
 	assert(drawn>=samples.size()*0.9,"窗口没有持续绘制，不能作为战斗性能样本")
+	print("COMBAT_SLOW_FRAMES: ",JSON.stringify(slow_frames))
 	samples.sort()
 	release_counts.append(get_tree().get_node_count())
 	print("COMBAT_WAVE: ",JSON.stringify({"wave":completed_waves,"frames":samples.size(),"drawn":drawn,"median_ms":samples[samples.size()/2],"p95_ms":samples[mini(samples.size()-1,floori(samples.size()*0.95))],"p99_ms":samples[mini(samples.size()-1,floori(samples.size()*0.99))],"peak_ms":samples[-1],"nodes":get_tree().get_node_count(),"static_bytes":Performance.get_monitor(Performance.MEMORY_STATIC),"texture_bytes":Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)}))

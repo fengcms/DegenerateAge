@@ -33,6 +33,7 @@ var actor_names_visible := false
 var object_manifest: Dictionary
 var layouts: Array
 var selected_layout := 0
+var grid_size := Vector2i(16,16)
 var world: Node2D
 var player: CharacterBody2D
 var navigator: CaveLayout
@@ -92,9 +93,9 @@ func _build_atlas() -> void:
 
 ## 每层各建一个合批网格：土底、草土覆盖、道路，按固定顺序叠加。
 func _ground(rows: Array, layer: int) -> void:
-	var builder := FlatTileMesh.new(256,true)
-	for y in range(16):
-		for x in range(16):
+	var builder := FlatTileMesh.new(grid_size.x*grid_size.y,true)
+	for y in range(grid_size.y):
+		for x in range(grid_size.x):
 			if layer>0 and rows[y][x] != "1":
 				continue
 			var slot := shape_ids.find(SampleRoadRules.at(rows,Vector2i(x,y)))+1 if layer>0 else 0
@@ -146,6 +147,7 @@ func _switch_layout(index: int) -> void:
 	world.position = OFFSET
 	add_child(world)
 	var definition: Dictionary = layouts[index]
+	grid_size = Vector2i(definition.roads[0].length(),definition.roads.size())
 	_ground(definition.roads,0)
 	_ground(definition.grass,1)
 	_ground(definition.roads,2)
@@ -174,18 +176,18 @@ func _switch_layout(index: int) -> void:
 		world.add_child(sprite)
 		for footprint in spec.footprint:
 			blocked[cell+Vector2i(footprint[0],footprint[1])] = true
-	for y in range(-1,17):
-		for x in range(-1,17):
-			if x == -1 or y == -1 or x == 16 or y == 16:
+	for y in range(-1,grid_size.y+1):
+		for x in range(-1,grid_size.x+1):
+			if x == -1 or y == -1 or x == grid_size.x or y == grid_size.y:
 				blocked[Vector2i(x,y)] = true
 	var rows: Array = []
-	for y in range(16):
+	for y in range(grid_size.y):
 		var row := ""
-		for x in range(16):
+		for x in range(grid_size.x):
 			row += "0" if blocked.has(Vector2i(x,y)) else "1"
 		rows.append(row)
 	var file := FileAccess.open("res://compiled_layout.json",FileAccess.WRITE)
-	file.store_string(JSON.stringify({"grid_size":[16,16],"walkable_rows":rows}))
+	file.store_string(JSON.stringify({"grid_size":[grid_size.x,grid_size.y],"walkable_rows":rows}))
 	file.close()
 	navigator = CaveLayout.new("res://compiled_layout.json")
 	for cell in blocked:

@@ -16,7 +16,7 @@ static func at(rows: Array, cell: Vector2i) -> int:
 	var bits := 0
 	for i in range(8):
 		var p: Vector2i = cell + NEIGHBORS[i]
-		if p.x >= 0 and p.y >= 0 and p.x < 16 and p.y < 16 and rows[p.y][p.x] == "1":
+		if p.x >= 0 and p.y >= 0 and p.y < rows.size() and p.x < rows[p.y].length() and rows[p.y][p.x] == "1":
 			bits |= 1 << i
 	return normalize(bits)
 
