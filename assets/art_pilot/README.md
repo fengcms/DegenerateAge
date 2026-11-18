@@ -45,3 +45,5 @@ wolf_attack_v1.png、beetle_attack_v1.png各128×384（四帧128×96），共用
 hero_hit_se_v1 与 hero_death_se_v1 的 PNG/JSON 分别为四帧受击和倒地图集，112×512、单帧 112×128、锚点 (56,112)，RGBA8 合计 448 KiB。源稿与提示词在 art_source/actors/hero_hit_se_trial_v1、hero_death_se_trial_v1，由模块化营地构建工具生成。只供隔离样板 F/C/V 预览；倒地末帧保持，未接正式伤害或复活事件。
 
 hero_attack_ne_v1.png/json：独立右后挥剑四阶段，112×512、帧 112×128、锚点 (56,112)，RGBA8 理论 224 KiB。源稿及构建参数在 art_source/actors/hero_attack_ne_trial_v1；隔离营地 4 键预览，正式角色外观不变。
+
+hero_attack_sw_v1.png/json 为左前挥剑四阶段，112×512，共224KiB RGBA8；源和提示词在 art_source/actors/hero_attack_sw_trial_v1。仅隔离营地5键预览。

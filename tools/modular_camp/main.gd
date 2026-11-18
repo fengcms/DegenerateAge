@@ -14,6 +14,7 @@ const DEFINITIONS := {
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var reaction_specs: Dictionary = {}
+var left_attack_spec: Dictionary
 var rear_attack_spec: Dictionary
 var attack_spec: Dictionary
 var motion_enabled := true
@@ -47,6 +48,7 @@ var occluders: Array[SampleOccluder] = []
 func _ready() -> void:
 	for state in ["hit","death"]:
 		reaction_specs[state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_se_v1.json"))
+	left_attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_sw_v1.json"))
 	rear_attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_ne_v1.json"))
 	attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_se_v1.json"))
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
@@ -205,7 +207,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\nF受击 / C倒地 / V重置 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / 5左前挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\nF受击 / C倒地 / V重置 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
 
 ## 按档案定位角色表现；主角支持八个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -221,6 +223,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 			sprite.setup_extra(direction,_texture("assets/art_pilot/hero_walk_"+direction+"_v1.png"),_texture("assets/art_pilot/hero_idle_"+direction+"_v3.png"))
 		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_se_v1.png"),attack_spec)
 		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_ne_v1.png"),rear_attack_spec)
+		sprite.setup_attack(_texture("assets/art_pilot/hero_attack_sw_v1.png"),left_attack_spec)
 		for state in reaction_specs:
 			sprite.setup_reaction(_texture("assets/art_pilot/hero_"+state+"_se_v1.png"),reaction_specs[state])
 		sprite.enabled = motion_enabled
@@ -263,6 +266,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_start_front_demo()
 		elif event.keycode in [KEY_1,KEY_2,KEY_3]:
 			_start_extra_demo("n" if event.keycode==KEY_1 else ("e" if event.keycode==KEY_2 else "w"))
+		elif event.keycode == KEY_5:
+			_start_attack_demo("sw")
 		elif event.keycode in [KEY_T,KEY_4]:
 			_start_attack_demo("se" if event.keycode==KEY_T else "ne")
 		elif event.keycode == KEY_I:
@@ -413,6 +418,7 @@ func _verify() -> void:
 		print("VERIFY_STAGE: ",index," / hero_attack")
 		await _verify_attack(captures)
 		await _verify_attack(captures,"ne")
+		await _verify_attack(captures,"sw")
 		await _verify_reactions(captures)
 		await _verify_wall_stop(captures,"nw")
 		await _verify_wall_stop(captures,"sw")
