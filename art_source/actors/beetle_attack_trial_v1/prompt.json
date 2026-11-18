@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "../beetle_idle_trial_v1/candidate.png",
+  "prompt": "Use case: identity-preserve. FOUR distinct frames of the exact copper armored beetle performing a short STANDING MANDIBLE SNAP attack,1536x1024 genuine transparent PNG,2x2 cells768x512. Row-major phases: 1 windup head draws back mandibles wide, 2 forward strike head extends lower-left mandibles open, 3 contact mandibles snapped closed, 4 recovery head returns neutral. Preserve bronze/copper verdigris segmented carapace, six jointed insect legs, two antennae, same elevated orthographic camera and screen lower-left facing. Legs brace on ground, shell and rear feet stay at same location, only head/neck/frontlegs modestly move. Same scale every frame, ALL antennae/legs/shell stay inside each cell with24px transparent margin. No extra legs or weapons, no jump, no enemy, blood, effects, text, shadow or glow. Background fully alpha transparent."
+}

@@ -1,0 +1,33 @@
+{
+  "status": "isolated_attack_trial",
+  "source": "candidate_alpha_v2.png",
+  "sourceFrame": [
+    768,
+    512
+  ],
+  "columns": 2,
+  "frames": 4,
+  "scale": 0.16,
+  "sourcePivot": [
+    384,
+    460
+  ],
+  "frameSize": [
+    128,
+    96
+  ],
+  "pivot": [
+    64,
+    80
+  ],
+  "direction": "sw",
+  "state": "attack",
+  "loop": false,
+  "frameSeconds": [
+    0.2,
+    0.12,
+    0.12,
+    0.2
+  ],
+  "visualContactFrame": 2
+}

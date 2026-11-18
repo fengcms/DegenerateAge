@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: background-extraction. Remove ALL white/grey background and halos from this wolf four-frame sheet. Preserve exact1536x1024 canvas and 2x2 cell layout, all fur/paws/tail silhouettes, scale, pose and jaw expressions unchanged. Genuine alpha transparency everywhere outside wolves, INCLUDING all borders and gaps. No glow, floor, contact shadow or opaque backdrop. Keep every tail and paw inside its original cell."
+}

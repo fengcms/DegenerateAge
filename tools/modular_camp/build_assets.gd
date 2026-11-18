@@ -67,7 +67,8 @@ func _initialize() -> void:
 	print("BEETLE_BUILT: ",beetle.get_size())
 	_build_walk(root)
 	_build_hero_attack(root)
-	_build_monster_idle(root)
+	_build_monster_motion(root,"idle")
+	_build_monster_motion(root,"attack")
 	_build_supplies(root,manifest)
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))
@@ -183,10 +184,10 @@ func _pack_idle(source: String, spec: Dictionary, size: Vector2i, pivot: Vector2
 	frame.blit_rect(idle,Rect2i(Vector2i.ZERO,scaled),offset)
 	return frame
 
-## 固定2×2源格统一倍率打包两类待机，保留帧间真实差异，不逐帧吸附足尖。
-func _build_monster_idle(root: String) -> void:
+## 固定2×2源格统一倍率打包两类待机或攻击，保留帧间真实差异，不逐帧吸附足尖。
+func _build_monster_motion(root: String, state: String) -> void:
 	for kind in ["wolf","beetle"]:
-		var folder: String = root+"/art_source/actors/"+kind+"_idle_trial_v1/"
+		var folder: String = root+"/art_source/actors/"+kind+"_"+state+"_trial_v1/"
 		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
 		var source := Image.load_from_file(folder+spec.source)
 		var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
@@ -201,10 +202,10 @@ func _build_monster_idle(root: String) -> void:
 			_assert_frame_edges(frame)
 			frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
 			atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
-		var output: String = root+"/assets/art_pilot/"+kind+"_idle_v1"
+		var output: String = root+"/assets/art_pilot/"+kind+"_"+state+"_v1"
 		assert(atlas.save_png(output+".png")==OK)
 		FileAccess.open(output+".json",FileAccess.WRITE).store_string(JSON.stringify(spec,"  "))
-	print("MONSTER_IDLE_BUILT")
+	print("MONSTER_"+state.to_upper()+"_BUILT")
 
 ## 离线逐边检查帧格没有截断可见肢体或混入背景；低于5% alpha的残留仍需棋盘底人工复核。
 func _assert_frame_edges(frame: Image) -> void:

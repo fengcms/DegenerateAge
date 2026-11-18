@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "../wolf_idle_trial_v1/candidate.png",
+  "prompt": "Use case: identity-preserve. Create FOUR DISTINCT frames of a SHORT STANDING BITE attack for the exact corrupted wolf in reference. 1536x1024 transparent PNG, 2x2 cells each768x512, order top-left windup, top-right bite extension, bottom-left jaw closed followthrough, bottom-right recovery. Wolf stays facing screen lower-left, elevated orthographic camera fixed. Preserve exact shaggy grey fur, purple subtle fissures, four canine legs, long tail, long muzzle. Windup neck retracts and crouches; extension head thrusts 15% forward with jaws wide; followthrough jaw shuts and forelegs brace; recovery returns to neutral reference silhouette. HIND paws fixed same anchor in every cell, forepaws stay near ground, no airborne leap. Keep body scale constant, entire silhouette including tail, paws and muzzle within cell with minimum24px transparent margin. No enemy, gore, effects, labels, white or colored background, cast shadow, glow. Genuine ALPHA transparency."
+}

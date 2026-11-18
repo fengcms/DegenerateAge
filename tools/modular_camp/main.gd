@@ -18,6 +18,7 @@ var motion_enabled := true
 var monster_motion_enabled := true
 var monster_motion_paused := false
 var monster_specs: Dictionary = {}
+var monster_attack_specs: Dictionary = {}
 var verification_direction := Vector2.ZERO
 var actor_specs: Dictionary
 var monster_previews: Array[Sprite2D] = []
@@ -45,6 +46,7 @@ func _ready() -> void:
 	attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_se_v1.json"))
 	walk_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_walk_se_v3.json"))
 	for kind in ["wolf","beetle"]:
+		monster_attack_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_attack_v1.json"))
 		monster_specs[kind] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_idle_v1.json"))
 	actor_specs = JSON.parse_string(FileAccess.get_file_as_string("res://actors.json"))
 	layouts = JSON.parse_string(FileAccess.get_file_as_string("res://layouts.json"))
@@ -198,7 +200,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上 · H动作对照 · I转向 · J怪物动作\nT挥剑 · K暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角四个斜向四帧试装 / 狼与甲虫待机试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上 · H动作对照 · I转向 · J怪物动作\nT挥剑 / R怪物攻击 · K暂停怪物 / L逐帧 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角四个斜向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
 
 ## 按档案定位角色表现；主角支持四个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -213,6 +215,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 		sprite.enabled = motion_enabled
 	elif sprite is SampleIdleSprite:
 		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
+		sprite.setup_attack(_texture("assets/art_pilot/"+kind+"_attack_v1.png"),monster_attack_specs[kind])
 		sprite.set_enabled(monster_motion_enabled)
 		sprite.set_paused(monster_motion_paused)
 	sprite.set_meta("actor_kind",kind)
@@ -250,6 +253,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_I:
 			waypoints.clear()
 			_turn_preview()
+		elif event.keycode == KEY_R:
+			_start_monster_attacks()
 		elif event.keycode == KEY_J:
 			_set_monster_motion(not monster_motion_enabled)
 		elif event.keycode == KEY_K:
@@ -362,6 +367,7 @@ func _verify() -> void:
 		_verify_actors()
 		print("VERIFY_STAGE: ",index," / monster_idle")
 		await _verify_monster_idle(captures)
+		await _verify_monster_attack(captures)
 		print("VERIFY_STAGE: ",index," / hero_walk")
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
@@ -409,12 +415,15 @@ func _verify() -> void:
 		var old := Vector2i(wall[0],wall[1])
 		assert(player_art.start_attack())
 		var old_art: WeakRef = weakref(player_art)
+		_start_monster_attacks()
+		var old_monster: WeakRef = weakref(monster_previews[0])
 		moved_wall = true
 		_switch_layout(index)
 		assert(not player_art.attacking)
 		await get_tree().process_frame
 		await get_tree().process_frame
-		assert(old_art.get_ref()==null,"切图应释放旧动作实例")
+		assert(old_art.get_ref()==null and old_monster.get_ref()==null,"切图应释放旧动作实例")
+		assert(not monster_previews[0].attacking)
 		assert(navigator.is_walkable(old))
 		assert(not navigator.is_walkable(old+Vector2i(0,2)))
 		assert(waypoints.is_empty())
@@ -642,7 +651,7 @@ func _verify_rear(captures: String) -> void:
 	assert(player_art.texture==player_art.rear_idle,"重新启用应保留背向")
 	player.position = origin
 
-## 同时切换展示怪物待机开关，切图保留用户选择；不改变布局或物理。
+## 同时切换展示怪物动作开关，切图保留用户选择；不改变布局或物理。
 func _set_monster_motion(value: bool) -> void:
 	monster_motion_enabled = value
 	for actor in monster_previews:
@@ -890,4 +899,69 @@ func _verify_attack(captures: String) -> void:
 	player_art.enabled = true
 	player_art.update_motion(Vector2.ZERO)
 	assert(player_art.texture==player_art.directional_idle and player.position==origin)
+	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked)
+
+## 同时触发两怪原地单次攻击，保持暂停选择，播放中重复触发由实例拒绝。
+func _start_monster_attacks() -> void:
+	for actor in monster_previews:
+		if actor is SampleIdleSprite:
+			actor.start_attack()
+
+## 两布局覆盖攻击四帧、自动恢复、暂停逐帧、原图取消及落点/导航保持，不触发战斗。
+func _verify_monster_attack(captures: String) -> void:
+	var revision := navigator.navigation_revision
+	var blocked := navigator.blocked_cells().duplicate()
+	var positions: Array[Vector2] = []
+	var seen: Dictionary = {}
+	var shots: Dictionary = {}
+	_set_monster_paused(false)
+	for actor in monster_previews:
+		positions.append(actor.position)
+		seen[actor.get_meta("actor_kind")] = {}
+		assert(actor.start_attack())
+		assert(not actor.start_attack())
+	var deadline := Time.get_ticks_msec()+1500
+	while Time.get_ticks_msec()<deadline:
+		if not captures.is_empty():
+			await RenderingServer.frame_post_draw
+		else:
+			await get_tree().process_frame
+		for actor in monster_previews:
+			if actor.attacking:
+				var kind: String = actor.get_meta("actor_kind")
+				var index: int = actor.current_frame
+				seen[kind][index] = true
+				assert(actor.texture==actor.attack_regions[index])
+				var key := "attack_%s_%d_%d.png"%[kind,selected_layout,index]
+				if not captures.is_empty() and not shots.has(key):
+					shots[key] = get_viewport().get_texture().get_image()
+	for kind in seen:
+		assert(seen[kind].size()==4,"怪物攻击未实际显示四帧")
+	for actor in monster_previews:
+		assert(not actor.attacking and actor.texture in actor.regions)
+	assert(shots.size()<=8)
+	for key in shots:
+		shots[key].save_png(captures+"/"+key)
+	shots.clear()
+	_set_monster_paused(true)
+	_start_monster_attacks()
+	await get_tree().create_timer(0.3).timeout
+	for index in range(monster_previews.size()):
+		var actor: SampleIdleSprite = monster_previews[index]
+		assert(actor.attacking and actor.current_frame==0 and not actor.is_processing())
+		for frame in range(1,4):
+			actor.step_frame()
+			assert(actor.current_frame==frame and actor.texture==actor.attack_regions[frame])
+		actor.step_frame()
+		assert(not actor.attacking and actor.texture==actor.regions[0] and actor.paused)
+		assert(actor.start_attack())
+		actor.set_paused(false)
+		actor._process(actor.attack_duration+0.1)
+		assert(not actor.attacking and actor.texture==actor.regions[0])
+		assert(actor.start_attack())
+		actor.set_enabled(false)
+		assert(not actor.attacking and actor.texture==actor.original and not actor.start_attack())
+		actor.set_enabled(true)
+		assert(actor.position==positions[index] and actor.z_index==roundi(actor.position.y))
+	_set_monster_paused(false)
 	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked)
