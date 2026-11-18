@@ -2,8 +2,41 @@
   {
     "source": "art_source/actors/hero_sit_modular_v1/source.png",
     "output": "assets/sprites/player/guardian_modular_v1/sit_atlas.png",
-    "frame": [112,128],
-    "pivot": [56,112],
+    "frame": [
+      112,
+      128
+    ],
+    "pivot": [
+      56,
+      112
+    ],
     "height": 70
+  },
+  {
+    "source": "art_source/actors/hero_wing_modular_v1/idle_source_v2.png",
+    "output": "assets/sprites/player/guardian_modular_v1/wing_idle_atlas.png",
+    "frame": [
+      128,
+      128
+    ],
+    "pivot": [
+      64,
+      112
+    ],
+    "height": 96
+  },
+  {
+    "source": "art_source/actors/hero_wing_modular_v1/walk_source.png",
+    "output": "assets/sprites/player/guardian_modular_v1/wing_walk_atlas.png",
+    "frame": [
+      128,
+      128
+    ],
+    "pivot": [
+      64,
+      112
+    ],
+    "height": 96,
+    "poses": 2
   }
 ]

@@ -99,9 +99,9 @@ func _show_frame(next_pose: String, next_phase: int) -> void:
 	if not _mount_id.is_empty() and next_pose in ["idle", "walk"]:
 		var mount: Dictionary = _mounts[_mount_id]
 		wanted = mount[next_pose]
-		frames = 4
+		frames = int(mount.get(next_pose+"_frames",4))
 		pivot = mount.pivot
-		factor = 1.0
+		factor = float(mount.get("scale_factor",1.0))
 	phase = clampi(next_phase, 0, frames - 1)
 	if texture != wanted:
 		texture = wanted
@@ -219,6 +219,12 @@ func _process_frames(actor: CharacterBody2D, delta: float) -> void:
 		_show_frame("attack", mini(int(_animations.attack.frames)-1, contact+int((1.0 - _attack_left / _attack_duration) * (int(_animations.attack.frames)-contact))))
 	elif actor.velocity.length_squared() > 1.0:
 		face(actor.velocity)
-		_show_frame("walk", posmod(int(_clock * 10.0), int(_animations.walk.frames) if _mount_id.is_empty() else 4))
+		_show_frame("walk", posmod(int(_clock * 10.0), _frame_count("walk")))
 	else:
-		_show_frame("idle", posmod(int(_clock * 6.0), int(_animations.idle.frames) if _mount_id.is_empty() else 4))
+		_show_frame("idle", posmod(int(_clock * 6.0), _frame_count("idle")))
+
+## 根据当前形象与骑乘状态读取实际帧数；兼容原四帧坐骑，不将简化步态强行播放为四帧。
+func _frame_count(state: String) -> int:
+	if not _mount_id.is_empty() and state in ["idle","walk"]:
+		return int(_mounts[_mount_id].get(state+"_frames",4))
+	return int(_animations[state].frames)

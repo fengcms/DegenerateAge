@@ -61,7 +61,7 @@ func _ready() -> void:
 	GameState.set_panel_open("inventory", true)
 	game._unhandled_input(press)
 	check(GameState.active_mount == "mount_corrupted_wing", "面板打开时 R 仍可直接骑乘")
-	check(art.texture == wing.idle and art.vframes == 4 and art.offset == -wing.pivot,
+	check(art.texture == wing.idle and art.vframes == 1 and art.offset == -wing.pivot,
 		"骑乘后立即使用双翼待机图集与脚底锚点")
 	player.velocity = Vector2(100, 0)
 	art._process(0.11)

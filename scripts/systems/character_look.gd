@@ -40,10 +40,13 @@ const LOOKS := {
 		},
 		"mounts": {
 			"mount_corrupted_wing": {
-				"idle": preload("res://assets/sprites/player/guardian/mounts/corrupted_wing_idle_atlas.png"),
-				"walk": preload("res://assets/sprites/player/guardian/mounts/corrupted_wing_walk_atlas.png"),
+				"idle": preload("res://assets/sprites/player/guardian_modular_v1/wing_idle_atlas.png"),
+				"walk": preload("res://assets/sprites/player/guardian_modular_v1/wing_walk_atlas.png"),
 				"frame": Vector2i(128, 128),
-				"pivot": Vector2(64, 104),
+				"pivot": Vector2(64, 112),
+				"scale_factor": 2.0/3.0,
+				"idle_frames": 1,
+				"walk_frames": 2,
 			},
 		},
 	},
