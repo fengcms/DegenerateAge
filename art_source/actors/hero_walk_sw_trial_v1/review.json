@@ -1,0 +1,19 @@
+{
+  "actorName": "守护者左前",
+  "status": "under_review",
+  "frameSize": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [
+    275,
+    710
+  ],
+  "scale": 0.14,
+  "direction": "sw",
+  "guide": "pose_guide.png",
+  "issues": "左前候选：需检查步态交替、足尖漂移与缺失配套站姿"
+}

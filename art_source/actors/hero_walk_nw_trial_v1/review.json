@@ -1,0 +1,19 @@
+{
+  "actorName": "守护者左后",
+  "status": "rejected_for_runtime",
+  "frameSize": [
+    512,
+    768
+  ],
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "pivot": [
+    275,
+    710
+  ],
+  "scale": 0.14,
+  "direction": "nw",
+  "guide": "pose_guide.png",
+  "issues": "未通过：头颈仍偏右，与左向足尖不一致；先保留审片"
+}

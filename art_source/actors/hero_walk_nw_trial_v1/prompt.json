@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen",
+  "references": [
+    "pose_guide.png",
+    "../hero_walk_pilot_v3/rear_idle_source.png"
+  ],
+  "prompt": "Use case: sketch-to-render. First image is exact FOUR FRAME rear LEFT walking pose/camera guide. Second is character IDENTITY only, not direction. Dress the four mannequin poses with that exact worn bronze lamellar warrior. Entire body/back/pelvis/knees/toes face SCREEN UPPER LEFT (northwest) in all frames, NOT upper right. Blue limbs anatomical LEFT, red anatomical RIGHT; sword held LOW only by red RIGHT hand on far screen-right side; keep near blue left hand EMPTY. Preserve ALL four distinct guide leg poses and alternating planted legs, fixed elevated orthographic camera and cell placement. Same black topknot, beige scarf, crossed leather back straps, pouch on anatomical right hip, short ragged cape and grey skirt, boots. Keep knees/boots readable. Four512x768 cells in2048x768 horizontal strip. No mirrored character, swapped hand, extra limbs, red/blue colors, labels. Genuine transparent background, no shadow/ground/glow. Realistic muted weathered material rendering."
+}

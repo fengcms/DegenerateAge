@@ -56,14 +56,14 @@ def knee(hip, ankle):
 
 
 def main():
-    """按se/ne相机渲染固定正交四姿态；左右肢体和前方不变，切换视角不镜像骨架。"""
+    """按四个斜向相机渲染固定正交四姿态；左右肢体和前方不变，切换视角不镜像骨架。"""
     parser = argparse.ArgumentParser()
     parser.add_argument('output', type=Path)
-    parser.add_argument('--direction', choices=['se', 'ne'], default='se')
+    parser.add_argument('--direction', choices=['se', 'ne', 'sw', 'nw'], default='se')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     output = args.output.resolve()
-    camera_position = (-6,-8,7) if args.direction == 'se' else (-6,8,7)
-    screen_right = Vector((0.8,-0.6,0)) if args.direction == 'se' else Vector((-0.8,-0.6,0))
+    camera_position = {'se':(-6,-8,7), 'ne':(-6,8,7), 'sw':(6,-8,7), 'nw':(6,8,7)}[args.direction]
+    screen_right = Vector((-camera_position[1],camera_position[0],0)).normalized()
     output.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
@@ -119,15 +119,15 @@ def main():
     projected_origin = world_to_camera_view(scene, camera, Vector((0,0,0)))
     projected_forward = world_to_camera_view(scene, camera, Vector((0,-1,0)))
     projected_delta = projected_forward - projected_origin
-    assert projected_delta.x > 0
-    assert projected_delta.y > 0 if args.direction == "ne" else projected_delta.y < 0
+    assert projected_delta.x > 0 if args.direction.endswith("e") else projected_delta.x < 0
+    assert projected_delta.y > 0 if args.direction.startswith("n") else projected_delta.y < 0
     bpy.ops.object.light_add(type='AREA',location=(-3,-4,8))
     bpy.context.object.data.energy = 1600
     bpy.context.object.data.shape = 'DISK'
     bpy.context.object.data.size = 6
     scene.render.filepath = str(output/'pose_guide.png')
     bpy.ops.render.render(write_still=True)
-    (output/'pose_checks.json').write_text(json.dumps({'direction':args.direction,'camera':camera_position,'screen_right':list(screen_right),'units':'meters','forward':[0,-1,0],'left_color':'blue','right_color':'red','frames':reports},indent=2)+'\n')
+    (output/'pose_checks.json').write_text(json.dumps({'direction':args.direction,'camera':camera_position,'projected_forward_delta':list(projected_delta),'screen_right':list(screen_right),'units':'meters','forward':[0,-1,0],'left_color':'blue','right_color':'red','frames':reports},indent=2)+'\n')
     print('POSE_GUIDE_OK: alternating contacts / equal bone lengths / planted sole heights')
 
 

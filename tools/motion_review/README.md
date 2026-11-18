@@ -44,3 +44,7 @@ python3 tools/motion_review/launch.py --source art_source/actors/hero_walk_pose_
 build_pose_guide.py新增--direction ne；默认se保持原骨架坐标。相机和四人偶排列随视角一起改变，身体前方、左蓝/右红肢体及骨长不变，不使用镜像。渲染前额外验证身体前方投影确实指向屏幕右上/右下。Blender分别输出两方向POSE_GUIDE_OK，前后四帧骨架数值与原se版一致；数值通过仍不能批准AI输出的步态。
 
 review.json还可指定referencePivot（静态对照图像素坐标）；默认仍是底边中心。使用带透明帧格的站姿时必须提供其实际接触区锚点，例如(56,112)，避免把帧底当脚底造成虚假的高低差。此字段只调整对照图，不修正候选各帧的漂移。
+
+## 四斜向姿态参照
+
+--direction现支持se/ne/sw/nw。四方向使用同一腿骨和接触姿态，只改变相机以及沿画面水平排列的方向；输出projected_forward_delta，验证身体前方在画面中的左右/上下符号。左向不镜像左右手，不自动批准生成美术。原se/ne数值骨架回归保持一致。

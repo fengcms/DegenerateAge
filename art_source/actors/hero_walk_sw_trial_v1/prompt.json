@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen",
+  "references": [
+    "pose_guide.png",
+    "../hero_walk_pilot_v3/idle_source.png"
+  ],
+  "prompt": "Use case: sketch-to-render. First image is exact FOUR frame walking skeleton pose and camera reference. Second is warrior identity only, NOT its facing. Produce transparent 2048x768 sheet four equal512x768 cells. Dress all four skeleton poses as that same original dark bronze lamellar warrior. ENTIRE body including chest, pelvis, knees and toes faces SCREEN LOWER LEFT (southwest), exactly like skeleton noses and toes. Do not merely turn head. Blue is anatomical LEFT limb, red anatomical RIGHT. Preserve each distinct guide pose and alternating support legs. Sword held LOW ONLY in RED/anatomical RIGHT hand, far arm on screen left. Preserve black topknot, beige scarf, circular ornament on anatomical right chest, right hip pouch, short torn cape, worn bronze plates, grey skirt and boots. Same body scale and centers as guide, fixed orthographic elevated camera. No body mirroring, no switched hands, no extra limbs, no colored mannequin parts, no frame labels. Genuine transparent background without ground, glow or shadow. Realistic muted worn materials."
+}
