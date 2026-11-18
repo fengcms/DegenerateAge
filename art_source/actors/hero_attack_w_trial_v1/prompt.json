@@ -1,0 +1,4 @@
+{
+  "tool": "image_gen",
+  "prompt": "Create original warrior four-frame sword attack sprite sheet using reference identity, all facing SCREEN LEFT strict LEFT PROFILE from elevated isometric camera. Near anatomical LEFT hand EMPTY, far anatomical RIGHT hand holds ONLY straight sword. NO pouch or dagger on near left hip. Worn bronze charcoal lamellar armor, beige ragged scarf, tied hair. 2x2 equal square cells: raised sword windup, forward downward strike toward left, low followthrough, recovery. Same proportions feet scale. Requested2048square1024cells; feet centered512,900; entire silhouette including sword within100..920 x/y with broad fully transparent margins. Clean real alpha no fog, halo, shadows, floor marks, effects, text or grid. Detailed restrained realistic Chinese fantasy MMORPG game sprite, not mirror of opposite side. Right hand sword always, left empty."
+}

@@ -49,3 +49,5 @@ hero_attack_ne_v1.png/json：独立右后挥剑四阶段，112×512、帧 112×1
 hero_attack_sw_v1.png/json 为左前挥剑四阶段，112×512，共224KiB RGBA8；源和提示词在 art_source/actors/hero_attack_sw_trial_v1。仅隔离营地5键预览。
 
 hero_attack_nw_v1.png/json 为左后挥剑四阶段，112×512、锚点(56,112)，224KiB RGBA8；源和提示词在 art_source/actors/hero_attack_nw_trial_v1，隔离营地6键播放。
+
+hero_attack_s/n/e/w_v1.png/json为四个独立正向和侧向挥剑，各112×512、锚点(56,112)，共896KiB RGBA8。源及提示词在对应art_source/actors/hero_attack_<方向>_trial_v1目录，隔离营地7/8/9/0键预览，不接正式战斗。

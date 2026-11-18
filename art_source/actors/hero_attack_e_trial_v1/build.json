@@ -1,0 +1,33 @@
+{
+  "source": "candidate.png",
+  "sourceFrame": [
+    627,
+    627
+  ],
+  "columns": 2,
+  "frames": 4,
+  "scale": 0.15,
+  "sourcePivot": [
+    315,
+    610
+  ],
+  "frameSize": [
+    112,
+    128
+  ],
+  "pivot": [
+    56,
+    112
+  ],
+  "direction": "e",
+  "state": "attack",
+  "loop": false,
+  "frameSeconds": [
+    0.18,
+    0.09,
+    0.15,
+    0.18
+  ],
+  "visualContactFrame": 1,
+  "status": "isolated_motion_trial"
+}
