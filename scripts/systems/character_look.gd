@@ -10,7 +10,8 @@ extends RefCounted
 ##   - 单一事实源是武器模板的 look 字段（data/equipments.json），本模块是唯一解析入口。
 ##   - 只决定「当前该显示哪套形象」，不做装备语义、不结算属性、不写存档。
 ##   - 头像不在此处理：头像固定一张，见 HUD。
-## 资源全部用 preload 登记，保证进入导出包；新增 look 只需在此补纹理与帧格，
+## 资源路径按形象登记，首次使用该形象时加载并缓存；导出采用all_resources并校验资源包。
+## 新增look只需在此补纹理与帧格，
 ## 世界渲染与人物面板不需要为每档改动代码；换装测试校验所有已登记档位。
 
 ## 武器未标注 look、空手、或标注了尚未登记的 look 时统一回退到该形象。
@@ -22,26 +23,26 @@ const DEFAULT_LOOK := "look_01"
 ## 各look显式登记帧格与锚点；初始新形象112×128，既有阶段形象64×80，人物面板另用高清图。
 const LOOKS := {
 	"look_01": {
-		"main": preload("res://assets/sprites/player/guardian/guardian_atlas.png"),
-		"extra": preload("res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png"),
-		"walk": preload("res://assets/sprites/player/guardian/guardian_walk_atlas.png"),
+		"main": "res://assets/sprites/player/guardian/guardian_atlas.png",
+		"extra": "res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png",
+		"walk": "res://assets/sprites/player/guardian/guardian_walk_atlas.png",
 		"frame": Vector2i(112, 128),
 		"pivot": Vector2(56, 112),
 		"scale_factor": 2.0/3.0,
 		"death_seconds": 0.9,
-		"panel": preload("res://assets/ui/portraits/guardian_panel.png"),
+		"panel": "res://assets/ui/portraits/guardian_panel.png",
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/idle_atlas.png"), "frames": 1},
-			"walk": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/walk_atlas.png"), "frames": 4},
-			"attack": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/attack_atlas.png"), "frames": 4, "contact": 2},
-			"hit": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/hit_atlas.png"), "frames": 4},
-			"death": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/death_atlas.png"), "frames": 4},
-			"sit": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/sit_atlas.png"), "frames": 1},
+			"idle": {"texture": "res://assets/sprites/player/guardian_modular_v1/idle_atlas.png", "frames": 1},
+			"walk": {"texture": "res://assets/sprites/player/guardian_modular_v1/walk_atlas.png", "frames": 4},
+			"attack": {"texture": "res://assets/sprites/player/guardian_modular_v1/attack_atlas.png", "frames": 4, "contact": 2},
+			"hit": {"texture": "res://assets/sprites/player/guardian_modular_v1/hit_atlas.png", "frames": 4},
+			"death": {"texture": "res://assets/sprites/player/guardian_modular_v1/death_atlas.png", "frames": 4},
+			"sit": {"texture": "res://assets/sprites/player/guardian_modular_v1/sit_atlas.png", "frames": 1},
 		},
 		"mounts": {
 			"mount_corrupted_wing": {
-				"idle": preload("res://assets/sprites/player/guardian_modular_v1/wing_idle_atlas.png"),
-				"walk": preload("res://assets/sprites/player/guardian_modular_v1/wing_walk_atlas.png"),
+				"idle": "res://assets/sprites/player/guardian_modular_v1/wing_idle_atlas.png",
+				"walk": "res://assets/sprites/player/guardian_modular_v1/wing_walk_atlas.png",
 				"frame": Vector2i(128, 128),
 				"pivot": Vector2(64, 112),
 				"scale_factor": 2.0/3.0,
@@ -51,89 +52,92 @@ const LOOKS := {
 		},
 	},
 	"look_02": {
-		"main": preload("res://assets/sprites/player/stage_looks/look_02/look_02_idle_atlas.png"),
-		"walk": preload("res://assets/sprites/player/stage_looks/look_02/look_02_walk_atlas.png"),
+		"main": "res://assets/sprites/player/stage_looks/look_02/look_02_idle_atlas.png",
+		"walk": "res://assets/sprites/player/stage_looks/look_02/look_02_walk_atlas.png",
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
-		"panel": preload("res://assets/ui/portraits/look_02_panel.png"),
+		"panel": "res://assets/ui/portraits/look_02_panel.png",
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_idle_atlas.png"), "frames": 4},
-			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_walk_atlas.png"), "frames": 8},
-			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_attack_atlas.png"), "frames": 6},
-			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_hit_atlas.png"), "frames": 2},
-			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_death_atlas.png"), "frames": 6},
-			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_02/look_02_sit_atlas.png"), "frames": 4},
+			"idle": {"texture": "res://assets/sprites/player/stage_looks/look_02/look_02_idle_atlas.png", "frames": 4},
+			"walk": {"texture": "res://assets/sprites/player/stage_looks/look_02/look_02_walk_atlas.png", "frames": 8},
+			"attack": {"texture": "res://assets/sprites/player/stage_looks/look_02/look_02_attack_atlas.png", "frames": 6},
+			"hit": {"texture": "res://assets/sprites/player/stage_looks/look_02/look_02_hit_atlas.png", "frames": 2},
+			"death": {"texture": "res://assets/sprites/player/stage_looks/look_02/look_02_death_atlas.png", "frames": 6},
+			"sit": {"texture": "res://assets/sprites/player/stage_looks/look_02/look_02_sit_atlas.png", "frames": 4},
 		},
 	},
 	"look_03": {
-		"main": preload("res://assets/sprites/player/stage_looks/look_03/look_03_idle_atlas.png"),
-		"walk": preload("res://assets/sprites/player/stage_looks/look_03/look_03_walk_atlas.png"),
+		"main": "res://assets/sprites/player/stage_looks/look_03/look_03_idle_atlas.png",
+		"walk": "res://assets/sprites/player/stage_looks/look_03/look_03_walk_atlas.png",
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
-		"panel": preload("res://assets/ui/portraits/look_03_panel.png"),
+		"panel": "res://assets/ui/portraits/look_03_panel.png",
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_idle_atlas.png"), "frames": 4},
-			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_walk_atlas.png"), "frames": 8},
-			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_attack_atlas.png"), "frames": 6},
-			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_hit_atlas.png"), "frames": 2},
-			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_death_atlas.png"), "frames": 6},
-			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_03/look_03_sit_atlas.png"), "frames": 4},
+			"idle": {"texture": "res://assets/sprites/player/stage_looks/look_03/look_03_idle_atlas.png", "frames": 4},
+			"walk": {"texture": "res://assets/sprites/player/stage_looks/look_03/look_03_walk_atlas.png", "frames": 8},
+			"attack": {"texture": "res://assets/sprites/player/stage_looks/look_03/look_03_attack_atlas.png", "frames": 6},
+			"hit": {"texture": "res://assets/sprites/player/stage_looks/look_03/look_03_hit_atlas.png", "frames": 2},
+			"death": {"texture": "res://assets/sprites/player/stage_looks/look_03/look_03_death_atlas.png", "frames": 6},
+			"sit": {"texture": "res://assets/sprites/player/stage_looks/look_03/look_03_sit_atlas.png", "frames": 4},
 		},
 	},
 	"look_04": {
-		"main": preload("res://assets/sprites/player/stage_looks/look_04/look_04_idle_atlas.png"),
-		"walk": preload("res://assets/sprites/player/stage_looks/look_04/look_04_walk_atlas.png"),
+		"main": "res://assets/sprites/player/stage_looks/look_04/look_04_idle_atlas.png",
+		"walk": "res://assets/sprites/player/stage_looks/look_04/look_04_walk_atlas.png",
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
-		"panel": preload("res://assets/ui/portraits/look_04_panel.png"),
+		"panel": "res://assets/ui/portraits/look_04_panel.png",
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_idle_atlas.png"), "frames": 4},
-			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_walk_atlas.png"), "frames": 8},
-			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_attack_atlas.png"), "frames": 6},
-			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_hit_atlas.png"), "frames": 2},
-			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_death_atlas.png"), "frames": 6},
-			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_04/look_04_sit_atlas.png"), "frames": 4},
+			"idle": {"texture": "res://assets/sprites/player/stage_looks/look_04/look_04_idle_atlas.png", "frames": 4},
+			"walk": {"texture": "res://assets/sprites/player/stage_looks/look_04/look_04_walk_atlas.png", "frames": 8},
+			"attack": {"texture": "res://assets/sprites/player/stage_looks/look_04/look_04_attack_atlas.png", "frames": 6},
+			"hit": {"texture": "res://assets/sprites/player/stage_looks/look_04/look_04_hit_atlas.png", "frames": 2},
+			"death": {"texture": "res://assets/sprites/player/stage_looks/look_04/look_04_death_atlas.png", "frames": 6},
+			"sit": {"texture": "res://assets/sprites/player/stage_looks/look_04/look_04_sit_atlas.png", "frames": 4},
 		},
 	},
 	"look_05": {
-		"main": preload("res://assets/sprites/player/stage_looks/look_05/look_05_idle_atlas.png"),
-		"walk": preload("res://assets/sprites/player/stage_looks/look_05/look_05_walk_atlas.png"),
+		"main": "res://assets/sprites/player/stage_looks/look_05/look_05_idle_atlas.png",
+		"walk": "res://assets/sprites/player/stage_looks/look_05/look_05_walk_atlas.png",
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
-		"panel": preload("res://assets/ui/portraits/look_05_panel.png"),
+		"panel": "res://assets/ui/portraits/look_05_panel.png",
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_idle_atlas.png"), "frames": 4},
-			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_walk_atlas.png"), "frames": 8},
-			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_attack_atlas.png"), "frames": 6},
-			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_hit_atlas.png"), "frames": 2},
-			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_death_atlas.png"), "frames": 6},
-			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_05/look_05_sit_atlas.png"), "frames": 4},
+			"idle": {"texture": "res://assets/sprites/player/stage_looks/look_05/look_05_idle_atlas.png", "frames": 4},
+			"walk": {"texture": "res://assets/sprites/player/stage_looks/look_05/look_05_walk_atlas.png", "frames": 8},
+			"attack": {"texture": "res://assets/sprites/player/stage_looks/look_05/look_05_attack_atlas.png", "frames": 6},
+			"hit": {"texture": "res://assets/sprites/player/stage_looks/look_05/look_05_hit_atlas.png", "frames": 2},
+			"death": {"texture": "res://assets/sprites/player/stage_looks/look_05/look_05_death_atlas.png", "frames": 6},
+			"sit": {"texture": "res://assets/sprites/player/stage_looks/look_05/look_05_sit_atlas.png", "frames": 4},
 		},
 	},
 	"look_06": {
-		"main": preload("res://assets/sprites/player/stage_looks/look_06/look_06_idle_atlas.png"),
-		"walk": preload("res://assets/sprites/player/stage_looks/look_06/look_06_walk_atlas.png"),
+		"main": "res://assets/sprites/player/stage_looks/look_06/look_06_idle_atlas.png",
+		"walk": "res://assets/sprites/player/stage_looks/look_06/look_06_walk_atlas.png",
 		"frame": Vector2i(64, 80),
 		"pivot": Vector2(32, 64),
-		"panel": preload("res://assets/ui/portraits/look_06_panel.png"),
+		"panel": "res://assets/ui/portraits/look_06_panel.png",
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_idle_atlas.png"), "frames": 4},
-			"walk": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_walk_atlas.png"), "frames": 8},
-			"attack": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_attack_atlas.png"), "frames": 6},
-			"hit": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_hit_atlas.png"), "frames": 2},
-			"death": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_death_atlas.png"), "frames": 6},
-			"sit": {"texture": preload("res://assets/sprites/player/stage_looks/look_06/look_06_sit_atlas.png"), "frames": 4},
+			"idle": {"texture": "res://assets/sprites/player/stage_looks/look_06/look_06_idle_atlas.png", "frames": 4},
+			"walk": {"texture": "res://assets/sprites/player/stage_looks/look_06/look_06_walk_atlas.png", "frames": 8},
+			"attack": {"texture": "res://assets/sprites/player/stage_looks/look_06/look_06_attack_atlas.png", "frames": 6},
+			"hit": {"texture": "res://assets/sprites/player/stage_looks/look_06/look_06_hit_atlas.png", "frames": 2},
+			"death": {"texture": "res://assets/sprites/player/stage_looks/look_06/look_06_death_atlas.png", "frames": 6},
+			"sit": {"texture": "res://assets/sprites/player/stage_looks/look_06/look_06_sit_atlas.png", "frames": 4},
 		},
 		"mounts": {
 			"mount_corrupted_wing": {
-				"idle": preload("res://assets/sprites/player/stage_looks/look_06/mounts/corrupted_wing_idle_atlas.png"),
-				"walk": preload("res://assets/sprites/player/stage_looks/look_06/mounts/corrupted_wing_walk_atlas.png"),
+				"idle": "res://assets/sprites/player/stage_looks/look_06/mounts/corrupted_wing_idle_atlas.png",
+				"walk": "res://assets/sprites/player/stage_looks/look_06/mounts/corrupted_wing_walk_atlas.png",
 				"frame": Vector2i(128, 128),
 				"pivot": Vector2(64, 104),
 			},
 		},
 	},
 }
+
+## 最多缓存六个已使用形象；热路径只查表，纹理仍由ResourceLoader共享，进程结束释放。
+static var _resolved: Dictionary = {}
 
 ## 已提示过「形象素材未到」的 look_id，避免每次换装重复刷日志。
 static var _pending_logged: Array[String] = []
@@ -149,10 +153,28 @@ static func look_id_for(slots: Dictionary) -> String:
 
 ## 取某 look 的图集定义；素材未登记时回退默认 look，保证换装链路不因素材未到而中断。
 static func definition(look_id: String) -> Dictionary:
-	if LOOKS.has(look_id):
-		return LOOKS[look_id]
-	_log_pending(look_id)
-	return LOOKS[DEFAULT_LOOK]
+	var resolved_id := look_id
+	if not LOOKS.has(resolved_id):
+		_log_pending(resolved_id)
+		resolved_id = DEFAULT_LOOK
+	if not _resolved.has(resolved_id):
+		_resolved[resolved_id] = _load_textures(LOOKS[resolved_id])
+	return _resolved[resolved_id]
+
+## 首次使用时递归解析该形象的纹理字段；保留帧格数值，禁止在逐帧流程重复分配。
+static func _load_textures(spec: Dictionary) -> Dictionary:
+	var result := {}
+	for key in spec:
+		var value: Variant = spec[key]
+		if value is Dictionary:
+			result[key] = _load_textures(value)
+		elif value is String and value.begins_with("res://"):
+			var texture := load(value) as Texture2D
+			assert(texture != null, "角色纹理加载失败："+value)
+			result[key] = texture
+		else:
+			result[key] = value
+	return result
 
 ## 该 look 是否已在 look 表中登记（供校验与测试判断是否需要回退）。
 static func is_declared(look_id: String) -> bool:
