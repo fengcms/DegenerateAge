@@ -21,14 +21,14 @@ func _ready() -> void:
 	expect(GameState.inventory_used() == 3, "Sample must contain three item examples")
 	expect(SaveManager.active_slot == -1 and not SaveManager.autosave_enabled, "Sample must not autosave")
 	expect(ground.sample_camp_theme, "Sample ground theme must be active")
-	expect(player.sample_art.texture.get_size() == Vector2(512, 320), "Guardian idle atlas dimensions")
+	expect(player.sample_art.texture.get_size() == Vector2(896, 128), "Guardian idle atlas dimensions")
 	expect(player.sample_art.extra_texture.get_size() == Vector2(512, 160), "Guardian hit and sit atlas dimensions")
-	expect(player.sample_art._animations.walk.texture.get_size() == Vector2(512, 640), "Guardian eight-pose walk atlas dimensions")
+	expect(player.sample_art._animations.walk.texture.get_size() == Vector2(896, 512), "Guardian four-pose walk atlas dimensions")
 	expect((player.get_node("CollisionShape2D").shape as CircleShape2D).radius == 12, "Art must not enlarge player collision")
 	var art := player.sample_art
 	player.set_physics_process(false)
 	art._process(0.01)
-	expect(is_equal_approx(art.scale.x, PlayerCharacter.ART_SCALE) and art.offset == Vector2(-32, -64), "Guardian display scale keeps foot pivot")
+	expect(is_equal_approx(art.scale.x, 1.0) and art.offset == Vector2(-56, -112), "Guardian display scale keeps foot pivot")
 	for i in range(8):
 		art.face(Vector2.from_angle(PI / 2 + i * PI / 4))
 		expect(art.facing == i, "Screen direction %d" % i)
@@ -38,13 +38,13 @@ func _ready() -> void:
 	player.set_sitting(false)
 	player.velocity = Vector2(100, 0)
 	art._process(0.1)
-	expect(art.pose == "walk" and art.facing == 6 and art.vframes == 8 and art.phase >= 0 and art.phase < 8, "East movement should use eight walk beats")
+	expect(art.pose == "walk" and art.facing == 6 and art.vframes == 4 and art.phase >= 0 and art.phase < 4, "East movement should use four walk beats")
 	var walk_rows := {}
 	for i in range(8):
 		art._process(0.1)
 		walk_rows[art.frame_coords.y] = true
 		expect(art.position == Vector2.ZERO, "逐帧行走保持脚底锚点")
-	expect(walk_rows.size() == 8, "Guardian walk should show all eight distinct pose rows")
+	expect(walk_rows.size() == 4, "Guardian walk should show all four distinct pose rows")
 	player.velocity = Vector2.ZERO
 	art.attack(Vector2.DOWN, 0.8)
 	art._process(0.01)
@@ -53,12 +53,12 @@ func _ready() -> void:
 	expect(art.pose == "attack" and art.phase > 0, "Attack should progress through recovery phases")
 	art.hit()
 	art._process(0.01)
-	expect(art.pose == "hit" and art.vframes == 2, "Separate guardian hit should override attack visually")
+	expect(art.pose == "hit" and art.vframes == 4, "Separate guardian hit should override attack visually")
 	player.is_dead = true
 	art._process(0.01)
-	expect(art.pose == "death" and art.vframes == 6 and art.frame_coords.y == 0, "Death should start with a brief recoil")
-	art._process(0.61)
-	expect(art.phase == 5 and art.vframes == 6 and art.frame_coords.y == 5, "Death transition should finish prone and hold")
+	expect(art.pose == "death" and art.vframes == 4 and art.frame_coords.y == 0, "Death should start with a brief recoil")
+	art._process(0.91)
+	expect(art.phase == 3 and art.vframes == 4 and art.frame_coords.y == 3, "Death transition should finish prone and hold")
 	player.is_dead = false
 	var wolf: Monster
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -76,15 +76,16 @@ func _ready() -> void:
 			for step in range(4):
 				wolf_art._show_pose("walk",step)
 				expect(wolf_art.frame_coords==Vector2i(step,direction), "狼八方向各四步态")
-		for atlas in [art._animations.walk.texture]:
-			var sheet := (atlas as Texture2D).get_image()
-			var cell_w := sheet.get_width() / 8
-			var rows := 8
-			for row in range(rows):
-				for col in range(8):
-					var frame_image := sheet.get_region(Rect2i(col * cell_w, row * 80, cell_w, 80))
-					var used := frame_image.get_used_rect()
-					expect(used.position.y + used.size.y == 64, "Walk frame must share the same foot anchor")
+		var sheet := Image.load_from_file("res://assets/sprites/player/guardian_modular_v1/walk_atlas.png")
+		for direction in range(8):
+			for step in range(4):
+				var frame_image := sheet.get_region(Rect2i(direction*112,step*128,112,128))
+				var suffix: String = ["s","sw","w","nw","n","ne","e","se"][direction]
+				var version := "v3" if suffix=="se" else "v2" if suffix in ["ne","nw"] else "v1"
+				var original := Image.load_from_file("res://assets/art_pilot/hero_walk_"+suffix+"_"+version+".png")
+				expect(frame_image.get_data()==original.get_region(Rect2i(0,step*128,112,128)).get_data(), "主角逐帧像素与已验收脚底位置保持一致")
+		art._show_frame("walk",0)
+		expect(art.offset==Vector2(-56,-112),"主角行走使用统一脚底锚点")
 		wolf.sample_art.hit()
 		wolf.sample_art._process(0.01)
 		expect(wolf_art.pose == "hit" and wolf_art.texture == wolf_art.definitions.hit.texture and wolf_art.frame_coords.y == wolf_art.facing, "狼受击切换独立图集并保持朝向")

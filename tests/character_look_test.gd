@@ -39,7 +39,7 @@ func _test_resolution() -> void:
 
 	var default_entry := CharacterLook.definition("look_01")
 	expect(default_entry.main.get_size() == Vector2(512, 640), "默认主图集应为 512×640")
-	expect(default_entry.frame == Vector2i(64, 80) and default_entry.pivot == Vector2(32, 64),
+	expect(default_entry.frame == Vector2i(112, 128) and default_entry.pivot == Vector2(56, 112),
 		"默认形象帧格与脚底锚点")
 	var panel_frame := CharacterLook.panel_texture("look_01")
 	expect(panel_frame == default_entry.panel and panel_frame.get_size() == Vector2(256, 400),
@@ -52,7 +52,7 @@ func _test_resolution() -> void:
 			"章节武器应登记 %s" % look_id)
 		expect(CharacterLook.is_declared(look_id), "%s 应在形象表中登记" % look_id)
 		var stage := CharacterLook.definition(look_id)
-		expect(stage.frame == default_entry.frame and stage.pivot == default_entry.pivot,
+		expect(stage.frame == Vector2i(64,80) and stage.pivot == Vector2(32,64),
 			"%s 应共用 64×80 帧格与脚底锚点" % look_id)
 		expect(stage.panel.get_size() == Vector2(256, 400), "%s 应使用独立 256×400 面板图" % look_id)
 		for state in ["idle", "walk", "attack", "hit", "death", "sit"]:
@@ -87,7 +87,7 @@ func _test_weapon_switch() -> void:
 	expect(player._look_id == "look_01", "初始武器应使用 look_01")
 	expect(player.sample_art.texture == CharacterLook.definition("look_01").animations.idle.texture,
 		"世界玩家应使用 look_01 逐帧待机图集")
-	expect(player.sample_art.offset == Vector2(-32, -64), "世界玩家应保持脚底锚点")
+	expect(player.sample_art.offset == Vector2(-56, -112), "世界玩家应保持脚底锚点")
 
 	panel.set_open(true)
 	await get_tree().process_frame

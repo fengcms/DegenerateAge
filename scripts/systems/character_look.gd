@@ -19,22 +19,24 @@ const DEFAULT_LOOK := "look_01"
 ## look 表：look_id → 世界图集与帧格参数。
 ## main 关键姿态（列＝方向，行＝姿势帧）、extra 受击/打坐、walk 行走；
 ## frame 为单帧尺寸（像素），pivot 为帧内脚底锚点（像素）。
-## 玩家各 look 使用同一帧格与锚点；人物面板另用独立高清图。
+## 各look显式登记帧格与锚点；初始新形象112×128，既有阶段形象64×80，人物面板另用高清图。
 const LOOKS := {
 	"look_01": {
 		"main": preload("res://assets/sprites/player/guardian/guardian_atlas.png"),
 		"extra": preload("res://assets/sprites/player/guardian/guardian_hit_sit_atlas.png"),
 		"walk": preload("res://assets/sprites/player/guardian/guardian_walk_atlas.png"),
-		"frame": Vector2i(64, 80),
-		"pivot": Vector2(32, 64),
+		"frame": Vector2i(112, 128),
+		"pivot": Vector2(56, 112),
+		"scale_factor": 2.0/3.0,
+		"death_seconds": 0.9,
 		"panel": preload("res://assets/ui/portraits/guardian_panel.png"),
 		"animations": {
-			"idle": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_idle_atlas.png"), "frames": 4},
-			"walk": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_walk_atlas.png"), "frames": 8},
-			"attack": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_attack_atlas.png"), "frames": 6},
-			"hit": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_hit_atlas.png"), "frames": 2},
-			"death": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_death_atlas.png"), "frames": 6},
-			"sit": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_sit_atlas.png"), "frames": 4},
+			"idle": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/idle_atlas.png"), "frames": 1},
+			"walk": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/walk_atlas.png"), "frames": 4},
+			"attack": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/attack_atlas.png"), "frames": 4, "contact": 2},
+			"hit": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/hit_atlas.png"), "frames": 4},
+			"death": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/death_atlas.png"), "frames": 4},
+			"sit": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_sit_atlas.png"), "frames": 4, "pivot": Vector2(32,64), "scale_factor": 1.0},
 		},
 		"mounts": {
 			"mount_corrupted_wing": {

@@ -24,7 +24,10 @@ var _animations: Dictionary = {}
 var _mounts: Dictionary = {}
 var _mount_id := ""
 var _base_pivot := Vector2.ZERO
+var _look_scale := 1.0
+var _death_seconds := DEATH_SECONDS
 
+## 为历史图集宿主创建精灵，不改变宿主逻辑。
 static func attach(actor: Node2D, path: String, pivot: Vector2, extra_path := "", walk_path := "") -> SampleActorArt:
 	var art := _create(actor)
 	var definition := {"main": load(path) as Texture2D, "extra": null, "walk": null, "pivot": pivot}
@@ -63,6 +66,8 @@ func apply_look(definition: Dictionary) -> void:
 	walk_texture = definition.get("walk")
 	var pivot: Vector2 = definition.get("pivot", Vector2.ZERO)
 	_base_pivot = pivot
+	_look_scale = float(definition.get("scale_factor",1.0))
+	_death_seconds = float(definition.get("death_seconds",DEATH_SECONDS))
 	_animations = definition.get("animations", {})
 	_mounts = definition.get("mounts", {})
 	offset = -pivot
@@ -88,24 +93,29 @@ func _show_frame(next_pose: String, next_phase: int) -> void:
 	var animation: Dictionary = _animations[next_pose]
 	var wanted: Texture2D = animation.texture
 	var frames: int = animation.frames
-	var pivot := _base_pivot
+	var pivot: Vector2 = animation.get("pivot",_base_pivot)
+	var factor := float(animation.get("scale_factor",_look_scale))
 	if not _mount_id.is_empty() and next_pose in ["idle", "walk"]:
 		var mount: Dictionary = _mounts[_mount_id]
 		wanted = mount[next_pose]
 		frames = 4
 		pivot = mount.pivot
+		factor = 1.0
 	phase = clampi(next_phase, 0, frames - 1)
 	if texture != wanted:
 		texture = wanted
 		hframes = 8
 		vframes = frames
 	offset = -pivot
+	scale = Vector2.ONE * display_scale * factor
 	frame_coords = Vector2i(facing, phase)
 
+## 根据屏幕空间方向更新八向编号，零向量保持朝向。
 func face(vector: Vector2) -> void:
 	if vector.length_squared() > 0.01:
 		facing = posmod(roundi((vector.angle() - PI / 2.0) / (PI / 4.0)), 8)
 
+## 在宿主结算时播放接触帧，后续只推进视觉恢复。
 func attack(vector: Vector2, interval: float) -> void:
 	face(vector)
 	_attack_duration = clampf(interval * 0.65, 0.12, 0.36)
@@ -116,12 +126,14 @@ func attack(vector: Vector2, interval: float) -> void:
 	if _animations.is_empty():
 		_show("attack", 0, 5)
 	else:
-		_show_frame("attack", 0)
+		_show_frame("attack", int(_animations.attack.get("contact",0)))
 
+## 受击表现打断攻击表现，不改变伤害或硬直规则。
 func hit() -> void:
 	_hit_left = HIT_SECONDS
 	_attack_left = 0.0
 
+## 兼容历史关键姿态图集，按指定行显示并复用纹理。
 func _show(next_pose: String, next_phase: int, row: int, supplemental := false, walking := false) -> void:
 	pose = next_pose
 	phase = next_phase
@@ -131,6 +143,7 @@ func _show(next_pose: String, next_phase: int, row: int, supplemental := false, 
 		vframes = 4 if wanted == walk_texture else 2 if wanted == extra_texture else 8
 	frame_coords = Vector2i(facing, row)
 
+## 每帧只推进表现与深度，死亡及休整状态由宿主决定。
 func _process(delta: float) -> void:
 	_clock += delta
 	_attack_left = maxf(0.0, _attack_left - delta)
@@ -189,18 +202,22 @@ func _process_frames(actor: CharacterBody2D, delta: float) -> void:
 	rotation = 0.0
 	scale = Vector2.ONE * display_scale
 	if actor.get("is_dead") == true:
-		_death_clock = minf(_death_clock + delta, DEATH_SECONDS)
-		_show_frame("death", mini(5, int(_death_clock / DEATH_SECONDS * 6.0)))
+		_death_clock = minf(_death_clock + delta, _death_seconds)
+		_show_frame("death", mini(int(_animations.death.frames)-1, int(_death_clock / _death_seconds * int(_animations.death.frames))))
 		return
 	_death_clock = 0.0
+	# 新动作保留短接触反馈，手动移动随后取消挥击恢复，避免滑行。
+	if int(_animations.attack.get("contact",0))>0 and _attack_duration-_attack_left>=0.08 and actor.velocity.length_squared()>1.0:
+		_attack_left = 0.0
 	if _hit_left > 0.0:
-		_show_frame("hit", mini(1, int((1.0 - _hit_left / HIT_SECONDS) * 2.0)))
+		_show_frame("hit", mini(int(_animations.hit.frames)-1, int((1.0 - _hit_left / HIT_SECONDS) * int(_animations.hit.frames))))
 	elif actor.get("is_sitting") == true:
-		_show_frame("sit", posmod(int(_clock * 6.0), 4))
+		_show_frame("sit", posmod(int(_clock * 6.0), int(_animations.sit.frames)))
 	elif _attack_left > 0.0:
-		_show_frame("attack", mini(5, int((1.0 - _attack_left / _attack_duration) * 6.0)))
+		var contact := int(_animations.attack.get("contact",0))
+		_show_frame("attack", mini(int(_animations.attack.frames)-1, contact+int((1.0 - _attack_left / _attack_duration) * (int(_animations.attack.frames)-contact))))
 	elif actor.velocity.length_squared() > 1.0:
 		face(actor.velocity)
-		_show_frame("walk", posmod(int(_clock * 10.0), 8 if _mount_id.is_empty() else 4))
+		_show_frame("walk", posmod(int(_clock * 10.0), int(_animations.walk.frames) if _mount_id.is_empty() else 4))
 	else:
-		_show_frame("idle", posmod(int(_clock * 6.0), 4))
+		_show_frame("idle", posmod(int(_clock * 6.0), int(_animations.idle.frames) if _mount_id.is_empty() else 4))
