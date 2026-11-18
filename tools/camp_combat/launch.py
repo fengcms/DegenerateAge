@@ -1,4 +1,4 @@
-"""隔离启动真实营地战斗样板；复制代码和数据，复用稳定资产，仅使用随机user://并在退出清理。"""
+"""隔离启动真实营地战斗样板；复制代码、数据和资产，仅使用随机user://并在退出清理。"""
 from pathlib import Path
 import argparse
 import importlib.util
@@ -15,8 +15,14 @@ def main():
     """创建独立项目与存档身份，导入后运行交互或完整战斗验收；任何脚本错误拒绝通过。"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify', action='store_true')
+    parser.add_argument('--soak', action='store_true')
+    parser.add_argument('--review', action='store_true')
     parser.add_argument('--capture', type=Path)
     args = parser.parse_args()
+    if args.review and (not args.capture or args.verify or args.soak):
+        parser.error('--review 需独立配合 --capture 输出目录')
+    if args.soak and (args.verify or args.capture):
+        parser.error('--soak 必须独立运行，避免截图/无窗口影响性能样本')
     spec = importlib.util.spec_from_file_location('isolated', ROOT / 'tools/run_isolated_tests.py')
     isolated = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(isolated)
@@ -41,6 +47,9 @@ def main():
             assert f'config/name="{name}"' in config
             (project / 'project.godot').write_text(config)
             (project / 'Combat.tscn').write_text('[gd_scene load_steps=2 format=3]\n[ext_resource type="Script" path="res://tools/camp_combat/main.gd" id="1"]\n[node name="Combat" type="Node2D"]\nscript = ExtResource("1")\n')
+            if args.review:
+                scene = project / 'Combat.tscn'
+                scene.write_text(scene.read_text().replace('camp_combat/main.gd','camp_combat/review.gd'))
             env = dict(os.environ, DEGENERATE_CAMP_ISOLATED='1')
             imported = subprocess.run([godot,'--headless','--editor','--path',temp,'--quit'], capture_output=True,text=True,timeout=180,env=env)
             if imported.returncode or 'SCRIPT ERROR' in imported.stderr:
@@ -56,19 +65,22 @@ def main():
             command.append('--')
             if args.verify:
                 command.append('--verify-combat')
+            if args.soak:
+                command.append('--soak-combat')
             if args.capture:
                 args.capture.mkdir(parents=True,exist_ok=True)
                 command.append('--capture='+str(args.capture.resolve()))
-            if args.verify:
+            if args.verify or args.soak or args.review:
                 try:
-                    result = subprocess.run(command, capture_output=True,text=True,timeout=120,env=env)
+                    result = subprocess.run(command, capture_output=True,text=True,timeout=360 if args.soak else 120,env=env)
                 except subprocess.TimeoutExpired as error:
                     print(error.stdout or b'')
                     print(error.stderr or b'')
                     raise
                 print(result.stdout)
                 print(result.stderr)
-                if result.returncode or 'SCRIPT ERROR' in result.stderr or 'CAMP_COMBAT_VERIFY_OK' not in result.stdout:
+                marker = 'CAMP_ART_REVIEW_OK' if args.review else 'CAMP_COMBAT_VERIFY_OK'
+                if result.returncode or 'SCRIPT ERROR' in result.stderr or marker not in result.stdout or (args.soak and 'CAMP_COMBAT_SOAK_OK' not in result.stdout):
                     raise RuntimeError('真实战斗验收未完整通过')
             else:
                 subprocess.run(command,check=True,env=env)

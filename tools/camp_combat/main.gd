@@ -2,13 +2,19 @@ extends Node2D
 ## 模块化营地真实战斗场：正式玩家/怪物/自动战斗/地面物，只替换场景装配和表现。
 ## 仅隔离启动器使用，不登记正式地图，不写玩家真实存档；F自动战斗、G拾取、R重开。
 const Art = preload("res://tools/camp_combat/art.gd")
+static var completed_waves := 0
+static var release_counts: Array[int] = []
+var soak := false
+var recording := false
+var samples: Array[float] = []
+var drawn_start := 0
+var previous_usec := 0
 var camp: Node2D
 var hero: PlayerCharacter
 var enemies: Array[Monster] = []
 var caption: Label
 var kills := 0
 var pickups := 0
-var hero_hits := 0
 var damage_events := 0
 var captured := false
 var verify := false
@@ -16,7 +22,8 @@ var verify := false
 ## 创建独立初始角色和两怪遭遇，正式数值模板不改；使用三级成长作为本场演示起点。
 func _ready() -> void:
 	assert(OS.get_environment("DEGENERATE_CAMP_ISOLATED")=="1","必须经隔离启动器启动战斗样板")
-	verify = "--verify-combat" in OS.get_cmdline_user_args()
+	soak = "--soak-combat" in OS.get_cmdline_user_args()
+	verify = "--verify-combat" in OS.get_cmdline_user_args() or soak
 	GameState.reset_to_defaults()
 	GameState.menu_mode = "world"
 	GameState.current_map = "wild_trial"
@@ -109,9 +116,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if hero==null or caption==null:
 		return
+	if recording:
+		var now := Time.get_ticks_usec()
+		samples.append(float(now-previous_usec)/1000.0)
+		previous_usec = now
 	for occluder in camp.occluders:
 		occluder.update_reveal(hero.position,delta)
-	caption.text = "营地战斗样板 · WASD移动 / 点击怪物追击 · F自动战斗 / G拾取 · R重新开始\n生命 %d/%d · 自动战斗 %s · 击败 %d/2 · 金币 %d · 拾取 %d\n怪物当前为左前方向试装，缺方向不镜像；使用正式追踪、伤害与掉落逻辑" % [GameState.player.hp,GameState.max_hp(),"开" if GameState.auto_battle_on else "关",kills,GameState.gold,pickups]
+	caption.text = "营地战斗样板 · WASD移动 / 点击怪物追击 · F自动战斗 / G拾取 · R重新开始\n生命 %d/%d · 自动战斗 %s · 击败 %d/2 · 金币 %d · 拾取 %d\n击败腐化野狼与裂壳虫，收集战利品；R可重新开始" % [GameState.player.hp,GameState.max_hp(),"开" if GameState.auto_battle_on else "关",kills,GameState.gold,pickups]
 
 ## 只统计正式死亡信号，不在展示层发经验或掉落。
 func _on_kill(_id: String) -> void:
@@ -128,6 +139,12 @@ func _on_damage(_target: Node, _amount: int, _critical: bool) -> void:
 ## 在真实物理时钟下完成追踪、互相攻击、死亡、正式掉落与拾取；失败不打印成功标记。
 func _run_verification() -> void:
 	await get_tree().physics_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if soak:
+		recording = true
+		previous_usec = Time.get_ticks_usec()
+		drawn_start = Engine.get_frames_drawn()
 	var origin := hero.position
 	var initial_xp := int(GameState.player.xp)
 	GameState.set_auto_battle(true)
@@ -150,7 +167,24 @@ func _run_verification() -> void:
 	await get_tree().create_timer(2.0).timeout
 	for enemy in enemies:
 		assert(not is_instance_valid(enemy),"死亡动画后未释放怪物")
+	var loot_layer := get_tree().get_first_node_in_group("loot_root")
+	var cleanup_deadline := Time.get_ticks_msec()+15000
+	while loot_layer.get_child_count()>0 and Time.get_ticks_msec()<cleanup_deadline:
+		await get_tree().physics_frame
+	assert(loot_layer.get_child_count()==0,"拾取后地面物未清理")
+	GameState.set_auto_battle(false)
+	GameState.set_auto_pickup(false)
+	await get_tree().create_timer(1.5).timeout
 	await _capture("completed")
+	if soak:
+		recording = false
+		_report_wave()
+		completed_waves += 1
+		if completed_waves<3:
+			get_tree().reload_current_scene()
+			return
+		assert(release_counts[2]==release_counts[0],"同场重开后节点持续增长")
+		print("CAMP_COMBAT_SOAK_OK: waves=3")
 	print("CAMP_COMBAT_VERIFY_OK: kills=",kills," damage_events=",damage_events," pickups=",pickups," gold=",GameState.gold)
 	get_tree().quit()
 
@@ -161,3 +195,11 @@ func _capture(name: String) -> void:
 			await get_tree().process_frame
 			RenderingServer.force_draw(false)
 			get_viewport().get_texture().get_image().save_png(argument.trim_prefix("--capture=")+"/"+name+".png")
+
+## 正常窗口三轮真实战斗采样，不调用强制绘制；保留尖峰和节点数，静态内存仅作观测。
+func _report_wave() -> void:
+	var drawn := Engine.get_frames_drawn()-drawn_start
+	assert(drawn>=samples.size()*0.9,"窗口没有持续绘制，不能作为战斗性能样本")
+	samples.sort()
+	release_counts.append(get_tree().get_node_count())
+	print("COMBAT_WAVE: ",JSON.stringify({"wave":completed_waves,"frames":samples.size(),"drawn":drawn,"median_ms":samples[samples.size()/2],"p95_ms":samples[mini(samples.size()-1,floori(samples.size()*0.95))],"p99_ms":samples[mini(samples.size()-1,floori(samples.size()*0.99))],"peak_ms":samples[-1],"nodes":get_tree().get_node_count(),"static_bytes":Performance.get_monitor(Performance.MEMORY_STATIC),"texture_bytes":Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)}))
