@@ -34,7 +34,7 @@ func _ready() -> void:
 		expect(art.facing == i, "Screen direction %d" % i)
 	player.set_sitting(true)
 	art._process(0.01)
-	expect(art.pose == "sit" and art.vframes == 4, "Resting should use independent eight-way seated art")
+	expect(art.pose == "sit" and art.vframes == 1 and art.offset == Vector2(-56,-112) and is_equal_approx(art.scale.x,1.0), "Resting should use independent eight-way seated art")
 	player.set_sitting(false)
 	player.velocity = Vector2(100, 0)
 	art._process(0.1)

@@ -1,0 +1,9 @@
+[
+  {
+    "source": "art_source/actors/hero_sit_modular_v1/source.png",
+    "output": "assets/sprites/player/guardian_modular_v1/sit_atlas.png",
+    "frame": [112,128],
+    "pivot": [56,112],
+    "height": 70
+  }
+]

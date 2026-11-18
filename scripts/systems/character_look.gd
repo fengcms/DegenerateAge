@@ -36,7 +36,7 @@ const LOOKS := {
 			"attack": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/attack_atlas.png"), "frames": 4, "contact": 2},
 			"hit": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/hit_atlas.png"), "frames": 4},
 			"death": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/death_atlas.png"), "frames": 4},
-			"sit": {"texture": preload("res://assets/sprites/player/guardian/animations/guardian_sit_atlas.png"), "frames": 4, "pivot": Vector2(32,64), "scale_factor": 1.0},
+			"sit": {"texture": preload("res://assets/sprites/player/guardian_modular_v1/sit_atlas.png"), "frames": 1},
 		},
 		"mounts": {
 			"mount_corrupted_wing": {
