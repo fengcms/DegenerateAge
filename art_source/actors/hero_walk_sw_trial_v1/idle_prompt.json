@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "reference": "candidate.png",
+  "prompt": "Use case: identity-preserve. Create ONE matching IDLE sprite of the exact warrior in this four-frame sheet. Entire body faces SCREEN LOWER LEFT southwest, same elevated orthographic view as sheet, face chest pelvis and toes all oriented lower-left. Both feet planted naturally beneath hips, neutral standing not a frozen stride. Same head topknot, beige scarf, dark bronze lamellar plates, circular right chest ornament, leather straps, anatomical right hip pouch, short ragged cape, grey skirt and boots. Sword remains low in ANATOMICAL RIGHT hand, far arm on screen LEFT, near left hand EMPTY. Full body on1024x1536 canvas, topknot near y100, feet near y1420, all sword inside frame. Match adult body proportions and worn muted realistic materials exactly. Genuine transparent background, no floor/shadow/glow/text. Do not mirror or switch hands."
+}

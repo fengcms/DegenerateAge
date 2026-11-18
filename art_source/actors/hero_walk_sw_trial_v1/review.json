@@ -1,6 +1,6 @@
 {
   "actorName": "守护者左前",
-  "status": "under_review",
+  "status": "isolated_motion_trial",
   "frameSize": [
     512,
     768
@@ -15,5 +15,5 @@
   "scale": 0.14,
   "direction": "sw",
   "guide": "pose_guide.png",
-  "issues": "左前候选：需检查步态交替、足尖漂移与缺失配套站姿"
+  "issues": "左前隔离试装：已补配套站姿，步幅/布料与足尖漂移仍需精修"
 }

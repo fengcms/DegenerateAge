@@ -21,3 +21,7 @@ I原地对照前后站姿。右上移动先使用背面静态图，未制作背�
 ## 右上行走扩展
 
 现已补入../hero_walk_ne_pose_v2/candidate.png，由背面双色骨架约束生成。build.json的rearWalkSource定义四列512×768、0.14缩放与源锚点(275,710)，输出hero_walk_ne_v2.png，与既有站姿/右下行走共用112×128帧和(56,112)锚点。directions现为se/ne；右下源图未改。O复现右上试走，其他方向仍回退。前文“右上仅单帧”为上一阶段记录，当前仅两方向具备四帧试装，仍非完整八向。
+
+## 左前扩展
+
+leftWalkSource和leftIdleSource指向../hero_walk_sw_trial_v1；directions与idleDirections现为se/ne/sw。新增左前四帧与配套站姿，不覆盖旧图，运行U键试走。左后仍缺合格素材，当前非完整四向或八向。
