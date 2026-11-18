@@ -53,8 +53,9 @@ func _ready() -> void:
 		monster_preview_specs[kind] = {}
 		for state in ["walk","hit","death"]:
 			monster_preview_specs[kind][state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_"+state+"_v1.json"))
-	for state in ["hit","death"]:
-		reaction_specs[state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_se_v1.json"))
+	for direction in ["se","ne"]:
+		for state in ["hit","death"]:
+			reaction_specs[state+"_"+direction] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_"+direction+"_v1.json"))
 	for direction in ["s","n","e","w"]:
 		cardinal_attack_specs[direction] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_"+direction+"_v1.json"))
 	left_rear_attack_spec = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_attack_nw_v1.json"))
@@ -238,7 +239,7 @@ func _actor_sprite(kind: String) -> Sprite2D:
 		for direction in cardinal_attack_specs:
 			sprite.setup_attack(_texture("assets/art_pilot/hero_attack_"+direction+"_v1.png"),cardinal_attack_specs[direction])
 		for state in reaction_specs:
-			sprite.setup_reaction(_texture("assets/art_pilot/hero_"+state+"_se_v1.png"),reaction_specs[state])
+			sprite.setup_reaction(_texture("assets/art_pilot/hero_"+state+"_v1.png"),reaction_specs[state])
 		sprite.enabled = motion_enabled
 	elif sprite is SampleIdleSprite:
 		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
@@ -300,7 +301,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_turn_preview()
 		elif event.keycode in [KEY_F,KEY_C]:
 			waypoints.clear()
-			player_art.start_reaction("hit" if event.keycode==KEY_F else "death")
+			player_art.start_reaction("hit" if event.keycode==KEY_F else "death",player_art.facing_id)
 		elif event.keycode == KEY_V:
 			waypoints.clear()
 			player_art.reset_reaction()
@@ -449,6 +450,7 @@ func _verify() -> void:
 		for direction in ["s","n","e","w"]:
 			await _verify_attack(captures,direction)
 		await _verify_reactions(captures)
+		await _verify_reactions(captures,"ne")
 		await _verify_wall_stop(captures,"nw")
 		await _verify_wall_stop(captures,"sw")
 		print("VERIFY_STAGE: ",index," / supplies_occlusion")
@@ -1156,7 +1158,7 @@ func _verify_extra(captures: String, direction: String) -> void:
 	player.position = origin
 
 ## 两布局验证受击/死亡四阶段、打断优先级、末帧保持、显示开关及重置，不结算真实伤害。
-func _verify_reactions(captures: String) -> void:
+func _verify_reactions(captures: String, direction := "se") -> void:
 	waypoints.clear()
 	var origin := player.position
 	var revision := navigator.navigation_revision
@@ -1166,8 +1168,8 @@ func _verify_reactions(captures: String) -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		assert(player_art.start_attack())
-		assert(player_art.start_reaction(state) and not player_art.attacking)
-		assert(not player_art.start_reaction(state) and not player_art.start_attack())
+		assert(player_art.start_reaction(state,direction) and not player_art.attacking)
+		assert(not player_art.start_reaction(state,direction) and not player_art.start_attack())
 		var seen: Dictionary = {}
 		var shots: Dictionary = {}
 		var deadline := Time.get_ticks_msec()+3000
@@ -1185,10 +1187,10 @@ func _verify_reactions(captures: String) -> void:
 		assert(seen.size()==4 and not player_art.reaction_playing,"反应%s 帧%s 播放%s 相位%s"%[state,seen.keys(),player_art.reaction_playing,player_art.reaction_elapsed])
 		assert(player.position==origin)
 		for frame in shots:
-			shots[frame].save_png(captures+"/hero_%s_%d_%d.png"%[state,selected_layout,frame])
+			shots[frame].save_png(captures+"/hero_%s_%s_%d_%d.png"%[state,direction,selected_layout,frame])
 		shots.clear()
 		if state=="hit":
-			assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.directional_idle)
+			assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.idle_for_direction(direction))
 		else:
 			verification_direction = Vector2.RIGHT
 			_route(origin+Vector2(100,0))
@@ -1199,7 +1201,7 @@ func _verify_reactions(captures: String) -> void:
 			verification_direction = Vector2.ZERO
 			assert(player.position==origin and waypoints.is_empty())
 			assert(player_art.reaction_state=="death" and player_art.texture==player_art.reaction_frames.death[3])
-			assert(not player_art.start_reaction("hit") and not player_art.start_attack())
+			assert(not player_art.start_reaction("hit",direction) and not player_art.start_attack())
 			player_art.enabled = false
 			player_art.update_motion(Vector2.ZERO)
 			assert(player_art.blocks_preview_motion() and player_art.texture==player_art.idle_texture)
@@ -1207,17 +1209,17 @@ func _verify_reactions(captures: String) -> void:
 			player_art.update_motion(Vector2.ZERO)
 			assert(player_art.texture==player_art.reaction_frames.death[3])
 		player_art.reset_reaction()
-	assert(player_art.start_reaction("hit"))
+	assert(player_art.start_reaction("hit",direction))
 	player_art.update_motion(Vector2.ZERO,Vector2.UP)
 	assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.extra_idles["n"])
-	assert(player_art.start_reaction("hit"))
-	assert(player_art.start_reaction("death"))
+	assert(player_art.start_reaction("hit",direction))
+	assert(player_art.start_reaction("death",direction))
 	player_art.advance_reaction(10.0)
 	assert(not player_art.reaction_playing and player_art.texture==player_art.reaction_frames.death[3])
 	player_art.reset_reaction()
-	assert(player_art.start_reaction("hit"))
+	assert(player_art.start_reaction("hit",direction))
 	player_art.advance_reaction(10.0)
-	assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.directional_idle)
+	assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.idle_for_direction(direction))
 	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked and player.position==origin)
 
 ## 两布局真实采样怪物步态、受击和倒地，检查暂停逐帧、打断、末帧保持及显式重置。

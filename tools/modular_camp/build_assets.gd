@@ -276,23 +276,27 @@ func _build_hero_attack(root: String) -> void:
 
 ## 按真实源格打包受击与死亡四阶段，统一缩放与锚点；所有源帧四边须通过透明检查。
 func _build_hero_reactions(root: String) -> void:
-	for state in ["hit","death"]:
-		var folder: String = root+"/art_source/actors/hero_"+state+"_se_trial_v1/"
-		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
-		var source := Image.load_from_file(folder+spec.source)
-		var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
-		assert(source.get_size()==cell*2 and source.detect_alpha()!=Image.ALPHA_NONE)
-		var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
-		var scaled := Vector2i((Vector2(cell)*float(spec.scale)).round())
-		var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
-		assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
-		var atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
-		for index in range(4):
-			var frame := source.get_region(Rect2i(Vector2i(index%2,index/2)*cell,cell))
-			_assert_frame_edges(frame)
-			frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
-			atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
-		var output: String = root+"/assets/art_pilot/hero_"+state+"_se_v1"
-		assert(atlas.save_png(output+".png")==OK)
-		FileAccess.open(output+".json",FileAccess.WRITE).store_string(JSON.stringify(spec,"  "))
+	for direction in ["se","ne"]:
+		for state in ["hit","death"]:
+			var folder: String = root+"/art_source/actors/hero_"+state+"_"+direction+"_trial_v1/"
+			var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(folder+"build.json"))
+			var source := Image.load_from_file(folder+spec.source)
+			var cell := Vector2i(spec.sourceFrame[0],spec.sourceFrame[1])
+			var source_size := Vector2i(spec.get("sourceSize",[cell.x*2,cell.y*2])[0],spec.get("sourceSize",[cell.x*2,cell.y*2])[1])
+			assert(source.get_size()==source_size and source.detect_alpha()!=Image.ALPHA_NONE)
+			var size := Vector2i(spec.frameSize[0],spec.frameSize[1])
+			var scaled := Vector2i((Vector2(cell)*float(spec.scale)).round())
+			var offset := Vector2i(spec.pivot[0],spec.pivot[1])-Vector2i((Vector2(spec.sourcePivot[0],spec.sourcePivot[1])*float(spec.scale)).round())
+			assert(Rect2i(Vector2i.ZERO,size).encloses(Rect2i(offset,scaled)))
+			var atlas := Image.create(size.x,size.y*4,false,Image.FORMAT_RGBA8)
+			for index in range(4):
+				var source_index := index+int(spec.get("sourceStartFrame",0))
+				var origin := Vector2i(floori((source_index%2)*source_size.x/2.0),floori((source_index/2)*source_size.y/float(spec.get("sourceRows",2))))
+				var frame := source.get_region(Rect2i(origin,cell))
+				_assert_frame_edges(frame)
+				frame.resize(scaled.x,scaled.y,Image.INTERPOLATE_LANCZOS)
+				atlas.blit_rect(frame,Rect2i(Vector2i.ZERO,scaled),offset+Vector2i(0,index*size.y))
+			var output: String = root+"/assets/art_pilot/hero_"+state+"_"+direction+"_v1"
+			assert(atlas.save_png(output+".png")==OK)
+			FileAccess.open(output+".json",FileAccess.WRITE).store_string(JSON.stringify(spec,"  "))
 	print("HERO_REACTIONS_BUILT")

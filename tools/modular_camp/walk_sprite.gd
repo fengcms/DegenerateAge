@@ -5,6 +5,7 @@ extends Sprite2D
 const DIRECTION_VECTORS := {"se":Vector2(0.89442719,0.44721360),"ne":Vector2(0.89442719,-0.44721360),"sw":Vector2(-0.89442719,0.44721360),"nw":Vector2(-0.89442719,-0.44721360),"s":Vector2.DOWN,"n":Vector2.UP,"e":Vector2.RIGHT,"w":Vector2.LEFT}
 var extra_frames: Dictionary = {}
 var extra_idles: Dictionary = {}
+var reaction_variants: Dictionary = {}
 var reaction_state := ""
 var reaction_playing := false
 var reaction_elapsed := 0.0
@@ -222,7 +223,7 @@ func setup_extra(direction: String, atlas: Texture2D, idle: Texture2D) -> void:
 ## 加载期缓存右前受击或死亡图集，沿用统一帧格；状态时长不连接正式结算事件。
 func setup_reaction(atlas: Texture2D, spec: Dictionary) -> void:
 	var state: String = spec.state
-	assert(state in ["hit","death"] and spec.direction=="se" and not spec.loop)
+	assert(state in ["hit","death"] and spec.direction in DIRECTION_VECTORS and not spec.loop)
 	assert(spec.frames==4 and spec.frameSeconds.size()==4 and spec.holdLast==(state=="death"))
 	assert(atlas.get_size()==frames[0].atlas.get_size() and Vector2(spec.pivot[0],spec.pivot[1])==-walk_offset)
 	var cached: Array[AtlasTexture] = []
@@ -236,17 +237,22 @@ func setup_reaction(atlas: Texture2D, spec: Dictionary) -> void:
 		assert(interval>0)
 		seconds.append(interval)
 		duration += interval
-	reaction_frames[state] = cached
-	reaction_seconds[state] = seconds
-	reaction_durations[state] = duration
+	if not reaction_variants.has(spec.direction):
+		reaction_variants[spec.direction] = {}
+	reaction_variants[spec.direction][state] = {"frames":cached,"seconds":seconds,"duration":duration}
 
 ## 受击打断挥剑，死亡可打断受击；死亡期间拒绝新动作，同类重复输入不重置相位。
-func start_reaction(state: String) -> bool:
+func start_reaction(state: String, direction := "se") -> bool:
 	assert(state in ["hit","death"])
-	if not enabled or reaction_state=="death" or reaction_state==state or not reaction_frames.has(state):
+	if not enabled or reaction_state=="death" or reaction_state==state or not reaction_variants.has(direction) or not reaction_variants[direction].has(state):
 		return false
 	cancel_attack()
-	facing_id = "se"
+	for reaction in reaction_variants[direction]:
+		var clip: Dictionary = reaction_variants[direction][reaction]
+		reaction_frames[reaction] = clip.frames
+		reaction_seconds[reaction] = clip.seconds
+		reaction_durations[reaction] = clip.duration
+	facing_id = direction
 	walking = false
 	phase_distance = 0
 	walk_frame = 0

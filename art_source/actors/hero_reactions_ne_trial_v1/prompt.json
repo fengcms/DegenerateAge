@@ -1,0 +1,4 @@
+{
+  "tool": "image_gen",
+  "prompt": "Production original game hero reaction sprite sheet, same identity as reference, all REAR THREE-QUARTER facing screen upper RIGHT NE. Anatomical right hand keeps one sword, left empty, bronze dark armor beige ragged scarf tied black hair. EIGHT poses arranged TWO COLUMNS FOUR ROWS with equal SQUARE cells, requested2048x4096. Read row-major. Frames1-4 HIT: flinch backward, brace, recover, standing. Frames5-8 DEATH: knees buckle, kneel, tip onto side, lying fully still on ground sideways with sword in right hand. No gore. Same scale and camera all poses; feet/ground anchor middle bottom of eachcell, generous 12% transparent margins all sides, blade complete. Real transparent alpha no backdrop fog shadow text grid. Restrained realistic painted Chinese fantasy MMORPG original design. Back of head upper-right throughout standing poses, never turn toward camera."
+}
