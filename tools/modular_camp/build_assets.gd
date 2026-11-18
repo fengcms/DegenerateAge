@@ -70,6 +70,8 @@ func _initialize() -> void:
 	_build_hero_reactions(root)
 	_build_monster_motion(root,"idle")
 	_build_monster_motion(root,"attack")
+	for state in ["walk","hit","death"]:
+		_build_monster_motion(root,state)
 	_build_supplies(root,manifest)
 	var file := FileAccess.open(output+"manifest.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  "))

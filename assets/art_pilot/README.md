@@ -51,3 +51,5 @@ hero_attack_sw_v1.png/json 为左前挥剑四阶段，112×512，共224KiB RGBA8
 hero_attack_nw_v1.png/json 为左后挥剑四阶段，112×512、锚点(56,112)，224KiB RGBA8；源和提示词在 art_source/actors/hero_attack_nw_trial_v1，隔离营地6键播放。
 
 hero_attack_s/n/e/w_v1.png/json为四个独立正向和侧向挥剑，各112×512、锚点(56,112)，共896KiB RGBA8。源及提示词在对应art_source/actors/hero_attack_<方向>_trial_v1目录，隔离营地7/8/9/0键预览，不接正式战斗。
+
+wolf/beetle_walk/hit/death_v1.png/json：两怪左前步态、受击及倒地，每张128×384、单帧128×96、锚点(64,80)，六张共1152KiB RGBA8。来源、提示词、构建参数在art_source/actors对应trial目录，隔离营地Z/X/E/Q预览。

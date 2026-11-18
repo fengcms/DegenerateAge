@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "prompt": "Original copper-armored giant beetle four-frame WALK sprite sheet matching reference. All face lower left elevated isometric view, exactly six legs, two antennae and two mandibles. 2x2 equal cells four sequential tripod gait stages, alternating three-leg support and passing steps, visibly different leg poses but stable shell size and orientation. Requested1536x1024,768x512 cells, beetle within x120..650,y100..420, ground anchor384,410. Rich weathered copper carapace, dark articulated legs, restrained realistic fantasy MMORPG painted sprite. Real TRANSPARENT alpha background only, no gray backdrop or fog or shadow, floor, grid, labels. Generous empty margin eachcell, no limbs clipped.",
+  "alphaCorrection": null
+}

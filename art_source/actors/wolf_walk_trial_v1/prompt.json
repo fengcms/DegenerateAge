@@ -1,0 +1,5 @@
+{
+  "tool": "image_gen",
+  "prompt": "Original game monster wolf walk cycle sprite sheet using reference identity: lean dark gray mangy fantasy wolf, bony shoulders, ragged fur, small muted purple patches. All face screen lower left, elevated isometric three-quarter view, all four paws present. 2x2 equal cells four sequential WALK poses: left front+right rear forward, passing, right front+left rear forward, passing. Different alternating leg positions, same body length scale head direction and centered ground anchor. Requested1536x1024, cell768x512, wolf body spanning x100..670,y120..450, ground anchor384,450. Transparent margins all sides, true alpha, no fog shadows ground effects grid labels or blood. Restrained realistic painted early Chinese fantasy RPG style. No copied game assets.",
+  "alphaCorrection": "Extract ONLY the four wolves from this 2x2 sprite sheet. Remove entire gray brown background and halo to true transparent alpha. Preserve exact pixels of wolves, four leg poses, layout, scale and position, 1536x1024 requested. No backdrop, no floor shadow, no fog, no text. All borders of each768x512cell fully transparent."
+}

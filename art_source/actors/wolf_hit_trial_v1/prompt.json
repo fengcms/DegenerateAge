@@ -1,0 +1,4 @@
+{
+  "tool": "image_gen",
+  "prompt": "Original monster wolf HIT REACTION four-stage sprite sheet using reference identity. Lean dark gray ragged wolf with muted purple patches, faces lower left elevated isometric view in all frames. 2x2 cells: flinch head backward, body crouches bracing, recover rising, normal alert stance. Four paws anatomically correct, no sliding/root movement, same scale. Requested1536x1024, cells768x512, full body within100..670x80..450, pivot384,450. Clean transparent alpha cutouts no fog halo shadows ground text grid blood or effects. Restrained realistic fantasy MMORPG painted sprites, retain wolf identity."
+}

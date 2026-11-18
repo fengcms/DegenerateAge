@@ -1,0 +1,33 @@
+{
+  "columns": 2.0,
+  "direction": "sw",
+  "frameSeconds": [
+    0.16,
+    0.16,
+    0.16,
+    0.16
+  ],
+  "frameSize": [
+    128.0,
+    96.0
+  ],
+  "frames": 4.0,
+  "holdLast": false,
+  "loop": true,
+  "pivot": [
+    64.0,
+    80.0
+  ],
+  "scale": 0.16,
+  "source": "candidate.png",
+  "sourceFrame": [
+    768.0,
+    512.0
+  ],
+  "sourcePivot": [
+    384.0,
+    460.0
+  ],
+  "state": "walk",
+  "status": "isolated_motion_trial"
+}

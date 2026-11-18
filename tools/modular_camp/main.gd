@@ -14,6 +14,7 @@ const DEFINITIONS := {
 var player_art: SampleWalkSprite
 var walk_spec: Dictionary
 var reaction_specs: Dictionary = {}
+var monster_preview_specs: Dictionary = {}
 var cardinal_attack_specs: Dictionary = {}
 var left_rear_attack_spec: Dictionary
 var left_attack_spec: Dictionary
@@ -48,6 +49,10 @@ var occluders: Array[SampleOccluder] = []
 
 ## 读取固定资产并建立第一个布局，自动验收模式覆盖两个布局和墙移动。
 func _ready() -> void:
+	for kind in ["wolf","beetle"]:
+		monster_preview_specs[kind] = {}
+		for state in ["walk","hit","death"]:
+			monster_preview_specs[kind][state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/"+kind+"_"+state+"_v1.json"))
 	for state in ["hit","death"]:
 		reaction_specs[state] = JSON.parse_string(FileAccess.get_file_as_string("res://assets/art_pilot/hero_"+state+"_se_v1.json"))
 	for direction in ["s","n","e","w"]:
@@ -212,7 +217,7 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / 5左前挥剑 / 6左后挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\n7正前/8正后/9右/0左挥剑 · F受击 / C倒地 / V重置 · 新材质与独立物件试装 · 土草路＋贴花 / 轮廓保护淡出 · 主角八方向四帧试装 / 狼与甲虫待机/攻击试装" % definition.name
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / 5左前挥剑 / 6左后挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\n7正前/8正后/9右/0左挥剑 · F受击 / C倒地 / V重置\n怪物：Z步态 / X受击 / E倒地 / Q重置 · 原地姿态审查 · 土草路＋独立物件" % definition.name
 
 ## 按档案定位角色表现；主角支持八个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -238,6 +243,8 @@ func _actor_sprite(kind: String) -> Sprite2D:
 	elif sprite is SampleIdleSprite:
 		sprite.setup(_texture("assets/art_pilot/"+kind+"_idle_v1.png"),monster_specs[kind])
 		sprite.setup_attack(_texture("assets/art_pilot/"+kind+"_attack_v1.png"),monster_attack_specs[kind])
+		for state in monster_preview_specs[kind]:
+			sprite.setup_preview(_texture("assets/art_pilot/"+kind+"_"+state+"_v1.png"),monster_preview_specs[kind][state])
 		sprite.set_enabled(monster_motion_enabled)
 		sprite.set_paused(monster_motion_paused)
 	sprite.set_meta("actor_kind",kind)
@@ -276,6 +283,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_start_extra_demo("n" if event.keycode==KEY_1 else ("e" if event.keycode==KEY_2 else "w"))
 		elif event.keycode in [KEY_7,KEY_8,KEY_9,KEY_0]:
 			_start_attack_demo({KEY_7:"s",KEY_8:"n",KEY_9:"e",KEY_0:"w"}[event.keycode])
+		elif event.keycode in [KEY_Z,KEY_X,KEY_E,KEY_Q]:
+			for actor in monster_previews:
+				if event.keycode==KEY_Q:
+					actor.reset_preview()
+				else:
+					actor.start_preview({KEY_Z:"walk",KEY_X:"hit",KEY_E:"death"}[event.keycode])
 		elif event.keycode == KEY_6:
 			_start_attack_demo("nw")
 		elif event.keycode == KEY_5:
@@ -413,6 +426,7 @@ func _verify() -> void:
 		print("VERIFY_STAGE: ",index," / monster_idle")
 		await _verify_monster_idle(captures)
 		await _verify_monster_attack(captures)
+		await _verify_monster_previews(captures)
 		print("VERIFY_STAGE: ",index," / hero_walk")
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
@@ -665,7 +679,7 @@ func _verify_wall_stop(captures: String, direction := "se") -> void:
 	verification_direction = Vector2.ZERO
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	assert(not player_art.walking)
+	assert(not player_art.walking,"撤销输入方向%s 位置%s 速度%s 路线%s 相位%s"%[direction,player.position,player.velocity,waypoints,player_art.phase_distance])
 	player.position = origin
 
 ## 原地切换前后两个已制作朝向，不移动角色；用于检查武器持握、比例和共用脚底锚点。
@@ -1205,3 +1219,65 @@ func _verify_reactions(captures: String) -> void:
 	player_art.advance_reaction(10.0)
 	assert(player_art.reaction_state.is_empty() and player_art.texture==player_art.directional_idle)
 	assert(navigator.navigation_revision==revision and navigator.blocked_cells()==blocked and player.position==origin)
+
+## 两布局真实采样怪物步态、受击和倒地，检查暂停逐帧、打断、末帧保持及显式重置。
+func _verify_monster_previews(captures: String) -> void:
+	var revision := navigator.navigation_revision
+	for state in ["walk","hit","death"]:
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var seen: Dictionary = {}
+		var shots: Dictionary = {}
+		_set_monster_paused(false)
+		for actor in monster_previews:
+			actor.reset_preview()
+			assert(actor.start_preview(state))
+			assert(not actor.start_preview(state) and not actor.start_attack())
+			seen[actor.get_meta("actor_kind")] = {}
+		var deadline := Time.get_ticks_msec()+1200
+		while Time.get_ticks_msec()<deadline:
+			if captures.is_empty():
+				await get_tree().process_frame
+			else:
+				await RenderingServer.frame_post_draw
+			for actor in monster_previews:
+				if actor.preview_state==state:
+					var kind: String = actor.get_meta("actor_kind")
+					var frame: int = actor.current_frame
+					seen[kind][frame] = true
+					assert(actor.texture==actor.preview_clips[state].regions[frame])
+					var key := "monster_%s_%s_%d_%d.png"%[kind,state,selected_layout,frame]
+					if not captures.is_empty() and not shots.has(key):
+						shots[key] = get_viewport().get_texture().get_image()
+		for kind in seen:
+			assert(seen[kind].size()==4,"怪物%s %s未覆盖四阶段"%[kind,state])
+		for actor in monster_previews:
+			if state=="hit":
+				assert(actor.preview_state.is_empty() and actor.texture in actor.regions)
+			elif state=="death":
+				assert(actor.current_frame==3 and not actor.start_preview("walk") and not actor.start_preview("hit"))
+			actor.reset_preview()
+			actor.set_paused(true)
+			assert(actor.start_preview(state))
+			for frame in range(1,4):
+				actor.step_frame()
+				assert(actor.current_frame==frame and actor.texture==actor.preview_clips[state].regions[frame])
+			actor.step_frame()
+			assert(actor.current_frame==(3 if state=="death" else 0))
+			actor.reset_preview()
+			assert(actor.start_preview("walk"))
+			assert(actor.start_preview("hit"))
+			assert(not actor.start_preview("walk"))
+			assert(actor.start_preview("death"))
+			actor._advance_preview(10)
+			assert(actor.current_frame==3 and actor.preview_state=="death")
+			actor.set_enabled(false)
+			assert(actor.preview_state.is_empty() and actor.texture==actor.original and not actor.start_preview(state))
+			actor.reset_preview()
+			assert(actor.texture==actor.original)
+			actor.set_enabled(true)
+			actor.set_paused(false)
+		for key in shots:
+			shots[key].save_png(captures+"/"+key)
+		shots.clear()
+	assert(navigator.navigation_revision==revision)
