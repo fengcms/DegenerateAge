@@ -27,6 +27,7 @@ var monster_specs: Dictionary = {}
 var monster_attack_specs: Dictionary = {}
 var verification_direction := Vector2.ZERO
 var actor_specs: Dictionary
+var monster_movers: Array[SampleMonsterMotion] = []
 var monster_previews: Array[Sprite2D] = []
 var actor_names_visible := false
 var object_manifest: Dictionary
@@ -137,6 +138,7 @@ func _switch_layout(index: int) -> void:
 	collision_cells.clear()
 	occluders.clear()
 	monster_previews.clear()
+	monster_movers.clear()
 	if world != null:
 		remove_child(world)
 		world.queue_free()
@@ -221,7 +223,11 @@ func _switch_layout(index: int) -> void:
 		actor.z_index = roundi(actor.position.y)
 		world.add_child(actor)
 		monster_previews.append(actor)
-	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / 5左前挥剑 / 6左后挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\n7正前/8正后/9右/0左挥剑 · F受击 / C倒地 / V重置\n怪物：Z步态 / X受击 / E倒地 / Q重置 · 原地姿态审查 · 土草路＋独立物件" % definition.name
+		var mover := SampleMonsterMotion.new()
+		world.add_child(mover)
+		mover.setup(actor,navigator)
+		monster_movers.append(mover)
+	label.text = "模块化结构样板 %s · Tab切换布局 · 点击寻路 / WASD移动 · B碰撞 · M移动墙 · N名称 · P右下/O右上/U左下/Y左上/G正下 · H动作对照 · I转向 · J怪物动作\n1正后 / 2向右 / 3向左 · T右前挥剑 / 4右后挥剑 / 5左前挥剑 / 6左后挥剑 / R怪物攻击 · K暂停怪物 / L逐帧\n7正前/8正后/9右/0左挥剑 · F受击 / C倒地 / V重置\n怪物：F8试走 / Z原地步态 / X受击 / E倒地 / Q重置 · 土草路＋独立物件" % definition.name
 
 ## 按档案定位角色表现；主角支持八个方向试装，怪物可试装待机，不引入AI或碰撞。
 func _actor_sprite(kind: String) -> Sprite2D:
@@ -287,7 +293,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_start_extra_demo("n" if event.keycode==KEY_1 else ("e" if event.keycode==KEY_2 else "w"))
 		elif event.keycode in [KEY_7,KEY_8,KEY_9,KEY_0]:
 			_start_attack_demo({KEY_7:"s",KEY_8:"n",KEY_9:"e",KEY_0:"w"}[event.keycode])
+		elif event.keycode==KEY_F8:
+			for mover in monster_movers:
+				mover.start_walk()
 		elif event.keycode in [KEY_Z,KEY_X,KEY_E,KEY_Q]:
+			if event.keycode==KEY_Q:
+				for mover in monster_movers:
+					mover.stop_walk(false)
 			for actor in monster_previews:
 				if event.keycode==KEY_Q:
 					actor.reset_preview()
@@ -431,6 +443,7 @@ func _verify() -> void:
 		await _verify_monster_idle(captures)
 		await _verify_monster_attack(captures)
 		await _verify_monster_previews(captures)
+		await _verify_monster_motion(captures)
 		print("VERIFY_STAGE: ",index," / hero_walk")
 		await _verify_walk(captures)
 		await _verify_wall_stop(captures)
@@ -742,6 +755,8 @@ func _verify_rear(captures: String) -> void:
 
 ## 同时切换展示怪物动作开关，切图保留用户选择；不改变布局或物理。
 func _set_monster_motion(value: bool) -> void:
+	for mover in monster_movers:
+		mover.stop_walk(false)
 	monster_motion_enabled = value
 	for actor in monster_previews:
 		if actor is SampleIdleSprite:
@@ -1293,3 +1308,47 @@ func _verify_monster_previews(captures: String) -> void:
 func _render_verification_frame() -> void:
 	await get_tree().process_frame
 	RenderingServer.force_draw(false)
+
+## 两布局真实试走覆盖位移四帧、暂停、抵达待机与死亡打断，结束恢复落点以隔离其他验收。
+func _verify_monster_motion(captures: String) -> void:
+	var revision := navigator.navigation_revision
+	for mover in monster_movers:
+		var actor := mover.art
+		var origin := actor.position
+		actor.set_paused(false)
+		actor.reset_preview()
+		assert(mover.start_walk())
+		assert(not mover.start_walk())
+		var seen: Dictionary = {}
+		var deadline := Time.get_ticks_msec()+3000
+		while mover.active and Time.get_ticks_msec()<deadline:
+			await get_tree().physics_frame
+			if mover.active:
+				seen[actor.current_frame] = true
+		assert(not mover.active and seen.size()==4,"怪物真实试走未覆盖四帧或未停止")
+		assert(actor.position.distance_to(origin+Iso.grid_pt(-2,0))<0.1)
+		assert(actor.preview_state.is_empty() and not actor.distance_driven_walk)
+		if not captures.is_empty():
+			await _render_verification_frame()
+			get_viewport().get_texture().get_image().save_png(captures+"/monster_motion_%s_%d.png"%[actor.get_meta("actor_kind"),selected_layout])
+		actor.position = origin
+		assert(mover.start_walk())
+		actor.set_paused(true)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		assert(actor.position==origin)
+		actor.set_paused(false)
+		assert(actor.start_preview("death"))
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		assert(not mover.active and actor.position==origin and actor.preview_state=="death")
+		actor.reset_preview()
+		assert(mover.start_walk())
+		actor.set_enabled(false)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		assert(not mover.active and actor.position==origin)
+		actor.set_enabled(true)
+		mover.position = origin
+		actor.z_index = roundi(origin.y)
+	assert(navigator.navigation_revision==revision)

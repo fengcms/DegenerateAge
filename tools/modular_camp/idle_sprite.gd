@@ -2,6 +2,7 @@ class_name SampleIdleSprite
 extends Sprite2D
 ## 隔离营地怪物待机、攻击、步态与反应试装：缓存区域按秒播放，不控制移动、碰撞、AI或伤害。
 ## 仅加载期构建区域，热路径切换引用；关闭动作恢复原静态图，切图由父场景释放。
+var distance_driven_walk := false
 var preview_clips: Dictionary = {}
 var preview_state := ""
 var preview_elapsed := 0.0
@@ -52,6 +53,8 @@ func set_enabled(value: bool) -> void:
 ## 固定数量对象按秒更新；卡顿后直接恢复正确循环相位，不累积补帧队列。
 func _process(delta: float) -> void:
 	if not preview_state.is_empty():
+		if preview_state=="walk" and distance_driven_walk:
+			return
 		_advance_preview(delta)
 		return
 	if attacking:
@@ -205,3 +208,9 @@ func reset_preview() -> void:
 	_finish_attack()
 	if not enabled:
 		texture = original
+
+## 真实试走按累计屏幕像素采样四阶段，步幅64像素；不依赖渲染帧率，也不加载资源。
+func show_walk_distance(distance_pixels: float) -> void:
+	assert(distance_driven_walk and preview_state=="walk")
+	current_frame = floori(fposmod(distance_pixels,64.0)/16.0)
+	texture = preview_clips.walk.regions[current_frame]
