@@ -37,6 +37,8 @@ func _ready() -> void:
 			var rect: Array = entity.get("footprint", [])
 			assert(rect.size() == 2 and int(rect[0]) >= 1 and int(rect[1]) >= 1)
 			sprites += (entity.get("visual_cells", []) as Array).size()
+			if map_id == "wild_trial":
+				_check_wild_props(art, entity)
 			if bool(entity.get("blocking", false)):
 				blocking += 1
 				assert(walls.get_node_or_null(instance_id) is CollisionPolygon2D,
@@ -63,3 +65,19 @@ func _ready() -> void:
 		await get_tree().physics_frame
 	print("[ChapterOneMapArtTest] PASS")
 	get_tree().quit()
+
+
+## 核对改绘物件使用正式纹理，且每个实例仍与原摆放格、画幅和脚底对齐。
+func _check_wild_props(art: ChapterOneMapArt, entity: Dictionary) -> void:
+	var variants: Array = entity.get("visual_assets", [])
+	for i in range(entity.visual_cells.size()):
+		var asset: String = variants[i] if i < variants.size() else entity.asset_id
+		if asset not in ["moss_ridge", "broken_cart"]:
+			continue
+		var sprite := art.get_node("%s_%02d" % [entity.instance_id, i]) as Sprite2D
+		var size := Vector2(188, 182) if asset == "moss_ridge" else Vector2(180, 177)
+		var grid: Array = entity.visual_cells[i]
+		assert(sprite.texture.resource_path.ends_with("/" + asset + "_modular.png"), "试炼荒野正式图未采用新贴图")
+		assert(sprite.texture.get_size() == size and sprite.offset == Vector2(-size.x * 0.5, -size.y + 4.0))
+		assert(sprite.position == Iso.grid_to_world(Vector2i(int(grid[0]), int(grid[1]))))
+		assert(sprite.z_index == clampi(roundi(sprite.position.y), -3500, 3500))

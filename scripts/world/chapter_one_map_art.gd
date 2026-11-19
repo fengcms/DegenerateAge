@@ -6,6 +6,8 @@ extends Node2D
 var map_id := ""
 var layout: Dictionary = {}
 var _textures: Dictionary = {}
+const WILD_PROP_DIR := "res://assets/tiles/chapter1_v2/wild_trial/"
+const WILD_MODULAR_PROPS := ["moss_ridge", "broken_cart"]
 
 
 ## 在节点加入场景树前设定地图与摆放数据；调用方保证版本已与运行布局核对。
@@ -69,12 +71,16 @@ func add_collisions_to(body: StaticBody2D) -> void:
 		body.add_child(collision)
 
 
-## 以资产 ID 缓存纹理，重复的墙段和岩脊不为每个实例单独解码。
+## 按路径缓存纹理。荒野新版岩脊和残车沿用旧画幅，缺图时读取原贴图。
 func _texture_for(entity: Dictionary) -> Texture2D:
 	var asset_id := String(entity.get("asset_id", ""))
 	var path := String(entity.get("asset_path", ""))
 	if map_id=="wild_trial" and asset_id=="dead_tree":
 		path = "res://assets/environment/camp_modular_v1/tree.png"
+	elif map_id == "wild_trial" and path.is_empty() and asset_id in WILD_MODULAR_PROPS:
+		var replacement := WILD_PROP_DIR + asset_id + "_modular.png"
+		if ResourceLoader.exists(replacement, "Texture2D"):
+			path = replacement
 	if path.is_empty():
 		path = "res://assets/tiles/chapter1_v2/%s/%s.png" % [map_id, asset_id]
 	if _textures.has(path):
