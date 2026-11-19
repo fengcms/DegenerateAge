@@ -80,6 +80,8 @@ const CH1_CAVE_EDGES := [
 const WALL_THICKNESS := 10.0
 const CAMP_WHITEBOX_PATH := "res://data/map_art/camp_whitebox_v2.json"
 const CAMP_FINAL_ART_MANIFEST := "res://assets/maps/camp_style_full_b_v2/manifest.json"
+## 将亮橙木材压到旧木色域。沿用围栏图像的纹理明暗、透明边界和采样方式。
+const CAMP_FENCE_TINT := Color(0.68, 0.78, 0.86)
 const COLOR_FILL := Color("36423a")     # 地面底色
 const COLOR_GRID := Color("44564a")     # 网格线
 const COLOR_BORDER := Color("5f7563")   # 外边框
@@ -180,6 +182,9 @@ func _load_camp_final_art() -> void:
 		overlay.z_index = -3999
 		add_child(overlay)
 	var unit_scale := _camp_rect.size / _camp_canvas_size
+	var fence_ids := {}
+	for fence: Dictionary in _camp_whitebox["fences"]:
+		fence_ids[String(fence["id"])] = true
 	var object_ids: Dictionary = {}
 	for entry: Dictionary in manifest.get("objects", []):
 		var id := String(entry["id"])
@@ -198,6 +203,8 @@ func _load_camp_final_art() -> void:
 			sprite.name = "Camp_%s_%s" % [id, layer]
 			sprite.texture = texture
 			sprite.centered = false
+			if fence_ids.has(id):
+				sprite.self_modulate = CAMP_FENCE_TINT
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if entry.get("pixel_art", false) else CanvasItem.TEXTURE_FILTER_LINEAR
 			sprite.scale = unit_scale * Vector2(float(rect[2]) / texture.get_width(),
 				float(rect[3]) / texture.get_height())

@@ -187,7 +187,10 @@ def write_split_entity(name, entry, cut_y, output, scratch):
     source = SOURCE / f"{name}.png"
     full = scratch / f"{name}_full.png"
     back_crop = scratch / f"{name}_back_crop.png"
-    magick(source, "-trim", "+repage", "-resize", f"{width}x{height}!", "-strip", full)
+    if name == "training_fire":
+        write_training_fire_frame(width, height, full, scratch)
+    else:
+        magick(source, "-trim", "+repage", "-resize", f"{width}x{height}!", "-strip", full)
     magick(full, "-crop", f"{width}x{cut}+0+0", "+repage", "-background", "none",
            "-gravity", "northwest", "-extent", f"{width}x{height}", "-strip",
            output / f"{name}_front.png")
@@ -197,6 +200,25 @@ def write_split_entity(name, entry, cut_y, output, scratch):
     return {"id": name, "rect": rect, "foot_y": entry["art_foot_y"],
             "back": f"res://assets/maps/camp_style_full_b_v2/{name}_back.png",
             "front": f"res://assets/maps/camp_style_full_b_v2/{name}_front.png"}
+
+
+def write_training_fire_frame(width, height, output, scratch):
+    """裁出透明火塘，按原火塘宽度及地面接触线合入当前参考画幅。"""
+    source = SOURCE_V2 / "training_fire.png"
+    # 主体边界来自大于 10% 的 alpha，只用于裁切，源图内部的透明度保持不变。
+    crop = subprocess.check_output(
+        ["magick", str(source), "-alpha", "extract", "-threshold", "10%",
+         "-trim", "-format", "%wx%h%O", "info:"],
+        text=True,
+    )
+    piece = scratch / "training_fire_piece.png"
+    piece_width = round(width * 48 / 76)
+    piece_height = round(height * 31 / 68)
+    magick(source, "-crop", crop, "+repage", "-resize", f"{piece_width}x{piece_height}!", piece)
+    x = round(width * 13 / 76)
+    y = round(height * 57 / 68) - piece_height
+    magick("-size", f"{width}x{height}", "xc:none", piece, "-geometry", f"+{x}+{y}",
+           "-compose", "Over", "-composite", "-strip", output)
 
 
 def polygon_bounds(points):
