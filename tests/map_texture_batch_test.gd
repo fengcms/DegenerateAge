@@ -12,9 +12,9 @@ func _ready() -> void:
 		await get_tree().process_frame
 		if map_id == "camp":
 			assert(ground._tile_mesh == null and ground._camp_whitebox.get("id", "") == "camp_whitebox_v2"
-				and ground._camp_modular != null and ground._camp_modular.get_child_count()==3
+				and ground._camp_modular != null and ground._camp_modular.get_child_count()==4
 				and ground._camp_foreground_count == 11,
-				"营地应使用三层模块地面及11个实体前沿")
+				"营地应使用三层模块地面、贴花及11个实体前沿")
 			assert(ground.get_world_bounds().size == Vector2(3200, 1800), "营地画幅必须是矩形")
 			for layer in range(3):
 				var node := ground._camp_modular.get_child(layer) as MeshInstance2D
@@ -26,12 +26,15 @@ func _ready() -> void:
 				for uv: Vector2 in packed[Mesh.ARRAY_TEX_UV]:
 					assert(uv.x>=0 and uv.x<=1 and uv.y>=0 and uv.y<=1,"模块UV越出图集")
 				assert(node.texture.get_size()==Vector2(1024,1536),"模块图集尺寸与UV规格不符")
+			var definition: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/map_art/camp_modular_v1.json"))
+			_check_decals(ground._camp_modular, ground.get_world_bounds(), definition.roads)
 			ground.queue_free()
 			await get_tree().process_frame
 			continue
 		if map_id=="wild_trial":
-			assert(ground._wild_modular!=null and ground._wild_modular.get_child_count()==3,"试炼野外须复用三层模块地面")
+			assert(ground._wild_modular!=null and ground._wild_modular.get_child_count()==4,"试炼野外须复用三层模块地面及贴花")
 			assert(ground._wild_modular.tile_counts[0]==ground.grid_size.x*ground.grid_size.y,"野外模块须覆盖完整地图")
+			_check_decals(ground._wild_modular, ground.get_world_bounds(), ground._chapter_one_road_rows)
 			var roads := 0
 			for row: String in ground._chapter_one_road_rows:
 				roads += row.count("1")
@@ -73,3 +76,19 @@ func _ready() -> void:
 		await get_tree().process_frame
 	print("[MapTextureBatchTest] PASS")
 	get_tree().quit()
+
+
+## 地面贴花须单面合批，所有锚点均在原道路外侧，且图块不伸出地图矩形。
+func _check_decals(terrain: CampModularArt, bounds: Rect2, roads: Array) -> void:
+	var decals := terrain.get_node("GroundDecals") as MeshInstance2D
+	assert(decals.mesh.get_surface_count() == 1 and decals.z_index > -3998)
+	var vertices: PackedVector3Array = decals.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var count := vertices.size() / 4
+	assert(count > 0 and count <= 48)
+	for vertex in vertices:
+		assert(bounds.grow(0.001).has_point(Vector2(vertex.x, vertex.y)))
+	for i in range(0, vertices.size(), 4):
+		var p := (vertices[i] + vertices[i + 2]) * 0.5
+		var cell := Vector2i(Iso.world_to_grid(Vector2(p.x, p.y)).round())
+		assert(roads[cell.y][cell.x] == "0" and ModularRoadRules.at(roads, cell) & 15 != 0)
+	print("[PERF] 路肩贴花合批数量：", count)

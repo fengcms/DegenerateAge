@@ -1,9 +1,12 @@
 class_name CampModularArt
 extends Node2D
-## 正式营地与试炼野外模块地面：复用64×32、16相位与47邻接图集，三层静态网格在加载时一次构建。
+## 正式营地与试炼野外模块地面：三层地形和一层低密度路肩贴花在地图加载时一次构建。
 ## 通行、碰撞、服务点仍归IsoGround的正式布局管理；本模块只负责视觉，不写布局或存档。
 const TERRAIN := "res://assets/environment/camp_modular_v1/terrain_atlas.png"
 const GRASS := "res://assets/environment/camp_modular_v1/grass_atlas.png"
+const DECALS := "res://assets/environment/camp_modular_v1/decals_atlas.png"
+const DECAL_SECTORS := Vector2i(8, 6)
+const DECAL_SIZE := Vector2(96, 48)
 const RULES := preload("res://scripts/world/modular_road_rules.gd")
 var tile_counts: Array[int] = []
 
@@ -46,3 +49,53 @@ func setup(definition: Dictionary, bounds: Rect2) -> void:
 		mesh.z_index = -4000+layer
 		add_child(mesh)
 		tile_counts.append(count)
+	_add_roadside_decals(rows, bounds)
+
+## 沿原道路找相邻的非道路格。按世界矩形分区，每区最多取一个稳定散列样本。
+## 贴花只读道路掩码，无碰撞及逐帧更新，切图随地面网格一同释放。
+func _add_roadside_decals(rows: Array, bounds: Rect2) -> void:
+	var selected: Dictionary = {}
+	var scores: Dictionary = {}
+	var anchors := bounds.grow_individual(-DECAL_SIZE.x * 0.5, -DECAL_SIZE.y * 0.5,
+		-DECAL_SIZE.x * 0.5, -DECAL_SIZE.y * 0.5)
+	for y in range(1, rows.size() - 1):
+		var row: String = rows[y]
+		var above: String = rows[y - 1]
+		var below: String = rows[y + 1]
+		for x in range(1, row.length() - 1):
+			if row[x] == "1":
+				continue
+			if row[x - 1] != "1" and row[x + 1] != "1" and above[x] != "1" and below[x] != "1":
+				continue
+			var cell := Vector2i(x, y)
+			var center := Iso.grid_to_world(cell)
+			if not anchors.has_point(center):
+				continue
+			var sector := Vector2i((center - bounds.position) / bounds.size * Vector2(DECAL_SECTORS))
+			var score := hash(cell)
+			if not scores.has(sector) or score < scores[sector]:
+				scores[sector] = score
+				selected[sector] = cell
+	if selected.is_empty():
+		return
+	var texture := load(DECALS) as Texture2D
+	if texture == null:
+		return
+	var builder := FlatTileMesh.new(selected.size(), true)
+	for cell: Vector2i in selected.values():
+		var origin := Iso.grid_to_world(cell) - DECAL_SIZE * 0.5
+		var left := float(hash(cell) % 2) * 0.5
+		builder.add_quad(
+			PackedVector2Array([origin, origin + Vector2(DECAL_SIZE.x, 0),
+				origin + DECAL_SIZE, origin + Vector2(0, DECAL_SIZE.y)]),
+			PackedVector2Array([Vector2(left, 0), Vector2(left + 0.5, 0),
+				Vector2(left + 0.5, 1), Vector2(left, 1)]))
+	var mesh := MeshInstance2D.new()
+	mesh.name = "GroundDecals"
+	mesh.mesh = builder.build()
+	mesh.texture = texture
+	mesh.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	mesh.modulate = Color(0.82, 0.8, 0.76, 0.65)
+	mesh.z_as_relative = false
+	mesh.z_index = -3997
+	add_child(mesh)

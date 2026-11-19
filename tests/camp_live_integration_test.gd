@@ -21,9 +21,9 @@ func _ready() -> void:
 		"正常游戏应加载矩形营地")
 	var source_solids := (ground._camp_whitebox["entities"] as Array).size() + (ground._camp_whitebox["fences"] as Array).size()
 	assert(ground.get_node("CaveWalls").get_child_count() == source_solids, "每个实体与围栏应只有一条整体碰撞")
-	assert(ground._camp_modular != null and ground._camp_modular.get_child_count()==3
+	assert(ground._camp_modular != null and ground._camp_modular.get_child_count()==4
 		and ground._camp_foreground_count == source_solids,
-		"正式营地必须装配三层模块地面与全部原障碍前沿")
+		"正式营地必须装配三层模块地面、贴花与全部原障碍前沿")
 	var cave_walls := ground.get_node("CaveWalls") as StaticBody2D
 	## 取样点从**当前布局实时推导**（每个实体的轮廓重心），不写死画布坐标：
 	## 营地美术调整会整体平移实体（`training_north` 就挪过 444,529 → 450,519），
