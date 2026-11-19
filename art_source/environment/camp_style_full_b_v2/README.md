@@ -5,3 +5,5 @@
 `tools/build_camp_style_full_b_v2.py` 用这些源图和 `data/map_art/camp_whitebox_v2.json` 生成 `assets/maps/camp_style_full_b_v2/`。保留的建筑、长老树、马车和中央灯仍从 `art_source/environment/camp_style_full_b/` 制作。原生成图保留在此目录；脚本输出的循环地纹、碎石路与分层整体实体是唯一正式运行素材。
 
 `training_fire.png` 为内置 imagegen 生成的灰石火塘。原营火前层仅用于占地和视角参考，完整提示见 `training_fire_prompt.txt`。构建器从透明源稿裁出主体，再按原火塘宽 48 像素及底边第 57 像素定位到 76×68 的运行画幅。按原第 50 像素分为背层和前沿，输出 `training_fire_back.png` 与 `training_fire_front.png`。火苗为静态图像。
+
+`guardian_lamp.png` 与 `caravan.png` 是内置 imagegen 制作的灰瓦镇灵灯与旧帆布马车，参考本项目原单体的镜头方向和落地位置，完整提示随源稿保存。构建器沿用正式实体的 168×300 与 440×250 像素画幅、原分层切线和脚底坐标。灯光留在灯罩的贴图内。构建后的四张图位于 `assets/maps/camp_style_full_b_v2/`。

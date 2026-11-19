@@ -32,6 +32,12 @@ LARGE_ENTITIES = {
     "caravan": 97,
     "training_fire": 25,
 }
+# 新设施按旧图主体在双倍参考画布中的宽、高、左边距和底边定位。
+FACILITY_FRAMES = {
+    "training_fire": (76, 68, 48, 31, 13, 57),
+    "guardian_lamp": (168, 300, 62, 300, 53, 300),
+    "caravan": (440, 250, 403, 248, 0, 250),
+}
 
 
 def write_ground_tile(output, scratch):
@@ -187,8 +193,8 @@ def write_split_entity(name, entry, cut_y, output, scratch):
     source = SOURCE / f"{name}.png"
     full = scratch / f"{name}_full.png"
     back_crop = scratch / f"{name}_back_crop.png"
-    if name == "training_fire":
-        write_training_fire_frame(width, height, full, scratch)
+    if name in FACILITY_FRAMES and (SOURCE_V2 / f"{name}.png").is_file():
+        write_facility_frame(name, width, height, full, scratch)
     else:
         magick(source, "-trim", "+repage", "-resize", f"{width}x{height}!", "-strip", full)
     magick(full, "-crop", f"{width}x{cut}+0+0", "+repage", "-background", "none",
@@ -202,21 +208,22 @@ def write_split_entity(name, entry, cut_y, output, scratch):
             "front": f"res://assets/maps/camp_style_full_b_v2/{name}_front.png"}
 
 
-def write_training_fire_frame(width, height, output, scratch):
-    """裁出透明火塘，按原火塘宽度及地面接触线合入当前参考画幅。"""
-    source = SOURCE_V2 / "training_fire.png"
+def write_facility_frame(name, width, height, output, scratch):
+    """裁出审核过的透明单体，按原地面接触线和主体占地合入参考画幅。"""
+    source = SOURCE_V2 / f"{name}.png"
     # 主体边界来自大于 10% 的 alpha，只用于裁切，源图内部的透明度保持不变。
     crop = subprocess.check_output(
         ["magick", str(source), "-alpha", "extract", "-threshold", "10%",
          "-trim", "-format", "%wx%h%O", "info:"],
         text=True,
     )
-    piece = scratch / "training_fire_piece.png"
-    piece_width = round(width * 48 / 76)
-    piece_height = round(height * 31 / 68)
+    frame_width, frame_height, subject_width, subject_height, left, bottom = FACILITY_FRAMES[name]
+    piece = scratch / f"{name}_piece.png"
+    piece_width = round(width * subject_width / frame_width)
+    piece_height = round(height * subject_height / frame_height)
     magick(source, "-crop", crop, "+repage", "-resize", f"{piece_width}x{piece_height}!", piece)
-    x = round(width * 13 / 76)
-    y = round(height * 57 / 68) - piece_height
+    x = round(width * left / frame_width)
+    y = round(height * bottom / frame_height) - piece_height
     magick("-size", f"{width}x{height}", "xc:none", piece, "-geometry", f"+{x}+{y}",
            "-compose", "Over", "-composite", "-strip", output)
 
